@@ -172,6 +172,13 @@ class ResponseParserStateMachine {
       console.warn(`[DEV] AIX: ${label} - output item enter index/type mismatch: expected ${expectedIndex}/${outputType}, got ${this.#inOutputIndex}/${this.#inOutputType}`);
     this.#inOutputIndex = outputIndex;
     this.#inOutputType = outputType;
+    // [2026-06-12] content_index/summary_index are scoped per output item by the protocol: reset on item entry.
+    // Without this, a response with a second 'reasoning' (or 'message') item inherits the prior item's index
+    // and summaryPartEnter/contentPartEnter warn spuriously (seen with reasoning -> tools -> reasoning flows).
+    this.#contentIndex = undefined;
+    this.#contentAddSpacer = false;
+    this.#summaryIndex = undefined;
+    this.#summaryAddSpacer = false;
   }
 
   outputItemExit(label: TEventType, outputIndex: number, outputType: TOutputItem['type']) {
