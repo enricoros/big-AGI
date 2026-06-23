@@ -6,6 +6,11 @@ import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import { GoodTooltip } from './GoodTooltip';
 
+
+const _inPageSx = {
+  backgroundColor: 'background.popup',
+} as const;
+
 export const darkModeToggleButtonSx = {
   boxShadow: 'sm',
   backgroundColor: 'background.surface',
@@ -40,7 +45,7 @@ function _themeModeIcon(mode: ThemeMode) {
   }
 }
 
-export function DarkModeToggleButton(props: { hasText?: boolean }) {
+export function DarkModeToggleButton(props: { hasText?: boolean, inPage?: boolean }) {
 
   // external state
   const { mode: colorMode, setMode: setColorMode } = useColorScheme();
@@ -57,12 +62,12 @@ export function DarkModeToggleButton(props: { hasText?: boolean }) {
 
   return (
     <GoodTooltip title={title}>
-      {props.hasText ? (
+      {props.hasText || props.inPage ? (
         <Button
-          variant='soft'
+          variant={props.inPage ? 'outlined' : 'soft'}
           color='neutral'
           onClick={handleToggleDarkMode}
-          sx={darkModeToggleButtonSx}
+          sx={props.inPage ? _inPageSx : darkModeToggleButtonSx}
           startDecorator={React.cloneElement(_themeModeIcon(mode), { color: 'primary' })}
         >
           {_themeModeLabel[mode]}
