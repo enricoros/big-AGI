@@ -2,7 +2,11 @@ import * as React from 'react';
 
 import { Box, Button, List, ListDivider, ListItem, ListItemButton, ListItemContent, ListItemDecorator, Typography } from '@mui/joy';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import NorthEastIcon from '@mui/icons-material/NorthEast';
 import SearchIcon from '@mui/icons-material/Search';
+import TerminalOutlinedIcon from '@mui/icons-material/TerminalOutlined';
+
+import { optimaActions } from '~/common/layout/optima/useOptima';
 
 import { ASRxConfigureEngines } from '~/modules/asrx/components/ASRxConfigureEngines';
 import { BrowseSettings } from '~/modules/browse/BrowseSettings';
@@ -121,6 +125,35 @@ function VoiceOutputBlock(props: { isMobile: boolean }) {
   );
 }
 
+/** Diagnostics group: developer/inspection surfaces (not AI tools), styled as the child-nav cards. */
+function ToolsDiagnostics() {
+  return <>
+    <SectionHeader label='Diagnostics' />
+    <List size='sm' sx={_styles.childNavList}>
+      <ListItem>
+        <ListItemButton onClick={() => optimaActions().openAIXDebugger()} sx={_styles.childNavButton}>
+          <ListItemDecorator><TerminalOutlinedIcon /></ListItemDecorator>
+          <ListItemContent>
+            AI Inspector
+            <Typography level='body-xs' >Inspect live AI requests</Typography>
+          </ListItemContent>
+          <NorthEastIcon sx={{ fontSize: 'lg' }} />
+        </ListItemButton>
+      </ListItem>
+      <ListItem>
+        <ListItemButton onClick={() => optimaActions().openLogger()} sx={_styles.childNavButton}>
+          <ListItemDecorator><TerminalOutlinedIcon /></ListItemDecorator>
+          <ListItemContent>
+            Logs Viewer
+            <Typography level='body-xs' sx={{ color: 'text.secondary' }}>View application logs</Typography>
+          </ListItemContent>
+          <NorthEastIcon sx={{ fontSize: 'lg' }} />
+        </ListItemButton>
+      </ListItem>
+    </List>
+  </>;
+}
+
 function ToolsSearchBanner() {
   return (
     <Box sx={_styles.searchBanner}>
@@ -175,6 +208,7 @@ function renderSection(nodeId: SettingsNavId, isMobile: boolean, onSelect: (id: 
       return <>
         <ToolsSearchBanner />
         <ChildNav parentId='tools' onSelect={onSelect} />
+        <ToolsDiagnostics />
       </>;
     case 'tools-browse':
       return <Box sx={_styles.block}><BrowseSettings /></Box>;

@@ -2,19 +2,17 @@ import * as React from 'react';
 
 import { Box, Button } from '@mui/joy';
 import KeyboardCommandKeyOutlinedIcon from '@mui/icons-material/KeyboardCommandKeyOutlined';
-import TerminalOutlinedIcon from '@mui/icons-material/TerminalOutlined';
 
 import type { PreferencesTabId } from '~/common/layout/optima/store-layout-optima';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { DarkModeToggleButton, darkModeToggleButtonSx } from '~/common/components/DarkModeToggleButton';
 import { GoodModal } from '~/common/components/modals/GoodModal';
-import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { SettingsContent } from './SettingsContent';
 import { SettingsNavList } from './SettingsNavList';
 import { SettingsNavSelect } from './SettingsNavSelect';
-import { getSettingsNavTopLevelGroup, resolveSettingsNavId } from './settings.nav';
+import { resolveSettingsNavId } from './settings.nav';
 
 
 const _styles = {
@@ -113,8 +111,6 @@ export function SettingsModal(props: {
   // derived nav state
   const { setTab } = props;
   const nodeId = resolveSettingsNavId(props.tab);
-  const isToolsSection = getSettingsNavTopLevelGroup(nodeId) === 'tools';
-  const enableAixDebuggerDialog = true;
 
   return (
     <GoodModal
@@ -128,15 +124,9 @@ export function SettingsModal(props: {
       fullscreen={isMobile}
       startButton={
         <Box sx={_styles.startButton}>
-          {!isToolsSection && <DarkModeToggleButton hasText />}
-          {!isMobile && !isToolsSection && <Button variant='soft' color='neutral' onClick={props.onOpenShortcuts} startDecorator={<KeyboardCommandKeyOutlinedIcon color='primary' />} sx={darkModeToggleButtonSx}>
+          <DarkModeToggleButton hasText />
+          {!isMobile && <Button variant='soft' color='neutral' onClick={props.onOpenShortcuts} startDecorator={<KeyboardCommandKeyOutlinedIcon color='primary' />} sx={darkModeToggleButtonSx}>
             Shortcuts
-          </Button>}
-          {isToolsSection && <Button variant='soft' color='neutral' disabled={!enableAixDebuggerDialog} onClick={optimaActions().openAIXDebugger} startDecorator={<TerminalOutlinedIcon color={enableAixDebuggerDialog ? 'primary' : undefined} />} sx={darkModeToggleButtonSx}>
-            AI Inspector
-          </Button>}
-          {isToolsSection && <Button variant='soft' color='neutral' onClick={optimaActions().openLogger} startDecorator={<TerminalOutlinedIcon color='primary' />} sx={darkModeToggleButtonSx}>
-            Logs Viewer
           </Button>}
         </Box>
       }
