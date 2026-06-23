@@ -218,7 +218,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             // string representation. (2026-06-13: a PTC client-tool call used to kill the stream here
             // with "unexpected argument format: got 'object' instead of 'incr_str'")
             if (contentBlock && contentBlock.input && typeof contentBlock.input === 'object')
-              contentBlock.input = Object.keys(contentBlock.input).length === 0 ? '' : JSON.stringify(contentBlock.input);
+              contentBlock.input = _antStreamingToolInputToString(contentBlock.input);
 
             // [Anthropic, 2025-11-24] Programmatic Tool Calling - detect if called from code execution
             const isProgrammaticCall = contentBlock.caller?.type === 'code_execution_20250825' || contentBlock.caller?.type === 'code_execution_20260120';
@@ -232,7 +232,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             // Streaming: same normalization as tool_use above ({} streams via input_json_delta;
             // pre-populated objects are stringified so the += accumulation below stays consistent)
             if (contentBlock && contentBlock.input && typeof contentBlock.input === 'object')
-              contentBlock.input = Object.keys(contentBlock.input).length === 0 ? '' : JSON.stringify(contentBlock.input);
+              contentBlock.input = _antStreamingToolInputToString(contentBlock.input);
 
             _handleCBS_ServerToolUse(pt, contentBlock);
             break;
@@ -698,6 +698,16 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
 
 // --- Shared helpers (used by both S and NS parsers) ---
+
+/**
+ * [Anthropic streaming] Normalize a tool_use/server_tool_use `input` from content_block_start to the
+ * string that input_json_delta appends to: `{}` -> '' (args stream as deltas); a pre-populated
+ * object -> its JSON string (PTC: code execution computed the full args, no deltas follow).
+ * NS instead keeps the object and lets the transmitter ('json_object') do the stringify.
+ */
+function _antStreamingToolInputToString(input: object): string {
+  return Object.keys(input).length === 0 ? '' : JSON.stringify(input);
+}
 
 /** Ellipsize long strings for iTexts/oTexts display (keeps start + end, shows byte count in the middle) */
 function _ellipsizeContext(text: string, maxBytes = 512): string {
