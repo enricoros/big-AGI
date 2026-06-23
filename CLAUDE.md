@@ -45,6 +45,7 @@ The `gh` command is available to interact with GitHub from the terminal, but **N
 - Never `git merge` between the two branches - breaks the linear topology
 - Backporting `dev` -> `main` is a re-implementation, never a cherry-pick - keep `main`-side edits minimal/additive so the existing `dev` version lands cleanly on rebase; split into small commits when natural
 - Rebasing `dev` onto `main`: work on a scratch branch (never `private/dev` directly); only files `main` changed since the merge-base can conflict - forecast with `git diff --name-only $(git merge-base private/dev opensource/main) opensource/main`
+- Resolve that rebase per-conflict: keep `dev` where it diverges, UNION where `main` only added (never blanket `-X theirs`/`-X ours` - they drop `main`'s additions). Check no `<<<<<<<` markers survive before each `--continue`
 
 ### Core Directory Structure
 
