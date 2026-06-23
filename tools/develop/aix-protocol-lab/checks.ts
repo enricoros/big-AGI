@@ -457,6 +457,19 @@ interface _WireAtoms {
 
 const _newAtoms = (): _WireAtoms => ({ textChars: 0, reasoningChars: 0, reasoningSigs: 0, redactedParcels: 0, fnCalls: new Map(), serverTools: new Map(), toolResults: new Map(), citations: 0, images: 0 });
 
+/**
+ * Char count of an Anthropic tool `input` entering the accumulator: empty `{}` -> 0 (args stream via
+ * input_json_delta), pre-populated object (PTC) -> its JSON string length, string -> as-is. (Counting
+ * `{}` as the literal "{}" was the lab's own 2-char-per-tool over-count, false-flagging full streams.)
+ * INTENTIONALLY re-derives the parser's rule (`_antStreamingToolInputToString`) rather than importing
+ * it: the wire side is a differential oracle, so independence is what catches a future divergence.
+ */
+function _antInputChars(input: unknown): number {
+  if (typeof input === 'object' && input !== null)
+    return Object.keys(input).length === 0 ? 0 : JSON.stringify(input).length;
+  return String(input ?? '').length;
+}
+
 function _wireAtoms(run: LabRun): _WireAtoms | null {
   const atoms = _newAtoms();
   const events = run.segments.flatMap(s => s.events);
@@ -479,10 +492,10 @@ function _wireAtoms(run: LabRun): _WireAtoms | null {
             atoms.redactedParcels++;
             break;
           case 'tool_use':
-            atoms.fnCalls.set(block.id, { name: block.name, argChars: typeof block.input === 'object' ? JSON.stringify(block.input ?? {}).length : String(block.input ?? '').length });
+            atoms.fnCalls.set(block.id, { name: block.name, argChars: _antInputChars(block.input) });
             break;
           case 'server_tool_use':
-            atoms.serverTools.set(block.id, { name: block.name, inputChars: typeof block.input === 'object' ? JSON.stringify(block.input ?? {}).length : String(block.input ?? '').length });
+            atoms.serverTools.set(block.id, { name: block.name, inputChars: _antInputChars(block.input) });
             break;
           default:
             if (typeof block?.type === 'string' && block.type.endsWith('_tool_result'))

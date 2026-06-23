@@ -47,6 +47,8 @@ export interface LabCaps {
   webDynamic?: boolean;
   /** adds the capybara client function tool; on Anthropic with codeExec it gets allowed_callers so CODE can invoke it (PTC) */
   fnCall?: boolean;
+  /** adds a SECOND distinct client function tool (convert_temperature) - stresses parallel calls across different schemas + tool selection */
+  multiFn?: boolean;
 }
 
 export interface LabScenario {
@@ -110,6 +112,18 @@ export const LAB_SCENARIOS: LabScenario[] = [
     caps: { reasoning: true, webSearch: true, webFetch: true, webDynamic: true },
   },
   {
+    id: 'interleave',
+    description: 'Max interleaving, short outputs: 2 DISTINCT client function tools called in parallel (3 calls) + server search/fetch. Anthropic uses dynamic filtering (internal encrypted code); Gemini exercises tool-circulation (hosted+custom combined); OpenAI shows client-FC turn-boundary deferral of hosted tools. Built for manual ledger verification.',
+    system: 'Be extremely terse. One-word answers where possible, no preamble. Use every applicable tool in parallel within a single step when you can.',
+    prompt: 'In ONE step, in parallel, do ALL of:\n' +
+      '1. get_capybara_info_given_name_and_color for "enrico" (brown) AND "coolio" (golden) - two separate calls.\n' +
+      '2. convert_temperature 100 from "C" to "F" - one call.\n' +
+      '3. Search the web for "big-AGI", filtering the results programmatically if your tools support it.\n' +
+      '4. Fetch https://big-agi.com.\n' +
+      'Then reply with only: ok',
+    caps: { reasoning: true, webSearch: true, webFetch: true, codeExec: true, webDynamic: true, fnCall: true, multiFn: true },
+  },
+  {
     id: 'kitchen-sink',
     description: 'The canonical gauntlet: reasoning + parallel search + code exec + parallel fetch + final text + in-response reasoning continuity probe.',
     prompt: 'Think deeply of a random number between 1 and 1000 and keep it to yourself for now. ' +
@@ -154,6 +168,23 @@ const CAPYBARA_TOOL: Extract<AixTools_ToolDefinition, { type: 'function_call' }>
   },
 };
 
+/** Second distinct client tool (for multiFn) - a different schema, kept direct-only on all flavors. */
+const CONVERT_TEMP_TOOL: Extract<AixTools_ToolDefinition, { type: 'function_call' }> = {
+  type: 'function_call',
+  function_call: {
+    name: 'convert_temperature',
+    description: 'Converts a temperature between unit scales. Returns the converted value. Use when asked to convert temperatures.',
+    input_schema: {
+      properties: {
+        value: { type: 'number', description: 'The temperature value to convert' },
+        from: { type: 'string', description: 'Source unit: C, F, or K' },
+        to: { type: 'string', description: 'Target unit: C, F, or K' },
+      },
+      required: ['value', 'from', 'to'],
+    },
+  },
+};
+
 /** PTC unlock for Anthropic code execution: allowed_callers triggers aixAnthropicHostedFeatures().enableCodeExecution. */
 const ANT_PTC_UNLOCK_TOOL: AixTools_ToolDefinition = {
   type: 'function_call',
@@ -190,17 +221,22 @@ export function compileScenario(flavor: LabFlavor, scenario: LabScenario, modelI
         model.vndAntWebFetch = 'auto';
         model.vndAntWebFetchMaxUses = 4;
       }
-      if (caps.webDynamic)
-        model.vndAntWebDynamic = true; // upgrades web tools to *_20260209 with internal (encrypted) code execution
-      if (wantsClientFn && caps.codeExec)
+      if (caps.webDynamic) {
+        // dynamic filtering: web tools upgrade to *_20260209 and run code INTERNALLY (encrypted results).
+        // [Anthropic issue #1087] Do NOT also add a standalone code_execution tool here - the two code
+        // environments confuse the model. So we suppress the PTC standalone path below and keep client
+        // tools direct-only; the internal code execution comes free with the dynamic web tools.
+        model.vndAntWebDynamic = true;
+      } else if (wantsClientFn && caps.codeExec) {
         // PTC: the client function is invocable BOTH directly and from server-side code execution
         // (allowed_callers also flips aixAnthropicHostedFeatures().enableCodeExecution on)
         tools.push({
           type: 'function_call',
           function_call: { ...CAPYBARA_TOOL.function_call, allowed_callers: ['direct', 'code_execution'] },
         });
-      else if (caps.codeExec)
+      } else if (caps.codeExec) {
         tools.push(ANT_PTC_UNLOCK_TOOL);
+      }
       break;
 
     case 'openai-responses':
@@ -236,6 +272,10 @@ export function compileScenario(flavor: LabFlavor, scenario: LabScenario, modelI
   // plain client function tool everywhere the anthropic case didn't already add its PTC variant
   if (wantsClientFn && !tools.some(t => t.type === 'function_call' && t.function_call.name === CAPYBARA_TOOL.function_call.name))
     tools.push(CAPYBARA_TOOL);
+
+  // second distinct client tool - direct-only on every flavor (mix of PTC-capable + direct tools is itself interesting)
+  if (caps.multiFn && !tools.some(t => t.type === 'function_call' && t.function_call.name === CONVERT_TEMP_TOOL.function_call.name))
+    tools.push(CONVERT_TEMP_TOOL);
 
   const chatGenerate: AixAPIChatGenerate_Request = {
     systemMessage: scenario.system ? { parts: [{ pt: 'text', text: scenario.system }] } : null,

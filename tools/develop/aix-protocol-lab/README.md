@@ -127,6 +127,26 @@ output item (fixed in `outputItemEnter`). The wire is, as of today, strictly ord
 
 ## Findings already on record (captures of 2026-06-12)
 
+Fourth session (`interleave` scenario: distinct parallel FC + dynamic filtering + circulation, 2026-06-23):
+
+- `interleave` = 2 DISTINCT client tools (capybara, convert_temperature) called in parallel (3 calls)
+  + server search/fetch, each vendor's richest concurrent config. All grammars clean.
+- **Anthropic** (dynamic filtering, `vndAntWebDynamic`): model emitted 3 parallel client FCs AND wrote
+  two `code_execution` blocks whose code calls `await web_search(...)`/`await web_fetch(...)` internally
+  - the dynamic-filtering path. Turn paused at `ok-tool_invocations` for client tools, so the code-exec
+  ops are legitimately left `open` (results arrive next turn). S/NS structure identical. Compiler now
+  suppresses the standalone PTC code tool when `webDynamic` is on (Anthropic issue #1087: two code
+  environments confuse the model).
+- **OpenAI Responses**: client FC forces the turn boundary (`ok-tool_invocations`), hosted tools deferred
+  - documented protocol difference. Deep sequencing clean on all 4 oracles; the same-generation oracle
+  matched the stream exactly while the separate NS twin had an extra reasoning item (twin nondeterminism,
+  not loss). A 6-run `hunt` stayed 100% clean (incl. a 104-event run) - still strictly serial.
+- **Gemini** (tool circulation): the richest single turn - 2 server web searches (done) AND 3 parallel
+  client FCs together in one turn; all loss categories full (sigs 5/5, FC 100=100, citation 1/1).
+- **Lab self-bug fixed**: the wire-side loss counter seeded each Anthropic `tool_use` with
+  `JSON.stringify({})` = 2 chars, over-reporting wire args by 2/tool and falsely flagging full
+  function-call streams as "partial". Now matches the parser's empty-`{}`-to-'' zap (`_antInputChars`).
+
 Third session (burst + deep sequencing + PTC streaming fix, 2026-06-13):
 
 - **Anthropic streaming parser bug found by `burst` and fixed**: a client `tool_use` invoked
