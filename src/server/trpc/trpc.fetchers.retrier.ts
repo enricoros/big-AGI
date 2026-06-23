@@ -37,6 +37,9 @@ const _429_RETRY_DENYLIST: { test: string | RegExp; label: string }[] = [
   { test: 'rate limit of 0 input tokens per minute', label: 'zero-rate-limit (no model access)' },
   // [Z.ai] Insufficient balance - prepaid credits exhausted
   { test: 'Insufficient balance or no resource package', label: 'insufficient-balance (Z.ai)' },
+  // [Sakana.ai / OpenAI-compat] Prepaid credit balance exhausted - user must add credits.
+  // Upstream 429 body: {"error":{"message":"Prepaid credit balance is exhausted","type":"usage_limit_reached",...}}
+  { test: 'credit balance is exhausted', label: 'credit-exhausted (Sakana.ai)' },
 ];
 
 
