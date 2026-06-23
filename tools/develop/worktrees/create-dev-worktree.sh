@@ -241,8 +241,29 @@ if [ "$1" = "--remove" ]; then
         printf "%b⊘ %b(not found)%b\n" "$YELLOW" "$GRAY" "$NC"
     fi
     
-    # Remove branch if it exists
-    if [ "$BRANCH_EXISTS" = true ]; then
+    # Determine whether this branch must be protected from deletion.
+    # Removing a worktree should never delete a long-lived/shared branch just
+    # because it happened to be checked out there (e.g. an accidental
+    # `git checkout main` inside a scratch worktree). git's own safety does not
+    # help here: the worktree is removed first, which frees the branch, so a
+    # subsequent `git branch -D main` would succeed.
+    PROTECTED_BRANCHES="main dev staging prod"
+    BRANCH_IS_PROTECTED=false
+    for pb in $PROTECTED_BRANCHES; do
+        if [ "$BRANCH_TO_REMOVE" = "$pb" ]; then
+            BRANCH_IS_PROTECTED=true
+        fi
+    done
+    # Also protect any branch still checked out in another worktree
+    if git worktree list | grep -qF "[$BRANCH_TO_REMOVE]"; then
+        BRANCH_IS_PROTECTED=true
+    fi
+
+    # Remove branch if it exists (never delete protected/shared branches)
+    if [ "$BRANCH_EXISTS" = true ] && [ "$BRANCH_IS_PROTECTED" = true ]; then
+        echo -n "Deleting branch $BRANCH_TO_REMOVE... "
+        printf "%b⊘ %b(protected, kept)%b\n" "$YELLOW" "$GRAY" "$NC"
+    elif [ "$BRANCH_EXISTS" = true ]; then
         echo -n "Deleting branch $BRANCH_TO_REMOVE... "
         # Try safe delete first
         if git --no-pager branch -d "$BRANCH_TO_REMOVE" >/dev/null 2>&1; then
@@ -283,7 +304,9 @@ if [ "$1" = "--remove" ]; then
         FINAL_BRANCH_EXISTS=true
     fi
     
-    if [ "$FINAL_WORKTREE_EXISTS" = false ] && [ "$FINAL_BRANCH_EXISTS" = false ]; then
+    if [ "$FINAL_WORKTREE_EXISTS" = false ] && [ "$BRANCH_IS_PROTECTED" = true ]; then
+        print_color "$GREEN" "✓ Worktree removed. Branch '$BRANCH_TO_REMOVE' kept (protected)."
+    elif [ "$FINAL_WORKTREE_EXISTS" = false ] && [ "$FINAL_BRANCH_EXISTS" = false ]; then
         print_color "$GREEN" "✓ Cleanup complete! Both worktree and branch removed."
     else
         print_color "$YELLOW" "⚠ Cleanup partially complete:"
