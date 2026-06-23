@@ -178,20 +178,33 @@ if [ "$1" = "--remove" ]; then
     # Get worktree list once
     WORKTREE_LIST=$(git worktree list 2>/dev/null || true)
     
-    # First try to find by branch name (most reliable)
-    WORKTREE_PATH=$(echo "$WORKTREE_LIST" | grep -F "[$BRANCH_TO_REMOVE]" | awk '{print $1}' | head -1 || true)
-    if [ -n "$WORKTREE_PATH" ]; then
-        WORKTREE_EXISTS=true
-    else
-        # Try the expected paths
-        if echo "$WORKTREE_LIST" | grep -q "$WORKTREE_TO_REMOVE"; then
-            WORKTREE_PATH="$WORKTREE_TO_REMOVE"
+    # Resolve by branch name OR directory basename. Accept EITHER a branch name
+    # (the worktree with that branch checked out) OR a worktree dir name
+    # (big-agi_<arg>, old big-agi-<arg>, or <arg>). This handles repurposed
+    # worktrees whose checked-out branch no longer matches the directory name
+    # (e.g. a scratch worktree left on `main`).
+    WORKTREE_BRANCH=""
+    while IFS= read -r wt_line; do
+        [ -z "$wt_line" ] && continue
+        wt_path=$(echo "$wt_line" | awk '{print $1}')
+        wt_base=$(basename "$wt_path")
+        wt_branch=$(echo "$wt_line" | sed 's/.*\[\([^]]*\)\].*/\1/')
+        if [ "$wt_branch" = "$BRANCH_TO_REMOVE" ] \
+            || [ "$wt_base" = "big-agi_$BRANCH_TO_REMOVE" ] \
+            || [ "$wt_base" = "big-agi-$BRANCH_TO_REMOVE" ] \
+            || [ "$wt_base" = "$BRANCH_TO_REMOVE" ]; then
+            WORKTREE_PATH="$wt_path"
+            WORKTREE_BRANCH="$wt_branch"
             WORKTREE_EXISTS=true
-        elif echo "$WORKTREE_LIST" | grep -q "../big-agi-$BRANCH_TO_REMOVE"; then
-            # Handle old naming convention with hyphen
-            WORKTREE_PATH="../big-agi-$BRANCH_TO_REMOVE"
-            WORKTREE_EXISTS=true
+            break
         fi
+    done <<< "$WORKTREE_LIST"
+
+    # Never remove the primary (main) worktree
+    if [ "$WORKTREE_EXISTS" = true ] && [ "$WORKTREE_PATH" = "$MAIN_WORKTREE" ]; then
+        print_color "$RED" "✗ Refusing to remove the primary worktree: $WORKTREE_PATH"
+        echo
+        exit 1
     fi
     
     # Check if branch exists
@@ -209,13 +222,11 @@ if [ "$1" = "--remove" ]; then
     
     # Remove worktree if it exists
     if [ "$WORKTREE_EXISTS" = true ]; then
-        # Get the absolute path from git worktree list
-        ACTUAL_WORKTREE_PATH=$(git worktree list | grep -F "[$BRANCH_TO_REMOVE]" | awk '{print $1}' | head -1)
-        if [ -n "$ACTUAL_WORKTREE_PATH" ]; then
-            WORKTREE_PATH="$ACTUAL_WORKTREE_PATH"
+        if [ -n "$WORKTREE_BRANCH" ] && [ "$WORKTREE_BRANCH" != "$BRANCH_TO_REMOVE" ]; then
+            printf "Removing worktree %s %b(on branch %s)%b... " "$WORKTREE_PATH" "$GRAY" "$WORKTREE_BRANCH" "$NC"
+        else
+            echo -n "Removing worktree $WORKTREE_PATH... "
         fi
-        
-        echo -n "Removing worktree $WORKTREE_PATH... "
         # Try normal remove first, suppress output
         if git --no-pager worktree remove "$WORKTREE_PATH" >/dev/null 2>&1; then
             print_color "$GREEN" "✓"
