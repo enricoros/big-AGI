@@ -35,6 +35,7 @@ const _styles = {
   // wrapper: lets the breadcrumb collapse/ellipsize gracefully inside the centered top bar.
   // Joy Breadcrumbs renders as `nav > ol > li`; keep it on one line and let the crumbs shrink rather than wrap.
   root: {
+    mr: 1.5,
     minWidth: 0, // allow flex children to shrink so the title can ellipsize
     overflow: 'hidden',
     display: 'flex',
