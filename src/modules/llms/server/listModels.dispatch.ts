@@ -50,6 +50,7 @@ import { mistralModels } from './openai/models/mistral.models';
 import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './openai/models/moonshot.models';
 import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './openai/models/openrouter.models';
 import { openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openAISortModels, openaiValidateModelDefs_DEV } from './openai/models/openai.models';
+import { sakanaAIHeuristic, sakanaAIModelsToModelDescriptions } from './openai/models/sakanaai.models';
 import { perplexityHardcodedModelDescriptions, perplexityInjectVariants } from './openai/models/perplexity.models';
 import { tlusApiHeuristic, tlusApiTryParse } from './openai/models/tlusapi.models';
 import { togetherAIModelsToModelDescriptions } from './openai/models/together.models';
@@ -486,6 +487,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // [FireworksAI] special case for model enumeration
               if (fireworksAIHeuristic(oaiUrl))
                 return fireworksAIModelsToModelDescriptions(maybeModels);
+
+              // [Sakana.ai] Fugu models - API lists ids only; caps/pricing from manual mappings
+              if (sakanaAIHeuristic(oaiUrl))
+                return sakanaAIModelsToModelDescriptions(maybeModels);
 
               // [MiniMax] hardcoded models (no /v1/models API yet)
               if (minimaxHeuristic(oaiUrl))
