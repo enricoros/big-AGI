@@ -126,7 +126,7 @@ export function AixDebuggerDialog(props: {
     const timeoutId = setTimeout(() => {
       if (!useUIPreferencesStore.getState().aixInspector)
         useUIPreferencesStore.getState().toggleAixInspector();
-    }, 1000);
+    }, 400);
     return () => clearTimeout(timeoutId);
   }, []);
 
