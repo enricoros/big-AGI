@@ -35,6 +35,7 @@ const _styles = {
   // wrapper: lets the breadcrumb collapse/ellipsize gracefully inside the centered top bar.
   // Joy Breadcrumbs renders as `nav > ol > li`; keep it on one line and let the crumbs shrink rather than wrap.
   root: {
+    minHeight: 'var(--Bar)',
     mr: 1.5,
     minWidth: 0, // allow flex children to shrink so the title can ellipsize
     overflow: 'hidden',
@@ -53,7 +54,7 @@ const _styles = {
 
   titleEditable: {
     maxWidth: { xs: 144, sm: 200, md: 260 },
-    cursor: 'text',
+    cursor: 'pointer', // was: 'text'
     borderRadius: 'xs',
     px: 0.25,
     '&:hover': { textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px' },
@@ -61,8 +62,8 @@ const _styles = {
 
   // inline editor: shown in place of the breadcrumb while renaming (chat-view leaf only)
   editor: {
-    minWidth: 200,
-    maxWidth: 'min(60dvw, 360px)',
+    minWidth: 280,
+    maxWidth: 'min(72dvw, 480px)',
     mx: { md: 1 },
   } as const,
 
@@ -95,6 +96,7 @@ export function ChatBarBreadcrumbs(props: {
         placeholder='Chat title...'
         invertedColors
         centerText
+        maxRows={3} // bound the auto-grow: long titles scroll within ~3 rows instead of making the editor very tall
         onEdit={commitEdit}
         onCancel={cancelEdit}
         sx={_styles.editor}
