@@ -17,6 +17,7 @@ export function InlineTextarea(props: {
   invertedColors?: boolean,
   centerText?: boolean,
   minRows?: number,
+  maxRows?: number, // optional. caps the auto-grow height; beyond it the textarea scrolls (great for single-field inline edits)
   syncWithInitialText?: boolean, // optional. if set, the text will be reset to initialText when the prop changes
   selectAllOnFocus?: boolean, // optional. if set to false, text won't be selected on focus (default: true)
   onEdit: (text: string) => void,
@@ -66,6 +67,7 @@ export function InlineTextarea(props: {
       color={props.decolor ? undefined : props.invertedColors ? 'primary' : 'warning'}
       autoFocus={!props.decolor}
       minRows={props.minRows !== undefined ? props.minRows : 1}
+      maxRows={props.maxRows}
       placeholder={props.placeholder}
       value={text}
       onChange={handleEditTextChanged}
