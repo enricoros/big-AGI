@@ -40,8 +40,8 @@ const _fuguUltraPrice: ModelDescriptionSchema['chatPrice'] = {
 // emits `{ type: 'web_search' }` for the 'sakanaai' dialect.
 const _fuguParamSpecs = [
   { paramId: 'llmVndOaiEffort' as const, enumValues: ['high', 'xhigh'] },
-  // Sakana web_search is a bare on/off tool (no context-size levels) - restrict the enum to a single
-  // value so the UI shows just On/Off; the adapter emits `{ type: 'web_search' }` regardless of the value.
+  // Reuse OpenAI's Responses web_search control, restricted to a single value so the UI shows On/Off (Sakana
+  // has no context-size levels). The responses adapter emits the bare `{ type: 'web_search' }` for this dialect.
   { paramId: 'llmVndOaiWebSearchContext' as const, enumValues: ['high'] },
 ];
 

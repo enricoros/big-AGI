@@ -224,13 +224,20 @@ export function LLMParametersEditor(props: {
     , [props.parameterSpecs]);
 
 
-  // effort options: one memo for all vendors, filtered to model's allowed values
-  const { antEffortOptions, gemEffortOptions, oaiEffortOptions, miscEffortOptions } = React.useMemo(() => ({
-    antEffortOptions: llmParametersFilterEffortOptions(_antEffortOptions, modelParamSpec['llmVndAntEffort'], 'llmVndAntEffort'),
-    gemEffortOptions: llmParametersFilterEffortOptions(_gemEffortOptions, modelParamSpec['llmVndGemEffort'], 'llmVndGemEffort'),
-    oaiEffortOptions: llmParametersFilterEffortOptions(_oaiEffortOptions, modelParamSpec['llmVndOaiEffort'], 'llmVndOaiEffort'),
-    miscEffortOptions: llmParametersFilterEffortOptions(_miscEffortOptions, modelParamSpec['llmVndMiscEffort'], 'llmVndMiscEffort'),
-  }), [modelParamSpec]);
+  // enum options: one memo for all vendors, filtered to each model's allowed values (via parameterSpec.enumValues)
+  const { antEffortOptions, gemEffortOptions, oaiEffortOptions, miscEffortOptions, oaiWebSearchOptions } = React.useMemo(() => {
+    // web search: filter to the model's allowed levels; when restricted to a single level (e.g. Sakana's
+    // bare on/off web_search), relabel that lone level as a plain "On" (the "Off" entry is kept as-is).
+    const ws = llmParametersFilterEffortOptions(_webSearchContextOptions, modelParamSpec['llmVndOaiWebSearchContext'], 'llmVndOaiWebSearchContext');
+    const wsOnOff = ws?.filter(o => o.value !== _UNSPECIFIED).length === 1;
+    return {
+      antEffortOptions: llmParametersFilterEffortOptions(_antEffortOptions, modelParamSpec['llmVndAntEffort'], 'llmVndAntEffort'),
+      gemEffortOptions: llmParametersFilterEffortOptions(_gemEffortOptions, modelParamSpec['llmVndGemEffort'], 'llmVndGemEffort'),
+      oaiEffortOptions: llmParametersFilterEffortOptions(_oaiEffortOptions, modelParamSpec['llmVndOaiEffort'], 'llmVndOaiEffort'),
+      miscEffortOptions: llmParametersFilterEffortOptions(_miscEffortOptions, modelParamSpec['llmVndMiscEffort'], 'llmVndMiscEffort'),
+      oaiWebSearchOptions: ws?.map(o => (wsOnOff && o.value !== _UNSPECIFIED) ? { ...o, label: 'On' } : o) ?? null,
+    };
+  }, [modelParamSpec]);
 
 
   // current values: { ...fallback, ...baseline, ...user }
@@ -750,7 +757,7 @@ export function LLMParametersEditor(props: {
           else
             onChangeParameter({ llmVndOaiWebSearchContext: value });
         }}
-        options={_webSearchContextOptions}
+        options={oaiWebSearchOptions ?? _webSearchContextOptions}
       />
     )}
 
