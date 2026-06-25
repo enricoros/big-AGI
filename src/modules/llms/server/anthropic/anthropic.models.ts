@@ -253,6 +253,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
 
   // Claude 5 models (Fable/Mythos) - NOTE: no thinking variants, adaptive thinking is always on
   {
+    hidden: true, // Fable 5 stays hidden until it's back on the API
     id: 'claude-fable-5', // Active - 2026-06-09
     label: 'Claude Fable 5',
     pubDate: '20260609',
