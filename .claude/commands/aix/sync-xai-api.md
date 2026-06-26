@@ -38,6 +38,8 @@ Then take a look at the newest API information available. Try these sources, and
 
 **If all blocked:** Explain what you attempted and ask user to provide documentation manually.
 
+**Live endpoint (extra signal):** If `.env.api-keys` has `XAI_API_KEY`, fire a real streaming Responses request and inspect the raw SSE - ground-truth for xAI-specific output items, event types, and usage fields that docs lag: `POST https://api.x.ai/v1/responses` (`"stream":true`). Never commit or echo the key.
+
 $ARGUMENTS
 Check carefully for discrepancies between our implementation and the current API docs:
 

@@ -22,6 +22,8 @@ Then take a look at the newest API information available. Try these sources, and
 
 **If all blocked:** Explain what you attempted and ask user to provide documentation manually.
 
+**Live endpoint (extra signal):** If `.env.api-keys` has `GEMINI_API_KEY`, fire a real streaming generateContent request and inspect the raw SSE - ground-truth for new fields, event types, response shapes, and error formats that docs lag: `POST https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse&key=$GEMINI_API_KEY`. Never commit or echo the key.
+
 $ARGUMENTS
 Check carefully and look if there are any discrepancies in the protocols, the available API surface, the structure of the messages, functionality, logic, etc.
 Make sure you look deep in the fields of the requests and responses, especially required fields, streaming event types, and any new response shapes.

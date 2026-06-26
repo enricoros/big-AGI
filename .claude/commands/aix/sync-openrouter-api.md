@@ -35,6 +35,8 @@ Then check the latest API information. Try these sources (be creative if blocked
 
 **If blocked:** Ask user to provide documentation.
 
+**Live endpoint (extra signal):** The models list is public - `curl https://openrouter.ai/api/v1/models` - ground-truth for per-model capabilities/metadata. If `.env.api-keys` has `OPENROUTER_API_KEY`, also fire a real streaming `POST https://openrouter.ai/api/v1/chat/completions` (`"stream":true`) to inspect reasoning/tool/usage fields and OpenRouter-specific extensions. Never commit or echo the key.
+
 $ARGUMENTS
 Focus on discrepancies and gaps:
 - **Request/Response structure**: New fields, changed requirements, streaming event types
