@@ -6,7 +6,15 @@
 set -eo pipefail  # Exit on error, pipe failure
 
 # config
-IDE_CMD='webstorm64'  # Command to open the IDE, change as needed
+# Command to open the IDE. Auto-detect the first available launcher:
+# `webstorm64` on Windows, `webstorm` on macOS/Linux (JetBrains Toolbox).
+IDE_CMD='webstorm64'  # default/fallback used in messages if none found on PATH
+for _ide_cand in webstorm64 webstorm; do
+    if command -v "$_ide_cand" >/dev/null 2>&1; then
+        IDE_CMD="$_ide_cand"
+        break
+    fi
+done
 
 # Colors for output (matching release scripts style)
 RED='\033[0;31m'
