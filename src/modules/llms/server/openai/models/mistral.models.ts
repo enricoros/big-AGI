@@ -12,7 +12,7 @@ const DEV_DEBUG_MISTRAL_MODELS = Release.IsNodeDevBuild; // not in staging to re
 
 
 // [Mistral]
-// Updated 2026-04-16
+// Updated 2026-06-26
 // - models on: https://docs.mistral.ai/getting-started/models/models_overview/
 // - pricing on: https://mistral.ai/pricing#api-pricing
 // - benchmark elo on CBA
@@ -32,9 +32,10 @@ const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
   'mistral-large-2411': { pubDate: '20241118', chatPrice: { input: 2, output: 6 }, benchmark: { cbaElo: 1305 }, hidden: true }, // older version
   'mistral-large-latest': { pubDate: '20251202', chatPrice: { input: 0.5, output: 1.5 }, hidden: true }, // → 2512
 
-  'mistral-medium-2508': { pubDate: '20250812', chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1410 } }, // Mistral Medium 3.1
+  'mistral-medium-2604': { pubDate: '20260428', chatPrice: { input: 1.5, output: 7.5 } }, // Mistral Medium 3.5 - frontier-class multimodal, adjustable reasoning (reasoning_effort), Modified MIT
+  'mistral-medium-2508': { pubDate: '20250812', chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1410 }, hidden: true }, // Mistral Medium 3.1
   'mistral-medium-2505': { pubDate: '20250507', chatPrice: { input: 0.4, output: 2 }, benchmark: { cbaElo: 1387 }, hidden: true }, // Mistral Medium 3
-  'mistral-medium-latest': { pubDate: '20250812', chatPrice: { input: 0.4, output: 2 }, hidden: true }, // → 2508
+  'mistral-medium-latest': { pubDate: '20260428', chatPrice: { input: 1.5, output: 7.5 }, hidden: true }, // → 2604
   'mistral-medium': { pubDate: '20231211', chatPrice: { input: 0.4, output: 2 }, hidden: true }, // symlink (legacy: original Mistral Medium prototype on La Plateforme beta)
 
   'magistral-medium-2509': { pubDate: '20250917', chatPrice: { input: 2, output: 5 }, benchmark: { cbaElo: 1304 } }, // reasoning (leaderboard: magistral-medium-2506 = 1304)

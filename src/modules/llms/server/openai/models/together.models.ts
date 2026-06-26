@@ -78,7 +78,10 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
           };
       }
       const interfaces = [LLM_IF_OAI_Chat];
-      if (model.id.toLowerCase().includes('vision') || model.id.toLowerCase().includes('-vl'))
+      // vision detection by id string (Together's API exposes no modality field): 'vision'/'-vl' plus
+      // families that are natively multimodal across all variants (Llama 4 Scout/Maverick, Pixtral)
+      const lcId = model.id.toLowerCase();
+      if (lcId.includes('vision') || lcId.includes('-vl') || lcId.includes('llama-4') || lcId.includes('pixtral'))
         interfaces.push(LLM_IF_OAI_Vision);
 
       const md = fromManualMapping(_knownTogetherAIChatModels, model.id, model.created, undefined, {

@@ -17,7 +17,7 @@ const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduc
  * Groq models.
  * - models list: https://console.groq.com/docs/models
  * - pricing: https://groq.com/pricing/
- * - updated: 2026-04-16
+ * - updated: 2026-06-26
  */
 type _GroqModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 
@@ -48,23 +48,14 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
   },
   {
     isPreview: true,
-    idPrefix: 'moonshotai/kimi-k2-instruct-0905',
-    label: 'Kimi K2 Instruct 0905 (Preview)',
-    pubDate: '20250905',
-    description: 'Kimi K2 1T MoE model (32B active, 384 experts). Advanced agentic coding. 262K context, 16K max output. ~200 t/s on Groq.',
-    contextWindow: 262144,
-    maxCompletionTokens: 16384,
+    idPrefix: 'qwen/qwen3.6-27b',
+    label: 'Qwen 3.6 · 27B (Preview)',
+    pubDate: '20260509', // from API 'created' (no editorial date available)
+    description: 'Qwen3.6 27B by Alibaba Cloud. Multimodal (vision + text), flagship-level agentic coding, thinking/non-thinking modes, tool use. 131K context, 32K max output. ~500 t/s on Groq.',
+    contextWindow: 131072,
+    maxCompletionTokens: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 1.00, output: 3.00, cache: { cType: 'oai-ac', read: 0.50 } },
-  },
-  // Deprecated redirects (still returned by API)
-  {
-    idPrefix: 'moonshotai/kimi-k2-instruct',
-    label: 'Kimi K2 Instruct (Deprecated)',
-    pubDate: '20250711',
-    symLink: 'moonshotai/kimi-k2-instruct-0905',
-    contextWindow: 131072, // API returns 131K (vs 262K for the 0905 version)
-    maxCompletionTokens: 16384,
+    chatPrice: { input: 0.60, output: 3.00 },
   },
 
   // REMOVED MODELS (no longer returned by API):
@@ -72,6 +63,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
   // - (Jan 21, 2026) deepseek-r1-distill-llama-70b, deepseek-r1-distill-qwen-32b
   // - (Feb 18, 2026) moonshotai/kimi-k2-instruct (deprecated redirect, removed from docs; still returned by API -> symlink above)
   // - (Apr 02, 2026) meta-llama/llama-4-maverick-17b-128e-instruct (removed from docs and pricing)
+  // - (Jun 26, 2026) moonshotai/kimi-k2-instruct-0905 + moonshotai/kimi-k2-instruct (both removed from docs AND API)
 
 
   // Production Models - Compound Systems (pass-through pricing to underlying models)

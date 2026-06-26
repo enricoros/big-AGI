@@ -32,7 +32,7 @@ const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
  * Moonshot AI (Kimi) models.
  * - models list and pricing: https://platform.kimi.ai/docs/pricing/chat (was platform.moonshot.ai - now 301 redirect)
  * - API docs: https://platform.kimi.ai/docs/api/chat
- * - updated: 2026-06-16
+ * - updated: 2026-06-26
  * - NOTE: K2 series (non-2.5/2.6) discontinued on 2026-05-25, removed from API; kept hidden for fallback.
  */
 type _MoonshotModelDef = KnownModel & { pubDate: string };
@@ -268,7 +268,7 @@ export function moonshotModelToModelDescription(_model: unknown): ModelDescripti
 
   // NOTE: 'created' is passed for the indexed/created field but is deliberately NOT used as a pubDate
   // fallback for the "new" badge (unlike Groq/OpenAI/the aggregators): Moonshot's API returns a single
-  // constant 'created' for ALL models (verified 2026-06-19: 11 models all stamped 2026-06-15), so it
+  // constant 'created' for ALL models (re-verified 2026-06-26: 11 models all share one ~fetch-time value), so it
   // can't tell new from old - a fallback would false-badge the entire catalog as "new". Known models
   // still get their real editorial pubDate via _knownMoonshotModels.
   const description = fromManualMapping(_knownMoonshotModels, model.id, model.created, undefined, {

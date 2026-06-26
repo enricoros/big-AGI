@@ -18,17 +18,17 @@ export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
  * - Models: https://platform.minimax.io/docs/release-notes/models.md
  * - Pricing: https://platform.minimax.io/docs/guides/pricing-paygo.md
  * - Text generation: https://platform.minimax.io/docs/guides/text-generation.md
- * - Updated: 2026-06-16
+ * - Updated: 2026-06-26
  */
 type _MiniMaxModelDef = ModelDescriptionSchema & { pubDate: string };
 
 const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
 
-  // M3 - flagship, natively multimodal, 1M context (2026-05-31)
+  // M3 - flagship, natively multimodal, 1M context (2026-06-01)
   {
     id: 'MiniMax-M3',
     label: 'MiniMax M3',
-    pubDate: '20260531',
+    pubDate: '20260601',
     description: 'Flagship: frontier coding and agentic reasoning, natively multimodal (text, image, video input). 1M context, 131K max output.',
     contextWindow: 1000000,
     maxCompletionTokens: 131072,
@@ -101,7 +101,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
   {
     id: 'MiniMax-M2.1',
     label: 'MiniMax M2.1',
-    pubDate: '20251223',
+    pubDate: '20251222',
     description: '230B params (10B active), multilingual coding. 200K context, 65K max output.',
     contextWindow: 204800,
     maxCompletionTokens: 65536,
@@ -112,7 +112,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
   {
     id: 'MiniMax-M2.1-highspeed',
     label: 'MiniMax M2.1 (Highspeed)',
-    pubDate: '20251223',
+    pubDate: '20251222',
     description: 'Faster M2.1 variant. 200K context, 65K max output.',
     contextWindow: 204800,
     maxCompletionTokens: 65536,
