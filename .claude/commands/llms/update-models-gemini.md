@@ -13,6 +13,8 @@ Reference `src/modules/llms/server/llm.types.ts`, `src/modules/llms/server/llm.s
 
 **Fallbacks if blocked:** Check Google AI JS SDK at https://github.com/googleapis/js-genai, search "gemini models latest pricing", "gemini latest models", or search GitHub for latest model prices and context windows
 
+**Live endpoint (extra signal):** If `.env.api-keys` has `GEMINI_API_KEY`, scan the served model list as ground-truth for what's new/available and cross-check the docs above: `curl "https://generativelanguage.googleapis.com/v1beta/models?key=$GEMINI_API_KEY"`. Never commit or echo the key.
+
 **Important:**
 - Ignore context windows (auto-determined at runtime) and training cutoffs (not supported)
 - Review the full model list for additions, removals, and price changes

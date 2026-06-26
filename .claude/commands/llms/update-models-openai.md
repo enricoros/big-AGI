@@ -19,6 +19,8 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 - OpenAI Node SDK (https://github.com/openai/openai-node) has limited model metadata only
 - As last resort: Use Chrome DevTools MCP to navigate and extract from official docs
 
+**Live endpoint (extra signal):** If `.env.api-keys` has `OPENAI_API_KEY`, scan the served model list as ground-truth for what's new/available and cross-check the docs above: `curl https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY"`. Never commit or echo the key.
+
 **Important:**
 - Review the full model list for additions, removals, and price changes
 - Minimize whitespace/comment changes, focus on content

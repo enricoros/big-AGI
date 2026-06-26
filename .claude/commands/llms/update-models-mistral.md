@@ -17,6 +17,8 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 - Check Mistral API list models response
 - As last resort: Use Chrome DevTools MCP to render pricing table
 
+**Live endpoint (extra signal):** If `.env.api-keys` has `MISTRAL_API_KEY`, scan the served model list as ground-truth for what's new/available and cross-check the docs above: `curl https://api.mistral.ai/v1/models -H "Authorization: Bearer $MISTRAL_API_KEY"`. Never commit or echo the key.
+
 **Important:**
 - Review the full model list for additions, removals, and price changes
 - Minimize whitespace/comment changes, focus on content

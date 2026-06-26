@@ -12,6 +12,8 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 
 **Do NOT use web search.** The `.md` endpoint provides structured markdown content directly.
 
+**Live endpoint (extra signal):** If `.env.api-keys` has `GROQ_API_KEY`, scan the served model list as ground-truth for what's new/available and cross-check the docs above: `curl https://api.groq.com/openai/v1/models -H "Authorization: Bearer $GROQ_API_KEY"`. Never commit or echo the key.
+
 **Important:**
 - Review the full model list for additions, removals, and price changes
 - Minimize whitespace/comment changes, focus on content

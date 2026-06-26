@@ -85,6 +85,8 @@ For each vendor (prioritize High > Medium > Low):
 
 5. Run `tsc --noEmit` after changes.
 
+**Live endpoint (extra signal):** If `.env.api-keys` has a key for one of these vendors (e.g. `FIREWORKSAI_API_KEY`, `TOGETHERAI_API_KEY`), hit its live models endpoint (authenticating with the key; path varies - e.g. Together `/v1/models`, Fireworks `/inference/v1/models`) to get the real, current response shape - the fastest way to catch parser drift, new capability fields, or changed field names. Never commit or echo the key.
+
 **Important:**
 - Do NOT convert dynamic vendors to hardcoded lists - the dynamic approach is intentional
 - Focus on parser correctness, not model coverage

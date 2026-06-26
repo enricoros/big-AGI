@@ -15,6 +15,8 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 
 **Fallbacks if blocked:** Search "deepseek api latest pricing", "deepseek latest models", "deepseek models list" or search GitHub for latest model prices and context windows
 
+**Live endpoint (extra signal):** If `.env.api-keys` has `DEEPSEEK_API_KEY`, scan the served model list as ground-truth for what's new/available and cross-check the docs above: `curl https://api.deepseek.com/models -H "Authorization: Bearer $DEEPSEEK_API_KEY"`. Never commit or echo the key.
+
 **Important:**
 - Review the full model list for additions, removals, and price changes
 - Minimize whitespace/comment changes, focus on content

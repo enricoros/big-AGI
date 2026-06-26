@@ -16,6 +16,8 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 
 **Fallbacks if blocked:** Search "minimax api models pricing", "minimax m2 m3 models", "minimax api changelog" or check https://openrouter.ai models list for MiniMax entries.
 
+**Live endpoint (extra signal):** MiniMax exposes no list-models endpoint, but if `.env.api-keys` has `MINIMAX_API_KEY` a minimal chat-completions probe against a candidate id confirms it's served (non-200 = not live). Never commit or echo the key.
+
 **Important:**
 - Models are `ModelDescriptionSchema[]` objects (not ManualMappings) - match existing pattern in the file
 - Review the full model list for additions, removals, and price changes

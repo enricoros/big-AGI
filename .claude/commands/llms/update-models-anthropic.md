@@ -37,6 +37,8 @@ pages you might discover this way:
 https://github.com/anthropics/anthropic-sdk-typescript, or web-search
 for "anthropic models latest pricing" / "anthropic latest models".
 
+**Live endpoint (extra signal):** If `.env.api-keys` has `ANTHROPIC_API_KEY`, scan the served model list as ground-truth for what's new/available and cross-check the docs above: `curl https://api.anthropic.com/v1/models -H "x-api-key: $ANTHROPIC_API_KEY" -H 'anthropic-version: 2023-06-01'`. Never commit or echo the key.
+
 **Important:**
 - Review the full model list for additions, removals, and price changes
 - For new models: check which `parameterSpecs` are needed (thinking mode,

@@ -12,6 +12,8 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 
 **Do NOT use web search.** Fetch the URLs directly, or ask the user to provide data, if unaccessible.
 
+**Live endpoint (extra signal):** If `.env.api-keys` has `MOONSHOT_API_KEY`, scan the served model list as ground-truth for what's new/available and cross-check the docs above: `curl https://api.moonshot.ai/v1/models -H "Authorization: Bearer $MOONSHOT_API_KEY"`. Never commit or echo the key.
+
 **Important:**
 - Review the full model list for additions, removals, and price changes
 - Minimize whitespace/comment changes, focus on content

@@ -16,6 +16,8 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 - Random sites? https://the-rogue-marketing.github.io/grok-api-latest-llms-pricing-october-2025/ (find a newer version), https://langdb.ai/app/providers/xai/ (browse by model, limited coverage)
 - As last resort: Use Chrome DevTools MCP to access docs.x.ai
 
+**Live endpoint (extra signal):** If `.env.api-keys` has `XAI_API_KEY`, scan the served model list as ground-truth for what's new/available and cross-check the docs above: `curl https://api.x.ai/v1/models -H "Authorization: Bearer $XAI_API_KEY"` (also `/v1/language-models` for richer pricing/modalities). Never commit or echo the key.
+
 **Important:**
 - Review the full model list for additions, removals, and price changes
 - Minimize whitespace/comment changes, focus on content
