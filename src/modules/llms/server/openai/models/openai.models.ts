@@ -111,6 +111,78 @@ type _OpenAIModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 
 export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 
+  /// GPT-5.6 series - Limited preview June 26, 2026
+  // New naming: the number is the generation; Sol/Terra/Luna are durable capability tiers (intelligence/balance/cost).
+  // Limited preview to a small set of govt-approved partners; not yet on the public /v1/models API, so model IDs use the
+  // stable tier pointers (OpenAI: tiers "advance on their own cadence"). contextWindow/maxCompletionTokens are assumed at
+  // 5.5-class pending API/docs confirmation; pricing is verified from the official announcement.
+  // NOTE: 5.6 Sol introduces new `max` and `ultra` reasoning-effort modes (ultra = subagent acceleration) not yet in the
+  //       llmVndOaiEffort registry - using the supported subset for now; max/ultra need separate param-system support.
+
+  // GPT-5.6 Sol - flagship
+  {
+    idPrefix: 'gpt-5.6-sol',
+    label: 'GPT-5.6 Sol',
+    pubDate: '20260626',
+    description: 'Flagship next-generation model (limited preview). Strongest yet for agentic coding, science, and cybersecurity, with the most robust safety stack to date.',
+    contextWindow: 1050000, // assumed (5.5-class); unverified - not yet on public API
+    maxCompletionTokens: 128000, // assumed; unverified
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'medium' }, // TODO: add 'max'/'ultra' once supported in llmVndOaiEffort
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 0.5 }, output: 30 }, // cache read = 90% discount
+    // benchmark: TBD (limited preview, not yet on leaderboards)
+  },
+
+  // GPT-5.6 Terra - balanced
+  {
+    idPrefix: 'gpt-5.6-terra',
+    label: 'GPT-5.6 Terra',
+    pubDate: '20260626',
+    description: 'Balanced model for efficient, high-volume everyday work (limited preview). Competitive with GPT-5.5 while being 2x cheaper.',
+    contextWindow: 1050000, // assumed (5.5-class); unverified - not yet on public API
+    maxCompletionTokens: 128000, // assumed; unverified
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 2.5, cache: { cType: 'oai-ac', read: 0.25 }, output: 15 }, // cache read = 90% discount
+    // benchmark: TBD (limited preview, not yet on leaderboards)
+  },
+
+  // GPT-5.6 Luna - fast & affordable
+  {
+    idPrefix: 'gpt-5.6-luna',
+    label: 'GPT-5.6 Luna',
+    pubDate: '20260626',
+    description: 'Fastest, most affordable GPT-5.6 model for high-volume work (limited preview). Strong capability at the lowest cost in the family.',
+    contextWindow: 400000, // assumed (fast-tier class); unverified - not yet on public API
+    maxCompletionTokens: 128000, // assumed; unverified
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 1, cache: { cType: 'oai-ac', read: 0.1 }, output: 6 }, // cache read = 90% discount
+    // benchmark: TBD (limited preview, not yet on leaderboards)
+  },
+
+
   /// GPT-5.5 series - Released April 23, 2026
 
   // GPT-5.5
@@ -1287,6 +1359,11 @@ export function openAIInjectVariants(acc: ModelDescriptionSchema[], model: Model
 
 
 const _manualOrderingIdPrefixes = [
+  // GPT-5.6 (Sol/Terra/Luna tiers)
+  'gpt-5.6-sol',
+  'gpt-5.6-terra',
+  'gpt-5.6-luna',
+  'gpt-5.6-',
   // GPT-5.5
   'gpt-5.5-20',
   'gpt-5.5-pro-20',
