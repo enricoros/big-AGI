@@ -15,8 +15,14 @@ export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefi
 // - Alibaba uses tiered pricing keyed on the request's INPUT token count (both input and output prices step up).
 // - Policy: curate the current best-per-tier lineup only; all uncatalogued models, dated snapshots
 //   (-YYYY-MM-DD / -2507), and -preview/-latest aliases are hidden (see alibabaModelToModelDescription).
-// - Thinking control (enable_thinking/thinking_budget) is NOT wired for the 'alibaba' dialect yet, so reasoning
-//   here is a capability flag only (no parameterSpec) - see openai.chatCompletions.ts. Tracked as a follow-up.
+// - Thinking control: thinking-capable models expose a 'Thinking' toggle (Off/On; unset = vendor default, usually on)
+//   via _PS_Thinking, mapped to Qwen's `enable_thinking` in the 'alibaba' dialect (openai.chatCompletions.ts).
+//   Verified live on qwen3.x + DashScope-hosted DeepSeek-V4 / GLM-5.2. Kimi K2.7 Code is always-on (reasoning flag, no toggle).
+
+// 'Thinking' toggle backed by Qwen's binary enable_thinking - renders as Off ('none') / On ('high') / Default (unset).
+const _PS_Thinking: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
+] as const;
 
 const _knownAlibabaChatModels = llmsDefineManualMappings([
 
@@ -24,6 +30,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'qwen3.7-max',
     label: 'Qwen3.7 Max',
+    parameterSpecs: _PS_Thinking,
     pubDate: '20260622',
     description: 'Flagship agent model with native extended thinking and 1M context. Text-only; strong at coding, productivity, and long-horizon autonomous tasks.',
     contextWindow: 1000000, // 1M
@@ -34,6 +41,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'qwen3.7-plus',
     label: 'Qwen3.7 Plus',
+    parameterSpecs: _PS_Thinking,
     pubDate: '20260601',
     description: 'Multimodal agent model with 1M context, native thinking, and vision/video understanding. Lower cost than Max.',
     contextWindow: 1000000, // 1M
@@ -47,6 +55,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'qwen3.6-flash',
     label: 'Qwen3.6 Flash',
+    parameterSpecs: _PS_Thinking,
     pubDate: '20260622',
     description: 'Fast, cost-effective multimodal model with 1M context, near-flagship quality, vision/video, and built-in tools.',
     contextWindow: 1000000, // 1M
@@ -73,6 +82,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'qwen3-vl-plus',
     label: 'Qwen3 VL Plus',
+    parameterSpecs: _PS_Thinking,
     pubDate: '20260430',
     description: 'Current vision-language model with strong visual reasoning and thinking. Tiered pricing by input length (up to 256K).',
     contextWindow: 262144, // 256K
@@ -99,6 +109,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'qwen-plus',
     label: 'Qwen Plus',
+    parameterSpecs: _PS_Thinking,
     description: 'Balanced quality, speed, and cost with hybrid thinking. 1M context.',
     contextWindow: 1000000, // 1M
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
@@ -112,6 +123,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'qwen-flash',
     label: 'Qwen Flash',
+    parameterSpecs: _PS_Thinking,
     description: 'Fast and very low cost with hybrid thinking. 1M context.',
     contextWindow: 1000000, // 1M
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
@@ -137,6 +149,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'deepseek-v4-pro',
     label: 'DeepSeek V4 Pro (Alibaba)',
+    parameterSpecs: _PS_Thinking,
     pubDate: '20260623',
     description: 'DeepSeek V4 Pro served via Alibaba Model Studio (Alibaba pricing, ~5x DeepSeek-direct). 1M context, thinking.',
     contextWindow: 1_048_576, // 1M
@@ -147,6 +160,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'deepseek-v4-flash',
     label: 'DeepSeek V4 Flash (Alibaba)',
+    parameterSpecs: _PS_Thinking,
     pubDate: '20260622',
     description: 'DeepSeek V4 Flash served via Alibaba Model Studio. 1M context, thinking.',
     contextWindow: 1_048_576, // 1M
@@ -157,6 +171,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'glm-5.2',
     label: 'GLM-5.2 (Alibaba)',
+    parameterSpecs: _PS_Thinking,
     pubDate: '20260626',
     description: 'Zhipu GLM-5.2 served via Alibaba Model Studio. 1M context, thinking. (Alibaba pricing not yet published.)',
     contextWindow: 1048576, // 1M
@@ -177,6 +192,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'deepseek-v3.2',
     label: 'DeepSeek V3.2 (Alibaba)',
+    parameterSpecs: _PS_Thinking,
     pubDate: '20260623',
     description: 'DeepSeek V3.2 served via Alibaba Model Studio (superseded by V4). Thinking.',
     contextWindow: 131072, // ~128K (approx)

@@ -151,9 +151,10 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (reasoningEffort
     && openAIDialect !== 'openrouter' // OpenRouter has its own channeling of this
     && openAIDialect !== 'deepseek' && openAIDialect !== 'moonshot' && openAIDialect !== 'zai' // MoonShot maps to none->disabled / high->enabled
+    && openAIDialect !== 'alibaba' // Alibaba/Qwen ignores reasoning_effort; uses enable_thinking instead (block below)
     && openAIDialect !== 'perplexity' // Perplexity has its own block below with stricter validation
   ) {
-    // for: 'alibaba' | 'azure' | 'groq' | 'lmstudio' | 'localai' | 'mistral' | 'openai' | 'togetherai' | 'xai'
+    // for: 'azure' | 'groq' | 'lmstudio' | 'localai' | 'mistral' | 'openai' | 'togetherai' | 'xai'
     payload.reasoning_effort = reasoningEffort;
   }
 
@@ -174,6 +175,11 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     if (supportsMaxEffort && reasoningEffort !== 'none')
       payload.reasoning_effort = reasoningEffort;
   }
+
+  // [Alibaba, 2026-06-26] Qwen thinking control via 'enable_thinking' (binary). Verified on compatible-mode for qwen3.x + DashScope-hosted DeepSeek-V4/GLM-5.2.
+  // Models exposing this use a `llmVndMiscEffort` spec with enumValues ['none','high'] -> Off/On (unset = Default = vendor default, usually on).
+  if (reasoningEffort && openAIDialect === 'alibaba')
+    payload.enable_thinking = reasoningEffort !== 'none';
 
 
   // [OpenAI, 2026-02-04] Verbosity control - official OpenAI parameter (low/medium/high, default: medium)

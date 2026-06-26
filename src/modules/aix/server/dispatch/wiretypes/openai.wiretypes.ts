@@ -460,6 +460,9 @@ export namespace OpenAIWire_API_Chat_Completions {
       type: z.enum(['enabled', 'disabled']),
     }).optional(),
 
+    // [Alibaba, 2026-06-26] Qwen (and DashScope-hosted third-party) thinking toggle via compatible-mode; Qwen ignores `reasoning_effort`
+    enable_thinking: z.boolean().optional(),
+
     seed: z.number().int().optional(),
     stop: z.array(z.string()).optional(), // Up to 4 sequences where the API will stop generating further tokens.
     user: z.string().optional(),
