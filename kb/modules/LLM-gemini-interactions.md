@@ -23,7 +23,7 @@ Google replaced the legacy flat `outputs[]` response with a typed `steps[]` time
 
 `POST` returns only model-generated steps; `GET` returns the full timeline including `user_input` steps (the NS parser skips these). `usage` is UNCHANGED (`total_input/output/cached/thought/tool_use_tokens`); the migration guide's `{prompt_tokens,...}` was illustrative shorthand, not the wire shape. Request side is unchanged EXCEPT multi-turn `input`: legacy `{role,content}` turns are now `{type:'user_input'|'model_output', content[]}` steps. We never sent `response_mime_type`/`image_config`, so the `response_format` consolidation does not touch us.
 
-**No revision header (CORS):** we rely on Google's DEFAULT schema (steps, since the 2026-05-26 flip) and deliberately do NOT send an `Api-Revision` header. It is not CORS-safelisted, so on the client-side-fetch (direct browser->Google) path it forces a preflight that the endpoint rejects, breaking direct connections. The header was only useful to opt in before the default flip, which has passed.
+**No revision header (CORS):** we rely on Google's DEFAULT schema (steps, since the 2026-05-26 flip) and deliberately do NOT send an `Api-Revision` header. It is not CORS-safelisted, so on the client-side-fetch (direct browser->Google) path it forces a preflight that the endpoint rejects, breaking direct connections. The header was only useful to opt in before the default flip, which has passed. (The rejection is header-specific, not endpoint-wide: the interactions GET is otherwise CORS-open for `x-goog-api-key`/`x-goog-api-client`/`content-type` and the CSF `?key=` form — see Failure mode E.)
 
 **Deep Research - VERIFIED empirically (2026-06-02, steps schema):** a live `deep-research-preview-04-2026` stream emits `interaction.created` -> `interaction.status_update` (status `in_progress`) -> `step.start {type:'thought'}` -> repeated `step.delta {type:'thought_summary', content:{type:'text', text}}` (the research-plan / synthesis narration, routed to `appendReasoningText`) interleaved with `step.delta {type:'thought_signature', signature:''}` (empty signature, skipped). Final report text arrives as `model_output` step content, then `interaction.completed`. DR's event set is a strict subset of Antigravity's, so the zero-warning Antigravity replay covers DR's `model_output` + completion paths too.
 
@@ -96,6 +96,20 @@ Resource sits in `status: in_progress` for **days** with `steps: []` — the gen
 ### D. Connection drop mid-run
 
 Network blip; resource is fine. **Resume (SSE replay)** picks up cleanly.
+
+### E. `usage` absent on the live `interaction.completed` event  `[2026-06-26, Interactions BUG]` (#1143)
+
+The live POST stream's `interaction.completed` is a deliberately reduced payload that **OMITS `usage`** (Google: "empty outputs to reduce payload size"). `usage` is backfilled onto the stored resource seconds after completion, so any later GET / SSE-replay of the same id carries the full token block. **Verified empirically** on the SAME interaction: the live capture's completed event had keys `{id, status, created, updated, object, agent}` and **no `usage`**; a re-fetch (JSON GET *and* `?stream=true`) of that id returned the full `usage`. Net effect before the fix: a perfectly successful Deep Research run landed with **zero token/cost metrics** (and the runtime was being dropped too - see point 1).
+
+Two-part fix:
+1. **Runtime always emitted.** `_emitUsageMetrics` used to `return` early when `usage` was absent, which discarded the locally-measured `dtAll`/`dtStart` along with the (absent) tokens. Timing is status-independent, so it is now emitted unconditionally and **hoisted to one call before each terminal `switch`** (SSE `_handleInteractionCompleted` + NS). Token counts are still added only when `usage` is present.
+2. **Token backfill transform** — `gemini.interactions.transform-usageBackfill.ts`, a 1:1 `particleTransform` wired **ONLY on the POST dispatch** (not resume/recover, which read the stored resource directly and already carry `usage`). It captures the interaction id from the `set-upstream-handle` particle and, on the terminal `set-metrics` particle that still lacks tokens, fires ONE GET of the stored interaction, maps `usage` → token metrics (shared `geminiInteractionsUsageToTokenMetrics`), and merges them into the live timing (`updateMetrics` key-merges, so the real `dtAll` is preserved). `vTOutInner` is derived from the live `dtInner` + fetched output; cost then computes at finalize (DR models carry a `gemini25Pro` pricing baseline). Antigravity self-excludes (it never emits an upstream handle).
+
+Notes:
+- **No field mask.** `GET interactions/{id}` rejects every `?fields=` / `X-Goog-FieldMask` subset with `400`; only `?fields=*` works (= full ~1.3MB). The backfill pulls the whole resource and keeps only `usage`.
+- **CORS-open (verified 2026-06-26).** The GET reflects any Origin and allowlists `x-goog-api-key` / `x-goog-api-client` / `content-type` (and the CSF `?key=` form), so the transform runs on the browser/CSF path too — it is deliberately **NOT** `csfUnsafe`. Only `api-revision` stays preflight-rejected (consistent with the no-revision-header note above). Any fetch failure is caught by the executor's transform safety net → runtime-only metrics.
+- **No real duration upstream.** The resource's `created`/`updated` are stamped identically at finalization (no run-duration field), so local `dtAll` (parser wall-clock) is the only runtime signal.
+- Metrics tooltip: "Time" (total runtime) renders whenever `dtAll` exists, independent of the Speed/throughput section (`dMessageUtils.tsx` `prettyMessageMetrics`).
 
 ## UI
 
@@ -228,7 +242,8 @@ Captures land in `./captures/` (gitignored). Move a capture file out of `capture
 |--------------------------------------------------------------------------------------|-------------------------------------------------------|
 | `aix/server/dispatch/wiretypes/gemini.interactions.wiretypes.ts`                     | Zod schemas (RequestBody, Interaction, StreamEvent)   |
 | `aix/server/dispatch/chatGenerate/adapters/gemini.interactionsCreate.ts`             | POST body (input + agent_config)                      |
-| `aix/server/dispatch/chatGenerate/parsers/gemini.interactions.parser.ts`             | SSE parser + NS parser                                |
-| `aix/server/dispatch/chatGenerate/chatGenerate.dispatch.ts` (`gemini` case)          | Resume dispatch: SSE vs JSON branch                   |
+| `aix/server/dispatch/chatGenerate/parsers/gemini.interactions.parser.ts`             | SSE parser + NS parser; `geminiInteractionsUsageToTokenMetrics` (shared usage→tokens) |
+| `aix/server/dispatch/chatGenerate/parsers/gemini.interactions.transform-usageBackfill.ts` | Token-usage backfill transform (POST only; see Failure mode E) |
+| `aix/server/dispatch/chatGenerate/chatGenerate.dispatch.ts` (`gemini` case)          | POST + resume dispatch (SSE vs JSON); wires the backfill transform on POST |
 | `apps/chat/components/message/BlockOpUpstreamResume.tsx`                             | Resume / Recover / Stop UI                            |
 | `apps/chat/components/ChatMessageList.tsx` (`handleMessageUpstreamResume`)           | Wires click handler to `aixReattachContent_DMessage_orThrow` |

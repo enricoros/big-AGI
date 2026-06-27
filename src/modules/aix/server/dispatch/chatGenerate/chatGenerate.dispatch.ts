@@ -26,6 +26,7 @@ import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './
 import { createBedrockConverseParserNS, createBedrockConverseStreamParser } from './parsers/bedrock-converse.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
 import { createGeminiInteractionsParserNS, createGeminiInteractionsParserSSE } from './parsers/gemini.interactions.parser';
+import { createGeminiInteractionsUsageBackfillTransform } from './parsers/gemini.interactions.transform-usageBackfill';
 import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsParserNS } from './parsers/openai.parser';
 import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from './parsers/openai.responses.parser';
 
@@ -195,6 +196,10 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
           /** Upstream hardcodes stream=true + background=true (required by deep-research agents) and has no non-streaming alternative. */
           demuxerFormat: 'fast-sse',
           chatGenerateParse: createGeminiInteractionsParserSSE(requestedModelName),
+          // [2026-06-26, Interactions BUG] Interations Deep Research only: the live `interaction.completed` event omits `usage`,
+          // so backfill token counts via a one-shot GET of the stored interaction. POST path ONLY - reattach/resume/recover
+          // read the stored resource directly (usage already present), so they need no backfill.
+          particleTransform: createGeminiInteractionsUsageBackfillTransform(access),
         };
       }
 
