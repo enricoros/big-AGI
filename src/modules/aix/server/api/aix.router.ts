@@ -11,6 +11,23 @@ import { AixWire_API, AixWire_API_ChatContentGenerate } from './aix.wiretypes';
 
 // --- AIX tRPC Router ---
 
+/**
+ * Vercel hard-kills the edge function at 300s (limit set in the Vercel project settings) without running
+ * any tRPC catch/finally, so a timed-out request leaves only a generic 'Task timed out' line with no model.
+ * This arms a timer that logs the culprit ~15s before that kill - the only reliable way to see which
+ * models/contexts run long enough to time out.
+ *
+ * It MUST live inside the streaming generator body (which runs during stream consumption); a tRPC middleware
+ * can't do this because its `await next()` resolves before streaming begins (verified on @trpc/server 11.18).
+ * Cleared in `finally` on any completion - success, error, or client abort - so it only ever fires for a
+ * request that genuinely crossed 270s.
+ */
+function _armSlowRequestWatchdog(label: string, hardKillTime = 300): () => void {
+  const timer = setTimeout(() => console.error(`[AIX] SLOW request (almost ${hardKillTime}s): ${label}`), (hardKillTime - 15) * 1000);
+  return () => clearTimeout(timer);
+}
+
+
 export const aixRouter = createTRPCRouter({
 
   /**
@@ -27,10 +44,15 @@ export const aixRouter = createTRPCRouter({
       connectionOptions: AixWire_API.ConnectionOptionsChatGenerate_schema.optional(), // debugDispatchRequest, debugProfilePerformance, enableResumability
     }))
     .mutation(async function* ({ input, ctx }) {
-      const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
-      const dispatchCreator = () => createChatGenerateDispatch(input.access, input.model, input.chatGenerate, input.streaming, !!input.connectionOptions?.enableResumability);
+      const _clearWatchdog = _armSlowRequestWatchdog(`model=${input.model.id} dialect=${input.access.dialect} context=${input.context.name}/${input.context.ref}`);
+      try {
+        const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
+        const dispatchCreator = () => createChatGenerateDispatch(input.access, input.model, input.chatGenerate, input.streaming, !!input.connectionOptions?.enableResumability);
 
-      yield* executeChatGenerateWithContinuation(dispatchCreator, ctx.reqSignal, _d);
+        yield* executeChatGenerateWithContinuation(dispatchCreator, ctx.reqSignal, _d);
+      } finally {
+        _clearWatchdog();
+      }
     }),
 
   /**
@@ -46,10 +68,15 @@ export const aixRouter = createTRPCRouter({
       connectionOptions: AixWire_API.ConnectionOptionsChatGenerate_schema.pick({ debugDispatchRequest: true }).optional(), // debugDispatchRequest
     }))
     .mutation(async function* ({ input, ctx }) {
-      const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
-      const dispatchCreator = () => createChatGenerateResumeDispatch(input.access, input.upstreamHandle, input.streaming);
+      const _clearWatchdog = _armSlowRequestWatchdog(`reattach dialect=${input.access.dialect} context=${input.context.name}/${input.context.ref}`);
+      try {
+        const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
+        const dispatchCreator = () => createChatGenerateResumeDispatch(input.access, input.upstreamHandle, input.streaming);
 
-      yield* executeChatGenerateWithContinuation(dispatchCreator, ctx.reqSignal, _d);
+        yield* executeChatGenerateWithContinuation(dispatchCreator, ctx.reqSignal, _d);
+      } finally {
+        _clearWatchdog();
+      }
     }),
 
   /**
