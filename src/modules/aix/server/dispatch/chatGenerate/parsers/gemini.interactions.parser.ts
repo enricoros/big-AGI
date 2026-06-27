@@ -454,31 +454,29 @@ export function createGeminiInteractionsParserNS(requestedModelName: string | nu
     // close out any open part before the terminal status emission
     if (lastEmittedKind !== null) pt.endMessagePart();
 
+    // Metrics once, before the switch (status-independent). NS has no first-content time, so timing is dtAll only.
+    _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, undefined);
+
     // Terminal status -> stop reason + dialect end (mirrors _handleInteractionCompleted)
     switch (interaction.status) {
       case 'completed':
-        _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, undefined);
         pt.setTokenStopReason('ok');
         pt.setDialectEnded('done-dialect');
         break;
       case 'failed':
-        _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, undefined);
         pt.setDialectTerminatingIssue('Deep Research interaction failed', null, 'srv-warn');
         break;
       case 'cancelled':
-        _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, undefined);
         pt.setTokenStopReason('cg-issue');
         pt.setDialectEnded('done-dialect');
         break;
       case 'incomplete':
         pt.appendText('\n_Response incomplete (run stopped early)._\n');
-        _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, undefined);
         pt.setTokenStopReason('out-of-tokens');
         pt.setDialectEnded('done-dialect');
         break;
       case 'budget_exceeded':
         pt.appendText('\n_Run stopped: budget exceeded._\n');
-        _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, undefined);
         pt.setTokenStopReason('out-of-tokens');
         pt.setDialectEnded('done-dialect');
         break;
@@ -787,11 +785,14 @@ function _handleInteractionCompleted(
   // Flush any content parts that were open when the final step arrived
   if (lastOpenIdx !== -1) pt.endMessagePart();
 
+  // Metrics are status-independent (runtime always; token counts only when `usage` is present), so emit
+  // once here instead of repeating the call in each terminal branch - requires_action now gets it too.
+  _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
+
   switch (interaction.status) {
     case 'completed':
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} complete`, { opId: operationOpId, state: 'done' });
-      _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
       pt.setTokenStopReason('ok');
       pt.setDialectEnded('done-dialect');
       break;
@@ -799,14 +800,12 @@ function _handleInteractionCompleted(
     case 'failed':
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} failed`, { opId: operationOpId, state: 'error' });
-      _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
       pt.setDialectTerminatingIssue(`${agentLabel} interaction failed`, null, 'srv-warn');
       break;
 
     case 'cancelled':
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} cancelled`, { opId: operationOpId, state: 'done' });
-      _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
       pt.setTokenStopReason('cg-issue');
       pt.setDialectEnded('done-dialect');
       break;
@@ -823,7 +822,6 @@ function _handleInteractionCompleted(
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} incomplete`, { opId: operationOpId, state: 'done' });
       pt.appendText('\n_Response incomplete (run stopped early)._\n');
-      _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
       pt.setTokenStopReason('out-of-tokens');
       pt.setDialectEnded('done-dialect');
       break;
@@ -833,7 +831,6 @@ function _handleInteractionCompleted(
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} budget exceeded`, { opId: operationOpId, state: 'error' });
       pt.appendText('\n_Run stopped: budget exceeded._\n');
-      _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
       pt.setTokenStopReason('out-of-tokens');
       pt.setDialectEnded('done-dialect');
       break;
@@ -846,7 +843,6 @@ function _handleInteractionCompleted(
       console.warn('[GeminiInteractions] interaction.completed with status=in_progress; terminating as retryable');
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} interrupted`, { opId: operationOpId, state: 'error' });
-      _emitUsageMetrics(pt, interaction.usage, parserCreationTimestamp, timeToFirstContent);
       pt.setTokenStopReason('cg-issue');
       pt.setDialectEnded('done-dialect');
       break;
@@ -861,7 +857,12 @@ function _handleInteractionCompleted(
 
 
 /**
- * Map Gemini Interactions `usage` to `CGSelectMetrics`.
+ * Map a Gemini Interactions `usage` block to token-count metrics (NO timing). Returns null when
+ * usage is absent/empty.
+ *
+ * Shared by the live/NS parsers AND the usage-backfill transform: the live Deep Research
+ * `interaction.completed` event omits `usage` by design (reduced payload - see the doc), so the
+ * transform re-fetches the stored interaction and feeds its `usage` through this same mapping.
  *
  * Notes on the token model (per the Interactions API):
  *  - `total_input_tokens` counts the user-visible prompt input.
@@ -872,21 +873,16 @@ function _handleInteractionCompleted(
  *  - `total_output_tokens` excludes thought tokens; `gemini.parser.ts` already adds TOutR into TOut
  *    for consistency, and we follow the same convention here.
  */
-function _emitUsageMetrics(
-  pt: IParticleTransmitter,
-  usage: TUsage | undefined,
-  parserCreationTimestamp: number,
-  timeToFirstContent: number | undefined,
-): void {
-  if (!usage) return;
-
-  const m: AixWire_Particles.CGSelectMetrics = {};
+export function geminiInteractionsUsageToTokenMetrics(usage: Partial<TUsage> | undefined | null): Pick<AixWire_Particles.CGSelectMetrics, 'TIn' | 'TCacheRead' | 'TOut' | 'TOutR'> | null {
+  if (!usage) return null;
 
   const inputTokens = usage.total_input_tokens ?? 0;
   const cachedTokens = usage.total_cached_tokens ?? 0;
   const toolUseTokens = usage.total_tool_use_tokens ?? 0;
   const outputTokens = usage.total_output_tokens ?? 0;
   const thoughtTokens = usage.total_thought_tokens ?? 0;
+
+  const m: ReturnType<typeof geminiInteractionsUsageToTokenMetrics> = {};
 
   // TIn = "new" input, i.e. prompt tokens beyond cache, plus tool-use tokens (folded in - no dedicated slot)
   const newInput = Math.max(0, inputTokens - cachedTokens) + toolUseTokens;
@@ -898,17 +894,46 @@ function _emitUsageMetrics(
   if (totalOut > 0) m.TOut = totalOut;
   if (thoughtTokens > 0) m.TOutR = thoughtTokens;
 
-  // timing
+  return (m.TIn !== undefined || m.TOut !== undefined || m.TCacheRead !== undefined) ? m : null;
+}
+
+/**
+ * Emit chat-generate metrics on a terminal interaction.
+ *
+ * TIMING is emitted UNCONDITIONALLY: it is measured locally (parser-creation -> now) and does not
+ * depend on the upstream `usage` block. This matters because the live Deep Research
+ * `interaction.completed` event omits `usage` by design, and gating timing behind usage-presence
+ * would silently discard the real run duration (`dtAll`). TOKENS are emitted only when `usage` is
+ * present here; when it is not, the `usage-backfill` transform re-fetches them post-stream and
+ * merges them into this same metrics particle (timing is preserved via accMetrics' key-merge).
+ */
+function _emitUsageMetrics(
+  pt: IParticleTransmitter,
+  usage: TUsage | undefined,
+  parserCreationTimestamp: number,
+  timeToFirstContent: number | undefined,
+): void {
+
+  const m: AixWire_Particles.CGSelectMetrics = {};
+
+  // timing - always available locally, independent of upstream usage
   const dtAll = Date.now() - parserCreationTimestamp;
   m.dtAll = dtAll;
   if (timeToFirstContent !== undefined) {
     m.dtStart = timeToFirstContent;
     const dtInner = dtAll - timeToFirstContent;
-    if (dtInner > 0) {
+    if (dtInner > 0)
       m.dtInner = dtInner;
-      if (totalOut > 0)
-        m.vTOutInner = Math.round(100 * 1000 /*ms/s*/ * totalOut / dtInner) / 100;
-    }
+  }
+
+  // tokens - only when the upstream usage block is present in this event
+  const tokenMetrics = geminiInteractionsUsageToTokenMetrics(usage);
+  if (tokenMetrics) {
+    // assign usage
+    Object.assign(m, tokenMetrics);
+    // compute speed
+    if (m.dtInner && m.TOut)
+      m.vTOutInner = Math.round(100 * 1000 /*ms/s*/ * m.TOut / m.dtInner) / 100;
   }
 
   pt.updateMetrics(m);
