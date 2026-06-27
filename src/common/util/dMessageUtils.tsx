@@ -290,7 +290,7 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
 
   const showWaitingTime = metrics?.dtStart !== undefined && (uiComplexityMode === 'extra' || metrics.dtStart >= 10000);
   const showSpeedSection = uiComplexityMode !== 'minimal' && (showWaitingTime || metrics?.vTOutInner !== undefined);
-  const showTimeSection = showSpeedSection && !!metrics?.dtAll;
+  const showTimeSection = uiComplexityMode !== 'minimal' && !!metrics?.dtAll;
 
   const costCode = metrics.$code ? _prettyCostCode(metrics.$code) : null;
 
