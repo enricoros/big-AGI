@@ -287,7 +287,10 @@ export function LLMParametersEditor(props: {
 
   // state (here because the initial state depends on props)
   const tempAboveOne = llmTemperature !== null && llmTemperature !== undefined && llmTemperature > 1;
-  const [overheat, setOverheat] = React.useState(tempAboveOne);
+  const [overheatToggle, setOverheat] = React.useState(tempAboveOne);
+  // derive overheat from both the local toggle and the live value, so a temperature > 1 set elsewhere
+  // (e.g. the Model Configuration dialog or the chat-side panel) reactively unlocks 0..2 in every editor instance
+  const overheat = overheatToggle || tempAboveOne;
   const showOverheatButton = overheat || llmTemperature === 1 || tempAboveOne;
 
 
@@ -300,8 +303,9 @@ export function LLMParametersEditor(props: {
     if (overheat && tempAboveOne)
       onChangeParameter({ llmTemperature: 1 });
 
-    // toggle overheating
-    setOverheat(on => !on);
+    // toggle overheating - flip the derived value (not the raw toggle), so disabling works
+    // even when overheat is on only because the live temperature > 1 was set elsewhere
+    setOverheat(!overheat);
   }, [onChangeParameter, overheat, tempAboveOne]);
 
 
