@@ -35,10 +35,8 @@ export class DispatchContinuationSignal extends Error {
 // --- Completion Stats ---
 
 /**
- * Final stats of a chat generation, captured as the particle stream ends. Generic - NO analytics dependency:
- * a caller passes `onCompletionStats` to executeChatGenerateWithContinuation to receive this at the true end
- * of the stream (normal end, client abort, or error). `metrics` carries the token/duration/cost snapshot.
- * The sink may be async and is awaited (see below), so a caller can flush a side-effect before the stream closes.
+ * Final stats of a chat generation. Generic - NO analytics dependency. `metrics` carries the
+ * token/duration/cost snapshot; `terminationReason` says how generation ended ('done-dialect' = clean).
  */
 export interface AixChatGenerateCompletionStats {
   metrics?: AixWire_Particles.CGSelectMetrics;       // token counts (TIn/TCacheRead/TOut/...), duration (dtAll), cost
@@ -50,6 +48,27 @@ function _captureCompletionStats(stats: AixChatGenerateCompletionStats, particle
   if (!('cg' in particle)) return; // text/part particles carry no stats
   if (particle.cg === 'set-metrics') stats.metrics = particle.metrics;
   else if (particle.cg === 'end') stats.terminationReason = particle.terminationReason;
+}
+
+/**
+ * Composable completion-stats tap: re-yields a chat-generate particle stream untouched and, at its true end
+ * (normal end, client abort, or error), awaits `onCompletionStats` with the captured stats - so an async sink
+ * (e.g. an analytics POST) flushes before the stream closes. Kept separate so executeChatGenerateWithContinuation
+ * stays clean: CSF and other callers use it directly, and opt into stats only by wrapping with this.
+ */
+export async function* withChatGenerateCompletionStats(
+  particles: AsyncIterable<AixWire_Particles.ChatGenerateOp>,
+  onCompletionStats: (stats: AixChatGenerateCompletionStats) => void | Promise<void>,
+): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
+  const stats: AixChatGenerateCompletionStats = {};
+  try {
+    for await (const particle of particles) {
+      _captureCompletionStats(stats, particle);
+      yield particle;
+    }
+  } finally {
+    await onCompletionStats(stats);
+  }
 }
 
 
@@ -78,57 +97,44 @@ export async function* executeChatGenerateWithContinuation(
   dispatchCreatorFn: () => Promise<ChatGenerateDispatch>,
   abortSignal: AbortSignal,
   _d: AixDebugObject,
-  onCompletionStats?: (stats: AixChatGenerateCompletionStats) => void | Promise<void>,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
   let currentCreator = dispatchCreatorFn;
-  const completionStats: AixChatGenerateCompletionStats = {};
 
-  try {
-    for (let turn = 0; turn <= MAX_CONTINUATION_TURNS; turn++) {
-      try {
+  for (let turn = 0; turn <= MAX_CONTINUATION_TURNS; turn++) {
+    try {
 
-        // tap the stream to capture final token/termination stats (only when a sink is provided)
-        for await (const particle of executeChatGenerateWithOperationRetry(currentCreator, abortSignal, _d)) {
-          if (onCompletionStats) _captureCompletionStats(completionStats, particle);
-          yield particle;
-        }
-        // Note: the code above replaces `yield* executeChatGenerateWithOperationRetry(currentCreator, abortSignal, _d);`
-        return; // normal completion
+      yield* executeChatGenerateWithOperationRetry(currentCreator, abortSignal, _d);
+      return; // normal completion
 
-      } catch (error) {
-        // pass-through non-continuation errors (shall be rare, probably CSF errors or errors from exceeding retries, etc.)
-        if (!(error instanceof DispatchContinuationSignal)) throw error;
+    } catch (error) {
+      // pass-through non-continuation errors (shall be rare, probably CSF errors or errors from exceeding retries, etc.)
+      if (!(error instanceof DispatchContinuationSignal)) throw error;
 
-        if (turn >= MAX_CONTINUATION_TURNS) {
-          if (DEBUG_CONTINUATION) console.warn('[continuation] ❌ Max continuation turns reached', MAX_CONTINUATION_TURNS);
-          throw error;
-        }
-
-        if (DEBUG_CONTINUATION) console.log(`[continuation] Turn ${turn + 1}/${MAX_CONTINUATION_TURNS}: ${error.continuation.reason}`);
-
-        // Chain: each turn's creator calls the previous and applies its mutation.
-        // The chained creator pattern composes mutations without an explicit list -
-        // each mutateBody receives the body as-mutated by prior turns.
-        const previousCreator = currentCreator;
-        const { continuation } = error;
-
-        currentCreator = async () => {
-          const dispatch = await previousCreator();
-          if ('body' in dispatch.request)
-            dispatch.request.body = continuation.mutateBody(dispatch.request.body as Record<string, unknown>);
-          return dispatch;
-        };
-
-        // Continuation checkpoint - client snapshots accumulator state and shows info placeholder
-        yield { cg: 'aix-info', ait: 'flow-cont', text: `Continuing (${turn + 1}/${MAX_CONTINUATION_TURNS})...` };
-
-        // -> Loop continues - already-yielded particles are preserved
+      if (turn >= MAX_CONTINUATION_TURNS) {
+        if (DEBUG_CONTINUATION) console.warn('[continuation] ❌ Max continuation turns reached', MAX_CONTINUATION_TURNS);
+        throw error;
       }
+
+      if (DEBUG_CONTINUATION) console.log(`[continuation] Turn ${turn + 1}/${MAX_CONTINUATION_TURNS}: ${error.continuation.reason}`);
+
+      // Chain: each turn's creator calls the previous and applies its mutation.
+      // The chained creator pattern composes mutations without an explicit list -
+      // each mutateBody receives the body as-mutated by prior turns.
+      const previousCreator = currentCreator;
+      const { continuation } = error;
+
+      currentCreator = async () => {
+        const dispatch = await previousCreator();
+        if ('body' in dispatch.request)
+          dispatch.request.body = continuation.mutateBody(dispatch.request.body as Record<string, unknown>);
+        return dispatch;
+      };
+
+      // Continuation checkpoint - client snapshots accumulator state and shows info placeholder
+      yield { cg: 'aix-info', ait: 'flow-cont', text: `Continuing (${turn + 1}/${MAX_CONTINUATION_TURNS})...` };
+
+      // -> Loop continues - already-yielded particles are preserved
     }
-  } finally {
-    // awaited so a caller's async sink (e.g. an analytics POST) flushes before the generator - and the
-    // response stream - closes; a no-op when no sink was passed (`await undefined`)
-    await onCompletionStats?.(completionStats);
   }
 }
