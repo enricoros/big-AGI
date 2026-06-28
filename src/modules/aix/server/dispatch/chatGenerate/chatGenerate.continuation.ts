@@ -38,6 +38,7 @@ export class DispatchContinuationSignal extends Error {
  * Final stats of a chat generation, captured as the particle stream ends. Generic - NO analytics dependency:
  * a caller passes `onCompletionStats` to executeChatGenerateWithContinuation to receive this at the true end
  * of the stream (normal end, client abort, or error). `metrics` carries the token/duration/cost snapshot.
+ * The sink may be async and is awaited (see below), so a caller can flush a side-effect before the stream closes.
  */
 export interface AixChatGenerateCompletionStats {
   metrics?: AixWire_Particles.CGSelectMetrics;       // token counts (TIn/TCacheRead/TOut/...), duration (dtAll), cost
@@ -77,7 +78,7 @@ export async function* executeChatGenerateWithContinuation(
   dispatchCreatorFn: () => Promise<ChatGenerateDispatch>,
   abortSignal: AbortSignal,
   _d: AixDebugObject,
-  onCompletionStats?: (stats: AixChatGenerateCompletionStats) => void,
+  onCompletionStats?: (stats: AixChatGenerateCompletionStats) => void | Promise<void>,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
   let currentCreator = dispatchCreatorFn;
@@ -126,6 +127,8 @@ export async function* executeChatGenerateWithContinuation(
       }
     }
   } finally {
-    onCompletionStats?.(completionStats);
+    // awaited so a caller's async sink (e.g. an analytics POST) flushes before the generator - and the
+    // response stream - closes; a no-op when no sink was passed (`await undefined`)
+    await onCompletionStats?.(completionStats);
   }
 }
