@@ -145,6 +145,9 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
   const handleCustomInstructionKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
+      // Skip if composing (e.g., CJK input methods) - issue #784
+      if (event.nativeEvent.isComposing)
+        return;
       event.preventDefault();
       void handleGenerateNew();
     }
