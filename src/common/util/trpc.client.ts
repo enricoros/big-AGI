@@ -33,11 +33,12 @@ const enableLoggerLink = (opts: any) => {
  * Detects transport-layer failures by HTTP status / content-type, BEFORE tRPC's JSONL parser turns them into
  * engine-specific `SyntaxError`s (which are only string-matchable on V8 - see aix.client.errors.ts). We tag a typed,
  * engine-independent marker (`error.cause.aixTransportCode`), read by [Error Channel 1] aixClassifyStreamingError - see the channel map in aix.client.errors.ts.
- * - 413 (Vercel rejects request bodies over the edge ~4.5MB limit, as `text/plain`, before the function runs)
+ * - 413 from whatever sits in front of the function: the hosted Vercel edge (~4.5MB, as `text/plain`), OR a
+ *   self-hosted reverse proxy (nginx `client_max_body_size`, etc.). The classifier emits host-appropriate copy.
  * - text/html where a JSON(L) stream is expected (captive portals / proxies / gateway error pages)
  *
  * NOTE: only the server-side tRPC path passes through here. CSF (client-side-fetch, direct browser->provider) has its
- * own error surface and structurally cannot hit a Vercel 413 (there is no edge hop), so it intentionally bypasses this.
+ * own error surface and structurally cannot hit a front-door 413 (there is no edge/proxy hop), so it bypasses this.
  */
 const streamingTransportFetch: typeof fetch = async (input, init) => {
   const res = await fetch(input, init);

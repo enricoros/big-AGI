@@ -30,7 +30,12 @@ export const Is = {
   Deployment: {
     Localhost: clientHostName().includes('localhost:300'),
     VercelFromBackendOrSSR: !!process.env.VERCEL_ENV,
-    VercelFromFrontend: !!process.env.NEXT_PUBLIC_VERCEL_URL,
+    // NOTE: Vercel auto-exposes NEXT_PUBLIC_VERCEL_URL on hosted prod/preview builds (framework env vars), so keying off
+    // it would also work - but we use our own NEXT_PUBLIC_DEPLOYMENT_TYPE (set in next.config.ts from VERCEL_ENV): it's
+    // explicit, self-controlled, and already the canonical deploy signal (see app.release buildInfo). Resolves to
+    // 'vercel-<env>' on the hosted build, 'local'/custom on self-host. Used to avoid showing Vercel-specific copy (e.g.
+    // the 413 "edge network" limit) on self-hosted deployments sitting behind nginx/other reverse proxies.
+    VercelFromFrontend: (process.env.NEXT_PUBLIC_DEPLOYMENT_TYPE ?? '').startsWith('vercel'),
   },
 } as const;
 

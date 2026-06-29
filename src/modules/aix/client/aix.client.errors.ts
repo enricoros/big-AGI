@@ -14,8 +14,11 @@ import { presentErrorToHumans } from '~/common/util/errorUtils';
 // configuration
 const AIX_CLIENT_DEV_ASSERTS = process.env.NODE_ENV === 'development';
 
-// user-facing messages reused by the typed transport-marker branch and the legacy string-match fallbacks
-const MSG_REQUEST_EXCEEDED = '**Request too large**: Your message or attachments exceed the 4.5MB limit of the Vercel edge network. Tip: use the cleanup button in the right pane to hide messages, remove large attachments or reduce conversation length.';
+// user-facing messages reused by the typed transport-marker branch and the legacy string-match fallbacks.
+// NOTE: this is the PORTABLE stored text (becomes the error fragment's `part.error` - used for plain rendering, edits,
+// exports, logs), so keep it host-neutral. The 413 case is additionally upgraded to the BlockPartError_RequestExceeded
+// component, which OVERRIDES this string in chat and owns the host-aware phrasing (Vercel 4.5MB vs generic self-host).
+const MSG_REQUEST_EXCEEDED = '**Request too large**: Your message or attachments exceed the request size limit of the server. Tip: use the cleanup button in the right pane to hide messages, remove large attachments or reduce conversation length.';
 const MSG_RESPONSE_CAPTIVE = '**Network issue**: The network returned an HTML page instead of expected data. This can be a Wi-Fi sign-in page, a proxy or browser extension, or a temporary gateway error. Please **refresh and try again**, or check your connection and disable blockers. Additional details may be available in the browser console.';
 
 
@@ -90,9 +93,9 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
   // Initial connection failures, HTTP errors, or text responses that blow up tRPC's JSON parser
   if (error instanceof TRPCClientError) {
 
-    // Server-side PAYLOAD_TOO_LARGE - HTTP 413
+    // Server-side PAYLOAD_TOO_LARGE - HTTP 413 (fallback; streamingTransportFetch normally tags this earlier)
     if (error.data?.httpStatus === 413)
-      return { errorType: 'request-exceeded', errorMessage: '**Request too large**: This request exceed the size limit of the servers' };
+      return { errorType: 'request-exceeded', errorMessage: MSG_REQUEST_EXCEEDED };
 
     switch (error.cause?.message) {
       /**

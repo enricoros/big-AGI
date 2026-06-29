@@ -4,6 +4,7 @@ import { Alert, Box, FormHelperText, Switch } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { ContentScaling } from '~/common/app.theme';
+import { Is } from '~/common/util/pwaUtils';
 import { useLLM } from '~/common/stores/llms/llms.hooks';
 import { useModelServiceClientSideFetch } from '~/common/stores/llms/hooks/useModelServiceClientSideFetch';
 
@@ -36,9 +37,11 @@ export function BlockPartError_RequestExceeded(props: {
           Request Too Large
         </Box>
         <div>
-          Your message or attachments exceed the limit
-          of the Vercel edge network
-          {/*  Note: Assumption here - since explaing to any 413, it could be any network */}
+          {/* The 413 can come from any layer in front of the function: the hosted edge network, or a self-hosted
+              reverse proxy (nginx, etc.). Don't claim "Vercel" unless this is actually the hosted build. */}
+          {Is.Deployment.VercelFromFrontend
+            ? <>Your message or attachments exceed the ~4.5&nbsp;MB request limit of the Vercel edge network</>
+            : <>Your message or attachments exceed the request size limit of the server</>}
         </div>
 
         {/* Recovery options */}
@@ -100,6 +103,9 @@ export function BlockPartError_RequestExceeded(props: {
               <li>Use the cleanup button in the right pane to hide old messages</li>
               <li>Remove large attachments from the conversation</li>
               {/*<li>Reduce conversation length before sending</li>*/}
+              {!Is.Deployment.VercelFromFrontend && (
+                <li>If self-hosting, raise the request size limit on your server or proxy</li>
+              )}
             </Box>
           </Box>
         )}
