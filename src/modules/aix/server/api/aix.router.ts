@@ -23,7 +23,7 @@ import { AixWire_API, AixWire_API_ChatContentGenerate } from './aix.wiretypes';
  * request that genuinely crossed 270s.
  */
 function _armSlowRequestWatchdog(label: string, hardKillTime = 300): () => void {
-  const timer = setTimeout(() => console.error(`[AIX] SLOW request (almost ${hardKillTime}s): ${label}`), (hardKillTime - 15) * 1000);
+  const timer = setTimeout(() => console.log(`[AIX] SLOW request (almost ${hardKillTime}s): ${label}`), (hardKillTime - 15) * 1000);
   return () => clearTimeout(timer);
 }
 
