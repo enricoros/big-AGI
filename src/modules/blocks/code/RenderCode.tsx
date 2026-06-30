@@ -202,9 +202,10 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   // heuristics for specialized rendering
 
+  const _tCode = code.trim();
   const lcBlockTitle = blockTitle.trim().toLowerCase();
 
-  const isHTMLCode = heuristicIsBlockPureHTML(code);
+  const isHTMLCode = heuristicIsBlockPureHTML(_tCode);
   const renderHTML = isHTMLCode && showHTML;
 
   const isMdCode = !blockIsPartial && (lcBlockTitle === 'md' || lcBlockTitle === 'markdown' || lcBlockTitle.endsWith('.md'));
@@ -213,14 +214,14 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const isMermaidCode = lcBlockTitle === 'mermaid' && !blockIsPartial;
   const renderMermaid = isMermaidCode && showMermaid;
 
-  const isPlantUMLCode = heuristicIsCodePlantUML(code.trim());
+  const isPlantUMLCode = heuristicIsCodePlantUML(_tCode);
   let renderPlantUML = isPlantUMLCode && showPlantUML;
   const { data: plantUmlSvgData, error: plantUmlError } = usePlantUmlSvg(renderPlantUML, code);
   renderPlantUML = renderPlantUML && (!!plantUmlSvgData || !!plantUmlError);
 
-  const isSVGCode = heuristicIsSVGCode(code);
+  const isSVGCode = heuristicIsSVGCode(_tCode);
   const renderSVG = isSVGCode && showSVG;
-  const canScaleSVG = renderSVG && code.includes('viewBox="');
+  const canScaleSVG = renderSVG && _tCode.includes('viewBox="');
 
   const renderSyntaxHighlight = !renderHTML && !renderMarkdown && !renderMermaid && !renderPlantUML && !renderSVG;
   const cannotRenderLineNumbers = !renderSyntaxHighlight || showSoftWrap;
