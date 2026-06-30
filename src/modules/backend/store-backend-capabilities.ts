@@ -12,7 +12,6 @@ export interface BackendCapabilities {
   hasLlmAnthropic: boolean;
   hasLlmAzureOpenAI: boolean;
   hasLlmBedrock: boolean;
-  hasLlmCerebras: boolean;
   hasLlmDeepseek: boolean;
   hasLlmGemini: boolean;
   hasLlmGroq: boolean;
@@ -54,7 +53,6 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
     hasLlmAnthropic: false,
     hasLlmBedrock: false,
     hasLlmAzureOpenAI: false,
-    hasLlmCerebras: false,
     hasLlmDeepseek: false,
     hasLlmGemini: false,
     hasLlmGroq: false,

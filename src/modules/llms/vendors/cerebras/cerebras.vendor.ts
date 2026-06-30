@@ -16,7 +16,6 @@ export const ModelVendorCerebras: IModelVendor<DCerebrasServiceSettings, OpenAIA
   displayGroup: 'cloud',
   location: 'cloud',
   instanceLimit: 1,
-  hasServerConfigKey: 'hasLlmCerebras',
 
   /// client-side-fetch ///
   csfAvailable: _csfCerebrasAvailable,
