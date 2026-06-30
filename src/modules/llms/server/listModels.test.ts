@@ -220,6 +220,13 @@ describe('listModels enumeration', () => {
     );
   });
 
+  test('openai-compat/cerebras: live listing', { skip: skipIfMissing('CEREBRAS_API_KEY') }, async () => {
+    await expectOk(
+      { dialect: 'cerebras', ...openAIShape({ oaiKey: E.CEREBRAS_API_KEY || '' }) } as AixAPI_Access,
+      1, 'cerebras/live',
+    );
+  });
+
   test('openai-compat/deepseek: live listing', { skip: skipIfMissing('DEEPSEEK_API_KEY') }, async () => {
     await expectOk(
       { dialect: 'deepseek', ...openAIShape({ oaiKey: E.DEEPSEEK_API_KEY || '' }) } as AixAPI_Access,

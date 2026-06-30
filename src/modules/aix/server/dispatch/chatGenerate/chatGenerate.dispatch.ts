@@ -241,6 +241,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     // fallthrough
     case 'alibaba':
     case 'azure':
+    case 'cerebras':
     case 'deepseek':
     case 'groq':
     case 'lmstudio':
@@ -359,6 +360,7 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
     case 'alibaba':
     case 'anthropic':
     case 'bedrock':
+    case 'cerebras':
     case 'deepseek':
     case 'groq':
     case 'lmstudio':

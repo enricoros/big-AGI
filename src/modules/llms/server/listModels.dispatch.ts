@@ -35,6 +35,7 @@ import { OPENAI_API_PATHS, openAIAccess } from './openai/openai.access';
 import { alibabaModelFilter, alibabaModelSort, alibabaModelToModelDescription } from './openai/models/alibaba.models';
 import { arceeAIHeuristic, arceeAIModelsToModelDescriptions } from './openai/models/arceeai.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './openai/models/azure.models';
+import { cerebrasModelFilter, cerebrasModelSortFn, cerebrasModelToModelDescription, cerebrasValidateModelDefs_DEV } from './openai/models/cerebras.models';
 import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './openai/models/chutesai.models';
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './openai/models/deepseek.models';
 import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models';
@@ -371,6 +372,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
 
     case 'alibaba':
     case 'azure':
+    case 'cerebras':
     case 'deepseek':
     case 'groq':
     case 'localai':
@@ -445,6 +447,14 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .filter(azureDeploymentFilter)
                 .map(azureDeploymentToModelDescription)
                 .sort(openAISortModels);
+
+            case 'cerebras':
+              // [DEV] check for stale/unknown model definitions
+              cerebrasValidateModelDefs_DEV(maybeModels.map(m => m.id));
+              return maybeModels
+                .filter(cerebrasModelFilter)
+                .map(({ id, created }) => cerebrasModelToModelDescription({ id, created }))
+                .sort(cerebrasModelSortFn);
 
             case 'deepseek':
               return maybeModels

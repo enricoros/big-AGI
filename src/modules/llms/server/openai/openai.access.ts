@@ -4,7 +4,7 @@
  * This module only imports zod for schema definition and provides access logic
  * that works identically on server and client environments.
  *
- * Supports 15 OpenAI-compatible dialects: alibaba, azure, deepseek, groq, lmstudio,
+ * Supports 16 OpenAI-compatible dialects: alibaba, azure, cerebras, deepseek, groq, lmstudio,
  * localai, mistral, moonshot, openai, openrouter, perplexity, sakanaai, togetherai, xai, zai
  */
 
@@ -21,6 +21,7 @@ import { llmsFixupHost, llmsHostnameMatches } from '../../shared/llm.isomorphic'
 
 // configuration
 const DEFAULT_ALIBABA_HOST = 'https://dashscope-intl.aliyuncs.com/compatible-mode';
+const DEFAULT_CEREBRAS_HOST = 'https://api.cerebras.ai';
 const DEFAULT_DEEPSEEK_HOST = 'https://api.deepseek.com';
 const DEFAULT_GROQ_HOST = 'https://api.groq.com/openai';
 const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
@@ -83,7 +84,7 @@ export type OpenAIDialects = OpenAIAccessSchema['dialect'];
 export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 export const openAIAccessSchema = z.object({
   dialect: z.enum([
-    'alibaba', 'azure', 'deepseek', 'groq', 'lmstudio',
+    'alibaba', 'azure', 'cerebras', 'deepseek', 'groq', 'lmstudio',
     'localai', 'mistral', 'moonshot', 'openai',
     'openrouter', 'perplexity', 'sakanaai', 'togetherai', 'xai', 'zai',
   ]),
@@ -121,6 +122,25 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
     case 'azure':
       return _azureOpenAIAccess(access, modelRefId, apiPath);
+
+    case 'cerebras':
+      // [Cerebras] OpenAI-compatible, fixed host (no host map): api.cerebras.ai + /v1/...
+      let cerebrasKey = access.oaiKey || env.CEREBRAS_API_KEY || '';
+
+      // Use function to select a random key if multiple keys are provided
+      cerebrasKey = llmsRandomKeyFromMultiKey(cerebrasKey);
+
+      if (!cerebrasKey)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Cerebras API Key. Add it on the UI (Models Setup) or server side (your deployment).' });
+
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${cerebrasKey}`,
+        },
+        url: llmsFixupHost(DEFAULT_CEREBRAS_HOST, apiPath) + apiPath,
+      };
 
     case 'deepseek':
       // https://platform.deepseek.com/api-docs/

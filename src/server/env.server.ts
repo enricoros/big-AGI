@@ -60,6 +60,9 @@ export const env = createEnv({
     BEDROCK_SESSION_TOKEN: z.string().optional(), // required with the other 2 on corporate accounts sometimes
     BEDROCK_REGION: z.string().optional(),
 
+    // LLM: Cerebras
+    CEREBRAS_API_KEY: z.string().optional(),
+
     // LLM: Deepseek AI
     DEEPSEEK_API_KEY: z.string().optional(),
 
