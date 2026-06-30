@@ -47,6 +47,8 @@ const IF_47_R = [...IF_4_R, LLM_IF_HOTFIX_NoTemperature];
 //                              sentinel on 4.6/4.7/4.8 thinking variants, and for manual budget control on 4.5/earlier.
 //                              Fable/Mythos 5 (2026-06-09): adaptive thinking is ALWAYS ON (no thinking variant, the base
 //                              model reasons); `thinking: {type: 'disabled'}` and budget_tokens both return 400.
+//                              Sonnet 5 (2026-06-29): adaptive-only too, BUT `thinking: {type: 'disabled'}` is allowed (200),
+//                              so it keeps the base + thinking-variant split (like Opus 4.7/4.8); only budget_tokens returns 400.
 // - llmVndAntWebFetch/Search   seem an API feature available on all models
 
 const ANT_TOOLS: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = [
@@ -60,7 +62,7 @@ const ANT_TOOLS: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = 
 /**
  * Dynamic filtering for web search/fetch - only Opus/Sonnet 4.6+.
  * Also the home of the standalone Code Sandbox toggle (code_execution_20260120), whose model support
- * (Fable/Mythos 5, Opus/Sonnet 4.6+) is a clean subset of this set. NOT added to the base
+ * (Fable/Mythos/Sonnet 5, Opus/Sonnet 4.6+) is a clean subset of this set. NOT added to the base
  * ANT_TOOLS, as Haiku 4.5 only supports code_execution_20250825 (not the 20260120 we ship).
  */
 const ANT_TOOLS_DYNAMIC: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = [
@@ -73,6 +75,20 @@ const ANT_TOOLS_DYNAMIC: Exclude<ModelDescriptionSchema['parameterSpecs'], undef
 const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { idVariant: 'thinking' /* this is here because of OpenRouter matching, see below - all these are assued as thinking variants */ } } = {
 
   // NOTE: what's not redefined below is inherited from the underlying model definition
+
+  // Claude Sonnet 5 thinking variant (Claude 5 gen, adaptive-only; base allows disabling thinking)
+  'claude-sonnet-5': {
+    idVariant: 'thinking',
+    label: 'Claude Sonnet 5 (Adaptive)',
+    description: 'Claude Sonnet 5 with adaptive thinking for high-performance coding and agentic workflows',
+    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - Sonnet 5 rejects budget_tokens */ },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
+      ...ANT_TOOLS_DYNAMIC,
+    ],
+    benchmark: { cbaElo: 1490 }, // claude-sonnet-5-thinking (launch estimate, no arena data yet)
+  },
 
   // Claude 4.8 models with thinking variants (adaptive-only, manual budgets removed)
   'claude-opus-4-8': {
@@ -290,6 +306,26 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // Mythos 5: same specs/pricing/constraints as Fable 5; invitation-only, /v1/models lists it only for approved orgs
     chatPrice: { input: 10, output: 50, cache: { cType: 'ant-bp', read: 1.00, write: 12.50, duration: 300 } },
     benchmark: { cbaElo: 1510 + 1 }, // (no arena data yet) assuming: claude-fable-5 + 1
+  },
+
+  // Claude Sonnet 5 (Claude 5 gen) - unlike Fable/Mythos 5, thinking CAN be disabled, so it keeps a base + thinking variant (like Opus 4.7/4.8)
+  {
+    id: 'claude-sonnet-5', // Active - 2026-06-29
+    label: 'Claude Sonnet 5',
+    pubDate: '20260629',
+    description: 'High-performance Sonnet-tier model for coding and agentic workflows',
+    contextWindow: 1_000_000, // 1M GA at flat pricing (no opt-in required)
+    maxCompletionTokens: 128000,
+    interfaces: [...IF_47, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
+      ...ANT_TOOLS_DYNAMIC,
+    ],
+    // Sonnet 5 (Claude 5 gen): adaptive thinking (budget_tokens rejected; `thinking:{type:'disabled'}` allowed -> base = non-thinking),
+    // temperature/top_p/top_k rejected (400 'deprecated'), no fast mode at launch (speed: 400). 1M context GA at flat pricing.
+    // Pricing: INTRODUCTORY $2/$10 (cache w$2.50/r$0.20) through 2026-08-31, then $3/$15 standard (cache w$3.75/r$0.30).
+    chatPrice: { input: 2, output: 10, cache: { cType: 'ant-bp', read: 0.20, write: 2.50, duration: 300 } },
+    benchmark: { cbaElo: 1485 }, // claude-sonnet-5 (launch estimate, no arena data yet)
   },
 
   // Claude 4.8 models
