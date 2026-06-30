@@ -318,14 +318,16 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     maxCompletionTokens: 128000,
     interfaces: [...IF_47, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
-      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
+      // CRITICAL: Sonnet 5 defaults to adaptive thinking ON (unlike Opus 4.8 base, which defaults OFF). So this base entry must
+      // EXPLICITLY disable thinking (initialValue null -> `thinking:{type:'disabled'}`)
+      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: null },
       ...ANT_TOOLS_DYNAMIC,
     ],
-    // Sonnet 5 (Claude 5 gen, drop-in upgrade for Sonnet 4.6): adaptive thinking ON by default (no `thinking` field -> it thinks; base
-    // runs adaptive-hidden like Opus 4.8 base). Manual budget_tokens rejected (400); `thinking:{type:'disabled'}` allowed (200).
-    // temperature/top_p/top_k rejected (400 'deprecated'), no prefill, no fast mode (speed: 400). New tokenizer: ~30% more tokens
-    // vs Sonnet 4.6 (per-token price unchanged). First Sonnet with cyber safeguards (refusals: stop_reason 'refusal', HTTP 200).
-    // Pricing: INTRODUCTORY $2/$10 (cache w$2.50/r$0.20) through 2026-08-31, then $3/$15 standard (cache w$3.75/r$0.30).
+    // Sonnet 5 (Claude 5 gen, drop-in upgrade for Sonnet 4.6): adaptive thinking ON by default (omit `thinking` -> it thinks);
+    // base entry above disables it explicitly. Manual budget_tokens rejected (400); `thinking:{type:'disabled'}` allowed (200).
+    // temperature/top_p/top_k rejected (400 'deprecated') EVEN with thinking disabled, no prefill, no fast mode (speed: 400).
+    // New tokenizer: ~30% more tokens vs Sonnet 4.6 (per-token price unchanged). First Sonnet with cyber safeguards (refusals:
+    // stop_reason 'refusal', HTTP 200). Pricing: INTRODUCTORY $2/$10 (cache w$2.50/r$0.20) through 2026-08-31, then $3/$15 standard.
     chatPrice: { input: 2, output: 10, cache: { cType: 'ant-bp', read: 0.20, write: 2.50, duration: 300 } },
     benchmark: { cbaElo: 1485 }, // claude-sonnet-5 (launch estimate, no arena data yet)
   },
