@@ -34,7 +34,7 @@ export function aixAnthropicHostedFeatures(model: AixAPI_Model, chatGenerate: Ai
   const _hasAixCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
   const _hasAixToolRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
 
-  // Dynamic web tools (20260209) require code execution for programmatic tool calling
+  // Dynamic web tools (20260318, was 20260209) require code execution for programmatic tool calling
   // const hasDynamicWebTools = model.vndAntWebDynamic === true && (model.vndAntWebSearch === 'auto' || model.vndAntWebFetch === 'auto');
 
   // Programmatic Tool Calling - tools with allowed_callers or input_examples
@@ -49,7 +49,7 @@ export function aixAnthropicHostedFeatures(model: AixAPI_Model, chatGenerate: Ai
   // three ways, all converging on ONE explicit container: the standalone Code Sandbox toggle (a
   // general-purpose hosted-container sandbox), Skills (which run inside the container), and Programmatic Tool Calling
   // (which uses the container as its script executor).
-  // Dynamic web tools (_20260209) have their OWN internal code execution. We never AUTO-enable the
+  // Dynamic web tools (_20260318, was _20260209) have their OWN internal code execution. We never AUTO-enable the
   // standalone tool from them (#1087: a 2nd implicit environment is parasitic), nor from container
   // continuity alone. We DO honor an explicit user toggle even alongside dynamic web: Anthropic's
   // docs note this can create two execution environments that may confuse the model (mitigable via
@@ -285,10 +285,11 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   if (!disableAllHostedTools) {
     const hostedTools: NonNullable<TRequest['tools']> = [];
 
-    // Web Search Tool - dynamic filtering (20260209) uses internal code execution for better results
+    // Web Search Tool - dynamic filtering (20260318, supersedes 20260209) uses internal code execution for better results.
+    // response_inclusion intentionally left unset (defaults to 'full') - unchanged behavior, see _WebSearchTool_20260318_schema.
     if (model.vndAntWebSearch === 'auto') {
       hostedTools.push({
-        type: model.vndAntWebDynamic ? 'web_search_20260209' : 'web_search_20250305',
+        type: model.vndAntWebDynamic ? 'web_search_20260318' : 'web_search_20250305',
         name: 'web_search',
         ...(model.vndAntWebSearchMaxUses !== undefined ? { max_uses: model.vndAntWebSearchMaxUses } : {}),
         ...(model.userGeolocation ? {
@@ -297,10 +298,11 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
       });
     }
 
-    // Web Fetch Tool - dynamic filtering (20260209) uses internal code execution for better results
+    // Web Fetch Tool - dynamic filtering (20260318, supersedes 20260209/20260309) uses internal code execution for better results.
+    // response_inclusion intentionally left unset (defaults to 'full') - unchanged behavior, see _WebFetchTool_20260318_schema.
     if (model.vndAntWebFetch === 'auto') {
       hostedTools.push({
-        type: model.vndAntWebDynamic ? 'web_fetch_20260209' : 'web_fetch_20250910',
+        type: model.vndAntWebDynamic ? 'web_fetch_20260318' : 'web_fetch_20250910',
         name: 'web_fetch',
         ...(model.vndAntWebFetchMaxUses !== undefined ? { max_uses: model.vndAntWebFetchMaxUses } : {}),
         citations: { enabled: true },
@@ -320,10 +322,11 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
       });
 
     // Code execution tool (Anthropic's) - added for the Code Sandbox toggle, Skills, container reuse, and Programmatic Tool Calling.
-    // Not AUTO-added for dynamic web tools (_20260209) which execute code internally; an explicit user
+    // Not AUTO-added for dynamic web tools (_20260318, was _20260209) which execute code internally; an explicit user
     // toggle may still coexist with them by design (see aixAnthropicHostedFeatures note re #1087).
     // Keep _20260120: it matches the code execution version dynamic web auto-injects, so coexisting
-    // merges into ONE environment. An older version (e.g. _20250825) 400s: 'tool names must be unique'.
+    // merges into ONE environment (re-verified empirically on _20260318: caller.type is still 'code_execution_20260120').
+    // An older version (e.g. _20250825) 400s: 'tool names must be unique'.
     if (enableCodeExecution)
       hostedTools.push({ type: 'code_execution_20260120', name: 'code_execution' });
 
@@ -334,7 +337,7 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   }
 
   // --- Container continuity between calls ---
-  // Re-attaching the container is DECOUPLED from enableCodeExecution: dynamic web tools (_20260209)
+  // Re-attaching the container is DECOUPLED from enableCodeExecution: dynamic web tools (_20260318, was _20260209)
   // use a container internally, and the API accepts a `container` alongside them WITHOUT the standalone
   // code_execution tool (empirically verified). So we keep ONE sandbox across mixed search/skills/code
   // turns - a file written by code execution survives an intervening search turn (verified: ls /tmp). This

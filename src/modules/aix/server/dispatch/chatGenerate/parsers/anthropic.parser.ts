@@ -74,6 +74,15 @@ const hotFixAntInjectToolsTextSpacer = true;
  * - Message Deltas will provide a 'stop reason' on the message
  * - Begin/End are explicit
  */
+
+// TODO (tracked, not implemented): Anthropic GA'd "mid-conversation system messages" 2026-05-28 (Opus 4.8 only so far) -
+// a `{role: 'system'}` message can be appended mid-`messages` (must immediately follow a user/tool-result turn, and
+// either end the array or precede an assistant turn) to inject operator-priority instructions without invalidating the
+// cached prefix - unlike editing the top-level `system` field, which busts the cache for everything after it. This is a
+// REQUEST-construction feature (would live in anthropic.messageCreate.ts's per-message content-block generator, not
+// here) - noted in this file as the spot we track Anthropic protocol deltas pending wider model support past Opus 4.8.
+// See: https://platform.claude.com/docs/en/build-with-claude/mid-conversation-system-messages
+
 export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
   let responseMessage: AnthropicWire_API_Message_Create.Response;

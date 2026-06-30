@@ -13,6 +13,18 @@ const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a
  *
  * ## Updates
  *
+ * ### 2026-06-30 - API Sync: new tool versions, refusal categories, Sonnet 5 verified
+ * - Tools: Added web_search_20260318 / web_fetch_20260318 (GA, 2026-06-11) - adds `response_inclusion` ('full'|'excluded')
+ *   to drop the nested search/fetch call+result pair from the response once consumed by a completed code-execution call
+ *   (dynamic filtering). Wired as the new default for the dynamic-filtering path (replacing _20260209); `response_inclusion`
+ *   left unset (defaults to 'full') - this is purely the version bump, no behavior change.
+ * - StopDetails.category: added 'frontier_llm', 'military_weapons' (current docs list these alongside 'cyber'/'bio'/'reasoning_extraction')
+ * - Verified empirically against the live API: Claude Sonnet 5 (launched 2026-06-29) breaking changes (temperature/top_p/top_k
+ *   rejected, manual thinking budget rejected, but thinking.disabled and forced tool_choice both OK unlike Fable/Mythos 5) -
+ *   existing adapter logic already handles all of these correctly via LLM_IF_HOTFIX_NoTemperature + per-model thinking-budget plumbing.
+ * - NOT adopted (tracked in anthropic.parser.ts top comment): mid-conversation system messages (role: 'system', Opus 4.8
+ *   only, GA 2026-05-28) - appends operator-priority instructions mid-`messages` without invalidating the cached prefix.
+ *
  * ### 2026-06-09 - API Sync: Claude Fable 5 / Mythos 5, forward-compatible parsing
  * - StopDetails.category: added 'reasoning_extraction' (Fable 5 ToS classifier for reverse engineering / output duplication)
  * - StopDetails: added `recommended_model` (suggested retry model when a server-side fallback could not run)
@@ -802,6 +814,18 @@ export namespace AnthropicWire_Tools {
     use_cache: z.boolean().optional(), // default true; set false to bypass cache and fetch fresh content
   });
 
+  /**
+   * [Anthropic, 2026-06-11 GA] Latest - adds `response_inclusion`.
+   * When the fetch was called programmatically from a completed code-execution call (dynamic filtering), 'excluded'
+   * drops the nested server_tool_use(web_fetch) + web_fetch_tool_result pair from the response entirely (verified
+   * empirically: ~98% response size reduction on a full page fetch). Default 'full' (unchanged from prior versions).
+   * Direct calls, or code-execution calls that paused before completing, are always returned in full regardless.
+   */
+  const _WebFetchTool_20260318_schema = _WebFetchTool_20260309_schema.extend({
+    type: z.literal('web_fetch_20260318'),
+    response_inclusion: z.enum(['full', 'excluded']).optional(), // default: 'full'
+  });
+
   // -- Web Search Tools --
 
   const _WebSearchTool_20250305_schema = _ToolDefinitionBase_schema.extend({
@@ -813,9 +837,15 @@ export namespace AnthropicWire_Tools {
     user_location: z.any().nullish(), // UserLocation schema
   });
 
-  /** [Anthropic, Feb 2026 GA] Web search v2 - latest. */
+  /** [Anthropic, Feb 2026 GA] Web search v2. */
   const _WebSearchTool_20260209_schema = _WebSearchTool_20250305_schema.extend({
     type: z.literal('web_search_20260209'),
+  });
+
+  /** [Anthropic, 2026-06-11 GA] Latest - adds `response_inclusion`, see _WebFetchTool_20260318_schema for semantics. */
+  const _WebSearchTool_20260318_schema = _WebSearchTool_20260209_schema.extend({
+    type: z.literal('web_search_20260318'),
+    response_inclusion: z.enum(['full', 'excluded']).optional(), // default: 'full'
   });
 
 
@@ -835,8 +865,10 @@ export namespace AnthropicWire_Tools {
     _WebFetchTool_20250910_schema,
     _WebFetchTool_20260209_schema,
     _WebFetchTool_20260309_schema,
+    _WebFetchTool_20260318_schema,
     _WebSearchTool_20250305_schema,
     _WebSearchTool_20260209_schema,
+    _WebSearchTool_20260318_schema,
   ]);
 
 }
@@ -878,7 +910,7 @@ export namespace AnthropicWire_API_Message_Create {
    */
   const StopDetails_schema = z.object({
     type: z.enum(['refusal']).or(z.string()),
-    category: z.enum(['cyber', 'bio', 'reasoning_extraction']).or(z.string()).nullish(),
+    category: z.enum(['cyber', 'bio', 'reasoning_extraction', 'frontier_llm', 'military_weapons']).or(z.string()).nullish(),
     explanation: z.string().nullish(),
     /** [Anthropic, 2026-06-09] Model suggested for a direct retry when a server-side fallback could not run (e.g. fallback model rate-limited). Hint only, may be null. */
     recommended_model: z.string().nullish(),
