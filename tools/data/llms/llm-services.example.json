@@ -83,6 +83,37 @@
     "oaiHost": "",
     "heliKey": ""
   },
+  "cerebras": {
+    "dialect": "cerebras",
+    "oaiKey": "YOUR_CEREBRAS_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": ""
+  },
+  "minimax": {
+    "_comment": "openai-compatible @ api.minimax.io (no first-class dialect; uses openai dialect + host)",
+    "dialect": "openai",
+    "oaiKey": "YOUR_MINIMAX_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "https://api.minimax.io",
+    "heliKey": ""
+  },
+  "zai": {
+    "_comment": "Z.ai / GLM (Zhipu) - curated catalog",
+    "dialect": "zai",
+    "oaiKey": "YOUR_ZAI_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": ""
+  },
+  "sakanaai": {
+    "_comment": "Sakana AI - curated catalog",
+    "dialect": "sakanaai",
+    "oaiKey": "YOUR_SAKANAAI_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": ""
+  },
   "ollama": {
     "_comment": "Local Ollama instance - no API key needed",
     "dialect": "ollama",
@@ -103,5 +134,22 @@
     "oaiOrg": "",
     "oaiHost": "http://127.0.0.1:8080",
     "heliKey": ""
+  },
+  "azure_DISABLED": {
+    "_comment": "Disabled: Azure lists your own deployments (account-specific), not a public catalog. Rename to 'azure' and set oaiHost to enable",
+    "dialect": "azure",
+    "oaiKey": "YOUR_AZURE_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "https://YOUR_RESOURCE.openai.azure.com",
+    "heliKey": ""
+  },
+  "bedrock_DISABLED": {
+    "_comment": "Disabled: Bedrock catalog is AWS-account-specific (SigV4/bearer), not a public catalog. Rename to 'bedrock' to enable",
+    "dialect": "bedrock",
+    "bedrockBearerToken": "YOUR_BEDROCK_BEARER_TOKEN_HERE",
+    "bedrockAccessKeyId": "",
+    "bedrockSecretAccessKey": "",
+    "bedrockSessionToken": null,
+    "bedrockRegion": "us-east-1"
   }
 }
