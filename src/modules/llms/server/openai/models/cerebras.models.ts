@@ -158,31 +158,45 @@ function _cerebrasModelSortFn(a: ModelDescriptionSchema, b: ModelDescriptionSche
 }
 
 
+// Next.js Edge Runtime detection (Vercel sets this global to a string in the edge runtime; undefined
+// in Node and the browser). Ambient `typeof` is safe even when the global doesn't exist at runtime.
+declare global {
+  // noinspection ES6ConvertVarToLetConst
+  var EdgeRuntime: string | undefined;
+}
+
 /**
- * Lists Cerebras models. Two paths, keyed on CSF (Direct Connection):
- * - NON-CSF (server): api.cerebras.ai is behind Cloudflare bot-management, which 403s the server fetch
- *   with a challenge page. Skip the doomed network call and serve the editorial catalog as-is.
- * - CSF (the default, runs in the browser): the browser passes Cloudflare, so fetch the rich live
- *   /public/v1/models catalog for full metadata + forward-compatible discovery of new models.
- * Kept here (not in the shared dispatch) because the endpoint, wire schema, CSF branching, and
+ * Lists Cerebras models. The split is by RUNTIME, not by CSF:
+ * api.cerebras.ai is behind Cloudflare bot-management that 403s the EDGE-runtime fetch (a challenge
+ * HTML page) while allowing Node and browsers (verified: same code, plain-Node fetch -> 200, edge -> 403).
+ * - EDGE runtime (the app's /api/edge listing path): skip the doomed call, serve the editorial DB.
+ * - everywhere else - Node tools (e.g. llm-registry-sync), and the browser under CSF / Direct Connection:
+ *   fetch the rich live /public/v1/models catalog (full metadata + forward-compatible discovery), with a
+ *   DB fallback if the network hiccups.
+ * Kept here (not in the shared dispatch) because the endpoint, wire schema, runtime branching, and
  * editorial overrides are all Cerebras-specific.
  */
 export async function cerebrasFetchModelDescriptions(access: OpenAIAccessSchema, signal?: AbortSignal): Promise<ModelDescriptionSchema[]> {
 
-  // [non-CSF] don't even attempt the server->Cloudflare fetch (always 403s) - use the hardcoded DB
-  if (!access.clientSideFetch)
+  // [edge runtime] don't even attempt the fetch (Cloudflare always 403s it) - use the hardcoded DB
+  if (typeof EdgeRuntime === 'string')
     return _cerebrasEditorialModelDescriptions();
 
-  // [CSF] in-browser fetch of the rich public catalog (no User-Agent: browsers forbid it, and the
-  // browser already clears Cloudflare). Unauthenticated, but routed through openAIAccess to keep the
-  // "missing key" UX consistent with the rest of the listing pipeline.
-  const _wire = createDebugWireLogger('LLMs/Cerebras');
-  const { headers, url } = openAIAccess(access, null, CEREBRAS_PUBLIC_MODELS_PATH);
-  _wire?.logRequest('GET', url, headers);
-  const wireModels = await fetchJsonOrTRPCThrow({ url, headers, name: 'Cerebras', signal });
-  _wire?.logResponse(wireModels);
-
-  return _cerebrasModelsToModelDescriptions(wireModels);
+  // [Node / browser] fetch the rich public catalog (unauthenticated, but routed through openAIAccess to
+  // keep the "missing key" UX consistent). No User-Agent needed: Node/browsers already clear Cloudflare.
+  try {
+    const _wire = createDebugWireLogger('LLMs/Cerebras');
+    const { headers, url } = openAIAccess(access, null, CEREBRAS_PUBLIC_MODELS_PATH);
+    _wire?.logRequest('GET', url, headers);
+    const wireModels = await fetchJsonOrTRPCThrow({ url, headers, name: 'Cerebras', signal });
+    _wire?.logResponse(wireModels);
+    return _cerebrasModelsToModelDescriptions(wireModels);
+  } catch (error) {
+    if (signal?.aborted) throw error; // never mask a user cancellation
+    // network/Cloudflare hiccup outside the edge runtime: degrade to the editorial DB rather than failing
+    console.warn('[Cerebras] live catalog fetch failed, using editorial models:', (error as Error)?.message || error);
+    return _cerebrasEditorialModelDescriptions();
+  }
 }
 
 
