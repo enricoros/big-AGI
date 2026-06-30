@@ -485,9 +485,18 @@ export function prettyShortChatModelName(model: string | undefined): string {
     if (model.includes('grok-beta')) return 'Grok Beta';
     if (model.includes('grok-vision-beta')) return 'Grok Vision Beta';
   }
-  // [Z.ai]
-  if (model.startsWith('glm-')) {
+  // [OpenAI OSS] gpt-oss family (shared across Cerebras/Groq/etc.) - the OpenAI regex above only matches gpt-[345]
+  if (model.includes('gpt-oss')) {
+    return model.slice(model.indexOf('gpt-oss'))
+      .replace('gpt-oss', 'GPT OSS')
+      .replace('-safeguard', ' Safeguard')
+      .replaceAll('-', ' ')
+      .replace(/(\d+)b\b/i, '$1B'); // '120b' -> '120B'
+  }
+  // [Z.ai] GLM family - also handles the 'zai-glm-...' ids exposed by Cerebras
+  if (model.startsWith('glm-') || model.startsWith('zai-glm-')) {
     return model
+      .replace('zai-', '')
       .replace('glm-', 'GLM-')
       .replace('ocr', 'OCR')
       .replace(/(\d)v/, '$1 V')   // vision suffix: 4.6v → 4.6 V
@@ -549,6 +558,7 @@ function _prettyGeminiModelName(cutModel: string): string {
     .replace('flash', 'Flash')
     .replace('max', 'Max')
     .replace('lite', 'Lite')
+    .replace(/(\d)b\b/g, '$1B') // size token: '31b' -> '31B' (e.g. Gemma 4 31B)
     // feature variants
     .replace('robotics er', 'Robotics')
     .replace('computer use', 'Computer Use')
