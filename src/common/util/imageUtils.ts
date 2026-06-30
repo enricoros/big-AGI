@@ -34,7 +34,7 @@ export type LLMImageResizeMode = 'openai-low-res' | 'openai-high-res' | 'google'
 /**
  * Converts an SVG string to a PNG Blob via an intermediate canvas.
  */
-export async function renderSVGToPNGBlob(svgCode: string, transparentBackground: boolean, renderScale: number = 2.0): Promise<Blob | null> {
+export async function renderSVGToPNGBlob(svgCode: string, transparentBackground: boolean, renderScale: number = 2.0, fixedOutputSize?: number): Promise<Blob | null> {
   if (!svgCode) return null;
 
   // Create a Blob URL for the SVG
@@ -53,9 +53,9 @@ export async function renderSVGToPNGBlob(svgCode: string, transparentBackground:
     };
   });
 
-  // Prepare canvas @[Scale]x, e.g. @2x
-  const canvasWidth = img.width * renderScale;
-  const canvasHeight = img.height * renderScale;
+  // Prepare canvas: either a fixed square size, or @[Scale]x of the intrinsic size (e.g. @2x)
+  const canvasWidth = fixedOutputSize ?? (img.width * renderScale);
+  const canvasHeight = fixedOutputSize ?? (img.height * renderScale);
   const canvas = document.createElement('canvas');
   canvas.width = canvasWidth;
   canvas.height = canvasHeight;
