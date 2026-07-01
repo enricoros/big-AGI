@@ -84,6 +84,17 @@ const gemini35FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   cache: { cType: 'oai-ac', read: 0.15 },
 };
 
+// Gemini Omni Flash Preview (video generation), paid-tier only. Official (2026-06/07):
+//  - input  $1.50/MTok (text / image / video / audio)
+//  - output $9.00/MTok text (incl. thinking) OR $17.50/MTok video (5,792 tok/s of 720p, ~$0.10/s)
+// Our pricing model has a single output rate, not per-modality. A video-gen model's output is ~98%
+// video tokens (verified 2026-07-01: 57,920 of 58,948 output tokens were video), so we price output at
+// the VIDEO rate - the dominant modality. This slightly over-charges the tiny text/thinking slice.
+const geminiOmniPricing: ModelDescriptionSchema['chatPrice'] = {
+  input: 1.50,
+  output: 17.50,
+};
+
 const gemini31FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.25, // text/image/video; audio is $0.50 but we don't differentiate yet
   output: 1.50,
@@ -454,6 +465,22 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
   },
 
   // Managed Agents - require the Interactions API (agent path, not generateContent)
+
+  // Gemini Omni Flash Preview - Released June 30, 2026. EXPERIMENTAL video generation.
+  // Text/image -> a short 720p video (3-10s, with baked-in audio). Rides the Interactions API but on the
+  // MODEL path (not an agent): the adapter's `isOmni` gate sends `model` + omits store/background, and the
+  // parser emits the inline mp4 as an EPHEMERAL video (played in-memory, NOT saved). Audio/video INPUT are
+  // unsupported (verified 2026-07-01: "Audio input modality is not enabled"). Vision (image) input is used
+  // for image-to-video. Output is billed by tokens (~58k for a short clip). See kb/modules/LLM-gemini-interactions.md.
+  {
+    id: 'models/gemini-omni-flash-preview',
+    labelOverride: 'Gemini Omni Flash Preview (video, experimental)',
+    pubDate: '20260630',
+    isPreview: true,
+    chatPrice: geminiOmniPricing, // paid-tier only: input $1.50, output priced at the video rate $17.50/MTok (~$0.10/s of 720p)
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_GEM_Interactions], // Vision = image input (image-to-video); Interactions routes to the model-path video dispatch
+    benchmark: undefined, // video generation, not benchmarkable on standard tests
+  },
 
   // Antigravity Agent Preview - Released May 19, 2026
   // General-purpose managed agent: powered by Gemini 3.5 Flash, runs inside a Google-hosted Linux
