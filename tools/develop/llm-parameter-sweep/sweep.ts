@@ -457,6 +457,7 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
   appendAutoText_weak(textChunk: string): void { this.text += textChunk; }
   appendAudioInline(_mimeType: string, _base64Data: string, _label: string, _generator: string, _durationMs: number): void { /* no-op */ }
   appendImageInline(_mimeType: string, _base64Data: string, _label: string, _generator: string, _prompt: string): void { /* no-op */ }
+  appendVideoInline(_mimeType: string, _base64Data: string, _label: string, _generator: string): void { /* no-op */ }
   appendHostedResource(_hres: any): void { /* no-op */ }
   startFunctionCallInvocation(id: string | null, functionName: string, _expectedArgsFmt: 'incr_str' | 'json_object', args: string | object | null): void {
     this.fnInvocationCount++;

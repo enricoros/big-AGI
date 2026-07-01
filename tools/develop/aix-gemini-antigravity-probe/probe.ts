@@ -46,6 +46,7 @@ function createRecordingTransmitter(): { pt: IParticleTransmitter; log: LogEntry
     appendAutoText_weak: rec('appendAutoText_weak'),
     appendAudioInline: rec('appendAudioInline'),
     appendImageInline: rec('appendImageInline'),
+    appendVideoInline: rec('appendVideoInline'),
     appendHostedResource: rec('appendHostedResource'),
     startFunctionCallInvocation: rec('startFunctionCallInvocation'),
     appendFunctionCallInvocationArgs: rec('appendFunctionCallInvocationArgs'),
