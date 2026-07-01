@@ -474,11 +474,14 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
   // for image-to-video. Output is billed by tokens (~58k for a short clip). See kb/modules/LLM-gemini-interactions.md.
   {
     id: 'models/gemini-omni-flash-preview',
-    labelOverride: 'Gemini Omni Flash Preview (video, experimental)',
+    labelOverride: 'Gemini Omni Flash Preview (video)',
     pubDate: '20260630',
     isPreview: true,
     chatPrice: geminiOmniPricing, // paid-tier only: input $1.50, output priced at the video rate $17.50/MTok (~$0.10/s of 720p)
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_GEM_Interactions], // Vision = image input (image-to-video); Interactions routes to the model-path video dispatch
+    interfaces: [
+      LLM_IF_HOTFIX_Sys0ToUsr0, //
+      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_GEM_Interactions, // Vision = image input (image-to-video); Interactions routes to the model-path video dispatch
+    ],
     benchmark: undefined, // video generation, not benchmarkable on standard tests
   },
 
