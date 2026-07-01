@@ -70,12 +70,13 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
   // moment the stream disconnects (probe: GET 404s within seconds of abort). Suppressing the upstream
   // handle hides the Resume/Recover/Stop UI - the local-fetch abort path is still wired for cancel.
   const isAntigravity = (requestedModelName ?? '').includes('antigravity-');
+  const isModelOmni = (requestedModelName ?? '').includes('omni'); // Gemini Omni video-gen: one-shot, store omitted -> not resumable
   // Per-agent run-chip presentation (only DR's text was hard-coded historically).
   const runChipMotif: 'search-web' | 'code-exec' = isAntigravity ? 'code-exec' : 'search-web';
-  const runChipText: string = isAntigravity ? 'Antigravity Agent running...' : 'Deep Research in progress...';
+  const runChipText: string = isAntigravity ? 'Antigravity Agent running...' : isModelOmni ? 'Generating video...' : 'Deep Research in progress...';
 
   let modelNameSent = requestedModelName == null; // on resume, DMessage already has the model name
-  let upstreamHandleSent = isAntigravity; // never emit a handle for Antigravity (non-resumable)
+  let upstreamHandleSent = isAntigravity || isModelOmni; // never emit a handle for Antigravity or Omni (non-resumable) - also avoids the doomed usage-backfill GET
   let operationOpId: string | null = null; // interaction id; used to pair in-progress / done operation-state updates AND as parentOpId for nested tool ops
   let operationOpenEmitted = false;
   let interactionIdCache: string | null = null; // cached for the `operation-state done` emission on interaction.completed
@@ -198,7 +199,7 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
         break;
 
       case 'interaction.completed':
-        _handleInteractionCompleted(pt, event.interaction, operationOpId ?? interactionIdCache, lastOpenIdx, parserCreationTimestamp, timeToFirstContent, runChipMotif, isAntigravity ? 'Antigravity Agent' : 'Deep Research');
+        _handleInteractionCompleted(pt, event.interaction, operationOpId ?? interactionIdCache, lastOpenIdx, parserCreationTimestamp, timeToFirstContent, runChipMotif, isAntigravity ? 'Antigravity Agent' : isModelOmni ? 'Gemini Omni' : 'Deep Research');
         break;
 
       // --- Step lifecycle ---
@@ -290,8 +291,8 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
             _emitAntigravityToolDeltaRefine(pt, event.delta, state, operationOpId);
             break;
           }
-          // Known-but-not-surfaced delta types (internal tools + spec's video we don't model) - silent skip
-          if (deltaType && (GeminiInteractionsWire_API_Interactions.SILENCE_STEP_TYPES.has(deltaType) || deltaType === 'video')) break;
+          // Known-but-not-surfaced delta types (internal tools) - silent skip
+          if (deltaType && GeminiInteractionsWire_API_Interactions.SILENCE_STEP_TYPES.has(deltaType)) break;
           console.warn('[GeminiInteractions] unknown step.delta shape at index', event.index, event.delta);
           break;
         }
@@ -334,6 +335,10 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
             // PCM needs WAV conversion; packaged formats pass through.
             if (delta.data && delta.mime_type)
               _emitAudio(pt, delta.mime_type, delta.data, '[GeminiInteractions] audio PCM convert failed:');
+            break;
+          case 'video':
+            // [Gemini Omni] Inline mp4 -> ephemeral (in-memory-only) video; URI (>4MB) gets a note.
+            _emitVideo(pt, delta.mime_type, delta.data, delta.uri);
             break;
           case 'document':
             _emitDocument(pt, delta.mime_type, delta.data, delta.uri);
@@ -415,7 +420,7 @@ export function createGeminiInteractionsParserNS(requestedModelName: string | nu
     //  - tool steps  -> skip on the recovery snapshot (chips were a streaming-time affordance)
     const steps = interaction.steps ?? [];
     const markFirstContent = (): void => void 0; // no timing on the one-shot path
-    let lastEmittedKind: 'thought' | 'text' | 'image' | 'audio' | null = null;
+    let lastEmittedKind: 'thought' | 'text' | 'image' | 'audio' | 'video' | null = null;
     const sharedState: BlockState = { stepType: 'model_output', kind: 'text', emittedCitationKeys: new Set() };
 
     for (const rawStep of steps) {
@@ -529,11 +534,12 @@ function _classifyStepKind(stepType: string): BlockState['kind'] {
   return 'other';
 }
 
-function _contentBlockKind(block: unknown): 'text' | 'image' | 'audio' | null {
+function _contentBlockKind(block: unknown): 'text' | 'image' | 'audio' | 'video' | null {
   const t = (block as { type?: string })?.type;
   if (t === 'text') return 'text';
   if (t === 'image') return 'image';
   if (t === 'audio') return 'audio';
+  if (t === 'video') return 'video';
   return null;
 }
 
@@ -542,7 +548,7 @@ function _emitContentBlock(pt: IParticleTransmitter, rawBlock: unknown, state: B
   const known = GeminiInteractionsWire_API_Interactions.KnownContent_schema.safeParse(rawBlock);
   if (!known.success) {
     const t = (rawBlock as { type?: string })?.type;
-    if (t && t !== 'video') console.warn('[GeminiInteractions] unknown content block, skipping:', t);
+    if (t) console.warn('[GeminiInteractions] unknown content block, skipping:', t);
     return false;
   }
   const block = known.data;
@@ -565,6 +571,10 @@ function _emitContentBlock(pt: IParticleTransmitter, rawBlock: unknown, state: B
       markFirstContent();
       if (block.data && block.mime_type)
         _emitAudio(pt, block.mime_type, block.data, '[GeminiInteractions] audio PCM convert failed:');
+      return true;
+    case 'video':
+      markFirstContent();
+      _emitVideo(pt, block.mime_type, block.data, block.uri);
       return true;
     case 'document':
       markFirstContent();
@@ -595,6 +605,17 @@ function _emitDocument(pt: IParticleTransmitter, mimeType: string | undefined, b
     pt.appendHostedResource({ p: 'hres', kind: 'inline-download', mimeType, b64: base64Data });
   else if (uri)
     pt.appendText(`\n[Document: ${uri}]\n`);
+}
+
+/**
+ * Emit a generated video (Gemini Omni). Inline mp4 bytes -> appendVideoInline (EXPERIMENTAL: the client
+ * plays it in-memory and does NOT persist it). URI (>4MB Files-API delivery) is not fetched - just a note.
+ */
+function _emitVideo(pt: IParticleTransmitter, mimeType: string | undefined, base64Data: string | undefined, uri: string | undefined): void {
+  if (base64Data && mimeType)
+    pt.appendVideoInline(mimeType, base64Data, 'Gemini Generated Video', 'Gemini');
+  else if (uri)
+    pt.appendText(`\n[Video: ${uri}]\n`); // >4MB delivery via Files API not fetched (experimental)
 }
 
 function _emitAudio(pt: IParticleTransmitter, mimeType: string, base64Data: string, errPrefix: string): void {

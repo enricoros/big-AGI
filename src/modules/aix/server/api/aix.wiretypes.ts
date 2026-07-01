@@ -790,6 +790,7 @@ export namespace AixWire_Particles {
     | { p: 'cer', id: string, error: DMessageToolResponsePart['error'], result: string, executor: 'gemini_auto_inline' | 'code_interpreter', environment: DMessageToolResponsePart['environment'] }
     | { p: 'ia', mimeType: string, a_b64: string, label?: string, generator?: string, durationMs?: number } // inline audio, complete
     | { p: 'ii', mimeType: string, i_b64: string, label?: string, generator?: string, prompt?: string, hintSkipResize?: boolean } // inline image, complete
+    | { p: 'iv', mimeType: string, v_b64: string, label?: string, generator?: string } // inline video, complete (EXPERIMENTAL: Gemini Omni; client plays it in-memory and does NOT persist it)
     /**
      * Model Operation - tracks instant model's operation(s) state, primarily for hosted tools.
      * - state is 'active' unless specified otherwise, 'error' is done too

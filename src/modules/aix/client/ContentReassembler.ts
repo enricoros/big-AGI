@@ -96,6 +96,7 @@ export class ContentReassembler {
     private readonly particleTransforms: ReassemblerParticleTransforms[],
     private readonly skipImageCompression?: boolean,
     private readonly onInlineAudio?: (audio: { blob: Blob; mimeType: string; label: string; durationMs?: number }) => void,
+    private readonly onInlineVideo?: (video: { blob: Blob; mimeType: string; label: string }) => void,
     private readonly wireAbortSignal?: AbortSignal,
   ) {
     this.initialState = {
@@ -371,6 +372,9 @@ export class ContentReassembler {
           case 'ii':
             await this.onAppendInlineImage(op);
             break;
+          case 'iv':
+            await this.onAppendInlineVideo(op);
+            break;
           case 'vp':
             this.onSetOperationState(op);
             break;
@@ -622,6 +626,33 @@ export class ContentReassembler {
       console.warn('[DEV] Failed to add inline audio to DBlobs:', { label: safeLabel, error, mimeType, size: base64Data.length });
       // Add an error fragment instead
       this._appendErrorFragment(`Failed to process audio: ${error?.message || 'Unknown error'}`, 'aix-audio-processing');
+    }
+  }
+
+  private async onAppendInlineVideo(particle: Extract<AixWire_Particles.PartParticleOp, { p: 'iv' }>): Promise<void> {
+
+    // Break text accumulation, as we have a full video part in the middle
+    this.S._textFragmentIndex = null;
+
+    const { mimeType, v_b64: base64Data, label } = particle;
+    const safeLabel = label || 'Generated Video';
+
+    try {
+
+      // create blob from base64 - this will throw on malformed data
+      const videoBlob = await convert_Base64WithMimeType_To_Blob(base64Data, mimeType, 'ContentReassembler.onAppendInlineVideo');
+
+      // EXPERIMENTAL: generated video is NOT persisted (would be a large blob + object-URLs die on reload).
+      // We save only a breadcrumb; the actual video is handed to the caller for ephemeral in-memory playback.
+      const sizeMB = Math.round(videoBlob.size / 1024 / 102.4) / 10;
+      this._pushFragment(createTextContentFragment(`Generated video ▶ \`${safeLabel}\` (${sizeMB} MB, in-memory only - not saved)`));
+
+      // notify caller for ephemeral playback (object URL created + revoked by the caller)
+      this.onInlineVideo?.({ blob: videoBlob, mimeType, label: safeLabel });
+
+    } catch (error: any) {
+      console.warn('[DEV] Failed to process inline video:', { label: safeLabel, error, mimeType, size: base64Data.length });
+      this._appendErrorFragment(`Failed to process video: ${error?.message || 'Unknown error'}`, 'aix-video-processing');
     }
   }
 

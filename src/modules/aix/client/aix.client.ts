@@ -17,6 +17,7 @@ import { getLabsLosslessImages } from '~/common/stores/store-ux-labs';
 import { llmChatPricing_adjusted } from '~/common/stores/llms/llms.pricing';
 import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
 import { stripUndefined } from '~/common/util/objectUtils';
+import { videoPlayObjectUrl } from '~/common/util/video/videoPlayManaged';
 import { webGeolocationCached } from '~/common/util/webGeolocationUtils';
 
 
@@ -930,6 +931,10 @@ async function _aixChatGenerateContent_LL(
       void AudioPlayer.playUrl(audioUrl)
         .catch((error) => console.log('[AIX] Failed to play audio:', { error }))
         .finally(() => URL.revokeObjectURL(audioUrl));
+    },
+    (video) => {
+      // EXPERIMENTAL (Gemini Omni): play generated video in an ephemeral overlay; the object URL is revoked on close - nothing is persisted.
+      videoPlayObjectUrl(URL.createObjectURL(video.blob), video.label || 'AI Video');
     },
     abortSignal,
   );

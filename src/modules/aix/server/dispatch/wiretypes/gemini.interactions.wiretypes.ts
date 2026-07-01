@@ -126,9 +126,9 @@ export namespace GeminiInteractionsWire_API_Interactions {
   //    `tools`, `system_instruction`, and `generation_config` are interaction-scoped and must be
   //    re-sent each turn.
   export const RequestBody_schema = z.object({
-    // --- Target: what to call ---
-    agent: z.string(), // Spec: agent is AgentOption (optional, required if `model` not provided). Send the BARE id; no 'models/' prefix.
-    // model: z.string(), // alternative path - not used here; would require generation_config instead of agent_config
+    // --- Target: what to call --- (agent XOR model)
+    agent: z.string().optional(), // Spec: agent is AgentOption (required if `model` not provided). Send the BARE id; no 'models/' prefix.
+    model: z.string().optional(), // model path (e.g. Gemini Omni video generation): send the BARE model id instead of `agent`. Video output is the model default (response_format/generation_config optional).
 
     // --- Inputs ---
     input: z.union([
@@ -151,14 +151,19 @@ export namespace GeminiInteractionsWire_API_Interactions {
     // --- Runtime flags (literals below force correct behavior at the adapter layer) ---
     stream: z.boolean().optional(), // SSE streaming - when true, POST returns an event-stream (interaction.created, step.start/delta/stop, interaction.completed). On reattach, GET ?stream=true replays the full event sequence (we do not send `last_event_id` - full replay is the intentional semantic; see poller comment).
     /**
-     * spec-optional; we lock to `true` so the interaction is retrievable post-run
-     * Required by DR agents AND by Antigravity Agent.
+     * REQUIRED, explicit true/false (no optional - every path makes a deliberate choice).
+     * Empirical background x store matrix (Omni model path, 2026-07-01): the ONLY rejected combo is
+     * `store:false` + `background:true` -> 400 'store=true is required for background interactions';
+     * all other 8 combos stream the mp4 inline fine. Per path:
+     *  - DR + Antigravity: `true` (interaction retained for resume/replay within Gemini's retention window).
+     *  - Omni: `false` (ephemeral - we do NOT retain generated video server-side; paired with background:false).
      */
-    store: z.literal(true),
+    store: z.boolean(), // was: `store: z.literal(true)` when we only had DR + AG, because we forced outselves to store it for resumability/recovery
     /**
-     * spec-optional, but we mandate it for clarity:
-     * - DR agents REQUIRE `true` ('Agents are required to use background=true').
-     * - Antigravity Agent REJECTS `true` ('does not support using background=True'). Adapter sets per-agent.
+     * REQUIRED, explicit true/false (no optional).
+     *  - DR agents REQUIRE `true` ('Agents are required to use background=true').
+     *  - Antigravity Agent REJECTS `true` ('does not support using background=True').
+     *  - Omni: `false` (background=false streams the mp4 inline over SSE; background=true would force store=true).
      */
     background: z.boolean(),
 
@@ -210,6 +215,15 @@ export namespace GeminiInteractionsWire_API_Interactions {
     channels: z.number().optional(),
   });
 
+  // [Gemini Omni, 2026-06-30] Video output block: inline mp4 bytes (`data`+`mime_type`) or a `uri` for
+  // >4MB (Files API). Verified 2026-07-01: model_output.content[0] = {type:'video', mime_type:'video/mp4', data:<b64>}.
+  const VideoContent_schema = z.object({
+    type: z.literal('video'),
+    data: z.string().optional(), // base64-encoded bytes
+    uri: z.string().optional(),
+    mime_type: z.string().optional(), // e.g. 'video/mp4'
+  });
+
   const DocumentContent_schema = z.object({
     type: z.literal('document'),
     // [inferred] Mirrors the image/audio block shape (inline `data`+`mime_type`, or a `uri`). The exact
@@ -225,6 +239,7 @@ export namespace GeminiInteractionsWire_API_Interactions {
     TextContent_schema,
     ImageContent_schema,
     AudioContent_schema,
+    VideoContent_schema,
     DocumentContent_schema,
   ]);
 
@@ -497,6 +512,15 @@ export namespace GeminiInteractionsWire_API_Interactions {
     arguments: z.string().optional(),
   });
 
+  // [Gemini Omni] Video output arrives as ONE complete step.delta (not chunked): {type:'video',
+  // mime_type:'video/mp4', data:<b64>} on the model_output step index. Verified 2026-07-01.
+  const VideoDelta_schema = z.object({
+    type: z.literal('video'),
+    data: z.string().optional(),     // base64 (complete)
+    uri: z.string().optional(),
+    mime_type: z.string().optional(),
+  });
+
   const DocumentDelta_schema = z.object({
     type: z.literal('document'),
     // [inferred] Same shape assumption as DocumentContent_schema - see note there.
@@ -505,12 +529,13 @@ export namespace GeminiInteractionsWire_API_Interactions {
     mime_type: z.string().optional(),
   });
 
-  // Delta discriminated union - covers variants we emit to the UI. Unknown variants (video, tool-call/result
+  // Delta discriminated union - covers variants we emit to the UI. Unknown variants (tool-call/result
   // deltas) fail safeParse in the parser and are handled by the tool-surfacing branch or silently dropped.
   export const StreamDelta_schema = z.discriminatedUnion('type', [
     TextDelta_schema,
     ImageDelta_schema,
     AudioDelta_schema,
+    VideoDelta_schema,
     DocumentDelta_schema,
     ThoughtSummaryDelta_schema,
     ThoughtSignatureDelta_schema,
