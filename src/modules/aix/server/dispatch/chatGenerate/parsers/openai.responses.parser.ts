@@ -14,6 +14,7 @@ import { OpenAIWire_API_Responses, OpenAIWire_Responses_Tools } from '../../wire
 
 // configuration
 const OPENAI_RESPONSES_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of events
+const OPENAI_RESPONSES_SALVAGE_FAILED = true; // #1149: 'failed' responses whose message completed (and streamed) are successes wrapped by a post-generation rate-limit check - false: restore fatal-on-error
 const OPENAI_RESPONSES_SAME_PART_SPACER = '\n\n';
 const INLINE_IMAGE_SKIP_RESIZE_MAX_B64_BYTES = 250_000; // skip resize for small images (e.g. code interpreter charts)
 const OPENAI_DEFAULT_CONTAINER_TTL_MS = 20 * 60 * 1000; // OpenAI code-interpreter containers expire after 20 min of inactivity (per docs); we stamp this so the client's reuse walk skips stale handles
@@ -67,6 +68,23 @@ function _findImageGenToolCfg(tools: TResponse['tools']): TImageGenToolCfg | und
   return tools?.find((t): t is TImageGenToolCfg => t.type === 'image_generation');
 }
 
+/**
+ * #1149 'failed'-response salvage - the single decision point, shared by streaming and NS.
+ *
+ * OpenAI can wrap a genuinely-COMPLETE response as 'failed': the TPM rate-limit check runs against actual
+ * usage mid-flight (not just at admission), so reasoning+search runs can trip it AFTER the final message
+ * fully generated and streamed. The wire shows 'error' (rate_limit_exceeded) -> 'response.failed', whose
+ * .output still carries the message with status 'completed' - that per-item status is the authoritative
+ * "generation finished" signal. Streaming callers additionally require `R.hasEmittedText` (the text actually
+ * reached the client), so a completed-but-never-streamed message can't render as an empty success; the NS
+ * parser needs no such check, as it emits content from this same .output.
+ * Empirical 2026-07-03 (5/5 GPT-5.5 Pro + web_search repros); same upstream behavior independently hit by
+ * vercel/ai#6534 and openai/codex#10055.
+ */
+function _isSalvageableFailedOutput(output: TResponse['output']): boolean {
+  return OPENAI_RESPONSES_SALVAGE_FAILED && output.some(item => item.type === 'message' && item.status === 'completed');
+}
+
 
 /**
  * We need this just to ensure events are not out of order, as out streaming is progressive
@@ -100,6 +118,7 @@ class ResponseParserStateMachine {
 
   // streaming state tracking
   #hasFunctionCalls: boolean = false; // tracks if we've seen function_call output items
+  public hasEmittedText: boolean = false; // any assistant message text streamed - gates the 'error'/'response.failed' salvage (#1149)
   #responseSealed: boolean = false; // true once response.completed/failed/incomplete has been processed - trailing 'error' events are advisory only
 
   // hosted tool configuration echo (captured at response.created)
@@ -394,13 +413,26 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
         pt.setDialectEnded('done-dialect'); // OpenAI Responses: 'response.completed'
         break;
 
-      case 'response.failed':
+      case 'response.failed': {
         R.setResponse(eventType, event.response);
+        if (R.responseSealed) break; // already terminated (e.g. by a no-text 'error' event) - this is a trailing echo
         R.markResponseSealed();
-        pt.setTokenStopReason('cg-issue'); // generic issue?
-        console.warn(`[DEV] AIX: FIXME: OpenAI-Response failed ${eventType}:`, event.response);
-        // TODO: extract and forward error details
+
+        // #1149 salvage: completed message + streamed text -> success (see _isSalvageableFailedOutput)
+        const failedError = event.response.error;
+        if (R.hasEmittedText && _isSalvageableFailedOutput(event.response.output)) {
+          console.warn(`[DEV] AIX: OpenAI Responses: response.failed but message already completed - treating as a soft success: ${failedError?.message || 'no error details'}`);
+          pt.setTokenStopReason(R.hasFunctionCalls ? 'ok-tool_invocations' : 'ok');
+          pt.setDialectEnded('done-dialect');
+          break;
+        }
+
+        // Genuine failure: surface the error
+        pt.setTokenStopReason('cg-issue');
+        pt.setDialectTerminatingIssue(!failedError ? 'Response failed with no error details.'
+          : `${safeErrorString(failedError.code) || 'Error'}: ${safeErrorString(failedError.message) || 'unknown.'}`, IssueSymbols.Generic, 'srv-warn');
         break;
+      }
 
       case 'response.incomplete':
         // TODO: We haven't seen one of those events yet; we need to see what happens and parse it!
@@ -577,6 +609,7 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
         R.contentPartVisit(eventType, event.output_index, event.content_index);
         // .delta: -> append the text content
         pt.appendText(R.contentPartInjectSpacer() ? OPENAI_RESPONSES_SAME_PART_SPACER + event.delta : event.delta);
+        if (event.delta) R.hasEmittedText = true;
         break;
 
       case 'response.output_text.done':
@@ -737,26 +770,37 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
 
       // 1.5 - Error
 
-      case 'error':
+      case 'error': {
         // there are complexities related to parsing this type: the docs suggest a flat structure, but we see nested objects
         // see the explanation on OpenAIWire_API_Responses.ErrorEvent_schema
 
         const errorCode = safeErrorString(event.error?.type || event.error?.code || event.code) ?? undefined;
         const errorMessage = safeErrorString(event.error?.message || event?.message) ?? undefined;
         const errorParam = safeErrorString(event.error?.param || event?.param) ?? undefined;
+        const errorText = `${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`;
 
         // Trailing-error guard: if the response already reached a terminal state (completed/failed/incomplete),
         // an 'error' event arriving after is an upstream advisory (e.g. rate-limit headroom) and must NOT
         // override the prior termination - otherwise it flips the message to red and the Beam ray to 'error'.
         if (R.responseSealed) {
-          console.warn(`[DEV] AIX: OpenAI Responses: trailing 'error' after sealed response - ignored: ${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`);
+          console.warn(`[DEV] AIX: OpenAI Responses: trailing 'error' after sealed response - ignored: ${errorText}`);
           break;
         }
 
-        // Transmit the error as text - note: throw if you want to transmit as 'error'
+        // #1149 salvage candidate: text already streamed and this event carries no .output to check - defer
+        // the verdict to the imminent 'response.failed' (see _isSalvageableFailedOutput), which repeats this error
+        if (OPENAI_RESPONSES_SALVAGE_FAILED && R.hasEmittedText) {
+          console.warn(`[DEV] AIX: OpenAI Responses: mid-stream 'error' after text streamed - deferring the verdict to the terminal event: ${errorText}`);
+          break;
+        }
+
+        // Nothing to salvage - fail now (and seal, so the trailing 'response.failed' echo doesn't re-report)
         // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
-        pt.setDialectTerminatingIssue(`${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`, IssueSymbols.Generic, 'srv-warn');
+        R.markResponseSealed();
+        pt.setTokenStopReason('cg-issue');
+        pt.setDialectTerminatingIssue(errorText, IssueSymbols.Generic, 'srv-warn');
         break;
+      }
 
       case 'keepalive':
         // [OpenAI, 2025-01-13] Keepalive events are sent periodically to keep the connection alive
@@ -871,8 +915,14 @@ export function createOpenAIResponseParserNS(vendor: 'openai' | 'xai'): ChatGene
         break;
 
       case 'failed':
-        tokenStopReason = 'cg-issue';
-        console.warn('[DEV] AIX: OpenAI-Response-NS response failed:', { response });
+        // #1149 salvage: only fix the stop reason - the per-item loop below appends content regardless of
+        // status (see _isSalvageableFailedOutput)
+        if (_isSalvageableFailedOutput(response.output))
+          console.warn('[DEV] AIX: OpenAI-Response-NS failed but message already completed - treating as a soft success:', { error: response.error });
+        else {
+          tokenStopReason = 'cg-issue';
+          console.warn('[DEV] AIX: OpenAI-Response-NS response failed:', { response });
+        }
         // TODO: extract and forward specific error details from response.error if present
         break;
 
@@ -1130,6 +1180,12 @@ function _forwardResponseError(parsedData: any, pt: IParticleTransmitter) {
     console.log('[DEV] AIX: OpenAI-Responses-dispatch ignored error:', { error });
     return false;
   }
+
+  // #1149 salvage: a full 'failed' Response with a completed message is not a bare error envelope - let
+  // the normal parse path append its content and set the stop reason (see _isSalvageableFailedOutput);
+  // without this, the early exit here would discard the entire completed answer
+  if (Array.isArray(parsedData.output) && _isSalvageableFailedOutput(parsedData.output))
+    return false;
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
   // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
