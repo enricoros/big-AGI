@@ -7,7 +7,7 @@ import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappin
 // --- Alibaba Model ID inference (auto-derived from _knownAlibabaChatModels) ---
 export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefix'];
 
-// Sources (verified 2026-06-26 against the live /v1/models list + docs):
+// Sources (verified 2026-07-03 against the live /v1/models list + docs; lineup + all prices unchanged since 2026-06-26):
 // - Models:  https://www.alibabacloud.com/help/en/model-studio/models
 // - Pricing: https://www.alibabacloud.com/help/en/model-studio/model-pricing (International/Singapore, USD per 1M tokens)
 // NOTES:
@@ -173,21 +173,21 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     label: 'GLM-5.2 (Alibaba)',
     parameterSpecs: _PS_Thinking,
     pubDate: '20260626',
-    description: 'Zhipu GLM-5.2 served via Alibaba Model Studio. 1M context, thinking. (Alibaba pricing not yet published.)',
+    description: 'Zhipu GLM-5.2 served via Alibaba Model Studio. 1M context, thinking.',
     contextWindow: 1048576, // 1M
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K
-    // chatPrice: not published on Alibaba Model Studio pricing page as of 2026-06-26
+    chatPrice: { input: 1.10, output: 3.851, cache: { cType: 'oai-ac', read: 0.275 } }, // implicit cache read 0.275 (verified 2026-07-03)
   },
   {
     idPrefix: 'kimi-k2.7-code',
     label: 'Kimi K2.7 Code (Alibaba)',
     pubDate: '20260626',
-    description: 'Moonshot Kimi K2.7 Code served via Alibaba Model Studio. Multimodal, always-on thinking, 256K context. (Alibaba pricing not yet published.)',
+    description: 'Moonshot Kimi K2.7 Code served via Alibaba Model Studio. Multimodal, always-on thinking, 256K context.',
     contextWindow: 262144, // 256K
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 32768,
-    // chatPrice: not published on Alibaba Model Studio pricing page as of 2026-06-26
+    chatPrice: { input: 0.8939, output: 3.7131, cache: { cType: 'oai-ac', read: 0.1788 } }, // implicit cache read 0.1788 (explicit: create 1.1174 / read 0.0894); verified 2026-07-03
   },
   {
     idPrefix: 'deepseek-v3.2',
