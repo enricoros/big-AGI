@@ -418,6 +418,9 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
         if (R.responseSealed) break; // already terminated (e.g. by a no-text 'error' event) - this is a trailing echo
         R.markResponseSealed();
 
+        // -> Metrics: timing always, even on failure (#1149; wrapped-failed responses carry usage: null)
+        pt.updateMetrics(_fromResponseMetrics(event.response.usage, R.parserCreationTimestamp, R.timeToFirstEvent));
+
         // #1149 salvage: completed message + streamed text -> success (see _isSalvageableFailedOutput)
         const failedError = event.response.error;
         if (R.hasEmittedText && _isSalvageableFailedOutput(event.response.output)) {
@@ -438,6 +441,9 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
         // TODO: We haven't seen one of those events yet; we need to see what happens and parse it!
         R.setResponse(eventType, event.response);
         R.markResponseSealed();
+
+        // -> Metrics: timing always, tokens when the usage block carries them (#1149)
+        pt.updateMetrics(_fromResponseMetrics(event.response.usage, R.parserCreationTimestamp, R.timeToFirstEvent));
 
         // -> Status: handle incomplete response
         if (event.response.incomplete_details?.reason === 'max_output_tokens')
@@ -797,6 +803,7 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
         // Nothing to salvage - fail now (and seal, so the trailing 'response.failed' echo doesn't re-report)
         // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
         R.markResponseSealed();
+        pt.updateMetrics(_fromResponseMetrics(undefined, R.parserCreationTimestamp, R.timeToFirstEvent)); // timing even on failure (#1149)
         pt.setTokenStopReason('cg-issue');
         pt.setDialectTerminatingIssue(errorText, IssueSymbols.Generic, 'srv-warn');
         break;
@@ -853,8 +860,10 @@ export function createOpenAIResponseParserNS(vendor: 'openai' | 'xai'): ChatGene
     const responseData = JSON.parse(eventData);
 
     // .error: transmits upstream errors pre-parsing (object wouldn't be valid)
-    if (_forwardResponseError(responseData, pt))
+    if (_forwardResponseError(responseData, pt)) {
+      pt.updateMetrics({ dtAll: Date.now() - parserCreationTimestamp }); // timing even on failure (#1149)
       return;
+    }
 
     // [OpenAI] possibly log the warnings to get more insights on the API
     if (responseData.warning)
