@@ -442,20 +442,26 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           pt.setTokenStopReason(tokenStopReason, _formatAnthropicStopError(delta.stop_details));
 
         // NOTE: we have more fields we're not parsing yet - https://platform.claude.com/docs/en/api/typescript/messages#message_delta_usage
-        if (usage?.output_tokens && messageStartTime) {
+        // Metrics: timing is emitted whenever we have a start reference, independent of upstream usage; token
+        // fields are added only when the usage block carries completion tokens (#1149).
+        if (messageStartTime) {
           const elapsedTimeMilliseconds = Date.now() - messageStartTime;
-          const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
-          const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
-          pt.updateMetrics({
-            TIn: chatInTokens !== undefined ? chatInTokens : -1,
-            TOut: usage.output_tokens,
-            // reasoning tokens are a subset of output_tokens (already in TOut) - surfaced as a breakdown, like OpenAI/Gemini
-            ...(typeof usage.output_tokens_details?.thinking_tokens === 'number' ? { TOutR: usage.output_tokens_details.thinking_tokens } : {}),
-            vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
+          const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
             dtStart: timeToFirstEvent,
             dtInner: elapsedTimeMilliseconds,
             dtAll: Date.now() - parserCreationTimestamp,
-          });
+          };
+          if (usage?.output_tokens) {
+            const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
+            const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
+            metricsUpdate.TIn = chatInTokens !== undefined ? chatInTokens : -1;
+            metricsUpdate.TOut = usage.output_tokens;
+            // reasoning tokens are a subset of output_tokens (already in TOut) - surfaced as a breakdown, like OpenAI/Gemini
+            if (typeof usage.output_tokens_details?.thinking_tokens === 'number')
+              metricsUpdate.TOutR = usage.output_tokens_details.thinking_tokens;
+            metricsUpdate.vTOutInner = Math.round(chatOutRate * 100) / 100; // Round to 2 decimal places
+          }
+          pt.updateMetrics(metricsUpdate);
         }
 
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant message_delta: stop_reason=${delta.stop_reason || 'none'}, TOut=${usage?.output_tokens || 'none'}`);
@@ -667,19 +673,15 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         needsTextSeparator = hotFixAntInjectToolsTextSpacer;
     }
 
-    // -> Stats
+    // -> Stats: timing always (measured locally); token/cache fields only when the usage block is present (#1149)
+    const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
+      // vTOutInner: // we don't know the server-side rate
+      // dtStart / dtInner: // we don't know
+      dtAll: Date.now() - parserCreationTimestamp,
+    };
     if (usage) {
-      const elapsedTimeMilliseconds = Date.now() - parserCreationTimestamp;
-      // const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
-      // const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
-      const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
-        TIn: usage.input_tokens,
-        TOut: usage.output_tokens,
-        // vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
-        // dtStart: // we don't know
-        // dtInner: // we don't know
-        dtAll: elapsedTimeMilliseconds,
-      };
+      metricsUpdate.TIn = usage.input_tokens;
+      metricsUpdate.TOut = usage.output_tokens;
       if (usage.cache_read_input_tokens || usage.cache_creation_input_tokens) {
         if (typeof usage.cache_read_input_tokens === 'number')
           metricsUpdate.TCacheRead = usage.cache_read_input_tokens;
@@ -689,8 +691,8 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       // reasoning tokens are a subset of output_tokens (already in TOut) - surfaced as a breakdown, like OpenAI/Gemini
       if (typeof usage.output_tokens_details?.thinking_tokens === 'number')
         metricsUpdate.TOutR = usage.output_tokens_details.thinking_tokens;
-      pt.updateMetrics(metricsUpdate);
     }
+    pt.updateMetrics(metricsUpdate);
 
     // Continuation: when pause_turn, throw to trigger re-dispatch with accumulated content
     if (stop_reason === 'pause_turn')

@@ -123,11 +123,9 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       return;
 
 
-    // -> Stats
+    // -> Stats (the usage chunk is the streaming terminal signal; timing survives even without token counts)
     if (json.usage) {
-      const metrics = _fromOpenAIUsage(json.usage, parserCreationTimestamp, timeToFirstEvent);
-      if (metrics)
-        pt.updateMetrics(metrics);
+      pt.updateMetrics(_fromOpenAIMetrics(json.usage, parserCreationTimestamp, timeToFirstEvent));
       // [OpenAI] Expected correct case: the last object has usage, but an empty choices array
       if (!json.choices.length)
         return;
@@ -445,12 +443,8 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
     if (json.model)
       pt.setModelName(json.model);
 
-    // -> Stats
-    if (json.usage) {
-      const metrics = _fromOpenAIUsage(json.usage, parserCreationTimestamp, undefined);
-      if (metrics)
-        pt.updateMetrics(metrics);
-    }
+    // -> Metrics: timing always, tokens only when the usage block carries them (#1149)
+    pt.updateMetrics(_fromOpenAIMetrics(json.usage, parserCreationTimestamp, undefined));
 
     // Assumption/validate: expect 1 completion, or stop
     if (json.choices.length !== 1)
@@ -649,26 +643,28 @@ function _fromOpenAIFinishReason(finish_reason: string | null | undefined) {
   return null;
 }
 
-function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage'], parserCreationTimestamp: number, timeToFirstEvent: number | undefined) {
+function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usage'], parserCreationTimestamp: number, timeToFirstEvent: number | undefined): AixWire_Particles.CGSelectMetrics {
 
-  // -> Stats only in some packages
-  if (!usage)
-    return undefined;
-
-  // Require at least the completion tokens, or issue a DEV warning otherwise
-  if (usage.completion_tokens === undefined) {
-    // Warn, so we may adjust this usage parsing for Non-OpenAI APIs
-    console.log('[DEV] AIX: OpenAI-dispatch missing completion tokens in usage', { usage });
-    return undefined;
-  }
-
-  // Create the metrics update object
+  // Time Metrics - measured locally (parser-creation -> now), independent of the upstream `usage` block.
+  // Emitted UNCONDITIONALLY so the run duration (`dtAll`) survives even when a provider omits usage or its
+  // completion tokens; gating timing behind usage-presence would silently discard it (#1149, cf. #1143).
   const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
-    TIn: usage.prompt_tokens ?? undefined,
-    TOut: usage.completion_tokens,
     // dtInner: openAI is not reporting the time as seen by the servers
     dtAll: Date.now() - parserCreationTimestamp,
   };
+  if (timeToFirstEvent !== undefined)
+    metricsUpdate.dtStart = timeToFirstEvent;
+
+  // Token Metrics - only when the upstream usage block carries completion tokens
+  if (usage?.completion_tokens === undefined) {
+    // Warn (dev) when usage is present but lacks completion tokens, so we may adjust for Non-OpenAI APIs
+    if (usage)
+      console.log('[DEV] AIX: OpenAI-dispatch missing completion tokens in usage', { usage });
+    return metricsUpdate;
+  }
+
+  metricsUpdate.TIn = usage.prompt_tokens ?? undefined;
+  metricsUpdate.TOut = usage.completion_tokens;
 
   // Input Metrics
 
@@ -720,11 +716,6 @@ function _fromOpenAIUsage(usage: OpenAIWire_API_Chat_Completions.Response['usage
       metricsUpdate.$cReported = Math.round(usage.cost.total_cost * 100 * 10000) / 10000;
     }
   }
-
-  // Time Metrics
-
-  if (timeToFirstEvent !== undefined)
-    metricsUpdate.dtStart = timeToFirstEvent;
 
   return metricsUpdate;
 }
