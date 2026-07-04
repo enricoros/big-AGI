@@ -747,9 +747,12 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       // load data purely into state, and ready for confirmation
       setBackupDataForRestore(data);
       setRestoreState('confirm');
-      // Reset checkboxes to OFF by default for safety
-      setRestoreLocalStorageEnabled(false);
-      setRestoreIndexedDBEnabled(false);
+      // Auto-select the category when it's the ONLY one in the file (settings-only or chats-only), so the user isn't stuck facing a disabled 'Replace' button.
+      // When both are present (a full backup) leave both OFF - replacing chats is destructive, so the user must choose deliberately.
+      const _hasLS = hasKeys(data.storage.localStorage);
+      const _hasIDB = hasKeys(data.storage.indexedDB);
+      setRestoreLocalStorageEnabled(_hasLS && !_hasIDB);
+      setRestoreIndexedDBEnabled(_hasIDB && !_hasLS);
     } catch (error: any) {
       // Unexpected system errors only
       logger.error('Unexpected error during restore preparation:', error);
