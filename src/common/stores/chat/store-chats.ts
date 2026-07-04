@@ -88,7 +88,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
       /** Used by:
        * - openAndLoadConversations (via DataAtRestV1.recreateConversation),
        * - LinkChatViewer(from RestV1),
-       * - ImportChats.handleChatGptLoad(H)
+       * - ImportChats (JSON/backup file import)
        */
       importConversation: (conversation: DConversation, preventClash: boolean): DConversationId => {
         const { conversations } = _get();
