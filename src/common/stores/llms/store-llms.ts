@@ -50,6 +50,7 @@ interface LlmsRootActions {
   userCloneLLM: (sourceId: DLLMId, cloneLabel: string, cloneVariant: string) => DLLMId | null;
 
   createModelsService: (vendor: IModelVendor) => DModelsService;
+  importServicesAppend: (services: DModelsService<any>[]) => { added: number; skipped: number };
   removeService: (id: DModelsServiceId) => void;
   updateServiceLabel: (id: DModelsServiceId, label: string, allowEmpty?: boolean) => void;
   updateServiceSettings: <TServiceSettings>(id: DModelsServiceId, partialSettings: Partial<TServiceSettings>) => void;
@@ -358,6 +359,37 @@ export const useModelsStore = create<LlmsStore>()(persist(
       });
 
       return newService;
+    },
+
+    importServicesAppend: (services: DModelsService<any>[]) => {
+
+      const { sources: existingServices, confServiceId } = get();
+
+      // add-only semantics: never overwrite an existing service, the local setup (keys) is likely fresher than the backup
+      const toAdd: DModelsService[] = [];
+      let skipped = 0;
+      for (const service of services) {
+        const isValid = !!service?.id && !!service.vId && !!findModelVendor(service.vId); // unknown vendor: e.g. a file from a newer app version
+        const isDuplicate = existingServices.some(s => s.id === service.id) || toAdd.some(s => s.id === service.id);
+        if (!isValid || isDuplicate) {
+          skipped++;
+          continue;
+        }
+        toAdd.push({
+          id: service.id,
+          label: service.label || findModelVendor(service.vId)?.name || service.vId,
+          vId: service.vId,
+          setup: (service.setup && typeof service.setup === 'object') ? service.setup : {},
+        });
+      }
+
+      if (toAdd.length)
+        set({
+          sources: [...existingServices, ...toAdd],
+          confServiceId: confServiceId ?? toAdd[0].id,
+        });
+
+      return { added: toAdd.length, skipped };
     },
 
     removeService: (id: DModelsServiceId) =>
