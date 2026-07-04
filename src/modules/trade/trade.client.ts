@@ -7,7 +7,7 @@ import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
 import { Release } from '~/common/app.release';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
-import { llmsStoreState } from '~/common/stores/llms/store-llms';
+import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { prettyShortChatModelName } from '~/common/util/dMessageUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
@@ -28,9 +28,10 @@ export function tradeFileVariant() {
  * Load conversations from the given Files (we don't need/use the handle here, as no LiveFile is involved in the import)
  * @param files The files to import, if null the user may have cancelled the request
  * @param preventClash If true, the importer will not overwrite existing conversations with the same ID
+ * @param restoreModelServices If true, model services (incl. API keys) found in backup files are restored, add-only - keep OFF for casual surfaces (drag-drop), ON only for deliberate restore (Import dialog)
  */
-export async function importConversationsFromFilesAtRest(files: File[] | null, preventClash: boolean = false): Promise<ImportedOutcome> {
-  const outcome: ImportedOutcome = { conversations: [], activateConversationId: null };
+export async function importConversationsFromFilesAtRest(files: File[] | null, preventClash: boolean = false, restoreModelServices: boolean = false): Promise<ImportedOutcome> {
+  const outcome: ImportedOutcome = { conversations: [], modelServices: [], activateConversationId: null };
 
   // user cancelled
   if (!files)
@@ -61,6 +62,10 @@ export async function importConversationsFromFilesAtRest(files: File[] | null, p
     if (cOutcome.importedConversationId)
       outcome.activateConversationId = cOutcome.importedConversationId;
   }
+
+  // import model services (incl. API keys): explicit opt-in only, and add-only - never overwrites existing services
+  if (restoreModelServices && outcome.modelServices.length)
+    outcome.servicesOutcome = llmsStoreActions().importServicesAppend(outcome.modelServices);
 
   return outcome;
 }
@@ -96,7 +101,7 @@ function loadConversationsFromAtRestV1(fileName: string, obj: any, outcome: Impo
 
     // Heuristic (backup): DataAtRestV1.RestAllJsonV1B
     case hasConversations && !hasMessages:
-      const { conversations, folders } = obj as DataAtRestV1.RestAllJsonV1B;
+      const { conversations, folders, models } = obj as DataAtRestV1.RestAllJsonV1B;
       for (const conversation of conversations)
         loadSingleChatFromAtRestV1(fileName, conversation, outcome);
 
@@ -106,6 +111,12 @@ function loadConversationsFromAtRestV1(fileName: string, obj: any, outcome: Impo
         if (dFolders.length)
           useFolderStore.getState().importFoldersAppend(dFolders, folders.enableFolders);
       }
+
+      // collect model services - light shape check only, the applier (importServicesAppend) validates the vendor and skips duplicates
+      if (models?.sources && Array.isArray(models.sources))
+        for (const service of models.sources)
+          if (service && typeof service === 'object' && service.id && service.vId)
+            outcome.modelServices.push(service);
       break;
 
     // Heuristic (single):
@@ -134,30 +145,41 @@ function loadSingleChatFromAtRestV1(fileName: string, part: DataAtRestV1.RestCha
 
 /**
  * Download all conversations as a JSON file, for backup and future restore
- * @throws {Error} if the user closes the dialog, or file could not be saved
+ * @returns the number of conversations saved and the exact file size, for UI confirmation
+ * @throws {DOMException} AbortError if the user closes the save dialog
+ * @throws {Error} if there are no conversations to save, or the file could not be saved
  */
-export async function downloadAllJsonV1B() {
+export async function downloadAllJsonV1B(): Promise<{ conversationCount: number; sizeBytes: number }> {
   // conversations and
   const { folders, enableFolders } = useFolderStore.getState();
+  const conversations = useChatStore.getState().conversations;
+
+  // never write an empty backup - the store may still be hydrating, or there is nothing to save
+  if (!conversations.length)
+    throw new Error('No conversations to backup. If you have chats, wait for the app to finish loading and retry.');
+
   const payload = DataAtRestV1.formatAllToJsonV1B(
-    useChatStore.getState().conversations,
+    conversations,
     llmsStoreState().sources,
     folders, enableFolders,
   );
   const json = JSON.stringify(payload);
   const blob = new Blob([json], { type: 'application/json' });
 
-  // save file
+  // save file - let errors (including AbortError on cancel) reach the caller, so the UI never fakes success
   await fileSave(blob, {
     fileName: `backup_chats_${window?.location?.hostname || 'all'}_${payload.conversations.length}_${prettyTimestampForFilenames(false)}.agi.json`,
     // mimeTypes: ['application/json', 'application/big-agi'],
     extensions: ['.json'],
-  }).catch(() => null);
+  });
+
+  return { conversationCount: payload.conversations.length, sizeBytes: blob.size };
 }
 
 /**
  * Download a conversation as a JSON file, for backup and future restore
- * @throws {Error} if the user closes the dialog, or file could not be saved
+ * @throws {DOMException} AbortError if the user closes the save dialog
+ * @throws {Error} if the file could not be saved
  */
 export async function downloadSingleChat(conversation: DConversation, format: 'json' | 'markdown') {
 
@@ -185,11 +207,11 @@ export async function downloadSingleChat(conversation: DConversation, format: 'j
   // const fileConvId = conversation.id.slice(0, 8);
   const fileTitle = conversationTitle(conversation).replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'untitled';
 
-  // save file
+  // save file - let errors (including AbortError on cancel) reach the caller, so the UI never fakes success
   await fileSave(blob, {
     fileName: `conversation_${fileTitle}_${prettyTimestampForFilenames(false)}.agi${extension}`,
     extensions: [extension],
-  }).catch(() => null);
+  });
 }
 
 /**

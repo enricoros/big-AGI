@@ -51,7 +51,8 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
 
 
   const handleImportFromFiles = async () => {
-    const outcome = await openConversationsAtRestPicker().then(importConversationsFromFilesAtRest);
+    // restoreModelServices: this dialog is the deliberate restore surface, so backup files also bring their services (keys) back
+    const outcome = await openConversationsAtRestPicker().then(files => importConversationsFromFilesAtRest(files, false, true));
 
     // activate the last (most recent) imported conversation
     if (outcome?.activateConversationId)
@@ -69,7 +70,7 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
     if ((isUrl && !chatGptUrlValid) || (isSource && !chatGptSource))
       return;
 
-    const outcome: ImportedOutcome = { conversations: [], activateConversationId: null };
+    const outcome: ImportedOutcome = { conversations: [], modelServices: [], activateConversationId: null };
 
     // load the conversation
     let conversationId: DConversationId, data: ChatGptSharedChatSchema;

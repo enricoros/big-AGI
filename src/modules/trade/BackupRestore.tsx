@@ -16,7 +16,7 @@ import { createModuleLogger } from '~/common/logger';
 import { downloadBlob } from '~/common/util/downloadUtils';
 
 import { tradeFileVariant } from './trade.client';
-import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { capitalizeFirstLetter, humanReadableBytes } from '~/common/util/textUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 
 
@@ -509,7 +509,7 @@ function isValidBackup(data: any): data is DFlashSchema {
 /**
  * Creates a backup object and optionally saves it to a file
  */
-async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore', forceDownloadOverFileSave: boolean, ignoreExclusions: boolean, includeSettings: boolean, includeIndexedDB: boolean, saveToFileName: string) {
+async function saveFlashObjectOrThrow(backupType: 'full' | 'partial' | 'auto-before-restore', forceDownloadOverFileSave: boolean, ignoreExclusions: boolean, includeSettings: boolean, includeIndexedDB: boolean, saveToFileName: string) {
 
   // for mobile, try with the download link approach - we keep getting truncated JSON save-files in other paths, streaming or not
   if (forceDownloadOverFileSave || !Is.Desktop)
@@ -517,8 +517,9 @@ async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore'
       .then(JSON.stringify)
       .then((flashString) => {
         logger.info(`Expected flash file size: ${flashString.length.toLocaleString()} bytes`);
-        downloadBlob(new Blob([flashString], { type: 'application/json' }), saveToFileName);
-        return undefined;
+        const blob = new Blob([flashString], { type: 'application/json' });
+        downloadBlob(blob, saveToFileName);
+        return blob.size; // truthy (schema is never empty) - callers can show success and report the size
       });
 
   // for mobile, try a different implementation, with streaming creation, to hopefully avoid truncation
@@ -526,7 +527,8 @@ async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore'
   //   return saveFlashObjectOrThrow_Streaming(backupType, ignoreExclusions, saveToFileName);
 
   // run after the file picker has confirmed a file
-  const flashBlobPromise = new Promise<Blob>(async (resolve) => {
+  // NOTE: async IIFE, not a Promise executor: a throw here (e.g. stringify OOM) must reject, or fileSave would hang forever
+  const flashBlobPromise = (async () => {
     // create the backup object (heavy operation)
     const flashObject = await createFlashObject(backupType, ignoreExclusions, includeSettings, includeIndexedDB);
 
@@ -536,8 +538,8 @@ async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore'
 
     logger.info(`Expected flash file size: ${flashString.length.toLocaleString()} bytes`);
 
-    resolve(new Blob([flashString], { type: 'application/json' }));
-  });
+    return new Blob([flashString], { type: 'application/json' });
+  })();
 
   return await fileSave(flashBlobPromise, {
     description: BACKUP_FILE_FORMAT,
@@ -630,7 +632,7 @@ async function saveFlashObjectOrThrow(backupType: 'full' | 'auto-before-restore'
 //   });
 // }
 
-async function createFlashObject(backupType: 'full' | 'auto-before-restore', ignoreExclusions: boolean, includeSettings: boolean, includeIndexedDB: boolean): Promise<DFlashSchema> {
+async function createFlashObject(backupType: 'full' | 'partial' | 'auto-before-restore', ignoreExclusions: boolean, includeSettings: boolean, includeIndexedDB: boolean): Promise<DFlashSchema> {
   return {
     schema: 'vnd.agi.flash-backup',
     schemaVersion: BACKUP_FORMAT_VERSION_NUMBER,
@@ -968,6 +970,7 @@ export function FlashBackup(props: {
   const [includeImages, setIncludeImages] = React.useState(false);
   const [includeSettings, setIncludeSettings] = React.useState(true);
   const [backupState, setBackupState] = React.useState<'idle' | 'processing' | 'success' | 'error'>('idle');
+  const [backupSizeBytes, setBackupSizeBytes] = React.useState<number | null>(null);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   // derived state
@@ -978,6 +981,7 @@ export function FlashBackup(props: {
 
   const handleFullBackup = React.useCallback(async (event: React.MouseEvent) => {
     setBackupState('processing');
+    setBackupSizeBytes(null);
     setErrorMessage(null);
     try {
       onStartedBackup?.();
@@ -991,6 +995,8 @@ export function FlashBackup(props: {
         `Big-AGI-${tradeFileVariant()}-flash${includeImages ? '+images' : ''}${includeSettings ? '' : '-nosets'}${event.ctrlKey ? '-download' : ''}-${dateStr}.json`,
       );
       setBackupState(success ? 'success' : 'idle');
+      if (typeof success === 'number')
+        setBackupSizeBytes(success);
     } catch (error: any) {
       if (error?.name === 'AbortError') {
         // the user has closed the file picker, most likely - do nothing
@@ -1026,6 +1032,11 @@ export function FlashBackup(props: {
     >
       {backupState === 'success' ? 'Backup Saved' : backupState === 'error' ? 'Backup Failed' : isProcessing ? 'Backing Up...' : 'Export All'}
     </Button>
+    {backupState === 'success' && backupSizeBytes !== null && (
+      <Typography level='body-xs' color='success'>
+        Flash backup saved · {humanReadableBytes(backupSizeBytes)}
+      </Typography>
+    )}
     {!errorMessage && <>
       <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', ml: 2, mr: 1.25, mt: 0.25 }}>
         <FormLabel sx={{ fontWeight: 'md' }}>Include Models & Settings</FormLabel>

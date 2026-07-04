@@ -4,6 +4,7 @@ import { Alert, Box, Divider, IconButton, List, ListItem, Tooltip, Typography } 
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 
 import type { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
+import type { DModelsService } from '~/common/stores/llms/llms.service.types';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 
@@ -23,6 +24,8 @@ type ConversationOutcome = {
 export interface ImportedOutcome {
   conversations: ConversationOutcome[];
   activateConversationId: DConversationId | null;
+  modelServices: DModelsService[];
+  servicesOutcome?: { added: number; skipped: number }; // set by the applier (trade.client), not the parser
 }
 
 
@@ -65,6 +68,15 @@ export function ImportOutcomeModal(props: { outcome: ImportedOutcome, rawJson: s
           and {successes.length === 1 ? 'it' : 'the last one'} is now active.
         </Typography>
       </>}
+
+      {!!props.outcome.servicesOutcome?.added && (
+        <Alert variant='soft' color='success'>
+          <Typography>
+            Restored {props.outcome.servicesOutcome.added} AI service configuration{props.outcome.servicesOutcome.added === 1 ? '' : 's'} (including keys).
+            Open the Models settings to refresh {props.outcome.servicesOutcome.added === 1 ? 'its' : 'their'} model list.
+          </Typography>
+        </Alert>
+      )}
 
       {failures.length >= 1 && <Box>
         <Alert variant='soft' color='danger'>

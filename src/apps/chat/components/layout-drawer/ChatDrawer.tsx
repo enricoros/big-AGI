@@ -67,7 +67,6 @@ function ChatDrawer(props: {
   activeFolderId: string | null,
   chatPanesConversationIds: DConversationId[],
   disableNewButton: boolean,
-  focusedChatBeamOpen: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null, addSplitPane: boolean) => void,
   onConversationNew: (forceNoRecycle: boolean, isIncognito: boolean) => void,
@@ -145,7 +144,8 @@ function ChatDrawer(props: {
   }, [onConversationsDelete]);
 
   const handleConversationsExport = React.useCallback(() => {
-    props.activeConversationId && onConversationsExportDialog(props.activeConversationId, true);
+    // null conversationId is fine: the dialog disables the single-chat buttons and still offers the all-chats/flash backups
+    onConversationsExportDialog(props.activeConversationId, true);
   }, [onConversationsExportDialog, props.activeConversationId]);
 
 
@@ -486,7 +486,10 @@ function ChatDrawer(props: {
           {/*<OpenAIIcon sx={{  ml: 'auto' }} />*/}
         </ListItemButton>
 
-        <ListItemButton disabled={filteredChatsAreEmpty || props.focusedChatBeamOpen} onClick={handleConversationsExport} sx={{ flex: 1 }}>
+        {/* Always enabled: this is also the only route to 'Backup All Chats' / 'Export All', which must stay reachable (e.g. with Beam open, or zero chats).
+          - former gate (d8c78b1a004, 'Export: disable when beam open, as it's not exported for now'), kept for the record:
+            disabled={filteredChatsAreEmpty || props.focusedChatBeamOpen} */}
+        <ListItemButton onClick={handleConversationsExport} sx={{ flex: 1 }}>
           <ListItemDecorator>
             <FileUploadOutlinedIcon />
           </ListItemDecorator>
