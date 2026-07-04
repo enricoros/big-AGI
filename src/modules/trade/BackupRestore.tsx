@@ -21,7 +21,7 @@ import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 
 
 // configuration
-const BACKUP_FILE_FORMAT = 'Big-AGI Flash File';
+const BACKUP_FILE_FORMAT = 'Big-AGI Backup File';
 const BACKUP_FORMAT_VERSION = '1.2';
 const BACKUP_FORMAT_VERSION_NUMBER = 102000;
 const WINDOW_RELOAD_DELAY = 300;
@@ -543,7 +543,8 @@ async function saveFlashObjectOrThrow(backupType: 'full' | 'partial' | 'auto-bef
 
   return await fileSave(flashBlobPromise, {
     description: BACKUP_FILE_FORMAT,
-    extensions: ['.agi.json', '.json'],
+    // only '.json' (not the invalid compound '.agi.json') - keeps Chrome's File System Access API save picker working; the fileName already carries the full name
+    extensions: ['.json'],
     fileName: saveToFileName,
   });
 }
@@ -686,7 +687,8 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
     let file: FileWithHandle;
     try {
       file = await fileOpen({
-        extensions: ['.agi.json', '.json'],
+        // only '.json': the compound '.agi.json' is an invalid extension for Chrome's File System Access API and breaks the picker (the backup file can't be selected). '.json' still matches '*.agi.json' files by suffix.
+        extensions: ['.json'],
         description: BACKUP_FILE_FORMAT,
         mimeTypes: ['application/json'],
       });
@@ -708,7 +710,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       } catch (error) {
         // User selected invalid JSON - this is expected, not a system error
         setRestoreState('error');
-        setErrorMessage(`Invalid JSON in Flash file: ${_getErrorText(error)}`);
+        setErrorMessage(`Invalid JSON in backup file: ${_getErrorText(error)}`);
         logger.warn('User selected non-JSON file for restore', { error }, undefined, { skipReporting: true });
         return;
       }
@@ -717,14 +719,14 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       if (!isValidBackup(data)) {
         // User selected wrong file format - this is expected, not a system error
         setRestoreState('error');
-        setErrorMessage(`Invalid Flash file format. This does not appear to be a valid ${BACKUP_FILE_FORMAT}.`);
+        setErrorMessage(`Invalid backup file format. This does not appear to be a valid ${BACKUP_FILE_FORMAT}.`);
         logger.warn('User selected invalid backup file format', { data: { hasMetadata: !!data?.metadata, hasStorage: !!data?.storage } }, undefined, { skipReporting: true });
         return;
       }
       if (data.metadata.application !== 'Big-AGI') {
         // User selected incompatible file - this is expected, not a system error
         setRestoreState('error');
-        setErrorMessage(`Incompatible Flash file. Found application "${data.metadata.application}" but expected "Big-AGI".`);
+        setErrorMessage(`Incompatible backup file. Found application "${data.metadata.application}" but expected "Big-AGI".`);
         logger.warn('User selected incompatible backup file', { application: data.metadata.application }, undefined, { skipReporting: true });
         return;
       }
@@ -825,11 +827,11 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
   return <>
 
     <Typography level='body-sm' mt={2}>
-      Restore a full installation:
+      Restore from a backup file:
     </Typography>
     <Button
       variant='soft'
-      aria-label='Restore from flash file'
+      aria-label='Restore from backup file'
       color={restoreState === 'success' ? 'success' : restoreState === 'error' ? 'danger' : 'primary'}
       disabled={isBusy || !isUnlocked}
       loading={restoreState === 'processing'}
@@ -841,7 +843,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
         justifyContent: 'space-between',
       }}
     >
-      {restoreState === 'success' ? 'Restore Complete' : restoreState === 'error' ? 'Restore Failed' : restoreState === 'processing' ? 'Restoring...' : 'Re-Flash from File'}
+      {restoreState === 'success' ? 'Restore Complete' : restoreState === 'error' ? 'Restore Failed' : restoreState === 'processing' ? 'Restoring...' : 'Restore from Backup File'}
     </Button>
     {/*{!errorMessage && <Typography level='body-xs'>*/}
     {/*  Warning: Replaces current data.<br />Requires page reload.*/}
@@ -869,7 +871,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       onClose={handleCancelRestore}
     >
       <Typography textColor='text.secondary'>
-        This will <Typography fontWeight='lg' color='danger'>replace all current application data</Typography> with the content from the selected flash file.&nbsp;
+        This will <Typography fontWeight='lg' color='danger'>replace all current application data</Typography> with the content from the selected backup file.&nbsp;
         <Typography fontWeight='lg' color='danger'>WARNING: This is a destructive operation that may break the app.</Typography>
       </Typography>
       {/*<Typography fontWeight='md'>*/}
@@ -877,7 +879,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       {/*</Typography>*/}
       {backupDataForRestore?.metadata && (
         <Box sx={{ mt: 1, p: 1.5, bgcolor: 'background.level1', borderRadius: 'sm', border: '1px solid', borderColor: 'neutral.outlinedBorder', fontSize: 'sm' }}>
-          <Box fontWeight='md' mb={1}>Flash File Details:</Box>
+          <Box fontWeight='md' mb={1}>Backup File Details:</Box>
           <Divider sx={{ my: 1 }} />
           Created: {new Date(backupDataForRestore.metadata.timestamp).toLocaleString()}<br />
           Backup Type: {backupDataForRestore.metadata.backupType}<br />
@@ -1017,7 +1019,7 @@ export function FlashBackup(props: {
     </Typography>
     <Button
       variant='soft'
-      aria-label='Download full flash file'
+      aria-label='Download full backup file'
       color={backupState === 'success' ? 'success' : backupState === 'error' ? 'warning' : 'primary'}
       disabled={isProcessing}
       loading={isProcessing}
