@@ -494,15 +494,16 @@ function GeminiFileChip(props: {
   // state
   const [busy, setBusy] = React.useState<false | 'download' | 'play' | 'delete'>(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const { showPromisedOverlay } = useOverlayComponents();
 
   // props
   const { access, fileName, mimeType, isVideo, onFragmentDelete } = props;
 
   // external state - metadata (size/expiry/state) + on-demand download
   const { data: metadata, isLoading: metaLoading, error: metaError } = apiQuery.llmGemini.fileApiGetMetadata.useQuery({ access, fileName }, {
-    staleTime: 60 * 1000, // expiry countdown + state (PROCESSING -> ACTIVE) drift; re-check occasionally
-    // the file reports PROCESSING right after generation and flips to ACTIVE within a few seconds - poll until then
-    // so the 'processing…' label clears on its own (previously it stuck until a manual page refresh)
+    staleTime: Infinity, // metadata (size/expiry) is immutable once ACTIVE -> never refetch (query is keyed per {access,fileName}, so switching chats won't reload it)
+    // the file reports PROCESSING right after generation and flips to ACTIVE within a few seconds - poll ONLY until
+    // then so the 'processing…' label clears itself; at ACTIVE the interval returns false and staleTime:Infinity keeps it quiet forever
     refetchInterval: (query) => (query.state.data?.state === 'PROCESSING' ? 3000 : false),
   });
   const { refetch: refetchContent } = apiQuery.llmGemini.fileApiDownload.useQuery({ access, fileName }, {
@@ -554,14 +555,21 @@ function GeminiFileChip(props: {
     }
   }, [getBlob]);
 
-  const handleDelete = React.useCallback(() => {
+  const handleDelete = React.useCallback(async (event: React.MouseEvent) => {
     if (!onFragmentDelete) return;
+    // confirm (shift-click to skip) - deletes the video from Google now; it would otherwise auto-expire in ~48h
+    if (!event.shiftKey && !await showPromisedOverlay('chat-message-delete-hosted-resource', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        confirmationText={<>Delete this generated video from Google now?<br />It would otherwise auto-expire in ~48h.</>}
+        positiveActionText='Delete'
+      />,
+    )) return;
     setBusy('delete');
-    // best-effort remote delete (the file auto-expires in 48h anyway, so we don't block/confirm on it), then drop
-    // the fragment. A 404 here just means it already expired - still remove the chip.
+    // best-effort remote delete (a 404 just means it already expired), then drop the fragment
     apiAsync.llmGemini.fileApiDelete.mutate({ access, fileName }).catch(console.error);
     onFragmentDelete();
-  }, [access, fileName, onFragmentDelete]);
+  }, [access, fileName, onFragmentDelete, showPromisedOverlay]);
 
 
   return (
