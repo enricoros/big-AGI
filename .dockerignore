@@ -6,6 +6,8 @@
 !public/
 !src/
 !tools/
+tools/video/node_modules/
+tools/video/out/
 
 !*.mjs
 !middleware_BASIC_AUTH.ts
