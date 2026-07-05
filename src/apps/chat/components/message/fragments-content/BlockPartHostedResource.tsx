@@ -1,5 +1,6 @@
 import * as React from 'react';
 import TimeAgo from 'react-timeago';
+import { useQuery } from '@tanstack/react-query';
 
 import { Box, Checkbox, CircularProgress, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Sheet, Typography } from '@mui/joy';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
@@ -13,6 +14,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import type { AnthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.access';
 import type { GeminiAccessSchema } from '~/modules/llms/server/gemini/gemini.access';
 import type { OpenAIAccessSchema } from '~/modules/llms/server/openai/openai.access';
+import { geminiFileDelete, geminiFileDownloadBlob, geminiFileErrorIsGone, geminiFileGetMetadata } from '~/modules/llms/vendors/gemini/geminiFiles.client';
 
 import type { ContentScaling } from '~/common/app.theme';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
@@ -499,16 +501,16 @@ function GeminiFileChip(props: {
   // props
   const { access, fileName, mimeType, isVideo, onFragmentDelete } = props;
 
-  // external state - metadata (size/expiry/state) + on-demand download
-  const { data: metadata, isLoading: metaLoading, error: metaError } = apiQuery.llmGemini.fileApiGetMetadata.useQuery({ access, fileName }, {
-    staleTime: Infinity, // metadata (size/expiry) is immutable once ACTIVE -> never refetch (query is keyed per {access,fileName}, so switching chats won't reload it)
+  // external state - metadata (size/expiry/state). CSF-aware: fetches Google directly when access.clientSideFetch is
+  // set (key stays client-side), else via the key-proxied tRPC route - see geminiFiles.client.ts. Keyed per
+  // {host, fileName} (fileName is globally unique), so switching chats hits cache with no reload.
+  const { data: metadata, isLoading: metaLoading, error: metaError } = useQuery({
+    queryKey: ['gemini-file-metadata', access.geminiHost, fileName],
+    queryFn: () => geminiFileGetMetadata(access, fileName),
+    staleTime: Infinity, // metadata (size/expiry) is immutable once ACTIVE -> never refetch
     // the file reports PROCESSING right after generation and flips to ACTIVE within a few seconds - poll ONLY until
     // then so the 'processing…' label clears itself; at ACTIVE the interval returns false and staleTime:Infinity keeps it quiet forever
     refetchInterval: (query) => (query.state.data?.state === 'PROCESSING' ? 3000 : false),
-  });
-  const { refetch: refetchContent } = apiQuery.llmGemini.fileApiDownload.useQuery({ access, fileName }, {
-    enabled: false, // on-demand only
-    select: _base64ResponseToBlob,
   });
 
   // derived
@@ -516,7 +518,7 @@ function GeminiFileChip(props: {
   const ext = mimeType.split(';')[0].trim().split('/')[1] || 'bin';
   const downloadName = `gemini-${shortId}.${ext}`;
   const displayName = isVideo ? 'Gemini Generated Video' : 'Generated file';
-  const isFileGone = !!metaError && typeof metaError === 'object' && 'data' in metaError && ((metaError.data as any)?.httpStatus === 404 || (metaError.data as any)?.aixFHttpStatus === 404);
+  const isFileGone = geminiFileErrorIsGone(metaError);
   const isProcessing = metadata?.state === 'PROCESSING';
   const isBusy = !!busy || metaLoading;
   const hasError = !!actionError || (!!metaError && !isFileGone);
@@ -524,9 +526,7 @@ function GeminiFileChip(props: {
 
   // handlers
 
-  const getBlob = React.useCallback(async () => {
-    return (await refetchContent({ cancelRefetch: false, throwOnError: true })).data?.blob;
-  }, [refetchContent]);
+  const getBlob = React.useCallback(() => geminiFileDownloadBlob(access, fileName), [access, fileName]);
 
   const handleDownload = React.useCallback(async () => {
     setBusy('download');
@@ -566,8 +566,8 @@ function GeminiFileChip(props: {
       />,
     )) return;
     setBusy('delete');
-    // best-effort remote delete (a 404 just means it already expired), then drop the fragment
-    apiAsync.llmGemini.fileApiDelete.mutate({ access, fileName }).catch(console.error);
+    // best-effort remote delete (CSF-aware; a 404 just means it already expired), then drop the fragment
+    geminiFileDelete(access, fileName).catch(console.error);
     onFragmentDelete();
   }, [access, fileName, onFragmentDelete, showPromisedOverlay]);
 
