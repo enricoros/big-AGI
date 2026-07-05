@@ -7,9 +7,11 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 
 import type { AnthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.access';
+import type { GeminiAccessSchema } from '~/modules/llms/server/gemini/gemini.access';
 import type { OpenAIAccessSchema } from '~/modules/llms/server/openai/openai.access';
 
 import type { ContentScaling } from '~/common/app.theme';
@@ -20,6 +22,7 @@ import { convert_Base64_To_UInt8Array } from '~/common/util/blobUtils';
 import { createTextContentFragment, DMessageContentFragment, DMessageFragmentId, DMessageHostedResourcePart } from '~/common/stores/chat/chat.fragments';
 import { copyBlobPromiseToClipboard, copyToClipboard } from '~/common/util/clipboardUtils';
 import { downloadBlob } from '~/common/util/downloadUtils';
+import { videoPlayObjectUrl } from '~/common/util/video/videoPlayManaged';
 import { humanReadableBytes } from '~/common/util/textUtils';
 import { mimeTypeIsPlainText, mimeTypeIsSupportedImage, reverseLookupMimeType } from '~/common/attachment-drafts/attachment.mimetypes';
 import { useAIPreferencesStore } from '~/common/stores/store-ai';
@@ -479,6 +482,154 @@ function OpenAIContainerFileChip(props: {
   );
 }
 
+
+function GeminiFileChip(props: {
+  access: GeminiAccessSchema,
+  fileName: string,
+  mimeType: string,
+  isVideo: boolean,
+  onFragmentDelete?: () => void,
+}) {
+
+  // state
+  const [busy, setBusy] = React.useState<false | 'download' | 'play' | 'delete'>(false);
+  const [actionError, setActionError] = React.useState<string | null>(null);
+
+  // props
+  const { access, fileName, mimeType, isVideo, onFragmentDelete } = props;
+
+  // external state - metadata (size/expiry/state) + on-demand download
+  const { data: metadata, isLoading: metaLoading, error: metaError } = apiQuery.llmGemini.fileApiGetMetadata.useQuery({ access, fileName }, {
+    staleTime: 60 * 1000, // expiry countdown + state (PROCESSING -> ACTIVE) drift; re-check occasionally
+    // the file reports PROCESSING right after generation and flips to ACTIVE within a few seconds - poll until then
+    // so the 'processing…' label clears on its own (previously it stuck until a manual page refresh)
+    refetchInterval: (query) => (query.state.data?.state === 'PROCESSING' ? 3000 : false),
+  });
+  const { refetch: refetchContent } = apiQuery.llmGemini.fileApiDownload.useQuery({ access, fileName }, {
+    enabled: false, // on-demand only
+    select: _base64ResponseToBlob,
+  });
+
+  // derived
+  const shortId = fileName.replace(/^files\//, '');
+  const ext = mimeType.split(';')[0].trim().split('/')[1] || 'bin';
+  const downloadName = `gemini-${shortId}.${ext}`;
+  const displayName = isVideo ? 'Gemini Generated Video' : 'Generated file';
+  const isFileGone = !!metaError && typeof metaError === 'object' && 'data' in metaError && ((metaError.data as any)?.httpStatus === 404 || (metaError.data as any)?.aixFHttpStatus === 404);
+  const isProcessing = metadata?.state === 'PROCESSING';
+  const isBusy = !!busy || metaLoading;
+  const hasError = !!actionError || (!!metaError && !isFileGone);
+
+
+  // handlers
+
+  const getBlob = React.useCallback(async () => {
+    return (await refetchContent({ cancelRefetch: false, throwOnError: true })).data?.blob;
+  }, [refetchContent]);
+
+  const handleDownload = React.useCallback(async () => {
+    setBusy('download');
+    setActionError(null);
+    try {
+      const blob = await getBlob();
+      blob && downloadBlob(blob, downloadName);
+    } catch (error: any) {
+      setActionError(error?.message || 'Download failed');
+    } finally {
+      setBusy(false);
+    }
+  }, [getBlob, downloadName]);
+
+  const handlePlay = React.useCallback(async () => {
+    setBusy('play');
+    setActionError(null);
+    try {
+      const blob = await getBlob();
+      // reuse the ephemeral fullscreen overlay (revokes the object URL on close) - same playback as inline video
+      blob && videoPlayObjectUrl(URL.createObjectURL(blob), 'AI Video');
+    } catch (error: any) {
+      setActionError(error?.message || 'Play failed');
+    } finally {
+      setBusy(false);
+    }
+  }, [getBlob]);
+
+  const handleDelete = React.useCallback(() => {
+    if (!onFragmentDelete) return;
+    setBusy('delete');
+    // best-effort remote delete (the file auto-expires in 48h anyway, so we don't block/confirm on it), then drop
+    // the fragment. A 404 here just means it already expired - still remove the chip.
+    apiAsync.llmGemini.fileApiDelete.mutate({ access, fileName }).catch(console.error);
+    onFragmentDelete();
+  }, [access, fileName, onFragmentDelete]);
+
+
+  return (
+    <Sheet
+      variant='soft'
+      color='primary'
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        mx: 1.5,
+        px: 1.125,
+        py: 0.5,
+        borderRadius: 'sm',
+        overflow: 'hidden',
+        maxWidth: '100%',
+        boxShadow: 'inset 1px 2px 2px -2px rgba(0, 0, 0, 0.2)',
+      }}
+    >
+      <AttachFileRoundedIcon sx={{ fontSize: 'lg', opacity: 0.5 }} />
+
+      <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Box className='agi-ellipsize' sx={{ fontSize: 'sm', fontWeight: 'md', color: hasError ? 'var(--joy-palette-danger-plainColor)' : undefined }}>
+          {metaLoading ? 'Loading...' : isFileGone ? 'Video no longer available (expired)' : hasError ? `${displayName} - ${actionError || 'Could not load file info'}` : displayName}
+        </Box>
+        {metadata && !isFileGone && (
+          <Box sx={{ fontSize: 'xs', opacity: 0.6 }}>
+            {humanReadableBytes(metadata.sizeBytes)}
+            {metadata.expirationTime && <> · expires <TimeAgo date={metadata.expirationTime} /></>}
+            {isProcessing && ' · processing…'}
+          </Box>
+        )}
+      </Box>
+
+      {!isFileGone ? <>
+
+        {isVideo && (
+          <GoodTooltip title='Play'>
+            <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handlePlay} size='sm'>
+              {busy === 'play' ? <CircularProgress size='sm' /> : <PlayArrowRoundedIcon sx={{ fontSize: 'lg' }} />}
+            </IconButton>
+          </GoodTooltip>
+        )}
+        <GoodTooltip title='Download file'>
+          <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleDownload} size='sm'>
+            {busy === 'download' ? <CircularProgress size='sm' /> : <DownloadIcon sx={{ fontSize: 'lg' }} />}
+          </IconButton>
+        </GoodTooltip>
+        {!!onFragmentDelete && (
+          <GoodTooltip title='Delete from Google & remove'>
+            <IconButton variant='plain' color='danger' disabled={isBusy} onClick={handleDelete} size='sm'>
+              {busy === 'delete' ? <CircularProgress size='sm' /> : <DeleteOutlineIcon sx={{ fontSize: 'lg' }} />}
+            </IconButton>
+          </GoodTooltip>
+        )}
+
+      </> : onFragmentDelete && (
+        <GoodTooltip title='Remove from message'>
+          <IconButton variant='plain' color='danger' onClick={onFragmentDelete} size='sm'>
+            <DeleteOutlineIcon sx={{ fontSize: 'lg' }} />
+          </IconButton>
+        </GoodTooltip>
+      )}
+    </Sheet>
+  );
+}
+
+
 function NoAccessChip(props: { fileId: string }) {
   return (
     <Sheet variant='outlined' sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: 'sm' }}>
@@ -514,6 +665,7 @@ export function BlockPartHostedResource(props: {
   // reactive service + access resolution (hooks must run unconditionally - gated by the resolved 'via')
   const antAccess = useLlmServiceAccess(resource.via === 'anthropic' ? props.messageGeneratorLlmId : undefined, 'anthropic');
   const oaiAccess = useLlmServiceAccess(resource.via === 'openai-container' ? props.messageGeneratorLlmId : undefined, 'openai');
+  const gemAccess = useLlmServiceAccess(resource.via === 'gemini-file' ? props.messageGeneratorLlmId : undefined, 'googleai');
 
   if (resource.via === 'anthropic' && antAccess)
     return (
@@ -538,5 +690,17 @@ export function BlockPartHostedResource(props: {
       />
     );
 
-  return <NoAccessChip fileId={resource?.fileId || 'unknown'} />;
+  if (resource.via === 'gemini-file' && gemAccess)
+    return (
+      <GeminiFileChip
+        access={gemAccess}
+        fileName={resource.fileName}
+        mimeType={resource.mimeType}
+        isVideo={!!resource.isVideo}
+        onFragmentDelete={onFragmentDelete ? handleFragmentDelete : undefined}
+      />
+    );
+
+  const fallbackLabel = !resource ? 'unknown' : 'fileId' in resource ? resource.fileId : 'fileName' in resource ? resource.fileName : 'unknown';
+  return <NoAccessChip fileId={fallbackLabel} />;
 }

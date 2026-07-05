@@ -248,6 +248,7 @@ export type DMessageHostedResourcePart = {
   pt: 'hosted_resource';
   resource:
     | { via: 'anthropic', fileId: string, containerId?: string }
+    | { via: 'gemini-file', fileName: string, mimeType: string, isVideo?: boolean /* NOTE: more metadata incl expiration time can be fetched by fileName */ } // [Gemini] Files-API artifact (e.g. Omni video via delivery:uri) - re-fetchable for ~48h via the key-proxied Gemini download route
     | { via: 'openai-container', fileId: string, containerId: string, filename?: string }; // OpenAI code-interpreter container file
 };
 

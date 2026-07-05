@@ -142,6 +142,16 @@ export namespace GeminiInteractionsWire_API_Interactions {
     agent_config: AgentConfig_schema.optional(), // Polymorphic on `type`: 'deep-research' | 'dynamic'. MUTUALLY EXCLUSIVE with `generation_config` (model path). Enables thought-summary streaming, visualizations, collaborative planning.
     // generation_config: GenerationConfig_schema.optional(), // model path - not modeled here yet
 
+    // --- Response format (model path, e.g. Omni video) ---
+    // `{ type:'video', delivery:'uri' }` forces the mp4 to be delivered as a 48h Files-API URI
+    // (`.../files/{id}:download?alt=media`) instead of inline b64. REQUIRES `store:true` (else 400:
+    // 'store=true is required when response format has video delivery set to URI'). The spec documents
+    // `delivery` only for audio/image, but video accepts it too. Verified 2026-07-05.
+    response_format: z.looseObject({
+      type: z.string(), // 'video' | 'audio' | 'image' | 'text'
+      delivery: z.enum(['inline', 'uri']).optional(),
+    }).optional(),
+
     // --- Sandbox (Antigravity Agent + future managed agents) ---
     // `environment` is the top-level sandbox handle on the agent path. Accepts the literal "remote"
     // (fresh sandbox with defaults), an existing env id string (reuses sandbox state across turns),

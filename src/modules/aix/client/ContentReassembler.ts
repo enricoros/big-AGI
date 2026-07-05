@@ -743,6 +743,18 @@ export class ContentReassembler {
         }));
         break;
 
+      case 'vnd.gem.file':
+        // [Gemini Omni] Files-API artifact (delivery:uri video): persist a re-fetchable hosted_resource. Unlike
+        // 'inline-download', this survives reload for ~48h - the chip re-fetches bytes on demand (key-proxied) to
+        // download or re-play. Nothing is inlined into the conversation; only the `files/{id}` handle is stored.
+        this._pushFragment(createHostedResourceContentFragment({
+          via: 'gemini-file',
+          fileName: op.fileName,
+          mimeType: op.mimeType,
+          ...(op.isVideo ? { isVideo: true } : {}),
+        }));
+        break;
+
       case 'inline-download': {
         // [Gemini] Inline file artifact (bytes arrive once on the wire): fire-and-forget client download,
         // plus a one-line text-fragment breadcrumb in place of the download so the transcript records it

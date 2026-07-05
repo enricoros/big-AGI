@@ -800,6 +800,7 @@ export namespace AixWire_Particles {
     | { p: 'urlc', title: string, url: string, num?: number, from?: number, to?: number, text?: string, pubTs?: number } // url citation - pubTs: publication timestamp
     | { p: 'hres' } & ( // hosted resource - provider-hosted resource
       | { kind: 'vnd.ant.file', fileId: string, containerId?: string }
+      | { kind: 'vnd.gem.file', fileName: string, mimeType: string, isVideo?: boolean } // [Gemini Omni] Files-API artifact (e.g. delivery:uri video): re-fetchable by `files/{id}` name for ~48h via the key-proxied Gemini download route
       | { kind: 'vnd.oai.container_file', fileId: string, containerId: string, filename?: string } // OpenAI code-interpreter container file (download via /v1/containers/.../files/.../content)
       | { kind: 'inline-download', mimeType: string, b64: string, filename?: string } // inline bytes (e.g. Gemini code-exec file): client downloads & discards, never stored/re-fetchable
       )

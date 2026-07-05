@@ -58,7 +58,8 @@ export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateR
 
   // Gemini Omni (video generation) rides the same Interactions dispatch (routed via LLM_IF_GEM_Interactions)
   // but is the MODEL path, not an agent: send `model` instead of `agent`, no agent_config/system_instruction,
-  // and omit store/background so background=false streams the mp4 inline over SSE. Verified 2026-07-01.
+  // background=false (sync SSE), and store:true + response_format delivery:uri so the mp4 comes back as a 48h
+  // Files-API URI we can persist/re-fetch (download + re-play). See the return block below. Verified 2026-07-05.
   const isModelOmni = agent.includes('omni');
 
   // Extract flattened system text (consumed below - DR: prepend to first user turn; else: native field)
@@ -102,8 +103,15 @@ export function aixToGeminiInteractionsCreate(model: AixAPI_Model, chatGenerateR
     // are a forced true/false choice (see wiretypes matrix note): the only invalid pair is store:false+background:true.
     ...(isModelOmni ? {
       model: agent,
-      store: false, // ephemeral: do NOT retain the generated video server-side, at least while prototyping - there maybe be a storage fee - to be confirmed
-      background: false, // sync: stream the mp4 inline over SSE (verified 2026-07-01)
+      // URI delivery (below) REQUIRES store:true - store:false + delivery:uri 400s ('store=true is required when
+      // response format has video delivery set to URI', verified 2026-07-05). Retains the interaction (1d free /
+      // 55d paid) plus a Files-API video file with a 48h TTL - the tradeoff for a downloadable/re-playable artifact.
+      store: true,
+      background: false, // sync: stream the video step inline over SSE (verified 2026-07-01)
+      // Deliver the mp4 as a 48h Files-API URI (`.../files/{id}:download?alt=media`) instead of ephemeral inline
+      // b64, so we can persist a re-fetchable hosted_resource (download + re-play). URI is size-independent (even a
+      // sub-4MB clip comes as a URI once this is set). Undocumented for video but accepted. Verified 2026-07-05.
+      response_format: { type: 'video', delivery: 'uri' },
     } : {
       agent,
       store: true, // keep the interaction alive so clients can reattach via SSE replay within Gemini's retention window (1d free / 55d paid). Required by both DR and Antigravity agents.

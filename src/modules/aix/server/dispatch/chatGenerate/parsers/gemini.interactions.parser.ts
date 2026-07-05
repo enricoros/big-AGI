@@ -608,14 +608,20 @@ function _emitDocument(pt: IParticleTransmitter, mimeType: string | undefined, b
 }
 
 /**
- * Emit a generated video (Gemini Omni). Inline mp4 bytes -> appendVideoInline (EXPERIMENTAL: the client
- * plays it in-memory and does NOT persist it). URI (>4MB Files-API delivery) is not fetched - just a note.
+ * Emit a generated video (Gemini Omni). We request delivery:uri, so the mp4 arrives as a Files-API URI
+ * (`.../files/{id}:download?alt=media`, 48h TTL): persist a re-fetchable hosted_resource (download + re-play chip).
+ * Inline bytes (delivery:inline fallback) -> appendVideoInline (ephemeral in-memory playback, not persisted).
  */
 function _emitVideo(pt: IParticleTransmitter, mimeType: string | undefined, base64Data: string | undefined, uri: string | undefined): void {
-  if (base64Data && mimeType)
-    pt.appendVideoInline(mimeType, base64Data, 'Gemini Generated Video', 'Gemini');
+  // preferred path: URI delivery -> extract the canonical `files/{id}` name and persist a hosted resource
+  const fileName = uri?.match(/\/(files\/[^/:?]+)/)?.[1];
+  if (fileName) {
+    const mime = mimeType || 'video/mp4';
+    pt.appendHostedResource({ p: 'hres', kind: 'vnd.gem.file', fileName, mimeType: mime, isVideo: mime.startsWith('video/') });
+  } else if (base64Data && mimeType)
+    pt.appendVideoInline(mimeType, base64Data, 'Gemini Generated Video', 'Gemini'); // defensive fallback: inline delivery -> ephemeral in-memory playback
   else if (uri)
-    pt.appendText(`\n[Video: ${uri}]\n`); // >4MB delivery via Files API not fetched (experimental)
+    pt.appendText(`\n[Video: ${uri}]\n`); // unrecognized uri shape - surface rather than drop
 }
 
 function _emitAudio(pt: IParticleTransmitter, mimeType: string, base64Data: string, errPrefix: string): void {
