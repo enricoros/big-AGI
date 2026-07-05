@@ -43,6 +43,36 @@ const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: numbe
 
 // --- Bedrock API Wire Types ---
 
+/**
+ * pubDate reliability on Bedrock (empirically verified 2026-07-04, us-east-1, live API pull).
+ *
+ * AWS exposes several date fields across the three listing APIs, but NONE is a trustworthy `pubDate`
+ * (= earliest public availability of the model by any channel) for third-party models. They all track
+ * when AWS ONBOARDED the model to Bedrock - the host-add date - which for hosted models is systematically
+ * later than the creator's real release, exactly the case pubDate resolution rule #5 says not to use.
+ * Concretely, from a live pull:
+ *
+ *   - ListFoundationModels -> modelLifecycle.startOfLifeTime (populated on all 66 FMs, NOT captured below):
+ *       bulk-clustered onboarding timestamps. 18 unrelated models shared 2025-12-02T00:00:00Z (a re:Invent
+ *       drop): Gemma 3 (real release Mar 2025), Kimi-K2-Thinking (Nov 2025), Qwen3-VL, gpt-oss-safeguard...
+ *       6 more shared 2026-02-06T18:00:00Z (DeepSeek V3.2, GLM-4.7, Kimi-K2.5...); Mixtral-8x7B -> 2024-03-01
+ *       (real Dec 2023). ACCURATE ONLY for AWS-first-party (amazon.nova* -> 2024-12-03, amazon.titan*) and
+ *       day-1 co-launch partners (openai.gpt-oss -> 2025-08-06), where onboarding == release because AWS is
+ *       the launch channel. (Sibling fields publicExtendedAccessTime/legacyTime/endOfLifeTime are lifecycle
+ *       exit markers, not release dates.)
+ *   - ListInferenceProfiles -> createdAt/updatedAt (NOT captured below): profile-provisioning date,
+ *       region-dependent for the SAME model (claude-sonnet-4 us=2025-05-20 vs global=2025-08-25); updatedAt
+ *       is recent housekeeping. Moot for Anthropic anyway - those inherit pubDate from our editorial table.
+ *   - Mantle /v1/models -> created (parsed below, intentionally NOT consumed): worst of the three. ~22 models
+ *       clustered at 2025-11-30; contradicts the model's own id suffix (openai.gpt-5.4-2026-03-05 -> created
+ *       2026-04-30) and disagrees with startOfLifeTime for the same model (zai.glm-5: 2026-03-18 vs 2026-02-22).
+ *   - description.releaseDate exists but only on 2/66 models (nova-pro, cohere-embed-v4) - too sparse to use.
+ *
+ * DECISION: do not fabricate pubDate from any AWS date for non-Anthropic models (would mislabel old models as
+ * "new"); Anthropic-on-Bedrock keeps its editorial pubDate (see llmBedrockFindAnthropicModel). The one safe
+ * source, if a "new" badge for AWS-first-party models is ever wanted, is startOfLifeTime gated to
+ * providerName === 'Amazon' - accurate there because AWS is the model's creator and launch channel.
+ */
 export namespace BedrockWire_API_Models_List {
 
   // ListFoundationModels response
@@ -56,6 +86,8 @@ export namespace BedrockWire_API_Models_List {
     responseStreamingSupported: z.boolean().nullable().optional(),
     inferenceTypesSupported: z.array(z.enum(['ON_DEMAND', 'INFERENCE_PROFILE', 'PROVISIONED']).or(z.string())).optional(),
     modelLifecycle: z.object({
+      // NOTE: AWS also sends startOfLifeTime (+ publicExtendedAccessTime/legacyTime/endOfLifeTime), but we
+      // only consume `status` - startOfLifeTime is a host-onboarding date, not a release date (see pubDate note above).
       status: z.enum(['ACTIVE', 'LEGACY']).or(z.string()),
     }).optional(),
     // Converse API metadata (present on newer models, null on legacy)
@@ -97,7 +129,7 @@ export namespace BedrockWire_API_Models_List {
     data: z.array(z.object({
       id: z.string(),
       object: z.string().optional(),
-      created: z.number().optional(),
+      created: z.number().optional(), // parsed but intentionally unused - Bedrock-onboarding date, not a release date (see pubDate note above)
       owned_by: z.string().optional(),
     })),
   });
@@ -279,6 +311,7 @@ export function bedrockModelsToDescriptions(
       if (modelMeta.outputImage) interfaces.push(LLM_IF_Outputs_Image);
       let label = modelMeta.isProfile ? _labelFromProfile(modelMeta.label, modelId) : modelMeta.label;
       const apiLabel = isMantle ? 'OpenAI-Compatible' : isConverseCapable ? 'Converse' : 'Unsupported';
+      // no `pubDate`: AWS only offers host-onboarding dates for these third-party models (see pubDate note atop the wire types)
       descriptions.push({
         id: modelId,
         label: `${isMantle || isConverseCapable ? symbolMantle : '🚧 '}${label.startsWith(modelMeta.provider) ? '' : (modelMeta.provider + ' ')}${label}`,
