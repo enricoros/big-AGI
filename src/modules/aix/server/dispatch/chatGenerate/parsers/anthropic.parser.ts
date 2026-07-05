@@ -977,7 +977,7 @@ function _handleCBS_CodeExecutionToolResult(pt: IParticleTransmitter, block: Ext
       if (block.content.type === 'code_execution_result' && block.content.stdout)
         oTexts.push(_ellipsizeContext(block.content.stdout));
       else if (block.content.type === 'encrypted_code_execution_result')
-        oTexts.push('[Anthropic encrypted output]');
+        oTexts.push(`[Anthropic encrypted output, ${block.content.encrypted_stdout.length.toLocaleString()} bytes]`);
       if (block.content.stderr)
         oTexts.push('stderr: ' + _ellipsizeContext(block.content.stderr));
       const codeExecFailed = block.content.return_code !== 0;
