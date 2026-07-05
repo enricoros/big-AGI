@@ -10,7 +10,7 @@ import * as React from 'react';
 
 import { Box, Button, Chip, CircularProgress, IconButton, Input, Sheet, Textarea, Tooltip, Typography } from '@mui/joy';
 import MicIcon from '@mui/icons-material/Mic';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import StopIcon from '@mui/icons-material/Stop';
 
@@ -453,7 +453,7 @@ export function LiveSvgAnimator(props: { isMobile: boolean }) {
 
             {!!error && <Typography level='body-sm' color='danger'>{error}</Typography>}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <Button color='primary' startDecorator={<PlayArrowIcon />} disabled={!prompt.trim()} onClick={handleStart}>
+              <Button color='primary' startDecorator={<PlayArrowRoundedIcon />} disabled={!prompt.trim()} onClick={handleStart}>
                 Start
               </Button>
             </Box>
@@ -472,7 +472,7 @@ export function LiveSvgAnimator(props: { isMobile: boolean }) {
               <Button color='danger' variant='soft' startDecorator={<CircularProgress size='sm' />} disabled>Stopping…</Button>
             ) : (
               <>
-                <Button color='primary' startDecorator={<PlayArrowIcon />} disabled={!prompt.trim()} onClick={handleStart}>Start again</Button>
+                <Button color='primary' startDecorator={<PlayArrowRoundedIcon />} disabled={!prompt.trim()} onClick={handleStart}>Start again</Button>
                 <Button color='neutral' variant='soft' startDecorator={<RestartAltIcon />} onClick={handleNew}>New</Button>
               </>
             )}
