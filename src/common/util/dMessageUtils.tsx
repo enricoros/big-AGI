@@ -19,6 +19,7 @@ import type { UIComplexityMode } from '~/common/app.theme';
 import { PhPaintBrush } from '~/common/components/icons/phosphor/PhPaintBrush';
 import { animationColorRainbow } from '~/common/util/animUtils';
 import { formatModelsCost } from '~/common/util/costUtils';
+import { prettyDuration } from './timeUtils';
 
 
 // configuration
@@ -313,7 +314,7 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
       {!!metrics.vTOutInner && <>~<b>{(Math.round(metrics.vTOutInner * 10) / 10).toLocaleString() || ''}</b> tok/s</>}
       {showWaitingTime && (<span style={{ opacity: 0.5 }}>
         {metrics.vTOutInner !== undefined && ' · '}
-        <span>{(Math.round(metrics.dtStart! / 100) / 10).toLocaleString() || ''}</span>s wait
+        <span>{prettyDuration(metrics.dtStart!, true)}</span> wait
       </span>)}
     </div>}
 
@@ -340,7 +341,7 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
 
     {/* Time */}
     {showTimeSection && <div>Time:</div>}
-    {showTimeSection && <div><b>{(Math.round(metrics.dtAll! / 100) / 10).toLocaleString()}</b> s</div>}
+    {showTimeSection && <div><b>{prettyDuration(metrics.dtAll!, true)}</b></div>}
   </Box>;
 }
 
