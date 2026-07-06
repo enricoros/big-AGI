@@ -115,6 +115,19 @@ function _prettyModelId(id: string, isVision: boolean): string {
 }
 
 
+// Fallback description for un-curated models. The API has no marketing text, so we keep it clean and
+// generic rather than exposing the raw enum ("fireworks `HF_BASE_MODEL` type."). Curated models in
+// _fireworksKnownModels override this with an editorial description.
+function _fireworksGenericDescription(kind: string | undefined): string {
+  switch (kind) {
+    case 'HF_BASE_MODEL': return 'Open-weights model served on Fireworks AI.';
+    case 'HF_PEFT_ADDON': return 'Fine-tuned adapter served on Fireworks AI.';
+    case 'FLUMINA_BASE_MODEL': return 'Image model served on Fireworks AI.';
+    default: return 'Model served on Fireworks AI.';
+  }
+}
+
+
 export function fireworksAIModelsToModelDescriptions(wireModels: unknown): ModelDescriptionSchema[] {
   return wireFireworksAIListOutputSchema
     .parse(wireModels)
@@ -131,7 +144,7 @@ export function fireworksAIModelsToModelDescriptions(wireModels: unknown): Model
 
       // heuristics
       const label = _prettyModelId(model.id, !!model.supports_image_input);
-      const description = `${model.owned_by} \`${model.kind || 'unknown'}\` type.`;
+      const description = _fireworksGenericDescription(model.kind);
       const contextWindow = model.context_length || null;
       const interfaces: DModelInterfaceV1[] = [LLM_IF_OAI_Chat];
       if (model.supports_image_input)
