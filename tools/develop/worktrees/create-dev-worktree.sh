@@ -120,6 +120,121 @@ list_worktrees() {
     echo
 }
 
+# Materialization steps shared by create and --materialize.
+# Runs from the primary checkout (cwd): copies .env* files and IntelliJ run
+# configurations into the target worktree, then installs npm dependencies.
+materialize_worktree() {
+    local target_path=$1
+    local copy_env=$2
+
+    # Create necessary directories
+    echo -n "Creating .idea directories... "
+    mkdir -p "$target_path/.idea/runConfigurations"
+    print_color "$GREEN" "✓"
+
+    # Copy environment files
+    echo -n "Copying environment files... "
+    if [ "$copy_env" = true ]; then
+        local env_count=0
+        for env_file in .env*; do
+            if [ -f "$env_file" ]; then
+                cp "$env_file" "$target_path/"
+                env_count=$((env_count + 1))
+            fi
+        done
+        if [ $env_count -gt 0 ]; then
+            printf "%b✓ %b(%d files)%b\n" "$GREEN" "$GRAY" "$env_count" "$NC"
+        else
+            printf "%b⊘ %b(none found)%b\n" "$YELLOW" "$GRAY" "$NC"
+        fi
+    else
+        printf "%b⊘ %b(skipped)%b\n" "$YELLOW" "$GRAY" "$NC"
+    fi
+
+    # Copy IntelliJ run configurations
+    echo -n "Copying IntelliJ run configurations... "
+    if [ -d ".idea/runConfigurations" ]; then
+        local config_count
+        config_count=$(find .idea/runConfigurations -name "*.xml" -type f 2>/dev/null | wc -l)
+        if [ $config_count -gt 0 ]; then
+            cp -r .idea/runConfigurations/* "$target_path/.idea/runConfigurations/" 2>/dev/null || true
+            printf "%b✓ %b(%d configurations)%b\n" "$GREEN" "$GRAY" "$config_count" "$NC"
+        else
+            printf "%b⊘ %b(directory empty)%b\n" "$YELLOW" "$GRAY" "$NC"
+        fi
+    else
+        printf "%b⊘ %b(not found)%b\n" "$YELLOW" "$GRAY" "$NC"
+    fi
+
+    # Copy datasource configurations
+    #echo -n "Copying datasource configurations... "
+    #local ds_copied=false
+    #if [ -f ".idea/dataSources.xml" ]; then
+    #    cp .idea/dataSources.xml "$target_path/.idea/"
+    #    ds_copied=true
+    #fi
+    #if [ -f ".idea/dataSources.local.xml" ]; then
+    #    cp .idea/dataSources.local.xml "$target_path/.idea/"
+    #    ds_copied=true
+    #fi
+    #if [ -d ".idea/dataSources" ]; then
+    #    cp -r .idea/dataSources "$target_path/.idea/"
+    #    ds_copied=true
+    #fi
+    #if [ "$ds_copied" = true ]; then
+    #    print_color "$GREEN" "✓"
+    #else
+    #    printf "%b⊘ %b(not found)%b\n" "$YELLOW" "$GRAY" "$NC"
+    #fi
+
+    # Copy other useful IntelliJ configurations (excluding workspace-specific files)
+    #echo -n "Copying other IntelliJ configurations... "
+    #local xml_count=0
+    #for config_file in .idea/*.xml; do
+    #    local filename=$(basename "$config_file")
+    #    # Skip workspace.xml and other user-specific files
+    #    if [[ "$filename" != "workspace.xml" && "$filename" != "tasks.xml" && "$filename" != "usage.statistics.xml" ]]; then
+    #        if [ -f "$config_file" ]; then
+    #            cp "$config_file" "$target_path/.idea/" 2>/dev/null || true
+    #            xml_count=$((xml_count + 1))
+    #        fi
+    #    fi
+    #done
+    #if [ $xml_count -gt 0 ]; then
+    #    printf "%b✓ %b(%d files)%b\n" "$GREEN" "$GRAY" "$xml_count" "$NC"
+    #else
+    #    printf "%b⊘ %b(none found)%b\n" "$YELLOW" "$GRAY" "$NC"
+    #fi
+
+    # Install node_modules if package.json exists
+    if [ -f "$target_path/package.json" ]; then
+        echo
+        print_color "$BLUE" "Installing npm dependencies..."
+        (cd "$target_path" && npm install --optional > /dev/null 2> /dev/null)
+    else
+        echo -n "Installing npm dependencies... "
+        printf "%b⊘ %b(no package.json)%b\n" "$YELLOW" "$GRAY" "$NC"
+    fi
+}
+
+# Open the IDE on a worktree path
+open_ide() {
+    local target_path=$1
+    local abs_path
+    abs_path=$(cd "$target_path" && pwd)
+    echo -n "Opening IDE... "
+    if command -v "$IDE_CMD" >/dev/null 2>&1; then
+        # Run IDE in background and redirect output to avoid clutter
+        "$IDE_CMD" "$abs_path" >/dev/null 2>&1 &
+        print_color "$GREEN" "✓"
+        print_color "$GRAY" "  $IDE_CMD launched with $abs_path"
+    else
+        print_color "$YELLOW" "⚠ IDE command '$IDE_CMD' not found"
+        print_color "$GRAY" "  You can manually open: $IDE_CMD $abs_path"
+    fi
+    echo
+}
+
 # Get script name without path
 SCRIPT_NAME=$(basename "$0")
 
@@ -132,6 +247,8 @@ if [ $# -eq 0 ]; then
     echo "  $SCRIPT_NAME <branch-name>                # Create new worktree from HEAD"
     echo "  $SCRIPT_NAME <branch-name> --from <ref>   # Create from a specific ref (e.g., opensource/main)"
     echo "  $SCRIPT_NAME <branch-name> --no-env       # Create without copying .env* files"
+    echo "  $SCRIPT_NAME <branch-name> --no-ide       # Create without launching the IDE"
+    echo "  $SCRIPT_NAME --materialize <branch|path>  # Copy .env* + run configs, npm install into an EXISTING worktree"
     echo "  $SCRIPT_NAME --remove <branch-name>       # Remove worktree and branch"
     echo "  $SCRIPT_NAME --list                       # List all worktrees"
     echo
@@ -143,6 +260,118 @@ fi
 if [ "$1" = "--list" ] || [ "$1" = "-l" ]; then
     print_header
     list_worktrees
+    exit 0
+fi
+
+# Handle --materialize flag: bring an EXISTING worktree (e.g. created by an AI
+# agent or a plain `git worktree add`) up to dev-ready parity - .env* files,
+# IntelliJ run configurations, npm dependencies - then open the IDE.
+# Run from the primary checkout; re-running is safe (refreshes env/configs).
+if [ "$1" = "--materialize" ] || [ "$1" = "-m" ]; then
+    shift
+    MATERIALIZE_TARGET=""
+    COPY_ENV=true
+    OPEN_IDE=true
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --no-env)
+                COPY_ENV=false
+                shift
+                ;;
+            --no-ide)
+                OPEN_IDE=false
+                shift
+                ;;
+            -*)
+                print_header
+                print_color "$RED" "✗ Unknown option: $1"
+                echo
+                echo "Usage: $SCRIPT_NAME --materialize <branch|path> [--no-env] [--no-ide]"
+                echo
+                exit 1
+                ;;
+            *)
+                if [ -n "$MATERIALIZE_TARGET" ]; then
+                    print_header
+                    print_color "$RED" "✗ Multiple targets provided: $MATERIALIZE_TARGET and $1"
+                    echo
+                    exit 1
+                fi
+                MATERIALIZE_TARGET=$1
+                shift
+                ;;
+        esac
+    done
+
+    if [ -z "$MATERIALIZE_TARGET" ]; then
+        print_header
+        print_color "$RED" "✗ Please specify which worktree to materialize"
+        echo
+        echo "Usage: $SCRIPT_NAME --materialize <branch|path> [--no-env] [--no-ide]"
+        echo
+        list_worktrees
+        exit 1
+    fi
+
+    print_header
+
+    # Resolve the target to a registered worktree path. Accept a direct path,
+    # a branch name, or a directory basename (big-agi_<name>, big-agi-<name>,
+    # or <name>) - same resolution as --remove.
+    TARGET_PATH=""
+    if [ -d "$MATERIALIZE_TARGET" ] && [ -e "$MATERIALIZE_TARGET/.git" ]; then
+        TARGET_PATH=$MATERIALIZE_TARGET
+    else
+        WORKTREE_LIST=$(git worktree list 2>/dev/null || true)
+        while IFS= read -r wt_line; do
+            [ -z "$wt_line" ] && continue
+            wt_path=$(echo "$wt_line" | awk '{print $1}')
+            wt_base=$(basename "$wt_path")
+            wt_branch=$(echo "$wt_line" | sed 's/.*\[\([^]]*\)\].*/\1/')
+            if [ "$wt_branch" = "$MATERIALIZE_TARGET" ] \
+                || [ "$wt_base" = "big-agi_$MATERIALIZE_TARGET" ] \
+                || [ "$wt_base" = "big-agi-$MATERIALIZE_TARGET" ] \
+                || [ "$wt_base" = "$MATERIALIZE_TARGET" ]; then
+                TARGET_PATH="$wt_path"
+                break
+            fi
+        done <<< "$WORKTREE_LIST"
+    fi
+
+    if [ -z "$TARGET_PATH" ]; then
+        print_color "$RED" "✗ No worktree found for '$MATERIALIZE_TARGET' (tried path, branch name, and big-agi_<name>)"
+        echo
+        list_worktrees
+        exit 1
+    fi
+
+    # Never materialize the primary worktree (it is the source of the copies)
+    MAIN_WORKTREE=$(git worktree list | head -1 | awk '{print $1}')
+    TARGET_ABS=$(cd "$TARGET_PATH" && pwd)
+    if [ "$TARGET_ABS" = "$MAIN_WORKTREE" ] || [ "$TARGET_ABS" = "$(pwd)" ]; then
+        print_color "$RED" "✗ Refusing to materialize the primary/current worktree onto itself"
+        echo
+        exit 1
+    fi
+
+    print_color "$BOLD_WHITE" "Materializing worktree: $TARGET_PATH"
+    if [ "$COPY_ENV" = true ]; then
+        echo "  • Environment files: copy .env*"
+    else
+        echo "  • Environment files: skip"
+    fi
+    echo
+
+    materialize_worktree "$TARGET_PATH" "$COPY_ENV"
+
+    echo
+    print_color "$GREEN" "✓ Worktree materialized!"
+    echo
+
+    if [ "$OPEN_IDE" = true ]; then
+        open_ide "$TARGET_PATH"
+    fi
     exit 0
 fi
 
@@ -344,6 +573,7 @@ fi
 NEW_BRANCH_NAME=""
 SOURCE_REF="HEAD"
 COPY_ENV=true
+OPEN_IDE=true
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -363,11 +593,15 @@ while [ $# -gt 0 ]; do
             COPY_ENV=false
             shift
             ;;
+        --no-ide)
+            OPEN_IDE=false
+            shift
+            ;;
         -*)
             print_header
             print_color "$RED" "✗ Unknown option: $1"
             echo
-            echo "Usage: $SCRIPT_NAME <branch-name> [--from <ref>] [--no-env]"
+            echo "Usage: $SCRIPT_NAME <branch-name> [--from <ref>] [--no-env] [--no-ide]"
             echo
             exit 1
             ;;
@@ -376,7 +610,7 @@ while [ $# -gt 0 ]; do
                 print_header
                 print_color "$RED" "✗ Multiple branch names provided: $NEW_BRANCH_NAME and $1"
                 echo
-                echo "Usage: $SCRIPT_NAME <branch-name> [--from <ref>] [--no-env]"
+                echo "Usage: $SCRIPT_NAME <branch-name> [--from <ref>] [--no-env] [--no-ide]"
                 echo
                 exit 1
             fi
@@ -390,7 +624,7 @@ if [ -z "$NEW_BRANCH_NAME" ]; then
     print_header
     print_color "$RED" "✗ Please provide a branch name"
     echo
-    echo "Usage: $SCRIPT_NAME <branch-name> [--from <ref>] [--no-env]"
+    echo "Usage: $SCRIPT_NAME <branch-name> [--from <ref>] [--no-env] [--no-ide]"
     echo
     list_worktrees
     exit 1
@@ -444,95 +678,8 @@ echo -n "Creating git worktree... "
 git worktree add "$WORKTREE_PATH" -b "$NEW_BRANCH_NAME" "$SOURCE_REF" >/dev/null 2>&1
 print_color "$GREEN" "✓"
 
-# Create necessary directories
-echo -n "Creating .idea directories... "
-mkdir -p "$WORKTREE_PATH/.idea/runConfigurations"
-print_color "$GREEN" "✓"
-
-# Copy environment files
-echo -n "Copying environment files... "
-if [ "$COPY_ENV" = true ]; then
-    env_count=0
-    for env_file in .env*; do
-        if [ -f "$env_file" ]; then
-            cp "$env_file" "$WORKTREE_PATH/"
-            env_count=$((env_count + 1))
-        fi
-    done
-    if [ $env_count -gt 0 ]; then
-        printf "%b✓ %b(%d files)%b\n" "$GREEN" "$GRAY" "$env_count" "$NC"
-    else
-        printf "%b⊘ %b(none found)%b\n" "$YELLOW" "$GRAY" "$NC"
-    fi
-else
-    printf "%b⊘ %b(skipped)%b\n" "$YELLOW" "$GRAY" "$NC"
-fi
-
-# Copy IntelliJ run configurations
-echo -n "Copying IntelliJ run configurations... "
-if [ -d ".idea/runConfigurations" ]; then
-    config_count=$(find .idea/runConfigurations -name "*.xml" -type f 2>/dev/null | wc -l)
-    if [ $config_count -gt 0 ]; then
-        cp -r .idea/runConfigurations/* "$WORKTREE_PATH/.idea/runConfigurations/" 2>/dev/null || true
-        printf "%b✓ %b(%d configurations)%b\n" "$GREEN" "$GRAY" "$config_count" "$NC"
-    else
-        printf "%b⊘ %b(directory empty)%b\n" "$YELLOW" "$GRAY" "$NC"
-    fi
-else
-    printf "%b⊘ %b(not found)%b\n" "$YELLOW" "$GRAY" "$NC"
-fi
-
-# Copy datasource configurations
-#echo -n "Copying datasource configurations... "
-#ds_copied=false
-#if [ -f ".idea/dataSources.xml" ]; then
-#    cp .idea/dataSources.xml "$WORKTREE_PATH/.idea/"
-#    ds_copied=true
-#fi
-#if [ -f ".idea/dataSources.local.xml" ]; then
-#    cp .idea/dataSources.local.xml "$WORKTREE_PATH/.idea/"
-#    ds_copied=true
-#fi
-#if [ -d ".idea/dataSources" ]; then
-#    cp -r .idea/dataSources "$WORKTREE_PATH/.idea/"
-#    ds_copied=true
-#fi
-#if [ "$ds_copied" = true ]; then
-#    print_color "$GREEN" "✓"
-#else
-#    printf "%b⊘ %b(not found)%b\n" "$YELLOW" "$GRAY" "$NC"
-#fi
-
-# Copy other useful IntelliJ configurations (excluding workspace-specific files)
-#echo -n "Copying other IntelliJ configurations... "
-#config_count=0
-#for config_file in .idea/*.xml; do
-#    filename=$(basename "$config_file")
-#    # Skip workspace.xml and other user-specific files
-#    if [[ "$filename" != "workspace.xml" && "$filename" != "tasks.xml" && "$filename" != "usage.statistics.xml" ]]; then
-#        if [ -f "$config_file" ]; then
-#            cp "$config_file" "$WORKTREE_PATH/.idea/" 2>/dev/null || true
-#            config_count=$((config_count + 1))
-#        fi
-#    fi
-#done
-#if [ $config_count -gt 0 ]; then
-#    printf "%b✓ %b(%d files)%b\n" "$GREEN" "$GRAY" "$config_count" "$NC"
-#else
-#    printf "%b⊘ %b(none found)%b\n" "$YELLOW" "$GRAY" "$NC"
-#fi
-
-# Install node_modules if package.json exists
-if [ -f "package.json" ]; then
-    echo
-    print_color "$BLUE" "Installing npm dependencies..."
-    cd "$WORKTREE_PATH"
-    npm install --optional > /dev/null 2> /dev/null
-    cd - > /dev/null
-else
-    echo -n "Installing npm dependencies... "
-    printf "%b⊘ %b(no package.json)%b\n" "$YELLOW" "$GRAY" "$NC"
-fi
+# Materialize: .idea dirs, .env* files, run configurations, npm install
+materialize_worktree "$WORKTREE_PATH" "$COPY_ENV"
 
 echo
 print_color "$GREEN" "✓ Worktree created successfully!"
@@ -555,16 +702,7 @@ print_color "$GRAY" "  git worktree remove $WORKTREE_PATH"
 print_color "$GRAY" "  git branch -D $NEW_BRANCH_NAME"
 echo
 
-# Actually open the IDE
-echo -n "Opening IDE... "
-ABSOLUTE_WORKTREE_PATH=$(cd "$WORKTREE_PATH" && pwd)
-if command -v "$IDE_CMD" >/dev/null 2>&1; then
-    # Run IDE in background and redirect output to avoid clutter
-    "$IDE_CMD" "$ABSOLUTE_WORKTREE_PATH" >/dev/null 2>&1 &
-    print_color "$GREEN" "✓"
-    print_color "$GRAY" "  $IDE_CMD launched with $ABSOLUTE_WORKTREE_PATH"
-else
-    print_color "$YELLOW" "⚠ IDE command '$IDE_CMD' not found"
-    print_color "$GRAY" "  You can manually open: $IDE_CMD $ABSOLUTE_WORKTREE_PATH"
+# Actually open the IDE (unless --no-ide)
+if [ "$OPEN_IDE" = true ]; then
+    open_ide "$WORKTREE_PATH"
 fi
-echo
