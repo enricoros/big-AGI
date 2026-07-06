@@ -482,6 +482,11 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       LLM_IF_HOTFIX_Sys0ToUsr0, //
       LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_GEM_Interactions, // Vision = image input (image-to-video); Interactions routes to the model-path video dispatch
     ],
+    // parameterSpecs: [
+    //   { paramId: 'llmVndGeminiVideoSeed' }, // generation_config.seed - the tunable Omni reliably honors (verified 2026-07-05)
+    //   { paramId: 'llmVndGeminiAspectRatio' }, // -> generation_config.image_config.aspect_ratio (probed 'not enabled for this model', wired for live judgment)
+    //   { paramId: 'llmVndGeminiImageSize' }, // -> generation_config.image_config.image_size (probed silently-ignored, wired for live judgment). temperature is implicit (LLM_IF_OAI_Chat), forwarded via model.temperature
+    // ],
     benchmark: undefined, // video generation, not benchmarkable on standard tests
   },
 
@@ -888,6 +893,7 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-3.5',
   'models/gemini-3.1-pro-preview',
   'models/gemini-3.1-pro-preview-customtools',
+  'models/gemini-omni-flash-preview', // display: after the 3.1 Pro models, before Nano Banana 2 (this list, not the _knownGeminiModels order, drives display sort - geminiSortModels)
   'models/gemini-3.1-flash-image',
   'models/gemini-3.1-flash-image-preview',
   'models/gemini-3.1-flash-preview',

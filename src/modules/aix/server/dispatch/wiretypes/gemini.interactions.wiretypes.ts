@@ -115,6 +115,30 @@ export namespace GeminiInteractionsWire_API_Interactions {
     _DeepResearchAgentConfig_schema,
   ]);
 
+  // generation_config: model-path tunable knobs (spec: GenerationConfig). MUTUALLY EXCLUSIVE with
+  // `agent_config` - only applicable when `model` is set (today: Gemini Omni video generation).
+  //
+  // The full upstream GenerationConfig is large (image_config{aspect_ratio,image_size}, speech_config,
+  // temperature, top_p, max_output_tokens, thinking_level, tool_choice, seed, ...). Empirically probed
+  // against the Omni video model 2026-07-05 (live, GEMINI_API_KEY):
+  //  - `seed`          -> RECOGNIZED + VALIDATED (bad type -> 400 'Expected number'; range 0..2147483647); valid int -> reproducible run. [WIRED, effective]
+  //  - `aspect_ratio`  -> 400 'Aspect ratio is not enabled for this model' (recognized field, disabled for Omni). [WIRED for live judgment]
+  //  - `image_size`    -> accepts garbage ('999K' -> 200), i.e. silently ignored (no effect observed). [WIRED for live judgment]
+  //  - `temperature`   -> accepted (HTTP 200) but the model steers only from `input` (no observed effect). [WIRED for live judgment]
+  //  - `resolution` / `response_modalities` / `duration_seconds` / `fps` / `negative_prompt` /
+  //    `person_generation` -> 400 'Unknown parameter ... at generation_config' (no Veo-style video knobs exist here). NOT modeled.
+  //  - `top_p` / `max_output_tokens` -> recognized but no steering effect (max_output_tokens also risks truncating the video). NOT exposed.
+  // aspect_ratio/image_size/temperature are wired at the user's request to evaluate live despite the probe
+  // results above (they may become effective if Google enables them for Omni). Add more if/when upstream does.
+  export const GenerationConfig_schema = z.object({
+    seed: z.number().int().optional(),        // reproducibility - the Omni-honored knob
+    temperature: z.number().optional(),       // accepted but no observed steering effect on Omni
+    image_config: z.object({                  // media generation config (image + video share this shape upstream)
+      aspect_ratio: z.string().optional(),    // e.g. '16:9' | '9:16' | '1:1' - probed 'not enabled' for Omni
+      image_size: z.string().optional(),      // '1K' | '2K' | '4K' - probed silently-ignored for Omni
+    }).optional(),
+  });
+
   // RequestBody_schema: POST /v1beta/interactions body.
   //
   // Cross-field constraints (from the formal spec):
@@ -140,7 +164,7 @@ export namespace GeminiInteractionsWire_API_Interactions {
 
     // --- Config (picks the agent or model path) ---
     agent_config: AgentConfig_schema.optional(), // Polymorphic on `type`: 'deep-research' | 'dynamic'. MUTUALLY EXCLUSIVE with `generation_config` (model path). Enables thought-summary streaming, visualizations, collaborative planning.
-    // generation_config: GenerationConfig_schema.optional(), // model path - not modeled here yet
+    generation_config: GenerationConfig_schema.optional(), // model path (Omni video): tunable knobs. MUTUALLY EXCLUSIVE with `agent_config`. Today only `seed` is honored - see GenerationConfig_schema note.
 
     // --- Response format (model path, e.g. Omni video) ---
     // `{ type:'video', delivery:'uri' }` forces the mp4 to be delivered as a 48h Files-API URI
