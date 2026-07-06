@@ -151,6 +151,15 @@ materialize_worktree() {
         printf "%b⊘ %b(skipped)%b\n" "$YELLOW" "$GRAY" "$NC"
     fi
 
+    # Copy next-env.d.ts (git-ignored, needed for type checks before a build)
+    echo -n "Copying next-env.d.ts... "
+    if [ -f "next-env.d.ts" ]; then
+        cp next-env.d.ts "$target_path/"
+        print_color "$GREEN" "✓"
+    else
+        printf "%b⊘ %b(not found)%b\n" "$YELLOW" "$GRAY" "$NC"
+    fi
+
     # Copy IntelliJ run configurations
     echo -n "Copying IntelliJ run configurations... "
     if [ -d ".idea/runConfigurations" ]; then
