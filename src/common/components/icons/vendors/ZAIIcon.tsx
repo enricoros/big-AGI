@@ -2,12 +2,10 @@ import * as React from 'react';
 
 import { SvgIcon, SvgIconProps } from '@mui/joy';
 
+// Z.ai mark: the official stylized "Z" - a diagonal stroke with a top-left and bottom-right bar.
+// Source: LobeHub AI icon set / Wikimedia (Z.ai company logo).
 export function ZAIIcon(props: SvgIconProps) {
-  return (
-    <SvgIcon viewBox='0 0 30 30' width={24} height={24} fill='currentColor' strokeWidth={0} {...props}>
-      <path d='M15.47,7.1l-1.3,1.85c-0.2,0.29-0.54,0.47-0.9,0.47h-7.1V7.09C6.16,7.1,15.47,7.1,15.47,7.1z' />
-      <polygon points='24.3,7.1 13.14,22.91 5.7,22.91 16.86,7.1' />
-      <path d='M14.53,22.91l1.31-1.86c0.2-0.29,0.54-0.47,0.9-0.47h7.09v2.33H14.53z' />
-    </SvgIcon>
-  );
+  return <SvgIcon viewBox='0 0 24 24' width='24' height='24' fill='currentColor' fillRule='evenodd' stroke='none' {...props}>
+    <path d='M12.105 2L9.927 4.953H.653L2.83 2h9.276zM23.254 19.048L21.078 22h-9.242l2.174-2.952h9.244zM24 2L9.264 22H0L14.736 2H24z' />
+  </SvgIcon>;
 }
