@@ -20,6 +20,7 @@ export function InlineTextarea(props: {
   maxRows?: number, // optional. caps the auto-grow height; beyond it the textarea scrolls (great for single-field inline edits)
   syncWithInitialText?: boolean, // optional. if set, the text will be reset to initialText when the prop changes
   selectAllOnFocus?: boolean, // optional. if set to false, text won't be selected on focus (default: true)
+  blurOnDone?: boolean, // optional. release focus from the textarea as editing ends via keyboard (Enter/Escape), so a focusable ancestor (e.g. a ListItemButton) doesn't inherit a stuck focus-visible ring
   onEdit: (text: string) => void,
   onCancel?: () => void,
   sx?: SxProps,
@@ -27,6 +28,10 @@ export function InlineTextarea(props: {
 
   const [text, setText] = React.useState(props.initialText);
   const enterIsNewline = useUIPreferencesStore(state => (!props.disableAutoSaveOnBlur && state.enterIsNewline));
+
+  // refs
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const releasingFocusRef = React.useRef(false); // true while a programmatic blur (from Enter/Escape) runs, to suppress its auto-save
 
 
   // [effect] optional syncing of the text to the initial text. warning, will discard the current partial edit
@@ -40,22 +45,37 @@ export function InlineTextarea(props: {
 
   const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value);
 
+  // release focus from our own textarea before the parent unmounts us (on keyboard commit/cancel),
+  // so the browser doesn't hand focus to the nearest focusable ancestor and leave a stuck ring there
+  const releaseFocusIfEnabled = () => {
+    if (!props.blurOnDone) return;
+    const el = textareaRef.current;
+    if (el && document.activeElement === el) {
+      releasingFocusRef.current = true; // suppress the auto-save that this blur would otherwise fire
+      el.blur();
+      releasingFocusRef.current = false;
+    }
+  };
+
   const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter') {
       if (e.nativeEvent.isComposing)
         return;
       if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
         e.preventDefault();
+        releaseFocusIfEnabled();
         props.onEdit(text);
       }
     } else if (e.key === 'Escape') {
       e.preventDefault();
       e.stopPropagation();
+      releaseFocusIfEnabled();
       props.onCancel?.();
     }
   };
 
   const handleEditBlur = () => {
+    if (releasingFocusRef.current) return; // programmatic blur from a keyboard commit/cancel: don't auto-save
     if (!props.disableAutoSaveOnBlur)
       props.onEdit(text);
   };
@@ -75,6 +95,7 @@ export function InlineTextarea(props: {
       onBlur={props.disableAutoSaveOnBlur ? undefined : handleEditBlur}
       slotProps={{
         textarea: {
+          ref: textareaRef,
           enterKeyHint: enterIsNewline ? 'enter' : 'done',
           ...(props.centerText && {
             sx: { textAlign: 'center' },
