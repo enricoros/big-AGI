@@ -19,6 +19,8 @@ import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
 import type { T2iCreateImageOutput, T2iGenerateOptions } from './t2i.server';
 import { openAIGenerateImagesOrThrow, openAIImageModelsCurrentGeneratorName } from './dalle/openaiGenerateImages';
+import { openRouterGenerateImagesOrThrow } from './openrouter/openrouterGenerateImages';
+import { openRouterImageModelLabel, useOpenRouterT2IStore } from './openrouter/store-module-openrouter';
 import { useTextToImageStore } from './store-module-t2i';
 
 
@@ -43,6 +45,8 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
 
   const dalleModelId = useDalleStore(state => state.dalleModelId);
 
+  const orImageModelId = useOpenRouterT2IStore(state => state.orImageModelId);
+
 
   // memo
 
@@ -59,7 +63,8 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
       providers,
       activeProvider,
     };
-  }, [userProviderId, dalleModelId, llmsModelServices]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userProviderId, dalleModelId, orImageModelId, llmsModelServices]);
 
 
   return {
@@ -118,6 +123,13 @@ export async function t2iGenerateImagesOrThrow(
 
     case 'googleai':
       throw new Error('Gemini Imagen integration coming soon');
+
+    case 'openrouter':
+      if (!modelServiceId)
+        throw new Error('No OpenRouter Model service configured for TextToImage');
+      if (aixInlineImageParts?.length)
+        throw new Error('Image transformation is not yet available with OpenRouter. Please use an OpenAI service instead.');
+      return await openRouterGenerateImagesOrThrow(modelServiceId, prompt, count, options);
 
     case 'xai':
       throw new Error('xAI image generation integration coming soon');
@@ -207,8 +219,8 @@ interface T2ILlmsModelService {
 function _findLlmsT2IServices(llms: ReadonlyArray<DLLM>, services: ReadonlyArray<DModelsService>) {
   return services
     .filter(s => {
-      // allowlist azure and localai
-      if (s.vId === 'azure' || s.vId === 'localai') return true;
+      // allowlist azure, localai and openrouter
+      if (s.vId === 'azure' || s.vId === 'localai' || s.vId === 'openrouter') return true;
       // denylist non-openai
       if (s.vId !== 'openai') return false;
       // openai: skip OpenAI-compatible proxies (MiniMax, ChutesAI, Fireworks, ...)
@@ -252,6 +264,19 @@ function _getTextToImageProviders(llmsModelServices: T2ILlmsModelService[]) {
           label,
           painter: openAIImageModelsCurrentGeneratorName(), // sync this with dMessageUtils.tsx
           description: 'OpenAI Image generation models',
+          configured: hasAnyModels,
+        });
+        break;
+
+      case 'openrouter':
+        providers.push({
+          providerId: modelServiceId, // identity mapping here
+          modelServiceId,
+          vendor: 'openrouter',
+          priority: 40, // below direct OpenAI configs
+          label,
+          painter: openRouterImageModelLabel(useOpenRouterT2IStore.getState().orImageModelId),
+          description: 'OpenRouter Image generation models',
           configured: hasAnyModels,
         });
         break;
