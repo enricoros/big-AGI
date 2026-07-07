@@ -45,6 +45,7 @@ import { llmapiHeuristic, llmapiModelsToModelDescriptions } from './openai/model
 import { llmsIsNativeOpenAIHost } from '../shared/llm.isomorphic';
 import { minimaxHardcodedModelDescriptions, minimaxHeuristic } from './openai/models/minimax.models';
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
+import { orcaRouterHeuristic, orcaRouterModelsToModelDescriptions } from './openai/models/orcarouter.models';
 import { lmStudioFetchModels, lmStudioModelsToModelDescriptions } from './openai/models/lmstudio.models';
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
 import { mistralModels } from './openai/models/mistral.models';
@@ -504,6 +505,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // [Novita] special case for model enumeration
               if (novitaHeuristic(oaiUrl))
                 return novitaModelsToModelDescriptions(openAIWireModelsResponse);
+
+              // [OrcaRouter] special case: provider-prefixed ids, capabilities inferred from the id
+              if (orcaRouterHeuristic(oaiUrl))
+                return orcaRouterModelsToModelDescriptions(maybeModels);
 
               // [LLM API] OpenAI-compatible gateway with rich model metadata
               if (llmapiHeuristic(oaiUrl))

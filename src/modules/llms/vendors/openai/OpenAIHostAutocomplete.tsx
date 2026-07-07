@@ -13,6 +13,7 @@ import { CloudflareIcon } from '~/common/components/icons/vendors/CloudflareIcon
 import { HeliconeIcon } from '~/common/components/icons/vendors/HeliconeIcon';
 import { MiniMaxIcon } from '~/common/components/icons/vendors/MiniMaxIcon';
 import { NovitaAIIcon } from '~/common/components/icons/vendors/NovitaAIIcon';
+import { OrcaRouterIcon } from '~/common/components/icons/vendors/OrcaRouterIcon';
 
 
 /**
@@ -45,6 +46,7 @@ const OPENAI_COMPATIBLE_PROVIDERS: VerifiedProvider[] = [
   { id: 'llmapi', label: 'LLM API', host: 'https://api.llmapi.ai', hostMatch: 'llmapi.ai', category: 'Example Providers', description: 'Multi-provider API gateway', docsUrl: 'https://llmapi.ai' },
   { id: 'minimax', label: 'MiniMax', host: 'https://api.minimax.io', hostMatch: 'minimax.io', category: 'Example Providers', description: 'Proprietary reasoning models', docsUrl: 'https://platform.minimax.io/docs', icon: MiniMaxIcon },
   { id: 'novita', label: 'Novita AI', host: 'https://api.novita.ai/openai', hostMatch: 'novita.ai', category: 'Example Providers', description: 'Budget open model inference', docsUrl: 'https://novita.ai/docs', icon: NovitaAIIcon },
+  { id: 'orcarouter', label: 'OrcaRouter', host: 'https://api.orcarouter.ai', hostMatch: 'orcarouter.ai', category: 'Example Providers', description: 'Adaptive multi-provider routing gateway', docsUrl: 'https://docs.orcarouter.ai', icon: OrcaRouterIcon },
   // Example Proxies
   { id: 'helicone', label: 'Helicone', host: 'https://oai.hconeai.com', hostMatch: 'hconeai.com', category: 'Example Proxies', description: 'Observability and caching proxy', docsUrl: 'https://docs.helicone.ai/getting-started/quick-start', icon: HeliconeIcon },
   { id: 'cloudflare', label: 'Cloudflare AI Gateway', host: 'https://gateway.ai.cloudflare.com/v1/{account}/{gateway}/openai', hostMatch: 'gateway.ai.cloudflare.com', category: 'Example Proxies', description: 'Caching and analytics gateway', docsUrl: 'https://developers.cloudflare.com/ai-gateway/', icon: CloudflareIcon },
