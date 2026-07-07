@@ -94,7 +94,7 @@ const chatBeamWrapperSx: SxProps = {
 const composerOpenSx: SxProps = {
   // NOTE: disabled on 2025-03-05: conflicts with the GlobalDragOverlay's
   // zIndex: 21, // just to allocate a surface, and potentially have a shadow
-  minWidth: { md: 480 }, // don't get compresses too much on desktop
+  minWidth: { md: 460 }, // don't get compresses too much on desktop
   // backgroundColor: themeBgAppChatComposer, // inlined in the Composer
   transition: 'background-color 0.5s ease-out',
   borderTop: `1px solid`,

@@ -803,7 +803,7 @@ export function Composer(props: {
               display: 'flex',
               flexDirection: 'column',
               gap: 1,
-              minWidth: 200, // flex: enable X-scrolling (resetting any possible minWidth due to the attachment drafts)
+              minWidth: 120, // flex: enable X-scrolling (resetting any possible minWidth due to the attachment drafts)
             }}>
 
               {/* Text Edit + Mic buttons + MicOverlay */}
