@@ -476,7 +476,7 @@ export function prettyShortChatModelName(model: string | undefined): string {
   }
   // [xAI]
   if (model.includes('grok-')) {
-    if (['grok-code', 'grok-4', 'grok-3', 'grok-2'].some(m => model.includes(m))) {
+    if (['grok-code', 'grok-build', 'grok-4', 'grok-3', 'grok-2'].some(m => model.includes(m))) {
       return model
         .replace('xai-', '')
         .replace('-beta', '')

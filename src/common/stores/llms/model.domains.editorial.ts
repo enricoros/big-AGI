@@ -74,6 +74,7 @@ export const EditorialDefaults = {
     { vendor: 'anthropic',  modelId: 'claude-opus-4-6' },
     { vendor: 'googleai',   modelId: 'models/gemini-3.1-pro-preview' },
     { vendor: 'anthropic',  modelId: 'claude-sonnet-4-6' },
+    { vendor: 'xai',        modelId: 'grok-4.5' },
     { vendor: 'xai',        modelId: 'grok-4.3' },
     { vendor: 'moonshot',   modelId: 'kimi-k2.6' },
     { vendor: 'zai',        modelId: 'glm-5.2' },
@@ -92,6 +93,7 @@ export const EditorialDefaults = {
     { vendor: 'openrouter', modelId: 'anthropic/claude-sonnet-4-6' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-7' },
+    { vendor: 'xai',        modelId: 'grok-4.5' }, // xAI: 'Code: Grok 4.5' (docs 2026-07-08)
     { vendor: 'xai',        modelId: 'grok-build-0.1' },
     { vendor: 'zai',        modelId: 'glm-5.2' },
     { vendor: 'zai',        modelId: 'glm-5' },

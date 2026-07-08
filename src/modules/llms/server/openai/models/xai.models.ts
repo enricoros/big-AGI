@@ -22,12 +22,13 @@ const DEV_DEBUG_XAI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO I
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
 // Verified: 2026-06-16 via live /v1/language-models (post-2026-05-15 retirement: grok-4-1-fast, grok-4-fast, grok-4-0709, grok-3, grok-3-mini, grok-2-vision-1212 redirect to grok-4.3; grok-code-fast-1 now aliases grok-build-0.1)
 // Re-confirmed: 2026-06-26 via docs.x.ai (no API key this run): same 5 chat models, same pricing/context windows
+// Verified: 2026-07-08 via live /v1/language-models + live probes: +grok-4.5 (released today); API now reports >200K long-context price tiers for ALL models (carried below as tiered pricing)
 
-// Flat pricing for Grok 4.3 / 4.20 flagship family (unified $1.25/$2.50 since May 2026)
+// Pricing for Grok 4.3 / 4.20 flagship family (unified $1.25/$2.50 since May 2026; >200K tier per live API 2026-07-08)
 const PRICE_FLAGSHIP = {
-  input: 1.25,
-  output: 2.5,
-  cache: { cType: 'oai-ac' as const, read: 0.2 },
+  input: [{ upTo: 200000, price: 1.25 }, { upTo: null, price: 2.50 }],
+  output: [{ upTo: 200000, price: 2.50 }, { upTo: null, price: 5.00 }],
+  cache: { cType: 'oai-ac' as const, read: [{ upTo: 200000, price: 0.20 }, { upTo: null, price: 0.40 }] },
 };
 
 // Interfaces: ALL XAI MODELS use the OpenAI Responses API (XAI dialect)
@@ -62,6 +63,27 @@ const XAI_PAR_Reasoning = XAI_PAR;
 type _XaiModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 
 const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
+
+  // Grok 4.5 (flagship, July 2026) - premium tier over 4.3; reasoning always-on: effort low/medium/high/xhigh, 'none' rejected by API (2026-07-08 probe)
+  {
+    idPrefix: 'grok-4.5',
+    label: 'Grok 4.5',
+    pubDate: '20260708',
+    description: 'xAI\'s smartest and fastest model with frontier performance on coding, knowledge work, and STEM - recommended by xAI for both chat and code. 500K token context window, text and image inputs, always-on reasoning with effort control (low/medium/high/xhigh). Knowledge cutoff: November 2024. Aliases: grok-4.5-latest, grok-build-latest.',
+    contextWindow: 500000,
+    maxCompletionTokens: undefined,
+    interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] }, // no 'none': reasoning cannot be disabled (API 400s, unlike grok-4.3)
+      ...XAI_PAR_Reasoning, // web_search + code_execution live-verified 2026-07-08
+    ],
+    chatPrice: {
+      input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
+      output: [{ upTo: 200000, price: 6.00 }, { upTo: null, price: 12.00 }],
+      cache: { cType: 'oai-ac', read: [{ upTo: 200000, price: 0.50 }, { upTo: null, price: 1.00 }] },
+    },
+    // benchmark: no CBA Elo yet (released 2026-07-08)
+  },
 
   // Grok 4.3 (flagship, April 2026) - reasoning_effort: none/low(default)/medium/high/xhigh
   {
@@ -141,7 +163,11 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
     maxCompletionTokens: undefined,
     interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
     parameterSpecs: XAI_PAR_Reasoning, // sweep (2026-06) confirms web search; rolled into the standard Grok-4 server-side toolset
-    chatPrice: { input: 1.00, output: 2.00, cache: { cType: 'oai-ac', read: 0.20 } },
+    chatPrice: {
+      input: [{ upTo: 200000, price: 1.00 }, { upTo: null, price: 2.00 }],
+      output: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
+      cache: { cType: 'oai-ac', read: [{ upTo: 200000, price: 0.20 }, { upTo: null, price: 0.40 }] },
+    },
   },
 
   // Retired: grok-3-mini (now alias of grok-4.3), grok-2-vision-1212 (gone from API)
@@ -230,6 +256,7 @@ export async function xaiFetchModelDescriptions(access: OpenAIAccessSchema): Pro
 
 // manual sort order - your desired order
 const _xaiIdStartsWithOrder = [
+  'grok-4.5',
   'grok-4.3',
   'grok-4.20-0309-reasoning',
   'grok-4.20-0309-non-reasoning',

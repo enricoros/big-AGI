@@ -117,6 +117,7 @@ export namespace XAIWire_API_Responses {
 
     // configure reasoning
     // [2026-05-15] grok-4.3: none/low(default)/medium/high; grok-4.20-multi-agent: low/medium/high/xhigh (4 vs 16 agents)
+    // [2026-07-08] grok-4.5: low/medium/high/xhigh - always-on reasoning, 'none' rejected (400)
     reasoning: z.object({
       effort: z.enum([/*'minimal',*/ 'none', 'low', 'medium', 'high', 'xhigh' /*, 'max'*/]).nullish(),
       summary: z.enum(['auto', 'concise', 'detailed']).nullish(), // request reasoning summaries
@@ -158,7 +159,7 @@ export namespace XAIWire_API_Responses {
     user: z.string().optional(), // stable identifier for your end-users
 
     // Unused
-    // logprobs: z.boolean().nullish(),
+    // logprobs: z.boolean().nullish(), // [2026-07-08] docs: not supported on grok-4.20 and newer (silently ignored)
     // metadata: z.record(z.string(), z.any()).optional(), // set of 16 key-value pairs that can be attached to an object
     // service_tier: z.enum(['auto', 'default', 'flex', 'priority']).nullish(),
     // top_logprobs: z.int().nullish(), // requires logprobs to be true, an integer between 0 and 8 specifying the number of most likely tokens to return at each token position
