@@ -509,6 +509,25 @@ export function prettyShortChatModelName(model: string | undefined): string {
       .replace(/-x$/, ' X')
       .replace(/-32b.*$/, ' 32B');
   }
+  // [Cohere] Command / Aya / North families - guarded on Cohere-exclusive shapes (command-a/-r, not bare 'command-'
+  // which is a generic word; c4ai/aya/north-mini/tiny-aya are Cohere-only) + the 'cohere/' aggregator form.
+  if (model.startsWith('command-a') || model.startsWith('command-r') || model.startsWith('c4ai-') || model.startsWith('north-mini') || model.startsWith('tiny-aya') || model.startsWith('cohere/') || model.startsWith('cohere-')) {
+    return model
+      .replace(/^cohere[/-]/, '')                // strip aggregator prefix (e.g. openrouter 'cohere/...')
+      .replace(/-\d{2}-20\d{2}$/, '')            // strip -MM-YYYY snapshot date (e.g. -05-2026)
+      .replace('north-mini-code-1-0', 'North Mini Code')
+      .replace('c4ai-', '')                      // Aya research prefix
+      .replace('command-r-plus', 'Command R+')
+      .replace('command-r7b', 'Command R7B')
+      .replace('command-a', 'Command A')
+      .replace('command-r', 'Command R')
+      .replace('aya-expanse', 'Aya Expanse')
+      .replace('aya-vision', 'Aya Vision')
+      .replace('tiny-aya', 'Tiny Aya')
+      .replace(/\b(\d+)b\b/i, '$1B')             // 32b -> 32B
+      .split('-').map(s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s).join(' ')
+      .trim();
+  }
   // [Sakana.ai] fugu, fugu-ultra, fugu-ultra-20260615 (service prefix already stripped by the auto-label heuristic)
   if (model === 'fugu' || model.startsWith('fugu-')) {
     return model

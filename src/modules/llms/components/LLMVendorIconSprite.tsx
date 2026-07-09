@@ -17,6 +17,7 @@ const VI: Record<ModelVendorId, string> = {
   azure: 'vi-azure',
   bedrock: 'vi-bedrock',
   cerebras: 'vi-cerebras',
+  cohere: 'vi-cohere',
   deepseek: 'vi-deepseek',
   googleai: 'vi-googleai',
   groq: 'vi-groq',
@@ -77,6 +78,14 @@ export const VendorIconSpriteMemo = React.memo(function VendorIconSprite() {
         <symbol id={VI.cerebras} viewBox='0 0 48 48'>
           <g fill='currentColor' stroke='currentColor' strokeWidth={3.085} strokeMiterlimit={10}>
           <path fill='none' d='M24 46C11.85 46 2 36.15 2 24S11.85 2 24 2M12.666 37.596c-7.497-6.29-8.474-17.465-2.184-24.962S27.948 4.16 35.445 10.45m-17.78 25.44c-6.562-3.464-9.074-11.594-5.61-18.156 3.465-6.564 11.593-9.075 18.157-5.61M24 33.157a9.156 9.156 0 0 1 0-18.313' />
+          </g>
+        </symbol>
+
+        <symbol id={VI.cohere} viewBox='0 0 24 24'>
+          <g fill='currentColor' fillRule='evenodd' stroke='none'>
+          <path d='M8.128 14.099c.592 0 1.77-.033 3.398-.703 1.897-.781 5.672-2.2 8.395-3.656 1.905-1.018 2.74-2.366 2.74-4.18A4.56 4.56 0 0018.1 1H7.549A6.55 6.55 0 001 7.55c0 3.617 2.745 6.549 7.128 6.549z' />
+          <path d='M9.912 18.61a4.387 4.387 0 012.705-4.052l3.323-1.38c3.361-1.394 7.06 1.076 7.06 4.715a5.104 5.104 0 01-5.105 5.104l-3.597-.001a4.386 4.386 0 01-4.386-4.387z' />
+          <path d='M4.776 14.962A3.775 3.775 0 001 18.738v.489a3.776 3.776 0 007.551 0v-.49a3.775 3.775 0 00-3.775-3.775z' />
           </g>
         </symbol>
 
