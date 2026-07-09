@@ -384,7 +384,7 @@ export const llmOpenAIRouter = createTRPCRouter({
           height = info.height;
         } catch (error) {
           // unsupported format (e.g. WebP) - keep the media_type (or default) and unknown dimensions
-          console.log(`openai.router.dialectOpenRouter_createImages: could not sniff image (${mimeType})`, error);
+          console.warn(`openai.router.dialectOpenRouter_createImages: could not sniff image (${mimeType})`, error);
         }
 
         // -> createImage
