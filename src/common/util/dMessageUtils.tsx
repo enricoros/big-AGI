@@ -426,6 +426,10 @@ export function prettyShortChatModelName(model: string | undefined): string {
       // price variants
       .replace('-pro', ' Pro')
       .replace('-preview', ' (preview)')
+      // GPT-5.6+ capability tiers
+      .replace('-sol', ' Sol')
+      .replace('-terra', ' Terra')
+      .replace('-luna', ' Luna')
       // .replace('-latest', ' latest') // covered by catch-all
       // size (covered by catch-all)
       // .replace('-mini', ' mini')
