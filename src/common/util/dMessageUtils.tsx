@@ -389,6 +389,15 @@ export function prettyShortChatModelName(model: string | undefined): string {
 
   // TODO: fully reform this function to be using information from the DLLM, rather than this manual mapping
 
+  // Variant ids ('base::variant', see LLMS_VARIANT_SEPARATOR) - any vendor: prettify the base alone, then re-append the variant
+  const variantIndex = model.indexOf('::');
+  if (variantIndex !== -1) {
+    // const variant = model.slice(variantIndex + 2);
+    return prettyShortChatModelName(model.slice(0, variantIndex));
+    // we decide to not show the variantm, since the model will be overwritten by the real returned model anyways, and so we skip it for this first second..
+    // + (' ' + variant.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' '));
+  }
+
   // [Gemini / Google] short-circuit canonical 'models/' prefix before OpenAI regex, to avoid substring collisions (e.g. '-computer-use-' in 'models/gemini-2.5-computer-use-...')
   if (model.startsWith('models/'))
     return _prettyGeminiModelName(model.slice(7));
