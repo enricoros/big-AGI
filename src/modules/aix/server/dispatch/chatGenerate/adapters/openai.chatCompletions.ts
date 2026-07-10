@@ -146,6 +146,11 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     }
   }
 
+  // [2026-07-09, OpenAI] reasoning.mode is Responses-only - fail loud rather than silently dropping the param
+  // (a Chat Completions dispatch can only carry it via a misconfigured model def or a forced-CC override)
+  if (model.vndOaiReasoningMode)
+    throw new Error('OpenAI Chat Completions API does not support the Reasoning Mode parameter (Responses API only)');
+
   // [OpenAI] Vendor-specific reasoning effort
   const reasoningEffort = model.reasoningEffort; // ?? model.vndOaiReasoningEffort;
   if (reasoningEffort

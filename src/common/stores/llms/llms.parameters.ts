@@ -401,6 +401,15 @@ export const DModelParameterRegistry = {
     // undefined means off
   },
 
+  llmVndOaiReasoningMode: _enumDef({
+    // [2026-07-09, OpenAI] GPT-5.6+ Responses API reasoning.mode - 'pro' replaces the standalone '-pro' models
+    label: 'Reasoning Mode',
+    type: 'enum',
+    description: 'Pro mode performs additional model work for difficult tasks, billed at standard token rates',
+    values: ['standard', 'pro'],
+    // undefined means vendor default ('standard')
+  }),
+
   llmVndOaiVerbosity: _enumDef({
     label: 'Verbosity',
     type: 'enum',

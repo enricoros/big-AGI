@@ -107,6 +107,7 @@ const ModelParameterSpec_schema = z.object({
     // Moonshot
     'llmVndMoonshotWebSearch',
     // OpenAI
+    'llmVndOaiReasoningMode',
     'llmVndOaiRestoreMarkdown',
     'llmVndOaiVerbosity',
     'llmVndOaiWebSearchContext',

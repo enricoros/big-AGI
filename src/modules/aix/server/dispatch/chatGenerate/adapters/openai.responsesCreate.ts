@@ -134,6 +134,11 @@ export function aixToOpenAIResponses(
       payload.reasoning.summary = 'detailed';
   }
 
+  // [2026-07-09, OpenAI] GPT-5.6+ Reasoning Mode: 'pro' performs additional model work for the hardest problems, billed at
+  // standard token rates (replaces standalone '-pro' models); orthogonal to effort, verified working with streaming
+  if (model.vndOaiReasoningMode)
+    payload.reasoning = { ...payload.reasoning, mode: model.vndOaiReasoningMode };
+
   // ALWAYS REQUEST Reasoning items: always include encrypted_content if there's any reasoning done; we had this inside the
   // former block, but models can reason even if reasoningEffort === undefined;
   if (!payload.store && reasoningEffort !== 'none') {

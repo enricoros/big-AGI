@@ -1585,7 +1585,8 @@ export namespace OpenAIWire_API_Responses {
 
     // configure reasoning
     reasoning: z.object({
-      effort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).nullish(), // defaults to 'none' for GPT-5.2, 'medium' for older
+      effort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']).nullish(), // defaults to 'none' for GPT-5.2, 'medium' for older; [2026-07-09, OpenAI] 'max' added with GPT-5.6
+      mode: z.enum(['standard', 'pro']).nullish(), // [2026-07-09, OpenAI] GPT-5.6+: 'pro' performs additional model work, billed at standard token rates; orthogonal to effort
       summary: z.enum(['auto', 'concise', 'detailed']).nullish(),
     }).nullish(),
 

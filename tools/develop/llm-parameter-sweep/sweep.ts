@@ -75,6 +75,10 @@ const SWEEP_DEFINITIONS = [
     values: ['standard', 'pro'] satisfies AixAPI_Model['vndOaiReasoningMode'][],
     neuteredValues: ['standard'], // standard is the default, so only-standard means no real support
     mode: 'enumerate',
+    // [2026-07-10] reasoning.mode only exists on the Responses API: the Chat Completions adapter does not carry it,
+    // so a CC-dispatched probe would 200 without the API ever seeing the param (false pass on gpt-4o/4.1/3.5 etc.)
+    preflightFail: (body, value) => body?.reasoning?.mode === value ? null
+      : `not carried on wire: reasoning.mode=${body?.reasoning?.mode ?? '(unset)'} (Responses-only param)`,
   }),
 
   // OpenAI: verbosity (Responses API)

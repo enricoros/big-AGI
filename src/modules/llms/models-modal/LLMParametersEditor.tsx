@@ -65,6 +65,12 @@ export function llmParametersFilterEffortOptions<T extends { value: string }>(op
 }
 
 
+const _oaiReasoningModeOptions = [
+  { value: 'pro', label: 'Pro', description: 'Additional model work for the hardest problems' } as const,
+  { value: 'standard', label: 'Standard', description: 'Regular reasoning' } as const,
+  { value: _UNSPECIFIED, label: 'Default', description: 'Default (Standard)' } as const,
+] as const;
+
 const _verbosityOptions = [
   { value: 'high', label: 'Detailed', description: 'Thorough responses, great for audits' } as const,
   { value: 'medium', label: 'Balanced', description: 'Standard detail level (default)' } as const,
@@ -268,6 +274,7 @@ export function LLMParametersEditor(props: {
     llmVndMiscEffort,
     // llmVndMoonshotWebSearch,
     llmVndOaiEffort,
+    llmVndOaiReasoningMode,
     llmVndOaiRestoreMarkdown,
     llmVndOaiWebSearchContext,
     llmVndOaiWebSearchGeolocation,
@@ -448,6 +455,19 @@ export function LLMParametersEditor(props: {
           else onChangeParameter({ llmVndOaiEffort: value });
         }}
         options={oaiEffortOptions}
+      />
+    )}
+    {/* OpenAI Reasoning Mode (GPT-5.6+) */}
+    {showParam('llmVndOaiReasoningMode') && (
+      <FormSelectControl
+        title='Reasoning Mode'
+        tooltip='Pro mode performs additional model work for difficult tasks; token usage is higher, billed at standard rates'
+        value={llmVndOaiReasoningMode ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndOaiReasoningMode');
+          else onChangeParameter({ llmVndOaiReasoningMode: value });
+        }}
+        options={_oaiReasoningModeOptions}
       />
     )}
     {/* Moonshot/Z.ai Thinking */}
