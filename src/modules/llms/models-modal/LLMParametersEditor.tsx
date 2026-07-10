@@ -342,19 +342,22 @@ export function LLMParametersEditor(props: {
   //             Now this seems to be still the case for llmVndOaiEffort === 'minimal' (gpt 5.0 and before), 5.1/5.2 work even with 'none'
   const oaiSkipSearchOnMinimalEffort = llmVndOaiEffort === 'minimal';
 
+  // [2026-07-09, OpenAI] reasoning models unlock temperature at effort 'none' (mirrors the hotfixOmitTemperature bypass in aix.client)
+  const oaiTempUnlockedByNoReasoning = !!props.parameterOmitTemperature && llmVndOaiEffort === 'none';
+
   return <>
 
     {!(props.simplified && props.parameterOmitTemperature) && <FormSliderControl
       title={<span style={{ minWidth: 100 }}>Temperature</span>} ariaLabel='Model Temperature'
       description={
         antThinkingEnabled_Adaptive ? 'Off (adaptive)' : antThinkingEnabled ? 'Off (thinking)'
-          : llmTemperature === null ? 'Unsupported'
+          : llmTemperature === null ? (oaiTempUnlockedByNoReasoning ? 'Default' : 'Unsupported')
             : llmTemperature === undefined ? 'Default'
               : llmTemperature < 0.33 ? 'More strict'
                 : llmTemperature > 1 ? 'Extra hot ♨️'
                   : llmTemperature > 0.67 ? 'Larger freedom' : 'Creativity'
       }
-      disabled={props.parameterOmitTemperature /* set when LLM_IF_HOTFIX_NoTemperature */ || antThinkingEnabled}
+      disabled={(props.parameterOmitTemperature && !oaiTempUnlockedByNoReasoning) /* set when LLM_IF_HOTFIX_NoTemperature, unless effort 'none' unlocks it */ || antThinkingEnabled}
       min={0}
       max={overheat ? 2 : 1}
       step={0.1}
