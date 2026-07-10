@@ -15,6 +15,45 @@ export type LlmsOpenAIModelId = typeof _knownOpenAIChatModels[number]['idPrefix'
 // OpenAI Model Variants
 export const hardcodedOpenAIVariants: ModelVariantMap = {
 
+  // GPT-5.6 Sol: Pro reasoning mode (successor to the standalone '-pro' models - gpt-5.6-pro does not exist),
+  // and reasoning disabled (non-thinking) - both verified live 2026-07-10
+  'gpt-5.6-sol': [
+    {
+      idVariant: '::pro',
+      label: 'GPT-5.6 Sol Pro',
+      // Empirical (2026-07-10): answers arrive whole (single terminal SSE delta, like 5.5 Pro, but much faster - ~5s vs ~34s
+      // on a trivial prompt); each request adds ~1.7K billed input tokens of orchestration scaffold; background mode supported.
+      description: 'GPT-5.6 Sol with Pro reasoning mode: performs additional model work for the hardest problems. Answers arrive whole (no incremental streaming) and requests carry a ~1.7K input token overhead, billed at standard GPT-5.6 Sol rates.',
+      parameterSpecs: [
+        { paramId: 'llmVndOaiReasoningMode', initialValue: 'pro', hidden: true }, // factory 'pro', not changeable
+        { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
+        { paramId: 'llmVndOaiWebSearchContext' },
+        { paramId: 'llmVndOaiVerbosity' },
+        { paramId: 'llmVndOaiImageGeneration' },
+        { paramId: 'llmVndOaiCodeInterpreter' },
+        { paramId: 'llmForceNoStream' },
+      ],
+    },
+    {
+      idVariant: '::thinking-none',
+      label: 'GPT-5.6 Sol (No-thinking)',
+      hidden: true, // hidden by default as redundant, user can unhide in settings
+      description: 'Supports temperature control for creative applications. GPT-5.6 Sol with reasoning disabled (reasoning_effort=none).',
+      interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching], // NO LLM_IF_OAI_Reasoning, NO LLM_IF_HOTFIX_NoTemperature
+      parameterSpecs: [
+        { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'none', hidden: true }, // factory 'none', not changeable
+        { paramId: 'llmVndOaiWebSearchContext' },
+        { paramId: 'llmVndOaiVerbosity' },
+        { paramId: 'llmVndOaiImageGeneration' },
+        { paramId: 'llmVndOaiCodeInterpreter' },
+        { paramId: 'llmForceNoStream' },
+      ],
+    },
+  ],
+
+  // NOTE: temperature-at-effort-none is probe-verified on Terra/Luna too, but per the flagship-only precedent
+  // (5.2/5.4/5.5 minis never got one) only Sol gets a No-thinking variant.
+
   // GPT-5.5 with reasoning disabled (non-thinking) - supports temperature control
   'gpt-5.5-2026-04-23': {
     idVariant: '::thinking-none',
