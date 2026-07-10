@@ -61,8 +61,19 @@ const SWEEP_DEFINITIONS = [
     description: 'OpenAI reasoning_effort values',
     applicability: { type: 'dialects', dialects: ['openai', 'azure', 'openrouter'] },
     applyToModel: (value) => ({ reasoningEffort: value }),
-    values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh' /*, 'max'*/ /* OpenRouter-only? */] satisfies AixAPI_Model['reasoningEffort'][],
+    values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max' /* [2026-07-09] GPT-5.6+ */] satisfies AixAPI_Model['reasoningEffort'][],
     neuteredValues: ['medium'], // medium is the default, so only-medium means no real support
+    mode: 'enumerate',
+  }),
+
+  // OpenAI: reasoning mode (Responses API, GPT-5.6+)
+  defineSweep({
+    name: 'oai-reasoning-mode',
+    description: 'OpenAI reasoning.mode values (Responses API, GPT-5.6+)',
+    applicability: { type: 'dialects', dialects: ['openai'] },
+    applyToModel: (value) => ({ vndOaiReasoningMode: value }),
+    values: ['standard', 'pro'] satisfies AixAPI_Model['vndOaiReasoningMode'][],
+    neuteredValues: ['standard'], // standard is the default, so only-standard means no real support
     mode: 'enumerate',
   }),
 

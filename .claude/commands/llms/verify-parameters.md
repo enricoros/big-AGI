@@ -42,6 +42,7 @@ and need to be carefully updated, otherwise thousands of clients may break.
 | Dialect   | Sweep Key                | Model paramId                |
 |-----------|--------------------------|------------------------------|
 | OpenAI    | `oai-reasoning-effort`   | `llmVndOaiEffort`            |
+| OpenAI    | `oai-reasoning-mode`     | `llmVndOaiReasoningMode`     |
 | OpenAI    | `oai-verbosity`          | `llmVndOaiVerbosity`         |
 | OpenAI    | `oai-image-generation`   | `llmVndOaiImageGeneration`   |
 | OpenAI    | `oai-web-search`         | `llmVndOaiWebSearchContext`  |
