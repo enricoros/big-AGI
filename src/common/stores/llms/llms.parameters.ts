@@ -168,7 +168,7 @@ export const DModelParameterRegistry = {
     label: 'Reasoning Effort',
     type: 'enum',
     description: 'Controls how much effort the model spends on reasoning.',
-    values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'],
+    values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'], // [2026-07-09, OpenAI] 'max' added with GPT-5.6
     // undefined means vendor default
   }),
 

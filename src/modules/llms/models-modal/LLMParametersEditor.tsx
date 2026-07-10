@@ -41,6 +41,7 @@ const _gemEffortOptions = [
 ] as const;
 
 const _oaiEffortOptions = [
+  { value: 'max', label: 'Max', description: 'Deepest reasoning (GPT-5.6+)' } as const,
   { value: 'xhigh', label: 'X-High', description: 'Hardest thinking, best quality' } as const,
   { value: 'high', label: 'High', description: 'Deep, thorough analysis' } as const,
   { value: 'medium', label: 'Medium', description: 'Balanced reasoning depth' } as const,

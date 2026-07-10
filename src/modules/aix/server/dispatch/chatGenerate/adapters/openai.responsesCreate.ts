@@ -118,9 +118,8 @@ export function aixToOpenAIResponses(
 
 
   // Reasoning
+  // [2026-07-09, OpenAI] 'max' effort is valid since GPT-5.6 (was Responses-rejected before then) - per-model domain validation is left to the API
   const reasoningEffort = model.reasoningEffort; // ?? model.vndOaiReasoningEffort;
-  if (reasoningEffort === 'max') // domain validation
-    throw new Error(`OpenAI Responses API does not support '${reasoningEffort}' reasoning effort`);
 
   if (reasoningEffort) {
     payload.reasoning = {
