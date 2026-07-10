@@ -1291,8 +1291,12 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
 
     // Extract passing values for each sweep (skip if none passed)
     for (const [sweepName, sweepResults] of bySweep) {
+      // [2026-07-10] For value sweeps, 'truncated' (out-of-tokens) counts as acceptance: the API took the value and
+      // generated past our token cap - excluding it punched fake holes in ranges (e.g. temperature [0,0.5,2] missing
+      // 1/1.5). Capability probes (fn) are excluded: a truncated roundtrip is genuinely inconclusive.
+      const truncatedIsPass = SWEEP_DEFINITIONS.some(s => s.name === sweepName);
       const passingValues = sweepResults
-        .filter(r => r.outcome === 'pass')
+        .filter(r => r.outcome === 'pass' || (truncatedIsPass && r.outcome === 'truncated'))
         .map(r => r.paramValue);
       if (passingValues.length === 0)
         continue;
