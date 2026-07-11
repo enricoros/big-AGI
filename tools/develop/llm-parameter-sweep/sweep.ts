@@ -332,6 +332,15 @@ function defineSweep<const TValue>(definition: SweepDefinition<TValue>) {
   return definition;
 }
 
+/**
+ * [2026-07-11] Default per-dialect model filters, applied when NEITHER the vendor config nor the CLI provides one.
+ * Keeps ad-hoc scans fast and focused on current-gen models (prefixes: gpt-6 included for forward-compat; the
+ * gpt-4/gpt-3.5 era is excluded). Any explicit config `modelFilter` or CLI `--model-filter` takes precedence.
+ */
+const DEFAULT_VENDOR_MODEL_FILTERS: Record<string, string[]> = {
+  openai: ['gpt-5', 'gpt-6', 'o'],
+};
+
 /** Check if passing values are neutered (only default/no-op values passed) */
 function isSweepNeutered(sweepName: string, passingValues: SweepValue[]): boolean {
   const sweepDef = SWEEP_DEFINITIONS.find(s => s.name === sweepName);
@@ -1700,7 +1709,9 @@ async function runSweep(
     }
 
     // 3. Filter models by: vendor config modelFilter (prefix match), then CLI --model-filter (regex)
-    const vendorModelFilter = vendorConfig.modelFilter;
+    // No config filter AND no CLI filter -> per-dialect default (e.g. openai: current-gen only, no gpt-4/3.5 era)
+    const vendorModelFilter = vendorConfig.modelFilter
+      ?? (!options.modelFilter ? DEFAULT_VENDOR_MODEL_FILTERS[access.dialect] : undefined);
     if (vendorModelFilter) {
       const prefixes = Array.isArray(vendorModelFilter) ? vendorModelFilter : [vendorModelFilter];
       models = models.filter(m => prefixes.some(p => m.id.startsWith(p)));
