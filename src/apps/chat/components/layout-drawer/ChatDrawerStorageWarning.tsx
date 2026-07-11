@@ -1,8 +1,7 @@
 import * as React from 'react';
 
-import { Box, Button, ColorPaletteProp, Divider, IconButton, Input, Link, Typography } from '@mui/joy';
+import { Box, Button, ColorPaletteProp, Divider, IconButton, Input, Link, ModalClose, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { GoodModal } from '~/common/components/modals/GoodModal';
 
@@ -27,7 +26,7 @@ const _styles = {
     // my: 1,
     pl: 1,
     py: 0.75,
-    pr: 1.75,
+    pr: 2.25,
     color: `${COLOR}.softColor`,
     backgroundColor: `${COLOR}.softBg`,
     borderRadius: 'sm',
@@ -48,6 +47,32 @@ const _styles = {
       color: `${COLOR}.solidColor`,
     },
   },
+
+  // modal: same visual family as the Activation dialog
+  modalDialog: {
+    minWidth: { xs: 340, sm: 420, md: 480 },
+    maxWidth: 480,
+    p: 'calc(var(--Card-padding) * 2)',
+  },
+  header: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  headline: {
+    fontSize: { xs: '1.25rem', sm: '1.5rem' },
+  },
+  block: {
+    mt: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 1.5,
+  },
+  footnote: {
+    textAlign: 'center',
+    color: 'text.tertiary',
+    pb: 0.5,
+  },
 } as const;
 
 
@@ -64,7 +89,7 @@ function isPhraseMatch(input: string): boolean {
  * show again - up to a cache clear, which wipes all app data (the very event this warns about).
  *
  * Note: the cloud/sync build (`dev`, Pro offering) backs chats up to a server and survives cache
- * clears, so there this banner is suppressed (gated on an active sync where it's rendered).
+ * clears; there this banner is hidden for backed-up users and gains Upgrade-to-Pro paths.
  */
 export function ChatDrawerStorageWarning() {
 
@@ -89,7 +114,8 @@ export function ChatDrawerStorageWarning() {
     <Box sx={_styles.banner}>
       {/*<WarningRoundedIcon sx={{ color: `${COLOR}.solidBg`, fontSize: 'lg', mt: 0.125, flexShrink: 0 }} />*/}
       <Typography level='body-xs' sx={{ color: 'inherit' }}>
-        Your chats and settings are saved only locally in this browser. Wiping the browser cache or data erases them permanently.
+        Chats are saved only in this browser.{' '}
+        Export important chats to keep a backup.
         {/*<b>Export</b> regularly to keep a backup.*/}
         {/*{' '}<Link*/}
         {/*  component='button'*/}
@@ -139,43 +165,68 @@ function StorageWarningConfirmationModal(props: {
   return (
     <GoodModal
       open
-      title='Dismiss storage warning?'
-      titleStartDecorator={<WarningRoundedIcon sx={{ color: 'warning.solidBg' }} />}
-      onClose={props.onClose}
+      noTitleBar
       hideBottomClose
+      darkerBackdrop
+      onClose={props.onClose}
+      sx={_styles.modalDialog}
     >
-      <Divider />
+      <ModalClose aria-label='Close storage warning' onClick={props.onClose} />
 
-      <Typography level='body-md'>
-        Your chats and settings live <b>only in this browser</b>. Clearing the browser cache or data
-        permanently erases everything - there is no server copy on this version.
-      </Typography>
-      <Typography level='body-md'>
-        Use <b>Export</b> to back up your chats and settings before clearing anything.
-      </Typography>
-
-      <Typography level='body-sm' sx={{ mt: 1 }}>
-        Type <Typography component='span' fontWeight='lg' color='warning'>&quot;{CONFIRMATION_PHRASE}&quot;</Typography> to hide this warning:
-      </Typography>
-      <Input
-        autoFocus
-        placeholder={CONFIRMATION_PHRASE}
-        value={userInput}
-        onChange={(event) => setUserInput(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' && isConfirmed)
-            props.onConfirm();
-        }}
-      />
-
-      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
-        <Button variant='plain' color='neutral' onClick={props.onClose}>
-          Cancel
-        </Button>
-        <Button variant='solid' color='warning' disabled={!isConfirmed} onClick={props.onConfirm}>
-          Hide warning
-        </Button>
+      {/* Header */}
+      <Box sx={_styles.header}>
+        <Typography level='h2' sx={_styles.headline}>
+          Data is stored in this browser
+        </Typography>
       </Box>
+
+      {/* Messages */}
+      <Box sx={_styles.block}>
+        <Box fontSize='sm'>
+          Big-AGI is a local-first app that saves your data and settings in this browser - private by default.
+        </Box>
+        <Box fontSize='sm'>
+          <b>Clearing the browser cache or data will erase chats and settings permanently.</b>
+        </Box>
+        <Box fontSize='sm'>
+          There is no server copy: use <b>Export</b> periodically to back up important chats.
+        </Box>
+
+        {/* Typed friction dismissal */}
+        <Box>
+          <Box sx={{ fontSize: 'sm', mb: 1 }}>
+            To dismiss this notice, type <Box component='span' sx={{ fontWeight: 'bold', color: 'primary.softColor' }}>&quot;{CONFIRMATION_PHRASE}&quot;</Box>:
+          </Box>
+          <Input
+            // color='warning'
+            // autoFocus
+            placeholder={CONFIRMATION_PHRASE}
+            value={userInput}
+            onChange={(event) => setUserInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && isConfirmed)
+                props.onConfirm();
+            }}
+          />
+          <Button
+            // size='lg'
+            // color='neutral'
+            variant='soft'
+            fullWidth
+            disabled={!isConfirmed}
+            onClick={props.onConfirm}
+            sx={{ mt: 1 }}
+          >
+            Continue without backup
+          </Button>
+        </Box>
+      </Box>
+
+      {/* Footer Note */}
+      {/*<Typography level='body-xs' sx={_styles.footnote}>*/}
+      {/*  For your security, API keys are never uploaded or synced.*/}
+      {/*</Typography>*/}
+
     </GoodModal>
   );
 }
