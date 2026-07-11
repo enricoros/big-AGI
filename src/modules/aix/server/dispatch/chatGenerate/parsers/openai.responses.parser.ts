@@ -8,6 +8,7 @@ import type { IParticleTransmitter } from './IParticleTransmitter';
 import { AIX_OAI_DEFAULT_IMAGE_GEN_MODEL } from '../adapters/openai.responsesCreate';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
+import { openAIUpstreamErrorLogLevel } from './openai.error-severity';
 
 import { OpenAIWire_API_Responses, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
 
@@ -433,7 +434,7 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
         // Genuine failure: surface the error
         pt.setTokenStopReason('cg-issue');
         pt.setDialectTerminatingIssue(!failedError ? 'Response failed with no error details.'
-          : `${safeErrorString(failedError.code) || 'Error'}: ${safeErrorString(failedError.message) || 'unknown.'}`, IssueSymbols.Generic, 'srv-warn');
+          : `${safeErrorString(failedError.code) || 'Error'}: ${safeErrorString(failedError.message) || 'unknown.'}`, IssueSymbols.Generic, openAIUpstreamErrorLogLevel(failedError));
         break;
       }
 
@@ -801,11 +802,11 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
         }
 
         // Nothing to salvage - fail now (and seal, so the trailing 'response.failed' echo doesn't re-report)
-        // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
+        // FIXME: potential point for throwing OperationRetrySignal
         R.markResponseSealed();
         pt.updateMetrics(_fromResponseMetrics(undefined, R.parserCreationTimestamp, R.timeToFirstEvent)); // timing even on failure (#1149)
         pt.setTokenStopReason('cg-issue');
-        pt.setDialectTerminatingIssue(errorText, IssueSymbols.Generic, 'srv-warn');
+        pt.setDialectTerminatingIssue(errorText, IssueSymbols.Generic, openAIUpstreamErrorLogLevel({ code: event.error?.code ?? event.code, type: event.error?.type }));
         break;
       }
 
@@ -1197,8 +1198,8 @@ function _forwardResponseError(parsedData: any, pt: IParticleTransmitter) {
     return false;
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
-  // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
-  pt.setDialectTerminatingIssue(safeErrorString(error) || 'unknown.', IssueSymbols.Generic, 'srv-warn');
+  // FIXME: potential point for throwing OperationRetrySignal
+  pt.setDialectTerminatingIssue(safeErrorString(error) || 'unknown.', IssueSymbols.Generic, openAIUpstreamErrorLogLevel(error));
   return true;
 }
 

@@ -8,6 +8,7 @@ import { IssueSymbols } from '../ChatGenerateTransmitter';
 
 import { OpenAIWire_API_Chat_Completions } from '../../wiretypes/openai.wiretypes';
 import { calculateDurationMs, createWAVFromPCM } from './gemini.audioutils';
+import { openAIUpstreamErrorLogLevel } from './openai.error-severity';
 
 
 /**
@@ -108,8 +109,8 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
     // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
     if (json.error) {
-      // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
-      return pt.setDialectTerminatingIssue(safeErrorString(json.error) || 'unknown.', IssueSymbols.Generic, 'srv-warn');
+      // FIXME: potential point for throwing OperationRetrySignal
+      return pt.setDialectTerminatingIssue(safeErrorString(json.error) || 'unknown.', IssueSymbols.Generic, openAIUpstreamErrorLogLevel(json.error));
     }
 
     // [OpenAI] if there's a warning, log it once
@@ -756,8 +757,8 @@ function _forwardOpenRouterDataError(parsedData: any, pt: IParticleTransmitter) 
   }
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
-  // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
-  pt.setDialectTerminatingIssue(errorMessage, IssueSymbols.Generic, 'srv-warn');
+  // FIXME: potential point for throwing OperationRetrySignal
+  pt.setDialectTerminatingIssue(errorMessage, IssueSymbols.Generic, openAIUpstreamErrorLogLevel(error));
   return true;
 }
 
