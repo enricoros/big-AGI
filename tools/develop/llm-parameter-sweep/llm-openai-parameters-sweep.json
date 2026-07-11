@@ -1,7 +1,37 @@
 {
   "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
-  "_evaluated": "Evaluated: fn, oai-image-generation, oai-reasoning-effort, oai-temperature-think-high, oai-temperature-think-none, oai-verbosity, oai-web-search, temperature. If missing, the parameter is not supported by that model.",
-  "_modelFilter": "gpt-5, o",
+  "_evaluated": "Evaluated: fn, oai-image-generation, oai-reasoning-effort, oai-reasoning-mode, oai-temperature-think-high, oai-temperature-think-none, oai-verbosity, oai-web-search, temperature. If missing, the parameter is not supported by that model.",
+  "_modelFilter": "gpt-5, gpt-6, o",
+  "gpt-5.6-sol": {
+    "fn": ["auto","required","roundtrip"],
+    "oai-reasoning-effort": ["none","low","medium","high","xhigh","max"],
+    "oai-reasoning-mode": ["standard","pro"],
+    "oai-temperature-think-high": [1],
+    "oai-temperature-think-none-range": [0,2],
+    "oai-verbosity": ["low","medium","high"],
+    "temperature": [1],
+    "tools": ["oai-image-generation","oai-web-search"]
+  },
+  "gpt-5.6-terra": {
+    "fn": ["auto","required","roundtrip"],
+    "oai-reasoning-effort": ["none","low","medium","high","xhigh","max"],
+    "oai-reasoning-mode": ["standard","pro"],
+    "oai-temperature-think-high": [1],
+    "oai-temperature-think-none-range": [0,2],
+    "oai-verbosity": ["low","medium","high"],
+    "temperature": [1],
+    "tools": ["oai-image-generation","oai-web-search"]
+  },
+  "gpt-5.6-luna": {
+    "fn": ["auto","required","roundtrip"],
+    "oai-reasoning-effort": ["none","low","medium","high","xhigh","max"],
+    "oai-reasoning-mode": ["standard","pro"],
+    "oai-temperature-think-high": [1],
+    "oai-temperature-think-none-range": [0,2],
+    "oai-verbosity": ["low","medium","high"],
+    "temperature": [1],
+    "tools": ["oai-image-generation","oai-web-search"]
+  },
   "gpt-5.5-2026-04-23": {
     "fn": ["auto","required","roundtrip"],
     "oai-reasoning-effort": ["none","low","medium","high","xhigh"],
@@ -14,6 +44,7 @@
   "gpt-5.5-pro-2026-04-23": {
     "fn": ["auto","required","roundtrip"],
     "oai-reasoning-effort": ["medium","high","xhigh"],
+    "oai-reasoning-mode": ["pro"],
     "oai-temperature-think-high": [1],
     "oai-verbosity": ["low","medium","high"],
     "temperature": [1],
@@ -31,6 +62,7 @@
   "gpt-5.4-pro-2026-03-05": {
     "fn": ["auto","required","roundtrip"],
     "oai-reasoning-effort": ["medium","high","xhigh"],
+    "oai-reasoning-mode": ["pro"],
     "oai-temperature-think-high": [1],
     "oai-verbosity": ["low","medium","high"],
     "temperature": [1],
@@ -80,6 +112,7 @@
   "gpt-5.2-pro-2025-12-11": {
     "fn": ["auto","required","roundtrip"],
     "oai-reasoning-effort": ["medium","high","xhigh"],
+    "oai-reasoning-mode": ["pro"],
     "oai-temperature-think-high": [1],
     "oai-verbosity": ["low","medium","high"],
     "temperature": [1],
@@ -143,6 +176,7 @@
   "gpt-5-pro-2025-10-06": {
     "fn": ["auto","required","roundtrip"],
     "oai-reasoning-effort": ["high"],
+    "oai-reasoning-mode": ["pro"],
     "oai-temperature-think-high": [1],
     "oai-verbosity": ["low","medium","high"],
     "temperature": [1],
@@ -175,7 +209,8 @@
     "temperature-range": [0,2]
   },
   "o4-mini-deep-research-2025-06-26": {
-    "temperature": [1]
+    "temperature": [1],
+    "tools": ["oai-web-search"]
   },
   "o4-mini-2025-04-16": {
     "fn": ["auto","required","roundtrip"],
@@ -186,6 +221,7 @@
   "o3-pro-2025-06-10": {
     "fn": ["auto","required","roundtrip"],
     "oai-reasoning-effort": ["low","medium","high"],
+    "oai-reasoning-mode": ["pro"],
     "oai-temperature-think-high": [1],
     "temperature": [1],
     "tools": ["oai-image-generation","oai-web-search"]
@@ -209,6 +245,7 @@
   "o1-pro-2025-03-19": {
     "fn": ["auto","required","roundtrip"],
     "oai-reasoning-effort": ["low","medium","high"],
+    "oai-reasoning-mode": ["pro"],
     "oai-temperature-think-high": [1],
     "temperature": [1]
   },
