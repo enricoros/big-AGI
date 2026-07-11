@@ -363,8 +363,11 @@ export function LLMParametersEditor(props: {
       step={0.1}
       defaultValue={0.5 /* FIXME: this wasn't FALLBACK_LLM_PARAM_TEMPERATURE, but we shall not need this */}
       valueLabelDisplay={props.parameters?.llmTemperature === undefined || antThinkingEnabled ? 'auto' : 'on'} // detect user-overridden or not
-      value={llmTemperature ?? (overheat ? [1, 1] : [0.5, 0.5]) /* null and undefined both would become undefined (uncontrolled) in the slider */}
-      onChange={value => onChangeParameter({ llmTemperature: value })}
+      value={llmTemperature ?? ( // nullish: single thumb when interactive (unlocked), collapsed two-thumb 'empty' look only when disabled - an array on a live slider becomes a range control
+        oaiTempUnlockedByNoReasoning ? 0.5 // default when unlocked by OpenAI + effort 'none'
+          : overheat ? [1, 1] : [0.5, 0.5]
+      )}
+      onChange={value => onChangeParameter({ llmTemperature: Array.isArray(value) ? value[0] : value })}
       endAdornment={
         <Tooltip arrow disableInteractive title={overheat ? 'Disable LLM Overheating' : 'Increase Max LLM Temperature to 2'} sx={{ p: 1 }}>
           <IconButton
