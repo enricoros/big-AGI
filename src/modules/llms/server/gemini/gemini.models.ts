@@ -108,6 +108,14 @@ const gemini31FlashImagePricing: ModelDescriptionSchema['chatPrice'] = {
   // - Image output: $60.00/MTok ($0.045/image 0.5K, $0.067/image 1K, $0.101/image 2K, $0.151/image 4K)
 };
 
+const gemini31FlashLiteImagePricing: ModelDescriptionSchema['chatPrice'] = {
+  input: 0.25, // text/image/video input (same as 3.1 Flash-Lite)
+  output: 1.50, // text and thinking output (same as 3.1 Flash-Lite)
+  // NOTE: Additional image-specific pricing (not yet supported in schema) - exactly half the Nano Banana 2 rate:
+  // - Image output: $30.00/MTok ($0.022/image 0.5K [747 tok], $0.034/image 1K [1120 tok], $0.050/image 2K [1680 tok], $0.076/image 4K [2520 tok])
+  //   The 1K equivalent ($0.0336) is official; 0.5K/2K/4K computed from the shared per-resolution token counts.
+};
+
 const gemini30ProPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
   output: [{ upTo: 200000, price: 12.00 }, { upTo: null, price: 18.00 }],
@@ -298,6 +306,25 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     isPreview: true,
     deprecated: '2026-06-25',
     chatPrice: gemini31FlashImagePricing,
+    interfaces: IF_30,
+    parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'high'] },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiAspectRatio' },
+      { paramId: 'llmVndGeminiImageSize' },
+    ],
+    benchmark: undefined, // Non-benchmarkable because generates images
+  },
+
+  // 3.1 Flash-Lite Image (GA) - aka "Nano Banana 2 Lite" - Released June 30, 2026 (alongside Gemini Omni Flash); cost-efficient, ~4s image generation
+  // Added after the parameter sweep surfaced it: sweep shows fn roundtrip + thinkingLevel ['minimal','high']. Without this def it fell
+  // through to the generic fallback ([Chat,Vision,Fn], no params) and lost the thinking-level control. Modeled on gemini-3.1-flash-image.
+  // displayName + token limits verified live 2026-07-10 via /v1beta/models; GA date per Google's API changelog.
+  {
+    id: 'models/gemini-3.1-flash-lite-image',
+    labelOverride: 'Nano Banana 2 Lite',
+    pubDate: '20260630', // GA June 30, 2026 (announced with Gemini Omni Flash) - per Google's Gemini API changelog
+    chatPrice: gemini31FlashLiteImagePricing,
     interfaces: IF_30,
     parameterSpecs: [
       { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'high'] },
@@ -896,6 +923,7 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-omni-flash-preview', // display: after the 3.1 Pro models, before Nano Banana 2 (this list, not the _knownGeminiModels order, drives display sort - geminiSortModels)
   'models/gemini-3.1-flash-image',
   'models/gemini-3.1-flash-image-preview',
+  'models/gemini-3.1-flash-lite-image',
   'models/gemini-3.1-flash-preview',
   'models/gemini-3.1-flash-lite',
   'models/gemini-3.1-flash-lite-preview',
