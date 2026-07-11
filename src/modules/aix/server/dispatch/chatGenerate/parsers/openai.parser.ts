@@ -93,6 +93,26 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       return;
     }
 
+    // [OpenCode, 2026-07-11] Trailing cost-accounting event (no id/model/choices) - harvest cost/usage, then skip
+    if (chunkData?.['x-opencode-type'] === 'inference-cost') {
+      const metricsUpdate: AixWire_Particles.CGSelectMetrics = {};
+      const nu = chunkData.normalizedUsage;
+      if (nu && typeof nu === 'object') {
+        if (typeof nu.inputTokens === 'number') metricsUpdate.TIn = nu.inputTokens;
+        if (typeof nu.outputTokens === 'number') metricsUpdate.TOut = nu.outputTokens;
+        if (typeof nu.reasoningTokens === 'number') metricsUpdate.TOutR = nu.reasoningTokens;
+        if (typeof nu.cacheReadTokens === 'number' && nu.cacheReadTokens > 0) metricsUpdate.TCacheRead = nu.cacheReadTokens;
+        const cacheWrite = (nu.cacheWrite5mTokens || 0) + (nu.cacheWrite1hTokens || 0);
+        if (cacheWrite > 0) metricsUpdate.TCacheWrite = cacheWrite;
+      }
+      const cost = typeof chunkData.cost === 'string' ? parseFloat(chunkData.cost) : (typeof chunkData.cost === 'number' ? chunkData.cost : undefined);
+      if (cost !== undefined && !isNaN(cost))
+        metricsUpdate.$cReported = Math.round(cost * 100 * 10000) / 10000;
+      if (Object.keys(metricsUpdate).length)
+        pt.updateMetrics(metricsUpdate);
+      return;
+    }
+
     // [OpenRouter] Extract provider routing info (before Zod parsing strips unknown fields)
     if (!openRouterProviderInfraSent && typeof chunkData?.provider === 'string' && chunkData.provider) {
       openRouterProviderInfraSent = true;
