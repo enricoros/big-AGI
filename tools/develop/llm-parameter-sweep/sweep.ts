@@ -69,8 +69,8 @@ const SWEEP_DEFINITIONS = [
   // OpenAI: reasoning mode (Responses API, GPT-5.6+)
   defineSweep({
     name: 'oai-reasoning-mode',
-    description: 'OpenAI reasoning.mode values (Responses API, GPT-5.6+)',
-    applicability: { type: 'dialects', dialects: ['openai'] },
+    description: 'OpenAI reasoning.mode values (Responses API + OpenRouter tunnel, GPT-5.6+)',
+    applicability: { type: 'dialects', dialects: ['openai', 'openrouter'] },
     applyToModel: (value) => ({ vndOaiReasoningMode: value }),
     values: ['standard', 'pro'] satisfies AixAPI_Model['vndOaiReasoningMode'][],
     neuteredValues: ['standard'], // standard is the default, so only-standard means no real support
@@ -339,6 +339,7 @@ function defineSweep<const TValue>(definition: SweepDefinition<TValue>) {
  */
 const DEFAULT_VENDOR_MODEL_FILTERS: Record<string, string[]> = {
   openai: ['gpt-5', 'gpt-6', 'o'],
+  openrouter: ['anthropic/claude', 'openai/gpt-5', 'google/gemini'],
 };
 
 /** Check if passing values are neutered (only default/no-op values passed) */
