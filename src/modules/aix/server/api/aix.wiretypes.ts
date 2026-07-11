@@ -162,7 +162,7 @@ export namespace AixWire_Parts {
      * - image/gif: Anthropic, OpenAI
      * - image/heic, image/heif: Gemini
      */
-    mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+    mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']), // keep in sync with AIX_WIRE_IMAGE_MIMETYPES
     base64: z.string(),
   });
 

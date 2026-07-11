@@ -17,6 +17,7 @@ import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_
 // configuration
 const MODEL_IMAGE_RESCALE_MIMETYPE = !Is.Browser.Safari ? 'image/webp' : 'image/jpeg';
 const MODEL_IMAGE_RESCALE_QUALITY = 0.90;
+const AIX_WIRE_IMAGE_MIMETYPES: string[] = ['image/jpeg', 'image/png', 'image/webp']; // keep in sync with InlineImagePart_schema (aix.wiretypes.ts)
 const IGNORE_CGR_NO_IMAGE_DEREFERENCE = true; // set to false to raise an exception, otherwise the CGR will continue skipping the part
 const AUTO_SYSTEM_IMAGES_INDEX = true; // set to false to disable the small index of images (in system instruction)
 
@@ -637,7 +638,21 @@ export async function aixConvertImageRefToInlineImageOrThrow(imageRefPart: DMess
     }
   }
 
-  return _clientCreateAixInlineImagePart(base64Data, mimeType || dataRef.mimeType);
+  // resolve the effective mime type (stored value, falling back to the data reference's)
+  mimeType = mimeType || dataRef.mimeType as any;
+
+  // wire-compat gate: the AIX schema only accepts jpeg/png/webp, but stored assets can carry
+  // other types (e.g. a small gif that never needed resizing) - transcode those here, which
+  // also heals legacy blobs; on undecodable images this throws, and callers drop just this
+  // image instead of the whole request failing server-side validation
+  if (!AIX_WIRE_IMAGE_MIMETYPES.includes(mimeType)) {
+    const imageBlob = await convert_Base64WithMimeType_To_Blob(base64Data, mimeType, 'aixConvertImageRefToInlineImage.wireGate');
+    const convertedOp = await imageBlobConvertType(imageBlob, MODEL_IMAGE_RESCALE_MIMETYPE, MODEL_IMAGE_RESCALE_QUALITY);
+    base64Data = await convert_Blob_To_Base64(convertedOp.blob, 'aixConvertImageRefToInlineImage.wireGate');
+    mimeType = convertedOp.blob.type as any;
+  }
+
+  return _clientCreateAixInlineImagePart(base64Data, mimeType);
 }
 
 function _clientCreateAixInlineImagePart(base64: string, mimeType: string): AixParts_InlineImagePart {
