@@ -26,12 +26,13 @@ const hotFixPreferArrayUserContent = true;
 const hotFixForceImageContentPartOpenAIDetail: 'auto' | 'low' | 'high' = 'high';
 const hotFixSquashTextSeparator = '\n\n\n---\n\n\n';
 const approxSystemMessageJoiner = '\n\n---\n\n';
+const orSendStickyClientSessionId = true; // [OpenRouter] send a CLIENT-GENERATED session_id (OR does not issue one) for provider-sticky routing (prompt-cache continuity) - disable switch, just in case
 
 
 type TRequest = OpenAIWire_API_Chat_Completions.Request;
 type TRequestMessages = TRequest['messages'];
 
-export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): TRequest {
+export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, sessionAffinityId?: string): TRequest {
 
   // Pre-process CGR - approximate spill of System to User message
   const chatGenerate = aixSpillSystemToUser(_chatGenerate);
@@ -239,6 +240,14 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       // max_results: 5, // could be configurable in the future
       // search_prompt: undefined, // could be configurable in the future
     }];
+
+
+  // [OpenRouter, 2026-07-11] Sticky client session id: WE mint this (OpenRouter does not issue session ids) and send it
+  // purely for provider affinity - a stable per-context id sticky-routes to the same upstream provider, which is what
+  // keeps prompt-cache hits alive: caches don't transfer across providers. The affinity id (conversationId/rayId/...) is
+  // hashed to avoid shipping internal ids upstream; a 32-bit collision only means two contexts share affinity, harmless.
+  if (openAIDialect === 'openrouter' && orSendStickyClientSessionId && sessionAffinityId)
+    payload.session_id = 'bagi-' + _fnv1aHex(sessionAffinityId);
 
 
   // [Moonshot] Kimi's $web_search builtin function
@@ -760,6 +769,16 @@ function _stampTrailingCacheBreakpoint(message: TRequestMessages[number] | undef
     }
   }
   console.warn('AIX: OpenAI-dispatch: cache breakpoint on a message without text parts');
+}
+
+/** FNV-1a 32-bit hex digest - tiny, deterministic, edge-safe; used to mint the OpenRouter sticky client session id. */
+function _fnv1aHex(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
 }
 
 /** Enforce the Anthropic 4-breakpoint API limit by un-stamping the earliest (prefix-redundant) breakpoints. */

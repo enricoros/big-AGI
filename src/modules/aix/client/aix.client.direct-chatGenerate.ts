@@ -30,7 +30,7 @@ export async function* clientSideChatGenerate(
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
   // keep in sync with the `aixRouter.chatGenerateContent` server-side procedure
   const _d: AixDebugObject = _createClientDebugConfig(access, connectionOptions, context.name);
-  const dispatchCreator = () => createChatGenerateDispatch(access, model, chatGenerate, streaming, !!connectionOptions?.enableResumability)
+  const dispatchCreator = () => createChatGenerateDispatch(access, model, chatGenerate, streaming, context.ref, !!connectionOptions?.enableResumability)
     .then(dispatch => {
       // [CSF-Only] Client-side transform stripping - remove any dispatch transforms that are tagged as csfUnsafe (e.g. for CORS reasons)
       if (dispatch.particleTransform?.csfUnsafe) dispatch.particleTransform = undefined;

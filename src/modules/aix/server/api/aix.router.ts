@@ -47,7 +47,7 @@ export const aixRouter = createTRPCRouter({
       const _clearWatchdog = _armSlowRequestWatchdog(`model=${input.model.id} dialect=${input.access.dialect} context=${input.context.name}/${input.context.ref}`);
       try {
         const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
-        const dispatchCreator = () => createChatGenerateDispatch(input.access, input.model, input.chatGenerate, input.streaming, !!input.connectionOptions?.enableResumability);
+        const dispatchCreator = () => createChatGenerateDispatch(input.access, input.model, input.chatGenerate, input.streaming, input.context.ref, !!input.connectionOptions?.enableResumability);
 
         yield* executeChatGenerateWithContinuation(dispatchCreator, ctx.reqSignal, _d);
       } finally {

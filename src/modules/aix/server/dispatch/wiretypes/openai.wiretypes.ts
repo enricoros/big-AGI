@@ -432,6 +432,11 @@ export namespace OpenAIWire_API_Chat_Completions {
       // }),
     ])).optional(),
 
+    // [OpenRouter, 2026-07-11] Sticky client session id (<=256 chars): an opaque CLIENT-GENERATED id
+    // (OpenRouter never issues one) that sticky-routes same-id requests to the same upstream provider,
+    // which is what keeps prompt-cache hits alive (caches don't transfer across providers)
+    session_id: z.string().optional(),
+
     // [OpenRouter, 2026-02-06] Provider routing preferences
     provider: z.object({
       require_parameters: z.boolean().optional(), // Only route to providers supporting all request params (strict mode)
