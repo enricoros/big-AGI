@@ -32,6 +32,7 @@ import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
+import { ChatDrawerStorageWarning } from './ChatDrawerStorageWarning';
 import { ChatFolderList } from './folders/ChatFolderList';
 import { ChatNavGrouping, ChatSearchDepth, ChatSearchSorting, isDrawerSearching, useChatDrawerRenderItems } from './useChatDrawerRenderItems';
 import { ClearFolderText } from '../layout-bar/useFolderDropdown';
@@ -473,6 +474,9 @@ function ChatDrawer(props: {
           </ListItem>
         )}
       </Box>
+
+      {/* Browser-storage disclaimer (issue #672) - dismissable, persisted to the app-chat store */}
+      <ChatDrawerStorageWarning />
 
       <ListDivider sx={{ my: 0 }} />
 
