@@ -1,6 +1,6 @@
 import * as z from 'zod/v4';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
@@ -156,8 +156,22 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   if (model.supported_parameters?.includes('reasoning'))
     interfaces.push(LLM_IF_OAI_Reasoning);
 
-  // Prompt caching support: check pricing fields
-  if (model.pricing?.input_cache_read !== undefined || model.pricing?.input_cache_write !== undefined)
+  // Prompt caching support, data-driven from pricing signals (probe-verified 2026-07-10):
+  // - paid cache writes where breakpoints CONTROL caching (Anthropic, Qwen: no breakpoints = no caching)
+  //   = explicit Anthropic-style breakpoints: the client emits meta_cache_control hints and the
+  //   oai-completions adapter stamps cache_control (OR dialect)
+  // - read-only pricing (Grok, DeepSeek, Moonshot, older OpenAI, ...) = automatic upstream caching,
+  //   informational tag only
+  // - google/ excluded from breakpoints: explicit Gemini caching via OR double-counts prompt tokens
+  //   (net cost INCREASE vs uncached), and implicit caching was not observed through OR at all
+  // - openai/ excluded from breakpoints: GPT-5.6+ writes to the paid cache automatically even without
+  //   cache_control (stamps are a no-op), so a breakpoint toggle would be fake - informational tag +
+  //   cache_write_tokens usage read-back give correct cost accounting anyway
+  // note: '~vendor/model-latest' are OR router aliases - strip the '~' so the vendor exclusions still match
+  const modelIdUnaliased = model.id.startsWith('~') ? model.id.slice(1) : model.id;
+  if (cacheWritePrice && !modelIdUnaliased.startsWith('google/') && !modelIdUnaliased.startsWith('openai/'))
+    interfaces.push(LLM_IF_ANT_PromptCaching);
+  else if (cacheReadPrice || model.pricing?.input_cache_read !== undefined)
     interfaces.push(LLM_IF_OAI_PromptCaching);
 
 

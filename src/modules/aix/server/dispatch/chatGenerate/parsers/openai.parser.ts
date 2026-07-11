@@ -678,6 +678,14 @@ function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usa
       if (metricsUpdate.TIn !== undefined)
         metricsUpdate.TIn -= TCacheRead;
     }
+
+    // [OpenRouter, 2026-07-10] Input redistribution: Cache Write (paid-write providers via OR: Anthropic, Qwen)
+    const TCacheWrite = usage.prompt_tokens_details.cache_write_tokens ?? undefined;
+    if (TCacheWrite !== undefined && TCacheWrite > 0) {
+      metricsUpdate.TCacheWrite = TCacheWrite;
+      if (metricsUpdate.TIn !== undefined)
+        metricsUpdate.TIn -= TCacheWrite;
+    }
   }
 
   // [DeepSeek] Input redistribution: Cache Read

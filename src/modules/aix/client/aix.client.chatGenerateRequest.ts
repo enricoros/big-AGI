@@ -1,7 +1,7 @@
 import type { Immutable } from '~/common/types/immutable.types';
 import { getImageAsset } from '~/common/stores/blob/dblobs-portability';
 
-import { DLLM, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoWebP, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0 } from '~/common/stores/llms/llms.types';
+import { DLLM, LLM_IF_ANT_PromptCaching, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoWebP, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0 } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageRole, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { DMessageFragment, DMessageImageRefPart, DMessageZyncAssetReferencePart, isContentOrAttachmentFragment, isToolResponseFunctionCallPart, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
@@ -663,6 +663,13 @@ export async function clientHotFixGenerateRequest_ApplyAll(llmInterfaces: DLLM['
 
   let workaroundsCount = 0;
 
+  // Strip cache-breakpoint hints for models without explicit prompt-caching support. The auto-breakpoint
+  // policy flags messages regardless of the active model (and flags persist when switching models), so
+  // acting adapters (Anthropic, OpenRouter) must only see hints when the model advertises the capability.
+  // Silent: this is the normal path for most models, not a workaround.
+  if (!llmInterfaces.includes(LLM_IF_ANT_PromptCaching))
+    clientHotFixGenerateRequest_StripCacheHints(aixChatGenerate);
+
   // Apply the remove-sys0 hot fix - at the time of doing it, Gemini Image Generation does not use the system instructions
   if (llmInterfaces.includes(LLM_IF_HOTFIX_StripSys0))
     workaroundsCount += clientHotFixGenerateRequest_StripSys0(aixChatGenerate);
@@ -689,6 +696,18 @@ export async function clientHotFixGenerateRequest_ApplyAll(llmInterfaces: DLLM['
 
 }
 
+
+/** Remove meta_cache_control parts in-place - for models without explicit prompt-caching support. */
+function clientHotFixGenerateRequest_StripCacheHints(aixChatGenerate: AixAPIChatGenerate_Request): void {
+  const stripParts = (parts: { pt: string }[]) => {
+    for (let i = parts.length - 1; i >= 0; i--)
+      if (parts[i].pt === 'meta_cache_control')
+        parts.splice(i, 1);
+  };
+  if (aixChatGenerate.systemMessage)
+    stripParts(aixChatGenerate.systemMessage.parts);
+  aixChatGenerate.chatSequence.forEach(message => stripParts(message.parts));
+}
 
 /**
  * Hot fix for models that don't support vision input and we need to perform the fix ahead of AIX send.

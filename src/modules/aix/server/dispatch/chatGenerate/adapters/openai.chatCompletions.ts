@@ -70,6 +70,13 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (hotFixAlternateUserAssistantRoles)
     chatMessages = _fixAlternateUserAssistantRoles(chatMessages);
 
+  // [OpenRouter, 2026-07-10] Anthropic rejects >4 cache_control blocks ("A maximum of 4 blocks with
+  // cache_control may be provided. Found 5.", verified via OR on all its Anthropic routes) - manual
+  // 'Cache up to here' flags can stack beyond the auto policy's 3. Keep the trailing 4: breakpoints
+  // cache prefixes, so earlier ones are redundant with later ones.
+  if (openAIDialect === 'openrouter')
+    _capTrailingCacheBreakpoints(chatMessages, 4);
+
   // [DeepSeek, 2026-04-24] When tools are present and thinking isn't disabled, V4 demands reasoning_content on EVERY assistant message in history
   // Inject '' placeholder where missing; real reasoning is attached by _toOpenAIMessages
   if (openAIDialect === 'deepseek' && chatGenerate.tools?.length)
@@ -386,8 +393,11 @@ function _fixAlternateUserAssistantRoles(chatMessages: TRequestMessages): TReque
       const lastItem = acc[acc.length - 1];
       if (lastItem.role === historyItem.role) {
         if (lastItem.role === 'assistant') {
-          lastItem.content += hotFixSquashTextSeparator + historyItem.content;
-          return acc;
+          // only coalesce plain-string contents; array (cache breakpoints) or null (tool-calls-only) forms stay separate
+          if (typeof lastItem.content === 'string' && typeof historyItem.content === 'string') {
+            lastItem.content += hotFixSquashTextSeparator + historyItem.content;
+            return acc;
+          }
         }
         if (lastItem.role === 'user') {
           lastItem.content = [
@@ -449,8 +459,8 @@ function _fixVndOaiRestoreMarkdown_Inline(payload: TRequest) {
     const firstMessage = payload.messages[0];
     const isDevOrSystem = firstMessage.role === 'developer' || firstMessage.role === 'system';
 
-    // update the text of the developer message
-    if (isDevOrSystem && firstMessage.content && !firstMessage.content.split('\n')[0].includes('Formatting re-enabled')) {
+    // update the text of the developer message (string form only - the array form is OpenRouter-dialect-only, never o1Family)
+    if (isDevOrSystem && typeof firstMessage.content === 'string' && firstMessage.content && !firstMessage.content.split('\n')[0].includes('Formatting re-enabled')) {
       firstMessage.content = 'Formatting re-enabled\n' + firstMessage.content;
     }
     // if the developer message is missing, add it altogether
@@ -483,10 +493,17 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
   // [DeepSeek, 2026-04-24] V4 thinking-by-default - reasoning_content must round-trip on tool-call turns; payload is the 'ma' part's aText (unlike Gemini/OpenAI-Responses which carry opaque handles).
   const echoDeepseekReasoning = openAIDialect === 'deepseek';
 
+  // [OpenRouter, 2026-07-10] OR translates Anthropic-style ephemeral breakpoints for paid-cache-write
+  // providers where breakpoints control caching (Anthropic, Qwen). The client strips the hints for models
+  // without LLM_IF_ANT_PromptCaching (see clientHotFixGenerateRequest_StripCacheHints), so dialect is the
+  // only gate needed here. Other OpenAI dialects self-cache (free writes) and ignore these hints.
+  const emitCacheBreakpoints = openAIDialect === 'openrouter';
+
   // Transform the chat messages into OpenAI's format (an array of 'system', 'user', 'assistant', and 'tool' messages)
   const chatMessages: TRequestMessages = [];
 
   // Convert the system message - single-part stay as-is and multi-part (text or doc) are flattened to a string
+  let msg0CacheBreakpoint = false;
   const msg0TextParts: OpenAIWire_ContentParts.TextContentPart[] = [];
   systemMessage?.parts.forEach((part) => {
     switch (part.pt) {
@@ -503,7 +520,8 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
         throw new Error('OpenAI ChatCompletions: images have to be in user messages, not in system message');
 
       case 'meta_cache_control':
-        // ignore this breakpoint hint - Anthropic only
+        if (emitCacheBreakpoints)
+          msg0CacheBreakpoint = true;
         break;
 
       default:
@@ -513,16 +531,18 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
   });
 
   // Add the system message
-  if (msg0TextParts.length)
-    chatMessages.push({
-      /**
-       * Notes:
-       * o1Family in this case is not o1-preview as it's sporting the Sys0ToUsr0 hotfix
-       * o3-mini accepts both system and developer roles, and they seem to have the same effects
-       */
-      role: !hotFixOpenAIo1Family ? 'system' : 'developer',
-      content: aixTexts_to_OpenAIInstructionText(msg0TextParts.map(text => text.text)),
-    });
+  if (msg0TextParts.length) {
+    /**
+     * Notes:
+     * o1Family in this case is not o1-preview as it's sporting the Sys0ToUsr0 hotfix
+     * o3-mini accepts both system and developer roles, and they seem to have the same effects
+     */
+    const systemText = aixTexts_to_OpenAIInstructionText(msg0TextParts.map(text => text.text));
+    chatMessages.push(!msg0CacheBreakpoint
+      ? { role: !hotFixOpenAIo1Family ? 'system' : 'developer', content: systemText }
+      // single text part carrying the trailing cache breakpoint; never coincides with the o1Family developer role (OpenRouter dialect only)
+      : { role: 'system', content: [{ type: 'text', text: systemText, cache_control: { type: 'ephemeral' } }] });
+  }
 
 
   // Convert the messages
@@ -573,7 +593,8 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
               break;
 
             case 'meta_cache_control':
-              // ignore this breakpoint hint - Anthropic only
+              if (emitCacheBreakpoints)
+                _stampTrailingCacheBreakpoint(currentMessage);
               break;
 
             case 'meta_in_reference_to':
@@ -685,7 +706,8 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
               break;
 
             case 'meta_cache_control':
-              // ignore this breakpoint hint - Anthropic only
+              if (emitCacheBreakpoints)
+                _stampTrailingCacheBreakpoint(currentMessage);
               break;
 
             default:
@@ -711,6 +733,45 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
   }
 
   return chatMessages;
+}
+
+/**
+ * [OpenRouter, 2026-07-10] Anthropic-style prompt caching: stamp an ephemeral breakpoint on the trailing
+ * text part of the message assembled so far. Text parts only (per OR docs - images can't carry breakpoints),
+ * coercing string content to the array form, which is the only shape that can carry cache_control.
+ */
+function _stampTrailingCacheBreakpoint(message: TRequestMessages[number] | undefined): void {
+
+  if (!message || (message.role !== 'user' && message.role !== 'assistant'))
+    return console.warn('AIX: OpenAI-dispatch: cache breakpoint without a user/assistant message to attach to');
+
+  // tool-calls-only assistant message: no content block to carry the breakpoint
+  if (message.content === null)
+    return console.warn('AIX: OpenAI-dispatch: cache breakpoint on a message without content');
+
+  const contentParts = typeof message.content === 'string' ? [OpenAIWire_ContentParts.TextContentPart(message.content)] : message.content;
+  message.content = contentParts;
+
+  for (let i = contentParts.length - 1; i >= 0; i--) {
+    const contentPart = contentParts[i];
+    if (contentPart.type === 'text') {
+      contentPart.cache_control = { type: 'ephemeral' };
+      return;
+    }
+  }
+  console.warn('AIX: OpenAI-dispatch: cache breakpoint on a message without text parts');
+}
+
+/** Enforce the Anthropic 4-breakpoint API limit by un-stamping the earliest (prefix-redundant) breakpoints. */
+function _capTrailingCacheBreakpoints(chatMessages: TRequestMessages, maxBreakpoints: number): void {
+  const stampedParts: OpenAIWire_ContentParts.TextContentPart[] = [];
+  for (const message of chatMessages)
+    if ((message.role === 'system' || message.role === 'user' || message.role === 'assistant') && Array.isArray(message.content))
+      for (const part of message.content)
+        if (part.type === 'text' && part.cache_control)
+          stampedParts.push(part);
+  for (let i = 0; i < stampedParts.length - maxBreakpoints; i++)
+    delete stampedParts[i].cache_control;
 }
 
 function _toOpenAITools(itds: AixTools_ToolDefinition[], strictToolInvocations: boolean): NonNullable<TRequest['tools']> {
