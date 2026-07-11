@@ -146,9 +146,9 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     }
   }
 
-  // [2026-07-09, OpenAI] reasoning.mode is Responses-only - fail loud rather than silently dropping the param
-  // (a Chat Completions dispatch can only carry it via a misconfigured model def or a forced-CC override)
-  if (model.vndOaiReasoningMode)
+  // [2026-07-09, OpenAI] reasoning.mode is Responses-only on native OpenAI (OpenRouter tunnels it, see the OR block
+  // below) - fail loud rather than silently dropping the param on other Chat Completions dispatches
+  if (model.vndOaiReasoningMode && openAIDialect !== 'openrouter')
     throw new Error('OpenAI Chat Completions API does not support the Reasoning Mode parameter (Responses API only)');
 
   // [OpenAI] Vendor-specific reasoning effort
@@ -309,12 +309,17 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
         }
       }
     }
-    // OpenAI-compatible (including deepseek, moonshotai, x-ai, z-ai) via OpenRouter - all effort levels including 'none' and 'minimal' are valid (not max, that's just for Anthropic via verbosity)
+    // OpenAI-compatible (including deepseek, moonshotai, x-ai, z-ai) via OpenRouter - all effort levels are valid
+    // [2026-07-11] 'max' throw removed: OR accepts reasoning.effort='max' since GPT-5.6 (probe-verified on
+    // openai/gpt-5.6-*); models that can't honor it get OR's own per-model validation error, same as native
     else if (reasoningEffort) {
-      if (reasoningEffort === 'max') // domain validation
-        throw new Error(`OpenRouter->OpenAI API does not support '${reasoningEffort}' reasoning effort`);
       payload.reasoning = { enabled: reasoningEffort !== 'none', effort: reasoningEffort };
     }
+
+    // [2026-07-11] GPT-5.6+ reasoning mode (OR-documented): 'pro' on a base id makes OpenRouter reroute to the
+    // matching '*-pro' model; orthogonal to effort (combos probe-verified incl pro+max)
+    if (model.vndOaiReasoningMode)
+      payload.reasoning = { ...payload.reasoning, mode: model.vndOaiReasoningMode };
 
     // FIX double-reasoning request - remove reasoning_effort after transferring it to reasoning (unless already set)
     if (payload.reasoning_effort) {

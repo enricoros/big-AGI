@@ -6,7 +6,7 @@ import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 import { createVariantInjector, ModelVariantMap } from '../../llm.server.variants';
-import { type KnownLink, type KnownModel, formatPubDate, fromManualMapping, llmDevCheckModels_DEV, llmsDefineModels } from '../../models.mappings';
+import { formatPubDate, fromManualMapping, type KnownLink, type KnownModel, llmDevCheckModels_DEV, llmsDefineModels } from '../../models.mappings';
 
 // --- OpenAI Model ID inference (auto-derived from _knownOpenAIChatModels) ---
 export type LlmsOpenAIModelId = typeof _knownOpenAIChatModels[number]['idPrefix'];
@@ -1602,6 +1602,7 @@ const _ORT_OAI_IF_ALLOWLIST: ReadonlySet<string> = new Set([
 ] as const);
 const _ORT_OAI_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
   'llmVndOaiEffort', // OpenAI reasoning effort
+  'llmVndOaiReasoningMode', // [2026-07-11] GPT-5.6+ reasoning mode - OR-documented `reasoning.mode`: 'pro' on a base id reroutes to the matching '*-pro' model
   'llmVndOaiVerbosity', // verbosity
   // 'llmVndOaiImageGeneration', // OR does NOT support image gen with OAI yet (2026-02-06)
 ] as const satisfies DModelParameterId[]);
@@ -1612,9 +1613,15 @@ const _ORT_OAI_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
  */
 export function llmOrtOaiLookup(orModelName: string): OrtVendorLookupResult | undefined | null {
 
+  const isOaiProModel = orModelName.endsWith('-pro'); // before the refMap rename - drives the reasoning mode pin below
+
   // typemap to known models
   const ortOaiRefMap: Record<string, string | null> = {
     // renames
+    // [2026-07-11] OR materializes GPT-5.6 Pro mode as standalone '-pro' ids - map to the tier entries (OR supplies label + pricing)
+    'gpt-5.6-sol-pro': 'gpt-5.6-sol',
+    'gpt-5.6-terra-pro': 'gpt-5.6-terra',
+    'gpt-5.6-luna-pro': 'gpt-5.6-luna',
     'gpt-5.5-chat': 'gpt-5.5-2026-04-23', // gpt-5.5-chat-latest not yet in API, map to snapshot
     'gpt-5.4-chat': 'gpt-5.4-2026-03-05', // no chat-latest yet, map to snapshot
     'gpt-5.3-chat': 'gpt-5.3-chat-latest',
@@ -1646,7 +1653,10 @@ export function llmOrtOaiLookup(orModelName: string): OrtVendorLookupResult | un
 
   const parameterSpecs = entry.parameterSpecs
     ?.filter(spec => _ORT_OAI_PARAM_ALLOWLIST.has(spec.paramId))
-    .map(spec => ({ ...spec }));
+    .map(spec =>
+      (isOaiProModel && spec.paramId === 'llmVndOaiReasoningMode') ? { ...spec, initialValue: 'pro' as const, hidden: true } // '-pro' ids ARE pro mode: pinned ('standard' doesn't reroute back)
+        : { ...spec },
+    );
 
   // initialTemperature: not set - OpenAI models use the global fallback (0.5);
   // NoTemperature models are handled client-side via LLM_IF_HOTFIX_NoTemperature (not propagated to OR)

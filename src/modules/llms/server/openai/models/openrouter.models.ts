@@ -262,9 +262,9 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       // 0-day: xAI/Grok/Moonshot/Z.ai/DeepSeek models get default reasoning effort if not inherited
       if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndMiscEffort')) {
         // console.log('[DEV] openRouterModelToModelDescription: unexpected xAI/Grok/DeepSeek reasoning model:', model.id);
-        // Binary thinking only: OpenRouter's unified reasoning API currently rejects 'max' (see openai.chatCompletions.ts).
-        // We pin enumValues here so the shared llmVndMiscEffort registry (which also includes 'max' for native DeepSeek V4)
-        // does not surface 'max' in the UI for OR-routed models that can't honor it.
+        // Binary thinking only: we pin enumValues so the shared llmVndMiscEffort registry (which also includes 'max'
+        // for native DeepSeek V4) does not surface 'max' in the UI for OR-routed third-party models - unverified they
+        // honor it (OR itself accepts reasoning.effort='max' since GPT-5.6, see openai.chatCompletions.ts).
         parameterSpecs.push({ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] });
       }
       break;

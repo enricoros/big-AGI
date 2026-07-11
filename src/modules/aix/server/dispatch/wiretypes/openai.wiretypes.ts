@@ -350,6 +350,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     reasoning: z.object({
       max_tokens: z.int().optional(), // Token-based control (Anthropic, Gemini): 1024-32000
       effort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']).optional(), // Effort-based control (OpenAI o1/o3/GPT-5, xAI, DeepSeek): allocates % of max_tokens
+      mode: z.enum(['standard', 'pro']).optional(), // [OpenRouter, 2026-07-11] GPT-5.6+: 'pro' on a base id reroutes to the matching '*-pro' model
       enabled: z.boolean().optional(), // Simple enable with medium effort defaults
       exclude: z.boolean().optional(), // Use reasoning internally without returning it in response
     }).optional(),
