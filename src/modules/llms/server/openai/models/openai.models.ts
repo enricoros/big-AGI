@@ -824,7 +824,8 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     description: '[Use: GPT-5.5 Pro with web search - Shut down: 2026-07-23] Faster, more affordable deep research model for complex, multi-step research tasks.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
-    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    // NOTE: no LLM_IF_OAI_Fn - deep research models reject custom function tools (web_search/code_interpreter only), per the parameter sweep (no fn roundtrip)
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: PS_DEEP_RESEARCH,
     chatPrice: { input: 2, cache: { cType: 'oai-ac', read: 0.5 }, output: 8 },
   },
@@ -865,7 +866,8 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     description: '[Use: GPT-5.5 Pro with web search - Shut down: 2026-07-23] Our most powerful deep research model for complex, multi-step research tasks.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
-    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    // NOTE: no LLM_IF_OAI_Fn - deep research models reject custom function tools (web_search/code_interpreter only), per the parameter sweep (no fn roundtrip)
+    interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: PS_DEEP_RESEARCH,
     chatPrice: { input: 10, cache: { cType: 'oai-ac', read: 2.5 }, output: 40 },
   },
