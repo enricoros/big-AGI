@@ -189,7 +189,13 @@ async function* _connectToDispatch(
     const dispatchFetchError = safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
     const extraDevMessage = AIX_SECURITY_ONLY_IN_DEV_BUILDS ? ` - [DEV_URL: ${request.url}]` : '';
 
-    chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${_d.prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, _d.consoleLogErrors);
+    // upstream rejections that are user/key/policy issues (401 bad key, 402 billing, 403 region/permission, 404 unknown model, 429 quota) log instead of warn;
+    // 400/422 and the rest keep warning, as they can signal adapter bugs (malformed requests we generated)
+    const demoteToLog = [401, 402, 403, 404, 429];
+    const isUpstreamUserError = error?.name === 'TRPCFetcherError' && error.category === 'http' && demoteToLog.includes(error.httpStatus);
+    const serverLogLevel = _d.consoleLogErrors === 'srv-warn' && isUpstreamUserError ? 'srv-log' : _d.consoleLogErrors;
+
+    chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${_d.prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, serverLogLevel);
     yield* chatGenerateTx.flushParticles();
     return null; // signal caller to exit
   }
