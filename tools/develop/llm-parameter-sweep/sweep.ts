@@ -1226,8 +1226,15 @@ function loadExistingDialectResults(filePath: string): DialectReultsByModel | nu
   }
 }
 
-function saveDialectResults(dialect: string, dialectResults: DialectReultsByModel, evaluatedSweeps: string[], modelFilter?: string, mergeModels?: boolean): void {
+function saveDialectResults(dialect: string, dialectResults: DialectReultsByModel, evaluatedSweeps: string[], modelFilter?: string, mergeModels?: boolean, partialSweeps?: boolean): void {
   const filePath = getResultsFilePath(dialect);
+
+  // [2026-07-11] Filtered scans never overwrite: a partial model set would clobber the full results file - and the
+  // default vendor filters make every standalone scan partial. Overwrite remains for full unfiltered scans only.
+  if (!mergeModels && modelFilter && fs.existsSync(filePath)) {
+    console.log(`${COLORS.yellow}Filtered scan over an existing results file -> auto-enabling --merge-models (run unfiltered to rebuild from scratch)${COLORS.reset}`);
+    mergeModels = true;
+  }
 
   // When --merge-models, shallow-merge new model entries into existing file
   if (mergeModels) {
@@ -1237,9 +1244,12 @@ function saveDialectResults(dialect: string, dialectResults: DialectReultsByMode
       const updatedCount = newModelIds.filter(id => id in existing).length;
       const addedCount = newModelIds.length - updatedCount;
       // Merge preserving scan order: new models first (in scan order), then remaining old models
+      // [2026-07-11] Sweep-filtered scans DEEP-merge per model (keys knowingly partial: replacing the whole entry
+      // silently dropped keys the run didn't probe - how 'fn' data was lost); full-sweep scans replace the whole
+      // entry, so capabilities a model genuinely lost don't linger as stale keys.
       const merged: DialectReultsByModel = {};
       for (const id of newModelIds)
-        merged[id] = dialectResults[id];
+        merged[id] = partialSweeps ? { ...existing[id], ...dialectResults[id] } : dialectResults[id];
       for (const id of Object.keys(existing)) {
         if (!(id in merged))
           merged[id] = existing[id];
@@ -1359,7 +1369,7 @@ function vendorResultToDialectResults(vendorResult: VendorSweepResult): DialectR
   return dialectResults;
 }
 
-function saveAllResults(allResults: VendorSweepResult[], mergeModels?: boolean): void {
+function saveAllResults(allResults: VendorSweepResult[], mergeModels?: boolean, partialSweeps?: boolean): void {
   for (const vendorResult of allResults) {
     if (vendorResult.models.length === 0) continue;
     // Collect all evaluated sweep names for this dialect
@@ -1370,7 +1380,7 @@ function saveAllResults(allResults: VendorSweepResult[], mergeModels?: boolean):
       }
     }
     const dialectResults = vendorResultToDialectResults(vendorResult);
-    saveDialectResults(vendorResult.dialect, dialectResults, [...evaluatedSweeps], vendorResult.modelFilter, mergeModels);
+    saveDialectResults(vendorResult.dialect, dialectResults, [...evaluatedSweeps], vendorResult.modelFilter, mergeModels, partialSweeps);
   }
 }
 
@@ -1653,7 +1663,9 @@ async function runSweep(
   options: CliOptions,
 ): Promise<VendorSweepResult[]> {
   const allResults: VendorSweepResult[] = [];
-  const maxTokens = sweepConfig.maxTokens ?? 128;
+  // [2026-07-11] fallback raised 128 -> 1024: reasoning models burned a 128-token budget before completing probes,
+  // truncating fn (capability lost on merge). For fn-grade scans prefer the config's per-vendor baseModelOverrides (4096).
+  const maxTokens = sweepConfig.maxTokens ?? 1024;
   const globalDelay = sweepConfig.delayMs ?? options.delay;
 
   for (const [vendorName, vendorConfig] of Object.entries(sweepConfig.vendors)) {
@@ -1975,7 +1987,7 @@ async function main(): Promise<void> {
   // Summary and save results
   if (!options.dryRun && results.some(v => v.models.length > 0)) {
     printSweepSummary(results);
-    saveAllResults(results, options.mergeModels);
+    saveAllResults(results, options.mergeModels, !!options.sweepFilter);
   }
 
   console.log(`${COLORS.dim}Done.${COLORS.reset}`);
