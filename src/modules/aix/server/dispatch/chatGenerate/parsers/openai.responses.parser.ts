@@ -596,7 +596,7 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
 
       case 'response.reasoning_summary_part.added':
         R.summaryPartEnter(eventType, event.output_index, event.summary_index);
-        R.expectEvents(['response.reasoning_summary_text.delta', 'response.reasoning_summary_text.done', 'response.reasoning_summary_part.done']);
+        R.expectEvents(['response.reasoning_summary_text.delta', 'response.reasoning_summary_text.done', 'response.reasoning_summary_part.done', 'response.reasoning_summary_part.added' /* parts can re-open without a .done in between - see summaryPartEnter */]);
         // nothing else to do, the part is likely empty, and we will incrementally parse it
         break;
 
