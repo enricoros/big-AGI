@@ -1,6 +1,18 @@
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 
 
+// T2I generation context - which surface is requesting the generation (for logging/analytics)
+
+export const T2I_CONTEXT_NAMES = [
+  'persona-icon-generation',  // Persona profile picture generation
+  'chat-draw-command', // Draw command in chat
+  'draw-app-queue',  // Draw/Imagine app background queue
+  'image-regenerate', // Regenerate existing image in message
+] as const;
+
+export type T2iContextName = typeof T2I_CONTEXT_NAMES[number];
+
+
 // --- Data Types for persisted Engine setups ---
 
 // T2I Vendor Types (supported image generation providers)

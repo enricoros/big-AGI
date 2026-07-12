@@ -5,7 +5,7 @@ import type { OpenAIAccessSchema } from '~/modules/llms/server/openai/openai.acc
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 // IMPORTANT: Import TYPE (!)
-import type { T2iContextName, T2iCreateImageOutput, T2iGenerateOptions } from '../t2i.server';
+import type { T2iCreateImageOutput, T2iGenerateOptions } from '../t2i.server';
 import type { DProfileOpenRouterImages } from '../t2i.types';
 import { resolveOpenRouterImageModelId } from '../t2i.config';
 
@@ -18,8 +18,7 @@ export async function openRouterGenerateImagesOrThrow(
   profile: DProfileOpenRouterImages,
   prompt: string,
   count: number,
-  t2iContextName: T2iContextName,
-  { abortSignal }: T2iGenerateOptions = {},
+  { t2iContextName, abortSignal }: T2iGenerateOptions,
 ): Promise<T2iCreateImageOutput[]> {
 
   // Use the engine's profile (null selection = auto-select the default)

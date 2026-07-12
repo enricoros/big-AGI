@@ -8,6 +8,7 @@ import { serverCapitalizeFirstLetter } from '~/server/wire';
 import { convert_Base64_To_UInt8Array, convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
 
 import { getImageInformationFromBytes, type T2ICreateImageAsyncStreamOp } from '~/modules/t2i/t2i.server';
+import { T2I_CONTEXT_NAMES } from '~/modules/t2i/t2i.types';
 import { OpenAIWire_API_Images_Generations } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 import { heartbeatsWhileAwaiting } from '~/modules/aix/server/dispatch/heartbeatsWhileAwaiting';
 
@@ -110,12 +111,7 @@ const createImagesInputSchema = z.object({
       base64: z.string(),
     }).optional(),
   }).optional(),
-  t2iContextName: z.enum([
-    'persona-icon-generation',  // Persona profile picture generation
-    'chat-draw-command', // Draw command in chat (XE instruction)
-    'draw-app-queue',  // Draw/Imagine app background queue
-    'image-regenerate', // Regenerate existing image in message
-  ]),
+  t2iContextName: z.enum(T2I_CONTEXT_NAMES),
 });
 
 
@@ -338,7 +334,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         prompt: z.string(),
         count: z.number().min(1).max(10),
       }),
-      t2iContextName: createImagesInputSchema.shape.t2iContextName,
+      t2iContextName: z.enum(T2I_CONTEXT_NAMES),
     }))
     .mutation(async function* ({ input, signal }): AsyncGenerator<T2ICreateImageAsyncStreamOp> {
 

@@ -8,7 +8,7 @@ import type { OpenAIAccessSchema } from '~/modules/llms/server/openai/openai.acc
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 // IMPORTANT: Import TYPE (!)
-import type { T2iContextName, T2iCreateImageOutput, T2iGenerateOptions } from '../t2i.server';
+import type { T2iCreateImageOutput, T2iGenerateOptions } from '../t2i.server';
 import type { DalleImageQuality, DalleModelId, DalleModelSelection, DalleSize, DProfileDalle } from '../t2i.types';
 import { getImageModelFamily, resolveDalleModelId } from '../t2i.config';
 
@@ -23,8 +23,7 @@ export async function openAIGenerateImagesOrThrow(
   prompt: string,
   aixInlineImageParts: AixParts_InlineImagePart[],
   count: number,
-  t2iContextName: T2iContextName,
-  { agiProfilePic, abortSignal }: T2iGenerateOptions = {},
+  { t2iContextName, agiProfilePic, abortSignal }: T2iGenerateOptions,
 ): Promise<T2iCreateImageOutput[]> {
 
   // Use the engine's profile
