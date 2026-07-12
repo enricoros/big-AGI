@@ -1,12 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { useShallow } from 'zustand/react/shallow';
 
 import { agiUuidV4 } from '~/common/util/idUtils';
 import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 
 import type { DT2ICredentialsAny, DT2IEngine, DT2IEngineAny, DT2IEngineId, DT2IVendorType } from './t2i.types';
-import { t2iFindByVendorPriorityAsc, t2iFindVendor, t2iFindVendorForLLMVendor } from './t2i.vendors-registry';
+import { t2iFindVendor, t2iFindVendorForLLMVendor } from './t2i.vendors-registry';
 
 
 interface T2IStoreState {
@@ -216,26 +215,9 @@ export const useT2IStore = create<T2IStore>()(persist(
 ));
 
 
-// --- Hooks ---
-
-export function useT2IEngines(): DT2IEngineAny[] {
-  return useT2IStore(useShallow(state => {
-    // non-deleted engines sorted by createdAt, oldest first
-    const result: DT2IEngineAny[] = [];
-    for (const engineId in state.engines) {
-      const e = state.engines[engineId];
-      if (!e.isDeleted) result.push(e);
-    }
-    return result.sort((a, b) => a.createdAt - b.createdAt);
-  }));
-}
-
-export function useT2IGlobalEngine(): DT2IEngineAny | null {
-  return useT2IStore(t2iFindGlobalEngine);
-}
-
-
 // --- Getters ---
+// NOTE: engine resolution (active-or-auto) lives in t2i.client's provider view,
+// the single resolution path - do not duplicate it here
 
 export function t2iFindEngineById(engineId: DT2IEngineId | null): DT2IEngineAny | null {
   if (!engineId) return null;
@@ -243,41 +225,6 @@ export function t2iFindEngineById(engineId: DT2IEngineId | null): DT2IEngineAny 
   const engine = engines[engineId];
   if (!engine || engine.isDeleted) return null;
   return engine;
-}
-
-export function t2iFindGlobalEngine({ engines, activeEngineId }: T2IStore = useT2IStore.getState()): DT2IEngineAny | null {
-  // A. user-selected active engine (no extra configured check - respect the user's choice)
-  if (activeEngineId) {
-    const active = engines[activeEngineId];
-    if (active && !active.isDeleted) return active;
-  }
-
-  // B. priority fallback: prefer engines whose linked service has models loaded, but
-  //    return any non-deleted engine as a last resort so the UI doesn't spuriously
-  //    go to "no engine". The generation path throws a clear error at call time.
-  const configuredEngines: DT2IEngineAny[] = [];
-  const anyEngines: DT2IEngineAny[] = [];
-  for (const engineId in engines) {
-    const e = engines[engineId];
-    if (e.isDeleted) continue;
-    anyEngines.push(e);
-    if (t2iEngineIsConfigured(e)) configuredEngines.push(e);
-  }
-  return t2iFindByVendorPriorityAsc(configuredEngines) ?? t2iFindByVendorPriorityAsc(anyEngines);
-}
-
-/**
- * An engine is "configured" (ready to generate) when its credentials resolve and
- * the linked LLM service has at least one model loaded (proof the service works).
- */
-export function t2iEngineIsConfigured(engine: DT2IEngineAny): boolean {
-  if (!t2iAreCredentialsValid(engine.credentials)) return false;
-  if (engine.credentials.type === 'llms-service') {
-    const { llms } = llmsStoreState();
-    const serviceId = engine.credentials.serviceId;
-    return llms.some(m => m.sId === serviceId);
-  }
-  return true;
 }
 
 /**

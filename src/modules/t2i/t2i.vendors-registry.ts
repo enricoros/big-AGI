@@ -33,27 +33,9 @@ export function t2iFindVendorForLLMVendor(llmVendorId: ModelVendorId): IT2IVendo
   return null;
 }
 
-/**
- * Given a set of candidate engines, return the one whose vendor has the lowest priority number
- * (= highest preference). Used for global engine fallback.
- */
-export function t2iFindByVendorPriorityAsc(engines: DT2IEngineAny[]): DT2IEngineAny | null {
-  for (const tv of _t2iFindAllVendors_Asc()) {
-    const engine = engines.find(e => e.vendorType === tv.vendorType);
-    if (engine) return engine;
-  }
-  return null;
-}
-
 /** UI: generator (painter) display name for an engine, via its vendor */
 export function t2iEngineGeneratorName(engine: DT2IEngineAny): string {
   const vendor = t2iFindVendor(engine.vendorType);
   // the engine's profile matches its vendor by construction
   return vendor ? vendor.generatorName(engine.profile as never) : engine.vendorType;
-}
-
-
-function _t2iFindAllVendors_Asc(): IT2IVendorAny[] {
-  return Object.values(_T2I_VENDOR_REGISTRY)
-    .sort((a, b) => a.priority - b.priority);
 }
