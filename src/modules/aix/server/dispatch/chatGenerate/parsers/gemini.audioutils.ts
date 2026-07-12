@@ -1,3 +1,6 @@
+import { convert_Base64_To_UInt8Array, convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
+
+
 export interface AudioFormat {
   channels: number;
   sampleRate: number;
@@ -14,14 +17,14 @@ interface ConvertedAudio {
 /** Convert Gemini PCM audio to WAV format */
 export function geminiConvertPCM2WAV(mimeType: string, base64PCMData: string): ConvertedAudio {
   const format = parseGeminiAudioMimeType(mimeType);
-  const pcmBuffer = Buffer.from(base64PCMData, 'base64');
+  const pcmBytes = convert_Base64_To_UInt8Array(base64PCMData, 'gemini.audioutils');
 
-  const wavBuffer = createWAVFromPCM(pcmBuffer, format);
-  const durationMs = calculateDurationMs(pcmBuffer.length, format);
+  const wavBytes = createWAVFromPCM(pcmBytes, format);
+  const durationMs = calculateDurationMs(pcmBytes.length, format);
 
   return {
     mimeType: 'audio/wav',
-    base64Data: wavBuffer.toString('base64'),
+    base64Data: convert_UInt8Array_To_Base64(wavBytes, 'gemini.audioutils'),
     durationMs,
   };
 }
@@ -76,9 +79,9 @@ function parseGeminiAudioMimeType(mimeType: string): AudioFormat {
 }
 
 /**
- * Create WAV file from raw PCM data
+ * Create WAV file from raw PCM data - runtime-portable (no Buffer): Uint8Array + DataView
  */
-export function createWAVFromPCM(pcmData: Buffer, format: AudioFormat): Buffer {
+export function createWAVFromPCM(pcmData: Uint8Array, format: AudioFormat): Uint8Array {
   const { channels, sampleRate, bitsPerSample } = format;
 
   const byteRate = sampleRate * channels * bitsPerSample / 8;
@@ -86,28 +89,35 @@ export function createWAVFromPCM(pcmData: Buffer, format: AudioFormat): Buffer {
   const dataSize = pcmData.length;
   const fileSize = 36 + dataSize;
 
-  const header = Buffer.alloc(44);
+  const wav = new Uint8Array(44 + dataSize);
+  const view = new DataView(wav.buffer);
+  const writeTag = (offset: number, tag: string) => {
+    for (let i = 0; i < tag.length; i++)
+      wav[offset + i] = tag.charCodeAt(i);
+  };
 
   // RIFF header
-  header.write('RIFF', 0);
-  header.writeUInt32LE(fileSize, 4);
-  header.write('WAVE', 8);
+  writeTag(0, 'RIFF');
+  view.setUint32(4, fileSize, true);
+  writeTag(8, 'WAVE');
 
   // fmt chunk
-  header.write('fmt ', 12);
-  header.writeUInt32LE(16, 16);           // PCM chunk size
-  header.writeUInt16LE(1, 20);            // Audio format (1 = PCM)
-  header.writeUInt16LE(channels, 22);     // Number of channels
-  header.writeUInt32LE(sampleRate, 24);   // Sample rate
-  header.writeUInt32LE(byteRate, 28);     // Byte rate
-  header.writeUInt16LE(blockAlign, 32);   // Block align
-  header.writeUInt16LE(bitsPerSample, 34); // Bits per sample
+  writeTag(12, 'fmt ');
+  view.setUint32(16, 16, true);            // PCM chunk size
+  view.setUint16(20, 1, true);             // Audio format (1 = PCM)
+  view.setUint16(22, channels, true);      // Number of channels
+  view.setUint32(24, sampleRate, true);    // Sample rate
+  view.setUint32(28, byteRate, true);      // Byte rate
+  view.setUint16(32, blockAlign, true);    // Block align
+  view.setUint16(34, bitsPerSample, true); // Bits per sample
 
   // data chunk
-  header.write('data', 36);
-  header.writeUInt32LE(dataSize, 40);
+  writeTag(36, 'data');
+  view.setUint32(40, dataSize, true);
 
-  return Buffer.concat([header, pcmData]);
+  // PCM payload
+  wav.set(pcmData, 44);
+  return wav;
 }
 
 /** Calculate audio duration in milliseconds */

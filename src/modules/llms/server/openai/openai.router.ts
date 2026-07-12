@@ -5,6 +5,8 @@ import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 import { serverCapitalizeFirstLetter } from '~/server/wire';
 
+import { convert_Base64_To_UInt8Array, convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
+
 import type { T2ICreateImageAsyncStreamOp } from '~/modules/t2i/t2i.server';
 import { OpenAIWire_API_Images_Generations } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 import { heartbeatsWhileAwaiting } from '~/modules/aix/server/dispatch/heartbeatsWhileAwaiting';
@@ -168,7 +170,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         throw new Error(`File too large to download (${(arrayBuffer.byteLength / 1024 / 1024).toFixed(1)} MB, limit ${MAX_FILE_BYTES / 1024 / 1024} MB)`);
 
       return {
-        base64Data: Buffer.from(arrayBuffer).toString('base64'),
+        base64Data: convert_UInt8Array_To_Base64(new Uint8Array(arrayBuffer), 'llms.openai.fileDownload'),
         mimeType: response.headers.get('content-type') || 'application/octet-stream',
       };
     }),
@@ -374,8 +376,8 @@ async function openaiPOSTOrThrow<TOut extends object, TPostBody extends object |
 }
 
 
-/** @serverSide Buffer is a Node.js API, not a Browser API. */
+/** Runtime-portable base64 -> Blob (Node, Edge, workerd). */
 function server_base64ToBlob(base64Data: string, mimeType: string) {
-  const buffer = Buffer.from(base64Data, 'base64');
-  return new Blob([buffer], { type: mimeType });
+  const bytes = convert_Base64_To_UInt8Array(base64Data, 'llms.openai.base64ToBlob');
+  return new Blob([bytes], { type: mimeType });
 }

@@ -5,6 +5,8 @@
  * ElevenLabs, OpenAI, and LocalAI synthesizers.
  */
 
+import { combine_Uint8Arrays_To_Uint8Array, convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
+
 import type { SpeexSpeechParticle } from './rpc.wiretypes';
 
 
@@ -41,7 +43,7 @@ export async function* streamAudioChunksOrThrow(
 
       // Yield when accumulated size reaches threshold
       if (accumulatedSize >= minChunkSize) {
-        yield { t: 'audio', base64: Buffer.concat(accumulatedChunks).toString('base64'), chunk: true };
+        yield { t: 'audio', base64: convert_UInt8Array_To_Base64(combine_Uint8Arrays_To_Uint8Array(accumulatedChunks), 'speex.stream'), chunk: true };
         totalAudioBytes += accumulatedSize;
         accumulatedChunks.length = 0;
         accumulatedSize = 0;
@@ -50,7 +52,7 @@ export async function* streamAudioChunksOrThrow(
 
     // Yield any remaining data as final chunk
     if (accumulatedSize > 0) {
-      yield { t: 'audio', base64: Buffer.concat(accumulatedChunks).toString('base64'), chunk: true /*, final: true*/ };
+      yield { t: 'audio', base64: convert_UInt8Array_To_Base64(combine_Uint8Arrays_To_Uint8Array(accumulatedChunks), 'speex.stream'), chunk: true /*, final: true*/ };
       totalAudioBytes += accumulatedSize;
     }
 
@@ -75,7 +77,7 @@ export async function* returnAudioWholeOrThrow(
   const audioArrayBuffer = await response.arrayBuffer();
   yield {
     t: 'audio',
-    base64: Buffer.from(audioArrayBuffer).toString('base64'),
+    base64: convert_UInt8Array_To_Base64(new Uint8Array(audioArrayBuffer), 'speex.whole'),
     chunk: false,
     ...(audioMeta?.contentType ? { contentType: audioMeta.contentType } : {}),
     ...(audioMeta?.characterCost ? { characterCost: audioMeta.characterCost } : {}),

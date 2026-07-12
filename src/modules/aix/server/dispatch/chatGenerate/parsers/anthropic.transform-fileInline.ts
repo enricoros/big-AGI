@@ -1,6 +1,7 @@
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow, fetchTextOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import { anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.access';
+import { convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
 
 import type { ChatGenerateParticleTransformFunction } from '../chatGenerate.dispatch';
 import { FileMetadataResponse_schema } from '~/modules/llms/server/llm.server.types';
@@ -136,7 +137,7 @@ export function createAnthropicFileInlineTransform(fileApiRequest: ReturnType<ty
       particle = {
         p: 'ii',  // inline image
         mimeType,
-        i_b64: Buffer.from(imageBuffer).toString('base64'),
+        i_b64: convert_UInt8Array_To_Base64(new Uint8Array(imageBuffer), 'aix.anthropic.fileInline'),
         ...(filename ? { label: filename } : {}),
         generator: `Anthropic File ${fileId}`,
         // small images: hint reassembler to skip the PNG->WebP recompression and preserve original quality

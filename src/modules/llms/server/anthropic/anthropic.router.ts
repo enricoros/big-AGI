@@ -3,6 +3,8 @@ import * as z from 'zod/v4';
 import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow, fetchTextOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
+import { convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
+
 import { FileMetadataResponse_schema, ListModelsResponse_schema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
@@ -89,7 +91,7 @@ export const llmAnthropicRouter = createTRPCRouter({
         throw new Error(`File too large to download (${(arrayBuffer.byteLength / 1024 / 1024).toFixed(1)} MB, limit ${MAX_FILE_BYTES / 1024 / 1024} MB)`);
 
       return {
-        base64Data: Buffer.from(arrayBuffer).toString('base64'),
+        base64Data: convert_UInt8Array_To_Base64(new Uint8Array(arrayBuffer), 'llms.anthropic.fileDownload'),
         mimeType: response.headers.get('content-type') || 'application/octet-stream',
       };
     }),
