@@ -67,6 +67,7 @@ type UuidV4Scope =
   | 'persona-2'
   | 'asrx.engine.instance'
   | 'speex.engine.instance'
+  | 't2i.engine.instance'
   ;
 
 

@@ -6,25 +6,76 @@ import { Box, Typography } from '@mui/joy';
 
 import { ExpanderSection } from '~/common/components/ExpanderSection';
 
-import type { TextToImageProvider } from '~/common/components/useCapabilities';
+import type { DT2IEngineAny, DT2IEngineId } from '../t2i.types';
+import { DallESettings } from '../dalle/DallESettings';
+import { OpenRouterT2ISettings } from '../openrouter/OpenRouterT2ISettings';
+import { useT2IStore } from '../store-module-t2i';
 
-import { t2iVendorConfigPanel } from './T2IConfigureEngines';
+
+// --- Profile panel (vendor-specific) ---
+
+/**
+ * Vendor-specific configuration panel for a T2I engine's profile.
+ * The openai, azure and localai vendors generate through the OpenAI/DALL·E
+ * path and share a profile shape, so they share the DALL·E panel.
+ */
+function T2IEngineProfilePanel(props: {
+  engine: DT2IEngineAny;
+  onUpdate: (updates: Partial<DT2IEngineAny>) => void;
+}) {
+  const { engine, onUpdate } = props;
+
+  const profile = engine.profile;
+  switch (profile.dialect) {
+    case 'dalle':
+      return (
+        <DallESettings
+          profile={profile}
+          onUpdateProfile={update => onUpdate({ profile: { ...profile, ...update } })}
+        />
+      );
+    case 'openrouter':
+      return (
+        <OpenRouterT2ISettings
+          profile={profile}
+          onUpdateProfile={update => onUpdate({ profile: { ...profile, ...update } })}
+        />
+      );
+    default:
+      return <Typography level='body-sm' color='warning'>Unknown engine type {(engine as any)?.vendorType}</Typography>;
+  }
+}
+
+
+/**
+ * Store-connected profile panel for a given engine id - used by the Draw app's
+ * inline Options expander, which knows the active engine id but not the instance.
+ */
+export function T2IEngineProfileEditor(props: { engineId: DT2IEngineId | null }) {
+  const { engineId } = props;
+  const engine = useT2IStore(state => engineId ? state.engines[engineId] ?? null : null);
+  if (!engine || engine.isDeleted) return null;
+  return (
+    <T2IEngineProfilePanel
+      engine={engine}
+      onUpdate={updates => useT2IStore.getState().updateEngine(engine.engineId, updates)}
+    />
+  );
+}
 
 
 // --- Public component ---
 
 export function T2IConfigureEngineFull(props: {
-  provider: TextToImageProvider;
+  engine: DT2IEngineAny;
   isMobile: boolean;
+  onUpdate: (updates: Partial<DT2IEngineAny>) => void;
 }) {
-  const { provider } = props;
+  const { engine, onUpdate } = props;
 
   // source discrimination: today every engine is auto-linked to an LLM service;
   // manual (api-key) and system-provided engines will discriminate here later
-  const isLinked = !!provider.modelServiceId;
-
-  const ConfigPanel = t2iVendorConfigPanel(provider.vendor);
-
+  const isLinked = engine.credentials.type === 'llms-service';
 
   // for the future Service Access expander (see below):
   // const accessTitle = isLinked ? 'Linked to AI Service' : 'Credentials';
@@ -37,17 +88,13 @@ export function T2IConfigureEngineFull(props: {
         parent-grid cell so the Topic's grid gap only applies between sections. */}
     <div>
       <ExpanderSection
-        title={`${provider.label} options`}
+        title={`${engine.label} options`}
         isCollapsible={false}
         initialExpanded={true}
         persistentDivider
       >
         <Box sx={_styles.sectionBody}>
-          {ConfigPanel ? (
-            <ConfigPanel />
-          ) : (
-            <Typography level='body-sm'>No engine-specific options.</Typography>
-          )}
+          <T2IEngineProfilePanel engine={engine} onUpdate={onUpdate} />
         </Box>
       </ExpanderSection>
     </div>
@@ -56,7 +103,7 @@ export function T2IConfigureEngineFull(props: {
         restore the ExpanderSection below when manual (api-key) engines arrive */}
     <Typography level='body-xs'>
       {isLinked
-        ? <>Credentials inherited from your {provider.label} LLM service. Manage in Chat &gt; AI Services.</>
+        ? <>Using credentials from your {engine.label} LLM service. Manage in Chat &gt; AI Services.</>
         : <>This engine is not linked to an AI Service.</>}
     </Typography>
     {/*<Box>*/}

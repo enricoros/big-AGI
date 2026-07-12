@@ -5,13 +5,16 @@ import { FormControl, Option, Select } from '@mui/joy';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { Link } from '~/common/components/Link';
 
-import { OPENROUTER_IMAGE_MODELS, resolveOpenRouterImageModelId, useOpenRouterT2IStore } from './store-module-openrouter';
+import type { DProfileOpenRouterImages } from '../t2i.types';
+import { OPENROUTER_IMAGE_MODELS } from '../t2i.config';
 
 
-export function OpenRouterT2ISettings() {
+export function OpenRouterT2ISettings(props: {
+  profile: DProfileOpenRouterImages;
+  onUpdateProfile: (update: Partial<DProfileOpenRouterImages>) => void;
+}) {
 
-  // external state
-  const { orImageModelId, setOrImageModelId } = useOpenRouterT2IStore();
+  const { profile, onUpdateProfile } = props;
 
   return <>
 
@@ -21,8 +24,8 @@ export function OpenRouterT2ISettings() {
         description={<Link level='body-sm' href='https://openrouter.ai/models?fmt=cards&output_modalities=image' target='_blank'>Image models</Link>}
       />
       <Select
-        value={resolveOpenRouterImageModelId(orImageModelId)}
-        onChange={(_event, value) => value && setOrImageModelId(value)}
+        value={profile.imageModelId || 'auto'}
+        onChange={(_event, value) => value && onUpdateProfile({ imageModelId: value === 'auto' ? null : value })}
         slotProps={{ button: { sx: { whiteSpace: 'inherit' } } }}
         sx={{ minWidth: '10rem' }}
       >
@@ -31,6 +34,8 @@ export function OpenRouterT2ISettings() {
             {option.label}
           </Option>
         ))}
+        {/* null selection - resolved at generation time, floats with the catalog */}
+        <Option value='auto'>Auto</Option>
       </Select>
     </FormControl>
 

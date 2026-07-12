@@ -10,7 +10,8 @@ import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { Link } from '~/common/components/Link';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
-import { DALLE_DEFAULT_IMAGE_SIZE, DalleImageSize, DalleModelSelection, getImageModelFamily, resolveDalleModelId, useDalleStore } from './store-module-dalle';
+import type { DalleImageSize, DalleModelSelection, DProfileDalle } from '../t2i.types';
+import { DALLE_DEFAULT_IMAGE_SIZE, getImageModelFamily, resolveDalleModelId } from '../t2i.config';
 import { openAIImageModelsPricing } from './openaiGenerateImages';
 
 
@@ -58,48 +59,52 @@ const CONF = {
 } as const;
 
 
-export function DallESettings() {
+export function DallESettings(props: {
+  profile: DProfileDalle;
+  onUpdateProfile: (update: Partial<DProfileDalle>) => void;
+}) {
 
   // state
   const advanced = useToggleableBoolean(false, 'DallESettings');
 
-  // external state
+  // external state - the engine's profile
+  const { profile, onUpdateProfile } = props;
   const {
-    dalleModelId, setDalleModelId,
-    dalleQualityD3, setDalleQualityD3,
-    dalleQualityGI, setDalleQualityGI,
-    dalleSizeD3, setDalleSizeD3,
-    dalleSizeD2, setDalleSizeD2,
-    dalleSizeGI, setDalleSizeGI,
-    dalleStyleD3, setDalleStyleD3,
-    dalleNoRewrite, setDalleNoRewrite,
-    dalleBackgroundGI, setDalleBackgroundGI,
-    dalleOutputFormatGI, setDalleOutputFormatGI,
-    dalleOutputCompressionGI, setDalleOutputCompressionGI,
-    dalleModerationGI, setDalleModerationGI,
-  } = useDalleStore();
+    dalleModelId,
+    dalleQualityD3,
+    dalleQualityGI,
+    dalleSizeD3,
+    dalleSizeD2,
+    dalleSizeGI,
+    dalleStyleD3,
+    dalleNoRewrite,
+    dalleBackgroundGI,
+    dalleOutputFormatGI,
+    dalleOutputCompressionGI,
+    dalleModerationGI,
+  } = profile;
 
 
   const handleDalleQualityD3Change = (event: React.ChangeEvent<HTMLInputElement>) =>
-    setDalleQualityD3(event.target.checked ? 'hd' : 'standard');
+    onUpdateProfile({ dalleQualityD3: event.target.checked ? 'hd' : 'standard' });
 
   const handleDalleNoRewriteChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    setDalleNoRewrite(!event.target.checked);
+    onUpdateProfile({ dalleNoRewrite: !event.target.checked });
 
   const handleResolutionD3Change = (_event: any, value: DalleImageSize | null) =>
-    value && setDalleSizeD3(value as any);
+    value && onUpdateProfile({ dalleSizeD3: value as any });
 
   const handleResolutionD2Change = (_event: any, value: DalleImageSize | null) =>
-    value && setDalleSizeD2(value as any);
+    value && onUpdateProfile({ dalleSizeD2: value as any });
 
   const handleResolutionGIChange = (_event: any, value: DalleImageSize | null) =>
-    value && setDalleSizeGI(value as any);
+    value && onUpdateProfile({ dalleSizeGI: value as any });
 
   const handleCompressionChange = (_event: Event, newValue: number | number[]) =>
-    setDalleOutputCompressionGI(newValue as number);
+    onUpdateProfile({ dalleOutputCompressionGI: newValue as number });
 
   const handleModerationGIChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    setDalleModerationGI(!event.target.checked ? 'low' : 'auto');
+    onUpdateProfile({ dalleModerationGI: !event.target.checked ? 'low' : 'auto' });
 
 
   // derived state - resolve the actual model and family
@@ -137,7 +142,7 @@ export function DallESettings() {
       // description={dalleModelId === null ? `Latest (${resolvedDalleModelId})` : isGI ? 'Latest' : isD3 ? 'Good' : 'Older'}
       options={CONF.MODEL_OPTS.map(opt => ({ ...opt, value: opt.value || 'auto', description: opt.description ?? '' }))}
       value={dalleModelId || 'auto'}
-      onChange={(value) => setDalleModelId(value === 'auto' ? null : value as DalleModelSelection)}
+      onChange={(value) => onUpdateProfile({ dalleModelId: value === 'auto' ? null : value as DalleModelSelection })}
     />
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
@@ -173,7 +178,7 @@ export function DallESettings() {
         // color='primary'
         description='Higher quality takes longer'
         options={CONF.QUALITY_GI}
-        value={dalleQualityGI} onChange={setDalleQualityGI}
+        value={dalleQualityGI} onChange={value => onUpdateProfile({ dalleQualityGI: value })}
       />
 
       <FormChipControl
@@ -187,7 +192,7 @@ export function DallESettings() {
             </Typography>
         }
         options={CONF.BACKGROUND_GI}
-        value={dalleBackgroundGI} onChange={setDalleBackgroundGI}
+        value={dalleBackgroundGI} onChange={value => onUpdateProfile({ dalleBackgroundGI: value })}
       />
 
       {advanced.on && <FormChipControl
@@ -195,7 +200,7 @@ export function DallESettings() {
         // color='primary'
         description='File format for the generated image'
         options={CONF.OUT_FORMAT_GI}
-        value={dalleOutputFormatGI} onChange={setDalleOutputFormatGI}
+        value={dalleOutputFormatGI} onChange={value => onUpdateProfile({ dalleOutputFormatGI: value })}
       />}
 
       {advanced.on && /*(dalleOutputFormatGI === 'webp' || dalleOutputFormatGI === 'jpeg') &&*/ (
@@ -235,7 +240,7 @@ export function DallESettings() {
         description={(isD3 && dalleStyleD3 === 'vivid') ? 'Hyper-Real' : 'Realistic'}
         disabled={!isD3}
         options={CONF.STYLE_D3}
-        value={isD3 ? dalleStyleD3 : 'natural'} onChange={setDalleStyleD3}
+        value={isD3 ? dalleStyleD3 : 'natural'} onChange={value => onUpdateProfile({ dalleStyleD3: value })}
       />
 
       <FormControl orientation='horizontal' disabled={!isD3} sx={{ justifyContent: 'space-between' }}>

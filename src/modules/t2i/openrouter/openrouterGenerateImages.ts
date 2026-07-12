@@ -5,7 +5,8 @@ import type { OpenAIAccessSchema } from '~/modules/llms/server/openai/openai.acc
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { T2iCreateImageOutput, T2iGenerateOptions } from '../t2i.server';
-import { resolveOpenRouterImageModelId, useOpenRouterT2IStore } from './store-module-openrouter';
+import type { DProfileOpenRouterImages } from '../t2i.types';
+import { resolveOpenRouterImageModelId } from '../t2i.config';
 
 
 /**
@@ -13,13 +14,14 @@ import { resolveOpenRouterImageModelId, useOpenRouterT2IStore } from './store-mo
  */
 export async function openRouterGenerateImagesOrThrow(
   modelServiceIdForAccess: DModelsServiceId,
+  profile: DProfileOpenRouterImages,
   prompt: string,
   count: number,
   { abortSignal }: T2iGenerateOptions = {},
 ): Promise<T2iCreateImageOutput[]> {
 
-  // Use the current settings (null selection = auto-select the default)
-  const orImageModelId = resolveOpenRouterImageModelId(useOpenRouterT2IStore.getState().orImageModelId);
+  // Use the engine's profile (null selection = auto-select the default)
+  const orImageModelId = resolveOpenRouterImageModelId(profile.imageModelId);
   const transportAccess = findServiceAccessOrThrow<{}, OpenAIAccessSchema>(modelServiceIdForAccess).transportAccess;
 
   // helper to check for abort conditions and throw consistent error

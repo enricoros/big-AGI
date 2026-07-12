@@ -8,7 +8,8 @@ import type { OpenAIAccessSchema } from '~/modules/llms/server/openai/openai.acc
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
 import type { T2iCreateImageOutput, T2iGenerateOptions } from '../t2i.server';
-import { DalleImageQuality, DalleModelId, DalleSize, getImageModelFamily, resolveDalleModelId, useDalleStore } from './store-module-dalle';
+import type { DalleImageQuality, DalleModelId, DalleModelSelection, DalleSize, DProfileDalle } from '../t2i.types';
+import { getImageModelFamily, resolveDalleModelId } from '../t2i.config';
 
 
 /**
@@ -17,13 +18,14 @@ import { DalleImageQuality, DalleModelId, DalleSize, getImageModelFamily, resolv
 export async function openAIGenerateImagesOrThrow(
   modelServiceIdForAccess: DModelsServiceId,
   modelVendor: 'azure' | 'localai' | 'openai',
+  profile: DProfileDalle,
   prompt: string,
   aixInlineImageParts: AixParts_InlineImagePart[],
   count: number,
   { agiProfilePic, abortSignal }: T2iGenerateOptions = {},
 ): Promise<T2iCreateImageOutput[]> {
 
-  // Use the current settings
+  // Use the engine's profile
   let {
     dalleModelId: dalleModelSelection,
     dalleNoRewrite,
@@ -40,7 +42,7 @@ export async function openAIGenerateImagesOrThrow(
     dalleStyleD3,
     // -- D2
     dalleSizeD2,
-  } = useDalleStore.getState();
+  } = profile;
 
   // Resolve the actual model to use (null = latest)
   let dalleModelId = resolveDalleModelId(dalleModelSelection);
@@ -197,8 +199,7 @@ export async function openAIGenerateImagesOrThrow(
 }
 
 
-export function openAIImageModelsCurrentGeneratorName() {
-  const dalleModelSelection = useDalleStore.getState().dalleModelId;
+export function openAIImageModelsGeneratorName(dalleModelSelection: DalleModelSelection) {
   const dalleModelId = resolveDalleModelId(dalleModelSelection);
   if (dalleModelId === 'gpt-image-2') return 'GPT Image 2';
   if (dalleModelId === 'gpt-image-1.5') return 'GPT Image 1.5';
@@ -212,11 +213,6 @@ export function openAIImageModelsCurrentGeneratorName() {
 /**
  * Pricing data for OpenAI image models (per 1M tokens/images)
  * Source: https://platform.openai.com/docs/pricing
- *
- * TODO: When adding credit-based pricing for big-agi hosted service:
- * - Add 'credits' pricing type alongside 'token-based' and 'fixed'
- * - Server-side validation of user credits before generation
- * - Deduct credits after successful generation
  */
 const IMAGE_MODEL_PRICING = {
   // Token-based pricing (GPT Image family). Per $1M tokens. Note: chatgpt-image-latest mirrors gpt-image-1.5.

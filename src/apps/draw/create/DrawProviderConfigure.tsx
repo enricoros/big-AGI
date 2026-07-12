@@ -4,7 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Card, CardContent } from '@mui/joy';
 import ConstructionIcon from '@mui/icons-material/Construction';
 
-import { t2iVendorConfigPanel } from '~/modules/t2i/components/T2IConfigureEngines';
+import { T2IEngineProfileEditor } from '~/modules/t2i/components/T2IConfigureEngineFull';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
@@ -27,14 +27,9 @@ export function DrawProviderConfigure(props: {
 
   const { activeProviderId, providers } = props;
 
-  const { ProviderConfig } = React.useMemo(() => {
-    const provider = providers.find(provider => provider.providerId === activeProviderId);
-    return {
-      ProviderConfig: t2iVendorConfigPanel(provider?.vendor),
-    };
-  }, [activeProviderId, providers]);
+  const hasProviderConfig = !!activeProviderId && providers.some(provider => provider.providerId === activeProviderId);
 
-  const open = _open && !!ProviderConfig;
+  const open = _open && hasProviderConfig;
 
 
   const handleToggleOpen = React.useCallback(() => {
@@ -54,10 +49,10 @@ export function DrawProviderConfigure(props: {
 
       {/* Service-Specific Configuration */}
       <ExpanderControlledBox expanded={open}>
-        {!!ProviderConfig && (
+        {hasProviderConfig && (
           <Card variant='outlined' sx={{ mb: 1, borderTopColor: 'primary.softActiveBg' }}>
             <CardContent sx={{ gap: 1.5 /* keep in sync with SettingsModal > AccordionDetails > Box */ }}>
-              <ProviderConfig />
+              <T2IEngineProfileEditor engineId={activeProviderId} />
             </CardContent>
           </Card>
         )}

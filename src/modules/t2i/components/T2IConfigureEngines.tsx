@@ -21,8 +21,8 @@ import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { useCapabilityTextToImage } from '~/common/components/useCapabilities';
 
-import { DallESettings } from '../dalle/DallESettings';
-import { OpenRouterT2ISettings } from '../openrouter/OpenRouterT2ISettings';
+import type { DT2IEngineAny } from '../t2i.types';
+import { useT2IStore } from '../store-module-t2i';
 import { T2IConfigureEngineFull } from './T2IConfigureEngineFull';
 
 
@@ -62,25 +62,6 @@ const _styles = {
 } as const;
 
 
-/**
- * Vendor-specific configuration panel for a T2I engine, or null if the vendor
- * has none. Azure and LocalAI generate through the OpenAI/DALL·E path and read
- * the same settings store, so they share the DALL·E panel.
- */
-export function t2iVendorConfigPanel(vendor: TextToImageProvider['vendor'] | undefined): React.FC | null {
-  switch (vendor) {
-    case 'azure':
-    case 'localai':
-    case 'openai':
-      return DallESettings;
-    case 'openrouter':
-      return OpenRouterT2ISettings;
-    default:
-      return null;
-  }
-}
-
-
 // Source indicator icon: LLM-service-linked engines show a link; future manual
 // (api-key) engines show a key; future system-provided engines show none
 function _sourceIcon(provider: TextToImageProvider): React.ElementType | null {
@@ -95,6 +76,10 @@ export function T2IConfigureEngines(props: { isMobile: boolean }) {
   const { mayWork, providers, activeProviderId, setActiveProviderId } = useCapabilityTextToImage();
 
 
+  // external state - the engine instance behind the active provider (providerId = engineId)
+  const activeEngine = useT2IStore(state => activeProviderId ? state.engines[activeProviderId] ?? null : null);
+
+
   // derived state
   const hasProviders = providers.length > 0;
   const activeProvider = providers.find(p => p.providerId === activeProviderId) ?? null;
@@ -106,6 +91,11 @@ export function T2IConfigureEngines(props: { isMobile: boolean }) {
     if (newValue)
       setActiveProviderId(newValue);
   }, [setActiveProviderId]);
+
+  const handleEngineUpdate = React.useCallback((updates: Partial<DT2IEngineAny>) => {
+    if (activeProviderId)
+      useT2IStore.getState().updateEngine(activeProviderId, updates);
+  }, [activeProviderId]);
 
 
   // empty state: no eligible LLM services at all
@@ -179,28 +169,29 @@ export function T2IConfigureEngines(props: { isMobile: boolean }) {
 
         {/* Linked indicator (all engines are LLM-service-linked for now; manual
             engines will get a delete button here, as in ASRxConfigureEngines) */}
-        {!!activeProvider?.modelServiceId && (
-          <TooltipOutlined title='Linked - manage in Chat > AI Services'>
-            <IconButton
-              variant='plain'
-              color='neutral'
-              disabled
-              sx={{ ml: 'auto' }}
-            >
-              <LinkIcon />
-            </IconButton>
-          </TooltipOutlined>
-        )}
+        {/*{!!activeProvider?.modelServiceId && (*/}
+        {/*  <TooltipOutlined title='Linked - manage in Chat > AI Services'>*/}
+        {/*    <IconButton*/}
+        {/*      variant='plain'*/}
+        {/*      color='neutral'*/}
+        {/*      disabled*/}
+        {/*      sx={{ ml: 'auto' }}*/}
+        {/*    >*/}
+        {/*      <LinkIcon />*/}
+        {/*    </IconButton>*/}
+        {/*  </TooltipOutlined>*/}
+        {/*)}*/}
 
       </Box>
 
     </Box>
 
     {/* Source banner + Configuration panel for the active engine */}
-    {!!activeProvider && (
+    {!!activeEngine && (
       <T2IConfigureEngineFull
-        provider={activeProvider}
+        engine={activeEngine}
         isMobile={props.isMobile}
+        onUpdate={handleEngineUpdate}
       />
     )}
 
