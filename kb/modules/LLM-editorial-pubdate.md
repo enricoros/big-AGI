@@ -23,7 +23,8 @@ For the forward-looking pipeline (extraction script, snapshot, website consumpti
 
 - **Symlink entries** (`KnownLink`) - inherit the target's `pubDate` via the merge logic in `fromManualMapping`.
 - **Unknown variants resolved through `super`/`fallback`** in `fromManualMapping` for non-Anthropic/non-Gemini vendors - the field is left undefined rather than fabricated.
-- **Dynamic-only vendors** (OpenRouter, TogetherAI, Novita, ChutesAI, FireworksAI, TLUS, Azure, LM Studio, LocalAI, FastAPI, ArceeAI, LLMAPI) - no editorial knob; pubDate flows in only when the underlying lookup or upstream API populates it.
+- **Dynamic-only vendors** (OpenRouter, Novita, ChutesAI, FireworksAI, TLUS, Azure, LM Studio, LocalAI, FastAPI, ArceeAI, LLMAPI) - no editorial knob; pubDate flows in only when the underlying lookup or upstream API populates it.
+- **TogetherAI** graduated to an id-keyed editorial patch map (`_togetherEditorialPubDates`, 2026-07-12) after its `created` proved to be endpoint churn (re-stamped on redeploys: DeepSeek-V4-Pro, released 2026-04-24, carried created=2026-07-12; 28/269 endpoints report 0, including the newest arrivals). `created` never feeds pubDate there; it only drives list order, with the editorial date as placement fallback.
 
 The rationale: today's date is a defensible 0-day proxy only when we know we're seeing a brand-new model the vendor just announced (Anthropic and Gemini's "discovery via official model list" paths). For arbitrary dynamic vendors, fabricating today would mark old/well-known models as new - misleading. Better to omit.
 
@@ -84,7 +85,7 @@ Three categories:
 | LLMAPI | Dynamic | `openai/models/llmapi.models.ts` | `_llmapiKnownModels` | 0 | n/a (empty) |
 | Alibaba | Dynamic | `openai/models/alibaba.models.ts` | `_knownAlibabaChatModels` | 0 | n/a (empty) |
 | OpenRouter | Dynamic + delegated lookup | `openai/models/openrouter.models.ts` | (parser) | -- | inherited via `llmOrt*Lookup` |
-| TogetherAI | Dynamic | `openai/models/together.models.ts` | (parser) | -- | no |
+| TogetherAI | Dynamic + patch map | `openai/models/together.models.ts` | `_togetherEditorialPubDates` | 4 | editorial-only; API `created` is endpoint churn (re-stamped on redeploys, 28/269 zeros - verified 2026-07-12), never used for pubDate |
 | FireworksAI | Dynamic | `openai/models/fireworksai.models.ts` | (parser) | -- | no |
 | Novita | Dynamic | `openai/models/novita.models.ts` | (parser) | -- | no |
 | ChutesAI | Dynamic | `openai/models/chutesai.models.ts` | (parser) | -- | no |

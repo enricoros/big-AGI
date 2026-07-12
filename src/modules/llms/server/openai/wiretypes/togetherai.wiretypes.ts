@@ -29,6 +29,7 @@ export const wireTogetherAIListOutputSchema = z.array(z.object({
     hourly: z.number(),
     input: z.number(),
     output: z.number(),
+    cached_input: z.number().optional(),
     base: z.number(),
     finetune: z.number(),
   }),
