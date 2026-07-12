@@ -12,7 +12,7 @@ import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined
 import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { llmsGetVendorIcon } from '~/modules/llms/components/LLMVendorIcon';
-import { OPENROUTER_IMAGE_MODELS } from '~/modules/t2i/t2i.config';
+import { t2iIsPainterName } from '~/modules/t2i/t2i.config';
 
 import type { MetricsChatGenerateCost_Md } from '~/common/stores/metrics/metrics.chatgenerate';
 import type { DMessage, DMessageGenerator, DMessageRole } from '~/common/stores/chat/chat.message';
@@ -138,11 +138,7 @@ export function makeMessageAvatarIcon(
 
     case 'assistant':
       const isDownload = messageGeneratorName === 'web';
-      const isTextToImage =
-        messageGeneratorName?.startsWith('GPT Image') // sync this with t2i.client.ts
-        || messageGeneratorName?.startsWith('DALL·E')
-        || messageGeneratorName === 'Prodia'
-        || (!!messageGeneratorName && OPENROUTER_IMAGE_MODELS.some(m => m.label === messageGeneratorName)); // OpenRouter painters are the model labels
+      const isTextToImage = t2iIsPainterName(messageGeneratorName);
       const isReact = messageGeneratorName?.startsWith('react-');
 
       // Extra appearance

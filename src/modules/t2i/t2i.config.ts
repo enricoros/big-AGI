@@ -93,3 +93,21 @@ export function openRouterImageModelLabel(modelId: string | null): string {
   const resolved = resolveOpenRouterImageModelId(modelId);
   return OPENROUTER_IMAGE_MODELS.find(m => m.value === resolved)?.label || resolved;
 }
+
+
+// --- Painter names ---
+
+/**
+ * Whether a message generator name is a T2I painter, i.e. the message was image-generated.
+ * Painter names are produced by the vendors' generatorName() - this is the single
+ * place that recognizes them (e.g. for the message avatar), so adding a vendor
+ * does not require touching the message rendering code.
+ */
+export function t2iIsPainterName(generatorName: string | undefined): boolean {
+  if (!generatorName) return false;
+  return generatorName.startsWith('GPT Image')
+    || generatorName.startsWith('DALL·E')
+    || generatorName === 'LocalAI'
+    || generatorName === 'Prodia' // legacy painter
+    || OPENROUTER_IMAGE_MODELS.some(m => m.label === generatorName); // OpenRouter painters are the model labels
+}
