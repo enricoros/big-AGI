@@ -61,6 +61,12 @@ export const OPENAI_API_PATHS = {
   xaiLanguageModels: '/v1/language-models',
 } as const;
 
+// -- OpenRouter-specific API Paths --
+
+export const OPENROUTER_API_PATHS = {
+  images: '/v1/images', // dedicated image generation endpoint, not OpenAI-compatible
+} as const;
+
 
 /** Select a random key from a comma-separated list of API keys, used to load balance. */
 export function llmsRandomKeyFromMultiKey(multiKeyString: string): string {

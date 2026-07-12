@@ -97,3 +97,28 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
   // }).nullish(),
 
 });
+
+// [OpenRouter] Image Generation API - https://openrouter.ai/docs/features/multimodal/image-generation
+// - POST /api/v1/images: { model, prompt, n? } -> { created, data: [{ b64_json, media_type? }], usage? }
+
+export type WireOpenRouterCreateImagesRequest = z.infer<typeof wireOpenRouterCreateImagesRequestSchema>;
+export const wireOpenRouterCreateImagesRequestSchema = z.object({
+  model: z.string(),
+  prompt: z.string(),
+  n: z.number().min(1).max(10).optional(),
+});
+
+export type WireOpenRouterCreateImagesResponse = z.infer<typeof wireOpenRouterCreateImagesResponseSchema>;
+export const wireOpenRouterCreateImagesResponseSchema = z.object({
+  created: z.number().optional(),
+  data: z.array(z.object({
+    b64_json: z.string(),
+    media_type: z.string().optional(), // e.g. 'image/png' - may be absent even for JPEGs
+    revised_prompt: z.string().optional(),
+  })),
+  usage: z.object({
+    prompt_tokens: z.number().optional(),
+    completion_tokens: z.number().optional(),
+    total_tokens: z.number().optional(),
+  }).loose().optional(),
+});
