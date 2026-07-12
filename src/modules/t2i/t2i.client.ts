@@ -51,7 +51,7 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
   // memo
 
   const { mayWork, mayEdit, providers, activeProvider } = React.useMemo(() => {
-    const providers = _getTextToImageProviders(llmsModelServices);
+    const providers = _getTextToImageProviders(llmsModelServices, orImageModelId);
     const activeProvider = _resolveActiveT2IProvider(userProviderId, providers);
     const mayWork = providers.some(p => p.configured);
     const resolvedDalleModelId = resolveDalleModelId(dalleModelId);
@@ -63,7 +63,6 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
       providers,
       activeProvider,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userProviderId, dalleModelId, orImageModelId, llmsModelServices]);
 
 
@@ -85,7 +84,7 @@ export function getActiveTextToImageProviderOrThrow() {
   const { selectedT2IProviderId } = useTextToImageStore.getState();
   const { llms, sources: modelsServices } = llmsStoreState();
   const llmsModelServiceIDs = _findLlmsT2IServices(llms, modelsServices);
-  const providers = _getTextToImageProviders(llmsModelServiceIDs);
+  const providers = _getTextToImageProviders(llmsModelServiceIDs, useOpenRouterT2IStore.getState().orImageModelId);
 
   // resolve the active provider using pure function
   const activeProvider = _resolveActiveT2IProvider(selectedT2IProviderId, providers);
@@ -235,7 +234,7 @@ function _findLlmsT2IServices(llms: ReadonlyArray<DLLM>, services: ReadonlyArray
 }
 
 
-function _getTextToImageProviders(llmsModelServices: T2ILlmsModelService[]) {
+function _getTextToImageProviders(llmsModelServices: T2ILlmsModelService[], orImageModelId: string | null) {
   const providers: TextToImageProvider[] = [];
 
   // add providers from model services
@@ -275,7 +274,7 @@ function _getTextToImageProviders(llmsModelServices: T2ILlmsModelService[]) {
           vendor: 'openrouter',
           priority: 40, // below direct OpenAI configs
           label,
-          painter: openRouterImageModelLabel(useOpenRouterT2IStore.getState().orImageModelId),
+          painter: openRouterImageModelLabel(orImageModelId), // sync this with dMessageUtils.tsx
           description: 'OpenRouter Image generation models',
           configured: hasAnyModels,
         });

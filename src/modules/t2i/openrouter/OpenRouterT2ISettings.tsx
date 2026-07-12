@@ -5,7 +5,7 @@ import { FormControl, Option, Select } from '@mui/joy';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { Link } from '~/common/components/Link';
 
-import { OPENROUTER_IMAGE_MODELS, useOpenRouterT2IStore } from './store-module-openrouter';
+import { OPENROUTER_IMAGE_MODELS, resolveOpenRouterImageModelId, useOpenRouterT2IStore } from './store-module-openrouter';
 
 
 export function OpenRouterT2ISettings() {
@@ -21,7 +21,7 @@ export function OpenRouterT2ISettings() {
         description={<Link level='body-sm' href='https://openrouter.ai/models?fmt=cards&output_modalities=image' target='_blank'>Image models</Link>}
       />
       <Select
-        value={orImageModelId}
+        value={resolveOpenRouterImageModelId(orImageModelId)}
         onChange={(_event, value) => value && setOrImageModelId(value)}
         slotProps={{ button: { sx: { whiteSpace: 'inherit' } } }}
         sx={{ minWidth: '10rem' }}

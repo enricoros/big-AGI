@@ -345,7 +345,7 @@ export const llmOpenAIRouter = createTRPCRouter({
           {
             model: config.model,
             prompt: config.prompt,
-            ...(config.count > 1 && { n: config.count }),
+            ...(config.count > 1 && { n: config.count }), // note: the current client fans out count=1 requests instead, as most models cap n at 1
           },
           OPENROUTER_API_PATHS.images,
           signal,
