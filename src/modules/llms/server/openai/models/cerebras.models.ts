@@ -166,10 +166,23 @@ declare global {
 }
 
 /**
+ * Explicit gate for the live catalog fetch - per-runtime status of Cerebras' Cloudflare bot-management:
+ * - Vercel Edge runtime: always 403'd (verified) - detected via the EdgeRuntime global, skip the doomed call.
+ * - Node (incl. a VPS/origin deployment) and browsers: clear Cloudflare fine (verified) - live fetch allowed.
+ * - other/future runtimes (e.g. workerd): unverified - live fetch attempted, editorial DB on failure; set
+ *   LLMS_CEREBRAS_SKIP_LIVE=1 in the server env to force the editorial DB without attempting.
+ * NOTE: raw process.env read (not env.server) because this file is also bundled client-side (CSF).
+ */
+function _cerebrasSkipLiveCatalog(): boolean {
+  if (typeof EdgeRuntime === 'string') return true;
+  return typeof process !== 'undefined' && process.env?.LLMS_CEREBRAS_SKIP_LIVE === '1';
+}
+
+/**
  * Lists Cerebras models. The split is by RUNTIME, not by CSF:
  * api.cerebras.ai is behind Cloudflare bot-management that 403s the EDGE-runtime fetch (a challenge
  * HTML page) while allowing Node and browsers (verified: same code, plain-Node fetch -> 200, edge -> 403).
- * - EDGE runtime (the app's /api/edge listing path): skip the doomed call, serve the editorial DB.
+ * - blocked/disabled runtimes (see _cerebrasSkipLiveCatalog): skip the doomed call, serve the editorial DB.
  * - everywhere else - Node tools (e.g. llm-registry-sync), and the browser under CSF / Direct Connection:
  *   fetch the rich live /public/v1/models catalog (full metadata + forward-compatible discovery), with a
  *   DB fallback if the network hiccups.
@@ -178,8 +191,8 @@ declare global {
  */
 export async function cerebrasFetchModelDescriptions(access: OpenAIAccessSchema, signal?: AbortSignal): Promise<ModelDescriptionSchema[]> {
 
-  // [edge runtime] don't even attempt the fetch (Cloudflare always 403s it) - use the hardcoded DB
-  if (typeof EdgeRuntime === 'string')
+  // [blocked/disabled runtime] don't even attempt the fetch - use the hardcoded DB
+  if (_cerebrasSkipLiveCatalog())
     return _cerebrasEditorialModelDescriptions();
 
   // [Node / browser] fetch the rich public catalog (unauthenticated, but routed through openAIAccess to
