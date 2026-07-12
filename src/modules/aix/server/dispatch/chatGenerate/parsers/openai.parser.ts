@@ -6,6 +6,8 @@ import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 
+import { convert_Base64_To_UInt8Array, convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
+
 import { OpenAIWire_API_Chat_Completions } from '../../wiretypes/openai.wiretypes';
 import { calculateDurationMs, createWAVFromPCM } from './gemini.audioutils';
 import { openAIUpstreamErrorLogLevel } from './openai.error-severity';
@@ -796,14 +798,14 @@ function openaiConvertPCM16ToWAV(base64PCMData: string): {
     bitsPerSample: 16,
   };
 
-  const pcmBuffer = Buffer.from(base64PCMData, 'base64');
+  const pcmBytes = convert_Base64_To_UInt8Array(base64PCMData, 'openai.parser.pcm16');
 
-  const wavBuffer = createWAVFromPCM(pcmBuffer, format);
-  const durationMs = calculateDurationMs(pcmBuffer.length, format);
+  const wavBytes = createWAVFromPCM(pcmBytes, format);
+  const durationMs = calculateDurationMs(pcmBytes.length, format);
 
   return {
     mimeType: 'audio/wav',
-    base64Data: wavBuffer.toString('base64'),
+    base64Data: convert_UInt8Array_To_Base64(wavBytes, 'openai.parser.pcm16'),
     durationMs,
   };
 }

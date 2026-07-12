@@ -290,6 +290,18 @@ export function convert_UInt8Array_To_Base64(bytes: Uint8Array, debugCaller: str
 
 /// Misc Operations ///
 
+// Combine multiple Uint8Arrays (byte chunks) into a single Uint8Array
+export function combine_Uint8Arrays_To_Uint8Array(chunks: ReadonlyArray<Uint8Array>): Uint8Array<ArrayBuffer> {
+  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const combined = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    combined.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return combined;
+}
+
 // Combine multiple ArrayBuffers
 export function combine_ArrayBuffers_To_Uint8Array(buffers: ReadonlyArray<ArrayBuffer>): Uint8Array<ArrayBuffer> {
   const totalLength = buffers.reduce((sum, buf) => sum + buf.byteLength, 0);

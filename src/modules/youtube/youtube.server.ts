@@ -2,6 +2,8 @@ import * as z from 'zod/v4';
 
 import { getImageInformationFromBytes } from '~/modules/t2i/t2i.server';
 
+import { convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
+
 import type { YouTubeVideoData } from './youtube.types';
 
 
@@ -115,7 +117,7 @@ async function _downloadAndConvertThumbnail(url: string): Promise<YouTubeVideoDa
     }
     // get low-level image information
     const imageBuffer = await response.arrayBuffer();
-    const base64Image = Buffer.from(imageBuffer).toString('base64');
+    const base64Image = convert_UInt8Array_To_Base64(new Uint8Array(imageBuffer), 'youtube.thumbnail');
     const imgInfo = getImageInformationFromBytes(imageBuffer);
     // return the image dataurl and its information
     return {
