@@ -76,7 +76,7 @@ export async function runImageGenerationUpdatingState(cHandler: ConversationHand
   }
 
   try {
-    const imageContentFragments = await t2iGenerateImageContentFragments(t2iProvider, imageText, aixInlineImageParts, repeat, 'app-chat');
+    const imageContentFragments = await t2iGenerateImageContentFragments(t2iProvider, imageText, aixInlineImageParts, repeat, 'app-chat', 'chat-draw-command');
 
     // add the image content fragments to the message
     for (const imageContentFragment of imageContentFragments)

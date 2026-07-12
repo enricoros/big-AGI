@@ -12,7 +12,8 @@ import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { createDMessageDataRefDBlob, createZyncAssetReferenceContentFragment, DMessageContentFragment } from '~/common/stores/chat/chat.fragments';
 import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 
-import type { T2iCreateImageOutput, T2iGenerateOptions } from './t2i.server';
+// IMPORTANT: Import TYPE (!)
+import type { T2iContextName, T2iCreateImageOutput, T2iGenerateOptions } from './t2i.server';
 import type { DT2IEngineAny, DT2IEngineId } from './t2i.types';
 import { getImageModelFamily, resolveDalleModelId } from './t2i.config';
 import { openAIGenerateImagesOrThrow } from './dalle/openaiGenerateImages';
@@ -85,6 +86,7 @@ export async function t2iGenerateImagesOrThrow(
   prompt: string,
   aixInlineImageParts: AixParts_InlineImagePart[],
   count: number,
+  t2iContextName: T2iContextName,
   options?: T2iGenerateOptions,
 ): Promise<T2iCreateImageOutput[]> {
 
@@ -104,12 +106,12 @@ export async function t2iGenerateImagesOrThrow(
     case 'azure':
     case 'localai':
     case 'openai':
-      return await openAIGenerateImagesOrThrow(_engineServiceIdOrThrow(engine), engine.vendorType, engine.profile, prompt, aixInlineImageParts, count, options);
+      return await openAIGenerateImagesOrThrow(_engineServiceIdOrThrow(engine), engine.vendorType, engine.profile, prompt, aixInlineImageParts, count, t2iContextName, options);
 
     case 'openrouter':
       if (aixInlineImageParts?.length)
         throw new Error('Image transformation is not yet available with OpenRouter. Please use an OpenAI service instead.');
-      return await openRouterGenerateImagesOrThrow(_engineServiceIdOrThrow(engine), engine.profile, prompt, count, options);
+      return await openRouterGenerateImagesOrThrow(_engineServiceIdOrThrow(engine), engine.profile, prompt, count, t2iContextName, options);
 
     default:
       const _exhaustiveCheck: never = engine;
@@ -134,11 +136,12 @@ export async function t2iGenerateImageContentFragments(
   aixInlineImageParts: AixParts_InlineImagePart[],
   count: number,
   scopeId: DBlobDBScopeId,
+  t2iContextName: T2iContextName,
   abortSignal?: AbortSignal,
 ): Promise<DMessageContentFragment[]> {
 
   // T2I: Generate using low-level function
-  const generatedImages = await t2iGenerateImagesOrThrow(t2iProvider, prompt, aixInlineImageParts, count, { abortSignal });
+  const generatedImages = await t2iGenerateImagesOrThrow(t2iProvider, prompt, aixInlineImageParts, count, t2iContextName, { abortSignal });
   if (!generatedImages?.length)
     throw new Error('No image generated');
 

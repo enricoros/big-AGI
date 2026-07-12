@@ -4,7 +4,8 @@ import { apiStream } from '~/common/util/trpc.client';
 import type { OpenAIAccessSchema } from '~/modules/llms/server/openai/openai.access';
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 
-import type { T2iCreateImageOutput, T2iGenerateOptions } from '../t2i.server';
+// IMPORTANT: Import TYPE (!)
+import type { T2iContextName, T2iCreateImageOutput, T2iGenerateOptions } from '../t2i.server';
 import type { DProfileOpenRouterImages } from '../t2i.types';
 import { resolveOpenRouterImageModelId } from '../t2i.config';
 
@@ -17,6 +18,7 @@ export async function openRouterGenerateImagesOrThrow(
   profile: DProfileOpenRouterImages,
   prompt: string,
   count: number,
+  t2iContextName: T2iContextName,
   { abortSignal }: T2iGenerateOptions = {},
 ): Promise<T2iCreateImageOutput[]> {
 
@@ -50,6 +52,7 @@ export async function openRouterGenerateImagesOrThrow(
         prompt,
         count: 1,
       },
+      t2iContextName,
     }, {
       signal: abortSignal, // aborts the tRPC request
     });

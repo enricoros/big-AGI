@@ -84,6 +84,7 @@ const createImageConfigLocalAI = _createImageConfigBase.extend({
 });
 
 
+export type CreateImagesInputSchema = z.infer<typeof createImagesInputSchema>;
 const createImagesInputSchema = z.object({
   access: openAIAccessSchema,
   // for this object sync with <> OpenAIWire_API_Images_Generations.Request_schema
@@ -109,6 +110,12 @@ const createImagesInputSchema = z.object({
       base64: z.string(),
     }).optional(),
   }).optional(),
+  t2iContextName: z.enum([
+    'persona-icon-generation',  // Persona profile picture generation
+    'chat-draw-command', // Draw command in chat (XE instruction)
+    'draw-app-queue',  // Draw/Imagine app background queue
+    'image-regenerate', // Regenerate existing image in message
+  ]),
 });
 
 
@@ -331,6 +338,7 @@ export const llmOpenAIRouter = createTRPCRouter({
         prompt: z.string(),
         count: z.number().min(1).max(10),
       }),
+      t2iContextName: createImagesInputSchema.shape.t2iContextName,
     }))
     .mutation(async function* ({ input, signal }): AsyncGenerator<T2ICreateImageAsyncStreamOp> {
 
