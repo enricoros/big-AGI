@@ -4,8 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Card, CardContent } from '@mui/joy';
 import ConstructionIcon from '@mui/icons-material/Construction';
 
-import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
-import { OpenRouterT2ISettings } from '~/modules/t2i/openrouter/OpenRouterT2ISettings';
+import { t2iVendorConfigPanel } from '~/modules/t2i/components/T2IConfigureEngines';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
@@ -30,9 +29,8 @@ export function DrawProviderConfigure(props: {
 
   const { ProviderConfig } = React.useMemo(() => {
     const provider = providers.find(provider => provider.providerId === activeProviderId);
-    const ProviderConfig: React.FC | null = provider?.vendor === 'openai' ? DallESettings : provider?.vendor === 'openrouter' ? OpenRouterT2ISettings : null;
     return {
-      ProviderConfig,
+      ProviderConfig: t2iVendorConfigPanel(provider?.vendor),
     };
   }, [activeProviderId, providers]);
 

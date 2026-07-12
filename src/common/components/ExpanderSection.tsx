@@ -115,7 +115,7 @@ export function ExpanderSection(props: {
         {!!description && <FormHelperText>{description}</FormHelperText>}
       </Box>
 
-      {isCollapsible && (!isExpanded || props.persistentDivider) && <Box sx={_styles.aeDivider} />}
+      {(isCollapsible ? (!isExpanded || props.persistentDivider) : props.persistentDivider) && <Box sx={_styles.aeDivider} />}
 
       {isCollapsible && (isExpanded
           ? <UnfoldMoreIcon sx={_styles.aeHeaderIcon} />
