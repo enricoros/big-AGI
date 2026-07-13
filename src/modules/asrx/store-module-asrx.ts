@@ -3,7 +3,6 @@ import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
-import { vendorHasBackendCap } from '~/modules/llms/vendors/vendor.helpers';
 
 import { agiUuidV4 } from '~/common/util/idUtils';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
@@ -191,7 +190,15 @@ export const useASRxStore = create<ASRxStore>()(persist(
 
   }), {
     name: 'app-module-asrx',
-    version: 1,
+    version: 2,
+
+    // 2: auto-link now requires a client-side key (CSF-only) - force one re-sync so
+    //    stale keyless auto-linked engines get re-evaluated and soft-deleted
+    migrate: (state: unknown, fromVersion) => {
+      if (fromVersion < 2 && state)
+        return { ...state, hasInitializedLlms: false };
+      return state;
+    },
 
     // Run auto-detections & migrations after rehydrate
     onRehydrateStorage: () => (store) => {
@@ -277,11 +284,11 @@ export function asrxFindGlobalEngine({ engines, activeEngineId }: ASRxStore = us
 /**
  * Credential validity:
  * - 'api-key' needs either an inline key or a custom host (for local/self-hosted endpoints)
- * - 'llms-service' passes when either the browser has usable credentials (csfAvailable)
- *   OR the vendor has server-side (backend env) configuration. The latter case means
- *   the browser itself can't make the request today, but the LLM service is legitimately
- *   "configured" - surfacing it as red would be misleading. The transcription adapter
- *   will return a clear error at call time if CSF isn't possible.
+ * - 'llms-service' passes when the browser has usable credentials (csfAvailable). ASRx
+ *   is CSF-only (no server transcription route), so a server-held env key - a legitimate
+ *   configuration for chat - cannot transcribe: such services are not auto-linked either
+ *   (see shouldAutoLinkFromLLMSource). Keep this strict: _buildBatchWireAccess relies on
+ *   it as the dispatch-time credentials gate.
  */
 export function asrxAreCredentialsValid(credentials: DASRxCredentialsAny): boolean {
   switch (credentials.type) {
@@ -294,7 +301,6 @@ export function asrxAreCredentialsValid(credentials: DASRxCredentialsAny): boole
       if (!llmService?.vId) return false;
       const vendor = findModelVendor(llmService.vId);
       if (!vendor) return false;
-      return !!vendor.csfAvailable?.(llmService.setup)
-        || vendorHasBackendCap(vendor);
+      return !!vendor.csfAvailable?.(llmService.setup);
   }
 }
