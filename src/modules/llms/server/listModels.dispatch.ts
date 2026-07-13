@@ -39,6 +39,7 @@ import { cerebrasFetchModelDescriptions } from './openai/models/cerebras.models'
 import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './openai/models/chutesai.models';
 import { cohereModelFilter, cohereModelSort, cohereModelToModelDescription } from './openai/models/cohere.models';
 import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './openai/models/deepseek.models';
+import { daoxeHeuristic, daoxeModelsToModelDescriptions } from './openai/models/daoxe.models';
 import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './openai/models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription, groqValidateModelDefs_DEV } from './openai/models/groq.models';
@@ -501,6 +502,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // [ChutesAI] special case for model enumeration
               if (chutesAIHeuristic(oaiUrl))
                 return chutesAIModelsToModelDescriptions(maybeModels);
+
+              // [DaoXE] multi-model multi-protocol gateway
+              if (daoxeHeuristic(oaiUrl))
+                return daoxeModelsToModelDescriptions(maybeModels);
 
               // [FireworksAI] special case for model enumeration
               if (fireworksAIHeuristic(oaiUrl))

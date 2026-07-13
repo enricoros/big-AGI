@@ -13,6 +13,7 @@ import { CloudflareIcon } from '~/common/components/icons/vendors/CloudflareIcon
 import { HeliconeIcon } from '~/common/components/icons/vendors/HeliconeIcon';
 import { MiniMaxIcon } from '~/common/components/icons/vendors/MiniMaxIcon';
 import { NovitaAIIcon } from '~/common/components/icons/vendors/NovitaAIIcon';
+import { DaoXEIcon } from '~/common/components/icons/vendors/DaoXEIcon';
 
 
 /**
@@ -40,6 +41,7 @@ const OPENAI_COMPATIBLE_PROVIDERS: VerifiedProvider[] = [
   // Example Providers
   { id: 'arcee', label: 'Arcee AI', host: 'https://api.arcee.ai/api', hostMatch: 'arcee.ai', category: 'Example Providers', description: 'Open-weight MoE models', docsUrl: 'https://docs.arcee.ai/', icon: ArceeAIIcon },
   { id: 'chutes', label: 'Chutes AI', host: 'https://llm.chutes.ai', hostMatch: '.chutes.ai', category: 'Example Providers', description: 'Serverless open model inference', docsUrl: 'https://chutes.ai/docs', icon: ChutesAIIcon },
+  { id: 'daoxe', label: 'DaoXE', host: 'https://daoxe.com', hostMatch: 'daoxe.com', category: 'Example Providers', description: 'Multi-model multi-protocol AI API gateway', docsUrl: 'https://github.com/seven7763/DaoXE-AI', icon: DaoXEIcon },
   { id: 'empiriolabs', label: 'EmpirioLabs AI', host: 'https://api.empiriolabs.ai', hostMatch: 'empiriolabs.ai', category: 'Example Providers', description: 'Multi-model API platform', docsUrl: 'https://docs.empiriolabs.ai' },
   { id: 'fireworks', label: 'Fireworks AI', host: 'https://api.fireworks.ai/inference', hostMatch: 'fireworks.ai', category: 'Example Providers', description: 'Fast open model inference', docsUrl: 'https://docs.fireworks.ai/getting-started/quickstart', icon: FireworksAIIcon },
   { id: 'llmapi', label: 'LLM API', host: 'https://api.llmapi.ai', hostMatch: 'llmapi.ai', category: 'Example Providers', description: 'Multi-provider API gateway', docsUrl: 'https://llmapi.ai' },
