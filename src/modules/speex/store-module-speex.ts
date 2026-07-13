@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
+import { vendorHasBackendCap } from '~/modules/llms/vendors/vendor.helpers';
 
 import { agiUuidV4 } from '~/common/util/idUtils';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
@@ -427,14 +428,11 @@ export function speexAreCredentialsValid(credentials: DSpeexCredentialsAny): boo
       if (!vendor) return false;
 
       // is vendor client-side configured? great
-      // const isClientSideConfigured = !!vendor.csfAvailable?.(llmService.setup);
-      // if (isClientSideConfigured) return true;
-      //
-      // // is vendor server-side configured? great
-      // return modelVendorHasCloudTenantConfiguration(vendor);
+      const isClientSideConfigured = !!vendor.csfAvailable?.(llmService.setup);
+      if (isClientSideConfigured) return true;
 
-      // use CSF as a validator if available (e.g. validates the key presence)
-      return !!vendor.csfAvailable?.(llmService.setup);
+      // is vendor server-side configured? great
+      return vendorHasBackendCap(vendor);
 
     case 'none':
       return true;

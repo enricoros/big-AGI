@@ -3,6 +3,7 @@
  */
 
 import { OPENAI_API_PATHS } from '~/modules/llms/server/openai/openai.access'; // server-side import
+import { env } from '~/server/env.server';
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import type { SpeexWire_Access_OpenAI, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
@@ -207,5 +208,8 @@ function _resolveAccess(access: Readonly<SpeexWire_Access_OpenAI>): { host: stri
   if (host.endsWith('/'))
     host = host.slice(0, -1);
 
-  return { host, apiKey: access.apiKey || '' };
+  // OpenAI on the default endpoint: fall back to the server-side env key (as chat/T2I do); never forwarded to a client-set host
+  const apiKey = access.apiKey || ((isOpenAI && !access.apiHost) ? env.OPENAI_API_KEY : '') || '';
+
+  return { host, apiKey };
 }
