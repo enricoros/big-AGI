@@ -33,6 +33,13 @@ const jetBrainsMono = JetBrains_Mono({
 });
 export const themeCodeFontFamilyCss = jetBrainsMono.style.fontFamily;
 
+/**
+ * Hotter lime for 'New'/'Beta' badges - intentionally brighter than the 400 brand anchor
+ * so tiny chips pop; pairs with black text and bold weight. Mirrors the website's
+ * RankingsSection chipNew - keep the two in sync.
+ */
+export const brandLimeExtraBadge = '#d4ff3a';
+
 
 export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({
   fontFamily: {

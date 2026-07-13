@@ -2,6 +2,8 @@ import * as React from 'react';
 
 import { Chip, ChipProps } from '@mui/joy';
 
+import { brandLimeExtraBadge } from '~/common/app.theme';
+
 
 /**
  * Simple badge/label component for inline status indicators like "New", "Beta", etc.
