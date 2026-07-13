@@ -133,6 +133,13 @@ export function SpeexConfigureEngines(props: { isMobile: boolean }) {
     useSpeexStore.getState().setActiveEngineId(newValue);
   }, []);
 
+  // TEMP (testing): shift+click the closed Select resets to auto-selection
+  const handleSelectMouseDown = React.useCallback((event: React.MouseEvent) => {
+    if (!event.shiftKey) return;
+    (event as any).defaultMuiPrevented = true; // don't open the listbox
+    useSpeexStore.getState().setActiveEngineId(null);
+  }, []);
+
   const handleOpenAddMenu = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     setAddMenuAnchor(event.currentTarget);
   }, []);
@@ -199,12 +206,26 @@ export function SpeexConfigureEngines(props: { isMobile: boolean }) {
 
       <Box sx={_styles.selectGroup}>
 
+        {/* Delete - only shown for manually-added engines */}
+        {activeEngine && !activeEngine.isAutoLinked && !activeEngine.isAutoDetected && (
+          <TooltipOutlined title={`Remove ${activeEngine.label}`}>
+            <IconButton
+              variant='plain'
+              color='neutral'
+              onClick={handleDeleteActive}
+            >
+              <DeleteOutlineIcon />
+            </IconButton>
+          </TooltipOutlined>
+        )}
+
         <Select
           placeholder='None'
           disabled={!hasEngines}
           value={activeEngineId}
           onChange={handleSelectEngine}
           color={warnInvalidConfig ? 'danger' : 'neutral'}
+          slotProps={{ button: { onMouseDown: handleSelectMouseDown } }}
           renderValue={(option) => {
             if (!option || Array.isArray(option)) return null;
             const engine = engines.find(e => e.engineId === option.value);
@@ -247,29 +268,6 @@ export function SpeexConfigureEngines(props: { isMobile: boolean }) {
           menuOpen={!!addMenuAnchor}
           onClick={handleOpenAddMenu}
         />
-
-        {/* Delete (manual) or Linked indicator (auto-linked/system, disabled) */}
-        {activeEngine && (() => {
-          const canDelete = !activeEngine.isAutoLinked && !activeEngine.isAutoDetected;
-          const tooltip = canDelete
-            ? `Remove ${activeEngine.label}`
-            : activeEngine.isAutoLinked
-              ? 'Linked - manage in Chat > AI Services'
-              : 'System service - not removable';
-          return (
-            <TooltipOutlined title={tooltip}>
-              <IconButton
-                variant='plain'
-                color='neutral'
-                disabled={!canDelete}
-                onClick={canDelete ? handleDeleteActive : undefined}
-                sx={{ ml: 'auto' }}
-              >
-                {canDelete ? <DeleteOutlineIcon /> : <LinkIcon />}
-              </IconButton>
-            </TooltipOutlined>
-          );
-        })()}
 
       </Box>
 

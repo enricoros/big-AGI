@@ -208,6 +208,19 @@ export function ASRxConfigureEngines(props: { isMobile: boolean }) {
 
       <Box sx={_styles.selectGroup}>
 
+        {/* Delete - only shown for manually-added engines */}
+        {activeEngine && !activeEngine.isAutoLinked && !activeEngine.isAutoDetected && (
+          <TooltipOutlined title={`Remove ${activeEngine.label}`}>
+            <IconButton
+              variant='plain'
+              color='neutral'
+              onClick={handleDeleteActive}
+            >
+              <DeleteOutlineIcon />
+            </IconButton>
+          </TooltipOutlined>
+        )}
+
         <Select
           placeholder='None'
           disabled={!hasEngines}
@@ -262,29 +275,6 @@ export function ASRxConfigureEngines(props: { isMobile: boolean }) {
           menuOpen={!!addMenuAnchor}
           onClick={handleOpenAddMenu}
         />
-
-        {/* Delete (manual) or Linked indicator (auto-linked/system, disabled) */}
-        {activeEngine && (() => {
-          const canDelete = !activeEngine.isAutoLinked && !activeEngine.isAutoDetected;
-          const tooltip = canDelete
-            ? `Remove ${activeEngine.label}`
-            : activeEngine.isAutoLinked
-              ? 'Linked - manage in Chat > AI Services'
-              : 'System service - not removable';
-          return (
-            <TooltipOutlined title={tooltip}>
-              <IconButton
-                variant='plain'
-                color='neutral'
-                disabled={!canDelete}
-                onClick={canDelete ? handleDeleteActive : undefined}
-                sx={{ ml: 'auto' }}
-              >
-                {canDelete ? <DeleteOutlineIcon /> : <LinkIcon />}
-              </IconButton>
-            </TooltipOutlined>
-          );
-        })()}
 
       </Box>
 
