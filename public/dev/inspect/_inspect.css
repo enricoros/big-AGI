@@ -123,6 +123,9 @@ details.entry[open] > summary .chev, details.le[open] > summary .chev { transfor
 .tfile { padding: 2px 0; }
 .tfile .trow { display: flex; justify-content: space-between; gap: 10px; }
 .tname { font-family: var(--mono); font-size: 12px; word-break: break-all; }
+/* clickable stored items (OPFS files, IDB stores) - minimal affordance, shared */
+.clk { cursor: pointer; }
+.clk:hover { text-decoration: underline; }
 .tsize { font-family: var(--mono); font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
 
 /* Flat rows (cookies / opfs / caches / env) */

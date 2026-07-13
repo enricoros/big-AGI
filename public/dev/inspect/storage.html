@@ -200,12 +200,14 @@
       var root;
       try { root = await navigator.storage.getDirectory(); } catch (e) { return { available: false, __error: String(e) }; }
       var entries = [];
+      var handles = {}; // full path -> FileSystemFileHandle, for click-to-open / download
       var total = 0;
       async function walk(dir, path, depth) {
         if (depth > 6) return;
         for await (var ent of dir.entries()) {
           var nm = ent[0], handle = ent[1];
           if (handle.kind === 'file') {
+            handles[path + nm] = handle;
             try { var f = await handle.getFile(); entries.push({ path: path + nm, bytes: f.size }); total += f.size; }
             catch (e) { entries.push({ path: path + nm, bytes: 0, error: String(e) }); }
           } else {
@@ -213,9 +215,9 @@
           }
         }
       }
-      try { await walk(root, '', 0); } catch (e2) { return { available: true, entries: entries, total: total, __error: String(e2) }; }
+      try { await walk(root, '', 0); } catch (e2) { return { available: true, entries: entries, total: total, handles: handles, __error: String(e2) }; }
       entries.sort(function (a, b) { return b.bytes - a.bytes; });
-      return { available: true, entries: entries, total: total };
+      return { available: true, entries: entries, total: total, handles: handles };
     }
 
     async function collectCaches() {
@@ -339,8 +341,11 @@
             var idxHtml = idxN ? ' <span class="idx" title="' + esc((s.indexes || []).join(', ')) + '">' + idxN + ' idx</span>' : '';
             var metric = measured ? (s.bytes || 0) : (s.count || 0);
             var barW = pct(metric, maxMetric).toFixed(1);
+            var onHtml = s.error
+              ? '<div class="on">' + esc(s.name) + idxHtml + ' <span class="badge warn">err</span></div>'
+              : '<div class="on"><span class="clk" data-idb-db="' + esc(db.name) + '" data-idb-store="' + esc(s.name) + '">' + esc(s.name) + '</span>' + idxHtml + '</div>';
             body += '<div class="ostore-wrap"><div class="ostore">' +
-              '<div class="on">' + esc(s.name) + idxHtml + (s.error ? ' <span class="badge warn">err</span>' : '') + '</div>' +
+              onHtml +
               '<div class="oc">' + s.count.toLocaleString('en-US') + ' obj</div>' +
               '<div class="oc">' + esc(sizeTxt) + '</div>' +
               '</div><div class="sizebar"><i style="width:' + barW + '%"></i></div></div>';
@@ -349,7 +354,8 @@
           inner += body;
         });
       }
-      var note = measured ? '' : 'Object counts shown; bars show relative object counts (per database and per store). Click <b>Measure sizes</b> for byte estimates (bars then reflect size).';
+      var clickNote = 'Click a store name to open its records as JSON in this tab.';
+      var note = measured ? clickNote : (clickNote + ' Object counts shown; bars show relative object counts (per database and per store). Click <b>Measure sizes</b> for byte estimates (bars then reflect size).');
       var meta = (data && data.dbs) ? (data.dbs.length + ' database' + (data.dbs.length === 1 ? '' : 's')) : '';
       return '<section id="s-idb"><div class="sec-head"><h2>IndexedDB</h2><div class="spacer"></div>' + measureBtn + '<div class="meta" style="margin-left:10px">' + esc(meta) + '</div></div>' +
         inner + (note ? '<div class="sec-note">' + note + '</div>' : '') + '</section>';
@@ -366,7 +372,7 @@
           node.children[p] = node.children[p] || { name: p, children: {}, files: [] };
           node = node.children[p];
         }
-        node.files.push({ name: parts.length ? parts[parts.length - 1] : '(root)', bytes: e.bytes });
+        node.files.push({ name: parts.length ? parts[parts.length - 1] : '(root)', bytes: e.bytes, path: e.path, error: e.error });
       });
       return root;
     }
@@ -377,7 +383,10 @@
         renderTree(c, depth + 1, maxBytes, out);
       });
       node.files.sort(function (a, b) { return b.bytes - a.bytes; }).forEach(function (f) {
-        out.push('<div class="tfile" style="padding-left:' + (depth * 16 + 4) + 'px"><div class="trow"><span class="tname">' + esc(f.name) + '</span><span class="tsize">' + fmtKB(f.bytes) + '</span></div><div class="sizebar"><i style="width:' + pct(f.bytes, maxBytes).toFixed(1) + '%"></i></div></div>');
+        var nameHtml = (f.path && !f.error)
+          ? '<span class="tname clk" data-opfs-path="' + esc(f.path) + '">' + esc(f.name) + '</span>'
+          : '<span class="tname">' + esc(f.name) + (f.error ? ' <span class="badge warn">err</span>' : '') + '</span>';
+        out.push('<div class="tfile" style="padding-left:' + (depth * 16 + 4) + 'px"><div class="trow">' + nameHtml + '<span class="tsize">' + fmtKB(f.bytes) + '</span></div><div class="sizebar"><i style="width:' + pct(f.bytes, maxBytes).toFixed(1) + '%"></i></div></div>');
       });
     }
     function renderOPFS(data) {
@@ -391,8 +400,11 @@
         inner = '<div class="flat">' + out.join('') + '</div>';
       }
       var meta = (data && data.available) ? ((data.entries || []).length + ' files · ' + fmtKB(data.total || 0)) : '';
+      var note = (data && data.available && data.entries && data.entries.length)
+        ? 'Click a filename to open it in this tab.'
+        : '';
       return '<section id="s-opfs"><div class="sec-head"><h2>OPFS (Origin Private File System)</h2><div class="spacer"></div><div class="meta">' + esc(meta) + '</div></div>' +
-        inner + (data && data.__error ? '<div class="sec-note">' + esc(data.__error) + '</div>' : '') + '</section>';
+        inner + (data && data.__error ? '<div class="sec-note">' + esc(data.__error) + '</div>' : (note ? '<div class="sec-note">' + note + '</div>' : '')) + '</section>';
     }
 
     function renderFlatSection(title, secId, data, opts) {
@@ -573,10 +585,65 @@
       return L.join('\n') + '\n';
     }
 
+    // ---------- open stored content in this tab ----------
+
+    // Rich extensions get their real MIME so the browser renders them; everything else is shown as text.
+    var RICH_MIME = {
+      png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp', avif: 'image/avif', ico: 'image/x-icon',
+      mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4', flac: 'audio/flac',
+      mp4: 'video/mp4', webm: 'video/webm', pdf: 'application/pdf',
+    };
+
+    // Navigate the current tab to a blob so the browser displays it (text/images/PDF/audio inline, binary as raw/download).
+    function openBlobInView(blob) {
+      var url = URL.createObjectURL(blob);
+      location.href = url;
+      // if navigation happens this never fires (context unloaded); if the browser downloads instead, we still clean up
+      setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    }
+
+    async function openOPFSFile(path) {
+      var handle = MODEL && MODEL.opfs && MODEL.opfs.handles && MODEL.opfs.handles[path];
+      if (!handle) { Inspect.toast('File handle unavailable - Refresh and retry'); return; }
+      try {
+        var file = await handle.getFile();
+        var ext = (String(path).toLowerCase().match(/\.([a-z0-9]+)$/) || [])[1] || '';
+        // re-type as a lightweight view (no copy): rich types render, everything else shows as text
+        openBlobInView(file.slice(0, file.size, RICH_MIME[ext] || 'text/plain;charset=utf-8'));
+      } catch (e) { Inspect.toast('Cannot read file: ' + String(e && e.message || e)); }
+    }
+
+    async function openIDBStore(dbName, storeName) {
+      Inspect.toast('Reading ' + storeName + '...');
+      try {
+        var db = await openDB(dbName);
+        var records = [];
+        var os = db.transaction(storeName, 'readonly').objectStore(storeName);
+        await new Promise(function (res, rej) {
+          var cur = os.openCursor();
+          cur.onsuccess = function () { var c = cur.result; if (!c) return res(); records.push({ key: c.key, value: c.value }); c.continue(); };
+          cur.onerror = function () { rej(cur.error); };
+        });
+        db.close();
+        // Blobs/buffers can't serialize to JSON - replace them with a short byte-size note
+        var json = JSON.stringify(records, function (k, v) {
+          if (v instanceof Blob) return '[Blob ' + v.size + ' bytes' + (v.type ? ', ' + v.type : '') + ']';
+          if (v instanceof ArrayBuffer) return '[ArrayBuffer ' + v.byteLength + ' bytes]';
+          if (ArrayBuffer.isView(v)) return '[' + (v.constructor && v.constructor.name || 'TypedArray') + ' ' + v.byteLength + ' bytes]';
+          return v;
+        }, 2);
+        openBlobInView(new Blob([json], { type: 'text/plain;charset=utf-8' }));
+      } catch (e) { Inspect.toast('Cannot read store: ' + String(e && e.message || e)); }
+    }
+
     // ---------- actions ----------
 
     function onRootClick(e) {
       var t = e.target;
+      var opfs = (t && t.closest) ? t.closest('[data-opfs-path]') : null;
+      if (opfs) { e.preventDefault(); openOPFSFile(opfs.getAttribute('data-opfs-path')); return; }
+      var idb = (t && t.closest) ? t.closest('[data-idb-store]') : null;
+      if (idb) { e.preventDefault(); openIDBStore(idb.getAttribute('data-idb-db'), idb.getAttribute('data-idb-store')); return; }
       var mb = (t && t.closest) ? t.closest('button[data-action="measure"]') : null;
       if (mb) { e.preventDefault(); Inspect.toast('Measuring...'); refresh(true); return; }
       var del = (t && t.closest) ? t.closest('button.delbtn') : null;
