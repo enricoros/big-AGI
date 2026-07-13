@@ -88,7 +88,7 @@ export function T2IConfigureEngineFull(props: {
         parent-grid cell so the Topic's grid gap only applies between sections. */}
     <div>
       <ExpanderSection
-        title={`${engine.label} options`}
+        title={`${engine.label} image generation`}
         isCollapsible={false}
         initialExpanded={true}
         persistentDivider

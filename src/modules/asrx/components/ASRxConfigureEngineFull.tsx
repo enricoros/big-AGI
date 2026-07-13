@@ -56,7 +56,7 @@ export function ASRxConfigureEngineFull(props: {
         parent-grid cell so the Topic's grid gap only applies between sections. */}
     <div>
       <ExpanderSection
-        title={`${engine.label} options`}
+        title={`${engine.label} transcription`}
         initialExpanded={true}
         persistentDivider
       >

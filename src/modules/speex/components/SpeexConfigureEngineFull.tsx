@@ -112,7 +112,7 @@ export function SpeexConfigureEngineFull(props: {
 
     {/*<Box mt={2} />*/}
     {/*<Divider sx={{ my: 1 }} inset='context' />*/}
-    <Divider sx={{ my: 1 }} inset='context'>{isMobile ? 'Configuration' : 'App Voice Configuration'}</Divider>
+    <Divider sx={{ my: 1 }} inset='context'>{`${engine.label} speech generation`}</Divider>
 
     {/* Engine-Specific pane */}
     {engine.vendorType === 'elevenlabs' ? (
