@@ -1,10 +1,13 @@
 import * as React from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { Box, Button, Divider, FormControl, Typography } from '@mui/joy';
+import { Box, Button, FormControl, Typography } from '@mui/joy';
+import KeyIcon from '@mui/icons-material/Key';
+import LinkIcon from '@mui/icons-material/Link';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
+import { ExpanderSection } from '~/common/components/ExpanderSection';
 import { FormChipControl } from '~/common/components/forms/FormChipControl';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSecretField } from '~/common/components/forms/FormSecretField';
@@ -18,6 +21,7 @@ import { SPEEX_DEFAULTS, SPEEX_PREVIEW_STREAM, SPEEX_PREVIEW_TEXT } from '../spe
 import { SpeexVoiceAutocomplete } from './SpeexVoiceAutocomplete';
 import { SpeexVoiceSelect } from './SpeexVoiceSelect';
 import { speakText } from '../speex.client';
+import { speexAreCredentialsValid } from '../store-module-speex';
 import { speexVendorTypeLabel } from './SpeexEngineSelect';
 
 
@@ -56,8 +60,6 @@ function CredentialsApiKeyInputs({ credentials, onUpdate, vendorType, showHost, 
         inputSx={{ maxWidth: 220 }}
       />
     )}
-
-    {showHost && <Divider inset='context' />}
 
   </>;
 }
@@ -100,39 +102,157 @@ function PreviewButton({ engineId }: { engineId: DSpeexEngineAny['engineId'] }) 
 }
 
 
+// --- styles ---
+
+const _styles = {
+  sectionBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 1.5,
+    pt: 1,
+    pb: 1,
+  },
+  bottomRow: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+  },
+  advancedToggle: {
+    textDecoration: 'underline',
+    cursor: 'pointer',
+    color: 'text.tertiary',
+  },
+} as const;
+
+
 export function SpeexConfigureEngineFull(props: {
   engine: DSpeexEngineAny;
   isMobile: boolean;
-  mode?: 'full' | 'voice-only';
-  bottomStart?: React.ReactNode;
   onUpdate: (updates: Partial<DSpeexEngineAny>) => void;
 }) {
-  const { engine, isMobile, mode = 'full', bottomStart, onUpdate } = props;
+  const { engine, isMobile, onUpdate } = props;
+
+  const isLinked = engine.isAutoLinked;
+  const isSystem = engine.isAutoDetected && !engine.isAutoLinked;
+  const isManual = !isLinked && !isSystem;
+  const isInvalid = !speexAreCredentialsValid(engine.credentials);
+
+  // manual credentials (api-key) - null for linked/system engines
+  const manualCredentials = isManual && engine.credentials.type === 'api-key' ? engine.credentials : null;
+
+  // Advanced toggle: vendors with an optional API host keep it behind Advanced;
+  // LocalAI requires the host and always shows it, Inworld has no host option
+  const hasAdvancedHost = !!manualCredentials && (engine.vendorType === 'elevenlabs' || engine.vendorType === 'openai');
+  const advanced = useToggleableBoolean(!!manualCredentials?.apiHost);
+
+  const handleCredentialsUpdate = React.useCallback((credentials: DCredentialsApiKey) => {
+    onUpdate({ credentials });
+  }, [onUpdate]);
+
+
+  // Service-access title reflects the engine's source + validity
+  const accessTitle =
+    isLinked ? 'Linked to AI Service'
+      : isSystem ? 'System'
+        : isInvalid ? 'Credentials (required)'
+          : 'Credentials';
+
+  // Access decorator (icon)
+  const accessIcon =
+    isLinked ? <LinkIcon fontSize='small' sx={{ opacity: 0.5 }} />
+      : isSystem ? null
+        : isInvalid ? <KeyIcon fontSize='small' sx={{ color: 'danger.solidBg' }} />
+          : <KeyIcon fontSize='small' sx={{ opacity: 0.5 }} />;
+
   return <>
 
-    {/*<Box mt={2} />*/}
-    {/*<Divider sx={{ my: 1 }} inset='context' />*/}
-    <Divider sx={{ my: 1 }} inset='context'>{`${engine.label} speech generation`}</Divider>
+    {/* 1. Voice Parameters - defaults OPEN, user can collapse */}
+    {/* Box wrap collapses the ExpanderSection fragment (header + content) into a single
+        parent-grid cell so the Topic's grid gap only applies between sections. */}
+    <div>
+      <ExpanderSection
+        title={`${engine.label} synthesis`}
+        initialExpanded={true}
+        persistentDivider
+      >
+        <Box sx={_styles.sectionBody}>
 
-    {/* Engine-Specific pane */}
-    {engine.vendorType === 'elevenlabs' ? (
-      <ElevenLabsConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} mode={mode} />
-    ) : engine.vendorType === 'inworld' ? (
-      <InworldConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} mode={mode} />
-    ) : engine.vendorType === 'localai' ? (
-      <LocalAIConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} mode={mode} />
-    ) : engine.vendorType === 'openai' ? (
-      <OpenAIConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} mode={mode} />
-    ) : engine.vendorType === 'webspeech' ? (
-      <WebSpeechConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} mode={mode} />
-    ) : (
-      <Typography level='body-sm' color='warning'>Unknown engine type {(engine as any)?.vendorType}</Typography>
-    )}
+          {engine.vendorType === 'elevenlabs' ? (
+            <ElevenLabsConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
+          ) : engine.vendorType === 'inworld' ? (
+            <InworldConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
+          ) : engine.vendorType === 'localai' ? (
+            <LocalAIConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
+          ) : engine.vendorType === 'openai' ? (
+            <OpenAIConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
+          ) : engine.vendorType === 'webspeech' ? (
+            <WebSpeechConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
+          ) : (
+            <Typography level='body-sm' color='warning'>Unknown engine type {(engine as any)?.vendorType}</Typography>
+          )}
 
-    {/* (Delete | Chip) -- Preview */}
-    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      {bottomStart}
-      <PreviewButton engineId={engine.engineId} />
+          {/* Preview the configured voice */}
+          <Box sx={_styles.bottomRow}>
+            <PreviewButton engineId={engine.engineId} />
+          </Box>
+
+        </Box>
+      </ExpanderSection>
+    </div>
+
+    {/* 2. Service Access - defaults CLOSED, auto-opens when credentials invalid */}
+    <Box>
+      <ExpanderSection
+        title={accessTitle}
+        initialExpanded={isInvalid}
+        expandRequest={isInvalid ? true : undefined}
+        startDecorator={accessIcon}
+        persistentDivider
+      >
+        <Box sx={_styles.sectionBody}>
+
+          {isLinked && (
+            <Typography level='body-xs'>
+              Credentials inherited from your {engine.label} LLM service. Manage in Chat &gt; AI Services.
+            </Typography>
+          )}
+
+          {isSystem && (
+            <Typography level='body-xs'>
+              System-provided voice. No configuration needed.
+            </Typography>
+          )}
+
+          {manualCredentials && (
+            <CredentialsApiKeyInputs
+              credentials={manualCredentials}
+              onUpdate={handleCredentialsUpdate}
+              vendorType={engine.vendorType}
+              showHost={engine.vendorType === 'localai' || (hasAdvancedHost && advanced.on)}
+              hostRequired={engine.vendorType === 'localai'}
+              hostPlaceholder={
+                engine.vendorType === 'localai' ? 'http://localhost:8080'
+                  : engine.vendorType === 'elevenlabs' ? 'https://api.elevenlabs.io'
+                    : 'https://api.openai.com'
+              }
+              keyPlaceholder={engine.vendorType === 'inworld' ? 'Base64-key' : undefined}
+            />
+          )}
+
+          {/* Advanced toggle (manual only, vendors with an optional host) */}
+          {hasAdvancedHost && (
+            <Box sx={_styles.bottomRow}>
+              <Typography
+                level='body-xs'
+                onClick={advanced.toggle}
+                sx={_styles.advancedToggle}
+              >
+                {advanced.on ? 'Hide Advanced' : 'Advanced'}
+              </Typography>
+            </Box>
+          )}
+
+        </Box>
+      </ExpanderSection>
     </Box>
 
   </>;
@@ -141,22 +261,13 @@ export function SpeexConfigureEngineFull(props: {
 
 // Vendor-specific configs
 
-function ElevenLabsConfig({ engine, onUpdate, mode, isMobile }: {
+function ElevenLabsConfig({ engine, onUpdate, isMobile }: {
   engine: DSpeexEngine<'elevenlabs'>,
   onUpdate: (updates: Partial<DSpeexEngine<'elevenlabs'>>) => void;
   isMobile: boolean;
-  mode: 'full' | 'voice-only';
 }) {
 
-  const { credentials, voice } = engine;
-  const showCredentials = mode === 'full' && !engine.isAutoLinked && credentials.type === 'api-key';
-
-  // advanced toggle for custom API host (#624)
-  const advanced = useToggleableBoolean(!!credentials.apiHost);
-
-  const handleCredentialsUpdate = React.useCallback((newCredentials: DCredentialsApiKey) => {
-    onUpdate({ credentials: newCredentials });
-  }, [onUpdate]);
+  const { voice } = engine;
 
   const handleVoiceChange = React.useCallback((ttsVoiceId: DVoiceElevenLabs['ttsVoiceId']) => {
     const { ttsVoiceId: _, ...restVoice } = voice;
@@ -169,26 +280,6 @@ function ElevenLabsConfig({ engine, onUpdate, mode, isMobile }: {
   }, [onUpdate, voice]);
 
   return <>
-
-    {/* Credentials (only for manually added engines in full mode) */}
-    {showCredentials && (
-      <CredentialsApiKeyInputs
-        credentials={credentials}
-        onUpdate={handleCredentialsUpdate}
-        vendorType='elevenlabs'
-        showHost={advanced.on}
-        hostPlaceholder='https://api.elevenlabs.io'
-      />
-    )}
-
-    {/* Advanced toggle */}
-    {showCredentials && (
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: -2 }}>
-        <Typography level='body-xs' onClick={advanced.toggle} sx={{ textDecoration: 'underline', cursor: 'pointer', color: 'text.tertiary' }}>
-          {advanced.on ? 'Hide Advanced' : 'Advanced'}
-        </Typography>
-      </Box>
-    )}
 
     <FormChipControl<Exclude<DVoiceElevenLabs['ttsModel'], undefined>>
       title='Model'
@@ -213,29 +304,17 @@ function ElevenLabsConfig({ engine, onUpdate, mode, isMobile }: {
       />
     </FormControl>
 
-    {/*{showCredentials && (*/}
-    {/*  <FormHelperText>*/}
-    {/*    Voice listing requires API key. Language auto-detected from preferences.*/}
-    {/*  </FormHelperText>*/}
-    {/*)}*/}
-
   </>;
 }
 
 
-function InworldConfig({ engine, onUpdate, mode, isMobile }: {
+function InworldConfig({ engine, onUpdate, isMobile }: {
   engine: DSpeexEngine<'inworld'>,
   onUpdate: (updates: Partial<DSpeexEngine<'inworld'>>) => void;
   isMobile: boolean;
-  mode: 'full' | 'voice-only';
 }) {
 
-  const { credentials, voice } = engine;
-  const showCredentials = mode === 'full' && !engine.isAutoLinked && credentials.type === 'api-key';
-
-  const handleCredentialsUpdate = React.useCallback((newCredentials: DCredentialsApiKey) => {
-    onUpdate({ credentials: newCredentials });
-  }, [onUpdate]);
+  const { voice } = engine;
 
   const handleVoiceChange = React.useCallback((ttsVoiceId: DVoiceInworld['ttsVoiceId']) => {
     const { ttsVoiceId: _, ...restVoice } = voice;
@@ -252,16 +331,6 @@ function InworldConfig({ engine, onUpdate, mode, isMobile }: {
   }, [onUpdate, voice]);
 
   return <>
-
-    {/* Credentials (only for manually added engines in full mode) */}
-    {showCredentials && (
-      <CredentialsApiKeyInputs
-        credentials={credentials}
-        onUpdate={handleCredentialsUpdate}
-        vendorType='inworld'
-        keyPlaceholder='Base64-key'
-      />
-    )}
 
     <FormChipControl<Exclude<DVoiceInworld['ttsModel'], undefined>>
       title='Model'
@@ -300,18 +369,12 @@ function InworldConfig({ engine, onUpdate, mode, isMobile }: {
 }
 
 
-function LocalAIConfig({ engine, onUpdate, mode, isMobile }: {
+function LocalAIConfig({ engine, onUpdate, isMobile }: {
   engine: DSpeexEngine<'localai'>,
   onUpdate: (updates: Partial<DSpeexEngine<'localai'>>) => void;
   isMobile: boolean;
-  mode: 'full' | 'voice-only';
 }) {
-  const { credentials, voice } = engine;
-  const showCredentials = mode === 'full' && !engine.isAutoLinked && credentials.type === 'api-key';
-
-  const handleCredentialsUpdate = React.useCallback((newCredentials: DCredentialsApiKey) => {
-    onUpdate({ credentials: newCredentials });
-  }, [onUpdate]);
+  const { voice } = engine;
 
   const handleModelChange = React.useCallback((ttsModel: DVoiceLocalAI['ttsModel']) => {
     const { ttsModel: _, ...restVoice } = voice;
@@ -324,18 +387,6 @@ function LocalAIConfig({ engine, onUpdate, mode, isMobile }: {
   }, [onUpdate, voice]);
 
   return <>
-
-    {/* Credentials (only for manually added engines in full mode) */}
-    {showCredentials && (
-      <CredentialsApiKeyInputs
-        credentials={credentials}
-        onUpdate={handleCredentialsUpdate}
-        vendorType='localai'
-        showHost
-        hostRequired
-        hostPlaceholder='http://localhost:8080'
-      />
-    )}
 
     {/* Model: autocomplete with suggestions + free-form input */}
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
@@ -362,19 +413,13 @@ function LocalAIConfig({ engine, onUpdate, mode, isMobile }: {
 }
 
 
-function OpenAIConfig({ engine, onUpdate, isMobile, mode }: {
+function OpenAIConfig({ engine, onUpdate, isMobile }: {
   engine: DSpeexEngine<'openai'>,
   onUpdate: (updates: Partial<DSpeexEngineAny>) => void;
   isMobile: boolean;
-  mode: 'full' | 'voice-only';
 }) {
 
-  const { credentials, voice } = engine;
-  const showCredentials = mode === 'full' && !engine.isAutoLinked && credentials.type === 'api-key';
-
-  const handleCredentialsUpdate = React.useCallback((newCredentials: DCredentialsApiKey) => {
-    onUpdate({ credentials: newCredentials });
-  }, [onUpdate]);
+  const { voice } = engine;
 
   const handleVoiceChange = React.useCallback((ttsVoiceId: DVoiceOpenAI['ttsVoiceId']) => {
     const { ttsVoiceId: _, ...restVoice } = voice;
@@ -391,17 +436,6 @@ function OpenAIConfig({ engine, onUpdate, isMobile, mode }: {
   }, [onUpdate, voice]);
 
   return <>
-
-    {/* Credentials (only for manually added engines in full mode) */}
-    {showCredentials && (
-      <CredentialsApiKeyInputs
-        credentials={credentials}
-        onUpdate={handleCredentialsUpdate}
-        vendorType='openai'
-        showHost
-        hostPlaceholder='https://api.openai.com (optional)'
-      />
-    )}
 
     <FormChipControl<DVoiceOpenAI['ttsModel']>
       title='Model'
@@ -462,7 +496,6 @@ function WebSpeechConfig({ engine, onUpdate, isMobile }: {
   engine: DSpeexEngine<'webspeech'>
   onUpdate: (updates: Partial<DSpeexEngine<'webspeech'>>) => void;
   isMobile: boolean;
-  mode: 'full' | 'voice-only';
 }) {
 
   const { voice } = engine;
