@@ -11,6 +11,7 @@
 import * as React from 'react';
 
 import { Alert, Box, IconButton, ListItemDecorator, Option, Select } from '@mui/joy';
+// import AutoModeIcon from '@mui/icons-material/AutoMode';
 import KeyIcon from '@mui/icons-material/Key';
 import LinkIcon from '@mui/icons-material/Link';
 
@@ -74,6 +75,7 @@ export function T2IConfigureEngines(props: { isMobile: boolean }) {
 
   // external state
   const { mayWork, providers, activeProviderId, setActiveProviderId } = useCapabilityTextToImage();
+  // const explicitEngineId = useT2IStore(state => state.activeEngineId); // raw user pin, null = auto
 
 
   // external state - the engine instance behind the active provider (providerId = engineId)
@@ -83,6 +85,7 @@ export function T2IConfigureEngines(props: { isMobile: boolean }) {
   // derived state
   const hasProviders = providers.length > 0;
   const activeProvider = providers.find(p => p.providerId === activeProviderId) ?? null;
+  // const isPinned = !!explicitEngineId && providers.some(p => p.providerId === explicitEngineId);
 
 
   // handlers
@@ -91,6 +94,10 @@ export function T2IConfigureEngines(props: { isMobile: boolean }) {
     if (newValue)
       setActiveProviderId(newValue);
   }, [setActiveProviderId]);
+
+  // const handleSetAuto = React.useCallback(() => {
+  //   setActiveProviderId(null);
+  // }, [setActiveProviderId]);
 
   const handleEngineUpdate = React.useCallback((updates: Partial<DT2IEngineAny>) => {
     if (activeProviderId)
@@ -133,6 +140,12 @@ export function T2IConfigureEngines(props: { isMobile: boolean }) {
           disabled={!mayWork}
           value={activeProviderId}
           onChange={handleSelectProvider}
+          // endDecorator={!mayWork ? undefined :
+          //   <TooltipOutlined title={isPinned ? 'Switch to Auto' : 'Currently in Auto'}>
+          //     <IconButton color={isPinned ? 'primary' : undefined} variant={isPinned ? 'solid' : undefined} onClick={handleSetAuto}>
+          //       <AutoModeIcon />
+          //     </IconButton>
+          //   </TooltipOutlined>}
           renderValue={(option) => {
             if (!option || Array.isArray(option)) return null;
             const provider = providers.find(p => p.providerId === option.value);

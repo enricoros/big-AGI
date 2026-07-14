@@ -10,6 +10,7 @@
 import * as React from 'react';
 
 import { Box, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
+// import AutoModeIcon from '@mui/icons-material/AutoMode';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import KeyIcon from '@mui/icons-material/Key';
 import LinkIcon from '@mui/icons-material/Link';
@@ -118,6 +119,7 @@ export function SpeexConfigureEngines(props: { isMobile: boolean }) {
 
   // external state - module
   const engines = useSpeexEngines();
+  // const explicitEngineId = useSpeexStore(state => state.activeEngineId); // raw user pin, null = auto
   const activeEngine = useSpeexGlobalEngine(); // active selection, or priority-ranked fallback
   const activeEngineId = activeEngine?.engineId ?? null;
 
@@ -125,6 +127,7 @@ export function SpeexConfigureEngines(props: { isMobile: boolean }) {
   // derived state
   const hasEngines = engines.length > 0;
   const warnInvalidConfig = !!activeEngine && !speexAreCredentialsValid(activeEngine.credentials);
+  // const isPinned = !!explicitEngineId && engines.some(e => e.engineId === explicitEngineId);
 
 
   // handlers
@@ -133,12 +136,9 @@ export function SpeexConfigureEngines(props: { isMobile: boolean }) {
     useSpeexStore.getState().setActiveEngineId(newValue);
   }, []);
 
-  // TEMP (testing): shift+click the closed Select resets to auto-selection
-  const handleSelectMouseDown = React.useCallback((event: React.MouseEvent) => {
-    if (!event.shiftKey) return;
-    (event as any).defaultMuiPrevented = true; // don't open the listbox
-    useSpeexStore.getState().setActiveEngineId(null);
-  }, []);
+  // const handleSetAuto = React.useCallback(() => {
+  //   useSpeexStore.getState().setActiveEngineId(null);
+  // }, []);
 
   const handleOpenAddMenu = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     setAddMenuAnchor(event.currentTarget);
@@ -225,7 +225,12 @@ export function SpeexConfigureEngines(props: { isMobile: boolean }) {
           value={activeEngineId}
           onChange={handleSelectEngine}
           color={warnInvalidConfig ? 'danger' : 'neutral'}
-          slotProps={{ button: { onMouseDown: handleSelectMouseDown } }}
+          // endDecorator={!hasEngines ? undefined :
+          //   <TooltipOutlined title={isPinned ? 'Switch to Auto' : 'Currently in Auto'}>
+          //     <IconButton color={isPinned ? 'primary' : undefined} variant={isPinned ? 'solid' : undefined} onClick={handleSetAuto}>
+          //       <AutoModeIcon />
+          //     </IconButton>
+          //   </TooltipOutlined>}
           renderValue={(option) => {
             if (!option || Array.isArray(option)) return null;
             const engine = engines.find(e => e.engineId === option.value);
