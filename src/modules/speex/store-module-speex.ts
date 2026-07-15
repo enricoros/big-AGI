@@ -9,7 +9,6 @@ import { agiUuidV4 } from '~/common/util/idUtils';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 import type { DSpeexCredentialsAny, DSpeexEngine, DSpeexEngineAny, DSpeexVendorType, SpeexEngineId } from './speex.types';
-import { SPEEX_DEFAULTS } from './speex.config';
 import { speexFindByVendorPriorityAsc, speexFindVendor, speexFindVendorForLLMVendor } from './speex.vendors-registry';
 import { webspeechHBestVoiceDeferred, webspeechIsSupported } from './protocols/webspeech/webspeech.client';
 
@@ -25,7 +24,6 @@ interface SpeexStoreState {
 
   // to avoid repeated migrations
   hasInitializedLlms: boolean;
-  hasMigratedElevenLabs: boolean;
 
 }
 
@@ -45,7 +43,6 @@ interface SpeexStoreActions {
   // business logic: auto-detection or migration
   syncWebSpeechEngine: () => boolean;
   syncEnginesFromLLMServices: (llmsSources: ReturnType<typeof useModelsStore.getState>['sources']) => boolean;
-  syncMigrateLegacyElevenLabsStore: () => boolean;
 
 }
 
@@ -60,7 +57,6 @@ export const useSpeexStore = create<SpeexStore>()(persist(
     activeEngineId: null,
     ttsCharLimit: 4096, // default: ~3 min of speech, null = unlimited
     hasInitializedLlms: false,
-    hasMigratedElevenLabs: false,
 
 
     // Engine CRUD
@@ -241,63 +237,6 @@ export const useSpeexStore = create<SpeexStore>()(persist(
       return hasChanges;
     },
 
-    syncMigrateLegacyElevenLabsStore: () => {
-      const { hasMigratedElevenLabs, engines, createEngine } = get();
-      if (hasMigratedElevenLabs || typeof localStorage === 'undefined') return false;
-
-      let hasChanges = false;
-      try {
-        const LEGACY_STORAGE_KEY = 'app-module-elevenlabs';
-        const legacyStoreRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
-
-        // with legacy store
-        if (legacyStoreRaw) {
-          const legacyState = JSON.parse(legacyStoreRaw)?.state;
-          const apiKey = legacyState?.elevenLabsApiKey;
-          const voiceId = legacyState?.elevenLabsVoiceId;
-
-          // with legacy key
-          if (apiKey && typeof apiKey === 'string' && apiKey.trim().length > 0) {
-            // check for existing engine with same API key
-            let existingEngine: DSpeexEngineAny | undefined;
-            for (const engineId in engines) {
-              const e = engines[engineId];
-              if (e.vendorType === 'elevenlabs' && e.credentials?.type === 'api-key' && e.credentials.apiKey === apiKey) {
-                existingEngine = e;
-                break;
-              }
-            }
-
-            // with no existing engine
-            if (!existingEngine) {
-              hasChanges = true;
-              createEngine('elevenlabs', {
-                label: 'ElevenLabs', // (migrated) // no need as the user can't change..
-                isAutoDetected: false,  // both false to make this delete-able
-                isAutoLinked: false,    // both false
-                credentials: { type: 'api-key', apiKey: apiKey.trim() },
-                voice: {
-                  dialect: 'elevenlabs',
-                  ttsModel: SPEEX_DEFAULTS.ELEVENLABS_MODEL,
-                  ttsVoiceId: (typeof voiceId === 'string' && voiceId.trim()) ? voiceId.trim() : SPEEX_DEFAULTS.ELEVENLABS_VOICE,
-                },
-              });
-              console.log('[DEV] Speex: Migrated legacy ElevenLabs configuration');
-            }
-          }
-
-          // optionally remove the old store data
-          // localStorage.removeItem(LEGACY_ELEVENLABS_STORAGE_KEY);
-        }
-      } catch (error) {
-        console.warn('[DEV] Speex: Failed to migrate legacy ElevenLabs store:', error);
-      }
-
-      // in any case mark as migrated
-      set({ hasMigratedElevenLabs: true });
-      return hasChanges;
-    },
-
   }), {
     name: 'app-module-speex',
     version: 1,
@@ -311,9 +250,6 @@ export const useSpeexStore = create<SpeexStore>()(persist(
 
       if (!store.hasInitializedLlms)
         store.syncEnginesFromLLMServices(useModelsStore.getState().sources);
-
-      if (!store.hasMigratedElevenLabs)
-        store.syncMigrateLegacyElevenLabsStore();
 
       // perform sync on LLM services changes
       useModelsStore.subscribe((state, prevState) => {
