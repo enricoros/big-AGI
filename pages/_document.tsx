@@ -20,6 +20,9 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         <meta name='description' content={Brand.Meta.Description} />
         <meta name='theme-color' content={Brand.Meta.ThemeColor} />
 
+        {/* Canonical this deployment stays live for existing users */}
+        <link rel='canonical' href='https://big-agi.com/' />
+
         {/* Favicons & PWA */}
         <link rel='shortcut icon' href='/favicon.ico' />
         <link rel='icon' type='image/png' sizes='32x32' href='/icons/favicon-32x32.png' />
