@@ -16,7 +16,7 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 
 import { NewsItems } from './news.data';
 import { beamNewsCallout } from './beam.data';
-import { bigAgi2NewsCallout, bigAgi2Url } from './bigAgi2.data';
+import { bigAgi2Url, EolNewsCallout } from './bigAgi2.data';
 
 import { downloadAllConversationsJson } from '~/modules/trade/trade.client';
 
@@ -90,8 +90,8 @@ export function AppNews() {
         </Typography>
 
         <Typography level='title-sm' sx={{ mb: 2, textAlign: 'center', lineHeight: 'lg' }} >
-          {capitalizeFirstLetter(Brand.Title.Base)} has been updated to version {currentVer}.<br/>
-          <b>And a whole-new 2.0 is waiting!</b>
+          {capitalizeFirstLetter(Brand.Title.Base)} v1 has reached end of life.<br/>
+          <b>Move your chats to the new Big-AGI before it&apos;s gone.</b>
         </Typography>
 
         <Box sx={{ mb: 5, display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -132,10 +132,10 @@ export function AppNews() {
             const addPadding = false; //!firstCard; // || showExpander;
             return <React.Fragment key={idx}>
 
-              {/* Inject the Big-AGI 2.0 item here*/}
+              {/* Inject the V1 End-of-Life item here*/}
               {idx === 0 && (
                 <Box sx={{ mb: 3 }}>
-                  {bigAgi2NewsCallout}
+                  <EolNewsCallout />
                 </Box>
               )}
 

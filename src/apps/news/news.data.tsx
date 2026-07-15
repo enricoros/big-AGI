@@ -17,7 +17,10 @@ import { Link } from '~/common/components/Link';
 import { clientUtmSource } from '~/common/util/pwaUtils';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
+import { EOL_HOSTED_OFFLINE_TEXT } from '~/common/eol/eol.config';
+
 import { beamBlogUrl } from './beam.data';
+import { bigAgi2Url } from './bigAgi2.data';
 
 
 // Cover Images
@@ -52,16 +55,14 @@ interface NewsItem {
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   {
-    versionCode: '2.0',
-    versionName: 'Big-AGI',
-    versionDate: new Date('2025-10-06T00:00:00Z'),
-    // text: <>Big-AGI 2.0 is now available at <B href='https://app.big-agi.com'>app.big-agi.com</B></>,
+    versionCode: '1.16',
+    versionName: 'End of Life',
+    versionDate: new Date('2026-07-15T00:00:00Z'),
     items: [
-      { text: <>Big-AGI 2.0 is ready with top-notch AI models support and more productive and faster than ever, including:</> },
-      { text: <><B href='https://app.big-agi.com' wow>Beam 2</B>: multi-modal, program-based, follow-ups, save presets</>, icon: ChatBeamIcon },
-      { text: <><B wow>Personas</B>: craft your perfect AI assistants with data support</> },
-      { text: <><B wow>Cloud Sync</B>: never lose your data</> },
-      { text: <>Built for the future, madly optimized</> },
+      { text: <>Big-AGI v1 has reached <B>End of Life</B>: no further updates, security fixes, or new models</> },
+      { text: <>The hosted v1 service goes <B>offline on {EOL_HOSTED_OFFLINE_TEXT}</B></> },
+      { text: <>Move your chats: <B>Export</B> from the chats drawer, then <B>Import</B> in the new Big-AGI</> },
+      { text: <>The new <B href={bigAgi2Url} wow>Big-AGI</B>: latest models, Beam 2, Personas, and Cloud Backup</>, icon: ChatBeamIcon },
     ],
   },
   /*{
@@ -342,8 +343,10 @@ function B(props: {
   );
   if (!href)
     return boldText;
+  // append UTM details if missing
+  const hrefWithUtm = href.includes('utm_source=') ? href : href + clientUtmSource();
   return (
-    <ExternalLink href={href + clientUtmSource()} highlight={props.wow} icon={props.issue ? 'issue' : undefined}>
+    <ExternalLink href={hrefWithUtm} highlight={props.wow} icon={props.issue ? 'issue' : undefined}>
       {boldText}
     </ExternalLink>
   );

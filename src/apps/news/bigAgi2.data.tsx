@@ -1,52 +1,87 @@
 import * as React from 'react';
 
 import { Button, Card, CardContent, Grid, Typography } from '@mui/joy';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LaunchIcon from '@mui/icons-material/Launch';
-import RocketLaunchRounded from '@mui/icons-material/RocketLaunchRounded';
 import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import { Link } from '~/common/components/Link';
-import { clientUtmSource } from '~/common/util/pwaUtils';
-
-
-export const bigAgi2Url = 'https://app.big-agi.com' + clientUtmSource('upgrade');
-const bigAgiSupport = 'https://form.typeform.com/to/nLf8gFmx?utm_source=big-agi-1&utm_medium=app&utm_campaign=support';
+import { EOL_HOSTED_OFFLINE_TEXT, eolIsHostedInstance, eolSupportUrl, eolTrackEvent, eolUpgradeUrl } from '~/common/eol/eol.config';
+import { EolMigrationModal } from '~/common/eol/EolMigrationModal';
 
 
-export const bigAgi2NewsCallout =
-  <Card variant='solid' color='primary' invertedColors>
-    <CardContent sx={{ gap: 2 }}>
+// all v2-bound CTAs carry `utm_campaign=eol-v1`, which the new app keys on
+export const bigAgi2Url = eolUpgradeUrl;
 
-      <Typography level='title-lg'>
-        Big-AGI 2.0 ✨ - Now Live
-      </Typography>
 
-      <Typography level='title-sm' sx={{ lineHeight: 'xl' }}>
-        Experience the <b>next generation of Big-AGI</b> with <b>Beam 2</b>, <b>Personas</b>, and <b>Cloud Sync</b> to never lose data.
-      </Typography>
+/**
+ * The V1 End-of-Life callout, shown at the top of the News page.
+ * Announces the shutdown and opens the migration wizard.
+ */
+export function EolNewsCallout() {
 
-      <Grid container spacing={1}>
-        <Grid xs={12} sm={7}>
-          <Button
-            size='lg'
-            fullWidth variant='solid' color='neutral' endDecorator={<RocketLaunchRounded />}
-            component={Link} href={bigAgi2Url} noLinkStyle target='_blank'
-          >
-            Big-AGI 2.0
-          </Button>
+  // state
+  const [wizardOpen, setWizardOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false); // client-only copy (hostname-dependent)
+
+  React.useEffect(() => setMounted(true), []);
+
+  const isHosted = mounted && eolIsHostedInstance();
+
+  const handleOpenWizard = React.useCallback(() => {
+    eolTrackEvent('eol_wizard_open', 'news');
+    setWizardOpen(true);
+  }, []);
+
+  return <>
+
+    <Card variant='solid' color='warning' invertedColors>
+      <CardContent sx={{ gap: 2 }}>
+
+        <Typography level='title-lg' startDecorator={<WarningRoundedIcon />}>
+          Big-AGI v1 - End of Life
+        </Typography>
+
+        <Typography level='title-sm' sx={{ lineHeight: 'xl' }}>
+          {isHosted ? <>
+            This service goes <b>offline on {EOL_HOSTED_OFFLINE_TEXT}</b>.{' '}
+          </> : <>
+            Big-AGI v1 no longer receives updates or new models.{' '}
+          </>}
+          Your chats live only in this browser: <b>export them now</b> and continue on the new{' '}
+          <b>Big-AGI</b> - latest models, Beam 2, Personas, and Cloud Backup.
+        </Typography>
+
+        <Grid container spacing={1}>
+          <Grid xs={12} sm={7}>
+            <Button
+              size='lg'
+              fullWidth variant='solid' color='neutral' endDecorator={<LaunchIcon />}
+              onClick={handleOpenWizard}
+            >
+              Migrate now
+            </Button>
+          </Grid>
+
+          <Grid xs={12} sm={5} sx={{ display: 'flex', flexAlign: 'center', justifyContent: 'center' }}>
+            <Button
+              fullWidth variant='soft' endDecorator={<SupportAgentIcon />}
+              component='a' href={eolSupportUrl} target='_blank'
+            >
+              Support
+            </Button>
+          </Grid>
+
         </Grid>
+      </CardContent>
+    </Card>
 
-        <Grid xs={12} sm={5} sx={{ display: 'flex', flexAlign: 'center', justifyContent: 'center' }}>
-          <Button
-            fullWidth variant='soft' color='primary' endDecorator={<SupportAgentIcon />}
-            component={Link} href={bigAgiSupport} noLinkStyle target='_blank'
-            // disabled
-          >
-            Support
-          </Button>
-        </Grid>
+    {/* Migration Wizard */}
+    {wizardOpen && (
+      <EolMigrationModal
+        origin='news'
+        onClose={() => setWizardOpen(false)}
+      />
+    )}
 
-      </Grid>
-    </CardContent>
-  </Card>;
+  </>;
+}

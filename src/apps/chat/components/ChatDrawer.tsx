@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Box, Button, Card, CardContent, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -10,7 +10,6 @@ import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import FolderIcon from '@mui/icons-material/Folder';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import RocketLaunchRoundedIcon from '@mui/icons-material/RocketLaunchRounded';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 
 import type { DConversationId } from '~/common/state/store-chats';
@@ -19,15 +18,14 @@ import { DFolder, useFolderStore } from '~/common/state/store-folders';
 import { DebounceInputMemo } from '~/common/components/DebounceInput';
 import { FoldersToggleOff } from '~/common/components/icons/FoldersToggleOff';
 import { FoldersToggleOn } from '~/common/components/icons/FoldersToggleOn';
-import { Link } from '~/common/components/Link';
 import { PageDrawerHeader } from '~/common/layout/optima/components/PageDrawerHeader';
 import { PageDrawerList } from '~/common/layout/optima/components/PageDrawerList';
-import { ROUTE_APP_NEWS } from '~/common/app.routes';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useOptimaDrawers } from '~/common/layout/optima/useOptimaDrawers';
 import { useUIPreferencesStore } from '~/common/state/store-ui';
 
+import { ChatDrawerEolNotice } from './ChatDrawerEolNotice';
 import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
 import { ChatFolderList } from './folders/ChatFolderList';
 import { ChatNavGrouping, ChatSearchSorting, isDrawerSearching, useChatDrawerRenderItems } from './useChatDrawerRenderItems';
@@ -81,13 +79,6 @@ function ChatDrawer(props: {
   const [searchSorting, setSearchSorting] = React.useState<ChatSearchSorting>('frequency');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [folderChangeRequest, setFolderChangeRequest] = React.useState<FolderChangeRequest | null>(null);
-  const [bigAgi2CalloutDismissed, setBigAgi2CalloutDismissed] = React.useState(() => {
-    try {
-      return localStorage.getItem('dismissedBA2ChatDrawerNotice') === 'true';
-    } catch {
-      return false;
-    }
-  });
 
   // external state
   const { closeDrawer, closeDrawerOnMobile } = useOptimaDrawers();
@@ -134,16 +125,6 @@ function ChatDrawer(props: {
   const handleConversationsExport = React.useCallback(() => {
     props.activeConversationId && onConversationsExportDialog(props.activeConversationId, true);
   }, [onConversationsExportDialog, props.activeConversationId]);
-
-  const handleDismissBigAgi2Callout = React.useCallback(() => {
-    setBigAgi2CalloutDismissed(true);
-    try {
-      localStorage.setItem('dismissedBA2ChatDrawerNotice', 'true');
-    } catch {
-      // ignore
-    }
-  }, []);
-
 
   // Folder change request
 
@@ -359,44 +340,8 @@ function ChatDrawer(props: {
         )}
       </Box>
 
-      {/* Big-AGI 2.0 Callout */}
-      {!bigAgi2CalloutDismissed && (
-        <Box sx={{ p: 2 }}>
-          <Card variant='solid' color='primary' invertedColors>
-            <CardContent sx={{ gap: 1, position: 'relative' }}>
-              <IconButton
-                size='sm'
-                onClick={handleDismissBigAgi2Callout}
-                sx={{
-                  position: 'absolute',
-                  top: -4,
-                  right: -8,
-                }}
-              >
-                <ClearIcon />
-              </IconButton>
-              <Typography level='title-sm'>
-                Big-AGI 2.0 ✨ is Live!
-              </Typography>
-              <Typography level='body-xs' sx={{ mb: 1 }}>
-                Experience Beam 2, Personas, and Cloud Sync.
-              </Typography>
-              <Button
-                fullWidth
-                size='sm'
-                variant='solid'
-                color='neutral'
-                endDecorator={<RocketLaunchRoundedIcon />}
-                component={Link}
-                href={ROUTE_APP_NEWS}
-                noLinkStyle
-              >
-                Learn More
-              </Button>
-            </CardContent>
-          </Card>
-        </Box>
-      )}
+      {/* V1 End-of-Life Notice + Migration Wizard */}
+      <ChatDrawerEolNotice />
 
       <ListDivider sx={{ my: 0 }} />
 
