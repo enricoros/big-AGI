@@ -3,7 +3,7 @@
 > **⚠️ IMPORTANT: `v1` Branch - End of Life**
 >
 > This is the **v1** (formerly **v1-stable**) branch, which reached end-of-life in October 2025.
-> - **The hosted v1 service goes offline on August 31, 2026** - export your chats before then (Chats drawer > Export)
+> - **The hosted v1 service goes offline on August 15, 2026**, then automatically redirects to the new Big-AGI - export your chats before then (Chats drawer > Export)
 > - **For the latest Big-AGI**, see the [**main** branch](https://github.com/enricoros/big-AGI/tree/main) and [**big-agi.com**](https://big-agi.com)
 > - **v1.16.11 is the final legacy release** - No further updates will be provided
 > - Docker users: `:stable`, `:development` and `:latest` point to the `main` branch

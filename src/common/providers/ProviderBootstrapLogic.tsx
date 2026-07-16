@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { markNewsAsSeen, shallRedirectToNews } from '../../apps/news/news.version';
 
 import { autoConfInitiateConfiguration } from '~/common/logic/autoconf';
+import { eolShouldRedirectNow, eolUpgradeUrl } from '~/common/eol/eol.config';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
 
@@ -15,6 +16,13 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
 
   // wire-up the NextJS router to a loading bar to be displayed while routes change
   useNextLoadProgress(route, events);
+
+
+  // [EOL] hosted v1 past its offline date: hand this instance over to the new Big-AGI
+  React.useEffect(() => {
+    if (eolShouldRedirectNow())
+      window.location.replace(eolUpgradeUrl);
+  }, []);
 
 
   // [bootup] logic

@@ -106,7 +106,8 @@ export function EolMigrationModal(props: {
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         {isHosted ? (
           <Typography level='body-md'>
-            This service will go <b>offline on {EOL_HOSTED_OFFLINE_TEXT}</b>{daysLeft > 0 && <Chip size='sm' color='warning' variant='soft' sx={{ ml: 1 }}>{daysLeft} days left</Chip>}.
+            This service will go <b>offline on {EOL_HOSTED_OFFLINE_TEXT}</b>{daysLeft > 0 && <Chip size='sm' color='warning' variant='soft' sx={{ ml: 1 }}>{daysLeft} days left</Chip>},
+            and this site will then automatically redirect to the new Big-AGI.
             Big-AGI continues at <Link href={eolUpgradeUrl} target='_blank'>big-agi.com</Link> with
             the latest models, Beam 2, Personas, and Cloud Backup.
           </Typography>

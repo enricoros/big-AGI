@@ -17,6 +17,7 @@ import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 import { ConfirmationModal } from '~/common/components/ConfirmationModal';
 import { ConversationsManager } from '~/common/chats/ConversationsManager';
+import { EolComposerGate } from '~/common/eol/EolComposerGate';
 import { GlobalShortcutItem, ShortcutKeyName, useGlobalShortcuts } from '~/common/components/useGlobalShortcut';
 import { PanelResizeInset } from '~/common/components/panes/GoodPanelResizeHandler';
 import { PreferencesTab, useOptimaLayout, usePluggableOptimaLayout } from '~/common/layout/optima/useOptimaLayout';
@@ -579,19 +580,21 @@ export function AppChat() {
 
     </PanelGroup>
 
-    <Composer
-      isMobile={isMobile}
-      chatLLM={chatLLM}
-      composerTextAreaRef={composerTextAreaRef}
-      conversationId={focusedPaneConversationId}
-      capabilityHasT2I={capabilityHasT2I}
-      isMulticast={!isMultiConversationId ? null : isComposerMulticast}
-      isDeveloperMode={isFocusedChatDeveloper}
-      onAction={handleComposerAction}
-      onTextImagine={handleTextImagine}
-      setIsMulticast={setIsComposerMulticast}
-      sx={beamOpenStoreInFocusedPane ? composerClosedSx : composerOpenSx}
-    />
+    <EolComposerGate>
+      <Composer
+        isMobile={isMobile}
+        chatLLM={chatLLM}
+        composerTextAreaRef={composerTextAreaRef}
+        conversationId={focusedPaneConversationId}
+        capabilityHasT2I={capabilityHasT2I}
+        isMulticast={!isMultiConversationId ? null : isComposerMulticast}
+        isDeveloperMode={isFocusedChatDeveloper}
+        onAction={handleComposerAction}
+        onTextImagine={handleTextImagine}
+        setIsMulticast={setIsComposerMulticast}
+        sx={beamOpenStoreInFocusedPane ? composerClosedSx : composerOpenSx}
+      />
+    </EolComposerGate>
 
     {/* Diagrams */}
     {!!diagramConfig && <DiagramsModal config={diagramConfig} onClose={() => setDiagramConfig(null)} />}

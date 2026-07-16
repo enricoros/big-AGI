@@ -60,7 +60,7 @@ export const NewsItems: NewsItem[] = [
     versionDate: new Date('2026-07-15T00:00:00Z'),
     items: [
       { text: <>Big-AGI v1 has reached <B>End of Life</B>: no further updates, security fixes, or new models</> },
-      { text: <>The hosted v1 service goes <B>offline on {EOL_HOSTED_OFFLINE_TEXT}</B></> },
+      { text: <>The hosted v1 service goes <B>offline on {EOL_HOSTED_OFFLINE_TEXT}</B>, then redirects to the new Big-AGI</> },
       { text: <>Move your chats: <B>Export</B> from the chats drawer, then <B>Import</B> in the new Big-AGI</> },
       { text: <>The new <B href={bigAgi2Url} wow>Big-AGI</B>: latest models, Beam 2, Personas, and Cloud Backup</>, icon: ChatBeamIcon },
     ],

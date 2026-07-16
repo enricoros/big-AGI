@@ -43,7 +43,8 @@ export function EolNewsCallout() {
 
         <Typography level='title-sm' sx={{ lineHeight: 'xl' }}>
           {isHosted ? <>
-            This service goes <b>offline on {EOL_HOSTED_OFFLINE_TEXT}</b>.{' '}
+            This service goes <b>offline on {EOL_HOSTED_OFFLINE_TEXT}</b>, then this site
+            automatically redirects to the new Big-AGI.{' '}
           </> : <>
             Big-AGI v1 no longer receives updates or new models.{' '}
           </>}
