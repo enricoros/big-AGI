@@ -380,7 +380,7 @@ export namespace AudioGenerator {
     if (!ctx) return;
 
     const now = ctx.currentTime;
-    const volume = options.volume ?? 0.2;
+    const volume = options.volume ?? 0.5;
     const noteDuration = 0.12;
 
     // const frequencies = [523.25, 783.99]; // C5, G5
@@ -406,13 +406,39 @@ export namespace AudioGenerator {
     });
   }
 
+  /**
+   * Apollo 'Quindar'-style radio cues: NASA's 2525 Hz intro (mic keyed) / 2475 Hz outro
+   * (mic released) tones, with a slight frequency sag for the vintage transceiver flavor.
+   * - 'key': transmission open (e.g. recording started)
+   * - 'minute': still-transmitting minute marker (shorter, quieter)
+   * - 'over': transmission complete - the full key/unkey pair, 'over and out'
+   */
+  export function apolloCue(kind: 'key' | 'minute' | 'over', options: SoundOptions = {}): void {
+    const ctx = singleContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    const volume = options.volume ?? 0.12; // 2.5 kHz sits at peak ear sensitivity - keep gentle
+    switch (kind) {
+      case 'key':
+        quindarTone(ctx, now, 2525, 0.2, volume);
+        break;
+      case 'minute':
+        quindarTone(ctx, now, 2525, 0.11, volume * 0.6);
+        break;
+      case 'over':
+        quindarTone(ctx, now, 2525, 0.12, volume);
+        quindarTone(ctx, now + 0.18, 2475, 0.25, volume);
+        break;
+    }
+  }
+
   /** Play an error notification sound when the assistant's response fails */
   export function chatNotifyError(options: SoundOptions = {}): void {
     const ctx = singleContext();
     if (!ctx) return;
 
     const now = ctx.currentTime;
-    const volume = options.volume ?? 0.15;
+    const volume = options.volume ?? 0.5;
     const noteDuration = 0.16;
 
     // Descending tone with triangle wave: G4 → D4 (subtle roughness for error)
@@ -725,4 +751,23 @@ function singleContext() {
     void agCtx.resume();
   }
   return agCtx;
+}
+
+/** One Quindar-style tone: sine + faint 2nd harmonic ('transmitted' color), slight downward frequency sag, click-free envelope. */
+function quindarTone(ctx: AudioContext, at: number, freqHz: number, durationSec: number, peak: number): void {
+  for (const [harmonic, level] of [[1, peak], [2, peak * 0.1]]) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    // analog oscillator 'sag': starts a touch sharp, drifts flat over the tone
+    o.frequency.setValueAtTime(freqHz * harmonic * 1.012, at);
+    o.frequency.exponentialRampToValueAtTime(freqHz * harmonic * 0.996, at + durationSec);
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(level, at + 0.005);
+    g.gain.setValueAtTime(level, at + Math.max(0.005, durationSec - 0.04));
+    g.gain.exponentialRampToValueAtTime(0.001, at + durationSec);
+    o.connect(g).connect(agMasterGain);
+    o.start(at);
+    o.stop(at + durationSec + 0.02);
+  }
 }
