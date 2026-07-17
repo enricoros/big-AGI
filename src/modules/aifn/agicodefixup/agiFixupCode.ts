@@ -57,7 +57,10 @@ export async function agiFixupCode(issueType: CodeFixType, codeToFix: string, er
       }),
     ],
     toolsPolicy:
-      config.functionPolicy === 'invoke' ? { type: 'function_call', function_call: { name: config.functionName } }
+      // 'invoke' used to force the named tool, DISABLED 2026-07-17 (see ToolsPolicy_schema): with our single tool,
+      // 'any' is equivalent and doesn't 400 on vendors that reject named forcing (Fable/Mythos 5, thinking Kimi)
+      // config.functionPolicy === 'invoke' ? { type: 'function_call', function_call: { name: config.functionName } }
+      config.functionPolicy === 'invoke' ? { type: 'any' }
         : config.functionPolicy === 'think-then-invoke' ? { type: 'auto' } : undefined,
   };
 

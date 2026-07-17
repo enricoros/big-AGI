@@ -32,7 +32,7 @@ export function aixAnthropicHostedFeatures(model: AixAPI_Model, chatGenerate: Ai
 
   // Allow/deny auto-adding hosted tools when custom tools are present with a restrictive policy
   const _hasAixCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
-  const _hasAixToolRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  const _hasAixToolRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' /* || chatGenerate.toolsPolicy?.type === 'function_call' - DISABLED 2026-07-17, see ToolsPolicy_schema */;
 
   // Dynamic web tools (20260318, was 20260209) require code execution for programmatic tool calling
   // const hasDynamicWebTools = model.vndAntWebDynamic === true && (model.vndAntWebSearch === 'auto' || model.vndAntWebFetch === 'auto');
@@ -585,7 +585,9 @@ function _toAnthropicToolChoice(itp: AixTools_ToolsPolicy): NonNullable<TRequest
       return { type: 'auto' as const };
     case 'any':
       return { type: 'any' as const };
-    case 'function_call':
-      return { type: 'tool' as const, name: itp.function_call.name };
+    // DISABLED 2026-07-17 - forced named tool, see ToolsPolicy_schema (the 'tool' branch of the forced-use
+    // hotfix above stays: it guards the Anthropic wire type, which still admits 'tool')
+    // case 'function_call':
+    //   return { type: 'tool' as const, name: itp.function_call.name };
   }
 }

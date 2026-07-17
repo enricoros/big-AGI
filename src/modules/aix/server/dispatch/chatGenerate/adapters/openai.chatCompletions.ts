@@ -205,7 +205,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   // Allow/deny auto-adding hosted tools when custom tools are present
   const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
-  const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' /* || chatGenerate.toolsPolicy?.type === 'function_call' - DISABLED 2026-07-17, see ToolsPolicy_schema */;
   const skipWebSearchDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
 
   // Hosted tools
@@ -841,11 +841,11 @@ function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsP
       return 'auto';
     case 'any':
       return 'required';
-    case 'function_call':
-      // [Moonshot, 2026-07-17] probe-verified: named tool_choice 400s ("tool_choice 'specified' is incompatible with
-      // thinking enabled") on all thinking-mode Kimi requests - always, on the K2.7-code/K3 always-thinking models;
-      // 'required' ('any') works. Callers targeting those models should prefer toolsPolicy 'any' with a single tool.
-      return { type: 'function' as const, function: { name: itp.function_call.name } };
+    // DISABLED 2026-07-17 - forced named tool, see ToolsPolicy_schema. [Moonshot] probe-verified: named tool_choice
+    // 400s ("tool_choice 'specified' is incompatible with thinking enabled") on all thinking-mode Kimi requests -
+    // always, on the K2.7-code/K3 always-thinking models; 'required' ('any') works.
+    // case 'function_call':
+    //   return { type: 'function' as const, function: { name: itp.function_call.name } };
   }
 }
 

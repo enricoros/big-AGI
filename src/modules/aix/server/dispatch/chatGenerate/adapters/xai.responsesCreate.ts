@@ -468,8 +468,9 @@ function _toXAIToolChoice(policy: AixTools_ToolsPolicy): XAIWire_Responses_Tools
       return 'auto';
     case 'any':
       return 'required';
-    case 'function_call':
-      return { type: 'function', name: policy.function_call.name };
+    // DISABLED 2026-07-17 - forced named tool, see ToolsPolicy_schema
+    // case 'function_call':
+    //   return { type: 'function', name: policy.function_call.name };
     default:
       const _exhaustiveCheck: never = policy;
       throw new Error(`Unsupported XAI tools policy type: ${(policy as any).type}`);

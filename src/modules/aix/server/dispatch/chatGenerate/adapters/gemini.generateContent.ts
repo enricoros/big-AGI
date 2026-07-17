@@ -254,7 +254,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   const hasToolContextCirculation = !_noToolContextCirculation.some((p) => model.id.includes(p));
 
   // [NO-CIRCULATION] can't combine hosted + custom tools with restrictive policies - custom wins -> wipe hosted if any
-  const hasUserRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' || chatGenerate.toolsPolicy?.type === 'function_call';
+  const hasUserRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' /* || chatGenerate.toolsPolicy?.type === 'function_call' - DISABLED 2026-07-17, see ToolsPolicy_schema */;
   // NOTE: we may have to remove the 'hasUserRestrictivePolicy' as some models seem to not want any other tool when user tools are set
   if (_addedHostedTools && hasUserTools && !hasToolContextCirculation && hasUserRestrictivePolicy) {
     _addedHostedTools = false;
@@ -556,13 +556,14 @@ function _toGeminiToolConfig(itp: AixTools_ToolsPolicy): NonNullable<TRequest['t
       return { functionCallingConfig: { mode: 'AUTO' } };
     case 'any':
       return { functionCallingConfig: { mode: 'ANY' } };
-    case 'function_call':
-      return {
-        functionCallingConfig: {
-          mode: 'ANY',
-          allowedFunctionNames: [itp.function_call.name],
-        },
-      };
+    // DISABLED 2026-07-17 - forced named tool, see ToolsPolicy_schema
+    // case 'function_call':
+    //   return {
+    //     functionCallingConfig: {
+    //       mode: 'ANY',
+    //       allowedFunctionNames: [itp.function_call.name],
+    //     },
+    //   };
   }
 }
 

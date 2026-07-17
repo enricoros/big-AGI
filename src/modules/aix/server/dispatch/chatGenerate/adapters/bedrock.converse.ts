@@ -255,8 +255,9 @@ function _toConverseToolChoice(itp: AixTools_ToolsPolicy): NonNullable<NonNullab
       return { auto: {} };
     case 'any':
       return { any: {} };
-    case 'function_call':
-      return { tool: { name: itp.function_call.name } };
+    // DISABLED 2026-07-17 - forced named tool, see ToolsPolicy_schema
+    // case 'function_call':
+    //   return { tool: { name: itp.function_call.name } };
   }
 }
 
