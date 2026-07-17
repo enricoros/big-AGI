@@ -842,6 +842,9 @@ function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsP
     case 'any':
       return 'required';
     case 'function_call':
+      // [Moonshot, 2026-07-17] probe-verified: named tool_choice 400s ("tool_choice 'specified' is incompatible with
+      // thinking enabled") on all thinking-mode Kimi requests - always, on the K2.7-code/K3 always-thinking models;
+      // 'required' ('any') works. Callers targeting those models should prefer toolsPolicy 'any' with a single tool.
       return { type: 'function' as const, function: { name: itp.function_call.name } };
   }
 }

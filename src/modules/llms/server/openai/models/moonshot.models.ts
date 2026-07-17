@@ -31,13 +31,28 @@ const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
 /**
  * Moonshot AI (Kimi) models.
  * - models list and pricing: https://platform.kimi.ai/docs/pricing/chat (was platform.moonshot.ai - now 301 redirect)
+ * - K3 pricing (separate page): https://platform.kimi.ai/docs/pricing/chat-k3
  * - API docs: https://platform.kimi.ai/docs/api/chat
- * - updated: 2026-06-26
+ * - updated: 2026-07-17
  * - NOTE: K2 series (non-2.5/2.6) discontinued on 2026-05-25, removed from API; kept hidden for fallback.
  */
 type _MoonshotModelDef = KnownModel & { pubDate: string };
 
 const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
+
+  // Kimi K3 - 1M-context flagship (native multimodal, always-on thinking at 'max' effort)
+  {
+    idPrefix: 'kimi-k3',
+    label: 'Kimi K3',
+    pubDate: '20260716',
+    description: 'Native multimodal flagship (text, image, video inputs) with always-on thinking. 1M context.',
+    contextWindow: 1048576,
+    maxCompletionTokens: 131072, // API default; configurable up to 1M
+    interfaces: IF_K2_7_CODE, // same surface as K2.7-code: Vision, NoTemperature (probe-verified 2026-07-17: temperature != 1 rejected), always-on Reasoning
+    // no _PS_Reasoning - thinking is always on at 'max', the only supported effort (API: supports_thinking_type 'only', valid_efforts ['max'])
+    chatPrice: { input: 3.00, output: 15.00, cache: { cType: 'oai-ac', read: 0.30 } },
+    benchmark: { cbaElo: 1486 }, // kimi-k3
+  },
 
   // Kimi K2.7-code Series - Code-focused flagship (native multimodal, always-on thinking)
   {
