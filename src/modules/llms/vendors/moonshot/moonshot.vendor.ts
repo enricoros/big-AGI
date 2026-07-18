@@ -9,6 +9,11 @@ interface DMoonshotServiceSettings {
   csf?: boolean;
 }
 
+/** Kimi Code subscription keys ('sk-kimi-...') route to api.kimi.com/coding instead of api.moonshot.ai (server-side in openai.access.ts) */
+export function isKimiCodeSubscriptionKey(key?: string): boolean {
+  return !!key?.startsWith('sk-kimi-');
+}
+
 export const ModelVendorMoonshot: IModelVendor<DMoonshotServiceSettings, OpenAIAccessSchema> = {
   id: 'moonshot',
   name: 'Moonshot AI',
@@ -43,5 +48,6 @@ export const ModelVendorMoonshot: IModelVendor<DMoonshotServiceSettings, OpenAIA
 };
 
 function _csfMoonshotAvailable(s?: Partial<DMoonshotServiceSettings>) {
-  return !!s?.moonshotKey;
+  // Kimi Code subscription keys route to api.kimi.com/coding, which has no CORS (preflight 404, probe-verified 2026-07-18)
+  return !!s?.moonshotKey && !isKimiCodeSubscriptionKey(s.moonshotKey);
 }

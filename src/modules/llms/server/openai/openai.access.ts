@@ -30,6 +30,7 @@ const DEFAULT_LMSTUDIO_HOST = 'http://localhost:1234';
 const DEFAULT_LOCALAI_HOST = 'http://127.0.0.1:8080';
 const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
 const DEFAULT_MOONSHOT_HOST = 'https://api.moonshot.ai';
+const DEFAULT_MOONSHOT_CODING_HOST = 'https://api.kimi.com/coding'; // Kimi Code subscription ('sk-kimi-' keys)
 const DEFAULT_OPENAI_HOST = 'api.openai.com';
 const DEFAULT_OPENROUTER_HOST = 'https://openrouter.ai/api';
 const DEFAULT_PERPLEXITY_HOST = 'https://api.perplexity.ai';
@@ -248,10 +249,13 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
     case 'moonshot':
       // https://platform.moonshot.ai/docs/api/chat
       let moonshotKey = access.oaiKey || env.MOONSHOT_API_KEY || '';
-      const moonshotHost = llmsFixupHost(access.oaiHost || DEFAULT_MOONSHOT_HOST, apiPath);
 
       // Use function to select a random key if multiple keys are provided
       moonshotKey = llmsRandomKeyFromMultiKey(moonshotKey);
+
+      // Kimi Code subscription keys ('sk-kimi-...') only work on the coding endpoint (401 on api.moonshot.ai, probe-verified 2026-07-18)
+      const moonshotDefaultHost = moonshotKey.startsWith('sk-kimi-') ? DEFAULT_MOONSHOT_CODING_HOST : DEFAULT_MOONSHOT_HOST;
+      const moonshotHost = llmsFixupHost(access.oaiHost || moonshotDefaultHost, apiPath);
 
       if (!moonshotKey || !moonshotHost)
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Moonshot API Key or Host. Add it on the UI or server side.' });
