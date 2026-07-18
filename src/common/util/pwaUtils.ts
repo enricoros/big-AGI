@@ -110,6 +110,47 @@ export function generateDeviceName(): string {
   return `${platform} ${browser}${pwaIndicator}`;
 }
 
+
+/**
+ * Pure UA device classifier - works on ANY UA string (e.g. other devices' server-observed UAs);
+ * the module-level `Is` above covers only the local browser.
+ *
+ * Conservative by design ("no risk"): each axis is asserted only on unambiguous tokens, else
+ * 'unknown'. Accepted bounded ambiguity: desktop-mode iPads (the default since iPadOS 13) send a
+ * Macintosh UA and classify as macos/computer - by decision, we don't chase iPads. Desktop vs
+ * laptop is NOT derivable from any signal (UA, client hints, anything) - hence one 'computer'.
+ */
+export function classifyUA(userAgent: string | null | undefined): UADeviceClass {
+  const ua = (userAgent || '').toLowerCase();
+  if (!ua) return { os: 'unknown', form: 'unknown' };
+
+  const os: UADeviceOS =
+    /ip(hone|od|ad)/.test(ua) ? 'ios'
+      : ua.includes('android') ? 'android'
+        : ua.includes('windows') ? 'windows'
+          : /macintosh|mac os x/.test(ua) ? 'macos'
+            : (ua.includes('cros') || ua.includes('linux')) ? 'linux' // ChromeOS folded into linux
+              : 'unknown';
+
+  const form: UAFormFactor =
+    /ipad|tablet/.test(ua) ? 'tablet'
+      : os === 'android' ? (ua.includes('mobile') ? 'phone' : 'tablet') // Android convention: no 'mobile' token = tablet
+        : /iphone|ipod|mobile/.test(ua) ? 'phone'
+          : (os === 'windows' || os === 'macos' || os === 'linux') ? 'computer'
+            : 'unknown';
+
+  return { os, form };
+}
+
+export interface UADeviceClass {
+  os: UADeviceOS;
+  form: UAFormFactor;
+}
+
+export type UADeviceOS = 'windows' | 'macos' | 'ios' | 'android' | 'linux' | 'unknown';
+export type UAFormFactor = 'phone' | 'tablet' | 'computer' | 'unknown';
+
+
 /// Web Share ///
 
 export function webSharePresent(): boolean {
