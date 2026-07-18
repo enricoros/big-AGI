@@ -27,6 +27,11 @@ export const LLMSearchFilterInput = React.memo(function LLMSearchFilterInput(pro
   onStarredToggle?: () => void, // if provided, shows the starred filter button
   showStarredOnly?: boolean,
 }) {
+
+  // reset the search on unmount (e.g. dropdown closed while typed) - the input restarts empty, so the filter must too
+  const { onSearch } = props;
+  React.useEffect(() => () => onSearch(null), [onSearch]);
+
   return (
     <DebouncedInputMemo
       size={props.size}
