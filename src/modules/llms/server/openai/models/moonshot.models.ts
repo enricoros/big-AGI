@@ -83,11 +83,13 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     idPrefix: 'kimi-k3',
     label: 'Kimi K3',
     pubDate: '20260716',
-    description: 'Native multimodal flagship (text, image, video inputs) with always-on thinking. 1M context.',
+    description: 'Native multimodal flagship (text, image, video inputs) with thinking on by default. 1M context.',
     contextWindow: 1048576,
     maxCompletionTokens: 131072, // API default; configurable up to 1M
     interfaces: IF_K2_7_CODE, // same surface as K2.7-code: Vision, NoTemperature (probe-verified 2026-07-17: temperature != 1 rejected), always-on Reasoning
-    // no _PS_Reasoning - thinking is always on at 'max', the only supported effort (API: supports_thinking_type 'only', valid_efforts ['max'])
+    // effort levels are Kimi Code-only; on this endpoint reasoning_effort low/high/max are silently ignored (probe-verified 2026-07-18,
+    // 16-run differential) BUT thinking {type:'disabled'} works despite metadata 'supports_thinking_type: only' - so expose Off/On only
+    parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 3.00, output: 15.00, cache: { cType: 'oai-ac', read: 0.30 } },
     benchmark: { cbaElo: 1486 }, // kimi-k3
   },
