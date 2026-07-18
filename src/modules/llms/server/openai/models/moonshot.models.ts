@@ -33,12 +33,50 @@ const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
  * - models list and pricing: https://platform.kimi.ai/docs/pricing/chat (was platform.moonshot.ai - now 301 redirect)
  * - K3 pricing (separate page): https://platform.kimi.ai/docs/pricing/chat-k3
  * - API docs: https://platform.kimi.ai/docs/api/chat
- * - updated: 2026-07-17
+ * - updated: 2026-07-18
  * - NOTE: K2 series (non-2.5/2.6) discontinued on 2026-05-25, removed from API; kept hidden for fallback.
+ * - NOTE: 'sk-kimi-' subscription keys list a separate 3-model catalog from api.kimi.com/coding (see the Kimi Code section below);
+ *   the two catalogs never mix, as each endpoint only lists its own models.
  */
 type _MoonshotModelDef = KnownModel & { pubDate: string };
 
 const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
+
+  // Kimi Code subscription models - only listed for 'sk-kimi-' keys via api.kimi.com/coding (probe-verified 2026-07-18).
+  // Subscription-billed: no per-token pricing. All support image/video inputs; prompt caching confirmed (cached_tokens in usage).
+  {
+    idPrefix: 'k3',
+    label: 'Kimi K3', // API display_name: 'K3'
+    pubDate: '20260716',
+    description: 'Kimi K3 on the Kimi Code subscription. Native multimodal with adjustable thinking effort. 1M context (Allegretto+ plans; 262K below).',
+    contextWindow: 1048576,
+    maxCompletionTokens: 131072,
+    interfaces: IF_K2_7_CODE,
+    // API think_efforts: valid ['low', 'high', 'max'], default 'max'; 'none' undocumented but probe-verified to disable thinking
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
+    benchmark: { cbaElo: 1486 }, // same weights as kimi-k3
+  },
+  {
+    idPrefix: 'kimi-for-coding',
+    label: 'Kimi K2.7 Coding', // API display_name: 'K2.7 Coding'
+    pubDate: '20260601',
+    description: 'K2.7 Code on the Kimi Code subscription. Always-on thinking, native multimodal. 256K context.',
+    contextWindow: 262144,
+    maxCompletionTokens: 32768,
+    interfaces: IF_K2_7_CODE,
+    // no effort spec - thinking is always on and reasoning_effort is ignored (probe-verified)
+    benchmark: { cbaElo: 1460 + 2 }, // same weights as kimi-k2.7-code
+  },
+  {
+    idPrefix: 'kimi-for-coding-highspeed',
+    label: 'Kimi K2.7 Coding Highspeed', // API display_name: 'K2.7 Coding Highspeed'
+    pubDate: '20260601',
+    description: 'High-speed K2.7 Code variant on the Kimi Code subscription (Allegretto+ plans). Always-on thinking, native multimodal. 256K context.',
+    contextWindow: 262144,
+    maxCompletionTokens: 32768,
+    interfaces: IF_K2_7_CODE,
+    benchmark: { cbaElo: 1460 + 1 }, // same weights as kimi-k2.7-code-highspeed
+  },
 
   // Kimi K3 - 1M-context flagship (native multimodal, always-on thinking at 'max' effort)
   {

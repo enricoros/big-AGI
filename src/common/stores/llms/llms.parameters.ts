@@ -176,8 +176,8 @@ export const DModelParameterRegistry = {
     label: 'Thinking',
     type: 'enum',
     description: 'Enable or disable extended thinking mode.',
-    values: ['none', 'high', 'max'],
-    // 'max' is for now DeepSeek V4-specific (reasoning_effort=max); other vendors restrict via enumValues
+    values: ['none', 'low', 'high', 'max'],
+    // 'max' is DeepSeek V4 + Kimi Code k3; 'low' is Kimi Code k3-specific; other vendors restrict via enumValues
     // undefined means vendor default (usually 'high', i.e. thinking enabled)
   }),
 
