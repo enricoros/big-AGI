@@ -8,11 +8,11 @@ import SearchIcon from '@mui/icons-material/Search';
 
 type DebounceInputProps = Omit<InputProps, 'onChange'> & {
   /**
-   * Keep DOM focus on this input while hosted inside a Joy UI Select listbox.
+   * Keep DOM focus on this input while hosted inside a Joy UI Select listbox or Menu popup.
    *
-   * The Select steals focus on every filter keystroke: MUI Base's useSelect re-runs a
-   * layout effect that focuses the highlighted option whenever the registered options
-   * change (its deps include the internal options map, rebuilt on option add/removal).
+   * The host steals focus on every filter keystroke: MUI Base's useSelect and useMenu
+   * both re-run effects that focus the highlighted item whenever the registered items
+   * change (their deps include the internal items map, rebuilt on item add/removal).
    * Countermeasures, in order:
    * - onBlur: when focus lands inside the listbox, take it back synchronously - this
    *   keeps the mobile on-screen keyboard up (a delayed refocus hides and re-shows it)
@@ -78,12 +78,12 @@ const DebouncedInput: React.FC<DebounceInputProps> = (props: DebounceInputProps)
   }, [onDebounce]);
 
   const handleRetainFocusBlur = React.useCallback((event: React.FocusEvent) => {
-    /* Bounce focus back synchronously when the hosting Select steals it (see `retainFocus` doc).
+    /* Bounce focus back synchronously when the hosting popup steals it (see `retainFocus` doc).
      * Refocusing within the blur event keeps the mobile on-screen keyboard up; the thief is the
-     * listbox itself (an ancestor of this input) or one of its options.
+     * host list itself (an ancestor of this input) or one of its options/menu items.
      */
     const thief = event.relatedTarget;
-    if (thief instanceof Element && (thief.contains(inputRef.current) || thief.closest('[role="listbox"]')))
+    if (thief instanceof Element && (thief.contains(inputRef.current) || thief.closest('[role="listbox"], [role="menu"]')))
       inputRef.current?.focus();
   }, []);
 
