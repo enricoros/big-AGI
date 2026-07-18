@@ -163,7 +163,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const reasoningEffort = model.reasoningEffort; // ?? model.vndOaiReasoningEffort;
   if (reasoningEffort
     && openAIDialect !== 'openrouter' // OpenRouter has its own channeling of this
-    && openAIDialect !== 'deepseek' && openAIDialect !== 'moonshot' && openAIDialect !== 'zai' // MoonShot maps to none->disabled / high->enabled
+    && openAIDialect !== 'deepseek' && openAIDialect !== 'moonshot' && openAIDialect !== 'zai' // these map to thinking enabled/disabled (+ reasoning_effort passthrough) in the block below
     && openAIDialect !== 'alibaba' // Alibaba/Qwen ignores reasoning_effort; uses enable_thinking instead (block below)
     && openAIDialect !== 'perplexity' // Perplexity has its own block below with stricter validation
   ) {
@@ -171,13 +171,13 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     payload.reasoning_effort = reasoningEffort;
   }
 
-  // [Moonshot] Kimi K2.5 reasoning effort -> thinking mode (only 'none' and 'high' supported for now)
+  // [Moonshot] Kimi reasoning effort -> thinking mode; Kimi Code 'k3' also honors reasoning_effort low/high/max (probe-verified 2026-07-18: primary K2.5/K2.6 tolerate the extra field, 'kimi-for-coding' ignores it)
   // [Z.ai] GLM thinking mode: binary enabled/disabled (supports GLM-4.5 series and higher) - https://docs.z.ai/guides/capabilities/thinking-mode
   // [DeepSeek, 2026-04-23] V4 thinking control https://api-docs.deepseek.com/guides/thinking_mode
   if (reasoningEffort && (openAIDialect === 'deepseek' || openAIDialect === 'moonshot' || openAIDialect === 'zai')) {
     // [Z.ai, 2026-06-13] reasoning_effort is GLM-5.2 only; other GLM models are binary thinking enabled/disabled - https://docs.z.ai/api-reference/llm/chat-completion
-    const supportsMaxEffort = openAIDialect === 'deepseek' || (openAIDialect === 'zai' && model.id.startsWith('glm-5.2'));
-    const allowedEffort = supportsMaxEffort ? ['none', 'high', 'max'] : ['none', 'high'];
+    const supportsEffortLevels = openAIDialect === 'deepseek' || openAIDialect === 'moonshot' || (openAIDialect === 'zai' && model.id.startsWith('glm-5.2'));
+    const allowedEffort = openAIDialect === 'moonshot' ? ['none', 'low', 'high', 'max'] : supportsEffortLevels ? ['none', 'high', 'max'] : ['none', 'high'];
     if (!allowedEffort.includes(reasoningEffort)) // domain validation
       throw new Error(`${openAIDialect} only supports reasoning effort ${allowedEffort.join(', ')}, got '${reasoningEffort}'`);
 
@@ -185,7 +185,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
     // [DeepSeek, 2026-04-23] DeepSeek also supports effort control for reasoning-enabled requests - set it here as it was carved from the reasoningEffort setter before
     // [Z.ai, 2026-06-13] GLM-5.2 reasoning_effort takes effect only when thinking is enabled (i.e. effort !== 'none')
-    if (supportsMaxEffort && reasoningEffort !== 'none')
+    if (supportsEffortLevels && reasoningEffort !== 'none')
       payload.reasoning_effort = reasoningEffort;
   }
 
