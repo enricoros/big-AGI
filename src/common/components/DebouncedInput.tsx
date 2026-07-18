@@ -8,11 +8,19 @@ import SearchIcon from '@mui/icons-material/Search';
 
 type DebounceInputProps = Omit<InputProps, 'onChange'> & {
   /**
-   * When true, this will not give up the focus on the input field, and aggressively
-   * refocus it after the debounce (assuming the callee will cascade a removal, which
-   * is the case for Joy UI Select components).
+   * Keep DOM focus on this input while hosted inside a Joy UI Select listbox.
+   *
+   * The Select steals focus on every filter keystroke: MUI Base's useSelect re-runs a
+   * layout effect that focuses the highlighted option whenever the registered options
+   * change (its deps include the internal options map, rebuilt on option add/removal).
+   * Countermeasures, in order:
+   * - onBlur: when focus lands inside the listbox, take it back synchronously - this
+   *   keeps the mobile on-screen keyboard up (a delayed refocus hides and re-shows it)
+   * - post-debounce repair: for browsers that don't report the focus thief (null
+   *   relatedTarget, e.g. older WebKit), restore focus late - no-op when the bounce worked
+   * - onKeyDownCapture: stop propagation so the Select's typeahead doesn't grab keystrokes
    */
-  aggressiveRefocus?: boolean;
+  retainFocus?: boolean;
   debounceTimeout: number;
   minChars?: number;
   onDebounce: (value: string) => void;
@@ -27,7 +35,7 @@ const DebouncedInput: React.FC<DebounceInputProps> = (props: DebounceInputProps)
   const refocusTimerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // derived state
-  const { debounceTimeout, minChars, onDebounce, aggressiveRefocus, ...rest } = props;
+  const { debounceTimeout, minChars, onDebounce, retainFocus, ...rest } = props;
 
   // callbacks
 
@@ -49,23 +57,35 @@ const DebouncedInput: React.FC<DebounceInputProps> = (props: DebounceInputProps)
       // Call onDebounce with the new value
       onDebounce(newValue);
 
-      // If requested, get back the focus
-      if (aggressiveRefocus) {
+      // Repair pass: if the synchronous bounce (onBlur below) missed the focus steal,
+      // restore focus late - flickers the mobile keyboard, but never loses the input
+      if (retainFocus) {
         if (refocusTimerRef.current)
           clearTimeout(refocusTimerRef.current);
 
         refocusTimerRef.current = setTimeout(() => {
           refocusTimerRef.current = undefined;
-          inputRef.current?.focus();
+          if (inputRef.current && document.activeElement !== inputRef.current)
+            inputRef.current.focus();
         }, 20);
       }
     }, debounceTimeout);
-  }, [debounceTimeout, aggressiveRefocus, minChars, onDebounce]);
+  }, [debounceTimeout, retainFocus, minChars, onDebounce]);
 
   const handleClear = React.useCallback(() => {
     setInputValue(''); // Clear internal state
     onDebounce(''); // Call onDebounce with empty string
   }, [onDebounce]);
+
+  const handleRetainFocusBlur = React.useCallback((event: React.FocusEvent) => {
+    /* Bounce focus back synchronously when the hosting Select steals it (see `retainFocus` doc).
+     * Refocusing within the blur event keeps the mobile on-screen keyboard up; the thief is the
+     * listbox itself (an ancestor of this input) or one of its options.
+     */
+    const thief = event.relatedTarget;
+    if (thief instanceof Element && (thief.contains(inputRef.current) || thief.closest('[role="listbox"]')))
+      inputRef.current?.focus();
+  }, []);
 
 
   // Clear all timers on unmount
@@ -86,7 +106,8 @@ const DebouncedInput: React.FC<DebounceInputProps> = (props: DebounceInputProps)
       onChange={handleChange}
       aria-label={rest['aria-label'] || 'Search'}
       startDecorator={rest.startDecorator === undefined ? <SearchIcon /> : rest.startDecorator}
-      onKeyDownCapture={!aggressiveRefocus ? undefined : (event) => {
+      onBlur={!retainFocus ? undefined : handleRetainFocusBlur}
+      onKeyDownCapture={!retainFocus ? undefined : (event) => {
         /* We stop the propagation of the event to prevent the parent component from handling it.
          * This is useful only when used inside a Select with options, as the select is eager to capture
          * the focus at every keystroke. This way we keep the focus.
@@ -103,7 +124,7 @@ const DebouncedInput: React.FC<DebounceInputProps> = (props: DebounceInputProps)
           {rest.endDecorator}
         </Box>
       }
-      slotProps={!aggressiveRefocus ? undefined : {
+      slotProps={!retainFocus ? undefined : {
         input: { ref: inputRef },
       }}
     />

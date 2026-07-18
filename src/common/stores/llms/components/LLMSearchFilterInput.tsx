@@ -35,7 +35,7 @@ export const LLMSearchFilterInput = React.memo(function LLMSearchFilterInput(pro
   return (
     <DebouncedInputMemo
       size={props.size}
-      aggressiveRefocus
+      retainFocus
       debounceTimeout={300}
       onDebounce={props.onSearch}
       placeholder={`Search ${props.llmsCount} models...`}
