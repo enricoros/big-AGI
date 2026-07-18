@@ -427,6 +427,10 @@ function _fixAlternateUserAssistantRoles(chatMessages: TRequestMessages): TReque
 
 function _fixRemoveEmptyMessages(chatMessages: TRequestMessages): TRequestMessages {
   return chatMessages.filter(message => {
+    // never drop protocol-bearing messages: tool_calls-only assistant messages have content:null,
+    // and each tool message pairs with a tool_call_id - removing either side orphans the other ("tool_call_id ... is not found")
+    if (message.role === 'assistant' && message.tool_calls?.length) return true;
+    if (message.role === 'tool') return true;
     const c = message.content;
     if (c === null || c === '') return false;
     if (typeof c === 'string' && !c.trim()) return false; // whitespace-only (e.g. '\n\n' from Anthropic)
@@ -500,6 +504,7 @@ function _fixVndOaiRestoreMarkdown_Inline(payload: TRequest) {
 function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMessages_SystemMessage | null, chatSequence: AixMessages_ChatMessage[], hotFixOpenAIo1Family: boolean): TRequestMessages {
 
   // [DeepSeek, 2026-04-24] V4 thinking-by-default - reasoning_content must round-trip on tool-call turns; payload is the 'ma' part's aText (unlike Gemini/OpenAI-Responses which carry opaque handles).
+  // [Moonshot] no echo needed: K3 (also thinking-by-default) accepts tool-call turns without reasoning_content (probe-verified 2026-07-18)
   const echoDeepseekReasoning = openAIDialect === 'deepseek';
 
   // [OpenRouter, 2026-07-10] OR translates Anthropic-style ephemeral breakpoints for paid-cache-write
