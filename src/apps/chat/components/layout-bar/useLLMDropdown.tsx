@@ -148,7 +148,7 @@ function LLMDropdown(props: {
     !showFilter ? undefined : (
       <Box sx={{ p: 1 }}>
         <DebouncedInputMemo
-          aggressiveRefocus
+          retainFocus
           debounceTimeout={300}
           onDebounce={setfilterString}
           placeholder={`Search ${llmsCount} models...`}
