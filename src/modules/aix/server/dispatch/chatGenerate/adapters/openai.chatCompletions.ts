@@ -608,7 +608,7 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
 
             case 'meta_cache_control':
               if (emitCacheBreakpoints)
-                _stampTrailingCacheBreakpoint(currentMessage);
+                _stampTrailingCacheBreakpoint(chatMessages);
               break;
 
             case 'meta_in_reference_to':
@@ -721,7 +721,7 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
 
             case 'meta_cache_control':
               if (emitCacheBreakpoints)
-                _stampTrailingCacheBreakpoint(currentMessage);
+                _stampTrailingCacheBreakpoint(chatMessages);
               break;
 
             default:
@@ -751,29 +751,39 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
 
 /**
  * [OpenRouter, 2026-07-10] Anthropic-style prompt caching: stamp an ephemeral breakpoint on the trailing
- * text part of the message assembled so far. Text parts only (per OR docs - images can't carry breakpoints),
+ * text part of the messages assembled so far. Text parts only (per OR docs - images can't carry breakpoints),
  * coercing string content to the array form, which is the only shape that can carry cache_control.
+ *
+ * Walks back across messages when the last one has no stampable text (image-only user messages,
+ * tool-calls-only assistant messages, meta-ref system messages): prompt caching is prefix-based, so
+ * stamping one block earlier still caches everything before it, which beats dropping the breakpoint.
  */
-function _stampTrailingCacheBreakpoint(message: TRequestMessages[number] | undefined): void {
+function _stampTrailingCacheBreakpoint(chatMessages: TRequestMessages): void {
 
-  if (!message || (message.role !== 'user' && message.role !== 'assistant'))
-    return console.warn('AIX: OpenAI-dispatch: cache breakpoint without a user/assistant message to attach to');
+  for (let m = chatMessages.length - 1; m >= 0; m--) {
+    const message = chatMessages[m];
 
-  // tool-calls-only assistant message: no content block to carry the breakpoint
-  if (message.content === null)
-    return console.warn('AIX: OpenAI-dispatch: cache breakpoint on a message without content');
+    // only user/assistant messages carry breakpoints (skips tool results and meta-ref system messages)
+    if (message.role !== 'user' && message.role !== 'assistant')
+      continue;
 
-  const contentParts = typeof message.content === 'string' ? [OpenAIWire_ContentParts.TextContentPart(message.content)] : message.content;
-  message.content = contentParts;
+    // tool-calls-only assistant message: no content block to carry the breakpoint
+    if (message.content === null)
+      continue;
 
-  for (let i = contentParts.length - 1; i >= 0; i--) {
-    const contentPart = contentParts[i];
-    if (contentPart.type === 'text') {
-      contentPart.cache_control = { type: 'ephemeral' };
-      return;
+    const contentParts = typeof message.content === 'string' ? [OpenAIWire_ContentParts.TextContentPart(message.content)] : message.content;
+
+    for (let i = contentParts.length - 1; i >= 0; i--) {
+      const contentPart = contentParts[i];
+      if (contentPart.type === 'text') {
+        message.content = contentParts;
+        contentPart.cache_control = { type: 'ephemeral' };
+        return;
+      }
     }
   }
-  console.warn('AIX: OpenAI-dispatch: cache breakpoint on a message without text parts');
+
+  console.warn('AIX: OpenAI-dispatch: cache breakpoint with no stampable text part in any preceding message');
 }
 
 /** FNV-1a 32-bit hex digest - tiny, deterministic, edge-safe; used to mint the OpenRouter sticky client session id. */
