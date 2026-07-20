@@ -18,6 +18,27 @@ export namespace Search {
   // This is the upstream API [rev-eng on 2023-04-27], for Server (Next.js) -> Upstream Server
   export namespace Wire {
 
+    // Brave Search API - https://api-dashboard.search.brave.com/app/documentation/web-search/responses
+    export namespace Brave {
+
+      export interface SearchResponse {
+        // type: 'search';
+        web?: {
+          // type: 'search';
+          results?: Result[];
+        };
+        // query, mixed, videos, news, ... omitted - we only consume web results
+      }
+
+      export interface Result {
+        title: string; // may contain highlight markup (<strong>...</strong>) and HTML entities
+        url: string;
+        description?: string; // may contain highlight markup and HTML entities
+        // page_age, profile, language, family_friendly, thumbnail, ... omitted
+      }
+
+    }
+
     // https://developers.google.com/custom-search/v1/reference/rest/v1/cse/list
     export interface RequestParams {
       key: string; // API key

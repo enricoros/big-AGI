@@ -69,6 +69,7 @@ export const backendRouter = createTRPCRouter({
         // others
         hasDB: (!!env.MDB_URI) || (!!env.POSTGRES_PRISMA_URL && !!env.POSTGRES_URL_NON_POOLING),
         hasBrowsing: !!env.PUPPETEER_WSS_ENDPOINT,
+        hasBraveSearch: !!env.BRAVE_SEARCH_API_KEY,
         hasGoogleCustomSearch: !!env.GOOGLE_CSE_ID && !!env.GOOGLE_CLOUD_API_KEY,
         hasVoiceElevenLabs: !!env.ELEVENLABS_API_KEY,
         // hashes
