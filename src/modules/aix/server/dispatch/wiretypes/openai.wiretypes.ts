@@ -1561,10 +1561,18 @@ export namespace OpenAIWire_Responses_Tools {
   //   // OpenAI vector store feature - not implemented
   // });
 
-  // const MCPTool_schema = z.object({
-  //   type: z.literal('mcp'),
-  //   // MCP (Model Context Protocol) tools - not implemented yet
-  // });
+  // MCP tool - server-side execution of remote MCP servers/connectors
+  // OpenAI: 'remote MCP servers' (server_url or connector_id); AWS Bedrock Mantle: connector_id = Lambda or AgentCore Gateway ARN
+  const MCPTool_schema = z.object({
+    type: z.literal('mcp'),
+    server_label: z.string(), // unique identifier for this tool connector within the request
+    connector_id: z.string().optional(), // provider-specific connector (Bedrock: Lambda/AgentCore Gateway ARN; OpenAI: e.g. 'connector_dropbox')
+    server_url: z.string().optional(), // OpenAI-only alternative: URL of a remote MCP server
+    server_description: z.string().optional(), // human-readable description of the tools provided
+    require_approval: z.enum(['never', 'always']).or(z.any()).optional(), // Bedrock requires the literal 'never'; OpenAI also accepts a granular object
+    allowed_tools: z.array(z.string()).optional(), // optional tool filter
+    headers: z.record(z.string(), z.string()).optional(), // OpenAI-only: auth headers for server_url MCP servers
+  });
 
   // Combined tools
 
@@ -1577,8 +1585,8 @@ export namespace OpenAIWire_Responses_Tools {
     WebSearchTool_schema,
     ImageGenerationTool_schema,
     CodeInterpreterTool_schema,
+    MCPTool_schema, // server-side remote MCP servers/connectors (OpenAI, Bedrock Mantle)
     // FileSearchTool_schema, // OpenAI vector store - not implemented
-    // MCPTool_schema,
     // ComputerUseTool_schema,
     // LocalShellTool_schema,
   ]);
