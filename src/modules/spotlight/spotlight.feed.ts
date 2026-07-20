@@ -4,7 +4,7 @@
 // The v1 contracts are frozen: fields never change, server evolution is additive-only.
 
 import { useQuery } from '@tanstack/react-query';
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 
