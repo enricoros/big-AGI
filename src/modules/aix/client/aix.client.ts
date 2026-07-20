@@ -74,7 +74,7 @@ export function aixCreateModelFromLLMOptions(
     llmRef, llmTemperature, llmResponseTokens, llmTopP, llmForceNoStream,
     llmVndAntEffort, llmVndGemEffort, llmVndOaiEffort, llmVndMiscEffort,
     llmVndAnt1MContext, llmVndAntCodeSandbox, llmVndAntInfSpeed, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebDynamic, llmVndAntWebFetch, llmVndAntWebFetchMaxUses, llmVndAntWebSearch, llmVndAntWebSearchMaxUses,
-    llmVndBedrockAPI,
+    llmVndBedrockAPI, llmVndBedrockWebSearch,
     llmVndGeminiAgentViz, llmVndGeminiAspectRatio, llmVndGeminiImageSize, llmVndGeminiCodeExecution, llmVndGeminiComputerUse, llmVndGeminiGoogleSearch, llmVndGeminiMediaResolution, llmVndGeminiThinkingBudget,
     // llmVndMoonshotWebSearch,
     llmVndOaiReasoningMode, llmVndOaiRestoreMarkdown, llmVndOaiVerbosity, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation, llmVndOaiImageGeneration, llmVndOaiCodeInterpreter,
@@ -148,6 +148,7 @@ export function aixCreateModelFromLLMOptions(
 
     // Bedrock
     ...(llmVndBedrockAPI ? { vndBedrockAPI: llmVndBedrockAPI } : {}),
+    ...(llmVndBedrockWebSearch === 'auto' ? { vndBedrockWebSearch: llmVndBedrockWebSearch } : {}),
 
     // Gemini
     ...(llmVndGeminiInteractions ? { vndGeminiAPI: 'interactions-agent' } : {}),

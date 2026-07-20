@@ -34,6 +34,7 @@ import type { ModelDescriptionSchema } from '../llm.server.types';
 import { llmsAntInjectVariants, llmBedrockFindAnthropicModel, llmBedrockStripAnthropicMDS } from '../anthropic/anthropic.models';
 import { LLM_IF_ANT_PromptCaching, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
 import { DModelParameterSpecAny } from '~/common/stores/llms/llms.parameters';
+import { env } from '~/server/env.server';
 
 
 // --- Suppression Rules ---
@@ -315,6 +316,9 @@ export function bedrockModelsToDescriptions(
   const bedrockAPIConverse = { paramId: 'llmVndBedrockAPI', initialValue: 'converse' } as const satisfies DModelParameterSpecAny;
   const bedrockAPIMantle = { paramId: 'llmVndBedrockAPI', initialValue: 'mantle' } as const satisfies DModelParameterSpecAny;
   const bedrockAPIMantleResponses = { paramId: 'llmVndBedrockAPI', initialValue: 'mantle-responses' } as const satisfies DModelParameterSpecAny;
+  // Web Search toggle: only offered when the deployment configured an AgentCore Gateway for server-side MCP tools
+  const bedrockWebSearch = { paramId: 'llmVndBedrockWebSearch' } as const satisfies DModelParameterSpecAny;
+  const hasBedrockWebSearch = !!env.BEDROCK_AGENTCORE_GATEWAY_ARN;
   for (const [modelId, modelMeta] of modelMap) {
     if (_seemsAnthropicBedrockModel(modelId)) {
 
@@ -401,7 +405,7 @@ export function bedrockModelsToDescriptions(
       contextWindow: known?.ctx ?? 131072,
       maxCompletionTokens: known?.out ?? 16384,
       interfaces,
-      parameterSpecs: [isResponsesOnly ? bedrockAPIMantleResponses : bedrockAPIMantle],
+      parameterSpecs: [isResponsesOnly ? bedrockAPIMantleResponses : bedrockAPIMantle, ...(isResponsesOnly && hasBedrockWebSearch ? [bedrockWebSearch] : [])],
       hidden: !isResponsesOnly, // show models with a curated API assignment; hide the rest (listed by Mantle, but unverified: some ids 400 with "isn't supported on this route", others are account-gated)
     });
   }

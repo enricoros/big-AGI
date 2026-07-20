@@ -297,6 +297,14 @@ export const DModelParameterRegistry = {
     // undefined is not accepted when this parameter is used
   }),
 
+  llmVndBedrockWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
+    label: 'Web Search',
+    type: 'enum',
+    description: 'AWS-native web search, executed server-side by Bedrock via the deployment\'s AgentCore Gateway',
+    values: ['auto'],
+    // undefined means off
+  }),
+
 
   // Gemini-specific
 
