@@ -6,6 +6,8 @@ import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.server';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
+import { bedrockHasContainerCredentialsEndpoint } from '~/modules/llms/server/bedrock/bedrock.containerCredentials';
+
 // critical to make sure we `import type` here
 import type { BackendCapabilities } from './store-backend-capabilities';
 
@@ -51,7 +53,7 @@ export const backendRouter = createTRPCRouter({
         hasLlmAlibaba: !!env.ALIBABA_API_KEY || !!env.ALIBABA_API_HOST,
         hasLlmAnthropic: !!env.ANTHROPIC_API_KEY,
         hasLlmAzureOpenAI: !!env.AZURE_OPENAI_API_KEY && !!env.AZURE_OPENAI_API_ENDPOINT,
-        hasLlmBedrock: !!env.BEDROCK_BEARER_TOKEN || (!!env.BEDROCK_ACCESS_KEY_ID && !!env.BEDROCK_SECRET_ACCESS_KEY),
+        hasLlmBedrock: !!env.BEDROCK_BEARER_TOKEN || (!!env.BEDROCK_ACCESS_KEY_ID && !!env.BEDROCK_SECRET_ACCESS_KEY) || (!!env.BEDROCK_USE_CONTAINER_CREDENTIALS && bedrockHasContainerCredentialsEndpoint()),
         hasLlmDeepseek: !!env.DEEPSEEK_API_KEY,
         hasLlmGemini: !!env.GEMINI_API_KEY,
         hasLlmGroq: !!env.GROQ_API_KEY,
