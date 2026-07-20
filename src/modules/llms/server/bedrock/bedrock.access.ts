@@ -79,6 +79,30 @@ export function bedrockResolveRegion(access: BedrockAccessSchema): string {
 }
 
 
+// --- Model Allowlist (optional, server-enforced) ---
+
+// region prefixes of inference profiles - keep in sync with _REGION_PREFIX_RE in bedrock.models.ts
+const _ALLOWLIST_REGION_PREFIX_RE = /^(us|eu|global|jp|apac)\./;
+
+/**
+ * Optional server-side model allowlist: BEDROCK_MODEL_ALLOWLIST (comma-separated model IDs).
+ * A model passes if its full ID or its region-prefix-stripped base ID is listed, so a single
+ * base entry (e.g. 'anthropic.claude-sonnet-5') covers the foundation model, its 'us.'/'eu.'/
+ * 'global.' inference profiles, and the Mantle variant; a prefixed entry (e.g.
+ * 'us.amazon.nova-pro-v1:0') admits just that profile. Unset/empty = all models allowed.
+ *
+ * This is enforced at both model listing and chat generation. It is effective (not cosmetic):
+ * the Bedrock vendor has no client-side-fetch path (no CORS on Bedrock endpoints), so every
+ * request flows through this server code.
+ */
+export function bedrockModelAllowed(modelId: string): boolean {
+  if (!env.BEDROCK_MODEL_ALLOWLIST) return true;
+  const allowed = env.BEDROCK_MODEL_ALLOWLIST.split(',').map(id => id.trim()).filter(Boolean);
+  if (!allowed.length) return true;
+  return allowed.includes(modelId) || allowed.includes(modelId.replace(_ALLOWLIST_REGION_PREFIX_RE, ''));
+}
+
+
 // --- URLs ---
 
 export function bedrockURLControlPlane(region: string, path: string): string {

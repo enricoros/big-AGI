@@ -1,6 +1,6 @@
 import { ANTHROPIC_API_PATHS, anthropicAccess, anthropicBetaFeatures } from '~/modules/llms/server/anthropic/anthropic.access';
 import { OPENAI_API_PATHS, openAIAccess } from '~/modules/llms/server/openai/openai.access';
-import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLMantle, bedrockURLRuntime } from '~/modules/llms/server/bedrock/bedrock.access';
+import { bedrockAccessAsync, bedrockModelAllowed, bedrockResolveRegion, bedrockURLMantle, bedrockURLRuntime } from '~/modules/llms/server/bedrock/bedrock.access';
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
 
@@ -102,6 +102,11 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     }
 
     case 'bedrock': {
+
+      // server-side model allowlist (BEDROCK_MODEL_ALLOWLIST) - defense in depth over the listing filter
+      if (!bedrockModelAllowed(model.id))
+        throw new Error(`Model '${model.id}' is not enabled on this server. Ask your administrator to add it to BEDROCK_MODEL_ALLOWLIST.`);
+
       switch (model.vndBedrockAPI) {
 
         // [Bedrock Converse] Bedrock-native API, preferred for Amazon models and useful in others too
