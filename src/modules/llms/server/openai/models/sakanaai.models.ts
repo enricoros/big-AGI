@@ -35,10 +35,11 @@ const _fuguUltraPrice: ModelDescriptionSchema['chatPrice'] = {
   cache: { cType: 'oai-ac', read: [{ upTo: 272000, price: 0.5 }, { upTo: null, price: 1 }] },
 };
 
-// Fugu params (Responses API). Reasoning effort: 'high' / 'xhigh' ('max' is a compat alias for 'xhigh',
-// rejected by the Responses adapter, so not offered). Web search reuses the OpenAI Responses 'web_search'
-// hosted tool: Sakana ignores the context-size value and accepts only the bare tool - the responses adapter
-// emits `{ type: 'web_search' }` for the 'sakanaai' dialect.
+// Fugu params (Responses API). Reasoning effort: validation enumerates 'high' / 'xhigh' / 'max' (2026-07-20);
+// 'max' (rejected pre-July) now executes but is a compat alias currently equal to 'xhigh', so it is not
+// offered as a duplicate level. Web search reuses the OpenAI Responses 'web_search' hosted tool: since
+// ~2026-07 Sakana tolerates the context-size value (effect undocumented) but the responses adapter still
+// emits the bare `{ type: 'web_search' }` for the 'sakanaai' dialect.
 const _fuguParamSpecs = [
   { paramId: 'llmVndOaiEffort' as const, enumValues: ['high', 'xhigh'] },
   // Reuse OpenAI's Responses web_search control, restricted to a single value so the UI shows On/Off (Sakana

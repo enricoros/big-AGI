@@ -183,7 +183,7 @@ export function aixToOpenAIResponses(
       const webSearchTool: TRequestTool = model.id.includes('-deep-research') ? {
         type: 'web_search_preview', // HOTFIX for deep research models, which only seem to support the outdated 'web_search_preview' tool
       } : isDialectSakana ? {
-        type: 'web_search', // [Sakana.ai] bare tool only - advanced options (context size, location, access) are not supported
+        type: 'web_search', // [Sakana.ai] bare tool - context size is tolerated since ~2026-07 but undocumented (location/access unverified), so keep emitting bare
       } : {
         type: 'web_search',
         search_context_size: model.vndOaiWebSearchContext ?? undefined,
