@@ -12,10 +12,11 @@ import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappin
 export type LlmsSakanaAIModelId = typeof _sakanaKnownModels[number]['idPrefix'];
 
 
-// [Sakana.ai] Models List API schema - observed at https://api.sakana.ai/v1/models (2026-06-23).
-// The list returns only id/object/created/description/owned_by - NO capabilities or pricing - so all
-// caps/pricing come from the manual mappings below; the API `description` is the unknown-model fallback.
-// (`created` is a constant placeholder across all models, so it is NOT used to derive a pubDate.)
+// [Sakana.ai] Models List API schema - observed at https://api.sakana.ai/v1/models (2026-07-20).
+// The list returns only id/object/created/owned_by - NO capabilities or pricing - so all caps/pricing
+// come from the manual mappings below; `description` (returned until ~2026-06) is kept as a tolerated
+// field and unknown-model fallback. (`created` now varies per model but does not track launch dates -
+// e.g. 'fugu' reports 2026-06-16 vs its 2026-06-22 launch - so it is NOT used to derive a pubDate.)
 const _wireSakanaAIModelItemSchema = z.object({
   id: z.string(), // only strictly required field
   object: z.string().nullish(),
@@ -48,6 +49,15 @@ const _fuguParamSpecs = [
 // Common Fugu interfaces. LLM_IF_OAI_Responses: all Fugu models are driven via the Responses API (see chatGenerate.dispatch).
 const _fuguUltraInterfaces = [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching];
 
+// [Sakana.ai] Fugu Cyber tiered PAYG pricing (USD per 1M tokens), boundary at 272K input tokens.
+// Source: https://console.sakana.ai/pricing (2026-07-20) - listed there as 'fugu-cyber-v1.0'; the API
+// serves it as 'fugu-cyber'. PAYG-only: not included in the subscription tiers.
+const _fuguCyberPrice: ModelDescriptionSchema['chatPrice'] = {
+  input: [{ upTo: 272000, price: 6 }, { upTo: null, price: 12 }],
+  output: [{ upTo: 272000, price: 36 }, { upTo: null, price: 54 }],
+  cache: { cType: 'oai-ac', read: [{ upTo: 272000, price: 0.6 }, { upTo: null, price: 1.2 }] },
+};
+
 const _sakanaKnownModels = llmsDefineManualMappings([
   // Fugu Ultra - dated snapshot (pinnable). Same capabilities/pricing as the floating 'fugu-ultra'.
   {
@@ -70,6 +80,18 @@ const _sakanaKnownModels = llmsDefineManualMappings([
     parameterSpecs: _fuguParamSpecs,
     chatPrice: _fuguUltraPrice,
     pubDate: '20260622',
+  },
+  // Fugu Cyber - cybersecurity-specialized orchestrator, same interface set/params as Ultra. Access-gated:
+  // non-approved API keys see it in the models list but get a permission_error (with the request form URL) on use.
+  {
+    idPrefix: 'fugu-cyber',
+    label: 'Sakana Fugu Cyber',
+    description: 'Orchestrator specialized for cybersecurity reasoning: security analysis, vulnerability research, threat investigation. 1M context. Requires access approval from Sakana; pay-as-you-go billing only.',
+    contextWindow: 1000000,
+    interfaces: _fuguUltraInterfaces,
+    parameterSpecs: _fuguParamSpecs,
+    chatPrice: _fuguCyberPrice,
+    pubDate: '20260721',
   },
   // Fugu - fast orchestration mini. Variable pricing: bills at the underlying routed model's standard rate (unpublished), so left unpriced.
   {
@@ -126,6 +148,6 @@ export function sakanaAIModelsToModelDescriptions(wireModels: unknown): ModelDes
     }));
   }
 
-  // stable sort by id: 'fugu' < 'fugu-ultra' < 'fugu-ultra-20260615'
+  // stable sort by id: 'fugu' < 'fugu-cyber' < 'fugu-ultra' < 'fugu-ultra-20260615'
   return descriptions.sort((a, b) => a.id.localeCompare(b.id));
 }
