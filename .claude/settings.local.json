@@ -40,10 +40,6 @@
       "mcp__chrome-devtools",
       "mcp__github",
       "mcp__ide__getDiagnostics"
-    ],
-    "deny": [
-      "Read(node_modules)",
-      "Read(node_modules/**)"
     ]
   }
 }
