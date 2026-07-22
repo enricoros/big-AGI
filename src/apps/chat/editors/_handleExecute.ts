@@ -14,6 +14,7 @@ import { _handleExecuteCommand, RET_NO_CMD } from './_handleExecuteCommand';
 import { runImageGenerationUpdatingState } from './image-generate';
 import { runPersonaOnConversationHead } from './chat-persona';
 import { runReActUpdatingState } from './react-tangent';
+import { runSLMUpdatingState } from './slm-tangent';
 
 
 export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversationId: DConversationId, executeCallerNameDebug: string) {
@@ -101,6 +102,9 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
       const reactPrompt = firstFragment.part.text;
       cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(`/react ${reactPrompt}`), true);
       return await runReActUpdatingState(cHandler, reactPrompt, chatLLMId, lastMessage.id);
+
+    case 'slm-content':
+      return await runSLMUpdatingState(cHandler, initialHistory, chatLLMId);
 
     default:
       console.log('Chat execute: issue running', chatExecuteMode, conversationId, lastMessage);
