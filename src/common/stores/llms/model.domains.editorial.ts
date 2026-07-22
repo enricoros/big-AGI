@@ -72,6 +72,7 @@ export const EditorialDefaults = {
     { vendor: 'openrouter', modelId: 'openai/gpt-5.6-sol' },
     { vendor: 'openai',     modelId: 'gpt-5.5' },
     { vendor: 'openrouter', modelId: 'openai/gpt-5.5' },
+    { vendor: 'googleai',   modelId: 'models/gemini-3.6-flash' }, // 2026-07-21 GA - newest Flash flagship, above 3.5 Flash (Elo 1485 vs 1476, cheaper output)
     { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-6' },
     { vendor: 'googleai',   modelId: 'models/gemini-3.1-pro-preview' },
@@ -85,6 +86,8 @@ export const EditorialDefaults = {
   ],
 
   codeApply: [
+    { vendor: 'googleai',   modelId: 'models/gemini-3.6-flash' }, // 2026-07-21 GA - "improved code/agentic planning" + token efficiency over 3.5 Flash
+    { vendor: 'openrouter', modelId: 'google/gemini-3.6-flash' },
     { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash' },
     { vendor: 'openrouter', modelId: 'google/gemini-3.5-flash' },
     { vendor: 'openai',     modelId: 'gpt-5.3-codex' },
@@ -111,9 +114,11 @@ export const EditorialDefaults = {
     { vendor: 'openai',     modelId: 'gpt-5.4-mini' },
     { vendor: 'openrouter', modelId: 'openai/gpt-5.4-mini' },
     { vendor: 'openai',     modelId: 'gpt-5.4-nano' },
+    { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash-lite' }, // 2026-07-21 GA - "low-latency subagent for high-volume automation" (Elo 1459 vs 3.1FL's 1432; slightly pricier at $0.30/$2.50 vs $0.25/$1.50)
+    { vendor: 'openrouter', modelId: 'google/gemini-3.5-flash-lite' },
     { vendor: 'googleai',   modelId: 'models/gemini-3.1-flash-lite' },
     { vendor: 'openrouter', modelId: 'google/gemini-3.1-flash-lite' },
-    { vendor: 'googleai',   modelId: 'models/gemini-2.5-flash-lite' },
+    { vendor: 'googleai',   modelId: 'models/gemini-2.5-flash-lite' }, // deprecated 2026-07-22, kept as deep fallback
     { vendor: 'anthropic',  modelId: 'claude-haiku-4-5-20251001' },
     { vendor: 'bedrock',    modelId: 'us.anthropic.claude-haiku-4-5-20251001-v1:0' },
     { vendor: 'bedrock',    modelId: 'global.anthropic.claude-haiku-4-5-20251001-v1:0' },
@@ -126,6 +131,8 @@ export const EditorialDefaults = {
   ],
 
   imageCaption: [
+    { vendor: 'googleai',   modelId: 'models/gemini-3.6-flash' }, // 2026-07-21 GA - vision, cheaper output than 3.5 Flash
+    { vendor: 'openrouter', modelId: 'google/gemini-3.6-flash' },
     { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash' },
     { vendor: 'openrouter', modelId: 'google/gemini-3.5-flash' },
     { vendor: 'anthropic',  modelId: 'claude-sonnet-4-6' },
