@@ -8,6 +8,18 @@
     "gemini-thinking-level": ["minimal","low","medium","high"],
     "temperature-range": [0,2]
   },
+  "models/gemini-3.5-flash-lite": {
+    "fn": ["auto","required","roundtrip"],
+    "gemini-thinking-budget": [1024,16384,24576,32768,65535],
+    "gemini-thinking-level": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-3.6-flash": {
+    "fn": ["auto","required","roundtrip"],
+    "gemini-thinking-budget": [1024,16384,24576,32768,65535],
+    "gemini-thinking-level": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
   "models/gemini-3.1-pro-preview": {
     "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget": [1024,16384,24576,32768,65535],
