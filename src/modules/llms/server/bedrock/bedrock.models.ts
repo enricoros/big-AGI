@@ -401,10 +401,13 @@ function _bedrockModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema)
       || a.label.localeCompare(b.label);
 
   // --- Anthropic: family > class > variant > region ---
-  const familyPrecedence = ['-fable-5', '-mythos-5', '-4-8', '-4-7', '-4-6', '-4-5-', '-4-1-', '-4-', '-3-7-', '-3-5-', '-3-'];
-  const classPrecedence = ['-opus-', '-sonnet-', '-haiku-'];
+  const familyPrecedence: string[][] = [
+    ['-fable-5', '-mythos-5', '-opus-5', '-sonnet-5', '-haiku-5'], // Claude 5 gen
+    ['-4-8'], ['-4-7'], ['-4-6'], ['-4-5-'], ['-4-1-'], ['-4-'], ['-3-7-'], ['-3-5-'], ['-3-'],
+  ];
+  const classPrecedence = ['-fable-', '-mythos-', '-opus-', '-sonnet-', '-haiku-'];
 
-  const getFamilyIdx = (id: string) => familyPrecedence.findIndex(f => id.includes(f));
+  const getFamilyIdx = (id: string) => familyPrecedence.findIndex(fam => fam.some(f => id.includes(f)));
   const getClassIdx = (id: string) => classPrecedence.findIndex(c => id.includes(c));
 
   const familyA = getFamilyIdx(aId);

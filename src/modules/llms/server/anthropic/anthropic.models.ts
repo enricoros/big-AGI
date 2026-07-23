@@ -311,6 +311,40 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     benchmark: { cbaElo: 1510 + 1 }, // (no arena data yet) assuming: claude-fable-5 + 1
   },
 
+  // Claude Opus 5 - PRE-WIRED, NOT YET RELEASED (as of 2026-07-23): this entry is DORMANT until the
+  // Anthropic API lists the model (the dispatch only maps /v1/models results, hardcoded-only defs never
+  // surface; in dev/staging this shows as a 'stale model defs' log line until launch - expected).
+  // ID source: 'claude-opus-5' spotted on Google Vertex AI Model Garden + quotas catalog 2026-07-14
+  // (codename 'Honeycomb EAP', briefly in Cursor's picker 2026-07-09); launch rumored 2026-07-23,
+  // window mid-July to early Aug 2026. Probed 2026-07-23: /v1/models does not list it and
+  // count_tokens/retrieve return clean not_found_error (no reserved-ID signal yet).
+  {
+    id: 'claude-opus-5',
+    label: 'Claude Opus 5',
+    pubDate: '20260723', // rumored launch date - UPDATE at launch (API created_at only feeds `created`, not pubDate)
+    description: 'Most capable Opus-tier model for complex reasoning and agentic coding',
+    contextWindow: 1_000_000, // leak-confirmed 1M; API max_input_tokens is authoritative on fuse anyway
+    maxCompletionTokens: 128000, // assumed (all 4.7+ and Claude 5 gen models); API max_tokens is authoritative on fuse
+    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch], // reasoning on base: assumes Claude 5 gen adaptive-ON default
+    parameterSpecs: [
+      // FORCE adaptive: valid in both possible worlds - Fable-style (always-on, 'disabled' returns 400) and
+      // Sonnet-5-style ('disabled' allowed). If launch confirms 'disabled' is allowed, split into a
+      // non-thinking base + '(Adaptive)' thinking variant like Sonnet 5 / Opus 4.8.
+      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }, // xhigh leak-confirmed; verify full set vs API capabilities at launch
+      ...ANT_TOOLS_DYNAMIC,
+    ],
+    // PRE-RELEASE ESTIMATES - VERIFY EVERYTHING AT LAUNCH (run llms:update-models-anthropic):
+    // - Pricing GUESSED at Opus-tier $5/$25 (constant across Opus 4.5/4.6/4.7/4.8; Fable 5 sits above at $10/$50).
+    // - Leaks: per-turn controls, safety fallbacks (flagged prompts reportedly route to Opus 4.8 - suggests
+    //   Fable-5-style refusal classifiers + `fallbacks` beta), positioned to REPLACE Opus 4.8,
+    //   'performance approaching Fable 5'. No system card, pricing, or official ID published yet.
+    // - Assumed to inherit Opus 4.7/4.8 constraints: sampling params rejected, no prefill, budget_tokens 400.
+    // - Fast mode unknown at launch (4.8 has fast_2x); add llmVndAntInfSpeed only once confirmed.
+    chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
+    benchmark: { cbaElo: 1515 }, // pre-release estimate: above Opus 4.8 thinking (1512), 'approaching' Fable 5 per leaks
+  },
+
   // Claude Sonnet 5 (Claude 5 gen) - unlike Fable/Mythos 5, thinking CAN be disabled, so it keeps a base + thinking variant (like Opus 4.7/4.8)
   {
     id: 'claude-sonnet-5', // Active - 2026-06-29

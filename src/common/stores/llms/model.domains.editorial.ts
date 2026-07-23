@@ -60,6 +60,13 @@ export const EditorialDefaults = {
     // { vendor: 'bedrock',    modelId: 'us.anthropic.claude-fable-5' },
     // { vendor: 'bedrock',    modelId: 'global.anthropic.claude-fable-5' },
     // { vendor: 'openrouter', modelId: 'anthropic/claude-fable-5' },
+    // PRE-RELEASE 2026-07-23: claude-opus-5 pre-wired (leaked ID, launch imminent; positioned to replace Opus 4.8).
+    // Dormant until services list the model; picks below activate day-0. No '-thinking' Bedrock suffix: the pre-wired
+    // def is a single always-adaptive entry (no variant) - revisit if launch confirms a base/thinking split.
+    { vendor: 'anthropic',  modelId: 'claude-opus-5' },
+    { vendor: 'bedrock',    modelId: 'us.anthropic.claude-opus-5' },
+    { vendor: 'bedrock',    modelId: 'global.anthropic.claude-opus-5' },
+    { vendor: 'openrouter', modelId: 'anthropic/claude-opus-5' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
     { vendor: 'bedrock',    modelId: 'us.anthropic.claude-opus-4-8-thinking' },
     { vendor: 'bedrock',    modelId: 'global.anthropic.claude-opus-4-8-thinking' },
@@ -98,6 +105,7 @@ export const EditorialDefaults = {
     { vendor: 'bedrock',    modelId: 'us.anthropic.claude-sonnet-4-6' },
     { vendor: 'bedrock',    modelId: 'global.anthropic.claude-sonnet-4-6' },
     { vendor: 'openrouter', modelId: 'anthropic/claude-sonnet-4-6' },
+    { vendor: 'anthropic',  modelId: 'claude-opus-5' }, // PRE-RELEASE 2026-07-23: dormant until listed
     { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-7' },
     { vendor: 'xai',        modelId: 'grok-4.5' }, // xAI: 'Code: Grok 4.5' (docs 2026-07-08)
@@ -136,6 +144,7 @@ export const EditorialDefaults = {
     { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash' },
     { vendor: 'openrouter', modelId: 'google/gemini-3.5-flash' },
     { vendor: 'anthropic',  modelId: 'claude-sonnet-4-6' },
+    { vendor: 'anthropic',  modelId: 'claude-opus-5' }, // PRE-RELEASE 2026-07-23: dormant until listed
     { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-7' },
     { vendor: 'openrouter', modelId: 'anthropic/claude-sonnet-4-6' },

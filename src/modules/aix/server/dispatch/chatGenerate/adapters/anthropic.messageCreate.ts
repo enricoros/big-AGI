@@ -204,7 +204,8 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   }
 
   // [Anthropic, 2026-06-09] Fable 5 / Mythos 5: adaptive is the only thinking mode - 'enabled' (budget_tokens) and 'disabled' return 400
-  const hotFixAdaptiveThinkingOnlyModel = /claude-(fable|mythos)-5/.test(model.id);
+  // PRE-RELEASE 2026-07-23: 'opus' matches the leaked claude-opus-5 SPECULATIVELY (fail-safe if Fable-style; harmless if 4.8-style; no overlap with claude-opus-4-x) - re-verify at launch
+  const hotFixAdaptiveThinkingOnlyModel = /claude-(fable|mythos|opus)-5/.test(model.id);
 
   // HOTFIX: Fable/Mythos 5 reject forced tool use: 400 'tool_choice forces tool use is not compatible with this model.'
   // (model-level, regardless of thinking config). Downgrade to 'auto' + a system hint - empirically the model
