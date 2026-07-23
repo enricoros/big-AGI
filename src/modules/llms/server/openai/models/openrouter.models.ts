@@ -80,6 +80,17 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     return null;
   }
 
+  // drop ':batch' variants: async batch tiers (50%-off resold vendor batch APIs) can't serve
+  // synchronous chat; they'd list as half-price chat models and fail or queue on send.
+  // OR briefly published them on 2026-07-22 (17 openai/*:batch) then withdrew - expected to return.
+  // When OR relaunches batch for real, do NOT just remove this gate - re-verify the semantics first:
+  // - if batch stays async (jobs API / delayed delivery), keep the gate; proper support means a batch
+  //   job surface (submit/poll/retrieve) outside the chat list, a product feature not a parser change
+  // - if OR ships them as sync-callable discounted endpoints, replace the gate with a visible variant:
+  //   '(batch)' label suffix + hidden-by-default + latency note, so users opt in knowingly
+  if (model.id.endsWith(':batch'))
+    return null;
+
 
   // -- Label --
 
