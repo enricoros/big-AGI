@@ -12,7 +12,7 @@ import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappin
 export type LlmsSakanaAIModelId = typeof _sakanaKnownModels[number]['idPrefix'];
 
 
-// [Sakana.ai] Models List API schema - observed at https://api.sakana.ai/v1/models (2026-07-20).
+// [Sakana.ai] Models List API schema - observed at https://api.sakana.ai/v1/models (2026-07-23).
 // The list returns only id/object/created/owned_by - NO capabilities or pricing - so all caps/pricing
 // come from the manual mappings below; `description` (returned until ~2026-06) is kept as a tolerated
 // field and unknown-model fallback. (`created` now varies per model but does not track launch dates -
@@ -35,7 +35,8 @@ const _fuguUltraPrice: ModelDescriptionSchema['chatPrice'] = {
   cache: { cType: 'oai-ac', read: [{ upTo: 272000, price: 0.5 }, { upTo: null, price: 1 }] },
 };
 
-// Fugu params (Responses API). Reasoning effort: validation enumerates 'high' / 'xhigh' / 'max' (2026-07-20);
+// Fugu params (Responses API). Reasoning effort: validation enumerates 'high' / 'xhigh' / 'max' (re-verified
+// 2026-07-23 on both fugu-ultra-v1.0 and -v1.1);
 // 'max' (rejected pre-July) now executes but is a compat alias currently equal to 'xhigh', so it is not
 // offered as a duplicate level. Web search reuses the OpenAI Responses 'web_search' hosted tool: since
 // ~2026-07 Sakana tolerates the context-size value (effect undocumented) but the responses adapter still
@@ -52,35 +53,64 @@ const _fuguUltraInterfaces = [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_
 
 // [Sakana.ai] Fugu Cyber tiered PAYG pricing (USD per 1M tokens), boundary at 272K input tokens.
 // Source: https://console.sakana.ai/pricing (2026-07-20) - listed there as 'fugu-cyber-v1.0'; the API
-// serves it as 'fugu-cyber'. PAYG-only: not included in the subscription tiers.
+// serves it as 'fugu-cyber' ONLY (2026-07-23: requesting 'fugu-cyber-v1.0' returns "Model not found",
+// unlike the Ultra family where the versioned IDs are real). PAYG-only: not included in the subscription tiers.
 const _fuguCyberPrice: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 272000, price: 6 }, { upTo: null, price: 12 }],
   output: [{ upTo: 272000, price: 36 }, { upTo: null, price: 54 }],
   cache: { cType: 'oai-ac', read: [{ upTo: 272000, price: 0.6 }, { upTo: null, price: 1.2 }] },
 };
 
+// Fugu Ultra versioning: Sakana switched to '-vX.Y' pinned IDs (API-registered 2026-07-23; sakana.ai/fugu:
+// "fugu-ultra-v1.0 (previously fugu-ultra-20260615)"). Cache-identity probes (2026-07-23, cross-model prompt-cache
+// hits/misses): 'fugu-ultra-v1.0' IS the 20260615 snapshot, and the floating 'fugu-ultra' currently IS 'v1.1'.
+// Both versions share the same pricing (console.sakana.ai/pricing lists them under one Fugu Ultra card).
 const _sakanaKnownModels = llmsDefineManualMappings([
-  // Fugu Ultra - dated snapshot (pinnable). Same capabilities/pricing as the floating 'fugu-ultra'.
+  // Fugu Ultra v1.1 - latest pinned version (registered 2026-07-22 PT; on the pricing page, not yet announced).
   {
-    idPrefix: 'fugu-ultra-20260615',
-    label: 'Sakana Fugu Ultra (2026-06-15)',
-    description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning. Dated snapshot. 1M context.',
+    idPrefix: 'fugu-ultra-v1.1',
+    label: 'Sakana Fugu Ultra v1.1',
+    description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning. Latest pinned version (July 2026 update). 1M context.',
+    contextWindow: 1000000,
+    interfaces: _fuguUltraInterfaces,
+    parameterSpecs: _fuguParamSpecs,
+    chatPrice: _fuguUltraPrice,
+    pubDate: '20260722',
+  },
+  // Fugu Ultra v1.0 - pinned version; same underlying model as the legacy 'fugu-ultra-20260615' ID.
+  {
+    idPrefix: 'fugu-ultra-v1.0',
+    label: 'Sakana Fugu Ultra v1.0',
+    description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning. Pinned version, previously served as fugu-ultra-20260615. 1M context.',
     contextWindow: 1000000,
     interfaces: _fuguUltraInterfaces,
     parameterSpecs: _fuguParamSpecs,
     chatPrice: _fuguUltraPrice,
     pubDate: '20260615',
   },
-  // Fugu Ultra - floating alias (latest).
+  // Fugu Ultra - legacy dated ID, superseded by 'fugu-ultra-v1.0' (same model); still served, hidden from the default list.
   {
-    idPrefix: 'fugu-ultra',
-    label: 'Sakana Fugu Ultra',
-    description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning - maximum answer quality on hard tasks. 1M context.',
+    idPrefix: 'fugu-ultra-20260615',
+    label: 'Sakana Fugu Ultra (2026-06-15)',
+    description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning. Legacy dated ID, superseded by fugu-ultra-v1.0 (same model). 1M context.',
     contextWindow: 1000000,
     interfaces: _fuguUltraInterfaces,
     parameterSpecs: _fuguParamSpecs,
     chatPrice: _fuguUltraPrice,
-    pubDate: '20260622',
+    pubDate: '20260615',
+    isLegacy: true,
+    hidden: true,
+  },
+  // Fugu Ultra - floating alias (latest; currently = v1.1, cache-identity verified 2026-07-23).
+  {
+    idPrefix: 'fugu-ultra',
+    label: 'Sakana Fugu Ultra',
+    description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning - maximum answer quality on hard tasks. Tracks the latest Fugu Ultra version. 1M context.',
+    contextWindow: 1000000,
+    interfaces: _fuguUltraInterfaces,
+    parameterSpecs: _fuguParamSpecs,
+    chatPrice: _fuguUltraPrice,
+    pubDate: '20260722',
   },
   // Fugu Cyber - cybersecurity-specialized orchestrator, same interface set/params as Ultra. Access-gated:
   // non-approved API keys see it in the models list but get a permission_error (with the request form URL) on use.
@@ -149,6 +179,6 @@ export function sakanaAIModelsToModelDescriptions(wireModels: unknown): ModelDes
     }));
   }
 
-  // stable sort by id: 'fugu' < 'fugu-cyber' < 'fugu-ultra' < 'fugu-ultra-20260615'
+  // stable sort by id: 'fugu' < 'fugu-cyber' < 'fugu-ultra' < 'fugu-ultra-20260615' < 'fugu-ultra-v1.0' < 'fugu-ultra-v1.1'
   return descriptions.sort((a, b) => a.id.localeCompare(b.id));
 }
