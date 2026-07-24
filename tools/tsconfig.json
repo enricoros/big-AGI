@@ -1,10 +1,17 @@
 {
+  /* The node-side type-check project (2nd leg of `npm run tsclint`): tools/ scripts plus the
+     src *.test.ts files, which the root tsconfig excludes (they must not enter the Next build
+     graph) and which run under tsx (`npm test`) just like the tools. */
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    /* Note: inherits the browser lib ("dom") from the root config on purpose: tools import
+       isomorphic src/ code (CSF design) that legitimately uses fetch/DOM types (HeadersInit,
+       pwaUtils, ...). A DOM-free tools project was tried 2026-07 and fails on 22 shared files. */
     "types": ["node"]
   },
   "include": [
-    "**/*.ts"
+    "**/*.ts",
+    "../src/**/*.test.ts"
   ],
   "exclude": []
 }
