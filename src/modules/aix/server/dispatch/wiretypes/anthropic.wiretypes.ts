@@ -1079,8 +1079,10 @@ export namespace AnthropicWire_API_Message_Create {
     top_p: z.number().optional(),
 
     /**
-     * [Anthropic, fast-mode-2026-02-01] Accelerated inference mode.
-     * Preview/waitlist. Only supported on Claude Opus 4.6/4.7/4.8 (4.6 tier deprecated 2026-05-28; not available on Fable 5).
+     * [Anthropic, fast-mode-2026-02-01] Accelerated inference mode (research preview, waitlist; up to 2.5x OTPS at 2x price).
+     * Only supported on Claude Opus 5 and Opus 4.8 (2026-07-24: Opus 4.7 returns 400; Opus 4.6 silently runs standard,
+     * see `usage.speed`). Not available on Fable 5 / Sonnet 5, Batch API, Priority Tier, or partner clouds.
+     * Note: switching speeds invalidates the prompt cache - requests at different speeds do not share cached prefixes.
      */
     speed: z.enum(['fast']).optional(),
 
@@ -1151,6 +1153,9 @@ export namespace AnthropicWire_API_Message_Create {
         tool_search_requests: z.number().optional(), // [Anthropic, 2025-11-24] Tool Search Tool usage
       }).nullish(),
       service_tier: z.enum(['standard', 'priority', 'batch']).nullish(),
+      // [Anthropic, fast-mode-2026-02-01] actual speed used - present ONLY when the request included `speed`
+      // (probe-verified 2026-07-24: absent on standard requests; Opus 4.6 reports 'standard' on its silent fast->standard fallback)
+      speed: z.enum(['fast', 'standard']).nullish(),
       inference_geo: z.string().nullish(),
     }),
 

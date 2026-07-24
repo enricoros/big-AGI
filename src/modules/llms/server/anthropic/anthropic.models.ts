@@ -136,8 +136,8 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
       { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive */ },
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'max'] },
       // fast mode REMOVED by Anthropic 2026-06-29: speed:'fast' no longer errors, but silently runs at standard
-      // speed/price (no usage.speed field to detect this client-side - see anthropic.wiretypes.ts). Toggle dropped
-      // here so the UI doesn't advertise a dead control. If Anthropic restores it, re-add 'fast_6x'.
+      // speed/price (usage.speed reports 'standard' - probe-verified 2026-07-24, parsed in anthropic.wiretypes.ts).
+      // Toggle dropped here so the UI doesn't advertise a dead control. If Anthropic restores it, re-add 'fast_6x'.
       ...ANT_TOOLS_DYNAMIC,
     ],
     benchmark: { cbaElo: 1502 }, // claude-opus-4-6-thinking
@@ -425,8 +425,8 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     parameterSpecs: [
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'max'] },
       // fast mode REMOVED by Anthropic 2026-06-29: speed:'fast' no longer errors, but silently runs at standard
-      // speed/price (no usage.speed field to detect this client-side - see anthropic.wiretypes.ts). Toggle dropped
-      // here so the UI doesn't advertise a dead control. If Anthropic restores it, re-add 'fast_6x'.
+      // speed/price (usage.speed reports 'standard' - probe-verified 2026-07-24, parsed in anthropic.wiretypes.ts).
+      // Toggle dropped here so the UI doesn't advertise a dead control. If Anthropic restores it, re-add 'fast_6x'.
       ...ANT_TOOLS_DYNAMIC,
     ],
     // Opus 4.6: flat $5/$25 pricing (1M context GA at standard pricing since 2026-03-13, no opt-in required)
