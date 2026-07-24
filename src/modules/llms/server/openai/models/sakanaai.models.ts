@@ -65,12 +65,31 @@ const _fuguCyberPrice: ModelDescriptionSchema['chatPrice'] = {
 // "fugu-ultra-v1.0 (previously fugu-ultra-20260615)"). Cache-identity probes (2026-07-23, cross-model prompt-cache
 // hits/misses): 'fugu-ultra-v1.0' IS the 20260615 snapshot, and the floating 'fugu-ultra' currently IS 'v1.1'.
 // Both versions share the same pricing (console.sakana.ai/pricing lists them under one Fugu Ultra card).
+//
+// Array order = display order (matching is longest-prefix, so order is free): the v-pins are the
+// canonical visible entries; the floating alias and the legacy dated ID are hidden duplicates of the
+// pins; Cyber leads but stays hidden until Sakana approves the key. When Sakana repoints the floating
+// 'fugu-ultra' (next vX.Y), re-verify with the cache-identity probe and move the symLink target.
 const _sakanaKnownModels = llmsDefineManualMappings([
+  // Fugu Cyber - cybersecurity-specialized orchestrator, same interface set/params as Ultra. Access-gated:
+  // non-approved API keys see it in the models list but get a permission_error (with the request form URL)
+  // on use - hence hidden by default; unhide after Sakana approves the key.
+  {
+    idPrefix: 'fugu-cyber',
+    label: 'Sakana Fugu Cyber',
+    description: 'Orchestrator specialized for cybersecurity reasoning: security analysis, vulnerability research, threat investigation. 1M context. Requires access approval from Sakana; pay-as-you-go billing only.',
+    contextWindow: 1000000,
+    interfaces: _fuguUltraInterfaces,
+    parameterSpecs: _fuguParamSpecs,
+    chatPrice: _fuguCyberPrice,
+    pubDate: '20260721',
+    hidden: true,
+  },
   // Fugu Ultra v1.1 - latest pinned version (registered 2026-07-22 PT; on the pricing page, not yet announced).
   {
     idPrefix: 'fugu-ultra-v1.1',
     label: 'Sakana Fugu Ultra v1.1',
-    description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning. Latest pinned version (July 2026 update). 1M context.',
+    description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning - maximum answer quality on hard tasks. Latest pinned version (July 2026 update). 1M context.',
     contextWindow: 1000000,
     interfaces: _fuguUltraInterfaces,
     parameterSpecs: _fuguParamSpecs,
@@ -101,29 +120,6 @@ const _sakanaKnownModels = llmsDefineManualMappings([
     isLegacy: true,
     hidden: true,
   },
-  // Fugu Ultra - floating alias (latest; currently = v1.1, cache-identity verified 2026-07-23).
-  {
-    idPrefix: 'fugu-ultra',
-    label: 'Sakana Fugu Ultra',
-    description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning - maximum answer quality on hard tasks. Tracks the latest Fugu Ultra version. 1M context.',
-    contextWindow: 1000000,
-    interfaces: _fuguUltraInterfaces,
-    parameterSpecs: _fuguParamSpecs,
-    chatPrice: _fuguUltraPrice,
-    pubDate: '20260722',
-  },
-  // Fugu Cyber - cybersecurity-specialized orchestrator, same interface set/params as Ultra. Access-gated:
-  // non-approved API keys see it in the models list but get a permission_error (with the request form URL) on use.
-  {
-    idPrefix: 'fugu-cyber',
-    label: 'Sakana Fugu Cyber',
-    description: 'Orchestrator specialized for cybersecurity reasoning: security analysis, vulnerability research, threat investigation. 1M context. Requires access approval from Sakana; pay-as-you-go billing only.',
-    contextWindow: 1000000,
-    interfaces: _fuguUltraInterfaces,
-    parameterSpecs: _fuguParamSpecs,
-    chatPrice: _fuguCyberPrice,
-    pubDate: '20260721',
-  },
   // Fugu - fast orchestration mini. Variable pricing: bills at the underlying routed model's standard rate (unpublished), so left unpriced.
   {
     idPrefix: 'fugu',
@@ -133,6 +129,14 @@ const _sakanaKnownModels = llmsDefineManualMappings([
     interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
     parameterSpecs: _fuguParamSpecs,
     pubDate: '20260622',
+  },
+  // Fugu Ultra - floating alias (currently = v1.1, cache-identity verified 2026-07-23): symlinked to the
+  // pin so the duplicate stays out of the picker but the alias relationship is visible in the models list.
+  {
+    idPrefix: 'fugu-ultra',
+    label: 'Sakana Fugu Ultra',
+    symLink: 'fugu-ultra-v1.1',
+    description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning. Tracks the latest Fugu Ultra version. 1M context.',
   },
 ]);
 
@@ -179,6 +183,13 @@ export function sakanaAIModelsToModelDescriptions(wireModels: unknown): ModelDes
     }));
   }
 
-  // stable sort by id: 'fugu' < 'fugu-cyber' < 'fugu-ultra' < 'fugu-ultra-20260615' < 'fugu-ultra-v1.0' < 'fugu-ultra-v1.1'
-  return descriptions.sort((a, b) => a.id.localeCompare(b.id));
+  // sort into editorial display order (= _sakanaKnownModels array order; unknown models sort at their
+  // family slot via prefix, ties by id) - the client preserves the service's list order
+  const _rank = (id: string) => {
+    const exact = _sakanaKnownModels.findIndex(known => id === known.idPrefix);
+    if (exact !== -1) return exact;
+    const prefix = _sakanaKnownModels.findIndex(known => id.startsWith(known.idPrefix));
+    return prefix === -1 ? _sakanaKnownModels.length : prefix;
+  };
+  return descriptions.sort((a, b) => _rank(a.id) - _rank(b.id) || a.id.localeCompare(b.id));
 }
