@@ -12,6 +12,7 @@ export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefi
 // - Pricing: https://www.alibabacloud.com/help/en/model-studio/model-pricing (International/Singapore, USD per 1M tokens)
 // - Cache:   https://www.alibabacloud.com/help/en/model-studio/context-cache (implicit hit = 20% of input; explicit create 125% / hit 10%; deepseek-v4-pro excepted)
 // 2026-07-24 pass: qwen3.7-flash NEW (in API 07-24, absent from docs - caps live-probed, pricing GUESSED); GLM-5.2 + Kimi K2.7 Code repriced;
+//   qwen3.8-max PRE-WIRED dormant (previewed 07-19, Token-Plan-only for now - see entry);
 //   still uncurated by policy: qwen3.5-122b-a10b (open 122B MoE, $0.4/$3.2), qwen3.6-27b, qwen3-coder-next/-flash (fallback-hidden).
 // NOTES:
 // - The live API returns only id/created/owned_by (no pricing/caps/context), so EVERYTHING here is editorial.
@@ -30,6 +31,21 @@ const _PS_Thinking: ModelDescriptionSchema['parameterSpecs'] = [
 const _knownAlibabaChatModels = llmsDefineManualMappings([
 
   // --- Qwen flagship / current generation ---
+  {
+    // PRE-WIRED 2026-07-24, DORMANT until the id appears in /v1/models: previewed 2026-07-19 as `qwen3.8-max-preview`,
+    // currently Token-Plan-only (API probe: access_denied; the -preview id would be regex-hidden anyway).
+    // Editorial caps from the announcement (2.4T sparse MoE, text/image/video, 1M context) - AT GA VERIFY:
+    // pricing (below = qwen3.7-max rates, GUESSED), maxCompletionTokens (max_tokens error probe), vision/thinking/fn probes, cache rule.
+    idPrefix: 'qwen3.8-max',
+    label: 'Qwen3.8 Max',
+    parameterSpecs: _PS_Thinking,
+    pubDate: '20260719',
+    description: 'Flagship 2.4T-parameter sparse MoE multimodal model with 1M context, thinking, and vision/video understanding.',
+    contextWindow: 1000000, // 1M (announced)
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    maxCompletionTokens: 65536, // GUESSED (= qwen3.7-max)
+    // chatPrice: { input: 2.50, output: 7.50, cache: { cType: 'oai-ac', read: 0.50 } }, // GUESSED (= qwen3.7-max rates) - RE-VERIFY AT GA
+  },
   {
     idPrefix: 'qwen3.7-max',
     label: 'Qwen3.7 Max',
