@@ -34,7 +34,6 @@ export const ModelVendorGroq: IModelVendor<DGroqServiceSettings, OpenAIAccessSch
     oaiKey: partialSetup?.groqKey || '',
     oaiOrg: '',
     oaiHost: '',
-    heliKey: '',
   }),
 
   // OpenAI transport ('Groq' dialect in 'access')

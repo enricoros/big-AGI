@@ -35,7 +35,6 @@ export const ModelVendorZAI: IModelVendor<DZAIServiceSettings, OpenAIAccessSchem
     oaiKey: partialSetup?.zaiKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.zaiHost || '',
-    heliKey: '',
   }),
 
   // OpenAI transport ('zai' dialect in 'access')

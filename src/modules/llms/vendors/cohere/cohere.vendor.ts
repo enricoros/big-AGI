@@ -35,7 +35,6 @@ export const ModelVendorCohere: IModelVendor<DCohereServiceSettings, OpenAIAcces
     oaiKey: partialSetup?.cohereKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.cohereHost || '',
-    heliKey: '',
   }),
 
   // OpenAI transport ('cohere' dialect in 'access')

@@ -33,7 +33,6 @@ export const ModelVendorSakanaAI: IModelVendor<DSakanaAIServiceSettings, OpenAIA
     oaiKey: partialSetup?.sakanaKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.sakanaHost || '',
-    heliKey: '',
   }),
 
   // OpenAI transport ('sakanaai' dialect in 'access')

@@ -48,7 +48,6 @@ export const ModelVendorAzure: IModelVendor<DAzureServiceSettings, OpenAIAccessS
     oaiKey: partialSetup?.azureKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.azureEndpoint || '',
-    heliKey: '',
   }),
 
   // OpenAI transport ('azure' dialect in 'access')

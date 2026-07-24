@@ -347,7 +347,6 @@ Configure 100s of AI models from 20+ providers:
 |:--------------|:---------------------------------------------------------------------------------------------------------------| 
 | Web Browse    | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
 | Web Search    | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
-| Observability | [Helicone](https://www.helicone.ai)                                                                            |
 
 ---
 

@@ -35,7 +35,6 @@ export const ModelVendorAlibaba: IModelVendor<DAlibabaServiceSettings, OpenAIAcc
     oaiKey: partialSetup?.alibabaOaiKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.alibabaOaiHost || '',
-    heliKey: '',
   }),
 
   // OpenAI transport ('alibaba' dialect in 'access')

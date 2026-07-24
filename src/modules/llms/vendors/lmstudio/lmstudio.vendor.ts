@@ -30,7 +30,6 @@ export const ModelVendorLMStudio: IModelVendor<DLMStudioServiceSettings, OpenAIA
     oaiKey: '',
     oaiOrg: '',
     oaiHost: partialSetup?.oaiHost || '',
-    heliKey: '',
   }),
 
   // OpenAI transport ('lmstudio' dialect in 'access')

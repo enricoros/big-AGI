@@ -37,7 +37,6 @@ export const ModelVendorMistral: IModelVendor<DMistralServiceSettings, OpenAIAcc
     oaiKey: partialSetup?.oaiKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.oaiHost || '',
-    heliKey: '',
   }),
 
   // OpenAI transport ('mistral' dialect in 'access')

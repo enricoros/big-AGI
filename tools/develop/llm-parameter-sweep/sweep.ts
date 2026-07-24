@@ -1439,7 +1439,6 @@ function createSingleVendorConfig(dialect: string, key: string, host?: string): 
         oaiKey: key,
         oaiOrg: '',
         oaiHost: host || '',
-        heliKey: '',
       } as any;
       break;
 
@@ -1448,7 +1447,6 @@ function createSingleVendorConfig(dialect: string, key: string, host?: string): 
         dialect: 'anthropic',
         anthropicKey: key,
         anthropicHost: host || null,
-        heliconeKey: null,
       } as any;
       break;
 
@@ -1513,7 +1511,7 @@ ${COLORS.bright}Config file format (SweepConfig):${COLORS.reset}
     "maxTokens": 128,
     "vendors": {
       "openai": {
-        "access": { "dialect": "openai", "oaiKey": "sk-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
+        "access": { "dialect": "openai", "oaiKey": "sk-...", "oaiOrg": "", "oaiHost": "" },
         "sweeps": ["temperature", "oai-reasoning-effort", "oai-verbosity"],
         "modelFilter": "gpt-4o",
         "baseModelOverrides": {}

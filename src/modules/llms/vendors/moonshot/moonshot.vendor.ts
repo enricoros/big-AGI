@@ -39,7 +39,6 @@ export const ModelVendorMoonshot: IModelVendor<DMoonshotServiceSettings, OpenAIA
     oaiKey: partialSetup?.moonshotKey || '',
     oaiOrg: '',
     oaiHost: '',
-    heliKey: '',
   }),
 
   // OpenAI transport ('moonshot' dialect in 'access')

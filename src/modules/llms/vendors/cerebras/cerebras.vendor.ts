@@ -37,7 +37,6 @@ export const ModelVendorCerebras: IModelVendor<DCerebrasServiceSettings, OpenAIA
     oaiKey: partialSetup?.cerebrasKey || '',
     oaiOrg: '',
     oaiHost: '',
-    heliKey: '',
   }),
 
   // OpenAI transport ('cerebras' dialect in 'access')

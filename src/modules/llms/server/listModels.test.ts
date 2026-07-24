@@ -155,7 +155,7 @@ async function expectOk(access: AixAPI_Access, minModels: number, label: string)
 // ---- per-dialect access shape (openai-compatible only) ----
 
 const openAIShape = (extra: Partial<Record<string, any>> = {}): any => ({
-  oaiKey: '', oaiOrg: '', oaiHost: '', heliKey: '', ...extra,
+  oaiKey: '', oaiOrg: '', oaiHost: '', ...extra,
 });
 
 
@@ -167,7 +167,7 @@ describe('listModels enumeration', () => {
 
   test('anthropic: live listing', { skip: skipIfMissing('ANTHROPIC_API_KEY') }, async () => {
     await expectOk(
-      { dialect: 'anthropic', anthropicKey: E.ANTHROPIC_API_KEY || '', anthropicHost: null, heliconeKey: null } as AixAPI_Access,
+      { dialect: 'anthropic', anthropicKey: E.ANTHROPIC_API_KEY || '', anthropicHost: null } as AixAPI_Access,
       1, 'anthropic/live',
     );
   });

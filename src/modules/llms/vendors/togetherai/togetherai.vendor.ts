@@ -38,7 +38,6 @@ export const ModelVendorTogetherAI: IModelVendor<DTogetherAIServiceSettings, Ope
     oaiKey: partialSetup?.togetherKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.togetherHost || '',
-    heliKey: '',
   }),
 
   // there is delay for Together Free API calls

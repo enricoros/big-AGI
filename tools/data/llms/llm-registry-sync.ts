@@ -829,7 +829,6 @@ function createSingleConfig(
         oaiKey: key,
         oaiOrg: '',
         oaiHost: host || '',
-        heliKey: '',
       } as any;
       break;
 
@@ -838,7 +837,6 @@ function createSingleConfig(
         dialect: 'anthropic',
         anthropicKey: key,
         anthropicHost: host || null,
-        heliconeKey: null,
       } as any;
       break;
 

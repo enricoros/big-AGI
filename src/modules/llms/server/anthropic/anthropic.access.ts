@@ -10,12 +10,11 @@ import { TRPCError } from '@trpc/server';
 
 import { env } from '~/server/env.server';
 
-import { llmsFixupHost, llmsHostnameMatches } from '../../shared/llm.isomorphic';
+import { llmsFixupHost } from '../../shared/llm.isomorphic';
 
 
 // configuration
 const DEFAULT_ANTHROPIC_HOST = 'api.anthropic.com';
-const DEFAULT_HELICONE_ANTHROPIC_HOST = 'anthropic.hconeai.com';
 
 /**
  * Centralized Anthropic API paths.
@@ -113,7 +112,6 @@ export const anthropicAccessSchema = z.object({
   clientSideFetch: z.boolean().optional(), // optional: backward compatibility from newer server version - can remove once all clients are updated
   anthropicKey: z.string().trim(),
   anthropicHost: z.string().trim().nullable(),
-  heliconeKey: z.string().trim().nullable(),
   anthropicInferenceGeo: z.string().trim().nullable().optional(), // [Anthropic, 2026-02-01] e.g. "us" for US-only inference, optional: for server backward-comp, and can be removed
 });
 
@@ -126,16 +124,7 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, 
     throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Anthropic API Key. Add it on the UI (Models Setup) or server side (your deployment).' });
 
   // API host
-  let anthropicHost = llmsFixupHost(access.anthropicHost || env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST, apiPath);
-
-  // Helicone for Anthropic
-  // https://docs.helicone.ai/getting-started/integration-method/anthropic
-  const heliKey = access.heliconeKey || env.HELICONE_API_KEY || false;
-  if (heliKey) {
-    if (!llmsHostnameMatches(anthropicHost, DEFAULT_ANTHROPIC_HOST) && !llmsHostnameMatches(anthropicHost, DEFAULT_HELICONE_ANTHROPIC_HOST))
-      throw new TRPCError({ code: 'BAD_REQUEST', message: 'The Helicone Anthropic Key has been provided, but the host is set to custom. Please fix it in the Models Setup page.' });
-    anthropicHost = `https://${DEFAULT_HELICONE_ANTHROPIC_HOST}`;
-  }
+  const anthropicHost = llmsFixupHost(access.anthropicHost || env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST, apiPath);
 
   // Beta features
   const betaFeatures = anthropicBetaFeatures(options);
@@ -151,7 +140,6 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, 
       // Beta features
       ...(betaFeatures.length && { 'anthropic-beta': betaFeatures.join(',') }),
       'X-API-Key': anthropicKey,
-      ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
     },
     url: anthropicHost + apiPath,
   };

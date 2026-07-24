@@ -5,13 +5,13 @@
   "maxTokens": 1024,
   "vendors": {
     "openai": {
-      "access": { "dialect": "openai", "oaiKey": "sk-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
+      "access": { "dialect": "openai", "oaiKey": "sk-...", "oaiOrg": "", "oaiHost": "" },
       "modelFilter": ["gpt-5", "o"],
       "sweeps": ["temperature", "oai-temperature-think-high", "oai-temperature-think-none", "oai-reasoning-effort", "oai-verbosity", "oai-image-generation", "oai-web-search"],
       "baseModelOverrides": { "maxTokens": 4096 }
     },
     "anthropic": {
-      "access": { "dialect": "anthropic", "anthropicKey": "sk-ant-...", "anthropicHost": null, "heliconeKey": null },
+      "access": { "dialect": "anthropic", "anthropicKey": "sk-ant-...", "anthropicHost": null },
       "sweeps": ["temperature", "ant-effort", "ant-thinking-budget"],
       "baseModelOverrides": { "maxTokens": 4096 }
     },
@@ -22,12 +22,12 @@
       "baseModelOverrides": { "maxTokens": 2048 }
     },
     "xai": {
-      "access": { "dialect": "xai", "oaiKey": "xai-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
+      "access": { "dialect": "xai", "oaiKey": "xai-...", "oaiOrg": "", "oaiHost": "" },
       "sweeps": ["temperature", "xai-reasoning-effort", "xai-web-search"],
       "baseModelOverrides": { "maxTokens": 2048 }
     },
     "openrouter": {
-      "access": { "dialect": "openrouter", "oaiKey": "sk-or-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
+      "access": { "dialect": "openrouter", "oaiKey": "sk-or-...", "oaiOrg": "", "oaiHost": "" },
       "modelFilter": ["anthropic/claude", "openai/gpt-5", "google/gemini"],
       "__AUTO_IGNORE_sweeps": ["temperature", "oai-reasoning-effort"]
     }

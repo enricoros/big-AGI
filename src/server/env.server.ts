@@ -102,10 +102,6 @@ export const env = createEnv({
     XAI_API_KEY: z.string().optional(),
 
 
-    // Helicone - works on both OpenAI and Anthropic vendors
-    HELICONE_API_KEY: z.string().optional(),
-
-
     // Browsing Service
     PUPPETEER_WSS_ENDPOINT: z.url().optional(),
 

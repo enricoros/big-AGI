@@ -67,13 +67,13 @@ export function accessForFlavor(flavor: LabFlavor): { access: AixAPI_Access; key
     case 'anthropic-messages':
       return {
         keySource: key.source,
-        access: { dialect: 'anthropic', anthropicKey: key.value, anthropicHost: null, heliconeKey: null },
+        access: { dialect: 'anthropic', anthropicKey: key.value, anthropicHost: null },
       };
     case 'openai-responses':
     case 'openai-chat':
       return {
         keySource: key.source,
-        access: { dialect: 'openai', oaiKey: key.value, oaiOrg: '', oaiHost: '', heliKey: '' },
+        access: { dialect: 'openai', oaiKey: key.value, oaiOrg: '', oaiHost: '' },
       };
     case 'gemini-generate':
     case 'gemini-interactions':

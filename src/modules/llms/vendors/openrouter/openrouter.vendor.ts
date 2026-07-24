@@ -52,7 +52,6 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
     oaiKey: partialSetup?.oaiKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.oaiHost || '',
-    heliKey: '',
     ...(partialSetup?.requireParameters ? { orRequireParameters: true } : {}),
   }),
 

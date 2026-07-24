@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Alert, Divider, IconButton } from '@mui/joy';
+import { Divider, IconButton } from '@mui/joy';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
@@ -22,10 +22,6 @@ import { ModelVendorOpenAI } from './openai.vendor';
 import { findMatchingOpenAIAutoProvider, OpenAIHostAutocomplete } from './OpenAIHostAutocomplete';
 
 
-// avoid repeating it all over
-const HELICONE_OPENAI_HOST = 'https://oai.hconeai.com';
-
-
 export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
@@ -33,7 +29,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     useServiceSetup(props.serviceId, ModelVendorOpenAI);
 
   // derived state
-  const { clientSideFetch, oaiKey, oaiOrg, oaiHost, heliKey } = serviceAccess;
+  const { clientSideFetch, oaiKey, oaiOrg, oaiHost } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
 
   // state
@@ -108,22 +104,6 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       value={oaiOrg}
       onChange={text => updateSettings({ oaiOrg: text })}
     />}
-
-    {showAdvanced && !oaiHost && <FormTextField
-      autoCompleteId='openai-helicone-key'
-      title='Helicone Key'
-      disabled={!!oaiHost}
-      description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
-      placeholder='sk-...'
-      value={heliKey}
-      onChange={text => updateSettings({ heliKey: text })}
-    />}
-
-    {!!heliKey && <Alert variant='soft' color={oaiHost?.includes(HELICONE_OPENAI_HOST) ? 'success' : 'warning'}>
-      Advanced: You set the Helicone key. {!oaiHost?.includes(HELICONE_OPENAI_HOST)
-      ? `But you also need to set the API Endpoint to ${HELICONE_OPENAI_HOST} to use Helicone.`
-      : 'OpenAI traffic will now be routed through Helicone.'}
-    </Alert>}
 
     {(showAdvanced || clientSideFetch) && <SetupFormClientSideToggle
       visible={!!oaiHost || !!oaiKey}

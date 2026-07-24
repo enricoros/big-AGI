@@ -47,9 +47,6 @@ PERPLEXITY_API_KEY=
 TOGETHERAI_API_KEY=
 XAI_API_KEY=
 
-# Model Observability: Helicone
-HELICONE_API_KEY=
-
 # Browse
 PUPPETEER_WSS_ENDPOINT=
 
@@ -94,7 +91,7 @@ requiring the user to enter an API key
 | Variable                    | Description                                                                                                    | Required                                                          |
 |-----------------------------|----------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|
 | `OPENAI_API_KEY`            | API key for OpenAI                                                                                             | Recommended                                                       |
-| `OPENAI_API_HOST`           | Changes the backend host for the OpenAI vendor, to enable platforms such as Helicone and CloudFlare AI Gateway | Optional                                                          |
+| `OPENAI_API_HOST`           | Changes the backend host for the OpenAI vendor, to enable platforms such as CloudFlare AI Gateway              | Optional                                                          |
 | `OPENAI_API_ORG_ID`         | Sets the "OpenAI-Organization" header field to support organization users                                      | Optional                                                          |
 | `ALIBABA_API_HOST`          | The Alibaba AI OpenAI-compatible endpoint                                                                      | Optional                                                          |
 | `ALIBABA_API_KEY`           | The API key for Alibaba AI                                                                                     | Optional                                                          |
@@ -122,18 +119,6 @@ requiring the user to enter an API key
 | `PERPLEXITY_API_KEY`        | The API key for Perplexity                                                                                     | Optional                                                          |
 | `TOGETHERAI_API_KEY`        | The API key for Together AI                                                                                    | Optional                                                          |
 | `XAI_API_KEY`               | The API key for xAI                                                                                            | Optional                                                          |
-
-### LLM Observability: Helicone
-
-Helicone provides observability to your LLM calls. It is a paid service, with a generous free tier.
-It is currently supported for:
-
-- **Anthropic**: by setting the Helicone API key, Helicone is automatically activated
-- **OpenAI**: you also need to set `OPENAI_API_HOST` to `oai.hconeai.com`, to enable routing
-
-| Variable           | Description              |
-|--------------------|--------------------------|
-| `HELICONE_API_KEY` | The API key for Helicone |
 
 ### Features
 

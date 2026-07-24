@@ -30,7 +30,6 @@ export const ModelVendorXAI: IModelVendor<DXAIServiceSettings, OpenAIAccessSchem
     oaiKey: partialSetup?.xaiKey || '',
     oaiOrg: '',
     oaiHost: '',
-    heliKey: '',
   }),
 
   // OpenAI transport ('xai' dialect in 'access')

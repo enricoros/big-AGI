@@ -13,7 +13,7 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 
 **Fallbacks if blocked:**
 - Search "mistral [model-name] latest pricing",  "mistral api latest pricing", "mistral latest models", or search GitHub for latest model prices and context windows
-- Cross-reference: pricepertoken.com, helicone.ai, artificialanalysis.ai
+- Cross-reference: pricepertoken.com, artificialanalysis.ai
 - Check Mistral API list models response
 - As last resort: Use Chrome DevTools MCP to render pricing table
 

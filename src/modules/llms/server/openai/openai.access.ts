@@ -25,7 +25,6 @@ const DEFAULT_CEREBRAS_HOST = 'https://api.cerebras.ai';
 const DEFAULT_COHERE_HOST = 'https://api.cohere.ai/compatibility';
 const DEFAULT_DEEPSEEK_HOST = 'https://api.deepseek.com';
 const DEFAULT_GROQ_HOST = 'https://api.groq.com/openai';
-const DEFAULT_HELICONE_OPENAI_HOST = 'oai.hconeai.com';
 const DEFAULT_LMSTUDIO_HOST = 'http://localhost:1234';
 const DEFAULT_LOCALAI_HOST = 'http://127.0.0.1:8080';
 const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
@@ -100,7 +99,6 @@ export const openAIAccessSchema = z.object({
   oaiKey: z.string().trim(),
   oaiOrg: z.string().trim(),
   oaiHost: z.string().trim(),
-  heliKey: z.string().trim(),
 
   // [OpenRouter only] Debug/routing service-level settings
   orRequireParameters: z.boolean().optional(), // Only route to providers supporting all request params
@@ -272,24 +270,21 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
       // Credential resolution: client-dominated
       // - if the client provides a host, they own the whole request - no server
-      // - credentials (API key, org, Helicone key) are sent to client-chosen endpoints
+      // - credentials (API key, org) are sent to client-chosen endpoints
       // - if the client doesn't set a host, they can still override the key (own billing).
       let oaiKey: string;
       let oaiHost: string;
       let oaiOrg: string;
-      let heliKey: string | false;
       if (access.oaiHost) {
         // Client controls the endpoint: only client credentials
         oaiHost = access.oaiHost;
         oaiKey = access.oaiKey || ''; // key can be null, e.g. LocalAI
         oaiOrg = access.oaiOrg || '';
-        heliKey = access.heliKey || false;
       } else {
         // Client hasn't touched the endpoint: server infrastructure
         oaiHost = /* NO access.oaiHost */ env.OPENAI_API_HOST || DEFAULT_OPENAI_HOST;
         oaiKey = access.oaiKey || env.OPENAI_API_KEY || '';
         oaiOrg = access.oaiOrg || env.OPENAI_API_ORG_ID || '';
-        heliKey = access.heliKey || env.HELICONE_API_KEY || false;
       }
 
       oaiHost = llmsFixupHost(oaiHost, apiPath);
@@ -297,15 +292,6 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       // Require a key when targeting the default OpenAI host
       if (!oaiKey && llmsHostnameMatches(oaiHost, DEFAULT_OPENAI_HOST))
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing OpenAI API Key. Add it on the UI or server side (your deployment).' });
-
-      // [Helicone] proxy: redirect default OpenAI host to Helicone when key present;
-      // if host is already Helicone keep it; for any other host, disable the Helicone key
-      if (heliKey) {
-        if (llmsHostnameMatches(oaiHost, DEFAULT_OPENAI_HOST))
-          oaiHost = `https://${DEFAULT_HELICONE_OPENAI_HOST}`;
-        else if (!llmsHostnameMatches(oaiHost, DEFAULT_HELICONE_OPENAI_HOST))
-          heliKey = false;
-      }
 
       // [Cloudflare AI Gateway] proxy: adapt API paths for Cloudflare's routing
       if (llmsHostnameMatches(oaiHost, 'gateway.ai.cloudflare.com')) {
@@ -332,7 +318,6 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Content-Type': 'application/json',
           ...(oaiKey && { Authorization: `Bearer ${oaiKey}` }),
           ...(oaiOrg && { 'OpenAI-Organization': oaiOrg }),
-          ...(heliKey && { 'Helicone-Auth': `Bearer ${heliKey}` }),
         },
         url: oaiHost + apiPath,
       };

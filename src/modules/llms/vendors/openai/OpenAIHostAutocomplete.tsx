@@ -10,7 +10,6 @@ import { ArceeAIIcon } from '~/common/components/icons/vendors/ArceeAIIcon';
 import { ChutesAIIcon } from '~/common/components/icons/vendors/ChutesAIIcon';
 import { FireworksAIIcon } from '~/common/components/icons/vendors/FireworksAIIcon';
 import { CloudflareIcon } from '~/common/components/icons/vendors/CloudflareIcon';
-import { HeliconeIcon } from '~/common/components/icons/vendors/HeliconeIcon';
 import { MiniMaxIcon } from '~/common/components/icons/vendors/MiniMaxIcon';
 import { NovitaAIIcon } from '~/common/components/icons/vendors/NovitaAIIcon';
 
@@ -46,7 +45,6 @@ const OPENAI_COMPATIBLE_PROVIDERS: VerifiedProvider[] = [
   { id: 'minimax', label: 'MiniMax', host: 'https://api.minimax.io', hostMatch: 'minimax.io', category: 'Example Providers', description: 'Proprietary reasoning models', docsUrl: 'https://platform.minimax.io/docs', icon: MiniMaxIcon },
   { id: 'novita', label: 'Novita AI', host: 'https://api.novita.ai/openai', hostMatch: 'novita.ai', category: 'Example Providers', description: 'Budget open model inference', docsUrl: 'https://novita.ai/docs', icon: NovitaAIIcon },
   // Example Proxies
-  { id: 'helicone', label: 'Helicone', host: 'https://oai.hconeai.com', hostMatch: 'hconeai.com', category: 'Example Proxies', description: 'Observability and caching proxy', docsUrl: 'https://docs.helicone.ai/getting-started/quick-start', icon: HeliconeIcon },
   { id: 'cloudflare', label: 'Cloudflare AI Gateway', host: 'https://gateway.ai.cloudflare.com/v1/{account}/{gateway}/openai', hostMatch: 'gateway.ai.cloudflare.com', category: 'Example Proxies', description: 'Caching and analytics gateway', docsUrl: 'https://developers.cloudflare.com/ai-gateway/', icon: CloudflareIcon },
 ];
 

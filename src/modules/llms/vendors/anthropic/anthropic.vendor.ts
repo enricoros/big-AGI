@@ -11,7 +11,6 @@ interface DAnthropicServiceSettings {
   anthropicKey: string;
   anthropicHost: string;
   csf?: boolean;
-  heliconeKey: string;
   inferenceGeoUS?: boolean; // [Anthropic, 2026-02-01] restrict inference to US region
 }
 
@@ -34,7 +33,6 @@ export const ModelVendorAnthropic: IModelVendor<DAnthropicServiceSettings, Anthr
     clientSideFetch: _csfAnthropicAvailable(partialSetup) && !!partialSetup?.csf,
     anthropicKey: partialSetup?.anthropicKey || '',
     anthropicHost: partialSetup?.anthropicHost || null,
-    heliconeKey: partialSetup?.heliconeKey || null,
     anthropicInferenceGeo: partialSetup?.inferenceGeoUS ? 'us' : null,
   }),
 
