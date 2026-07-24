@@ -11,6 +11,7 @@ import { ChatBarBreadcrumbs } from './ChatBarBreadcrumbs';
 import { useChatLLMDropdown } from './useLLMDropdown';
 import { usePersonaIdDropdown } from './usePersonaDropdown';
 import { useFolderDropdown } from './useFolderDropdown';
+import { useModelParamsDropdowns } from './useModelParamsDropdowns';
 
 
 export function ChatBarChat(props: {
@@ -25,6 +26,7 @@ export function ChatBarChat(props: {
   const { chatLLMDropdown } = useChatLLMDropdown(props.llmDropdownRef);
   const { personaDropdown } = usePersonaIdDropdown(props.conversationId, props.personaDropdownRef);
   const { folderDropdown } = useFolderDropdown(props.conversationId);
+  const { verbosityDropdown, reasoningDropdown } = useModelParamsDropdowns();
 
   return <>
 
@@ -41,6 +43,12 @@ export function ChatBarChat(props: {
 
     {/* Model selector */}
     {chatLLMDropdown}
+
+    {/* Reasoning selector (conditional) */}
+    {reasoningDropdown}
+
+    {/* Verbosity selector (conditional) */}
+    {verbosityDropdown}
 
     {/* Folder selector */}
     {folderDropdown}
