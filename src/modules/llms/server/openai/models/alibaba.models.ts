@@ -7,9 +7,12 @@ import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappin
 // --- Alibaba Model ID inference (auto-derived from _knownAlibabaChatModels) ---
 export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefix'];
 
-// Sources (verified 2026-07-03 against the live /v1/models list + docs; lineup + all prices unchanged since 2026-06-26):
+// Sources (verified 2026-07-24 against the live /v1/models list + docs):
 // - Models:  https://www.alibabacloud.com/help/en/model-studio/models
 // - Pricing: https://www.alibabacloud.com/help/en/model-studio/model-pricing (International/Singapore, USD per 1M tokens)
+// - Cache:   https://www.alibabacloud.com/help/en/model-studio/context-cache (implicit hit = 20% of input; explicit create 125% / hit 10%; deepseek-v4-pro excepted)
+// 2026-07-24 pass: qwen3.7-flash NEW (in API 07-24, absent from docs - caps live-probed, pricing GUESSED); GLM-5.2 + Kimi K2.7 Code repriced;
+//   still uncurated by policy: qwen3.5-122b-a10b (open 122B MoE, $0.4/$3.2), qwen3.6-27b, qwen3-coder-next/-flash (fallback-hidden).
 // NOTES:
 // - The live API returns only id/created/owned_by (no pricing/caps/context), so EVERYTHING here is editorial.
 // - Alibaba uses tiered pricing keyed on the request's INPUT token count (both input and output prices step up).
@@ -53,6 +56,21 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     }, // implicit cache: 0.08 (<=256K) / 0.24 (>256K)
   },
   {
+    idPrefix: 'qwen3.7-flash',
+    label: 'Qwen3.7 Flash',
+    parameterSpecs: _PS_Thinking,
+    pubDate: '20260715', // from the qwen3.7-flash-2026-07-15 snapshot id (API 2026-07-24)
+    description: 'Latest fast multimodal model with 1M context, thinking (on by default), vision, and 128K output.',
+    contextWindow: 1000000, // 1M (live-probed input cap: 983,616)
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning], // all live-probed 2026-07-24
+    maxCompletionTokens: 131072, // 128K (live-probed; 2x qwen3.6-flash)
+    chatPrice: {
+      input: [{ upTo: 256000, price: 0.25 }, { upTo: null, price: 1.00 }],
+      output: [{ upTo: 256000, price: 1.50 }, { upTo: null, price: 4.00 }],
+    }, // GUESSED (= qwen3.6-flash rates): not on any pricing page as of 2026-07-24 (day-zero model) - RE-VERIFY
+  },
+  {
+    // kept visible alongside qwen3.7-flash until the 3.7 pricing is published (still on Alibaba's recommended list 2026-07-24)
     idPrefix: 'qwen3.6-flash',
     label: 'Qwen3.6 Flash',
     parameterSpecs: _PS_Thinking,
@@ -177,7 +195,19 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1048576, // 1M
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K
-    chatPrice: { input: 1.10, output: 3.851, cache: { cType: 'oai-ac', read: 0.275 } }, // implicit cache read 0.275 (verified 2026-07-03)
+    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.28 } }, // repriced 2026-07-24 (was 1.10/3.851); cache = 20% implicit-hit rule
+  },
+  {
+    idPrefix: 'glm-5.2-fast',
+    label: 'GLM-5.2 Fast (Alibaba)',
+    parameterSpecs: _PS_Thinking,
+    pubDate: '20260710',
+    description: 'Zhipu GLM-5.2 fast-serving tier via Alibaba Model Studio (preview). Same model, lower latency, ~2x price.',
+    contextWindow: 1048576, // 1M (assumed = glm-5.2)
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
+    maxCompletionTokens: 131072, // 128K (live-probed 2026-07-24)
+    chatPrice: { input: 2.80, output: 8.80, cache: { cType: 'oai-ac', read: 0.56 } }, // cache = 20% implicit-hit rule
+    hidden: true, // preview-only for now (live id: glm-5.2-fast-preview); un-hide when GA
   },
   {
     idPrefix: 'kimi-k2.7-code',
@@ -187,7 +217,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 262144, // 256K
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 32768,
-    chatPrice: { input: 0.8939, output: 3.7131, cache: { cType: 'oai-ac', read: 0.1788 } }, // implicit cache read 0.1788 (explicit: create 1.1174 / read 0.0894); verified 2026-07-03
+    chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.19 } }, // repriced 2026-07-24 (was 0.8939/3.7131); cache = 20% implicit-hit rule (explicit: create 1.1875 / read 0.095)
   },
   {
     idPrefix: 'deepseek-v3.2',
