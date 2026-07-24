@@ -808,16 +808,17 @@ function createSingleConfig(
   const aixDialect = dialect as AixAPI_Access['dialect'];
 
   switch (aixDialect) {
-    case 'openai':
     case 'alibaba':
     case 'azure':
     case 'cerebras':
+    case 'cohere':
     case 'deepseek':
     case 'groq':
     case 'lmstudio':
     case 'localai':
     case 'mistral':
     case 'moonshot':
+    case 'openai':
     case 'openrouter':
     case 'perplexity':
     case 'sakanaai':
