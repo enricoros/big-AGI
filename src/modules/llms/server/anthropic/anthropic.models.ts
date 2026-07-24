@@ -49,6 +49,9 @@ const IF_47_R = [...IF_4_R, LLM_IF_HOTFIX_NoTemperature];
 //                              model reasons); `thinking: {type: 'disabled'}` and budget_tokens both return 400.
 //                              Sonnet 5 (2026-06-29): adaptive-only too, BUT `thinking: {type: 'disabled'}` is allowed (200),
 //                              so it keeps the base + thinking-variant split (like Opus 4.7/4.8); only budget_tokens returns 400.
+//                              Opus 5 (2026-07-24): adaptive-only, thinking ON by default; 'disabled' allowed ONLY at
+//                              effort 'high' or below (xhigh/max + disabled -> 400); budget_tokens -> 400. Shipped as a
+//                              SINGLE always-thinking entry (like Fable 5) - see the model entry for the probe rationale.
 // - llmVndAntWebFetch/Search   seem an API feature available on all models
 
 const ANT_TOOLS: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = [
@@ -62,7 +65,7 @@ const ANT_TOOLS: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = 
 /**
  * Dynamic filtering for web search/fetch - only Opus/Sonnet 4.6+.
  * Also the home of the standalone Code Sandbox toggle (code_execution_20260120), whose model support
- * (Fable/Mythos/Sonnet 5, Opus/Sonnet 4.6+) is a clean subset of this set. NOT added to the base
+ * (Claude 5 gen incl. Opus 5, Opus/Sonnet 4.6+) is a clean subset of this set. NOT added to the base
  * ANT_TOOLS, as Haiku 4.5 only supports code_execution_20250825 (not the 20260120 we ship).
  */
 const ANT_TOOLS_DYNAMIC: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = [
@@ -75,6 +78,8 @@ const ANT_TOOLS_DYNAMIC: Exclude<ModelDescriptionSchema['parameterSpecs'], undef
 const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { idVariant: 'thinking' /* this is here because of OpenRouter matching, see below - all these are assued as thinking variants */ } } = {
 
   // NOTE: what's not redefined below is inherited from the underlying model definition
+
+  // NOTE: no 'claude-opus-5' variant here - Opus 5 ships as a SINGLE always-thinking entry (like Fable 5), see below
 
   // Claude Sonnet 5 thinking variant (Claude 5 gen, adaptive-only; base allows disabling thinking)
   'claude-sonnet-5': {
@@ -114,9 +119,8 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     parameterSpecs: [
       { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - 4.7 rejects budget_tokens */ },
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
-      // TODO 2026-07-24: fast mode deprecated 2026-06-25, HARD REMOVAL on this date - speed:'fast' will then return
-      // an error (unlike Opus 4.6's silent no-op removal). Drop 'fast_6x' here once removed; migrate users to Opus 4.8.
-      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_6x'] },
+      // fast mode REMOVED by Anthropic 2026-07-24 (hard removal, announced 2026-06-25): speed:'fast' now returns
+      // an error (unlike Opus 4.6's silent no-op removal). Toggle dropped; migrate fast-mode users to Opus 5/4.8.
       ...ANT_TOOLS_DYNAMIC,
     ],
     benchmark: { cbaElo: 1504 }, // claude-opus-4-7-thinking
@@ -311,38 +315,35 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     benchmark: { cbaElo: 1510 + 1 }, // (no arena data yet) assuming: claude-fable-5 + 1
   },
 
-  // Claude Opus 5 - PRE-WIRED, NOT YET RELEASED (as of 2026-07-23): this entry is DORMANT until the
-  // Anthropic API lists the model (the dispatch only maps /v1/models results, hardcoded-only defs never
-  // surface; in dev/staging this shows as a 'stale model defs' log line until launch - expected).
-  // ID source: 'claude-opus-5' spotted on Google Vertex AI Model Garden + quotas catalog 2026-07-14
-  // (codename 'Honeycomb EAP', briefly in Cursor's picker 2026-07-09); launch rumored 2026-07-23,
-  // window mid-July to early Aug 2026. Probed 2026-07-23: /v1/models does not list it and
-  // count_tokens/retrieve return clean not_found_error (no reserved-ID signal yet).
+  // Claude Opus 5 - SINGLE always-thinking entry (like Fable 5), NOT a base + '(Adaptive)' split.
+  // Rationale (2026-07-24 live param-space probe): thinking is ON by default and adaptive spends 0 thinking
+  // tokens on trivial turns (probed: effort max on a trivial prompt -> thinking_toks=0), so a non-thinking
+  // entry buys nothing; `thinking:{type:'disabled'}` does exist BUT is capped at effort 'high' or below
+  // (xhigh/max + disabled -> 400) and docs warn it can emit tool calls as plain text - a degraded niche we
+  // deliberately don't surface. Effort is the one control Anthropic intends; revisit if users ask for disabled.
   {
-    id: 'claude-opus-5',
+    id: 'claude-opus-5', // Active - 2026-07-24
     label: 'Claude Opus 5',
-    pubDate: '20260723', // rumored launch date - UPDATE at launch (API created_at only feeds `created`, not pubDate)
-    description: 'Most capable Opus-tier model for complex reasoning and agentic coding',
-    contextWindow: 1_000_000, // leak-confirmed 1M; API max_input_tokens is authoritative on fuse anyway
-    maxCompletionTokens: 128000, // assumed (all 4.7+ and Claude 5 gen models); API max_tokens is authoritative on fuse
-    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch], // reasoning on base: assumes Claude 5 gen adaptive-ON default
+    pubDate: '20260724',
+    description: 'Step-change improvement over Opus 4.8 for complex agentic coding and enterprise work',
+    contextWindow: 1_000_000, // 1M is both default and max, no smaller variant (API-confirmed max_input_tokens)
+    maxCompletionTokens: 128000,
+    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch], // reasoning on the base model: thinking on by default
     parameterSpecs: [
-      // FORCE adaptive: valid in both possible worlds - Fable-style (always-on, 'disabled' returns 400) and
-      // Sonnet-5-style ('disabled' allowed). If launch confirms 'disabled' is allowed, split into a
-      // non-thinking base + '(Adaptive)' thinking variant like Sonnet 5 / Opus 4.8.
-      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 },
-      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }, // xhigh leak-confirmed; verify full set vs API capabilities at launch
+      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - explicit `adaptive` equals the default; budget_tokens returns 400 */ },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }, // full ladder (API-confirmed); default 'high'; docs: set large max_tokens at xhigh/max
+      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // fast mode: research preview, API only, waitlist-gated; $10/$50 2x tier (same as 4.8)
       ...ANT_TOOLS_DYNAMIC,
     ],
-    // PRE-RELEASE ESTIMATES - VERIFY EVERYTHING AT LAUNCH (run llms:update-models-anthropic):
-    // - Pricing GUESSED at Opus-tier $5/$25 (constant across Opus 4.5/4.6/4.7/4.8; Fable 5 sits above at $10/$50).
-    // - Leaks: per-turn controls, safety fallbacks (flagged prompts reportedly route to Opus 4.8 - suggests
-    //   Fable-5-style refusal classifiers + `fallbacks` beta), positioned to REPLACE Opus 4.8,
-    //   'performance approaching Fable 5'. No system card, pricing, or official ID published yet.
-    // - Assumed to inherit Opus 4.7/4.8 constraints: sampling params rejected, no prefill, budget_tokens 400.
-    // - Fast mode unknown at launch (4.8 has fast_2x); add llmVndAntInfSpeed only once confirmed.
+    // Opus 5 (launch-verified 2026-07-24, all probed live): flat $5/$25 across the 1M window (same as 4.8),
+    // 512-token min cacheable prompt (down from 1,024 on 4.8), knowledge cutoff May 2026. Inherits 4.7/4.8
+    // constraints: sampling params rejected (400 'deprecated'; temperature at the default 1.0 is accepted),
+    // no prefill (400). Unlike Fable 5: forced tool_choice 'any'/'tool' WORKS (200, probe-verified) - no AIX
+    // downgrade needed. New vs 4.8: thinking on by default (effort is the depth control); mid-conversation
+    // tool changes (beta `mid-conversation-tool-changes-2026-07-01`); `fallbacks` 'default' mode (beta
+    // `server-side-fallback-2026-07-01`).
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
-    benchmark: { cbaElo: 1515 }, // pre-release estimate: above Opus 4.8 thinking (1512), 'approaching' Fable 5 per leaks
+    benchmark: { cbaElo: 1506 }, // claude-opus-5 (launch ESTIMATE, fable-5 - 1)
   },
 
   // Claude Sonnet 5 (Claude 5 gen) - unlike Fable/Mythos 5, thinking CAN be disabled, so it keeps a base + thinking variant (like Opus 4.7/4.8)
@@ -374,7 +375,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     id: 'claude-opus-4-8', // Active - 2026-05-28
     label: 'Claude Opus 4.8',
     pubDate: '20260528',
-    description: 'Most capable Opus-tier model for complex reasoning and agentic coding',
+    description: 'Previous most capable Opus-tier model for complex reasoning and agentic coding',
     contextWindow: 1_000_000, // 1M GA at standard pricing (no opt-in required)
     maxCompletionTokens: 128000,
     interfaces: [...IF_47, LLM_IF_ANT_ToolsSearch],
@@ -401,12 +402,11 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     interfaces: [...IF_47, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
-      // TODO 2026-07-24: fast mode deprecated 2026-06-25, HARD REMOVAL on this date - speed:'fast' will then return
-      // an error (unlike Opus 4.6's silent no-op removal). Drop 'fast_6x' here once removed; migrate users to Opus 4.8.
-      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_6x'] }, // fast mode: research preview since 2026-05-12, Anthropic API only (6x tier, $30/$150)
+      // fast mode REMOVED by Anthropic 2026-07-24 (hard removal, announced 2026-06-25): speed:'fast' now returns
+      // an error (unlike Opus 4.6's silent no-op removal). Toggle dropped; migrate fast-mode users to Opus 5/4.8.
       ...ANT_TOOLS_DYNAMIC,
     ],
-    // Opus 4.7: flat $5/$25 pricing across entire 1M context window (no long-context premium; fast mode added 2026-05-12)
+    // Opus 4.7: flat $5/$25 pricing across entire 1M context window (no long-context premium)
     // Breaking changes vs 4.6: extended thinking budgets removed (adaptive-only), temperature/top_p/top_k rejected,
     // thinking content omitted by default, new tokenizer (~1x to 1.35x tokens for same text), no prefill.
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
