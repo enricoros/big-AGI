@@ -32,7 +32,6 @@
 
     /* Path Aliases */
     "paths": {
-      "*": ["."],
       "~/common/*": ["./src/common/*"],
       "~/extensions/*": ["./src/extensions/*"],
       "~/modules/*": ["./src/modules/*"],
