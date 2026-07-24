@@ -32,7 +32,8 @@ export const ModelVendorAnthropic: IModelVendor<DAnthropicServiceSettings, Anthr
     dialect: 'anthropic',
     clientSideFetch: _csfAnthropicAvailable(partialSetup) && !!partialSetup?.csf,
     anthropicKey: partialSetup?.anthropicKey || '',
-    anthropicHost: partialSetup?.anthropicHost || null,
+    // ignore leftover Helicone proxy hosts (integration removed 2026-07): substring is fine, as a false positive falls back to the official host
+    anthropicHost: partialSetup?.anthropicHost?.includes('hconeai.com') ? null : partialSetup?.anthropicHost || null,
     anthropicInferenceGeo: partialSetup?.inferenceGeoUS ? 'us' : null,
   }),
 

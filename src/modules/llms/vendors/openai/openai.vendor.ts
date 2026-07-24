@@ -35,7 +35,8 @@ export const ModelVendorOpenAI: IModelVendor<DOpenAIServiceSettings, OpenAIAcces
     clientSideFetch: _csfOpenAIAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: partialSetup?.oaiKey || '',
     oaiOrg: partialSetup?.oaiOrg || '',
-    oaiHost: partialSetup?.oaiHost || '',
+    // ignore leftover Helicone proxy hosts (integration removed 2026-07): substring is fine, as a false positive falls back to the official host
+    oaiHost: partialSetup?.oaiHost?.includes('hconeai.com') ? '' : partialSetup?.oaiHost || '',
   }),
 
   // List Models
