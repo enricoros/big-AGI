@@ -107,7 +107,7 @@ export async function captureRun(opts: CaptureOptions): Promise<{ run: LabRun; k
   });
 
   const dispatchCreator = async (): Promise<ChatGenerateDispatch> => {
-    const dispatch = await createChatGenerateDispatch(access, model, chatGenerate, opts.streaming, !!opts.enableResumability);
+    const dispatch = await createChatGenerateDispatch(access, model, chatGenerate, opts.streaming, undefined /* sessionAffinityId */, !!opts.enableResumability);
     return recorder.instrumentDispatch(
       dispatch,
       (signal) => fetchResponseOrTRPCThrow({ ...dispatch.request, signal, name: `AixLab.${opts.flavor}`, throwWithoutName: true }),

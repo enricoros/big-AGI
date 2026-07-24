@@ -627,6 +627,7 @@ async function testParameterValue(
       model,
       chatGenerate,
       false, // streaming = false
+      undefined, // sessionAffinityId = none
       false, // enableResumability = false
     );
   } catch (error: any) {
@@ -799,7 +800,7 @@ async function _dispatchAndCollect(
   let dispatch: ChatGenerateDispatch | undefined;
 
   try {
-    dispatch = await createChatGenerateDispatch(access, model, chatGenerate, false, false);
+    dispatch = await createChatGenerateDispatch(access, model, chatGenerate, false, undefined /* sessionAffinityId */, false);
   } catch (error: any) {
     const errorMessage = error?.message ? String(error.message).slice(0, 300) : String(error).slice(0, 300);
     return {
