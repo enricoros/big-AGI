@@ -1,0 +1,34 @@
+name: CI
+
+# Type-check (app + tools + tests projects) and lint on every push and PR.
+# Note: `npm test` is NOT run here: the live tests hit vendor APIs (key-gated or
+# network-dependent) and validate catalog freshness, which would flake CI.
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check (app, tools, tests)
+        run: npm run tsclint
+
+      - name: Lint
+        run: npm run lint
