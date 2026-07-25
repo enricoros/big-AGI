@@ -365,7 +365,8 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // base entry above disables it explicitly. Manual budget_tokens rejected (400); `thinking:{type:'disabled'}` allowed (200).
     // temperature/top_p/top_k rejected (400 'deprecated') EVEN with thinking disabled, no prefill, no fast mode (speed: 400).
     // New tokenizer: ~30% more tokens vs Sonnet 4.6 (per-token price unchanged). First Sonnet with cyber safeguards (refusals:
-    // stop_reason 'refusal', HTTP 200). Pricing: INTRODUCTORY $2/$10 (cache w$2.50/r$0.20) through 2026-08-31, then $3/$15 standard.
+    // stop_reason 'refusal', HTTP 200). Pricing: INTRODUCTORY $2/$10 (cache w$2.50/r$0.20) through 2026-08-31.
+    // TODO 2026-09-01: intro pricing ends - flip chatPrice to standard $3/$15 (cache read 0.30, write 3.75).
     chatPrice: { input: 2, output: 10, cache: { cType: 'ant-bp', read: 0.20, write: 2.50, duration: 300 } },
     benchmark: { cbaElo: 1485 }, // claude-sonnet-5 (launch estimate, no arena data yet)
   },
