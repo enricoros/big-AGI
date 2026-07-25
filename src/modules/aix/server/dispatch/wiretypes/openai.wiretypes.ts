@@ -473,6 +473,10 @@ export namespace OpenAIWire_API_Chat_Completions {
     // [Alibaba, 2026-06-26] Qwen (and DashScope-hosted third-party) thinking toggle via compatible-mode; Qwen ignores `reasoning_effort`
     enable_thinking: z.boolean().optional(),
 
+    // [NVIDIA NIM, 2026-07-25] vLLM-style chat template kwargs - the inner key is model-family-specific
+    // (verified live: `{thinking: false}` suppresses `reasoning_content` on Nemotron 3; accepted as a no-op elsewhere)
+    chat_template_kwargs: z.record(z.string(), z.union([z.boolean(), z.string(), z.number()])).optional(),
+
     seed: z.number().int().optional(),
     stop: z.array(z.string()).optional(), // Up to 4 sequences where the API will stop generating further tokens.
     user: z.string().optional(),

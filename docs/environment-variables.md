@@ -41,6 +41,8 @@ LOCALAI_API_HOST=
 LOCALAI_API_KEY=
 MISTRAL_API_KEY=
 MOONSHOT_API_KEY=
+NVIDIANIM_API_KEY=
+NVIDIANIM_API_HOST=
 OLLAMA_API_HOST=
 OPENROUTER_API_KEY=
 PERPLEXITY_API_KEY=
@@ -114,6 +116,8 @@ requiring the user to enter an API key
 | `LOCALAI_API_KEY`           | The (Optional) API key for LocalAI                                                                             | Optional                                                          |
 | `MISTRAL_API_KEY`           | The API key for Mistral                                                                                        | Optional                                                          |
 | `MOONSHOT_API_KEY`          | The API key for Moonshot AI                                                                                    | Optional                                                          |
+| `NVIDIANIM_API_KEY`         | The API key ('nvapi-...') for NVIDIA NIM (build.nvidia.com)                                                    | Optional                                                          |
+| `NVIDIANIM_API_HOST`        | Changes the NVIDIA NIM host, e.g. to a self-hosted NIM/vLLM endpoint                                           | Optional                                                          |
 | `OLLAMA_API_HOST`           | Changes the backend host for the Ollama vendor. See [config-local-ollama.md](config-local-ollama.md)           |                                                                   |
 | `OPENROUTER_API_KEY`        | The API key for OpenRouter                                                                                     | Optional                                                          |
 | `PERPLEXITY_API_KEY`        | The API key for Perplexity                                                                                     | Optional                                                          |

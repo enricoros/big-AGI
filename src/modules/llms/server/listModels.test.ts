@@ -42,6 +42,7 @@
 //                                        BIGAGI_TEST_LOCALAI_HOST)
 //   openai-compatible   mistral         MISTRAL_API_KEY         api.mistral.ai
 //   openai-compatible   moonshot        MOONSHOT_API_KEY        api.moonshot.ai
+//   openai-compatible   nvidianim       NVIDIANIM_API_KEY       integrate.api.nvidia.com (listing is PUBLIC)
 //   openai-compatible   openai          OPENAI_API_KEY *        api.openai.com
 //                                       (* default-host ONLY; not forwarded to custom hosts)
 //   openai-compatible   openai (host)   (no env fallback)       custom host (Chutes, Fireworks, MiniMax, ...)
@@ -268,6 +269,30 @@ describe('listModels enumeration', () => {
       { dialect: 'moonshot', ...openAIShape({ oaiKey: E.MOONSHOT_API_KEY || '' }) } as AixAPI_Access,
       1, 'moonshot/live',
     );
+  });
+
+  test('openai-compat/nvidianim: live listing (endpoint is PUBLIC; key-gated to stay offline)', { skip: skipIfMissing('NVIDIANIM_API_KEY') }, async () => {
+    // NVIDIA's /v1/models returns 200 without any key, so this COULD run keyless - key-gated
+    // for offline determinism (same rationale as openrouter below). The curated table drops
+    // unknown/retired ids; catalog churn that retires a curated model shows as a [DEV] stale
+    // warning, which expectOk turns into a failure - that is the drift alarm working.
+    const models = await expectOk(
+      { dialect: 'nvidianim', ...openAIShape({ oaiKey: E.NVIDIANIM_API_KEY || '' }) } as AixAPI_Access,
+      10, 'nvidianim/live',
+    );
+    ok(models.some(m => m.id.startsWith('nvidia/nemotron-3-')), 'nvidianim: Nemotron 3 family present');
+    // curated entries always carry a measured context; 0-day '[?]' arrivals legitimately have null
+    ok(models.filter(m => !m.label.startsWith('[?]')).every(m => m.contextWindow !== null), 'nvidianim: all curated models carry a context window');
+  });
+
+  test('openai-compat/openai via nvidia host: curated list via heuristic', { skip: skipIfMissing('NVIDIANIM_API_KEY') }, async () => {
+    // Pre-existing custom-host services (dialect='openai' + integrate.api.nvidia.com) route to the
+    // same curated parser via nvidiaNIMHeuristic - the raw 118-model stale superset must NOT leak through.
+    const models = await expectOk(
+      { dialect: 'openai', ...openAIShape({ oaiKey: E.NVIDIANIM_API_KEY || '', oaiHost: 'https://integrate.api.nvidia.com' }) } as AixAPI_Access,
+      10, 'openai/nvidia-host',
+    );
+    ok(!models.some(m => m.id.startsWith('zyphra/')), 'nvidia-host: retired catalog ids are dropped');
   });
 
   test('openai-compat/openai: live listing', { skip: skipIfMissing('OPENAI_API_KEY') }, async () => {

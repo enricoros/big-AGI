@@ -165,6 +165,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     && openAIDialect !== 'openrouter' // OpenRouter has its own channeling of this
     && openAIDialect !== 'deepseek' && openAIDialect !== 'moonshot' && openAIDialect !== 'zai' // these map to thinking enabled/disabled (+ reasoning_effort passthrough) in the block below
     && openAIDialect !== 'alibaba' // Alibaba/Qwen ignores reasoning_effort; uses enable_thinking instead (block below)
+    && openAIDialect !== 'nvidianim' // NVIDIA rejects unknown params and gpt-oss strictly validates reasoning_effort - dedicated block below
     && openAIDialect !== 'perplexity' // Perplexity has its own block below with stricter validation
   ) {
     // for: 'azure' | 'groq' | 'lmstudio' | 'localai' | 'mistral' | 'openai' | 'togetherai' | 'xai'
@@ -193,6 +194,19 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   // Models exposing this use a `llmVndMiscEffort` spec with enumValues ['none','high'] -> Off/On (unset = Default = vendor default, usually on).
   if (reasoningEffort && openAIDialect === 'alibaba')
     payload.enable_thinking = reasoningEffort !== 'none';
+
+  // [NVIDIA NIM, 2026-07-25] Two per-model reasoning mechanisms (NVIDIA rejects unknown top-level params, so we must be exact):
+  // - gpt-oss: native `reasoning_effort`, strictly validated to low|medium|high (llmVndOaiEffort spec narrows the UI to these)
+  // - other thinking models (Nemotron 3, etc.): binary toggle via vLLM `chat_template_kwargs` (llmVndMiscEffort ['none','high'];
+  //   the `thinking` inner key is verified on Nemotron 3 and accepted as a no-op template kwarg elsewhere)
+  if (reasoningEffort && openAIDialect === 'nvidianim') {
+    if (model.id.startsWith('openai/gpt-oss')) {
+      if (!['low', 'medium', 'high'].includes(reasoningEffort))
+        throw new Error(`NVIDIA gpt-oss models only support reasoning effort low, medium, high, got '${reasoningEffort}'`);
+      payload.reasoning_effort = reasoningEffort;
+    } else
+      payload.chat_template_kwargs = { thinking: reasoningEffort !== 'none' };
+  }
 
 
   // [OpenAI, 2026-02-04] Verbosity control - official OpenAI parameter (low/medium/high, default: medium)

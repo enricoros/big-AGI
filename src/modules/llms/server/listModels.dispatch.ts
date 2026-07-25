@@ -46,6 +46,7 @@ import { llmapiHeuristic, llmapiModelsToModelDescriptions } from './openai/model
 import { llmsIsNativeOpenAIHost } from '../shared/llm.isomorphic';
 import { minimaxHardcodedModelDescriptions, minimaxHeuristic } from './openai/models/minimax.models';
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
+import { nvidiaNIMHeuristic, nvidiaNIMModelsToModelDescriptions } from './openai/models/nvidianim.models';
 import { lmStudioFetchModels, lmStudioModelsToModelDescriptions } from './openai/models/lmstudio.models';
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
 import { mistralModels } from './openai/models/mistral.models';
@@ -386,6 +387,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'localai':
     case 'mistral':
     case 'moonshot':
+    case 'nvidianim':
     case 'openai':
     case 'openrouter':
     case 'sakanaai':
@@ -494,6 +496,11 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
 
             case 'openai':
 
+              // [NVIDIA NIM] custom-host services pointing at NVIDIA's endpoint get the curated parser
+              // (the /v1/models list is a stale superset where ~half the ids are retired and hard-404)
+              if (nvidiaNIMHeuristic(oaiUrl))
+                return nvidiaNIMModelsToModelDescriptions(maybeModels);
+
               // [Arcee AI] special case for model enumeration
               if (arceeAIHeuristic(oaiUrl))
                 return arceeAIModelsToModelDescriptions(openAIWireModelsResponse);
@@ -545,6 +552,11 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .map(openRouterModelToModelDescription)
                 .filter(desc => !!desc)
                 .reduce(openRouterInjectVariants, []);
+
+            case 'nvidianim':
+              // [NVIDIA NIM] API lists ids only (constant 'created', no metadata) - curated table with
+              // measured context windows; unknown ids dropped (the list is a stale superset, ~half retired)
+              return nvidiaNIMModelsToModelDescriptions(maybeModels);
 
             case 'sakanaai':
               // [Sakana.ai] Fugu models - API lists ids only; caps/pricing/params from manual mappings

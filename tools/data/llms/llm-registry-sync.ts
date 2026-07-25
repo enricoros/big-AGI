@@ -818,6 +818,7 @@ function createSingleConfig(
     case 'localai':
     case 'mistral':
     case 'moonshot':
+    case 'nvidianim':
     case 'openai':
     case 'openrouter':
     case 'perplexity':

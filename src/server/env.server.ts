@@ -82,6 +82,10 @@ export const env = createEnv({
     // LLM: Moonshot AI
     MOONSHOT_API_KEY: z.string().optional(),
 
+    // LLM: NVIDIA NIM (build.nvidia.com hosted, or self-hosted NIM/vLLM)
+    NVIDIANIM_API_KEY: z.string().optional(),
+    NVIDIANIM_API_HOST: z.url().optional(),
+
     // LLM: Ollama
     OLLAMA_API_HOST: z.url().optional(),
 

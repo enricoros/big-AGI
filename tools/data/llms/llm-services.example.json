@@ -83,6 +83,14 @@
     "oaiHost": "",
     "heliKey": ""
   },
+  "nvidianim": {
+    "_comment": "NVIDIA NIM (build.nvidia.com) - curated catalog, free hosted endpoint",
+    "dialect": "nvidianim",
+    "oaiKey": "YOUR_NVIDIANIM_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": ""
+  },
   "cerebras": {
     "dialect": "cerebras",
     "oaiKey": "YOUR_CEREBRAS_API_KEY_HERE",
