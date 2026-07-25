@@ -1,8 +1,8 @@
 name: CI
 
-# Type-check (app + tools + tests projects) and lint on every push and PR.
-# Note: `npm test` is NOT run here: the live tests hit vendor APIs (key-gated or
-# network-dependent) and validate catalog freshness, which would flake CI.
+# Type-check (app + tools/tests projects), lint, and test on every push and PR.
+# Tests: network tests are key-gated and skip without keys, so `npm test` here
+# runs only the offline, deterministic lane.
 
 on:
   push:
@@ -32,3 +32,6 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Test
+        run: npm test

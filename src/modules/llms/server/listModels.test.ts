@@ -6,13 +6,13 @@
 // Philosophy: a test must either (a) assert real behavior, or (b) report as
 // SKIPPED with a visible reason. We never let a missing-key path silently pass
 // with a "error message matches /Missing X/" check - that's testing a string
-// literal in the access builder, not the listing pipeline. In CI without keys
-// only the no-creds lane (hardcoded lists + OpenRouter public listing + node
-// import smoke) is asserted; the rest is reported as skipped.
+// literal in the access builder, not the listing pipeline. Every network test
+// is key-gated: without keys (e.g. CI) only the offline lane (hardcoded/curated
+// lists + import smoke) is asserted; the rest is reported as skipped.
 //
 // Run:
-// - `npx tsx --test src/modules/llms/server/listModels.test.ts`
-// - `npx tsx --test --test-reporter spec src/modules/llms/server/listModels.test.ts`
+// - `npm test` (skips key-less vendors; export vendor keys to widen coverage)
+// - `NODE_ENV=development npx tsx --test src/modules/llms/server/listModels.test.ts`
 //
 // -----------------------------------------------------------------------------
 // Credential env vars per protocol/dialect
@@ -49,7 +49,8 @@
 //   openai-compatible   perplexity      PERPLEXITY_API_KEY      api.perplexity.ai (no listing API; hardcoded)
 //   openai-compatible   togetherai      TOGETHERAI_API_KEY      api.together.xyz
 //   openai-compatible   xai             XAI_API_KEY             api.x.ai
-//   openai-compatible   zai             (no env fallback)       api.z.ai (curated list; API optional)
+//   openai-compatible   zai             ZAI_API_KEY (test-only; api.z.ai (curated list; API optional)
+//                                        no server env fallback)
 // -----------------------------------------------------------------------------
 
 import { describe, test } from 'node:test';
@@ -286,11 +287,11 @@ describe('listModels enumeration', () => {
     ok(models.some(m => /minimax/i.test(m.id)), 'minimax: MiniMax-* present');
   });
 
-  test('openai-compat/openrouter: live listing (endpoint is PUBLIC; any bearer accepted)', async () => {
-    // OpenRouter's /api/v1/models accepts any bearer token. We pass a placeholder
-    // so the access builder's non-empty-key check passes, then the upstream returns
-    // the full model list. This is the single no-creds test that exercises a real
-    // fetch + OpenAI-compatible parse + vendor mapping + variant injection pipeline.
+  test('openai-compat/openrouter: live listing (endpoint is PUBLIC; any bearer accepted)', { skip: skipIfMissing('OPENROUTER_API_KEY') }, async () => {
+    // OpenRouter's /api/v1/models accepts any bearer token, so this COULD run keyless -
+    // but it's key-gated so a keyless `npm test` stays offline and deterministic (catalog
+    // drift turns it red with zero code changes). Exercises a real fetch + OpenAI-compatible
+    // parse + vendor mapping + variant injection pipeline.
     const key = E.OPENROUTER_API_KEY?.trim() || 'x';
     const models = await expectOk(
       { dialect: 'openrouter', ...openAIShape({ oaiKey: key }) } as AixAPI_Access,
@@ -322,9 +323,11 @@ describe('listModels enumeration', () => {
   });
 
   test('openai-compat/zai: curated list (API is optional + unreliable)', async () => {
-    // Even if the upstream list API fails, zaiCuratedModelDescriptions() is returned.
+    // Always runs: even if the upstream list API fails (or keyless: is never tried),
+    // zaiCuratedModelDescriptions() is returned. With ZAI_API_KEY set, also exercises
+    // the optimistic live-discovery merge path.
     const models = await expectOk(
-      { dialect: 'zai', ...openAIShape() } as AixAPI_Access,
+      { dialect: 'zai', ...openAIShape({ oaiKey: E.ZAI_API_KEY || '' }) } as AixAPI_Access,
       1, 'zai',
     );
     ok(models.length > 0, 'zai: curated list non-empty');

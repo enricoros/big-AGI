@@ -13,6 +13,7 @@
     "start": "next start",
     "lint": "next lint",
     "tsclint": "tsc --noEmit --pretty && tsc --noEmit --pretty -p tools/tsconfig.json",
+    "test": "cross-env NODE_ENV=development tsx --test \"src/**/*.test.ts\"",
     "postinstall": "prisma generate --no-hints",
     "gen:icon-sprites": "node tools/develop/gen-icon-sprites/generate-llm-sprites.ts",
     "db:push": "prisma db push",
