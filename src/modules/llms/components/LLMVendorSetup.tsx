@@ -19,6 +19,7 @@ import { LMStudioServiceSetup } from '../vendors/lmstudio/LMStudioServiceSetup';
 import { LocalAIServiceSetup } from '../vendors/localai/LocalAIServiceSetup';
 import { MistralServiceSetup } from '../vendors/mistral/MistralServiceSetup';
 import { MoonshotServiceSetup } from '../vendors/moonshot/MoonshotServiceSetup';
+import { NvidiaNIMServiceSetup } from '../vendors/nvidianim/NvidiaNIMServiceSetup';
 import { OllamaServiceSetup } from '../vendors/ollama/OllamaServiceSetup';
 import { OpenAIServiceSetup } from '../vendors/openai/OpenAIServiceSetup';
 import { OpenRouterServiceSetup } from '../vendors/openrouter/OpenRouterServiceSetup';
@@ -48,6 +49,7 @@ const vendorSetupComponents: Record<ModelVendorId, React.ComponentType<{ service
   localai: LocalAIServiceSetup,
   mistral: MistralServiceSetup,
   moonshot: MoonshotServiceSetup,
+  nvidianim: NvidiaNIMServiceSetup,
   ollama: OllamaServiceSetup,
   openai: OpenAIServiceSetup,
   openrouter: OpenRouterServiceSetup,

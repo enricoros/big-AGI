@@ -22,6 +22,7 @@ import { LMStudioIcon } from '~/common/components/icons/vendors/LMStudioIcon';
 import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
 import { MoonshotIcon } from '~/common/components/icons/vendors/MoonshotIcon';
+import { NvidiaIcon } from '~/common/components/icons/vendors/NvidiaIcon';
 import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { OpenRouterIcon } from '~/common/components/icons/vendors/OpenRouterIcon';
@@ -51,6 +52,7 @@ const vendorIcons: Record<ModelVendorId, React.FunctionComponent<SvgIconProps>> 
   localai: LocalAIIcon,
   mistral: MistralIcon,
   moonshot: MoonshotIcon,
+  nvidianim: NvidiaIcon,
   ollama: OllamaIcon,
   openai: OpenAIIcon,
   openrouter: OpenRouterIcon,
