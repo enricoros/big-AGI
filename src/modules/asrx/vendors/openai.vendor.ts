@@ -27,8 +27,8 @@ export const ASRxVendorOpenAI: IASRxVendor<'openai'> = {
   },
 
   capabilities: {
-    languageDetection: false, // whisper auto-detects but the simple response doesn't return it
-    diarization: false,
+    languageDetection: true,  // whisper-1 via verbose_json (gpt-4o-transcribe doesn't report it)
+    diarization: true,        // via the gpt-4o-transcribe-diarize model (profile.diarize)
     interimResults: false,    // batch only
     wordTimestamps: true,     // via verbose_json response_format (whisper-1)
   },

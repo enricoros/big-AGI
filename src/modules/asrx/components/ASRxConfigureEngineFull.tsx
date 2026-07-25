@@ -17,6 +17,7 @@ import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 import type { DASRxEngine, DASRxEngineAny, DASRxVendorType, DCredentialsApiKey, DProfileDeepgram, DProfileOpenAI } from '../asrx.types';
 import { ASRX_DEFAULTS } from '../asrx.config';
 import { ASRxVendorDeepgram } from '../vendors/deepgram.vendor';
+import { ASRxVendorOpenAI } from '../vendors/openai.vendor';
 import { asrxAreCredentialsValid } from '../store-module-asrx';
 
 
@@ -399,9 +400,21 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
   const { profile } = engine;
   const isWhisper = (profile.asrModel ?? ASRX_DEFAULTS.OPENAI_MODEL) === 'whisper-1';
 
+  // advanced features start open when any is already configured
+  const advanced = useToggleableBoolean(!!profile.diarize);
+
   const handleProfileUpdate = React.useCallback((patch: Partial<DProfileOpenAI>) => {
     onUpdate({ profile: { ...profile, ...patch } });
   }, [onUpdate, profile]);
+
+  // any parameter off its default (the prompt is data, not a parameter - reset never touches it)
+  const hasUserParameters =
+    (profile.asrModel !== undefined && profile.asrModel !== ASRX_DEFAULTS.OPENAI_MODEL)
+    || !!profile.language || profile.temperature !== undefined || !!profile.diarize;
+
+  const handleResetParameters = React.useCallback(() => {
+    onUpdate({ profile: { ...ASRxVendorOpenAI.getDefaultProfile(), ...(profile.prompt && { prompt: profile.prompt }) } });
+  }, [onUpdate, profile.prompt]);
 
   return <>
 
@@ -454,6 +467,36 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
         sliderSx={{ maxWidth: 220, my: -0.5 }}
       />
     )}
+
+    {advanced.on && (
+      <FormSwitchControl
+        title='Label Speakers'
+        description='Diarize model; skips Prompt'
+        checked={!!profile.diarize}
+        onChange={checked => handleProfileUpdate({ diarize: checked || undefined })}
+      />
+    )}
+
+    {/* Advanced toggle on the left; reset link on the right, only when off-default */}
+    <Box sx={_styles.bottomRow}>
+      <Typography
+        level='body-xs'
+        onClick={advanced.toggle}
+        sx={{ ..._styles.advancedToggle, mr: 'auto' }}
+      >
+        {advanced.on ? 'Hide Advanced' : 'Advanced...'}
+      </Typography>
+      {hasUserParameters && (
+        <Link
+          component='button'
+          color='neutral'
+          level='body-xs'
+          onClick={handleResetParameters}
+        >
+          Reset to defaults ...
+        </Link>
+      )}
+    </Box>
 
   </>;
 }

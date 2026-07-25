@@ -59,8 +59,9 @@ export interface DProfileOpenAI {
   dialect: 'openai';
   asrModel?: 'gpt-4o-transcribe' | 'gpt-4o-mini-transcribe' | 'whisper-1';
   language?: string;       // ISO-639-1 (undefined = auto-detect)
-  prompt?: string;         // vocabulary/style guidance (especially for whisper-1)
+  prompt?: string;         // vocabulary/style guidance (especially for whisper-1; rejected by the diarize model)
   temperature?: number;    // 0..1 (whisper-1 only; gpt-4o-transcribe ignores)
+  diarize?: boolean;       // speaker labels - swaps the request onto the gpt-4o-transcribe-diarize model
 }
 
 
