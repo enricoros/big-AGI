@@ -11,7 +11,7 @@ export function ExpanderAccordion(props: {
   expandedVariant?: VariantProp,
   startCollapsed?: boolean,
   sx?: SxProps,
-  children?: React.JSX.Element
+  children?: React.ReactNode,
 }) {
 
   // state
@@ -43,10 +43,8 @@ export function ExpanderAccordion(props: {
           {props.icon} {props.title}
         </AccordionSummary>
 
-        <AccordionDetails variant={props.expandedVariant}>
-          <Box sx={{ display: 'grid' }}>
-            {expanded && props.children}
-          </Box>
+        <AccordionDetails variant={props.expandedVariant} slotProps={{ content: { sx: { p: 0, display: 'grid' } } }}>
+          {expanded && props.children}
         </AccordionDetails>
 
       </Accordion>
