@@ -90,7 +90,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
     {showAdvanced && <FormTextField
       autoCompleteId='anthropic-host'
       title='API Host'
-      description='For proxies or custom endpoints'
+      description='Proxies, custom endpoints'
       placeholder='deployment.service.region.amazonaws.com'
       isError={false}
       value={anthropicHost || ''}
