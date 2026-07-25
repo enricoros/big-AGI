@@ -113,7 +113,7 @@ Dynamic vendors (`openrouter`, `bedrock`) use `string` for `modelId` since their
 
 ### Vendor coverage
 
-Static vendors with rich literal unions: Anthropic, OpenAI, Gemini (`googleai`), xAI, Z.AI, Moonshot, DeepSeek. These provide the strongest compile-time guarantees.
+Static vendors with rich literal unions: Anthropic, OpenAI, Gemini (`googleai`), xAI, Z.AI, Moonshot, DeepSeek, NVIDIA NIM (`nvidianim`). These provide the strongest compile-time guarantees. NVIDIA NIM entries sit at the tail of every domain list - it is a free trial endpoint, so configured paid vendors always win.
 
 All other registered vendors (Alibaba, ArceeAI, Azure, ChutesAI, FastAPI, FireworksAI, Groq, LLMAPI, Novita, TogetherAI) also export `LlmsXxxModelId` types via the same `llmsDefineManualMappings` pattern, but their known-model arrays may be empty today - the union degenerates to the base element type rather than `never`, keeping the mechanism ready for future editorial entries.
 
