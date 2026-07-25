@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Divider, IconButton } from '@mui/joy';
+import { Alert, Box, Button, Divider, IconButton, Typography } from '@mui/joy';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
@@ -10,16 +10,62 @@ import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { NvidiaIcon } from '~/common/components/icons/vendors/NvidiaIcon';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
+import { ModelVendorNvidiaNIM } from '../nvidianim/nvidianim.vendor';
 import { ModelVendorOpenAI } from './openai.vendor';
 import { findMatchingOpenAIAutoProvider, OpenAIHostAutocomplete } from './OpenAIHostAutocomplete';
+
+
+// --- NVIDIA NIM upgrade notice detection ---
+
+function isNvidiaNIMConfig(host?: string, key?: string) {
+  if (!host || !key) return false;
+  const isNvidiaHost = host.toLowerCase().includes('integrate.api.nvidia.com');
+  const isNvidiaKey = key.startsWith('nvapi-');
+  return isNvidiaHost && isNvidiaKey;
+}
+
+/**
+ * Community upgrade notice: shown on custom-host services pointing at NVIDIA's endpoint, which now
+ * has a dedicated vendor (curated models, correct context windows, retired models filtered out).
+ */
+function NvidiaNIMUpgradeNotice(props: { oaiServiceId: DModelsServiceId, nvapiKey: string }) {
+
+  const handleMigrateService = React.useCallback(() => {
+    const { createModelsService, updateServiceSettings, setConfServiceId, removeService } = llmsStoreActions();
+    const newService = createModelsService(ModelVendorNvidiaNIM);
+    updateServiceSettings(newService.id, { nvidiaKey: props.nvapiKey });
+    // select the new service BEFORE removing the current one (same order as the modal's delete handler)
+    setConfServiceId(newService.id);
+    removeService(props.oaiServiceId);
+  }, [props.nvapiKey, props.oaiServiceId]);
+
+  return (
+    <Alert variant='soft' color='success' sx={{ alignItems: 'flex-start', gap: 1.5 }}>
+      <NvidiaIcon sx={{ fontSize: 'xl3', mt: 0.5 }} />
+      <Box>
+        <Typography level='title-sm' sx={{ mb: 0.5 }}>NVIDIA NIM is now a dedicated service</Typography>
+        <Typography level='body-sm'>
+          Thanks to you and the community, NVIDIA&apos;s free models are now fully supported: curated
+          model list, correct context windows, reasoning controls, and no more retired models failing
+          mid-chat. One click moves your API key to the new service and replaces this one.
+        </Typography>
+        <Button color='success' onClick={handleMigrateService} sx={{ mt: 1 }}>
+          Switch to NVIDIA NIM service
+        </Button>
+      </Box>
+    </Alert>
+  );
+}
 
 
 export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
@@ -60,6 +106,10 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     <ApproximateCosts serviceId={service?.id} />
 
+    {/* Migration notice to the NVIDIA NIM service */}
+    {isNvidiaNIMConfig(oaiHost, oaiKey) && (
+      <NvidiaNIMUpgradeNotice oaiServiceId={props.serviceId} nvapiKey={oaiKey} />
+    )}
 
     {(showAdvanced || !!oaiHost) && (
       <OpenAIHostAutocomplete
