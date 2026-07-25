@@ -54,3 +54,6 @@ yarn-error.log*
 
 # Ignore temporary CC files
 /tmpclaude*
+
+# Chrome DevTools workspace binding (per-worktree)
+/public/.well-known/appspecific/com.chrome.devtools.json

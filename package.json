@@ -6,6 +6,8 @@
   "homepage": "https://big-agi.com",
   "repository": "https://github.com/enricoros/big-agi",
   "scripts": {
+    "predev": "node tools/develop/gen-devtools-workspace/generate-devtools-workspace.mjs",
+    "predev-debug": "node tools/develop/gen-devtools-workspace/generate-devtools-workspace.mjs",
     "dev": "next dev --turbopack",
     "dev-debug": "cross-env NODE_OPTIONS='--inspect' next dev",
     "dev-https": "next dev --experimental-https",
