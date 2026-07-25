@@ -87,6 +87,8 @@ export async function asrxTranscribeBatch(
       ...(output.language ? { language: output.language } : {}),
       ...(output.confidence !== undefined ? { confidence: output.confidence } : {}),
       ...(output.durationMs !== undefined ? { durationMs: output.durationMs } : {}),
+      ...(output.topics?.length ? { topics: output.topics } : {}),
+      ...(output.sentiment ? { sentiment: output.sentiment } : {}),
     };
   } catch (error: any) {
     // abort -> specific error type so callers can distinguish user-stop from failure

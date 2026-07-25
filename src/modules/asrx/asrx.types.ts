@@ -47,10 +47,12 @@ export interface DProfileDeepgram {
   dialect: 'deepgram';
   asrModel?: 'nova-3' | 'nova-2' | string;
   language?: string;       // BCP-47 or 'multi' for multilingual auto-detect
-  smartFormat?: boolean;   // numbers, dates, currency, AND punctuation
+  smartFormat?: boolean;   // numbers, dates, currency, punctuation AND paragraph breaks
   diarize?: boolean;       // speaker identification
   utterances?: boolean;    // utterance-level segmentation
-  keywords?: string[];     // keyword boosting
+  keyterms?: string[];     // user dictionary: names/jargon boosting - wire param is model-split (keyterm vs keywords, see adapter)
+  topics?: boolean;        // topic detection (Deepgram audio intelligence)
+  sentiment?: boolean;     // sentiment analysis (Deepgram audio intelligence)
 }
 
 export interface DProfileOpenAI {
@@ -111,12 +113,27 @@ export type ASRxBatchResult =
       language?: string;      // detected or confirmed language (when provided by the vendor)
       confidence?: number;    // 0..1, when provided
       durationMs?: number;    // client-measured round-trip (or vendor-reported when available)
+      topics?: ASRxDetectedTopic[]; // vendor-detected topics (deduped, only when non-empty)
+      sentiment?: ASRxDetectedSentiment; // vendor-average sentiment, when analysis ran
     }
   | {
       success: false;
       errorType: ASRxErrorType;
       errorText: string;
     };
+
+/** A detected topic, with the transcript span that triggered the detection as evidence. */
+export interface ASRxDetectedTopic {
+  label: string;
+  quote?: string;         // truncated transcript span the vendor attributed the topic to
+  score?: number;         // vendor confidence 0..1 (best across segments)
+}
+
+/** Average sentiment of the whole audio, as reported by the vendor's analysis pass. */
+export interface ASRxDetectedSentiment {
+  label: 'positive' | 'neutral' | 'negative' | (string & {}); // hinted known values, open set
+  score?: number;         // vendor-reported average (Deepgram: -1..1)
+}
 
 export type ASRxErrorType =
   | 'asr-no-engine'       // no engine selected and none available
