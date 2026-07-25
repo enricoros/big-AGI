@@ -172,7 +172,7 @@ function _renderVendorItem({ vendor, canAdd, vendorInstancesCount }: VendorItemD
 
       {/* Free tier badge */}
       {vendor.hasFreeModels && canAdd && (
-        <PhGift sx={{ color: 'success.solidBg', fontSize: 'lg' }} />
+        <PhGift sx={{ color: 'primary.softColor', fontSize: 'lg' }} />
       )}
       {/*{vendor.hasFreeModels && (*/}
       {/*  <Chip*/}
