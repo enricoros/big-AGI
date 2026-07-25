@@ -18,6 +18,7 @@ export const ModelVendorNvidiaNIM: IModelVendor<DNvidiaNIMServiceSettings, OpenA
   location: 'cloud',
   instanceLimit: 1,
   hasFreeModels: true, // the hosted build.nvidia.com endpoint is free (rate-limited, ~40 RPM per account)
+  hasServerConfigKey: 'hasLlmNvidiaNIM',
 
   // CSF: the hosted endpoint CORS-allowlists *.nvidia.com only, so browser-direct is impossible against the
   // default host - CSF is only available when the user overrides the host (e.g. a local NIM/vLLM with open CORS)
