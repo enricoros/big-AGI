@@ -1,24 +1,17 @@
-import * as React from 'react';
+import { LiteVideoEmbed } from './LiteVideoEmbed';
 
-import ReactPlayer from 'react-player';
-import type { ReactPlayerProps } from 'react-player/types';
 
-export function VideoPlayerVimeo(props: ReactPlayerProps & {
-  vimeoVideoId: string; // set this to not set the full URL
-  responsive?: boolean; // make the player responsive
+export function VideoPlayerVimeo(props: {
+  vimeoVideoId: string;
+  title?: string;                       // a11y label + poster overlay; defaults to the oEmbed title
+  play?: 'click' | 'auto' | 'ambient';  // see LiteVideoEmbed
+  playing?: boolean;                    // legacy alias for play='ambient' (dev-branch call sites)
+  loop?: boolean;
+  rounded?: boolean;
+  responsive?: boolean;                 // fill the parent, 16:9 fallback
+  width?: number | string;
+  height?: number | string;
 }) {
-
-  const { responsive, vimeoVideoId, ...playerProps } = props;
-
-  // responsive patch
-  if (responsive) {
-    playerProps.width = '100%';
-    playerProps.height = '100%';
-  }
-
-  // src from video id
-  if (vimeoVideoId)
-    playerProps.src = `https://vimeo.com/${vimeoVideoId}`;
-
-  return <ReactPlayer {...playerProps} />;
+  const { vimeoVideoId, play, playing, ...embedProps } = props;
+  return <LiteVideoEmbed platform='vimeo' videoId={vimeoVideoId} play={play ?? (playing ? 'ambient' : undefined)} {...embedProps} />;
 }

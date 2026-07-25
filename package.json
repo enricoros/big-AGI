@@ -68,7 +68,6 @@
     "react-dom": "^18",
     "react-hook-form": "^7.79.0",
     "react-markdown": "^10.1.0",
-    "react-player": "^3.4.0",
     "react-resizable-panels": "^3.0.6",
     "react-timeago": "^8.3.0",
     "rehype-katex": "^7.0.1",

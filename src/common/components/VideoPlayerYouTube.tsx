@@ -1,24 +1,17 @@
-import * as React from 'react';
+import { LiteVideoEmbed } from './LiteVideoEmbed';
 
-import ReactPlayer from 'react-player';
-import type { ReactPlayerProps } from 'react-player/types';
 
-export function VideoPlayerYouTube(props: ReactPlayerProps & {
-  youTubeVideoId: string; // set this to not set the full URL
-  responsive?: boolean; // make the player responsive
+export function VideoPlayerYouTube(props: {
+  youTubeVideoId: string;
+  title?: string;                       // a11y label + poster overlay
+  play?: 'click' | 'auto' | 'ambient';  // see LiteVideoEmbed
+  playing?: boolean;                    // legacy alias for play='ambient' (dev-branch call sites)
+  loop?: boolean;
+  rounded?: boolean;
+  responsive?: boolean;                 // fill the parent, 16:9 fallback
+  width?: number | string;
+  height?: number | string;
 }) {
-
-  const { responsive, youTubeVideoId, ...playerProps } = props;
-
-  // responsive patch
-  if (responsive) {
-    playerProps.width = '100%';
-    playerProps.height = '100%';
-  }
-
-  // src from video id
-  if (youTubeVideoId)
-    playerProps.src = `https://www.youtube.com/watch?v=${youTubeVideoId}`;
-
-  return <ReactPlayer {...playerProps} />;
+  const { youTubeVideoId, play, playing, ...embedProps } = props;
+  return <LiteVideoEmbed platform='youtube' videoId={youTubeVideoId} play={play ?? (playing ? 'ambient' : undefined)} {...embedProps} />;
 }
