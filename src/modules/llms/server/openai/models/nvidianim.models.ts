@@ -139,8 +139,8 @@ const _knownNvidiaNIMModels = [
   {
     id: 'deepseek-ai/deepseek-v4-pro',
     label: 'DeepSeek V4 Pro',
-    description: 'DeepSeek flagship reasoning MoE. Note: often slow or saturated on the free endpoint.',
-    contextWindow: 1000000, // catalog value; unverified by probe (endpoint saturation), matches V4 Flash measured
+    description: 'DeepSeek flagship reasoning MoE. NVIDIA serves a reduced 256K context (native: 1M). Note: often slow or saturated on the free endpoint.',
+    contextWindow: 262144, // measured 2026-07-25 (harvest + manual probe agree) - NVIDIA truncates from the native 1M; V4 Flash gets the full window
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     parameterSpecs: _PS_Thinking,
     benchmark: { cbaElo: 1458 - 2 }, // lmarena: deepseek-v4-pro-thinking - 2 (yield to native vendor)
@@ -326,6 +326,17 @@ const _knownNvidiaNIMModels = [
     hidden: true,
   },
   {
+    id: 'poolside/laguna-xs-2.1',
+    label: 'Laguna XS 2.1',
+    description: 'Poolside compact coding-focused reasoning model. Can be slow to cold-start on the free endpoint.',
+    contextWindow: 262144, // measured 2026-07-25
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
+    parameterSpecs: _PS_Thinking,
+    chatPrice: _freePrice,
+    pubDate: '20260715', // harvest: catalog createdDate
+    hidden: true,
+  },
+  {
     id: 'google/diffusiongemma-26b-a4b-it',
     label: 'DiffusionGemma 26B',
     description: 'Experimental diffusion language model. CAUTION: prone to hanging under load.',
@@ -364,6 +375,20 @@ const _knownNvidiaNIMModels = [
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
     chatPrice: _freePrice,
     pubDate: '20260414',
+    hidden: true,
+  },
+  {
+    // ENTITLEMENT-GATED: NVIDIA scopes function visibility per account - this model serves some accounts
+    // (verified via usage analytics) but 404s with "Function ... not found in account" for others, including
+    // our probe key. Curated HIDDEN so it never surprises the default list, while entitled users can unhide it.
+    id: 'qwen/qwen3.5-397b-a17b',
+    label: 'Qwen 3.5 397B',
+    description: 'Qwen 3.5 flagship MoE (multimodal, reasoning). CAUTION: served only to some NVIDIA accounts - most keys get a 404 "Function not found for account" error.',
+    contextWindow: 262144, // catalog-advertised; unverifiable from our account (entitlement-gated)
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
+    parameterSpecs: _PS_Thinking,
+    chatPrice: _freePrice,
+    pubDate: '20260216', // harvest: catalog createdDate
     hidden: true,
   },
   {
@@ -448,7 +473,7 @@ const _retiredNvidiaNIMIds = [
   'nvidia/nv-embed-v1', 'nvidia/nv-embedcode-7b-v1', 'nvidia/nv-embedqa-e5-v5', 'nvidia/nv-embedqa-mistral-7b-v2', 'nvidia/nvclip',
   // probe-error: document parsers (no text input) or persistent 5xx
   // NOT here: 'qwen/qwen3.5-397b-a17b' - dead for our key (function version not visible to the account)
-  // but verified WORKING for other accounts via usage analytics (2026-07-25) - kept as a hidden 0-day entry
+  // but verified WORKING for other accounts via usage analytics (2026-07-25) - curated as a HIDDEN entry above
   'nvidia/ai-synthetic-video-detector', 'nvidia/llama-3.1-nemoguard-8b-topic-control', 'nvidia/nemoretriever-parse',
   'nvidia/nemotron-nano-3-30b-a3b', 'nvidia/nemotron-parse',
   // slow-or-dead: timed out at 45s and 120s across runs

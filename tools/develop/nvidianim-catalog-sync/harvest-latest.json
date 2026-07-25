@@ -1,17 +1,16 @@
 {
-  "harvestedAt": "2026-07-25T13:12:00.131Z",
+  "harvestedAt": "2026-07-25T23:12:57.062Z",
   "counts": {
     "total": 118,
     "dead-entitlement": 45,
-    "alive": 47,
+    "alive": 49,
     "no-chat-route": 14,
-    "throttled": 1,
-    "slow-or-dead": 5,
+    "slow-or-dead": 4,
     "probe-error": 6,
     "withCatalogCard": 99,
     "withPubDate": 103,
     "withDeprecation": 15,
-    "withCtxMeasured": 41,
+    "withCtxMeasured": 43,
     "ngcUnmatched": 80
   },
   "models": [
@@ -263,11 +262,11 @@
     },
     {
       "id": "deepseek-ai/deepseek-v4-flash",
-      "alive": "throttled",
+      "alive": "alive",
       "label": "deepseek-v4-flash",
       "description": "DeepSeek V4 Flash is a 284B MoE model with 1M-token context optimized for fast coding and agents.",
       "publisher": "deepseek-ai",
-      "ctxMeasured": null,
+      "ctxMeasured": 1000000,
       "ctxAdvertised": 1048576,
       "capabilities": {
         "tools": true,
@@ -284,17 +283,15 @@
       "catalogUpdated": "2026-04-24T21:06:50.546Z",
       "deprecationDate": null,
       "lastMonthInvocations": 16555817,
-      "notes": [
-        "503 - inconclusive, not a death signal"
-      ]
+      "notes": []
     },
     {
       "id": "deepseek-ai/deepseek-v4-pro",
-      "alive": "slow-or-dead",
+      "alive": "alive",
       "label": "deepseek-v4-pro",
       "description": "DeepSeek V4 scales to 1M-token context windows with efficient MoE architecture for coding tasks.",
       "publisher": "deepseek-ai",
-      "ctxMeasured": null,
+      "ctxMeasured": 262144,
       "ctxAdvertised": 1048576,
       "capabilities": {
         "tools": true,
@@ -311,9 +308,7 @@
       "catalogUpdated": "2026-04-24T18:06:21.755Z",
       "deprecationDate": null,
       "lastMonthInvocations": 6732803,
-      "notes": [
-        "timed out at 45s and again at 120s"
-      ]
+      "notes": []
     },
     {
       "id": "google/codegemma-1.1-7b",
@@ -414,9 +409,7 @@
       "catalogUpdated": "2026-06-10T18:07:50.386Z",
       "deprecationDate": null,
       "lastMonthInvocations": 4303686,
-      "notes": [
-        "ctx probe needed the escalated 120s timeout"
-      ]
+      "notes": []
     },
     {
       "id": "google/gemma-2-2b-it",
@@ -770,9 +763,7 @@
       "catalogUpdated": "2025-06-12T20:31:27.483Z",
       "deprecationDate": null,
       "lastMonthInvocations": 5491462,
-      "notes": [
-        "alive on retry (first attempt failed, needed the escalated 120s timeout)"
-      ]
+      "notes": []
     },
     {
       "id": "meta/llama-3.1-8b-instruct",
@@ -797,9 +788,7 @@
       "catalogUpdated": "2025-07-09T14:53:02.421Z",
       "deprecationDate": null,
       "lastMonthInvocations": 18528033,
-      "notes": [
-        "ctx probe needed the escalated 120s timeout"
-      ]
+      "notes": []
     },
     {
       "id": "meta/llama-3.2-11b-vision-instruct",
@@ -829,11 +818,11 @@
     },
     {
       "id": "meta/llama-3.2-1b-instruct",
-      "alive": "alive",
+      "alive": "slow-or-dead",
       "label": "llama-3.2-1b-instruct",
       "description": "Advanced state-of-the-art small language model with language understanding, superior reasoning, and text generation.",
       "publisher": "meta",
-      "ctxMeasured": 131072,
+      "ctxMeasured": null,
       "ctxAdvertised": 131072,
       "capabilities": {
         "tools": true,
@@ -850,7 +839,9 @@
       "catalogUpdated": "2025-05-21T14:03:40.918Z",
       "deprecationDate": null,
       "lastMonthInvocations": 544811,
-      "notes": []
+      "notes": [
+        "timed out at 45s and again at 120s"
+      ]
     },
     {
       "id": "meta/llama-3.2-3b-instruct",
@@ -927,7 +918,8 @@
       "deprecationDate": null,
       "lastMonthInvocations": 26852465,
       "notes": [
-        "alive on retry (first attempt failed, needed the escalated 120s timeout)"
+        "alive on retry (first attempt failed, needed the escalated 120s timeout)",
+        "ctx probe needed the escalated 120s timeout"
       ]
     },
     {
@@ -1649,7 +1641,7 @@
       "deprecationDate": null,
       "lastMonthInvocations": 490532,
       "notes": [
-        "HTTP 500: {\"error\":\"Error during inference of request chat-e0be629dda454f7f923c6f18d74d062b -- Encountered an error in forwardAsync function: [TensorRT-LLM][ERR"
+        "HTTP 500: {\"error\":\"Error during inference of request chat-5eb27dc80e394a969d302f54145141fc -- Encountered an error in forwardAsync function: [TensorRT-LLM][ERR"
       ]
     },
     {
@@ -2066,7 +2058,9 @@
       "catalogUpdated": "2025-12-15T14:22:38.215Z",
       "deprecationDate": null,
       "lastMonthInvocations": 12012135,
-      "notes": []
+      "notes": [
+        "ctx probe needed the escalated 120s timeout"
+      ]
     },
     {
       "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
@@ -2094,7 +2088,9 @@
       "catalogUpdated": "2026-04-28T15:37:00.315Z",
       "deprecationDate": null,
       "lastMonthInvocations": 8456415,
-      "notes": []
+      "notes": [
+        "ctx probe needed the escalated 120s timeout"
+      ]
     },
     {
       "id": "nvidia/nemotron-3-super-120b-a12b",
@@ -2619,11 +2615,11 @@
     },
     {
       "id": "poolside/laguna-xs-2.1",
-      "alive": "slow-or-dead",
+      "alive": "alive",
       "label": "laguna-xs-2.1",
       "description": "Efficient 33B MoE for local, long-horizon agentic coding and terminal tasks",
       "publisher": "poolside",
-      "ctxMeasured": null,
+      "ctxMeasured": 262144,
       "ctxAdvertised": 262144,
       "capabilities": {
         "tools": true,
@@ -2641,7 +2637,7 @@
       "deprecationDate": null,
       "lastMonthInvocations": null,
       "notes": [
-        "timed out at 45s and again at 120s"
+        "alive on retry (first attempt failed, needed the escalated 120s timeout)"
       ]
     },
     {
@@ -2771,7 +2767,9 @@
       "catalogUpdated": "2026-02-02T01:33:35.325Z",
       "deprecationDate": "07/27/2026",
       "lastMonthInvocations": 10143899,
-      "notes": []
+      "notes": [
+        "ctx probe needed the escalated 120s timeout"
+      ]
     },
     {
       "id": "stepfun-ai/step-3.7-flash",
