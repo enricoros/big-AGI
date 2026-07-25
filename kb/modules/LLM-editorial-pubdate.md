@@ -79,6 +79,7 @@ Three categories:
 | DeepSeek | Hybrid | `openai/models/deepseek.models.ts` | `_knownDeepseekChatModels` | 4 | 4/4 HIGH |
 | Groq | Hybrid (host) | `openai/models/groq.models.ts` | `_knownGroqModels` | 11 | 11/11 HIGH (underlying-model date) |
 | Z.AI / GLM | Hybrid | `openai/models/zai.models.ts` | `_knownZAIModels` | 21 | 21/21 HIGH (`pubDate` type-required, like Anthropic) |
+| NVIDIA NIM | Hybrid (3-tier) | `openai/models/nvidianim.models.ts` | `_knownNvidiaNIMModels` | 36 | 36/36 HIGH (`pubDate` type-required; upstream release dates cross-referenced from sibling vendor tables, NOT NVIDIA's onboarding dates; deny-listed ids dropped - the catalog is a stale superset - and unknown ids surface as `[?]` 0-day entries without pubDate; refresh via `tools/develop/nvidianim-catalog-sync/`) |
 | Bedrock | Reuses Anthropic | `bedrock/bedrock.models.ts` | -> `hardcodedAnthropicModels` | (12) | inherited |
 | Ollama | Editorial (catalog) | `ollama/ollama.models.ts` | `OLLAMA_BASE_MODELS` | 209 | **deferred** - see notes |
 | Arcee AI | Dynamic | `openai/models/arceeai.models.ts` | `_arceeKnownModels` | 0 | n/a (empty) |
