@@ -46,16 +46,19 @@ const ALIVE_ORDER: AliveClass[] = ['alive', 'throttled', 'unprobed', 'probe-erro
 interface Options {
   skipProbes: boolean;
   only: string | null;
+  extra: string | null;
 }
 
 function parseArgs(argv: string[]): Options | 'help' {
-  const options: Options = { skipProbes: false, only: null };
+  const options: Options = { skipProbes: false, only: null, extra: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--help' || arg === '-h') return 'help';
     else if (arg === '--skip-probes') options.skipProbes = true;
     else if (arg === '--only') options.only = argv[++i] ?? null;
     else if (arg.startsWith('--only=')) options.only = arg.slice('--only='.length);
+    else if (arg === '--extra') options.extra = argv[++i] ?? null;
+    else if (arg.startsWith('--extra=')) options.extra = arg.slice('--extra='.length);
     else throw new Error(`Unknown argument: ${arg}`);
   }
   return options;
@@ -67,6 +70,8 @@ NVIDIA Catalog Harvest - merges live ids, build.nvidia.com cards, NGC metadata a
 
   --skip-probes        sources 1-3 only, no API key needed, finishes in ~1 minute
   --only <substring>   restrict to model ids containing the substring (comma-separate for several)
+  --extra <id,id>      also probe ids NOT in /v1/models (delisted models can still serve for days;
+                       alive-ish ids from the previous ledger are carried over automatically)
   --help               this text
 
 Output: harvest-latest.json in the tool directory, plus an aligned console table.
@@ -143,9 +148,26 @@ async function main(): Promise<void> {
 
   // --- source 1: live ids
   const liveIds = await fetchLiveModelIds();
+
+  // Probe BEYOND /v1/models: delisting is not death on this endpoint (models have served for days
+  // after leaving the list, e.g. mistral-large-3, and only a probe can record the 410 + its EOL date).
+  // Carry over ids from the previous ledger that vanished from the list while still classified
+  // alive-ish; once a run records them 'retired'/dead they decay off naturally. Plus --extra ids.
+  const listedIds = new Set(liveIds.map((m) => m.id));
+  const unlistedIds: string[] = [];
+  try {
+    const prev = JSON.parse(fs.readFileSync(OUTPUT_FILE, 'utf-8')) as HarvestFile;
+    const carryable = new Set(['alive', 'throttled', 'slow-or-dead', 'probe-error']);
+    for (const m of prev.models)
+      if (!listedIds.has(m.id) && carryable.has(m.alive)) unlistedIds.push(m.id);
+  } catch { /* no previous ledger - fine */ }
+  for (const id of options.extra ? options.extra.split(',').map((s) => s.trim()).filter(Boolean) : [])
+    if (!listedIds.has(id) && !unlistedIds.includes(id)) unlistedIds.push(id);
+  const allIds: typeof liveIds = [...liveIds, ...unlistedIds.map((id) => ({ id, ownedBy: null }))];
+
   const onlyParts = options.only ? options.only.split(',').map((part) => part.trim()).filter(Boolean) : null;
-  const selected = onlyParts ? liveIds.filter((m) => onlyParts.some((part) => m.id.includes(part))) : liveIds;
-  console.log(`\n[1/4] live ids: ${liveIds.length} from /v1/models${options.only ? `, ${selected.length} selected` : ''}`);
+  const selected = onlyParts ? allIds.filter((m) => onlyParts.some((part) => m.id.includes(part))) : allIds;
+  console.log(`\n[1/4] live ids: ${liveIds.length} from /v1/models${unlistedIds.length ? ` + ${unlistedIds.length} unlisted carryover/extra` : ''}${options.only ? `, ${selected.length} selected` : ''}`);
 
   // --- source 2: build.nvidia.com catalog
   const { entries: indexEntries, pagesRead, notes: indexNotes } = await fetchCatalogIndex();
@@ -203,6 +225,7 @@ async function main(): Promise<void> {
 
   for (const { id, indexEntry, card, fuzzySlug } of cards) {
     const notes: string[] = [];
+    if (!listedIds.has(id)) notes.push('NOT in /v1/models this run (unlisted carryover/extra probe)');
     const ngcMatch = fuzzyLookup(ngcByKey, modelNameOf(id));
     const ngc = ngcMatch?.value ?? null;
     if (ngc) {

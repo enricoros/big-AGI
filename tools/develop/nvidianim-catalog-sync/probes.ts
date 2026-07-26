@@ -220,11 +220,38 @@ export async function probeContextWindow(apiKey: string, modelId: string): Promi
   if (measured !== null)
     return { ctxMeasured: measured, ctxProbe: null, note: escalated ? `ctx probe needed the escalated ${ESCALATED_TIMEOUT_MS / 1000}s timeout` : null };
 
+  // Fallback: some stacks (gpt-oss, mistral-nemotron) never state the limit, only the shortfall:
+  // "max_tokens must be at least 1, got -1068994" - i.e. got = ctx - promptTokens. Our probe prompt
+  // tokenizes to ~CTX_PROBE_REPEATS (+ tens of tokens of template overhead), so ctx is recoverable
+  // to within ~0.01% and snapped to the nearest canonical window. Estimation, not measurement -
+  // marked 'estimated' and only accepted when a canonical value is within tolerance.
+  const negMatch = result.body.match(/max_tokens must be at least \d+, got (-\d+)/);
+  if (negMatch) {
+    const estimate = CTX_PROBE_REPEATS + parseInt(negMatch[1], 10);
+    const snapped = _snapToCanonicalWindow(estimate);
+    if (snapped !== null)
+      return { ctxMeasured: snapped, ctxProbe: 'estimated', note: `ctx estimated from max_tokens shortfall (raw ${estimate}, snapped to ${snapped})` };
+    return { ctxMeasured: null, ctxProbe: 'no-match', note: `ctx shortfall estimate ${estimate} matches no canonical window - review manually` };
+  }
+
   return {
     ctxMeasured: null,
     ctxProbe: 'no-match',
     note: `ctx probe HTTP ${result.status}, no limit in body: ${result.body.slice(0, 150).replace(/\s+/g, ' ').trim()}`,
   };
+}
+
+// Context windows observed on this endpoint; the shortfall estimate snaps to the nearest one within
+// 1.5% (covers the chat-template token overhead the estimate cannot see).
+const _CANONICAL_CTX_WINDOWS = [4096, 8192, 16384, 32768, 65536, 128000, 131072, 196608, 202752, 250000, 262144, 524288, 1000000, 1048576] as const;
+
+function _snapToCanonicalWindow(estimate: number): number | null {
+  if (estimate <= 0) return null;
+  let best: number | null = null;
+  for (const win of _CANONICAL_CTX_WINDOWS)
+    if (Math.abs(win - estimate) / win <= 0.015 && (best === null || Math.abs(win - estimate) < Math.abs(best - estimate)))
+      best = win;
+  return best;
 }
 
 export const PROBE_PACING_MS = MIN_REQUEST_SPACING_MS;

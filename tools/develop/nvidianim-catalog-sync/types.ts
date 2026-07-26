@@ -18,7 +18,7 @@ export type AliveClass =
   | 'unprobed';          // --skip-probes, or no API key
 
 /** Context-window probe outcome, when it is not a plain number. */
-export type CtxProbeNote = 'silent-truncation-or-large' | 'timeout' | 'no-match' | 'error';
+export type CtxProbeNote = 'silent-truncation-or-large' | 'timeout' | 'no-match' | 'error' | 'estimated';
 
 export interface HarvestedCapabilities {
   tools: boolean | null;
