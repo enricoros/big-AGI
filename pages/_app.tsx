@@ -9,7 +9,7 @@ import { apiQuery } from '~/common/util/trpc.client';
 
 // [server-client-safe] dynamic imports to avoid webpack bundling issues with next/navigation
 const VercelAnalytics = dynamic(() => import('@vercel/analytics/next').then(mod => mod.Analytics), { ssr: false });
-const VercelSpeedInsights = dynamic(() => import('@vercel/speed-insights/next').then(mod => mod.SpeedInsights), { ssr: false });
+// const VercelSpeedInsights = dynamic(() => import('@vercel/speed-insights/next').then(mod => mod.SpeedInsights), { ssr: false });
 
 
 import 'katex/dist/katex.min.css';
@@ -66,7 +66,7 @@ const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
     <OptionalUrlTrackingCleaner />
 
     {Is.Deployment.VercelFromFrontend && <VercelAnalytics debug={false} />}
-    {Is.Deployment.VercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}
+    {/*{Is.Deployment.VercelFromFrontend && <VercelSpeedInsights debug={false} sampleRate={1 / 2} />}*/}
 
   </>;
 };
