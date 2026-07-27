@@ -38,7 +38,7 @@ const DeepgramWire_Listen_Response_schema = z.object({
     topics: z.object({
       segments: z.array(z.object({
         text: z.string().optional(),  // the transcript span the topics were detected in
-        start_word: z.number().optional(), // word-index span of `text` within the transcript - 1-based on the wire (observed)
+        start_word: z.number().optional(), // word-index span of `text` within the transcript - 0-based (verified)
         end_word: z.number().optional(),
         topics: z.array(z.object({
           topic: z.string().optional(),
@@ -181,10 +181,9 @@ export const transcribeDeepgram: TranscribeBackendFn<ASRxAccess_Deepgram> = asyn
             label,
             ...(quote ? { quote } : {}),
             ...(entry.confidence_score !== undefined ? { score: entry.confidence_score } : {}),
-            // word span rides with the first segment, same as `quote` (best-score updates don't move it);
-            // -1: Deepgram's wire indices are 1-based (observed) - normalized to 0-based at this boundary
-            ...(segment.start_word !== undefined ? { wordBegin: Math.max(0, segment.start_word - 1) } : {}),
-            ...(segment.end_word !== undefined ? { wordEnd: Math.max(0, segment.end_word - 1) } : {}),
+            // word span rides with the first segment, same as `quote` (best-score updates don't move it)
+            ...(segment.start_word !== undefined ? { wordBegin: segment.start_word } : {}),
+            ...(segment.end_word !== undefined ? { wordEnd: segment.end_word } : {}),
           });
         else if (entry.confidence_score !== undefined && !(prev.score! >= entry.confidence_score))
           prev.score = entry.confidence_score;
