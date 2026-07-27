@@ -38,7 +38,7 @@ const DeepgramWire_Listen_Response_schema = z.object({
     topics: z.object({
       segments: z.array(z.object({
         text: z.string().optional(),  // the transcript span the topics were detected in
-        start_word: z.number().optional(), // word-index span of `text` within the transcript
+        start_word: z.number().optional(), // word-index span of `text` within the transcript - 1-based on the wire (observed)
         end_word: z.number().optional(),
         topics: z.array(z.object({
           topic: z.string().optional(),
@@ -168,7 +168,11 @@ export const transcribeDeepgram: TranscribeBackendFn<ASRxAccess_Deepgram> = asyn
     for (const segment of json.results.topics.segments) {
       const segmentQuote = segment.text?.trim();
       const quote = segmentQuote && segmentQuote.length > 200 ? segmentQuote.slice(0, 200) + '…' : segmentQuote;
-      for (const entry of segment.topics ?? []) {
+      // a segment (one detection span) can carry multiple labels: optionally keep the top-scoring one only
+      let entries = segment.topics ?? [];
+      if (ASRX_DEFAULTS.DEEPGRAM_TOPICS_BEST_PER_SEGMENT && entries.length > 1)
+        entries = [entries.reduce((best, e) => (e.confidence_score ?? 0) > (best.confidence_score ?? 0) ? e : best)];
+      for (const entry of entries) {
         const label = entry.topic?.trim();
         if (!label) continue;
         const prev = byLabel.get(label.toLowerCase());
@@ -177,9 +181,10 @@ export const transcribeDeepgram: TranscribeBackendFn<ASRxAccess_Deepgram> = asyn
             label,
             ...(quote ? { quote } : {}),
             ...(entry.confidence_score !== undefined ? { score: entry.confidence_score } : {}),
-            // word span rides with the first segment, same as `quote` (best-score updates don't move it)
-            ...(segment.start_word !== undefined ? { wordBegin: segment.start_word } : {}),
-            ...(segment.end_word !== undefined ? { wordEnd: segment.end_word } : {}),
+            // word span rides with the first segment, same as `quote` (best-score updates don't move it);
+            // -1: Deepgram's wire indices are 1-based (observed) - normalized to 0-based at this boundary
+            ...(segment.start_word !== undefined ? { wordBegin: Math.max(0, segment.start_word - 1) } : {}),
+            ...(segment.end_word !== undefined ? { wordEnd: Math.max(0, segment.end_word - 1) } : {}),
           });
         else if (entry.confidence_score !== undefined && !(prev.score! >= entry.confidence_score))
           prev.score = entry.confidence_score;
