@@ -98,6 +98,8 @@ export type ASRxProfileSelector =
 export interface ASRxTranscribeBatchOptions {
   // language override (wins over engine profile's language, when set)
   languageCode?: string;
+  // topic detection: undefined honors the engine profile's policy; true/false overrides it (applied only where the vendor supports it - Deepgram)
+  topicsHint?: boolean;
   // abort the transcription mid-flight
   signal?: AbortSignal;
   // NorthBridge-style operation metadata (for future use in an ops panel)
