@@ -9,6 +9,8 @@ export const ASRX_DEFAULTS = {
   DEEPGRAM_MODEL: 'nova-3',
   DEEPGRAM_LANGUAGE: 'multi',
   DEEPGRAM_HOST: 'https://api.deepgram.com',
+  // topics noise floor (no wire-side threshold exists): Deepgram emits sub-1% guesses next to real detections (observed: 0.93 vs 0.005)
+  DEEPGRAM_TOPICS_MIN_CONFIDENCE: 0.4,
 
   // OpenAI - gpt-4o-transcribe is newer, higher quality than whisper-1
   OPENAI_MODEL: 'gpt-4o-transcribe',

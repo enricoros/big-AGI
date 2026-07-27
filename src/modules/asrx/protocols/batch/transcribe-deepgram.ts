@@ -38,6 +38,8 @@ const DeepgramWire_Listen_Response_schema = z.object({
     topics: z.object({
       segments: z.array(z.object({
         text: z.string().optional(),  // the transcript span the topics were detected in
+        start_word: z.number().optional(), // word-index span of `text` within the transcript
+        end_word: z.number().optional(),
         topics: z.array(z.object({
           topic: z.string().optional(),
           confidence_score: z.number().optional(),
@@ -175,13 +177,15 @@ export const transcribeDeepgram: TranscribeBackendFn<ASRxAccess_Deepgram> = asyn
             label,
             ...(quote ? { quote } : {}),
             ...(entry.confidence_score !== undefined ? { score: entry.confidence_score } : {}),
+            // word span rides with the first segment, same as `quote` (best-score updates don't move it)
+            ...(segment.start_word !== undefined ? { wordBegin: segment.start_word } : {}),
+            ...(segment.end_word !== undefined ? { wordEnd: segment.end_word } : {}),
           });
         else if (entry.confidence_score !== undefined && !(prev.score! >= entry.confidence_score))
           prev.score = entry.confidence_score;
       }
     }
-    // noise floor: Deepgram emits sub-1% guesses next to real detections (observed: 0.93 vs 0.005)
-    const detected = [...byLabel.values()].filter(t => t.score === undefined || t.score >= 0.2);
+    const detected = [...byLabel.values()].filter(t => t.score === undefined || t.score >= ASRX_DEFAULTS.DEEPGRAM_TOPICS_MIN_CONFIDENCE);
     if (detected.length) topics = detected;
   }
 

@@ -130,6 +130,8 @@ export interface ASRxDetectedTopic {
   label: string;
   quote?: string;         // truncated transcript span the vendor attributed the topic to
   score?: number;         // vendor confidence 0..1 (best across segments)
+  wordBegin?: number;     // word index of the quote's span start (Deepgram start_word), same segment as `quote`
+  wordEnd?: number;       // word index of the quote's span end (Deepgram end_word)
 }
 
 /** Average sentiment of the whole audio, as reported by the vendor's analysis pass. */
