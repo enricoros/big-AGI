@@ -36,8 +36,9 @@ export function ASRxConfigureEngineFull(props: {
   const isInvalid = !asrxAreCredentialsValid(engine.credentials);
 
   // Advanced toggle (manual only) lifted here so it can share the bottom row with Delete
+  // off-default values stay visible even with the toggle closed (see ManualCredentials)
   const manualHasHost = isManual && engine.credentials.type === 'api-key' && !!engine.credentials.apiHost;
-  const advanced = useToggleableBoolean(manualHasHost);
+  const advanced = useToggleableBoolean();
 
 
   // Service-access title reflects the engine's source + validity
@@ -104,7 +105,7 @@ export function ASRxConfigureEngineFull(props: {
               engine={engine}
               credentials={engine.credentials}
               onUpdate={onUpdate}
-              advancedOn={advanced.on}
+              advancedOn={advanced.on || manualHasHost}
             />
           )}
 
@@ -211,8 +212,8 @@ function DeepgramParameters({ engine, onUpdate }: {
   // state
   const [dictionaryOpen, setDictionaryOpen] = React.useState(false);
 
-  // advanced features start open when any is already configured
-  const advanced = useToggleableBoolean(!!profile.diarize || !!profile.topics || !!profile.sentiment || !!profile.keyterms?.length);
+  // advanced starts closed; features off their default stay visible individually below
+  const advanced = useToggleableBoolean();
 
 
   const handleProfileUpdate = React.useCallback((patch: Partial<DProfileDeepgram>) => {
@@ -269,38 +270,42 @@ function DeepgramParameters({ engine, onUpdate }: {
       onChange={checked => handleProfileUpdate({ smartFormat: checked })}
     />
 
-    {advanced.on && <>
-
+    {(advanced.on || !!profile.topics) && (
       <FormSwitchControl
         title='Label Topics'
         description='Detects subject changes'
         checked={!!profile.topics}
         onChange={checked => handleProfileUpdate({ topics: checked || undefined })}
       />
+    )}
 
+    {(advanced.on || !!profile.sentiment) && (
       <FormSwitchControl
         title='Label Sentiment'
         description='Overall tone'
         checked={!!profile.sentiment}
         onChange={checked => handleProfileUpdate({ sentiment: checked || undefined })}
       />
+    )}
 
+    {(advanced.on || !!profile.diarize) && (
       <FormSwitchControl
         title='Label Speakers'
         description='Speaker 0: Hi...'
         checked={!!profile.diarize}
         onChange={checked => handleProfileUpdate({ diarize: checked || undefined })}
       />
+    )}
 
-      {/* User Dictionary - the term list lives in a small editor modal */}
+    {/* User Dictionary - the term list lives in a small editor modal */}
+    {(advanced.on || termsCount > 0) && (
       <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
         <FormLabelStart title='Personal Dictionary' description='Fix names & jargon' />
         <Button variant='outlined' color='neutral' onClick={() => setDictionaryOpen(true)}>
           {termsCount ? `${termsCount} term${termsCount === 1 ? '' : 's'}` : 'Add terms...'}
         </Button>
       </FormControl>
-
-    </>}
+    )}
 
     {/* Advanced toggle on the left; reset link on the right, only when off-default */}
     <Box sx={_styles.bottomRow}>
@@ -400,8 +405,8 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
   const { profile } = engine;
   const isWhisper = (profile.asrModel ?? ASRX_DEFAULTS.OPENAI_MODEL) === 'whisper-1';
 
-  // advanced features start open when any is already configured
-  const advanced = useToggleableBoolean(!!profile.diarize);
+  // advanced starts closed; features off their default stay visible individually below
+  const advanced = useToggleableBoolean();
 
   const handleProfileUpdate = React.useCallback((patch: Partial<DProfileOpenAI>) => {
     onUpdate({ profile: { ...profile, ...patch } });
@@ -468,7 +473,7 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
       />
     )}
 
-    {advanced.on && (
+    {(advanced.on || !!profile.diarize) && (
       <FormSwitchControl
         title='Label Speakers'
         description='Diarize model; skips Prompt'
