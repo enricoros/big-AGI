@@ -1,0 +1,175 @@
+.sherpa {
+    /* looks */
+    min-height: 100svh;
+    transition: background-color 0.26s ease;
+
+    /* layout */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.sherpa.stopped {
+    /*noinspection CssUnresolvedCustomProperty*/
+    background: var(--joy-palette-background-level1);
+}
+
+.sherpa.singletab {
+    /*noinspection CssUnresolvedCustomProperty*/
+    background: radial-gradient(circle, var(--joy-palette-background-level1) 0%, var(--joy-palette-background-level3) 100%);
+}
+
+.sherpa .hcontent {
+    display: flex;
+    align-items: center;
+}
+
+.sherpa .vcontent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: -2%; /* bias towards the top half  */
+    margin-inline: 1.5rem; /* would like 2, but the login card will get too small */
+    max-width: 90%;
+}
+
+.sherpa .vcontent.singletab {
+    margin-top: auto;
+    margin-bottom: auto;
+    padding-bottom: 5%;
+}
+
+.sherpa .vcontent.login {
+    margin-top: 0;
+}
+
+.sherpa .divided {
+    /*noinspection CssUnresolvedCustomProperty*/
+    border-right: 1px solid var(--joy-palette-neutral-400);
+    margin: 0 1.5rem 0 0;
+    padding: 0 1.5rem 0 0;
+}
+
+.sherpa .vivided {
+    /*noinspection CssUnresolvedCustomProperty*/
+    border-bottom: 1px solid var(--joy-palette-neutral-300);
+    margin: 0 0 1.5rem 0;
+    padding: 0 0 1.5rem 0;
+}
+
+.sherpa .heading {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.sherpa .version {
+    font-size: 10px;
+}
+
+.sherpa .message {
+    margin-top: 0.125rem;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.sherpa .error {
+    /*noinspection CssUnresolvedCustomProperty*/
+    color: var(--joy-palette-danger-softColor, #800);
+}
+
+.sherpa .terminal-cursor {
+    margin-left: 1px;
+    animation: classic-blink 1.22s step-end infinite;
+}
+
+@keyframes classic-blink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+}
+
+.sherpa .button {
+    /*noinspection CssUnresolvedCustomProperty*/
+    color: var(--joy-palette-neutral-solidColor, #fff);
+    /*noinspection CssUnresolvedCustomProperty*/
+    background: var(--joy-palette-neutral-solidBg, #000);
+    padding: 0.75rem 1.25rem;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.sherpa .nanolink {
+    font-size: 0.6875rem;
+    line-height: 1.125rem;
+    /*noinspection CssUnresolvedCustomProperty*/
+    color: var(--joy-palette-neutral-500);
+    cursor: pointer;
+    opacity: 0.7;
+}
+.sherpa .nanolink:hover {
+    text-decoration: underline;
+}
+
+.sherpa .button.mt2 {
+    margin-top: 0.75rem;
+}
+
+.sherpa .button:hover {
+    opacity: 0.8;
+}
+
+
+.sherpa .state-loading {
+    font-size: 5rem;
+    color: #6e7c91;
+    animation: sherpa-appear 1s ease forwards;
+}
+
+.sherpa .state-loading .brace {
+    margin-right: 0.5rem;
+    font-weight: 100;
+    opacity: 0.8;
+}
+
+.sherpa .state-loading .ellipsis {
+    animation: sherpa-blink 2.44s infinite both; /* 2 * Enrico's heartbeat */
+}
+
+@keyframes sherpa-appear {
+    0% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes sherpa-blink {
+    0% {
+        opacity: 0.2;
+    }
+    20% {
+        opacity: 1;
+    }
+    30% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.2;
+    }
+}
+
