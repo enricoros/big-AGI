@@ -57,6 +57,8 @@ type ReassemblyState = AixChatGenerateContent_LL & {
   // reassembly-internal fields
   /** Cursor: index of the open text fragment for appending, or null if none is open */
   _textFragmentIndex: number | null;
+  /** Pending message phase (OpenAI/xAI Responses): set at message-item open, stamped on the NEXT text fragment created */
+  _pendingTextPhase: { vendor: 'openai' | 'xai', phase: 'commentary' | 'final_answer' } | null;
   /** set/overwritten during streaming, consumed by finalizeReassembly() */
   cgMetricsLg: undefined | AixChatGenerateContent_LL_Result['cgMetricsLg'];
   /** Raw termination cause: undetermined yet, client-set, or received from the wire on {cg:'end'} */
@@ -105,6 +107,7 @@ export class ContentReassembler {
       generator: initialGenerator,
       // reassembly-internal fields:
       _textFragmentIndex: null,
+      _pendingTextPhase: null,
       cgMetricsLg: undefined,
       terminationReason: undefined,
       dialectStopReason: undefined,
@@ -473,7 +476,15 @@ export class ContentReassembler {
     }
 
     // new TextContentFragment
-    this._pushFragment(createTextContentFragment(particle.t));
+    const newTextFragment = createTextContentFragment(particle.t);
+
+    // stamp the pending message phase on the new text fragment
+    if (this.S._pendingTextPhase) {
+      newTextFragment.vendorState = { [this.S._pendingTextPhase.vendor]: { phase: this.S._pendingTextPhase.phase } };
+      this.S._pendingTextPhase = null;
+    }
+
+    this._pushFragment(newTextFragment);
     this.S._textFragmentIndex = this.S.fragments.length - 1;
 
   }
@@ -948,6 +959,15 @@ export class ContentReassembler {
           upstreamContainer: { uct: 'vnd.gem.interactions', envId: id, expiresAt },
         };
       return; // session handle is message-scoped, not fragment-scoped
+    }
+
+    // Message phase (OpenAI/xAI Responses): sent at message-item open, before any text. Break text
+    // accumulation so adjacent items (commentary then final_answer) land in distinct fragments, and
+    // stamp the phase on the next text fragment created (see onAppendText).
+    if ((vendor === 'openai' || vendor === 'xai') && 'messagePhase' in state && state.messagePhase) {
+      this.S._textFragmentIndex = null;
+      this.S._pendingTextPhase = { vendor, phase: state.messagePhase };
+      return;
     }
 
     // Fragment-scoped vendor states - attach to the last fragment (e.g. Gemini thoughtSignature)

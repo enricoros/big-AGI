@@ -466,6 +466,14 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
         // expected the beginning of a new output item
         // BLANK item expected, of type 'message', 'reasoning' or 'function_call'
         R.outputItemEnter(eventType, event.output_index, event.item.type);
+
+        // [gpt-5.4+] message phase ('commentary' vs 'final_answer') is known at item-open, before the first
+        // text delta: forward it now so the client breaks + tags the upcoming text fragment
+        if (event.item.type === 'message') {
+          const messagePhase = event.item.phase;
+          if (messagePhase === 'commentary' || messagePhase === 'final_answer')
+            pt.sendSetVendorState({ p: 'svs', vendor: vendor, state: { messagePhase } });
+        }
         break;
 
       case 'response.output_item.done':
@@ -1022,6 +1030,7 @@ export function createOpenAIResponseParserNS(vendor: 'openai' | 'xai'): ChatGene
           const {
             // id: messageId,
             content: messageContent,
+            phase: messagePhase,
             // role: messageRole,
           } = oItem;
 
@@ -1030,6 +1039,10 @@ export function createOpenAIResponseParserNS(vendor: 'openai' | 'xai'): ChatGene
             console.warn('[DEV] AIX: OpenAI-Response-NS unexpected message content type:', { messageContent });
             break;
           }
+
+          // [gpt-5.4+] forward the message phase before the item's text (mirrors the streaming path)
+          if (messagePhase === 'commentary' || messagePhase === 'final_answer')
+            pt.sendSetVendorState({ p: 'svs', vendor: vendor, state: { messagePhase } });
 
           // Message
           for (const content of messageContent) {

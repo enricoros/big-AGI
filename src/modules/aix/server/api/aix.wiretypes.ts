@@ -109,6 +109,9 @@ export namespace AixWire_Parts {
           id: z.string().optional(),               // rs_... - item id
           encryptedContent: z.string().optional(), // blob returned when include:['reasoning.encrypted_content']
         }).optional(),
+        // Responses API message phase (on text parts): gpt-5.4+ set it on every assistant message;
+        // resent on replay (dropping it degrades performance per OpenAI docs)
+        phase: z.enum(['commentary', 'final_answer']).optional(),
       }).optional(),
       xai: z.object({
         // xAI Responses API reasoning item continuity handle. Same WIRE shape as OpenAI's, but the encrypted_content
@@ -117,6 +120,8 @@ export namespace AixWire_Parts {
           id: z.string().optional(),
           encryptedContent: z.string().optional(),
         }).optional(),
+        // message phase - captured via the shared Responses parser; not replayed to xAI yet
+        phase: z.enum(['commentary', 'final_answer']).optional(),
       }).optional(),
       // NOTE: we do NOT use this mechanism for per-vendor customization/ALT for parts
       // anthropic: z.object({
@@ -814,8 +819,8 @@ export namespace AixWire_Particles {
       | { vendor: 'openai-container', state: { container: { id: string; expiresAt: string } } } // message-level - OpenAI Responses code-interpreter container reuse; 20min TTL stamped by parser
       | { vendor: 'gemini-envid', state: { environment: { id: string; expiresAt: string | null } } } // message-level - Gemini Interactions sandbox handle (today: Antigravity); 7d TTL stamped by parser
       | { vendor: 'gemini', state: { thoughtSignature: string } } // fragment-level
-      | { vendor: 'openai', state: { reasoningItem: { id?: string, encryptedContent?: string } } } // fragment-level (attach to ma reasoning fragment)
-      | { vendor: 'xai', state: { reasoningItem: { id?: string, encryptedContent?: string } } } // fragment-level - DISTINCT from openai (different encryption keys, different server-side ids)
+      | { vendor: 'openai', state: { reasoningItem?: { id?: string, encryptedContent?: string }, messagePhase?: 'commentary' | 'final_answer' } } // fragment-level: reasoningItem attaches to the last (ma) fragment; messagePhase breaks + tags the NEXT text fragment
+      | { vendor: 'xai', state: { reasoningItem?: { id?: string, encryptedContent?: string }, messagePhase?: 'commentary' | 'final_answer' } } // fragment-level - DISTINCT from openai (different encryption keys, different server-side ids)
       // | { vendor: string, state: Record<string, unknown> } // disable catch-all becasue it forces casts in type discriminations
       )
     ;

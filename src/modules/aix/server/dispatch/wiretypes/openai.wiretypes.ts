@@ -1403,6 +1403,10 @@ export namespace OpenAIWire_Responses_Items {
     role: z.literal('assistant'),
     // assistant inputs: 'output_text', 'refusal'
     content: z.array(_ContentItem_Parts_schema),
+    // [OpenAI, 2026-02-24] message phase: 'commentary' (preambles/progress) vs 'final_answer'. gpt-5.4+ set
+    // it on every assistant message; docs require resending it on replay (dropping it degrades performance).
+    // Assistant messages only - the API 400s it on user/system/developer/function_call items.
+    phase: z.enum(['commentary', 'final_answer']).optional(),
   });
 
   const InputMessage_Compat_schema = z.union([
