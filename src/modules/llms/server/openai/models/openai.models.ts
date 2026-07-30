@@ -1368,8 +1368,9 @@ const openAIModelsDenyList: string[] = [
   // TTS Models: /v1/audio/speech
   'tts-1-hd', 'tts-1', 'gpt-4o-mini-tts', // FIXME: support these
 
-  // STT models: /v1/audio/transcriptions, /v1/audio/translations
-  'whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', 'gpt-4o-transcribe-diarize', // FIXME: support these
+  // STT models: /v1/audio/transcriptions, /v1/audio/translations - not chat models (supported by ASRx batch instead)
+  'whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', 'gpt-4o-transcribe-diarize', 'gpt-transcribe',
+  'gpt-live-transcribe', // STT via realtime transcription sessions only - no batch endpoint, not supported yet
 
   // Image-focused chat models (non-standard image output pricing)
   'gpt-5-image', 'gpt-5-image-mini',
