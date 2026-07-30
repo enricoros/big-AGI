@@ -38,7 +38,7 @@ const VENDOR_INFO: { [key in DASRxVendorType]: { label: string; description: str
   },
   openai: {
     label: 'OpenAI',
-    description: 'Whisper / GPT-4o transcribe',
+    description: 'GPT Transcribe / Whisper',
     icon: OpenAIIcon,
   },
 } as const;

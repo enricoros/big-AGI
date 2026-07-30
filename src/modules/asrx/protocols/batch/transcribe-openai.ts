@@ -5,11 +5,20 @@
  * Auth:     Authorization: Bearer {apiKey}
  * Body:     multipart/form-data with file + model + options
  *
- * Per-model request shape (empirically verified 2026-07-25):
- * - gpt-4o-(mini-)transcribe: json + `include[]=logprobs` -> token logprobs (derived confidence)
- * - whisper-1:                `verbose_json` -> language, duration, segment avg_logprob
+ * Per-model request shape (empirically verified 2026-07-25, gpt-transcribe ablation 2026-07-28):
+ * - gpt-transcribe:           json + `include[]=logprobs` (like gpt-4o); REJECTS verbose_json
+ *   ('json'/'text' only); responds with a `languages: [{code}]` detected-languages array.
+ *   ONLY model taking `keywords[]` (term hints, no observed cap) and `languages[]` (validated
+ *   codes) - every older model 400s on both; also takes singular `language` but 400s if BOTH
+ *   language and languages[] are present, so we only ever send the plural form
+ * - gpt-4o-(mini-)transcribe: json + `include[]=logprobs` -> token logprobs (derived confidence).
+ *   CAUTION: any `prompt` (even a bare term list) makes this family drop sentences (10/12 in
+ *   ablation) - so keywords are NOT folded into its prompt; a user-set prompt is still honored
+ * - whisper-1:                `verbose_json` -> language, duration, segment avg_logprob;
+ *   prompt is its documented vocabulary channel and is truncation-safe (keywords fold in)
  * - gpt-4o-transcribe-diarize (via profile.diarize): `diarized_json` + REQUIRED chunking_strategy;
- *   REJECTS prompt (400); segments carry speaker letters
+ *   REJECTS prompt and keywords[] (400); segments carry speaker letters
+ * - gpt-live-transcribe: NOT usable here - realtime transcription sessions only, errors on this endpoint
  *
  * Compatible with OpenAI-compatible proxies that implement the same endpoint.
  */
@@ -29,6 +38,10 @@ const OpenAIWire_Transcription_Response_schema = z.object({
   // whisper-1 verbose_json; .catch: auxiliary branch - wire drift degrades to fewer facts, never fails the transcript
   language: z.string().optional().catch(undefined),
   duration: z.number().optional().catch(undefined),
+  // gpt-transcribe json: detected languages, ISO-639-1 codes
+  languages: z.array(z.object({
+    code: z.string().optional(),
+  })).optional().catch(undefined),
   // whisper-1 verbose_json (avg_logprob) and diarize diarized_json (speaker + text) share this array
   segments: z.array(z.object({
     text: z.string().optional(),
@@ -91,23 +104,32 @@ export const transcribeOpenAI: TranscribeBackendFn<ASRxAccess_OpenAI> = async (p
   const useDiarize = !!profile.diarize;
   const model = useDiarize ? 'gpt-4o-transcribe-diarize' : (profile.asrModel || ASRX_DEFAULTS.OPENAI_MODEL);
   const isWhisper = model === 'whisper-1';
+  const isGptTranscribe = model.startsWith('gpt-transcribe'); // new-gen STT: keywords[] + languages[] wire params (older models 400 on both)
   const language = languageCode ?? profile.language;
+  const languages = language ? language.split(/[,\s]+/).filter(Boolean) : [];
+  const keywords = profile.keywords?.map(k => k.trim()).filter(Boolean) ?? [];
 
   // Build multipart body
   const formData = new FormData();
   formData.append('file', new Blob([audio as BlobPart], { type: mimeType }), _fileNameForMime(mimeType));
   formData.append('model', model);
-  if (language) formData.append('language', language);
+  if (isGptTranscribe)
+    languages.forEach(code => formData.append('languages[]', code)); // never the singular form too: the pair 400s
+  else if (languages.length)
+    formData.append('language', languages[0]);
   if (profile.temperature !== undefined) formData.append('temperature', String(profile.temperature));
   if (useDiarize) {
     formData.append('response_format', 'diarized_json');
     formData.append('chunking_strategy', 'auto');    // REQUIRED by diarization models beyond short clips
-    // prompt deliberately not sent - diarization models 400 on it
+    // prompt and keywords deliberately not sent - the diarization model 400s on both
   } else if (isWhisper) {
     formData.append('response_format', 'verbose_json'); // unlocks language + duration + segment logprobs
-    if (profile.prompt) formData.append('prompt', profile.prompt);
+    const prompt = _promptWithKeywords(profile.prompt, keywords);
+    if (prompt) formData.append('prompt', prompt);
   } else {
     formData.append('include[]', 'logprobs');           // token logprobs (json format only) -> derived confidence
+    if (isGptTranscribe) keywords.forEach(k => formData.append('keywords[]', k));
+    // gpt-4o family: keywords deliberately not folded - any prompt destabilizes it (see header); user-set prompt honored
     if (profile.prompt) formData.append('prompt', profile.prompt);
   }
 
@@ -170,8 +192,10 @@ export const transcribeOpenAI: TranscribeBackendFn<ASRxAccess_OpenAI> = async (p
     : (isWhisper && json.segments?.length) ? _confidenceFromLogprobs(json.segments.map(s => s.avg_logprob))
       : undefined;
 
-  // whisper-1 reports full names ('english') - normalize to ISO codes where known
-  const detectedLanguage = json.language ? (_WHISPER_LANGUAGE_CODES[json.language.trim().toLowerCase()] ?? json.language) : undefined;
+  // whisper-1 reports full names ('english') - normalize to ISO codes where known;
+  // gpt-transcribe reports ISO codes in `languages` (comma-joined when code-switched audio detects several)
+  const detectedLanguage = json.language ? (_WHISPER_LANGUAGE_CODES[json.language.trim().toLowerCase()] ?? json.language)
+    : (json.languages?.map(l => l.code).filter((c): c is string => !!c).join(',') || undefined);
 
   const result: ASRxCoreTranscribeResult = {
     text,
@@ -185,6 +209,15 @@ export const transcribeOpenAI: TranscribeBackendFn<ASRxAccess_OpenAI> = async (p
 
   return result;
 };
+
+
+// Helper - whisper-1 has no keywords[] param but takes term hints through the prompt, its documented vocabulary channel
+
+function _promptWithKeywords(prompt: string | undefined, keywords: string[]): string | undefined {
+  if (!keywords.length) return prompt;
+  const vocabulary = keywords.join(', ');
+  return prompt ? `${prompt}\n${vocabulary}` : vocabulary;
+}
 
 
 // Helper - derive a filename with a useful extension from the MIME type (OpenAI infers format from filename)

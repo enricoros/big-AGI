@@ -14,8 +14,8 @@ export const ASRX_DEFAULTS = {
   // one label per detection span: when a segment carries multiple topics, keep only the top-scoring one
   DEEPGRAM_TOPICS_BEST_PER_SEGMENT: true,
 
-  // OpenAI - gpt-4o-transcribe is newer, higher quality than whisper-1
-  OPENAI_MODEL: 'gpt-4o-transcribe',
+  // OpenAI - gpt-transcribe (2026-07) is the newest dedicated STT model, cheaper than gpt-4o-transcribe
+  OPENAI_MODEL: 'gpt-transcribe',
   OPENAI_HOST: 'https://api.openai.com',
 
 } as const;

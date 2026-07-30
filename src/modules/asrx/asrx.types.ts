@@ -57,10 +57,11 @@ export interface DProfileDeepgram {
 
 export interface DProfileOpenAI {
   dialect: 'openai';
-  asrModel?: 'gpt-4o-transcribe' | 'gpt-4o-mini-transcribe' | 'whisper-1';
-  language?: string;       // ISO-639-1 (undefined = auto-detect)
-  prompt?: string;         // vocabulary/style guidance (especially for whisper-1; rejected by the diarize model)
-  temperature?: number;    // 0..1 (whisper-1 only; gpt-4o-transcribe ignores)
+  asrModel?: 'gpt-transcribe' | 'gpt-4o-transcribe' | 'gpt-4o-mini-transcribe' | 'whisper-1';
+  language?: string;       // ISO-639-1, comma-separated list allowed - gpt-transcribe accepts several expected languages, older models use the first (undefined = auto-detect)
+  prompt?: string;         // free-form context/style guidance (rejected by the diarize model)
+  keywords?: string[];     // user dictionary: literal terms expected in the audio - gpt-transcribe wire param; folded into whisper-1's prompt; unused by gpt-4o models and diarize (see adapter)
+  temperature?: number;    // 0..1 (whisper-1 only; the gpt transcribe models ignore it)
   diarize?: boolean;       // speaker labels - swaps the request onto the gpt-4o-transcribe-diarize model
 }
 

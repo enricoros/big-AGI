@@ -27,7 +27,7 @@ export const ASRxVendorOpenAI: IASRxVendor<'openai'> = {
   },
 
   capabilities: {
-    languageDetection: true,  // whisper-1 via verbose_json (gpt-4o-transcribe doesn't report it)
+    languageDetection: true,  // gpt-transcribe reports detected ISO codes (languages[]); whisper-1 via verbose_json; gpt-4o-transcribe doesn't report it
     diarization: true,        // via the gpt-4o-transcribe-diarize model (profile.diarize)
     interimResults: false,    // batch only
     wordTimestamps: true,     // via verbose_json response_format (whisper-1)

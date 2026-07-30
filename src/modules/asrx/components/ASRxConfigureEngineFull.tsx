@@ -329,7 +329,7 @@ function DeepgramParameters({ engine, onUpdate }: {
     </Box>
 
     {dictionaryOpen && (
-      <DeepgramDictionaryModal
+      <DictionaryModal
         terms={profile.keyterms ?? []}
         onSave={terms => {
           handleProfileUpdate({ keyterms: terms.length ? terms : undefined });
@@ -343,8 +343,8 @@ function DeepgramParameters({ engine, onUpdate }: {
 }
 
 
-/** Minimal one-term-per-line editor for the Deepgram user dictionary. */
-function DeepgramDictionaryModal(props: {
+/** Minimal one-term-per-line editor for the user dictionary (Deepgram keyterms, OpenAI keywords). */
+function DictionaryModal(props: {
   terms: string[];
   onSave: (terms: string[]) => void;
   onClose: () => void;
@@ -374,9 +374,8 @@ function DeepgramDictionaryModal(props: {
     <GoodModal
       open
       title='Personal Dictionary'
-      closeText='Cancel'
+      hideBottomClose
       onClose={props.onClose}
-      startButton={<Button onClick={handleSave}>Save</Button>}
     >
       <Typography level='body-sm'>
         One term per line, up to 100 terms. These are sent with every transcription to boost names, brands and jargon the engine keeps mis-hearing.
@@ -389,6 +388,10 @@ function DeepgramDictionaryModal(props: {
         value={text}
         onChange={event => setText(event.target.value)}
       />
+      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+        <Button variant='plain' color='neutral' onClick={props.onClose}>Cancel</Button>
+        <Button onClick={handleSave} sx={{ minWidth: 100 }}>Save</Button>
+      </Box>
     </GoodModal>
   );
 }
@@ -403,7 +406,13 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
 }) {
 
   const { profile } = engine;
-  const isWhisper = (profile.asrModel ?? ASRX_DEFAULTS.OPENAI_MODEL) === 'whisper-1';
+  const asrModel = profile.asrModel ?? ASRX_DEFAULTS.OPENAI_MODEL;
+  const isWhisper = asrModel === 'whisper-1';
+  // keywords reach the wire only for gpt-transcribe (keywords[]) and whisper-1 (prompt fold) - see the batch adapter
+  const keywordsApply = !profile.diarize && (isWhisper || asrModel === 'gpt-transcribe');
+
+  // state
+  const [dictionaryOpen, setDictionaryOpen] = React.useState(false);
 
   // advanced starts closed; features off their default stay visible individually below
   const advanced = useToggleableBoolean();
@@ -412,14 +421,16 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
     onUpdate({ profile: { ...profile, ...patch } });
   }, [onUpdate, profile]);
 
-  // any parameter off its default (the prompt is data, not a parameter - reset never touches it)
+  // any parameter off its default (the prompt and dictionary are data, not parameters - reset never touches them)
   const hasUserParameters =
     (profile.asrModel !== undefined && profile.asrModel !== ASRX_DEFAULTS.OPENAI_MODEL)
     || !!profile.language || profile.temperature !== undefined || !!profile.diarize;
 
   const handleResetParameters = React.useCallback(() => {
-    onUpdate({ profile: { ...ASRxVendorOpenAI.getDefaultProfile(), ...(profile.prompt && { prompt: profile.prompt }) } });
-  }, [onUpdate, profile.prompt]);
+    onUpdate({ profile: { ...ASRxVendorOpenAI.getDefaultProfile(), ...(profile.prompt && { prompt: profile.prompt }), ...(profile.keywords?.length && { keywords: profile.keywords }) } });
+  }, [onUpdate, profile.keywords, profile.prompt]);
+
+  const keywordsCount = profile.keywords?.length ?? 0;
 
   return <>
 
@@ -428,7 +439,8 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
       title='Model'
       alignEnd
       options={[
-        { value: 'gpt-4o-transcribe', label: 'GPT-4o', description: 'Latest' },
+        { value: 'gpt-transcribe', label: 'GPT Transcribe', description: 'Latest' },
+        { value: 'gpt-4o-transcribe', label: 'GPT-4o', description: 'Proven' },
         { value: 'gpt-4o-mini-transcribe', label: 'GPT-4o mini', description: 'Cheap' },
         { value: 'whisper-1', label: 'Whisper', description: 'Legacy' },
       ]}
@@ -436,11 +448,11 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
       onChange={value => handleProfileUpdate({ asrModel: value })}
     />
 
-    {/* Language */}
+    {/* Language(s) */}
     <FormTextField
       autoCompleteId='asrx-openai-language'
       title='Language'
-      description={isMobile ? undefined : 'ISO-639-1, blank = auto'}
+      description={isMobile ? undefined : `'en' or 'en,it' - blank = auto`}
       placeholder='(auto-detect)'
       value={profile.language ?? ''}
       onChange={text => handleProfileUpdate({ language: text || undefined })}
@@ -451,8 +463,8 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
     <FormTextField
       autoCompleteId='asrx-openai-prompt'
       title='Prompt'
-      description={isMobile ? undefined : 'Vocabulary / style hint'}
-      placeholder='Optional - e.g. names or jargon'
+      description={isMobile ? undefined : 'Context / style hint'}
+      placeholder='Optional - topic or setting'
       value={profile.prompt ?? ''}
       onChange={text => handleProfileUpdate({ prompt: text || undefined })}
       inputSx={{ maxWidth: 210 }}
@@ -482,6 +494,16 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
       />
     )}
 
+    {/* User Dictionary - the term list lives in a small editor modal */}
+    {(advanced.on || keywordsCount > 0) && (
+      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
+        <FormLabelStart title='Personal Dictionary' description={keywordsApply ? 'Fix names & jargon' : 'Unused by this model'} />
+        <Button variant='outlined' color='neutral' onClick={() => setDictionaryOpen(true)}>
+          {keywordsCount ? `${keywordsCount} term${keywordsCount === 1 ? '' : 's'}` : 'Add terms...'}
+        </Button>
+      </FormControl>
+    )}
+
     {/* Advanced toggle on the left; reset link on the right, only when off-default */}
     <Box sx={_styles.bottomRow}>
       <Typography
@@ -502,6 +524,17 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
         </Link>
       )}
     </Box>
+
+    {dictionaryOpen && (
+      <DictionaryModal
+        terms={profile.keywords ?? []}
+        onSave={terms => {
+          handleProfileUpdate({ keywords: terms.length ? terms : undefined });
+          setDictionaryOpen(false);
+        }}
+        onClose={() => setDictionaryOpen(false)}
+      />
+    )}
 
   </>;
 }
