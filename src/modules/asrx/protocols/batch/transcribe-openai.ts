@@ -211,12 +211,13 @@ export const transcribeOpenAI: TranscribeBackendFn<ASRxAccess_OpenAI> = async (p
 };
 
 
-// Helper - whisper-1 has no keywords[] param but takes term hints through the prompt, its documented vocabulary channel
+// Helper - whisper-1 has no keywords[] param but takes term hints through the prompt, its documented
+// vocabulary channel; joined without newlines - the STT guide bans CR/LF inside prompts
 
 function _promptWithKeywords(prompt: string | undefined, keywords: string[]): string | undefined {
   if (!keywords.length) return prompt;
   const vocabulary = keywords.join(', ');
-  return prompt ? `${prompt}\n${vocabulary}` : vocabulary;
+  return prompt ? `${prompt} - ${vocabulary}` : vocabulary;
 }
 
 

@@ -4,6 +4,8 @@ import { Box, Button, FormControl, Link, Textarea, Typography } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
 import LinkIcon from '@mui/icons-material/Link';
 
+import type { FormRadioOption } from '~/common/components/forms/FormRadioControl';
+import type { Immutable } from '~/common/types/immutable.types';
 import { ExpanderSection } from '~/common/components/ExpanderSection';
 import { FormChipControl } from '~/common/components/forms/FormChipControl';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -399,6 +401,15 @@ function DictionaryModal(props: {
 
 // --- OpenAI parameters ---
 
+// hourly audio rates on hover, from the OpenAI pricing page (2026-07) - the API bills per minute of audio
+// (the diarize model, swapped in by Label Speakers, matches gpt-4o-transcribe at $0.36/h)
+const _OPENAI_MODEL_OPTIONS: Immutable<FormRadioOption<Exclude<DProfileOpenAI['asrModel'], undefined>>[]> = [
+  { value: 'gpt-transcribe', label: 'GPT Transcribe', description: 'Latest', tooltip: '$0.27 per hour' },
+  { value: 'gpt-4o-transcribe', label: 'GPT-4o', description: 'Proven', tooltip: '$0.36 per hour' },
+  { value: 'gpt-4o-mini-transcribe', label: 'GPT-4o mini', description: 'Cheap', tooltip: '$0.18 per hour' },
+  { value: 'whisper-1', label: 'Whisper', description: 'Legacy', tooltip: '$0.36 per hour' },
+];
+
 function OpenAIParameters({ engine, onUpdate, isMobile }: {
   engine: DASRxEngine<'openai'>;
   onUpdate: (updates: Partial<DASRxEngineAny>) => void;
@@ -438,12 +449,7 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
     <FormChipControl<Exclude<DProfileOpenAI['asrModel'], undefined>>
       title='Model'
       alignEnd
-      options={[
-        { value: 'gpt-transcribe', label: 'GPT Transcribe', description: 'Latest' },
-        { value: 'gpt-4o-transcribe', label: 'GPT-4o', description: 'Proven' },
-        { value: 'gpt-4o-mini-transcribe', label: 'GPT-4o mini', description: 'Cheap' },
-        { value: 'whisper-1', label: 'Whisper', description: 'Legacy' },
-      ]}
+      options={_OPENAI_MODEL_OPTIONS}
       value={profile.asrModel ?? ASRX_DEFAULTS.OPENAI_MODEL}
       onChange={value => handleProfileUpdate({ asrModel: value })}
     />
