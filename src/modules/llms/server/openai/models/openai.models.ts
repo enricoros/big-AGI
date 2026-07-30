@@ -160,9 +160,13 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   // - reasoning.mode: standard|pro (#1158) - 'pro' replaces the standalone '-pro' models (gpt-5.6-pro does not exist);
   //   orthogonal to effort (works with none..max), streams, takes summary=detailed; billed at standard token rates
   // - temperature/top_p only with effort=none; verbosity low|medium|high; web_search/code_interpreter/image_generation all work
-  // NOT yet adopted (shipped Jul 9 alongside 5.6, per API changelog): programmatic tool calling, explicit prompt-cache
-  // controls, persisted reasoning / reasoning.context (auto|current_turn|all_turns - also accepted by 5.5), assistant
-  // message 'phase' (commentary|final_answer), image detail 'original'.
+  // ADOPTED 2026-07-30: retained reasoning - the adapter hardwires reasoning.context 'all_turns' on gpt-5.4+
+  // (no user parameter; the lever is the chat 'Reasoning traces' policy). API-verified: 5.4+ incl. mini/nano/pro
+  // accept it, 5.3-codex and older 400 on it; only consumed reasoning items are billed, and old/foreign items
+  // are ignored for free, so replaying full reasoning history is always safe. Also adopted: assistant message
+  // 'phase' (commentary|final_answer), captured/replayed via _vnd.openai.phase on text fragments.
+  // NOT yet adopted (shipped Jul 9 alongside 5.6, per API changelog): programmatic tool calling, explicit
+  // prompt-cache controls, image detail 'original'.
 
   // GPT-5.6 Sol - flagship
   {

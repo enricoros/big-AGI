@@ -132,6 +132,15 @@ export function aixToOpenAIResponses(
     ].some(_id => model.id === _id || model.id.startsWith(_id + '-'));
     if (reasoningEffort !== 'none' && !model.forceNoStream && !specialExclusions)
       payload.reasoning.summary = 'detailed';
+
+    // [2026-02-24, OpenAI] Retained reasoning: 'all_turns' makes gpt-5.4+ consume the reasoning items we
+    // replay ('auto' is provider discretion). The user lever is what we send (chat 'Reasoning traces'
+    // policy); the API only bills consumed items, so this is free when little/nothing is sent.
+    // Gate: gpt-5.4+ (older models 400 on 'all_turns'), not Azure (may lag), not effort 'none'.
+    const gptGen = /^gpt-(\d+)(?:\.(\d+))?/.exec(model.id);
+    const supportsAllTurns = !!gptGen && (+gptGen[1] > 5 || (+gptGen[1] === 5 && +(gptGen[2] || 0) >= 4));
+    if (supportsAllTurns && reasoningEffort !== 'none' && !isDialectAzure)
+      payload.reasoning.context = 'all_turns';
   }
 
   // [2026-07-09, OpenAI] GPT-5.6+ Reasoning Mode: 'pro' performs additional model work for the hardest problems, billed at
