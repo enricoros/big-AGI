@@ -70,7 +70,8 @@ export function getDataTransferFilesOrPromises(items: DataTransferItemList, fall
     // Try to get file system handle if available and not forced to use file
     if ('getAsFileSystemHandle' in item && typeof item.getAsFileSystemHandle === 'function') {
       try {
-        const fsHandle = item.getAsFileSystemHandle() as Promise<FileSystemFileHandle | FileSystemDirectoryHandle | null>;
+        // null-tolerant cast: the spec says Promise, but the defensive check below guards buggy engines returning null
+        const fsHandle = item.getAsFileSystemHandle() as Promise<FileSystemFileHandle | FileSystemDirectoryHandle | null> | null;
         if (fsHandle)
           results.push(fsHandle.then(handleOrNull => {
             // if null, return a File instead - note that this is a fallback, as we prefer to get the handle

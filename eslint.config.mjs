@@ -69,6 +69,13 @@ export default defineConfig([{
     },
     plugins: { "@typescript-eslint": tsPlugin },
     rules: {
-        "@typescript-eslint/unbound-method": "warn",
+      // a detached method (destructure, stored ref, callback) loses `this` at the call - attest detach-safe declarations with `this: void`, or declare them property-style
+      "@typescript-eslint/unbound-method": "warn",
+      // `delete arr[i]` leaves a hole (length unchanged) - use splice/filter
+      "@typescript-eslint/no-array-delete": "warn",
+      // for-in on arrays walks string keys (+ inherited props), not values - use for-of / .entries()
+      "@typescript-eslint/no-for-in-array": "warn",
+      // promises where values belong (conditionals, spreads); void-return check off - async onClick/handlers are idiomatic
+      "@typescript-eslint/no-misused-promises": ["warn", { checksVoidReturn: false }],
     },
 }]);
