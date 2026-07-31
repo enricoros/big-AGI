@@ -231,8 +231,13 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
 
     // NOTE: This may log too much - for instance a 404 not found, etc.. - so we're putting it under the flag
     //       Consider we're also throwing the same, so there will likely be further logging.
-    if (SERVER_DEBUG_WIRE || SERVER_LOG_FETCHERS_ERRORS)
-      console.log(`[${method}] [${moduleName} network issue]: "${errorString}"`, { error, _cause, debugCleanUrl, urlShown: prettyShowUrl });
+    if (SERVER_DEBUG_WIRE || SERVER_LOG_FETCHERS_ERRORS) {
+      if (prettyShowUrl && !SERVER_DEBUG_WIRE)
+        // expected user-misconfig (unreachable/wrong URL): compact line - the thrown error carries the full message to the client
+        console.log(`[${method}] [${moduleName} network issue]: ${connErrorName} -> ${debugCleanUrl || url}`);
+      else
+        console.log(`[${method}] [${moduleName} network issue]: "${errorString}"`, { error, _cause, debugCleanUrl, urlShown: prettyShowUrl });
+    }
 
     // -> throw Connection error: will be a 400 (BAD_REQUEST), with preserved cause
     throw new TRPCFetcherError({
