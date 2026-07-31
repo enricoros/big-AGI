@@ -31,7 +31,8 @@ class LoggerImplementation implements ClientLogger {
     this.#log('critical', message, details, source, options);
 
 
-  async executeAction(logId: string, actionId?: string): Promise<void> {
+  // arrow property: the factory forwards this detached, so it must stay bound
+  executeAction = async (logId: string, actionId?: string): Promise<void> => {
 
     const entry = this._actions.getEntry(logId);
     if (!entry?.actions?.length)

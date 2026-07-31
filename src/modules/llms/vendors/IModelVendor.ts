@@ -38,6 +38,7 @@ export interface IModelVendor<TServiceSettings extends ServiceSettingsBase = {},
   rateLimitChatGenerate?(llm: DLLM, setup: Partial<TServiceSettings>): Promise<void>;
 
   rpcUpdateModelsOrThrow(
+    this: void, // detach-safe attestation: vendors cross-reference each other's implementations (e.g. `ModelVendorOpenAI.rpcUpdateModelsOrThrow`)
     access: TAccess,
   ): Promise<{ models: ModelDescriptionSchema[] }>;
 
