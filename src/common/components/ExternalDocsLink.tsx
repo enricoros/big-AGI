@@ -1,12 +1,14 @@
 import * as React from 'react';
 
 import type { ColorPaletteProp, TypographySystem } from '@mui/joy/styles/types';
+import type { DocPageSlug } from '~/common/gen/docs.slugs';
+
 import { Brand } from '~/common/app.config';
 import { ExternalLink } from '~/common/components/ExternalLink';
 
 
 export function ExternalDocsLink(props: {
-  docPage: string;
+  docPage: DocPageSlug;
   color?: ColorPaletteProp,
   level?: keyof TypographySystem | 'inherit',
   highlight?: boolean;
