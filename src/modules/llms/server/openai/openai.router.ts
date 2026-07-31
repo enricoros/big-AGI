@@ -123,7 +123,7 @@ export const llmOpenAIRouter = createTRPCRouter({
     .output(ListModelsResponse_schema)
 
     // tRPC middleware: log errors for this procedure - as we don't have proper try/catch blocks yet
-    .use(async ({ next, path, signal, type, input }) => {
+    .use(async ({ next, path, signal, input }) => {
       const result = await next();
 
       // [PROD] log/warn listModel errors
@@ -133,10 +133,16 @@ export const llmOpenAIRouter = createTRPCRouter({
         const isConnRefused = result.error instanceof TRPCFetcherError && ['ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND'].includes(result.error.connErrorName || '');
         if (isConnRefused) return result;
 
+        // Input validation errors (e.g. missing/invalid host): client-input problem, message-only line without a stack
+        if (!(result.error instanceof TRPCFetcherError) && result.error.code === 'BAD_REQUEST') {
+          console.log(`\n❌ ${path}(${input.access?.dialect || '?'}): ${result.error.message}`);
+          return result;
+        }
+
         // '401 unauthorized' is expected with wrong/missing API keys - log instead of warn
         const is401 = result.error instanceof TRPCFetcherError && result.error.httpStatus === 401;
         const isLocalAI = input.access?.dialect === 'localai';
-        console[(is401 || isLocalAI) ? 'log' : 'warn'](`\n❌ [PROD] ${path}(${input.access?.dialect || '?'}):${signal?.aborted ? ' [ABORTED]' : ''}`, result.error);
+        console[(is401 || isLocalAI) ? 'log' : 'warn'](`\n❌ ${path}(${input.access?.dialect || '?'}):${signal?.aborted ? ' [ABORTED]' : ''}`, result.error);
       }
 
       // [DEV] NOTE: the trpc onError will also log next when in development mode, @see handlerEdgeRoutes
