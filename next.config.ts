@@ -44,6 +44,9 @@ let nextConfig: NextConfig = {
     // trailingSlash: true,
   }),
 
+  // Allow running builds without racing over .next/ - if set takes precedence over the 'dist' above
+  ...(process.env.AGI_DIST_DIR && { distDir: process.env.AGI_DIST_DIR }),
+
   // [puppeteer] https://github.com/puppeteer/puppeteer/issues/11052
   // NOTE: we may not be needing this anymore, as we use '@cloudflare/puppeteer'
   serverExternalPackages: ['puppeteer-core'],

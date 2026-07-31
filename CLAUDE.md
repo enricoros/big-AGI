@@ -18,6 +18,7 @@ eslint src/path/to/file.ts           # Lint specific file
 
 # Full build (~60s+, only when suspecting runtime/bundle issues)
 npm run build  # next build runs compile+lint+types but stops at first type-error file; tsc shows all at once
+AGI_DIST_DIR=.next-verify npm run build  # isolated dist dir: never races a running dev server over .next/
 
 # Database & External Services
 # npm run supabase:local-update-types   # Generate TypeScript types
