@@ -132,7 +132,7 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
                     switch (at) {
                       case 'audio':
                         // dereference the Zync Audio Asset, converting it to an inline buffer
-                        throw '[DEV] audio assets from the user are not supported yet';
+                        throw new Error('[DEV] audio assets from the user are not supported yet');
 
                       case 'image':
                         // dereference the Zync Image Asset, converting it to an inline image
@@ -322,7 +322,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
                       case 'audio':
                         // dereference the Zync Audio Asset, converting it to an inline buffer
-                        throw '[DEV] audio assets from the user are not supported yet';
+                        throw new Error('[DEV] audio assets from the user are not supported yet');
 
                       default:
                         const _exhaustiveCheck: never = at;
@@ -470,7 +470,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
                       case 'audio':
                         // dereference the Zync Audio Asset, converting it to an inline buffer
-                        throw '[DEV] audio assets from the assistant are not supported yet';
+                        throw new Error('[DEV] audio assets from the assistant are not supported yet');
 
                       default:
                         const _exhaustiveCheck: never = at;
