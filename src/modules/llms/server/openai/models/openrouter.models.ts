@@ -8,6 +8,7 @@ import { formatPubDate, fromManualMapping } from '../../models.mappings';
 import { llmOrtAntLookup_ThinkingVariants } from '../../anthropic/anthropic.models';
 import { llmOrtGemLookup } from '../../gemini/gemini.models';
 import { llmOrtOaiLookup } from './openai.models';
+import { llmOrtXaiLookup } from './xai.models';
 import { wireOpenrouterModelsListOutputSchema } from '../wiretypes/openrouter.wiretypes';
 
 
@@ -291,24 +292,35 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       // probe-verified via OR: reasoning.enabled=false 400s ('Reasoning is mandatory ... cannot be disabled')
       if (model.id.startsWith('moonshotai/kimi-k3'))
         break;
-      // 0-day: xAI/Grok/Moonshot/Z.ai/DeepSeek models get default reasoning effort if not inherited
-      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndMiscEffort')) {
+      // [xAI, 2026-07-31] inherit native effort specs (medium/xhigh, which llmVndMiscEffort cannot express)
+      if (model.id.startsWith('x-ai/'))
+        _mergeLookup(llmOrtXaiLookup(llmRef));
+
+      // 'none' 400s where OR marks reasoning mandatory (verified: grok-4.5, grok-4.20-multi-agent, grok-build-0.1).
+      // Replace, don't mutate - specs may be shared with the native defs.
+      if (model.reasoning?.mandatory)
+        parameterSpecs.forEach((spec, i) => {
+          if ((spec.paramId === 'llmVndOaiEffort' || spec.paramId === 'llmVndMiscEffort') && 'enumValues' in spec && spec.enumValues)
+            parameterSpecs[i] = { ...spec, enumValues: spec.enumValues.filter(v => v !== 'none') };
+        });
+
+      // 0-day: xAI/Grok/Moonshot/Z.ai/DeepSeek models get default reasoning effort if not inherited.
+      // Checks llmVndOaiEffort too (else an inherited spec gets a 2nd control stacked); skips mandatory models,
+      // where a binary on/off is meaningless.
+      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndMiscEffort' || p.paramId === 'llmVndOaiEffort')
+        && !model.reasoning?.mandatory) {
         // console.log('[DEV] openRouterModelToModelDescription: unexpected xAI/Grok/DeepSeek reasoning model:', model.id);
         // Binary thinking only: we pin enumValues so the shared llmVndMiscEffort registry (which also includes 'max'
         // for native DeepSeek V4) does not surface 'max' in the UI for OR-routed third-party models - unverified they
         // honor it (OR itself accepts reasoning.effort='max' since GPT-5.6, see openai.chatCompletions.ts).
-        // [DeepSeek, 2026-07-31] Exception: trust OR's per-model `reasoning.supported_efforts`, which already separates
-        // the 0731 flash (max/high/low - single first-party endpoint, so levels are honored) from the April flash and
-        // V4-Pro (xhigh/high -> binary, as we do not expose 'xhigh'). deepseek/ only: the same derivation would also
-        // move xAI, which is unverified.
+        // [DeepSeek, 2026-07-31] Exception: OR's supported_efforts is right here, separating the 0731 flash
+        // (max/high/low) from the April flash and V4-Pro (xhigh/high -> binary). deepseek/ only - for xAI it is wrong.
         const orEfforts = model.id.startsWith('deepseek/') ? model.reasoning?.supported_efforts : undefined;
         const derived = _MISC_EFFORTS.filter(e => orEfforts?.includes(e));
         parameterSpecs.push({
           paramId: 'llmVndMiscEffort',
-          // guard: OR often sends the reasoning object with an empty efforts list, which means "no information" (fall
-          // back to binary), never "no efforts supported" (which would empty the UI)
-          enumValues: !derived.length ? ['none', 'high']
-            : [...(model.reasoning?.mandatory ? [] : ['none'] as const), ...derived],
+          // empty list means "no information" -> binary fallback, never "no efforts". 'none' is safe: mandatory never gets here.
+          enumValues: !derived.length ? ['none', 'high'] : ['none', ...derived],
         });
       }
       break;

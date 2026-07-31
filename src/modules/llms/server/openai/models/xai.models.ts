@@ -5,7 +5,9 @@ import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
-import type { ModelDescriptionSchema } from '../../llm.server.types';
+import type { DModelParameterId } from '~/common/stores/llms/llms.parameters';
+
+import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 import { OPENAI_API_PATHS, openAIAccess, OpenAIAccessSchema } from '../openai.access';
 import type { KnownLink, KnownModel } from '../../models.mappings';
 import { fromManualMapping, llmsDefineModels, llmDevCheckModels_DEV } from '../../models.mappings';
@@ -304,6 +306,43 @@ function _xaiFormatNewModelLabel(modelId: string): string {
   });
 
   return '[new] ' + cleanedParts.join(' ') + (hasBeta ? ' (beta)' : '');
+}
+
+
+// --- OpenRouter inheritance ---
+
+const _ORT_XAI_IF_ALLOWLIST: ReadonlySet<string> = new Set([
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning,
+] as const);
+
+// only the effort spec travels: xAI's server-side tools are native-only, OR does not tunnel them
+const _ORT_XAI_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
+  'llmVndOaiEffort',
+] as const satisfies DModelParameterId[]);
+
+/**
+ * Lookup for OpenRouter: match an OR xAI model ID to a known hardcoded xAI model.
+ * OR's `reasoning.supported_efforts` omits 'xhigh' for grok-4.3/4.5, both verified working 2026-07-31 - so our swept
+ * definitions own the effort list, and OR's `reasoning.mandatory` is used only to subtract 'none'.
+ * @param orModelName - The model name after stripping 'x-ai/' (e.g. 'grok-4.5')
+ */
+export function llmOrtXaiLookup(orModelName: string): OrtVendorLookupResult | undefined {
+
+  // OR collapses the dated native ids. Unmapped: 'grok-4.20' (native splits reasoning/non-reasoning, OR's single id is
+  // a binary toggle - verified), 'grok-build-0.1' (native has no effort spec).
+  const ortXaiRefMap: Record<string, string> = {
+    'grok-4.20-multi-agent': 'grok-4.20-multi-agent-0309',
+  };
+  const entry = _knownXAIChatModels.find(m => m.idPrefix === (ortXaiRefMap[orModelName] ?? orModelName));
+  if (!entry?.interfaces) return undefined;
+
+  const interfaces = entry.interfaces.filter(i => _ORT_XAI_IF_ALLOWLIST.has(i));
+
+  const parameterSpecs = entry.parameterSpecs
+    ?.filter(spec => _ORT_XAI_PARAM_ALLOWLIST.has(spec.paramId))
+    .map(spec => ({ ...spec }));
+
+  return { pubDate: entry.pubDate, interfaces, parameterSpecs };
 }
 
 
