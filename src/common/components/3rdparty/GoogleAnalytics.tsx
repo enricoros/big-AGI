@@ -15,7 +15,7 @@ export function sendGAEvent(..._args: Object[]) {
     return console.warn('[DEV] GA has not been initialized yet');
 
   if (window[currDataLayerName])
-    window[currDataLayerName]?.push(arguments);
+    window[currDataLayerName]?.push(..._args);
   else
     console.warn('[DEV] GA dataLayer does not exist');
 }
