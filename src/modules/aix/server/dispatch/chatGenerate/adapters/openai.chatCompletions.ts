@@ -225,6 +225,15 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' /* || chatGenerate.toolsPolicy?.type === 'function_call' - DISABLED 2026-07-17, see ToolsPolicy_schema */;
   const skipWebSearchDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
 
+  // [DeepSeek, 2026-07-31] Forced tool calls 400 while thinking is on ("Thinking mode does not support this
+  // tool_choice", both v4 models), and thinking is the vendor default, so the default path fails outright. We disable
+  // thinking rather than downgrade to 'auto': the callers that force a tool need a parseable call, not prose. Only
+  // internal utility calls set a restrictive policy, so a user's own chat turn never loses reasoning here.
+  if (openAIDialect === 'deepseek' && hasRestrictivePolicy) {
+    payload.thinking = { type: 'disabled' };
+    delete payload.reasoning_effort;
+  }
+
   // Hosted tools
   // [OpenAI] Vendor-specific web search context and/or geolocation
   // NOTE: OpenAI doesn't support web search with minimal reasoning effort (see LLMParametersEditor for more details)

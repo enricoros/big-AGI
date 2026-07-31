@@ -31,7 +31,9 @@ const getWeatherTool = aixFunctionCallTool({
  *    the probe should expect success but the model was not wire-forced.
  *  - Perplexity: will throw 'This service does not support function calls' if tools are present.
  *  - Mistral: will throw for any non-auto policy.
- *  - OpenAI/xAI/Gemini/DeepSeek/Bedrock: 'any' maps to native forced-call equivalents and works.
+ *  - OpenAI/xAI/Gemini/Bedrock: 'any' maps to native forced-call equivalents and works.
+ *  - DeepSeek V4 (flash and pro): 'any' -> 'required' 400s while thinking is on (the vendor default), so the adapter
+ *    forces thinking off for restrictive policies - see openai.chatCompletions.ts.
  *  - Models with always-on thinking (Fable/Mythos 5, DeepSeek V4): client-side
  *    aixRequireSingleFunctionCallInvocation filters void fragments, so extraction works.
  */
