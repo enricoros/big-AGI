@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
+import type { DocPageSlug } from '~/common/gen/docs.slugs';
 
 import { findModelVendor, ModelVendorId } from '../vendors/vendors.registry';
 
@@ -60,6 +61,36 @@ const vendorSetupComponents: Record<ModelVendorId, React.ComponentType<{ service
   zai: ZAIServiceSetup,
 } as const;
 
+
+/**
+ * Vendor -> big-agi.com/docs setup page. Written out because five ids differ from their slug
+ * (googleai, moonshot, nvidianim, sakanaai, togetherai); Record<ModelVendorId, ...> is exhaustive,
+ * so a new vendor cannot be registered without a docs slug (build-checked via DocPageSlug).
+ */
+export const VENDOR_DOCS: Record<ModelVendorId, DocPageSlug> = {
+  alibaba: 'connect-alibaba',
+  anthropic: 'connect-anthropic',
+  azure: 'connect-azure',
+  bedrock: 'connect-bedrock',
+  cerebras: 'connect-cerebras',
+  cohere: 'connect-cohere',
+  deepseek: 'connect-deepseek',
+  googleai: 'connect-gemini',
+  groq: 'connect-groq',
+  lmstudio: 'connect-lmstudio',
+  localai: 'connect-localai',
+  mistral: 'connect-mistral',
+  moonshot: 'connect-moonshot-ai',
+  nvidianim: 'connect-nvidia-nim',
+  ollama: 'connect-ollama',
+  openai: 'connect-openai',
+  openrouter: 'connect-openrouter',
+  perplexity: 'connect-perplexity',
+  sakanaai: 'connect-sakana',
+  togetherai: 'connect-together',
+  xai: 'connect-xai',
+  zai: 'connect-zai',
+} as const;
 
 export function LLMVendorSetup(props: { service: DModelsService }) {
   const vendor = findModelVendor(props.service.vId);

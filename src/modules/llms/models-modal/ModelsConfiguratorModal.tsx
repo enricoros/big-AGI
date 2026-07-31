@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { Box, Button, Checkbox, CircularProgress, Divider, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import LaunchIcon from '@mui/icons-material/Launch';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import RestoreIcon from '@mui/icons-material/Restore';
@@ -13,6 +14,7 @@ import { joyKeepPopup } from '~/common/components/CloseablePopup';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
+import { BaseProduct } from '~/common/app.release';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { PhGift } from '~/common/components/icons/phosphor/PhGift';
@@ -27,7 +29,7 @@ import { useModelsZeroState } from '~/common/stores/llms/hooks/useModelsZeroStat
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useUICounter, useUIPreferencesStore } from '~/common/stores/store-ui';
 
-import { LLMVendorSetup } from '../components/LLMVendorSetup';
+import { LLMVendorSetup, VENDOR_DOCS } from '../components/LLMVendorSetup';
 import { ModelsList } from './ModelsList';
 import { ModelsServiceSelector } from './ModelsServiceSelector';
 import { ModelsWizard } from './ModelsWizard';
@@ -83,6 +85,15 @@ export function ModelsConfiguratorModal(props: {
     ?? null;
 
   const activeService = modelsServices.find(s => s.id === activeServiceId);
+
+  // vendor docs page for the active service; openai in custom-host mode is documented by the custom-endpoints page instead
+  const activeServiceDocsUrl = React.useMemo(() => {
+    if (!activeService?.vId) return null;
+    const isCustomOpenAIHost = activeService.vId === 'openai' && !!(activeService.setup as { oaiHost?: string } | undefined)?.oaiHost;
+    const docSlug = isCustomOpenAIHost ? 'connect-custom-endpoints' : VENDOR_DOCS[activeService.vId];
+    return !docSlug ? null : BaseProduct.DocsBaseSite + '/' + docSlug;
+  }, [activeService]);
+
   // const hasClones = useModelsStore(({ llms }) => llms.some(llm => llm.sId === activeServiceId && llm.isUserClone));
 
   const hasAnyServices = !!modelsServices.length;
@@ -273,6 +284,16 @@ export function ModelsConfiguratorModal(props: {
                 <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
                 Remove Duplicated Models
               </MenuItem>
+
+              {/* Vendor Setup Guide (big-agi.com/docs) */}
+              {!!activeServiceDocsUrl && (
+                <MenuItem component='a' href={activeServiceDocsUrl} target='_blank'>
+                  {/*<ListItemDecorator><HelpOutlineRoundedIcon /></ListItemDecorator>*/}
+                  <ListItemDecorator />
+                  {activeService?.label ?? 'Service'} setup guide
+                  <LaunchIcon sx={{ ml: 'auto', fontSize: 16, opacity: 0.7 }} />
+                </MenuItem>
+              )}
 
               <ListDivider />
 

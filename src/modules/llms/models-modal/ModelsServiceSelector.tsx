@@ -407,6 +407,10 @@ export function ModelsServiceSelector(props: {
         sx={_styles.popup}
       >
         {vendorComponents}
+        {/* the one question a user has before picking a provider; spans the popup's 2-column grid */}
+        {/*<Box sx={{ gridColumn: '1 / -1', px: 1.5, py: 1 }}>*/}
+        {/*  <ExternalDocsLink level='body-sm' docPage='connect-models'>Which provider should I use?</ExternalDocsLink>*/}
+        {/*</Box>*/}
       </CloseablePopup>
 
     </Box>
