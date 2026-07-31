@@ -89,6 +89,15 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
     z.string(), // Allow other parameters not in the enum
   ])).optional(),
 
+  // [OpenRouter, 2026-07-31] Per-model reasoning surface. Often present with `supported_efforts` null/absent (most GLM,
+  // Kimi K2.x, Grok 4.20, DeepSeek V3.x), so an empty list means "no information", never "no efforts supported".
+  reasoning: z.object({
+    mandatory: z.boolean().nullish(), // true = reasoning cannot be disabled (rejects the 'off' request)
+    default_enabled: z.boolean().nullish(),
+    supported_efforts: z.array(z.string()).nullish(),
+    default_effort: z.string().nullish(),
+  }).nullish(),
+
   // not useful to us
   // default_parameters: z.object({
   //   temperature: z.number().nullish(),

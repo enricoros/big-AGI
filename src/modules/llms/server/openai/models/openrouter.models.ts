@@ -37,6 +37,9 @@ const orModelFamilyOrder = [
   'nvidia/', 'microsoft/', 'nousresearch/', 'ibm-granite/', 'poolside/', 'xiaomi/',
 ] as const;
 
+// llmVndMiscEffort thinking levels we expose, in canonical order ('xhigh' deliberately absent) - see llms.parameters.ts
+const _MISC_EFFORTS = ['low', 'high', 'max'] as const;
+
 const orOldModelIDs = [
   // Older OpenAI models (no longer on OR but kept for safety)
   'openai/gpt-3.5-turbo-', 'openai/gpt-4-0314', 'openai/gpt-4-32k-0314',
@@ -294,7 +297,19 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
         // Binary thinking only: we pin enumValues so the shared llmVndMiscEffort registry (which also includes 'max'
         // for native DeepSeek V4) does not surface 'max' in the UI for OR-routed third-party models - unverified they
         // honor it (OR itself accepts reasoning.effort='max' since GPT-5.6, see openai.chatCompletions.ts).
-        parameterSpecs.push({ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] });
+        // [DeepSeek, 2026-07-31] Exception: trust OR's per-model `reasoning.supported_efforts`, which already separates
+        // the 0731 flash (max/high/low - single first-party endpoint, so levels are honored) from the April flash and
+        // V4-Pro (xhigh/high -> binary, as we do not expose 'xhigh'). deepseek/ only: the same derivation would also
+        // move xAI, which is unverified.
+        const orEfforts = model.id.startsWith('deepseek/') ? model.reasoning?.supported_efforts : undefined;
+        const derived = _MISC_EFFORTS.filter(e => orEfforts?.includes(e));
+        parameterSpecs.push({
+          paramId: 'llmVndMiscEffort',
+          // guard: OR often sends the reasoning object with an empty efforts list, which means "no information" (fall
+          // back to binary), never "no efforts supported" (which would empty the UI)
+          enumValues: !derived.length ? ['none', 'high']
+            : [...(model.reasoning?.mandatory ? [] : ['none'] as const), ...derived],
+        });
       }
       break;
 
