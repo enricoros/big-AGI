@@ -45,6 +45,7 @@ let nextConfig: NextConfig = {
   }),
 
   // Allow running builds without racing over .next/ - if set takes precedence over the 'dist' above
+  // However note this will cause issues with "include" in tsconfig.json, which assumes 'dist'
   ...(process.env.AGI_DIST_DIR && { distDir: process.env.AGI_DIST_DIR }),
 
   // [puppeteer] https://github.com/puppeteer/puppeteer/issues/11052
