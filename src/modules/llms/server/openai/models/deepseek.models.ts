@@ -15,7 +15,9 @@ const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 //   an unreleased harness: direction, not ranking. V4-Pro untouched (release + revised effort mapping: early Aug 2026).
 // - Unpinnable: swept id spellings, separators, /beta + /v1 bases, dated base paths, request fields and version headers
 //   - all rejected or ignored. April weights survive only off-DeepSeek via the open weights; 0731 has no HF repo.
-// - Undated: 2x peak-hour pricing (Beijing 09-12, 14-18). Docs need a TRAILING SLASH, else Docusaurus serves a shell.
+// - Undated: 2x peak-hour pricing (Beijing 09-12, 14-18). chatPrice below is the off-peak base only - our pricing has
+//   no time dimension, so peak windows will read 2x low.
+// - Docs need a TRAILING SLASH, else Docusaurus serves a shell.
 
 // [DeepSeek, 2026-04-24] V4 release - https://api-docs.deepseek.com/news/news260424
 // - V4-Pro: 1.6T total / 49B active params; V4-Flash: 284B total / 13B active params (Novel Attention: token-wise compression + DSA)

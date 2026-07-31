@@ -382,6 +382,11 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (hotFixOpenAIOFamily)
     payload = _fixRemoveTemperatureAndTopP(payload);
 
+  // [DeepSeek, 2026-07-31] thinking mode silently ignores temperature/top_p - drop them instead of sending inert
+  // fields. After the tools block, which may have turned thinking off; when off they work normally and are kept.
+  if (openAIDialect === 'deepseek' && payload.thinking?.type !== 'disabled')
+    payload = _fixRemoveTemperatureAndTopP(payload);
+
   if (hotFixRemoveStreamOptions)
     payload = _fixRemoveStreamOptions(payload);
 
