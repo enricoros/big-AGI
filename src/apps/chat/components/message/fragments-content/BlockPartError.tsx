@@ -66,6 +66,9 @@ export function BlockPartError(props: {
     }
   }
 
+  // NOTE: in the future we can also append:
+  //   <ExternalDocsLink color='danger' level='body-sm' docPage='issue-key-and-access'>What this error means</ExternalDocsLink>
+
   return (
     <ScaledTextBlockRenderer
       text={textToRender}

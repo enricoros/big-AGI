@@ -6,6 +6,7 @@ import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
+import { ExternalDocsLink } from '~/common/components/ExternalDocsLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { isLocalUrl } from '~/common/util/urlUtils';
@@ -57,15 +58,14 @@ export function LMStudioServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     <Typography level='body-sm'>
       You can use a running <Link href='https://lmstudio.ai/' target='_blank'>LM Studio</Link> instance as a source
-      for local models. Please refer to our <Link
-      level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-local-lmstudio.md' target='_blank'>configuration guide</Link> for
+      for local models. Please refer to our <ExternalDocsLink level='body-sm' docPage='connect-lmstudio'>configuration guide</ExternalDocsLink> for
       how to link to your LM Studio instance.
     </Typography>
 
     <FormInputKey
       autoCompleteId='lmstudio-url' label='LM Studio API'
       required noKey
-      rightLabel={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-local-lmstudio.md' target='_blank'>Learn more</Link>}
+      rightLabel={<ExternalDocsLink level='body-sm' docPage='connect-lmstudio'>Learn more</ExternalDocsLink>}
       placeholder='e.g., http://127.0.0.1:1234'
       value={oaiHost} onChange={value => updateSettings({ oaiHost: value })}
     />

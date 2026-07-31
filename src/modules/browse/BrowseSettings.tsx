@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { Checkbox, FormControl, FormHelperText, FormLabel, Option, Select, Typography } from '@mui/joy';
 
 import { AlreadySet } from '~/common/components/AlreadySet';
-import { ExternalLink } from '~/common/components/ExternalLink';
+import { ExternalDocsLink } from '~/common/components/ExternalDocsLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
@@ -41,7 +41,7 @@ export function BrowseSettings() {
   return <>
 
     <Typography level='body-sm'>
-      Download and process web pages for analysis. <ExternalLink href='https://big-agi.com/docs/config-feature-browse'>Learn more</ExternalLink>.
+      Download and process web pages for analysis. <ExternalDocsLink docPage='self-host-optional-services'>Learn more</ExternalDocsLink>.
     </Typography>
 
     <FormInputKey

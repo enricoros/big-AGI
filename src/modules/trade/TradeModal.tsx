@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
+import { ExternalDocsLink } from '~/common/components/ExternalDocsLink';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 
 import { ExportChats, ExportConfig } from './ExportChats';
@@ -16,6 +17,7 @@ export function TradeModal(props: { config: TradeConfig, onConversationActivate:
       title={<>
         <b>{props.config.dir === 'import' ? 'Import ' : props.config.dir === 'export' ? 'Export ' : ''}</b> {(props.config.dir === 'export' && !props.config.exportAll) ? 'conversation' : 'conversations'}
       </>}
+      startButton={<ExternalDocsLink level='body-sm' docPage='account-backup'>Learn more</ExternalDocsLink>}
     >
 
       {props.config.dir === 'import' && (

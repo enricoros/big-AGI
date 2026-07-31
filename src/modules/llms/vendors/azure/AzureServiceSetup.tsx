@@ -5,6 +5,7 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
+import { ExternalDocsLink } from '~/common/components/ExternalDocsLink';
 import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormTextField } from '~/common/components/forms/FormTextField';
@@ -70,7 +71,7 @@ export function AzureServiceSetup(props: { serviceId: DModelsServiceId }) {
     <FormTextField
       autoCompleteId='azure-endpoint'
       title='Azure Endpoint'
-      description={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-azure-openai.md' target='_blank'>configuration</Link>}
+      description={<ExternalDocsLink level='body-sm' docPage='connect-azure'>configuration</ExternalDocsLink>}
       placeholder='https://your-resource.openai.azure.com'
       isError={hostError}
       value={azureEndpoint}

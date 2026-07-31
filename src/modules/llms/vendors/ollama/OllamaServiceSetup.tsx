@@ -3,10 +3,10 @@ import * as React from 'react';
 import { Button, FormControl, Typography } from '@mui/joy';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
+import { ExternalDocsLink } from '~/common/components/ExternalDocsLink';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
-import { Link } from '~/common/components/Link';
 import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
@@ -44,7 +44,7 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
     <FormTextField
       autoCompleteId='ollama-host'
       title='Ollama Host'
-      description={<Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-local-ollama.md' target='_blank'>Information</Link>}
+      description={<ExternalDocsLink level='body-sm' docPage='connect-ollama'>Information</ExternalDocsLink>}
       placeholder='http://127.0.0.1:11434'
       isError={hostError}
       value={ollamaHost || ''}

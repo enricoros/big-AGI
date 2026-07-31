@@ -14,6 +14,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import { CloseablePopup } from '~/common/components/CloseablePopup';
+import { ExternalDocsLink } from '~/common/components/ExternalDocsLink';
 import { DMessageAttachmentFragment, DMessageDocPart, DMessageImageRefPart, isDocPart, isImageRefPart, isZyncAssetImageReferencePartWithLegacyDBlob } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
@@ -292,6 +293,10 @@ export function AttachmentDraftMenu(props: {
                     : !llmSupportsAllFragments ? <div>May not be compatible with the current model. Please try another format.</div>
                       : draft.outputWarnings?.length ? '' /* printed below */
                         : <>Unknown warning</>}
+
+              <Box sx={{ mt: 1 }}>
+                <ExternalDocsLink level='body-sm' docPage='feature-attachments'>Supported formats</ExternalDocsLink>
+              </Box>
 
               {/* Explicit output warnings */}
               {!!draft.outputWarnings?.length && draft.outputWarnings.map((w, widx) =>

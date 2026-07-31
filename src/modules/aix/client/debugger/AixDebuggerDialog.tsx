@@ -282,6 +282,9 @@ export function AixDebuggerDialog(props: {
                   </Link> to see the exact requests to AI models.
                 </>}
             </Typography>
+            {/*<Typography level='body-sm' sx={{ mt: 1 }}>*/}
+            {/*  <ExternalDocsLink level='body-sm' docPage='feature-ai-inspector'>What the inspector shows</ExternalDocsLink>*/}
+            {/*</Typography>*/}
           </>}
           {!activeFrame && !!frames.length && (
             <Typography level='body-sm'>

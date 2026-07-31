@@ -5,6 +5,7 @@ import LaunchIcon from '@mui/icons-material/Launch';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
+import { ExternalDocsLink } from '~/common/components/ExternalDocsLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
@@ -61,9 +62,8 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       <Typography level='body-sm'>
         <Link href='https://openrouter.ai' target='_blank'>OpenRouter</Link> is a service
-        providing access to <Link href='https://openrouter.ai/models' target='_blank'>a wide range of models</Link>. See our <Link
-        href='https://github.com/enricoros/big-agi/blob/main/docs/config-openrouter.md' target='_blank'>
-        Docs</Link>.
+        providing access to <Link href='https://openrouter.ai/models' target='_blank'>a wide range of models</Link>. See
+        our <ExternalDocsLink level='body-sm' docPage='connect-openrouter'>Docs</ExternalDocsLink>.
       </Typography>
 
       <Typography level='body-sm' endDecorator={
