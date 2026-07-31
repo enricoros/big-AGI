@@ -1,5 +1,5 @@
 {
-  /* The node-side type-check project (2nd leg of `npm run tsclint`): tools/ scripts plus the
+  /* The node-side type-check project (2nd leg of `npm run tscheck`): tools/ scripts plus the
      src *.test.ts files, which the root tsconfig excludes (they must not enter the Next build
      graph) and which run under tsx (`npm test`) just like the tools. */
   "extends": "../tsconfig.json",
@@ -10,8 +10,14 @@
     "types": ["node"]
   },
   "include": [
-    "**/*.ts",
-    "../src/**/*.test.ts"
+    "**/*.ts", "**/*.tsx",
+    "../src/**/*.test.ts",
+    // ambient augmentations (authjs.d.ts widens next-auth's Session): nothing imports them, so
+    // without this the shared src/ files they describe fail here but pass at the root
+    "../src/**/*.d.ts"
   ],
-  "exclude": []
+  "exclude": [
+    // SELF-CONTAINED package (own package.json + tsconfig + node_modules + lockfile: Remotion pins its own React)
+    "video"
+  ]
 }

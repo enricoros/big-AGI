@@ -32,6 +32,10 @@ buildType && console.log(` 🧠 big-AGI: building for ${buildType}...\n`);
 let nextConfig: NextConfig = {
   reactStrictMode: !process.env.NO_STRICT_MODE, // default: enabled
 
+  // build-time lint: default ON (a build is the last gate); NO_LINT_BUILD=1 skips the ~15s
+  // typed pass when CI already ran `npm run lint` as its own step
+  eslint: { ignoreDuringBuilds: !!process.env.NO_LINT_BUILD },
+
   // [exports] https://nextjs.org/docs/advanced-features/static-html-export
   ...(buildType && {
     output: buildType,

@@ -4,6 +4,9 @@ import { fileURLToPath } from "node:url";
 import js from "@eslint/js";
 import { FlatCompat } from "@eslint/eslintrc";
 import pluginCompat from "eslint-plugin-compat";
+// typed linting - rides eslint-config-next's own @typescript-eslint packages
+import tsParser from "@typescript-eslint/parser";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,6 +17,17 @@ const compat = new FlatCompat({
 });
 
 export default defineConfig([{
+    /* Ours to declare: `lint` calls eslint directly (`next lint` supplied these, and is removed in
+       Next 16). Flat config only auto-skips node_modules - NOT dot-dirs. Only list what eslint
+       would otherwise open: js/ts under here would be linted with app rules and lie. */
+    ignores: [
+      ".next*/**", "out/**", "dist/**", // build output (minified bundles trip compat/ on every modern API)
+      "public/**",                      // served verbatim, outside the bundler + type program
+      ".claude/**",                     // agent tooling, own runtime
+      "electron/**",                    // excluded from the type program (root tsconfig)
+      "tools/video/**",                 // self-contained package, own toolchain
+    ],
+}, {
     extends: compat.extends("next/core-web-vitals"),
     rules: {
         //
@@ -41,5 +55,20 @@ export default defineConfig([{
     settings: {
         // feature-detected in-code (fallback/guard present), so they don't break older browsers
         polyfills: ["requestIdleCallback", "Intl.Segmenter", "ClipboardItem"],
+    },
+}, {
+    // Enrico 2026-07-30: TYPED rules - needs a full type program, so this is the ~15s of `npm run lint`
+    // unbound-method: detaching a prototype method (destructure, stored reference, callback) silently
+    // rebinds `this` - the destructure-heavy house style is only safe with this guard.
+    // Annotate genuinely 'detach-safe' declarations with `this: void` (or declare them property-style).
+    files: ["src/**/*.ts", "src/**/*.tsx"], // pages/ + app/ are in the program too, but hold ~no logic
+    ignores: ["**/*.test.ts"], // in the tools program, not this one
+    languageOptions: {
+        parser: tsParser,
+        parserOptions: { projectService: true, tsconfigRootDir: __dirname },
+    },
+    plugins: { "@typescript-eslint": tsPlugin },
+    rules: {
+        "@typescript-eslint/unbound-method": "warn",
     },
 }]);
