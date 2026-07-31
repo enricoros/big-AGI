@@ -202,7 +202,8 @@ export async function convert_Blob_To_Base64DataURL(blob: Blob, debugCaller: str
       throw new Error('Invalid blob');
     }
 
-    return new Promise<string>((resolve, reject) => {
+    // await so FileReader failures route through the catch below (dev warn + normalized error)
+    return await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
         if (typeof reader.result === 'string')
