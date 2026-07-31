@@ -66,7 +66,7 @@ export const llmOllamaRouter = createTRPCRouter({
   adminListPullable: edgeProcedure
     .input(accessOnlySchema)
     .output(listPullableOutputSchema)
-    .query(async ({}) => {
+    .query(async (/*{ ctx, input } unused */) => {
       return {
         pullableModels: Object.entries(OLLAMA_BASE_MODELS).map(([model_id, model]) => ({
           id: model_id,
