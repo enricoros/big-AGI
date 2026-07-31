@@ -109,100 +109,92 @@ export type RetryAttempt = {
  * @param onRetry Optional callback invoked before each retry attempt
  * @returns Promise that resolves with the successful result or rejects with the final error
  */
-export function fetchWithAbortableConnectionRetry<T>(operationFn: () => Promise<T>, abortSignal: AbortSignal, onRetry?: (retryInfo: RetryAttempt) => void): Promise<T> {
-  return new Promise<T>(async (resolve, reject) => {
-    let attemptNumber = 1;
+export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Promise<T>, abortSignal: AbortSignal, onRetry?: (retryInfo: RetryAttempt) => void): Promise<T> {
+  let attemptNumber = 1;
 
-    while (true) {
-      try {
+  while (true) {
+    try {
 
-        // normal attempt, expecting success and setting the promise value
-        const result = await operationFn();
-        if (AIX_DEBUG_SERVER_RETRY && attemptNumber > 1) {
-          // NOTE: console.warn to overwrite the lower level [POST/GET] warning logs
-          console.warn(`[fetchers.retrier] ✅ Success after ${attemptNumber} attempts`);
-        }
-        resolve(result);
-        return;
-
-      } catch (error: any) {
-
-        // aborted: forward the error immediately
-        if (abortSignal.aborted) {
-          if (AIX_DEBUG_SERVER_RETRY)
-            console.log(`[fetchers.retrier] ⛔ User aborted at attempt ${attemptNumber}`);
-          reject(error);
-          return;
-        }
-
-        // check if error is retryable
-        const rp = selectRetryProfile(error);
-
-        // not retryable
-        if (!rp) {
-          if (AIX_DEBUG_SERVER_RETRY) {
-            const errorInfo = !(error instanceof TRPCFetcherError) ? '' : `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
-            console.log(`[fetchers.retrier] ❌ Not retryable ${errorInfo}}`); // removing the duplicate error message
-            // console.log(`[fetchers.retrier] ❌ Not retryable ${errorInfo}: ${error?.message || error}`);
-          }
-          reject(error);
-          return;
-        }
-
-        // exhausted attempts
-        if (attemptNumber >= rp.maxAttempts) {
-          if (AIX_DEBUG_SERVER_RETRY) {
-            const errorInfo = !(error instanceof TRPCFetcherError) ? '' : `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
-            console.warn(`[fetchers.retrier] ⚠️ All ${rp.maxAttempts - 1} retry attempts exhausted ${errorInfo}`);
-          }
-          // gave up after `attemptNumber` total attempts (incl. the original); the `-1` is a magic constant to signal end of retries
-          onRetry?.({ attempt: attemptNumber, maxAttempts: attemptNumber, causeHttp: error instanceof TRPCFetcherError ? error.httpStatus : undefined, causeConn: 'ERR', delayMs: -1 });
-          reject(error);
-          return;
-        }
-
-        // log retry decision with error details
-        if (AIX_DEBUG_SERVER_RETRY) {
-          const errorInfo = error instanceof TRPCFetcherError
-            ? `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`
-            : '';
-          const profileType = rp === RETRY_PROFILES.network ? 'network' : 'server';
-          console.log(`[fetchers.retrier] 🔄 Retryable error ${errorInfo} - using '${profileType}' profile`);
-          // console.log(`[fetchers.retrier] 🔄 Retryable error ${errorInfo} - using ${profileType} profile: ${error?.message || error}`);
-        }
-
-        // calculate exponential backoff with jitter
-        const exponentialDelay = rp.baseDelayMs * Math.pow(2, attemptNumber - 1);
-        let delayMs = Math.min(exponentialDelay, rp.maxDelayMs);
-
-        // add jitter to prevent thundering herd
-        if (rp.jitterFactor > 0) {
-          const jitterRange = delayMs * rp.jitterFactor;
-          const randomJitter = (Math.random() * 2 - 1) * jitterRange; // ±jitterRange
-          delayMs = Math.max(1, Math.round(delayMs + randomJitter));
-        }
-
-        attemptNumber++;
-        if (AIX_DEBUG_SERVER_RETRY)
-          console.log(`[fetchers.retrier] 🔄 -> Retrying attempt ${attemptNumber - 1}/${rp.maxAttempts - 1} after ${delayMs}ms delay`);
-
-        // let the caller know about the retry attempt
-        onRetry?.({
-          attempt: attemptNumber,
-          maxAttempts: rp.maxAttempts,
-          delayMs,
-          causeHttp: error instanceof TRPCFetcherError ? error.httpStatus : undefined,
-          causeConn: error instanceof TRPCFetcherError ? error.category : undefined,
-        });
-
-        // abortable wait
-        if (await abortableDelay(delayMs, abortSignal)) {
-          reject(error);
-          return;
-        }
-
-        // -> loop continues for next attempt
+      // normal attempt, expecting success and setting the promise value
+      const result = await operationFn();
+      if (AIX_DEBUG_SERVER_RETRY && attemptNumber > 1) {
+        // NOTE: console.warn to overwrite the lower level [POST/GET] warning logs
+        console.warn(`[fetchers.retrier] ✅ Success after ${attemptNumber} attempts`);
       }
+      return result;
+
+    } catch (error: any) {
+
+      // aborted: forward the error immediately
+      if (abortSignal.aborted) {
+        if (AIX_DEBUG_SERVER_RETRY)
+          console.log(`[fetchers.retrier] ⛔ User aborted at attempt ${attemptNumber}`);
+        throw error;
+      }
+
+      // check if error is retryable
+      const rp = selectRetryProfile(error);
+
+      // not retryable
+      if (!rp) {
+        if (AIX_DEBUG_SERVER_RETRY) {
+          const errorInfo = !(error instanceof TRPCFetcherError) ? '' : `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
+          console.log(`[fetchers.retrier] ❌ Not retryable ${errorInfo}}`); // removing the duplicate error message
+          // console.log(`[fetchers.retrier] ❌ Not retryable ${errorInfo}: ${error?.message || error}`);
+        }
+        throw error;
+      }
+
+      // exhausted attempts
+      if (attemptNumber >= rp.maxAttempts) {
+        if (AIX_DEBUG_SERVER_RETRY) {
+          const errorInfo = !(error instanceof TRPCFetcherError) ? '' : `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
+          console.warn(`[fetchers.retrier] ⚠️ All ${rp.maxAttempts - 1} retry attempts exhausted ${errorInfo}`);
+        }
+        // gave up after `attemptNumber` total attempts (incl. the original); the `-1` is a magic constant to signal end of retries
+        onRetry?.({ attempt: attemptNumber, maxAttempts: attemptNumber, causeHttp: error instanceof TRPCFetcherError ? error.httpStatus : undefined, causeConn: 'ERR', delayMs: -1 });
+        throw error;
+      }
+
+      // log retry decision with error details
+      if (AIX_DEBUG_SERVER_RETRY) {
+        const errorInfo = error instanceof TRPCFetcherError
+          ? `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`
+          : '';
+        const profileType = rp === RETRY_PROFILES.network ? 'network' : 'server';
+        console.log(`[fetchers.retrier] 🔄 Retryable error ${errorInfo} - using '${profileType}' profile`);
+        // console.log(`[fetchers.retrier] 🔄 Retryable error ${errorInfo} - using ${profileType} profile: ${error?.message || error}`);
+      }
+
+      // calculate exponential backoff with jitter
+      const exponentialDelay = rp.baseDelayMs * Math.pow(2, attemptNumber - 1);
+      let delayMs = Math.min(exponentialDelay, rp.maxDelayMs);
+
+      // add jitter to prevent thundering herd
+      if (rp.jitterFactor > 0) {
+        const jitterRange = delayMs * rp.jitterFactor;
+        const randomJitter = (Math.random() * 2 - 1) * jitterRange; // ±jitterRange
+        delayMs = Math.max(1, Math.round(delayMs + randomJitter));
+      }
+
+      attemptNumber++;
+      if (AIX_DEBUG_SERVER_RETRY)
+        console.log(`[fetchers.retrier] 🔄 -> Retrying attempt ${attemptNumber - 1}/${rp.maxAttempts - 1} after ${delayMs}ms delay`);
+
+      // let the caller know about the retry attempt
+      onRetry?.({
+        attempt: attemptNumber,
+        maxAttempts: rp.maxAttempts,
+        delayMs,
+        causeHttp: error instanceof TRPCFetcherError ? error.httpStatus : undefined,
+        causeConn: error instanceof TRPCFetcherError ? error.category : undefined,
+      });
+
+      // abortable wait
+      if (await abortableDelay(delayMs, abortSignal))
+        throw error;
+
+      // -> loop continues for next attempt
     }
-  });
+  }
 }
