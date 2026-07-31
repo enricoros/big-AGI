@@ -347,7 +347,7 @@ export function ModelsConfiguratorModal(props: {
       );
 
     return undefined;
-  }, [activeHasFreeLLMs, activeService?.label, dcAllEnabled, dcHasEligible, dcNoneEnabled, dcStatus.eligible, dcStatus.enabled, handleDisableAllDC, handleEnableAllDC, handleHideAllModels, handleMainMenuOpenChange, handleRefreshModels, handleRemoveClones, handleResetAllParameters, handleResetVisibility, handleShowAllModels, handleShowOnlyFree, handleShowOnlyPaid, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, mainMenuOpen, setShowModelsFn, setShowModelsHidden, setStarredOnTop, showModelsFn, showModelsHidden, starredOnTop, subMenuHost]);
+  }, [activeHasFreeLLMs, activeService?.label, activeServiceDocsUrl, dcAllEnabled, dcHasEligible, dcNoneEnabled, dcStatus.eligible, dcStatus.enabled, handleDisableAllDC, handleEnableAllDC, handleHideAllModels, handleMainMenuOpenChange, handleRefreshModels, handleRemoveClones, handleResetAllParameters, handleResetVisibility, handleShowAllModels, handleShowOnlyFree, handleShowOnlyPaid, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, mainMenuOpen, setShowModelsFn, setShowModelsHidden, setStarredOnTop, showModelsFn, showModelsHidden, starredOnTop, subMenuHost]);
 
 
   // custom done button for wizard mode (combines start and close buttons)
