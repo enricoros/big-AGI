@@ -105,8 +105,8 @@ export function useGoogleDrivePicker(
   const handleOAuthError = React.useCallback((e: _OauthErrorEvent) => {
     setIsPickerOpen(false);
     // ignore if user closed the popup
-    if (e?.detail && 'type' in e?.detail && e.detail.type === 'popup_closed') return;
-    const errorMsg = e?.detail && 'error' in e?.detail && typeof e.detail.error === 'string' ? e.detail.error : undefined;
+    if (e?.detail && 'type' in e.detail && e.detail.type === 'popup_closed') return;
+    const errorMsg = e?.detail && 'error' in e.detail && typeof e.detail.error === 'string' ? e.detail.error : undefined;
     addSnackbar({ key: 'gdrive-oauth-error', message: errorMsg === 'access_denied' ? 'Drive file access was denied' : 'Google Drive authentication failed.', type: 'issue' });
   }, []);
 
