@@ -178,7 +178,10 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (reasoningEffort && (openAIDialect === 'deepseek' || openAIDialect === 'moonshot' || openAIDialect === 'zai')) {
     // [Z.ai, 2026-06-13] reasoning_effort is GLM-5.2 only; other GLM models are binary thinking enabled/disabled - https://docs.z.ai/api-reference/llm/chat-completion
     const supportsEffortLevels = openAIDialect === 'deepseek' || openAIDialect === 'moonshot' || (openAIDialect === 'zai' && model.id.startsWith('glm-5.2'));
-    const allowedEffort = openAIDialect === 'moonshot' ? ['none', 'low', 'high', 'max'] : supportsEffortLevels ? ['none', 'high', 'max'] : ['none', 'high'];
+    // [DeepSeek, 2026-07-31] the V4 reasoning_effort enum is none|minimal|low|medium|high|xhigh|max; we expose the
+    // documented low/high/max (+ none -> thinking disabled). 'low' keeps reasoning on while skipping the hidden agentic
+    // preamble, so it is the cheap thinking tier.
+    const allowedEffort = (openAIDialect === 'moonshot' || openAIDialect === 'deepseek') ? ['none', 'low', 'high', 'max'] : supportsEffortLevels ? ['none', 'high', 'max'] : ['none', 'high'];
     if (!allowedEffort.includes(reasoningEffort)) // domain validation
       throw new Error(`${openAIDialect} only supports reasoning effort ${allowedEffort.join(', ')}, got '${reasoningEffort}'`);
 
