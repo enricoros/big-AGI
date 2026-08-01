@@ -20,7 +20,8 @@ import { GoodModal } from '~/common/components/modals/GoodModal';
 import { PhGift } from '~/common/components/icons/phosphor/PhGift';
 import { SubMenuHost, SubMenuItem, useSubMenuHost } from '~/common/components/SubMenu';
 import { isLLMChatFree_cached } from '~/common/stores/llms/llms.pricing';
-import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
+import { isLLMCustomUserParameters } from '~/common/stores/llms/llms.types';
+import { llmsStoreActions, llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useAllServicesDCStatus } from '~/common/stores/llms/hooks/useModelServiceClientSideFetch';
 import { useHasFreeLLMs, useHasLLMs } from '~/common/stores/llms/llms.hooks';
@@ -94,7 +95,10 @@ export function ModelsConfiguratorModal(props: {
     return !docSlug ? null : BaseProduct.DocsBaseSite + '/' + docSlug;
   }, [activeService]);
 
-  // const hasClones = useModelsStore(({ llms }) => llms.some(llm => llm.sId === activeServiceId && llm.isUserClone));
+  // menu enablement - boolean selectors (early-exit scans, primitive return: no re-render unless flipping)
+  // mirrors exactly what each action would touch: resetServiceUserParameters strips userParameters + userLabel (skipping clones)
+  const hasServiceCustomizations = useModelsStore(({ llms }) => llms.some(llm => llm.sId === activeServiceId && !llm.isUserClone && (llm.userLabel !== undefined || isLLMCustomUserParameters(llm))));
+  const hasServiceClones = useModelsStore(({ llms }) => llms.some(llm => llm.sId === activeServiceId && llm.isUserClone === true));
 
   const hasAnyServices = !!modelsServices.length;
   const isTabWizard = tab === 'wizard';
@@ -274,13 +278,13 @@ export function ModelsConfiguratorModal(props: {
               </MenuItem>
 
               {/* Reset All Parameters */}
-              <MenuItem onClick={handleResetAllParameters}>
+              <MenuItem disabled={!hasServiceCustomizations} onClick={handleResetAllParameters}>
                 <ListItemDecorator><RestoreIcon /></ListItemDecorator>
                 Reset Customizations
               </MenuItem>
 
               {/* Remove Cloned Models */}
-              <MenuItem onClick={handleRemoveClones}>
+              <MenuItem disabled={!hasServiceClones} onClick={handleRemoveClones}>
                 <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
                 Remove Duplicated Models
               </MenuItem>
@@ -347,7 +351,7 @@ export function ModelsConfiguratorModal(props: {
       );
 
     return undefined;
-  }, [activeHasFreeLLMs, activeService?.label, activeServiceDocsUrl, dcAllEnabled, dcHasEligible, dcNoneEnabled, dcStatus.eligible, dcStatus.enabled, handleDisableAllDC, handleEnableAllDC, handleHideAllModels, handleMainMenuOpenChange, handleRefreshModels, handleRemoveClones, handleResetAllParameters, handleResetVisibility, handleShowAllModels, handleShowOnlyFree, handleShowOnlyPaid, handleShowWizard, hasAnyServices, hasLLMs, isMobile, isRefreshing, isTabSetup, isTabWizard, mainMenuOpen, setShowModelsFn, setShowModelsHidden, setStarredOnTop, showModelsFn, showModelsHidden, starredOnTop, subMenuHost]);
+  }, [activeHasFreeLLMs, activeService?.label, activeServiceDocsUrl, dcAllEnabled, dcHasEligible, dcNoneEnabled, dcStatus.eligible, dcStatus.enabled, handleDisableAllDC, handleEnableAllDC, handleHideAllModels, handleMainMenuOpenChange, handleRefreshModels, handleRemoveClones, handleResetAllParameters, handleResetVisibility, handleShowAllModels, handleShowOnlyFree, handleShowOnlyPaid, handleShowWizard, hasAnyServices, hasLLMs, hasServiceClones, hasServiceCustomizations, isMobile, isRefreshing, isTabSetup, isTabWizard, mainMenuOpen, setShowModelsFn, setShowModelsHidden, setStarredOnTop, showModelsFn, showModelsHidden, starredOnTop, subMenuHost]);
 
 
   // custom done button for wizard mode (combines start and close buttons)
