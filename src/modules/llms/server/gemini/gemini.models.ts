@@ -1149,7 +1149,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
 
   // handle symlinks
   let label = knownModel?.symLink
-    ? `🔗 ${knownModel?.labelOverride || displayName} → ${knownModel.symLink}`
+    ? `🔗 ${knownModel?.labelOverride || displayName} -> ${knownModel.symLink}`
     : knownModel?.labelOverride || displayName;
 
   // FIX: the Gemini 1114 model now returns 1121 as the version.. highlight the issue

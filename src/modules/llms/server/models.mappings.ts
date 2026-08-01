@@ -235,7 +235,7 @@ export function fromManualMapping(mappings: ReadonlyArray<KnownModel | KnownLink
     delete m.hidden;
   } else if (!disableSymlinkLooks && symlinkTarget) {
     // add a symlink icon to the label
-    label = `🔗 ${label} → ${symlinkTarget/*.replace(known.idPrefix, '')*/}`;
+    label = `🔗 ${label} -> ${symlinkTarget/*.replace(known.idPrefix, '')*/}`;
 
     // add an automated 'points to...' to the description, lifted from the base model
     if (!description.includes('Points to '))

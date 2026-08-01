@@ -235,7 +235,7 @@ export function mistralModels(wireModels: unknown): ModelDescriptionSchema[] {
 
     return {
       id: id,
-      label: labelOverride ?? (!isSymlink ? prettyName : `🔗 ${id} → ${prettyName}`),
+      label: labelOverride ?? (!isSymlink ? prettyName : `🔗 ${id} -> ${prettyName}`),
       created: created || 0,
       updated: /*updated ||*/ created || 0,
       description: description,
