@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
-import type { DocPageSlug } from '~/common/gen/docs.slugs';
+import type { SiteDocSlug } from '~/common/gen/com.site.docs.slug';
 
 import { findModelVendor, ModelVendorId } from '../vendors/vendors.registry';
 
@@ -65,9 +65,9 @@ const vendorSetupComponents: Record<ModelVendorId, React.ComponentType<{ service
 /**
  * Vendor -> big-agi.com/docs setup page. Written out because five ids differ from their slug
  * (googleai, moonshot, nvidianim, sakanaai, togetherai); Record<ModelVendorId, ...> is exhaustive,
- * so a new vendor cannot be registered without a docs slug (build-checked via DocPageSlug).
+ * so a new vendor cannot be registered without a docs slug (build-checked via SiteDocSlug).
  */
-export const VENDOR_DOCS: Record<ModelVendorId, DocPageSlug> = {
+export const VENDOR_DOCS: Record<ModelVendorId, SiteDocSlug> = {
   alibaba: 'connect-alibaba',
   anthropic: 'connect-anthropic',
   azure: 'connect-azure',

@@ -3,7 +3,7 @@
 // Source of truth: website/docs-src/nav.json + frontmatter. Checked in deliberately.
 
 /** A slug the docs site serves at /docs/<slug> - every live page, in nav order. Type doc links with this. */
-export type DocPageSlug =
+export type SiteDocSlug =
   | 'start-here'
   | 'choose-version'
   | 'first-chat'
@@ -31,12 +31,12 @@ export type DocPageSlug =
   | 'connect-xai'
   | 'connect-zai'
   | 'connect-custom-endpoints'
+  | 'feature-ai-inspector'
   | 'feature-attachments'
   | 'multi-model'
   | 'multi-model-fusion'
   | 'multi-model-read-disagreement'
   | 'feature-direct-connection'
-  | 'feature-ai-inspector'
   | 'feature-personas'
   | 'feature-ramble'
   | 'feature-sync'
