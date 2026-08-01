@@ -36,6 +36,9 @@ interface UIPreferencesStore {
   enterIsNewline: boolean;
   setEnterIsNewline: (enterIsNewline: boolean) => void;
 
+  messageFullWidth: boolean; // stretch assistant messages to the full row
+  setMessageFullWidth: (messageFullWidth: boolean) => void;
+
   renderCodeLineNumbers: boolean;
   setRenderCodeLineNumbers: (renderCodeLineNumbers: boolean) => void;
 
@@ -112,6 +115,9 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       enterIsNewline: false,
       setEnterIsNewline: (enterIsNewline: boolean) => set({ enterIsNewline }),
+
+      messageFullWidth: false,
+      setMessageFullWidth: (messageFullWidth: boolean) => set({ messageFullWidth }),
 
       renderCodeLineNumbers: false,
       setRenderCodeLineNumbers: (renderCodeLineNumbers: boolean) => set({ renderCodeLineNumbers }),

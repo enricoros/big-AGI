@@ -109,6 +109,7 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
             fitScreen={isMobile}
             isMobile={isMobile}
             hideAvatar
+            blocksStretch
             adjustContentScaling={-1}
             sx={!getBeamCardScrolling() ? beamCardMessageSx : beamCardMessageScrollingSx}
           />,

@@ -193,6 +193,7 @@ export function Fusion(props: {
               fitScreen={true}
               isMobile={props.isMobile}
               hideAvatar
+              blocksStretch
               showUnsafeHtmlCode={true}
               adjustContentScaling={-1}
               onMessageFragmentDelete={handleFragmentDelete}

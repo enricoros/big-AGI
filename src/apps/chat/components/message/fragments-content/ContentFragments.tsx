@@ -24,7 +24,8 @@ import { BlockPartToolResponse } from './BlockPartToolResponse';
 import { humanReadableFunctionName } from './BlockPartToolInvocation.utils';
 
 
-const _editLayoutSx: SxProps = {
+const _stretchLayoutSx: SxProps = {
+  // no justifyContent: the implicit grid column (and all fragments) stretches to the container width
   display: 'grid',
   gap: 1.5,     // see why we give more space on ChatMessage
 
@@ -36,12 +37,12 @@ const _editLayoutSx: SxProps = {
 };
 
 const _startLayoutSx: SxProps = {
-  ..._editLayoutSx,
+  ..._stretchLayoutSx,
   justifyContent: 'flex-start',
 } as const;
 
 const _endLayoutSx: SxProps = {
-  ..._editLayoutSx,
+  ..._stretchLayoutSx,
   justifyContent: 'flex-end',
 } as const;
 
@@ -53,6 +54,7 @@ export function ContentFragments(props: {
 
   contentScaling: ContentScaling,
   uiComplexityMode: UIComplexityMode,
+  blocksStretch: boolean,
   fitScreen: boolean,
   isMobile: boolean,
   messageRole: DMessageRole,
@@ -120,7 +122,7 @@ export function ContentFragments(props: {
   if (!props.showEmptyNotice && isEmpty)
     return null;
 
-  return <Box aria-label='message body' sx={(showDataStreamViz || isEditingText) ? _editLayoutSx : fromAssistant ? _startLayoutSx : _endLayoutSx}>
+  return <Box aria-label='message body' sx={(showDataStreamViz || isEditingText || (fromAssistant && props.blocksStretch)) ? _stretchLayoutSx : fromAssistant ? _startLayoutSx : _endLayoutSx}>
 
     {/* Empty Message Block - if empty */}
     {props.showEmptyNotice && (
