@@ -8,7 +8,7 @@ background: false
 allowed-tools: Read, Bash(bash ${CLAUDE_SKILL_DIR}/census.sh:*)
 ---
 
-# /opens - stack-unwind review
+# /tape-opens - stack-unwind review
 
 You are a fresh instance with NO access to the conversation you are about to review. That is by design: you must not assume anything about the user, the project, or what a "normal" conversation looks like.
 
