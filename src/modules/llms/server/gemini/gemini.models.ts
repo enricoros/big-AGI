@@ -905,11 +905,16 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
   /// Other Experimental Models
 
   // Gemma 4 Models - Released April 2, 2026
+  // Unlike Gemma 3 (which rejected both with "Image input modality is not enabled" / "Developer instruction is not enabled"),
+  // Gemma 4 accepts image input and systemInstruction - so no StripImages/Sys0ToUsr0 hotfixes.
+  // Verified live 2026-08-02 on both models: PNG/JPEG inline_data (single, multiple, and in prior turns) is
+  // read correctly and billed as IMAGE prompt tokens; systemInstruction is honored; function calling returns
+  // functionCall parts; thinking emits thought parts (thinkingLevel accepts only 'minimal'/'high', 400s on 'low'/'medium').
   {
     id: 'models/gemma-4-31b-it',
     pubDate: '20260402',
     isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndGemEffort', enumValues: ['minimal', 'high'] }],
     chatPrice: geminiExpFree, // Free tier only according to pricing page
     benchmark: { cbaElo: 1451 }, // gemma-4-31b
@@ -919,7 +924,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     id: 'models/gemma-4-26b-a4b-it',
     pubDate: '20260402',
     isPreview: true,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndGemEffort', enumValues: ['minimal', 'high'] }],
     chatPrice: geminiExpFree, // Free tier only according to pricing page
     benchmark: { cbaElo: 1439 }, // gemma-4-26b-a4b
@@ -1248,7 +1253,7 @@ export function geminiModelsAddVariants(models: ModelDescriptionSchema[]): Model
 const _ORT_GEM_IF_ALLOWLIST: ReadonlySet<string> = new Set([
   LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning,
   LLM_IF_Outputs_Image, // let image generation happen through OR (works also with the params below) - NOTE: for the few models that don't have image config params and so it's not added to those
-  LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, // for Gemma support, client-side fixes
+  LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, // client-side fixes: let per-model quirks (e.g. Omni's Sys0ToUsr0) survive the lookup - no longer needed by Gemma, which is fully multimodal since Gemma 4
 ] as const);
 
 const _ORT_GEM_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
