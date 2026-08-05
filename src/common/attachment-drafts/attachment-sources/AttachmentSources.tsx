@@ -1,9 +1,8 @@
 import * as React from 'react';
-import { keyframes } from '@emotion/react';
 import type { FileWithHandle } from 'browser-fs-access';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, Checkbox, ColorPaletteProp, Dropdown, IconButton, ListDivider, ListItem, ListItemDecorator, Menu, MenuButton, MenuItem } from '@mui/joy';
+import { Box, Button, Checkbox, ColorPaletteProp, Dropdown, IconButton, ListDivider, ListItem, ListItemDecorator, MenuButton } from '@mui/joy';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import AddToDriveRoundedIcon from '@mui/icons-material/AddToDriveRounded';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
@@ -16,10 +15,10 @@ import ScreenshotMonitorIcon from '@mui/icons-material/ScreenshotMonitor';
 import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
 import { ButtonAttachFilesMemo, openFileForAttaching } from '~/common/components/ButtonAttachFiles';
+import { RichMenu, RichMenuButton, RichMenuItem, richMenuItemSx } from '~/common/components/RichMenu';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { takeScreenCapture } from '~/common/util/screenCaptureUtils';
-import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 
 import { ButtonAttachCameraMemo } from './ButtonAttachCamera';
 import { ButtonAttachClipboardMemo } from './ButtonAttachClipboard';
@@ -29,43 +28,7 @@ import { ButtonAttachWebMemo } from './ButtonAttachWeb';
 import { hasGoogleDriveCapability } from './useGoogleDrivePicker';
 
 
-// configuration
-export const ATTACH_BUTTON_RADIUS = '18px'; // for the rich (non-compact) menu button
-
-
-// animations for the rich (non-compact) menu
-const animationMenu = keyframes` from {opacity: 0;} to {opacity: 1;}`;
-const animationMenuItem = keyframes` from {opacity: 0;transform: translateY(-6px);} to {opacity: 1;transform: translateY(0);}`;
-
 const _style = {
-  menuItem: {
-    // pl: 3,
-    // pr: 2,
-    py: 0.5, // was 1
-    minHeight: 60,
-    // minHeight: '3.25rem', // now 52, was 60
-  },
-  menuItemContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 0.125,
-  },
-  menuItemContentDisabled: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 0.125,
-    opacity: 0.5,
-  },
-  menuItemName: {
-    typography: 'title-sm',
-    fontWeight: 600,
-    // fontSize: '15px',
-  },
-  menuItemDescription: {
-    fontSize: 'xs',
-    color: 'text.tertiary',
-    // fontWeight: 400,
-  },
   liveFeedButton: {
     ml: 1,
     // outline: '1px solid transparent',
@@ -98,50 +61,8 @@ function LiveFeedButton(props: { isActive: boolean, tooltip: string, onClick: ()
 }
 
 
-// Rich menu item (used in menu-rich mode)
-function RichMenuItem(props: {
-  name: React.ReactNode;
-  description: React.ReactNode;
-  Icon: React.ComponentType;
-  onClick: () => void;
-  delay?: number;
-  disabled?: boolean;
-  color?: ColorPaletteProp;
-  endAction?: React.ReactNode;
-}) {
-  return (
-    <MenuItem
-      onClick={props.onClick}
-      disabled={props.disabled}
-      color={props.color}
-      sx={!props.delay ? _style.menuItem : {
-        ..._style.menuItem,
-        animation: `${animationMenuItem} 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${props.delay}s both`,
-      }}
-    >
-      <ListItemDecorator>
-        <props.Icon />
-      </ListItemDecorator>
-      <Box sx={props.disabled ? _style.menuItemContentDisabled : _style.menuItemContent}>
-        <Box sx={_style.menuItemName}>
-          {props.name}
-        </Box>
-        <Box sx={_style.menuItemDescription}>
-          {props.description}
-        </Box>
-      </Box>
-      {props.endAction && (
-        <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
-          {props.endAction}
-        </Box>
-      )}
-    </MenuItem>
-  );
-}
-
-
 // Auto-download toggle (shown when browsing capability exists)
-function AutoDownloadToggle(props: { delay?: number }) {
+function AutoDownloadToggle() {
 
   // external state
   const enableComposerAttach = useBrowseStore(s => s.enableComposerAttach);
@@ -155,17 +76,7 @@ function AutoDownloadToggle(props: { delay?: number }) {
 
     <ListDivider inset='gutter' sx={{ my: 1 }} />
 
-    <ListItem
-      sx={{
-        ..._style.menuItem,
-        animation: `${animationMenuItem} 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94) ${props.delay}s both`,
-      }}
-      // onClick={(event) => {
-      //   event.preventDefault();
-      //   event.stopPropagation();
-      //   setEnableComposerAttach(!enableComposerAttach);
-      // }}
-    >
+    <ListItem sx={richMenuItemSx.item}>
       <ListItemDecorator>
         <Checkbox
           size='sm'
@@ -176,11 +87,11 @@ function AutoDownloadToggle(props: { delay?: number }) {
           sx={{ ml: 0.375 }}
         />
       </ListItemDecorator>
-      <Box sx={_style.menuItemContent}>
+      <Box sx={richMenuItemSx.content}>
         <Box sx={{ typography: 'title-sm' }}>
           Attach pasted URLs
         </Box>
-        <Box sx={_style.menuItemDescription}>
+        <Box sx={richMenuItemSx.description}>
           Download and attach pasted web links
         </Box>
       </Box>
@@ -293,9 +204,7 @@ function AttachmentSources(props: {
 
       <Dropdown>
         {props.menuButton ? props.menuButton : !isMessage ? (
-          <MenuButton slots={{ root: IconButton }}>
-            <AddRoundedIcon />
-          </MenuButton>
+          <RichMenuButton icon={<AddRoundedIcon />} />
         ) : (
           <MenuButton slots={{ root: Button }} slotProps={{
             root: {
@@ -309,48 +218,28 @@ function AttachmentSources(props: {
             Attach
           </MenuButton>
         )}
-        <Menu sx={{ '--List-padding': '0.5rem', zIndex: themeZIndexOverMobileDrawer /* menu-compact or menu-message: above dialogs */ }}>
+        <RichMenu compact /* menu-compact or menu-message: above dialogs (default zIndex) */>
 
           {/* Files */}
-          {/*<MenuItem onClick={handleAttachFilePicker}>*/}
-          {/*  <ListItemDecorator><AttachFileRoundedIcon /></ListItemDecorator>*/}
-          {/*  {props.onlyImages ? 'Images' : 'File'}*/}
-          {/*</MenuItem>*/}
           <RichMenuItem name={props.onlyImages ? 'Images' : 'Files'} description='PDF, DOCX, images, code' color={props.color} Icon={AttachFileRoundedIcon} onClick={handleAttachFilePicker} />
 
           {/* Web */}
           {!props.onlyImages && /*props.canBrowse &&*/ (
-            // <MenuItem onClick={props.onOpenWebInput} disabled={!props.canBrowse}>
-            //   <ListItemDecorator><LanguageRoundedIcon /></ListItemDecorator>
-            //   Web
-            // </MenuItem>
             <RichMenuItem name='Web' description='Import from web pages' color={props.color} Icon={LanguageRoundedIcon} onClick={props.onOpenWebInput} disabled={!props.canBrowse} />
           )}
 
           {/* Google Drive */}
           {!props.onlyImages && hasGoogleDriveCapability && !!props.onOpenGoogleDrivePicker && (
-            // <MenuItem onClick={props.onOpenGoogleDrivePicker}>
-            //   <ListItemDecorator><AddToDriveRoundedIcon /></ListItemDecorator>
-            //   Drive
-            // </MenuItem>
             <RichMenuItem name='Drive' description='Attach Google Drive files' color={props.color} Icon={AddToDriveRoundedIcon} onClick={props.onOpenGoogleDrivePicker} />
           )}
 
           {/* Clipboard */}
           {!props.onlyImages && supportsClipboardRead() && (
-            // <MenuItem onClick={props.onAttachClipboard}>
-            //   <ListItemDecorator><ContentPasteGoIcon /></ListItemDecorator>
-            //   Paste
-            // </MenuItem>
             <RichMenuItem name='Clipboard' description='Auto-convert to the best format' color={props.color} Icon={ContentPasteGoIcon} onClick={props.onAttachClipboard} />
           )}
 
           {/* Screen Capture */}
           {props.hasScreenCapture && (
-            // <MenuItem onClick={handleTakeScreenCapture} disabled={capturingScreen}>
-            //   <ListItemDecorator><ScreenshotMonitorIcon /></ListItemDecorator>
-            //   Screen
-            // </MenuItem>
             <RichMenuItem
               name='Screen'
               color={screenCaptureError ? 'danger' : props.color}
@@ -364,10 +253,6 @@ function AttachmentSources(props: {
 
           {/* Camera */}
           {props.hasCamera && isMessage && (
-            // <MenuItem onClick={props.onOpenCamera}>
-            //   <ListItemDecorator><CameraAltOutlinedIcon /></ListItemDecorator>
-            //   Camera
-            // </MenuItem>
             <RichMenuItem
               name='Camera'
               color={props.color}
@@ -378,7 +263,7 @@ function AttachmentSources(props: {
             />
           )}
 
-        </Menu>
+        </RichMenu>
       </Dropdown>
 
       {/* [mobile] Responsive Camera OCR button */}
@@ -391,57 +276,15 @@ function AttachmentSources(props: {
   // menu-rich mode (desktop) - labeled button trigger with animated, descriptive menu items
   return (
     <Dropdown>
-      <MenuButton
-        slots={{ root: Button }}
-        slotProps={{
-          root: {
-            // size: 'sm',
-            variant: 'plain',
-            color: props.color,
-            startDecorator: <AddRoundedIcon />,
-            fullWidth: true, // to match other buttons in the col
-            sx: {
-              minWidth: 100,
-              justifyContent: 'flex-start',
-              borderRadius: ATTACH_BUTTON_RADIUS,
-              textWrap: 'nowrap',
-              ...(props.richButtonStandOut && {
-                backgroundColor: 'background.popup',
-                border: '1px solid',
-                borderColor: `${props.color || 'neutral'}.outlinedBorder`,
-              }),
-              // when aria-expanded is true (menu open), remove top border radius
-              '&[aria-expanded="true"]': {
-                borderTopRightRadius: 0,
-                borderTopLeftRadius: 0,
-                backgroundColor: `${props.color || 'neutral'}.softHoverBg`,
-              },
-            },
-          },
-        }}
-      >
-        Attach
-      </MenuButton>
 
-      <Menu
-        // variant='soft'
+      <RichMenuButton
+        icon={<AddRoundedIcon />}
+        label='Attach'
         color={props.color}
-        placement='top-start'
-        popperOptions={{ modifiers: [{ name: 'offset', options: { offset: [-10 /* 62 */, -2] } }] }}
-        sx={{
-          minWidth: 280,
-          '--List-padding': '0.5rem',
-          zIndex: themeZIndexOverMobileDrawer,
-          animation: `${animationMenu} 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
-          // boxShadow: '0 16px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-          boxShadow: 'md',
-          borderRadius: ATTACH_BUTTON_RADIUS,
-          border: '1px solid',
-          borderColor: `${props.color || 'neutral'}.outlinedBorder`,
-          backgroundColor: 'background.popup',
-          overflow: 'hidden',
-        }}
-      >
+        standOut={props.richButtonStandOut}
+      />
+
+      <RichMenu stagger color={props.color}>
 
         {/* File Attachment */}
         <RichMenuItem
@@ -449,7 +292,6 @@ function AttachmentSources(props: {
           Icon={AttachFileRoundedIcon}
           description={props.onlyImages ? 'PNG, JPG, WEBP images to edit' : 'PDF, DOCX, images, code'}
           onClick={handleAttachFilePicker}
-          delay={0}
         />
 
         {/* Web/URL Attachment */}
@@ -460,7 +302,6 @@ function AttachmentSources(props: {
             description='Import web pages, including screenshots'
             onClick={props.onOpenWebInput}
             disabled={!props.canBrowse}
-            delay={0.02}
           />
         )}
 
@@ -471,7 +312,6 @@ function AttachmentSources(props: {
             Icon={AddToDriveRoundedIcon}
             description='Attach Google Drive files'
             onClick={props.onOpenGoogleDrivePicker}
-            delay={0.04}
           />
         )}
 
@@ -483,7 +323,6 @@ function AttachmentSources(props: {
             // description='Auto-converts images and text to the best format'
             description='Auto-adapts images and text'
             onClick={props.onAttachClipboard}
-            delay={0.06}
           />
         )}
 
@@ -523,7 +362,6 @@ function AttachmentSources(props: {
             onClick={handleTakeScreenCapture}
             disabled={capturingScreen}
             color={screenCaptureError ? 'danger' : undefined}
-            delay={0.08}
             endAction={props.onStartLiveScreenFeed && <LiveFeedButton isActive={!!props.hasActiveScreenFeed} tooltip='Live Screen chat' onClick={props.onStartLiveScreenFeed} />}
           />
         )}
@@ -535,17 +373,16 @@ function AttachmentSources(props: {
             Icon={CameraAltOutlinedIcon}
             description='Capture photos with optional OCR'
             onClick={props.onOpenCamera}
-            delay={0.1}
             endAction={props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} tooltip='Live Camera chat' onClick={props.onStartLiveCameraFeed} />}
           />
         )}
 
         {/* URL Auto-Download Toggle - only show when browse capability exists */}
         {!props.onlyImages && props.canBrowse && (
-          <AutoDownloadToggle delay={0.12} />
+          <AutoDownloadToggle />
         )}
 
-      </Menu>
+      </RichMenu>
     </Dropdown>
   );
 }
