@@ -5,7 +5,7 @@ import type { AnthropicHostedFeatures } from '~/modules/llms/server/anthropic/an
 import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks } from '../../wiretypes/anthropic.wiretypes';
 
-import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './adapters.common';
+import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './adapters.common';
 
 
 // configuration
@@ -162,6 +162,9 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
   }
   if (currentMessage)
     chatMessages.push(currentMessage);
+
+  // [Anthropic] Pair every interior tool_use with a tool_result, or the request is rejected wholesale
+  _pairInteriorToolUseBlocks(chatMessages);
 
   // [Anthropic, 2026-07-10] The API rejects >4 cache_control blocks ("A maximum of 4 blocks with
   // cache_control may be provided.") - manual 'Cache up to here' flags can stack beyond the auto
@@ -403,6 +406,59 @@ function _capTrailingCacheBreakpoints(systemMessage: TRequest['system'], chatMes
         stampedBlocks.push(block);
   for (let i = 0; i < stampedBlocks.length - maxBreakpoints; i++)
     delete stampedBlocks[i].cache_control;
+}
+
+/**
+ * Anti-wedge: a `tool_use` block with no `tool_result` for its id in the immediately following user
+ * message is a 400 ("tool_use ids were found without tool_result blocks immediately after") that
+ * rejects the whole request. Since the orphan lives in stored history (a run that failed/aborted
+ * before the tool ran, or a tool no client processor claimed), every later turn replays it and gets
+ * the same 400: the conversation is bricked with no in-app way to tell which message is poisoned.
+ *
+ * This synthesizes the stub prescribed in kb/modules/AIX-stateless-roundtrip-retention.md (cat-1),
+ * which also retro-heals conversations already poisoned in users' stores. No-op when well-formed.
+ *
+ * The LAST assistant message is deliberately skipped: a trailing `tool_use` is the in-flight call of
+ * an agentic loop (and pause_turn continuation extends that same trailing message with its own blocks,
+ * after this adapter has run) - synthesizing there would fake the result of a call about to execute.
+ * `server_tool_use` is likewise untouched: hosted tools owe no tool_result.
+ */
+function _pairInteriorToolUseBlocks(chatMessages: TRequest['messages']): void {
+  for (let i = 0; i < chatMessages.length - 1; i++) {
+    const message = chatMessages[i];
+    if (message.role !== 'assistant') continue;
+
+    // client tool calls of this turn, in wire order
+    const toolUseIds: string[] = [];
+    for (const block of message.content)
+      if (block.type === 'tool_use')
+        toolUseIds.push(block.id);
+    if (!toolUseIds.length) continue;
+
+    // the results must be in the next message: if that isn't a user turn (role flip at a flush
+    // boundary), insert one to hold them - it will still sit immediately after the tool_use blocks
+    let resultsMessage = chatMessages[i + 1];
+    if (resultsMessage.role !== 'user') {
+      resultsMessage = { role: 'user', content: [] };
+      chatMessages.splice(i + 1, 0, resultsMessage);
+    }
+
+    const answeredIds = new Set<string>();
+    for (const block of resultsMessage.content)
+      if (block.type === 'tool_result')
+        answeredIds.add(block.tool_use_id);
+
+    const orphanIds = toolUseIds.filter(id => !answeredIds.has(id));
+    if (!orphanIds.length) continue;
+
+    // head-insert, in tool_use order: tool_result blocks lead the user turn, ahead of any user content
+    console.warn(`[Anthropic] Pairing ${orphanIds.length} orphan tool_use block(s) with a placeholder tool_result (messages.${i})`);
+    resultsMessage.content.unshift(...orphanIds.map(id => AnthropicWire_Blocks.ToolResultBlock(
+      id,
+      [AnthropicWire_Blocks.TextBlock(AIX_MISSING_TOOL_RESULT_TEXT, 'pairing.orphan-tool-use')],
+      undefined, // not is_error: the tool did not fail, its result is simply absent from history
+    )));
+  }
 }
 
 function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_ChatMessage): Generator<{

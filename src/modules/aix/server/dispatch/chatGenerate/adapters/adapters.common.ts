@@ -10,6 +10,18 @@ const DEFAULT_SPILL_PART_TYPES: AixMessages_SystemMessage['parts'][number]['pt']
 
 
 /**
+ * Anti-wedge stub for a tool call that has no result in the history (see the cat-1 rule in
+ * kb/modules/AIX-stateless-roundtrip-retention.md: all providers accept any string here).
+ *
+ * A tool call left unanswered in stored history is a hard 400 on Anthropic, OpenAI (both dialects)
+ * and Gemini, and it repeats on every later turn - the conversation is bricked until the offending
+ * message is deleted. Each adapter runs an interior-orphan pass over its own wire shape and pairs
+ * the missing results with this text; the trailing (in-flight) tool call is never paired.
+ */
+export const AIX_MISSING_TOOL_RESULT_TEXT = '[result omitted]';
+
+
+/**
  * CGR Server-side approximate Helper
  * Finds a cut point (if any) in the system message to move everything after it to a user message.
  */

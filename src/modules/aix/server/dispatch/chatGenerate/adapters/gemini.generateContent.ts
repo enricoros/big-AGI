@@ -3,7 +3,7 @@ import * as z from 'zod/v4';
 import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixParts_DocPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Messages, GeminiWire_Safety, GeminiWire_ToolDeclarations } from '../../wiretypes/gemini.wiretypes';
 
-import { aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './adapters.common';
+import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './adapters.common';
 
 
 // configuration
@@ -68,6 +68,9 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
   // Chat Messages
   const contents: TRequest['contents'] = _toGeminiContents(chatGenerate.chatSequence, api3RequiresSignatures);
+
+  // Pair every interior functionCall with a functionResponse, or the request is rejected wholesale
+  _pairInteriorFunctionCalls(contents);
 
   // constrained output modes - only JSON (not tool invocations for now)
   const jsonOutputEnabled = !!model.strictJsonOutput || jsonOutput;
@@ -297,6 +300,56 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
 type TRequest = GeminiWire_API_Generate_Content.Request;
 
+
+/**
+ * Anti-wedge: a model `functionCall` with no `functionResponse` for it in the next user content is a
+ * 400 ("the number of function response parts should be equal to the number of function call parts")
+ * that rejects the whole request. The orphan lives in stored history (a run that failed/aborted
+ * before the tool ran, or a tool no client processor claimed), so every later turn replays it and
+ * gets the same 400 - the conversation is bricked until the message is deleted.
+ *
+ * Synthesizes the stub prescribed in kb/modules/AIX-stateless-roundtrip-retention.md (cat-1), which
+ * also retro-heals conversations already poisoned in users' stores. No-op when well-formed.
+ * The LAST content is skipped: a trailing call is the in-flight call of an agentic loop.
+ * `executableCode` (hosted code execution) is untouched: it is answered by Gemini itself.
+ */
+function _pairInteriorFunctionCalls(contents: GeminiWire_Messages.Content[]): void {
+  for (let i = 0; i < contents.length - 1; i++) {
+    const content = contents[i];
+    if (content.role !== 'model') continue;
+
+    // client tool calls of this turn, in wire order
+    const functionCalls: { id?: string, name: string }[] = [];
+    for (const part of content.parts)
+      if ('functionCall' in part)
+        functionCalls.push({ id: part.functionCall.id, name: part.functionCall.name });
+    if (!functionCalls.length) continue;
+
+    // the responses must be in the next content: if that isn't a user turn, insert one to hold them
+    let responsesContent = contents[i + 1];
+    if (responsesContent.role !== 'user') {
+      responsesContent = { role: 'user', parts: [] };
+      contents.splice(i + 1, 0, responsesContent);
+    }
+
+    // match on the call id (always emitted by this adapter), falling back to the function name
+    const answeredKeys = new Set<string>();
+    for (const part of responsesContent.parts)
+      if ('functionResponse' in part)
+        answeredKeys.add(part.functionResponse.id ?? part.functionResponse.name);
+
+    const orphanCalls = functionCalls.filter(fc => !answeredKeys.has(fc.id ?? fc.name));
+    if (!orphanCalls.length) continue;
+
+    // head-insert, in functionCall order: responses lead the user turn, ahead of any user content
+    console.warn(`[Gemini] Pairing ${orphanCalls.length} orphan functionCall part(s) with a placeholder functionResponse (contents.${i})`);
+    responsesContent.parts.unshift(...orphanCalls.map(fc => GeminiWire_ContentParts.FunctionResponsePart({
+      id: fc.id,
+      name: fc.name,
+      response: { output: AIX_MISSING_TOOL_RESULT_TEXT },
+    })));
+  }
+}
 
 function _toGeminiContents(chatSequence: AixMessages_ChatMessage[], apiRequiresSignatures: boolean): GeminiWire_Messages.Content[] {
 
