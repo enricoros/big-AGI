@@ -682,9 +682,12 @@ else
 fi
 echo
 
-# Create the worktree with a new branch at the selected source ref
+# Create the worktree with a new branch at the selected source ref.
+# --no-track: when SOURCE_REF is a remote-tracking ref (e.g. opensource/main),
+# git would otherwise record that remote as the branch upstream and make it the
+# default push target; pushes must default to remote.pushDefault
 echo -n "Creating git worktree... "
-git worktree add "$WORKTREE_PATH" -b "$NEW_BRANCH_NAME" "$SOURCE_REF" >/dev/null 2>&1
+git worktree add "$WORKTREE_PATH" --no-track -b "$NEW_BRANCH_NAME" "$SOURCE_REF" >/dev/null 2>&1
 print_color "$GREEN" "✓"
 
 # Materialize: .idea dirs, .env* files, run configurations, npm install
