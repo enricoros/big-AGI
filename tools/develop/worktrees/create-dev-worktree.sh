@@ -88,6 +88,16 @@ list_worktrees() {
             fi
         fi
 
+        # Current commit subject (truncated) + marker for uncommitted tracked changes
+        COMMIT_SUBJECT=$(git log -1 --format=%s "$COMMIT_HASH" 2>/dev/null)
+        if [ ${#COMMIT_SUBJECT} -gt 44 ]; then
+            COMMIT_SUBJECT="${COMMIT_SUBJECT:0:42}.."
+        fi
+        DIRTY_MARK=" "
+        if [ -d "$WORKTREE_PATH" ] && [ -n "$(git -C "$WORKTREE_PATH" status --porcelain -uno 2>/dev/null | head -1)" ]; then
+            DIRTY_MARK="*"
+        fi
+
         # Convert to relative path (but keep current directory as full path)
         if [ "$WORKTREE_PATH" = "$CURRENT_DIR" ]; then
             # Show full path for current directory
@@ -107,10 +117,12 @@ list_worktrees() {
         fi
         
         # Print with formatted output
-        printf "  • %-50s" "$DISPLAY_PATH"
-        printf " %b%-20s%b" "$BOLD_WHITE" "$BRANCH_NAME" "$NC"
+        printf "  • %-55s" "$DISPLAY_PATH"
+        printf " %b%-24s%b" "$BOLD_WHITE" "$BRANCH_NAME" "$NC"
         printf " %b%-10s%b" "$CYAN" "$CREATED_AT" "$NC"
         printf " %b%s%b" "$GRAY" "${COMMIT_HASH:0:7}" "$NC"
+        printf "%b%s%b" "$YELLOW" "$DIRTY_MARK" "$NC"
+        printf " %b%-46s%b" "$WHITE" "$COMMIT_SUBJECT" "$NC"
         
         # Add additional info if present
         if [ -n "$ADDITIONAL_INFO" ]; then
@@ -130,9 +142,9 @@ list_worktrees() {
     echo
     
     # Show additional stats
-    WORKTREE_COUNT=$(git worktree list | wc -l)
+    WORKTREE_COUNT=$(git worktree list | wc -l | tr -d '[:space:]')
     if [ $WORKTREE_COUNT -gt 1 ]; then
-        print_color "$GRAY" "Total: $WORKTREE_COUNT worktrees (1 main + $((WORKTREE_COUNT-1)) additional)"
+        print_color "$GRAY" "Total: $WORKTREE_COUNT worktrees (1 main + $((WORKTREE_COUNT-1)) additional)  |  * = uncommitted changes (tracked files)"
     else
         print_color "$GRAY" "Total: 1 worktree (main only)"
     fi
