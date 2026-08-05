@@ -21,6 +21,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 GRAY='\033[0;90m'
 WHITE='\033[0;37m'
 BOLD_WHITE='\033[1;37m'
@@ -32,6 +33,7 @@ if [ ! -t 1 ]; then
     GREEN=''
     YELLOW=''
     BLUE=''
+    CYAN=''
     GRAY=''
     WHITE=''
     BOLD_WHITE=''
@@ -43,6 +45,12 @@ print_color() {
     local color=$1
     shift
     printf "%b%s%b\n" "$color" "$*" "$NC"
+}
+
+# Portable file-mtime formatter: GNU date (Linux, Git-Bash) then BSD stat (macOS)
+file_mtime() {
+    date -r "$1" '+%Y-%m-%d' 2>/dev/null \
+        || stat -f '%Sm' -t '%Y-%m-%d' "$1" 2>/dev/null
 }
 
 # Header function
@@ -69,7 +77,17 @@ list_worktrees() {
         BRANCH_NAME=$(echo "$line" | grep -o '\[.*\]' | tr -d '[]')
         # Get any additional info (like 'prunable')
         ADDITIONAL_INFO=$(echo "$line" | sed 's/.*\[\([^]]*\)\]//' | xargs)
-        
+
+        # Worktree creation time: the admin dir's `gitdir` file is written once
+        # at `git worktree add` (only move/repair rewrite it); main worktree has none
+        CREATED_AT=""
+        if [ -f "$WORKTREE_PATH/.git" ]; then
+            ADMIN_DIR=$(sed -n 's/^gitdir: //p' "$WORKTREE_PATH/.git" 2>/dev/null)
+            if [ -n "$ADMIN_DIR" ] && [ -f "$ADMIN_DIR/gitdir" ]; then
+                CREATED_AT=$(file_mtime "$ADMIN_DIR/gitdir")
+            fi
+        fi
+
         # Convert to relative path (but keep current directory as full path)
         if [ "$WORKTREE_PATH" = "$CURRENT_DIR" ]; then
             # Show full path for current directory
@@ -91,6 +109,7 @@ list_worktrees() {
         # Print with formatted output
         printf "  • %-50s" "$DISPLAY_PATH"
         printf " %b%-20s%b" "$BOLD_WHITE" "$BRANCH_NAME" "$NC"
+        printf " %b%-10s%b" "$CYAN" "$CREATED_AT" "$NC"
         printf " %b%s%b" "$GRAY" "${COMMIT_HASH:0:7}" "$NC"
         
         # Add additional info if present
