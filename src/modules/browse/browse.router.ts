@@ -14,6 +14,7 @@ import { workerPuppeteerDownloadFileOrThrow } from './browse.files';
 // configuration
 const DISABLE_FILE_DOWNLOADS = true;
 const WORKER_TIMEOUT = 20 * 1000; // 20 seconds
+const SCREENSHOT_TIMEOUT = 8 * 1000; // 8 seconds - a thumbnail is never worth the full protocol ceiling (WORKER_TIMEOUT + 2s)
 
 
 // Input schemas
@@ -260,52 +261,83 @@ async function workerPuppeteer(
     result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown content error');
   }
 
-  // get a screenshot of the page
-  try {
-    if (screenshotOptions?.width && screenshotOptions?.height && !result.file) {
-      const { width, height, quality } = screenshotOptions;
-      const scale = Math.round(100 * width / 1024) / 100;
+  /**
+   * Get a screenshot of the page - fully best-effort: the page content is already extracted and
+   * returned either way, so a failure here is a recovered condition (warn, never error).
+   * The thumbnail gets its OWN budget instead of inheriting the 22s protocol ceiling, and the
+   * losing promise is always caught - a late ProtocolError must never surface as an unhandled rejection.
+   */
+  if (screenshotOptions?.width && screenshotOptions?.height && !result.file) {
+    const { width, height, quality } = screenshotOptions;
+    const scale = Math.round(100 * width / 1024) / 100;
+    const imageType: ScreenshotOptions['type'] = 'webp';
+    const mimeType = `image/${imageType}`;
 
-      await page.setViewport({
-        width: width / scale,
-        height: height / scale,
-        deviceScaleFactor: scale,
-      });
+    let budgetTimer: ReturnType<typeof setTimeout> | undefined = undefined;
+    let budgetExpired = false;
 
-      const imageType: ScreenshotOptions['type'] = 'webp';
-      const mimeType = `image/${imageType}`;
+    const dataString = await Promise.race([
 
-      const dataString = await page.screenshot({
-        type: imageType,
-        encoding: 'base64',
-        clip: { x: 0, y: 0, width: width / scale, height: height / scale },
-        ...(quality && { quality }),
-      }) as string;
+      // capture (viewport included: setViewport forces the relayout that makes captureScreenshot slow)
+      (async () => {
+        await page.setViewport({
+          width: width / scale,
+          height: height / scale,
+          deviceScaleFactor: scale,
+        });
+        return await page.screenshot({
+          type: imageType,
+          encoding: 'base64',
+          clip: { x: 0, y: 0, width: width / scale, height: height / scale },
+          ...(quality && { quality }),
+        }) as string;
+      })().catch((error: any) => {
+        if (!budgetExpired) console.warn(`workerPuppeteer: screenshot skipped - ${_shortError(error)}`);
+        return null;
+      }),
 
+      // budget
+      new Promise<null>(resolve => {
+        budgetTimer = setTimeout(() => {
+          budgetExpired = true;
+          console.warn(`workerPuppeteer: screenshot skipped - over the ${SCREENSHOT_TIMEOUT}ms budget`);
+          resolve(null);
+        }, SCREENSHOT_TIMEOUT);
+      }),
+
+    ]);
+    clearTimeout(budgetTimer);
+
+    if (dataString)
       result.screenshot = {
         imgDataUrl: `data:${mimeType};base64,${dataString}`,
         mimeType,
         width,
         height,
       };
-    }
-  } catch (error: any) {
-    console.error('workerPuppeteer: page.screenshot', error);
   }
 
-  // Cleanup: close everything in reverse order
+  // Cleanup: close everything in reverse order - pure best-effort (the result is already complete)
   await page.close().catch((error) =>
-    console.error('workerPuppeteer: page.close error', { error }));
+    console.warn(`workerPuppeteer: page.close failed - ${_shortError(error)}`));
 
   if (incognitoContext) await incognitoContext.close().catch((error) =>
-    console.error('workerPuppeteer: context.close error', { error }));
+    console.warn(`workerPuppeteer: context.close failed - ${_shortError(error)}`));
 
   if (!isLocalBrowser) await browser.disconnect().catch((error) =>
-    console.error('workerPuppeteer: browser.disconnect error', { error }));
+    console.warn(`workerPuppeteer: browser.disconnect failed - ${_shortError(error)}`));
   else await browser.close().catch((error) =>
-    console.error('workerPuppeteer: browser.close error', { error }));
+    console.warn(`workerPuppeteer: browser.close failed - ${_shortError(error)}`));
 
   return result;
+}
+
+
+/** One line, no stack: these are recovered conditions and must not read as runtime errors. */
+function _shortError(error: any): string {
+  const name = error?.name || 'Error';
+  const message = (error?.message || '').split('\n')[0].trim();
+  return message ? `${name}: ${message}` : name;
 }
 
 
