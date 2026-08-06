@@ -28,6 +28,34 @@ const IF_CHAT_FN_VISION = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision];
 // Un-curated / future models still render via _prettyModelId + the fromManualMapping '[?]' fallback.
 const _fireworksKnownModels = llmsDefineManualMappings([
   {
+    idPrefix: 'accounts/fireworks/models/deepseek-v4-flash-0731',
+    label: 'DeepSeek V4 Flash 0731',
+    pubDate: '20260731',
+    description: 'Official release of DeepSeek V4 Flash, superseding the preview, with substantially enhanced agentic capabilities. Ships with a speculative decoding module attached.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN,
+    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/kimi-k3',
+    label: 'Kimi K3 (Vision)',
+    pubDate: '20260719',
+    description: 'Moonshot AI 2.8T-parameter flagship on Kimi Delta Attention, with native visual understanding and a 1M-token context for long-horizon coding and reasoning.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION,
+    chatPrice: { input: 3.00, output: 15.00, cache: { cType: 'oai-ac', read: 0.30 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/inkling',
+    label: 'Inkling (Vision)',
+    pubDate: '20260714',
+    description: 'Thinking Machines Lab first open-weights model: a 975B MoE (41B active) trained natively across text, image, and audio, with controllable thinking effort.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION,
+    benchmark: { cbaElo: 1441 }, // lmarena: inkling
+    // chatPrice: not on the serverless pricing table as of 2026-08-04
+  },
+  {
     idPrefix: 'accounts/fireworks/models/glm-5p2',
     label: 'GLM 5.2',
     pubDate: '20260616',
@@ -37,13 +65,63 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.14 } },
   },
   {
+    idPrefix: 'accounts/fireworks/models/kimi-k2p7-code',
+    label: 'Kimi K2.7 Code (Vision)',
+    pubDate: '20260612',
+    description: 'Coding-focused agentic model built on Kimi K2.6, with better end-to-end completion on long-horizon software engineering and ~30% fewer thinking tokens.',
+    contextWindow: 262_144, // 256K
+    interfaces: IF_CHAT_FN_VISION,
+    chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.19 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/minimax-m3',
+    label: 'MiniMax M3',
+    pubDate: '20260611',
+    description: 'MiniMax 428B MoE (23B active) with Sparse Attention for efficient long context, tuned for long-horizon agentic coding and cowork.',
+    contextWindow: 512_000, // 500K
+    interfaces: IF_CHAT_FN, // native multimodal upstream, but Fireworks serves it text-only (supports_image_input=false)
+    benchmark: { cbaElo: 1445 }, // lmarena: minimax-m3
+    chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.06 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/qwen3p7-plus',
+    label: 'Qwen3.7 Plus (Vision)',
+    pubDate: '20260609',
+    description: 'Alibaba flagship closed model, available outside Alibaba infrastructure exclusively through Fireworks AI.',
+    contextWindow: null, // not published by Fireworks
+    interfaces: IF_CHAT_FN_VISION,
+    benchmark: { cbaElo: 1459 }, // lmarena: qwen3.7-plus
+    chatPrice: { input: 0.40, output: 1.60, cache: { cType: 'oai-ac', read: 0.08 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/nemotron-3-ultra-nvfp4',
+    label: 'NVIDIA Nemotron 3 Ultra NVFP4',
+    pubDate: '20260602',
+    description: 'NVIDIA frontier-scale hybrid LatentMoE (550B params, 55B active) interleaving Mamba-2 and MoE layers, for multi-step agents and long-context reasoning.',
+    contextWindow: 262_144, // 256K
+    interfaces: IF_CHAT_FN,
+    benchmark: { cbaElo: 1426 }, // lmarena: nvidia-nemotron-3-ultra-550b-a55b-nvfp4
+    chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.12 } },
+  },
+  {
     idPrefix: 'accounts/fireworks/models/deepseek-v4-pro',
     label: 'DeepSeek V4 Pro',
     pubDate: '20260424',
     description: 'DeepSeek flagship open MoE (1.6T params) for frontier reasoning, coding, and long-context work up to 1M tokens. Hybrid attention keeps long contexts efficient.',
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN,
+    benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro
     chatPrice: { input: 1.74, output: 3.48, cache: { cType: 'oai-ac', read: 0.145 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/deepseek-v4-flash',
+    label: 'DeepSeek V4 Flash',
+    pubDate: '20260424',
+    description: 'Streamlined DeepSeek open MoE tuned for low-latency, high-throughput inference at 1M-token context, retaining most of Pro reasoning and coding quality.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN,
+    benchmark: { cbaElo: 1436 }, // lmarena: deepseek-v4-flash
+    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/kimi-k2p6',
@@ -52,7 +130,18 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     description: 'Moonshot AI native-multimodal agentic model tuned for long-horizon coding, autonomous execution, and swarm task orchestration.',
     contextWindow: 262_144, // 256K
     interfaces: IF_CHAT_FN_VISION,
+    benchmark: { cbaElo: 1461 }, // lmarena: kimi-k2.6
     chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.16 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/minimax-m2p7',
+    label: 'MiniMax M2.7',
+    pubDate: '20260411',
+    description: 'MiniMax MoE built for complex agent harnesses and elaborate productivity tasks, leveraging Agent Teams, Skills, and dynamic tool search.',
+    contextWindow: 196_608, // 192K
+    interfaces: IF_CHAT_FN,
+    benchmark: { cbaElo: 1417 }, // lmarena: minimax-m2.7
+    chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.06 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/glm-5p1',
@@ -61,6 +150,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     description: 'Z.ai 754B-parameter MoE built for agentic engineering, with strong coding and sustained performance across long multi-round tasks.',
     contextWindow: 202_752, // ~198K
     interfaces: IF_CHAT_FN,
+    benchmark: { cbaElo: 1469 }, // lmarena: glm-5.1
     chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.26 } },
   },
   {
@@ -71,6 +161,15 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     contextWindow: 131_072, // 128K
     interfaces: IF_CHAT_FN,
     chatPrice: { input: 0.15, output: 0.60, cache: { cType: 'oai-ac', read: 0.015 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/gpt-oss-20b',
+    label: 'GPT-OSS 20B',
+    pubDate: '20250804',
+    description: 'OpenAI smaller open-weight model for lower-latency, local, and specialized use cases.',
+    contextWindow: 131_072, // 128K
+    interfaces: [LLM_IF_OAI_Chat], // no tools on Fireworks (supports_tools=false)
+    chatPrice: { input: 0.07, output: 0.30, cache: { cType: 'oai-ac', read: 0.035 } },
   },
 ]);
 
@@ -89,6 +188,10 @@ function _prettyFireworksPiece(piece: string): string {
   const lower = piece.toLowerCase();
   if (_FW_WORDCASE[lower]) return _FW_WORDCASE[lower];
   if (_FW_ACRONYMS.has(lower)) return piece.toUpperCase();
+  // known word glued to its version, with no separator to split on: 'qwen3.7' -> 'Qwen3.7' (not 'QWEN3.7')
+  const glued = /^([a-z]+)([\d.]+[a-z]*)$/.exec(lower);
+  if (glued && (_FW_WORDCASE[glued[1]] || _FW_ACRONYMS.has(glued[1])))
+    return (_FW_WORDCASE[glued[1]] || glued[1].toUpperCase()) + glued[2].toUpperCase();
   if (/\d/.test(piece)) return piece.toUpperCase(); // versions/sizes: v4 -> V4, 120b -> 120B, 5.2 stays 5.2
   return serverCapitalizeFirstLetter(piece);
 }
@@ -97,7 +200,7 @@ function _prettyModelId(id: string, isVision: boolean): string {
   // example: "accounts/fireworks/models/llama-v3p1-405b-instruct" => "Fireworks · Llama V3.1 405B"
   let prettyName = id
     .replace(/^accounts\//, '') // remove the leading "accounts/" if present
-    .replace(/\/models\//, ' · ') // turn the next "/models/" into " · "
+    .replace(/\/(models|routers)\//, ' · ') // turn the next "/models/" (or "/routers/", the fast/turbo serving tiers) into " · "
     .replace(/(\d)p(\d)/g, '$1.$2') // Fireworks slug convention: 'p' between digits is a decimal point (5p2 -> 5.2)
     .replaceAll(/[_-]/g, ' ') // replace underscores or dashes with spaces
     .split(' ')
@@ -135,6 +238,10 @@ export function fireworksAIModelsToModelDescriptions(wireModels: unknown): Model
     .filter((model) => {
       // filter-out non-llms
       if (model.supports_chat === false)
+        return false;
+
+      // embedding/reranker models are listed with supports_chat=true (qwen3-embedding-8b, qwen3-reranker-8b): 'kind' is the reliable signal
+      if (model.kind === 'EMBEDDING_MODEL')
         return false;
 
       return !_fireworksDenyListContains.some(contains => model.id.includes(contains));
