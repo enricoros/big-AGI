@@ -69,12 +69,16 @@ code_execution_20260120, then I would prefer the default to be not persistent."*
   re-attaching the same id and `cat`-ing the file).
 - **A dynamic-web container holds no user-meaningful files** - just internal residue (`pfc_daemon.*`,
   node cache). Its value across turns is continuity for *mixed* sessions, not the search container itself.
-- **Haiku 4.5 accepts `code_execution_20260120`** despite the docs' model-compat table listing only
-  `_20250825` for it (the table is conservative; basic execution still ran). The `_20260120`-only features
-  (REPL persistence, PTC) may silently no-op there.
+- **Haiku 4.5 accepts `code_execution_20260120`** - probed before the docs said so; the model-compat table
+  now lists it and confirms the `_20260120`-only features (REPL persistence, PTC) are unavailable there,
+  so the newer versions behave like `_20250825`.
 
-Model support for `code_execution_20260120` (per docs): Fable/Mythos 5, Opus 4.5+, Sonnet 4.5+ (NOT Haiku
-4.5, NOT Opus 4.1).
+Model support for `code_execution_20260120` (per docs, 2026-06-18): Fable/Mythos 5, Opus 5, Sonnet 5, Opus
+4.5+, Sonnet 4.5+, Haiku 4.5 (degraded, see above) - NOT Opus 4.1 (`_20250825` only).
+
+`code_execution_20260521` (2026-06-11) is the same runtime as `_20260120`; it only tells Claude about the
+90s per-cell wall-clock limit. NOT adopted: the dynamic web tools auto-inject `_20260120`, and a version
+mismatch on the same tool name is the hard 400 above.
 
 
 ## Beta headers
@@ -94,8 +98,8 @@ server-retained ~30 days.
 ### 1. Standalone Code Sandbox toggle (`vndAntCodeSandbox`)
 
 An enum (`'auto'`), off by default, rendered as a toggle, added to `enableCodeExecution` (enum not boolean - matches the other vendors' code-exec params and leaves room for future modes). Scoped to `ANT_TOOLS_DYNAMIC` (Opus/Sonnet
-4.6+, Fable/Mythos 5) - a clean subset of `code_execution_20260120`-supporting models that excludes Haiku
-4.5. UI toggle in the model dialog (`LLMParametersEditor`) and chat side panel
+4.6+, Claude 5 gen) - a deliberately conservative subset of the `code_execution_20260120`-supporting models,
+excluding the 4.5 generation and Haiku 4.5's degraded support. UI toggle in the model dialog (`LLMParametersEditor`) and chat side panel
 (`ChatPanelModelParameters`); shown checked+disabled (implied-on) when Skills are active. The tool literal
 stays `code_execution_20260120` deliberately - matching the dynamic-web auto-injection so coexisting never
 hits the 400 name collision.
