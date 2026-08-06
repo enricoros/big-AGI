@@ -304,14 +304,6 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       if (modelIdUnaliased.startsWith('x-ai/'))
         _mergeLookup(llmOrtXaiLookup(llmRef));
 
-      // 'none' 400s where OR marks reasoning mandatory (verified: grok-4.5, grok-4.20-multi-agent, grok-build-0.1).
-      // Replace, don't mutate - specs may be shared with the native defs.
-      if (model.reasoning?.mandatory)
-        parameterSpecs.forEach((spec, i) => {
-          if ((spec.paramId === 'llmVndOaiEffort' || spec.paramId === 'llmVndMiscEffort') && 'enumValues' in spec && spec.enumValues)
-            parameterSpecs[i] = { ...spec, enumValues: spec.enumValues.filter(v => v !== 'none') };
-        });
-
       // 0-day: xAI/Grok/Moonshot/Z.ai/DeepSeek models get default reasoning effort if not inherited.
       // Checks llmVndOaiEffort too (else an inherited spec gets a 2nd control stacked); skips mandatory models,
       // where a binary on/off is meaningless.
@@ -352,6 +344,16 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
         parameterSpecs.push({ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] });
       break;
   }
+
+
+  // 'none' 400s where OR marks reasoning mandatory (verified: grok-4.5, grok-4.20-multi-agent, grok-build-0.1),
+  // and that holds in every vendor branch (gemini-3.5/3.6-flash, gpt-5.x-pro/-codex, claude-fable-5, ...), so
+  // the strip runs on the merged specs. Replace, don't mutate - specs may be shared with the native defs.
+  if (model.reasoning?.mandatory)
+    parameterSpecs.forEach((spec, i) => {
+      if ((spec.paramId === 'llmVndOaiEffort' || spec.paramId === 'llmVndMiscEffort') && spec.enumValues?.includes('none'))
+        parameterSpecs[i] = { ...spec, enumValues: spec.enumValues.filter(v => v !== 'none') };
+    });
 
 
   // -- Hidden --
