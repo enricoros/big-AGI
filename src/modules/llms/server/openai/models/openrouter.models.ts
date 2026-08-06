@@ -114,29 +114,55 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
   // -- Pricing --
 
-  const inputPrice = parseFloat(model.pricing.prompt);
-  const outputPrice = parseFloat(model.pricing.completion);
-  const cacheWritePrice = model.pricing.input_cache_write ? parseFloat(model.pricing.input_cache_write) : undefined;
-  const cacheReadPrice = model.pricing.input_cache_read ? parseFloat(model.pricing.input_cache_read) : undefined;
+  const pricing = model.pricing;
+
+  // [OpenRouter, 2026-08-06] `pricing.overrides` are long-context surcharge tiers, ascending by
+  // `min_prompt_tokens` (e.g. google/gemini-2.5-pro: 1.25/10 up to 200K, then 2.50/15 above it). 57 of the
+  // 399 listed models are tiered today (Gemini Pro, GPT-5.x, Grok 4.x, Qwen, Claude Sonnet 4.x): without
+  // folding them in, long prompts would be costed at the cheapest tier.
+  const priceTiers = pricing.overrides?.length ? pricing.overrides : undefined;
+
+  /** per-token price string -> our per-1M price, tiered when the model has long-context overrides */
+  function _orPricePerM(field: 'prompt' | 'completion' | 'input_cache_read' | 'input_cache_write'): NonNullable<ModelDescriptionSchema['chatPrice']>['input'] {
+    const basePrice = pricing[field];
+    if (basePrice === undefined) return undefined;
+    const baseValue = parseFloat(basePrice) * 1000 * 1000;
+    if (isNaN(baseValue)) return undefined;
+    if (!priceTiers) return baseValue;
+    // 'upTo' is the tier's inclusive upper bound, i.e. where the next tier's `min_prompt_tokens` starts
+    let value = baseValue;
+    const tieredValues = priceTiers.map((tier, index) => {
+      const tierPrice = tier[field];
+      if (tierPrice !== undefined) value = parseFloat(tierPrice) * 1000 * 1000;
+      return { upTo: priceTiers[index + 1]?.min_prompt_tokens ?? null, price: value };
+    });
+    return tieredValues.every(tier => tier.price === baseValue) ? baseValue
+      : [{ upTo: priceTiers[0].min_prompt_tokens, price: baseValue }, ...tieredValues];
+  }
+
+  const inputPrice = _orPricePerM('prompt');
+  const outputPrice = _orPricePerM('completion');
+  const cacheWritePrice = _orPricePerM('input_cache_write');
+  const cacheReadPrice = _orPricePerM('input_cache_read');
 
   const chatPrice: ModelDescriptionSchema['chatPrice'] = {
-    input: inputPrice ? inputPrice * 1000 * 1000 : 'free',
-    output: outputPrice ? outputPrice * 1000 * 1000 : 'free',
+    input: inputPrice || 'free',
+    output: outputPrice || 'free',
   };
 
   if (cacheWritePrice && cacheReadPrice) {
     // if writing, assume anthropic-style
     chatPrice.cache = {
       cType: 'ant-bp',
-      read: cacheReadPrice * 1000 * 1000,
-      write: cacheWritePrice * 1000 * 1000,
+      read: cacheReadPrice,
+      write: cacheWritePrice,
       duration: 300, // 5 minutes default
     };
   } else if (cacheReadPrice) {
     // if only reading, assume openai-style
     chatPrice.cache = {
       cType: 'oai-ac',
-      read: cacheReadPrice * 1000 * 1000,
+      read: cacheReadPrice,
     };
   }
 
