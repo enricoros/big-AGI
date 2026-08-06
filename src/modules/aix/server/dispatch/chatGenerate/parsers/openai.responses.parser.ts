@@ -474,6 +474,11 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
           if (messagePhase === 'commentary' || messagePhase === 'final_answer')
             pt.sendSetVendorState({ p: 'svs', vendor: vendor, state: { messagePhase } });
         }
+
+        // -> MCP: announce the server-side tool call as it starts - the added item carries the
+        //    tool name, which the subsequent response.mcp_call.* status events do not
+        if (event.item.type === 'mcp_call')
+          pt.sendOperationState(_mcpOperationType(event.item.name), `Calling ${_mcpToolDisplayName(event.item.name)}...`, { opId: event.item.id });
         break;
 
       case 'response.output_item.done':
@@ -570,11 +575,19 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
             _forwardDoneCustomToolCallItem(pt, doneItem, doneItem.id);
             break;
 
+          case 'mcp_list_tools':
+            // -> MCP-LT: tool discovery is bookkeeping - nothing to surface
+            break;
+
+          case 'mcp_call':
+            // -> MCP-C: close the server-side tool call placeholder with the outcome
+            _forwardDoneMCPCallItem(pt, doneItem);
+            break;
+
           default:
             const _exhaustiveCheck: never = doneItemType;
             // noinspection FallThroughInSwitchStatementJS
             // case 'file_search_call': // OpenAI vector store - not implemented
-            // case 'mcp_call':
             // TODO: Implement these when types are properly integrated
             aixResilientUnknownValue('OpenAI-Responses', `outputItemType:${doneItemType}`, doneItem);
             break;
@@ -769,6 +782,40 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
         R.outputItemVisit(eventType, event.output_index, 'code_interpreter_call');
         pt.sendOperationState('code-exec', 'Code executed', { opId: event.item_id, state: 'done' });
         // -> Final result is handled in response.output_item.done
+        break;
+
+      // 4.x - MCP Events (server-side tools: OpenAI remote MCP, Bedrock Mantle mcp connectors)
+      // Flow: mcp_list_tools: in_progress -> completed|failed
+      //       mcp_call: in_progress -> [arguments.delta]* -> arguments.done -> completed|failed
+      // NOTE: the 'Calling <tool>...' placeholder is sent at response.output_item.added (which has the tool name)
+
+      case 'response.mcp_list_tools.in_progress':
+      case 'response.mcp_list_tools.completed':
+        R.outputItemVisit(eventType, event.output_index, 'mcp_list_tools');
+        // silent: tool discovery is bookkeeping, not worth a placeholder
+        break;
+
+      case 'response.mcp_list_tools.failed':
+        R.outputItemVisit(eventType, event.output_index, 'mcp_list_tools');
+        // surface the failure - the model will proceed without the tools, and the user should know why
+        console.log('[DEV] AIX: OpenAI Responses: MCP tools listing failed');
+        break;
+
+      case 'response.mcp_call.in_progress':
+      case 'response.mcp_call_arguments.delta':
+        R.outputItemVisit(eventType, event.output_index, 'mcp_call');
+        // in_progress: placeholder already sent at output_item.added; deltas: we don't stream partial arguments
+        break;
+
+      case 'response.mcp_call_arguments.done':
+        R.outputItemVisit(eventType, event.output_index, 'mcp_call');
+        // Arguments complete - final handling (with name + output) in output_item.done
+        break;
+
+      case 'response.mcp_call.completed':
+      case 'response.mcp_call.failed':
+        R.outputItemVisit(eventType, event.output_index, 'mcp_call');
+        // -> Final result (or error) is handled in response.output_item.done, which carries name/arguments/error
         break;
 
       // 4.x - Custom Tool Call Events
@@ -1120,6 +1167,16 @@ export function createOpenAIResponseParserNS(vendor: 'openai' | 'xai'): ChatGene
           pt.endMessagePart();
           break;
 
+        case 'mcp_list_tools':
+          // -> MCP-LT: tool discovery is bookkeeping - nothing to surface
+          break;
+
+        case 'mcp_call':
+          // -> MCP-C: surface the completed server-side tool call
+          _forwardDoneMCPCallItem(pt, oItem);
+          pt.endMessagePart();
+          break;
+
         default:
           const _exhaustiveCheck: never = oItemType;
           aixResilientUnknownValue('OpenAI-Responses-NS', 'outputItemType', oItemType);
@@ -1343,6 +1400,49 @@ function _forwardDoneWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: 
       console.log(`[DEV] AIX: Unknown web_search_call action:`, { action });
       break;
   }
+}
+
+/** MCP tool display name: strip the gateway/server prefix, e.g. 'web-search___WebSearch' (AgentCore Gateway target___tool) -> 'WebSearch' */
+function _mcpToolDisplayName(name: string | undefined): string {
+  if (!name) return 'MCP tool';
+  return name.split('___').pop() || name;
+}
+
+/** Placeholder affordance for MCP tools: search-like tools reuse the web-search rendering; others show as executions (no dedicated MCP renderer yet) */
+function _mcpOperationType(name: string | undefined): 'search-web' | 'code-exec' {
+  return /search/i.test(name || '') ? 'search-web' : 'code-exec';
+}
+
+/**
+ * Processes a completed (or failed) MCP call item and closes its placeholder.
+ * MCP calls are executed server-side by the API provider (OpenAI remote MCP servers,
+ * AWS Bedrock Mantle 'mcp' connectors); we only surface name, arguments and outcome.
+ */
+function _forwardDoneMCPCallItem(pt: IParticleTransmitter, mcpCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'mcp_call' }>): void {
+  const { id: opId, name, arguments: mcpArguments, error: mcpError, status } = mcpCall;
+  const displayName = _mcpToolDisplayName(name);
+  const mot = _mcpOperationType(name);
+
+  // failed call -> error placeholder
+  if (mcpError || status === 'failed') {
+    const errorSuffix = mcpError ? `: ${String(mcpError).slice(0, 200)}` : '';
+    pt.sendOperationState(mot, `${displayName} error${errorSuffix}`, { opId, state: 'error' });
+    return;
+  }
+
+  // completed call -> summarize with the query when the arguments carry one (common for search tools)
+  let doneText = `${displayName} completed`;
+  let iTexts: string[] | undefined = undefined;
+  try {
+    const parsedArgs = JSON.parse(mcpArguments || '{}');
+    if (parsedArgs && typeof parsedArgs.query === 'string' && parsedArgs.query) {
+      doneText += `: ${parsedArgs.query}`;
+      iTexts = [parsedArgs.query];
+    }
+  } catch {
+    // non-JSON arguments: ignore, keep the generic done text
+  }
+  pt.sendOperationState(mot, doneText, { opId, state: 'done', ...(iTexts ? { iTexts } : {}) });
 }
 
 /**
