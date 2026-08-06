@@ -68,6 +68,7 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
       'max_tokens',
       'min_p',
       'parallel_tool_calls',
+      'prediction', // predicted outputs (speculative decoding hint)
       'presence_penalty',
       'reasoning', // Reasoning
       'reasoning_effort', // Legacy (prefer 'reasoning')
@@ -96,6 +97,7 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
     default_enabled: z.boolean().nullish(),
     supported_efforts: z.array(z.string()).nullish(),
     default_effort: z.string().nullish(),
+    supports_max_tokens: z.boolean().nullish(), // true = accepts reasoning.max_tokens (thinking budget) instead of/besides efforts
   }).nullish(),
 
   // not useful to us

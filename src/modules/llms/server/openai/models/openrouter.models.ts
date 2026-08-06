@@ -25,15 +25,15 @@ const FIXUP_MAX_OUTPUT = true;
 // NOTE: this list doubles as the visibility allow-list - any model whose family prefix is NOT here is hidden by default (see `hidden` below).
 const orModelFamilyOrder = [
   // Leading models/organizations (based on capabilities and popularity)
-  'anthropic/', 'deepseek/', 'google/', 'openai/', 'x-ai/',
+  'anthropic/', 'deepseek/', 'google/', 'openai/', 'x-ai/', 'meta/',
   // Upcoming
   'moonshotai/', 'z-ai/', 'qwen/',
   // Other major providers
   'mistralai/', 'meta-llama/', 'amazon/', 'cohere/',
   // Specialized/AI companies
-  'perplexity/', 'inflection/', 'inclusionai/', 'arcee-ai/',
+  'perplexity/', 'inflection/', 'inclusionai/', 'arcee-ai/', 'thinkingmachines/',
   // Chinese majors (surfaced on OpenRouter directly)
-  'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'baidu/', 'stepfun/',
+  'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'baidu/', 'stepfun/', 'meituan/',
   // Research/open models
   'nvidia/', 'microsoft/', 'nousresearch/', 'ibm-granite/', 'poolside/', 'xiaomi/',
 ] as const;
@@ -53,9 +53,14 @@ const orOldModelIDs = [
 ] as const;
 
 
+/** '~vendor/model-latest' are OR router aliases (alias_target) - drop the '~' so they match their own family */
+function _orUnalias(modelId: string): string {
+  return modelId.startsWith('~') ? modelId.slice(1) : modelId;
+}
+
 export function openRouterModelFamilySortFn(a: { id: string, created?: number }, b: { id: string, created?: number }): number {
-  const aPrefixIndex = orModelFamilyOrder.findIndex(prefix => a.id.startsWith(prefix));
-  const bPrefixIndex = orModelFamilyOrder.findIndex(prefix => b.id.startsWith(prefix));
+  const aPrefixIndex = orModelFamilyOrder.findIndex(prefix => _orUnalias(a.id).startsWith(prefix));
+  const bPrefixIndex = orModelFamilyOrder.findIndex(prefix => _orUnalias(b.id).startsWith(prefix));
 
   // If both have a prefix, sort by family first
   if (aPrefixIndex !== -1 && bPrefixIndex !== -1) {
@@ -94,6 +99,10 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   //   '(batch)' label suffix + hidden-by-default + latency note, so users opt in knowingly
   if (model.id.endsWith(':batch'))
     return null;
+
+  // the 11 '~vendor/model-latest' aliases are full members of their vendor family: match on the unaliased
+  // id everywhere (vendor inheritance, visibility), or they'd fall through to the generic branch
+  const modelIdUnaliased = _orUnalias(model.id);
 
 
   // -- Label --
@@ -182,8 +191,6 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   // - openai/ excluded from breakpoints: GPT-5.6+ writes to the paid cache automatically even without
   //   cache_control (stamps are a no-op), so a breakpoint toggle would be fake - informational tag +
   //   cache_write_tokens usage read-back give correct cost accounting anyway
-  // note: '~vendor/model-latest' are OR router aliases - strip the '~' so the vendor exclusions still match
-  const modelIdUnaliased = model.id.startsWith('~') ? model.id.slice(1) : model.id;
   if (cacheWritePrice && !modelIdUnaliased.startsWith('google/') && !modelIdUnaliased.startsWith('openai/'))
     interfaces.push(LLM_IF_ANT_PromptCaching);
   else if (cacheReadPrice || model.pricing?.input_cache_read !== undefined)
@@ -197,7 +204,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   ] as const;
 
   // -- Vendor parameter & interface inheritance --
-  const llmRef = model.id.replace(/^[^/]+\//, '');
+  const llmRef = modelIdUnaliased.replace(/^[^/]+\//, '');
   let initialTemperature: number | undefined;
   let pubDate: string | undefined;
 
@@ -222,8 +229,9 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
      * Anthropic: all models come in thinking flavor, which is then labeled as variant, or stripped for the base.
      * The 0-day adds the thiking budget
      */
-    case model.id.startsWith('anthropic/'):
-      const antLookup = llmOrtAntLookup_ThinkingVariants(llmRef);
+    case modelIdUnaliased.startsWith('anthropic/'):
+      // '-fast' is Anthropic's priority service tier resold as a twin id (2x price, same model): look up the base
+      const antLookup = llmOrtAntLookup_ThinkingVariants(llmRef.replace(/-fast$/, ''));
       _mergeLookup(antLookup);
 
       if (DEV_DEBUG_OPENROUTER_MODELS && !antLookup)
@@ -245,7 +253,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       }
       break;
 
-    case model.id.startsWith('google/'):
+    case modelIdUnaliased.startsWith('google/'):
       const gemLookup = llmOrtGemLookup(llmRef);
       _mergeLookup(gemLookup);
 
@@ -271,7 +279,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       }
       break;
 
-    case model.id.startsWith('openai/'):
+    case modelIdUnaliased.startsWith('openai/'):
       const oaiLookup = llmOrtOaiLookup(llmRef);
       if (oaiLookup === null) return null; // drop models we really don't care about
       _mergeLookup(oaiLookup);
@@ -287,13 +295,13 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       }
       break;
 
-    case model.id.startsWith('x-ai/') || model.id.startsWith('moonshotai/') || model.id.startsWith('z-ai/') || model.id.startsWith('deepseek/'):
+    case modelIdUnaliased.startsWith('x-ai/') || modelIdUnaliased.startsWith('moonshotai/') || modelIdUnaliased.startsWith('z-ai/') || modelIdUnaliased.startsWith('deepseek/'):
       // [Moonshot, 2026-07-17] Kimi K3: thinking is always-on at 'max' (its only valid effort) - no thinking toggle;
       // probe-verified via OR: reasoning.enabled=false 400s ('Reasoning is mandatory ... cannot be disabled')
-      if (model.id.startsWith('moonshotai/kimi-k3'))
+      if (modelIdUnaliased.startsWith('moonshotai/kimi-k3'))
         break;
       // [xAI, 2026-07-31] inherit native effort specs (medium/xhigh, which llmVndMiscEffort cannot express)
-      if (model.id.startsWith('x-ai/'))
+      if (modelIdUnaliased.startsWith('x-ai/'))
         _mergeLookup(llmOrtXaiLookup(llmRef));
 
       // 'none' 400s where OR marks reasoning mandatory (verified: grok-4.5, grok-4.20-multi-agent, grok-build-0.1).
@@ -315,7 +323,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
         // honor it (OR itself accepts reasoning.effort='max' since GPT-5.6, see openai.chatCompletions.ts).
         // [DeepSeek, 2026-07-31] Exception: OR's supported_efforts is right here, separating the 0731 flash
         // (max/high/low) from the April flash and V4-Pro (xhigh/high -> binary). deepseek/ only - for xAI it is wrong.
-        const orEfforts = model.id.startsWith('deepseek/') ? model.reasoning?.supported_efforts : undefined;
+        const orEfforts = modelIdUnaliased.startsWith('deepseek/') ? model.reasoning?.supported_efforts : undefined;
         const derived = _MISC_EFFORTS.filter(e => orEfforts?.includes(e));
         parameterSpecs.push({
           paramId: 'llmVndMiscEffort',
@@ -332,8 +340,10 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       // 'high' -> enabled:true, 'none' -> enabled:false, unset ('Default') -> no field (model default).
       // We pin enumValues to ['none', 'high'] (binary on/off, no effort levels) since generic models may
       // not honor effort granularity. Guard: only when the model advertises reasoning AND no equivalent
-      // reasoning control is already present (so we never double up or override a vendor-specific one).
-      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p =>
+      // reasoning control is already present (so we never double up or override a vendor-specific one)
+      // AND reasoning is not mandatory (where 'none' 400s and a binary on/off is meaningless - same rule
+      // as the xAI/Moonshot/Z.ai/DeepSeek branch above; hits Qwen thinking, MiniMax M2.x, StepFun, ...).
+      if (interfaces.includes(LLM_IF_OAI_Reasoning) && !model.reasoning?.mandatory && !parameterSpecs.some(p =>
         p.paramId === 'llmVndMiscEffort'
         || p.paramId === 'llmVndAntEffort' || p.paramId === 'llmVndAntThinkingBudget'
         || p.paramId === 'llmVndGemEffort' || p.paramId === 'llmVndGeminiThinkingBudget'
@@ -347,8 +357,8 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   // -- Hidden --
 
   // hidden: hide by default older models or models not in known families; match with startsWith for both orOldModelIDs and orModelFamilyOrder
-  const hidden = orOldModelIDs.some(prefix => model.id.startsWith(prefix))
-    || !orModelFamilyOrder.some(prefix => model.id.startsWith(prefix));
+  const hidden = orOldModelIDs.some(prefix => modelIdUnaliased.startsWith(prefix))
+    || !orModelFamilyOrder.some(prefix => modelIdUnaliased.startsWith(prefix));
 
 
   // -- pubDate fallback --
