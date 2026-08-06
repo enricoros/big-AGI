@@ -44,8 +44,8 @@ const _knownCohereModels = llmsDefineModels<_CohereModelDef>()([
   {
     idPrefix: 'command-a-plus-05-2026',
     label: 'Command A Plus',
-    pubDate: '20260501',
-    description: 'Cohere flagship. Agentic reasoning with vision, tool use, and long-context RAG. 436K context, 64K output. Thinking enabled by default.',
+    pubDate: '20260520',
+    description: 'Cohere flagship MoE (218B total, 25B active). Agentic reasoning with vision, tool use, and long-context RAG across 48 languages. 436K context, 64K output. Thinking enabled by default.',
     contextWindow: 436000,
     interfaces: _IF_Tools_Vision_Reasoning,
     maxCompletionTokens: 64000, // API-enforced ceiling (verified 2026-07-08)
@@ -103,7 +103,7 @@ const _knownCohereModels = llmsDefineModels<_CohereModelDef>()([
     interfaces: _IF_Tools_Reasoning,
     maxCompletionTokens: 64000, // API-enforced ceiling (verified 2026-07-08)
     parameterSpecs: _PS_Reasoning,
-    initialTemperature: 0.6, // Cohere sampling default for north-mini-code
+    initialTemperature: 1, // Cohere sampling default for north-mini-code (verified 2026-08-04)
     // chatPrice: North platform / not publicly published
   },
 
@@ -200,13 +200,46 @@ const _knownCohereModels = llmsDefineModels<_CohereModelDef>()([
     initialTemperature: 0.3,
   },
 
-  // Tiny Aya - research minis (hidden by default)
+  // Tiny Aya - 3.35B research minis covering 70 languages (hidden by default)
   {
     idPrefix: 'tiny-aya-global',
     label: 'Tiny Aya Global',
-    description: 'Tiny multilingual research model. 8K context. Text only.',
+    description: 'Tiny multilingual research model (3.35B), best balance across 70 languages. 8K context. Text only.',
     contextWindow: 8192,
     interfaces: _IF_Chat, // native 'tools' feature is advertised but FC does not fire (returns text) - verified 2026-07-09
+    maxCompletionTokens: 8192,
+    initialTemperature: 0.3,
+    hidden: true,
+  },
+
+  {
+    idPrefix: 'tiny-aya-earth',
+    label: 'Tiny Aya Earth',
+    description: 'Tiny Aya (3.35B) region-specialized for West Asian and African languages. 8K context. Text only.',
+    contextWindow: 8192,
+    interfaces: _IF_Chat,
+    maxCompletionTokens: 8192,
+    initialTemperature: 0.3,
+    hidden: true,
+  },
+
+  {
+    idPrefix: 'tiny-aya-fire',
+    label: 'Tiny Aya Fire',
+    description: 'Tiny Aya (3.35B) region-specialized for South Asian languages. 8K context. Text only.',
+    contextWindow: 8192,
+    interfaces: _IF_Chat,
+    maxCompletionTokens: 8192,
+    initialTemperature: 0.3,
+    hidden: true,
+  },
+
+  {
+    idPrefix: 'tiny-aya-water',
+    label: 'Tiny Aya Water',
+    description: 'Tiny Aya (3.35B) region-specialized for European and Asia-Pacific languages. 8K context. Text only.',
+    contextWindow: 8192,
+    interfaces: _IF_Chat,
     maxCompletionTokens: 8192,
     initialTemperature: 0.3,
     hidden: true,
