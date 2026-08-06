@@ -100,9 +100,11 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   if (model.id.endsWith(':batch'))
     return null;
 
-  // the 11 '~vendor/model-latest' aliases are full members of their vendor family: match on the unaliased
-  // id everywhere (vendor inheritance, visibility), or they'd fall through to the generic branch
-  const modelIdUnaliased = _orUnalias(model.id);
+  // the 11 '~vendor/model-latest' aliases are full members of their vendor family: resolve them to the
+  // model they point at (`alias_target`) everywhere (vendor inheritance, visibility), or they'd fall
+  // through to the generic branch - dropping the '~' alone leaves refs like 'claude-opus-latest', which
+  // no vendor index can look up (verified: all 11 missed their native interfaces/params before this)
+  const modelIdUnaliased = model.alias_target?.slug || _orUnalias(model.id);
 
 
   // -- Label --
