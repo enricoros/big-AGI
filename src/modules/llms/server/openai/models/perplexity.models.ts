@@ -5,7 +5,7 @@ import { llmsDefineModels } from '../../models.mappings';
 // --- Perplexity Model ID inference (auto-derived from _knownPerplexityChatModels) ---
 export type LlmsPerplexityModelId = typeof _knownPerplexityChatModels[number]['id'];
 
-import { LLM_IF_HOTFIX_NoStream, LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoStream, LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 
 // configuration
@@ -22,7 +22,7 @@ const _hardcodedPerplexityVariants: ModelVariantMap = !PERPLEXITY_ENABLE_VARIANT
     description: 'Expert-level research model with academic sources only. Searches scholarly databases, peer-reviewed papers, and academic publications. 128k context.',
     interfaces: [
       LLM_IF_HOTFIX_NoStream, // seems to be required for medium/academic
-      LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning,
+      LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision,
     ],
     parameterSpecs: [
       // Fixed parameters for academic search
@@ -48,7 +48,7 @@ const _knownPerplexityChatModels = llmsDefineModels<_PerplexityModelDef>()([
     pubDate: '20250214',
     description: 'Expert-level research model for exhaustive searches and comprehensive reports. 128k context.',
     contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
       { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
@@ -67,9 +67,9 @@ const _knownPerplexityChatModels = llmsDefineModels<_PerplexityModelDef>()([
     id: 'sonar-reasoning-pro',
     label: 'Sonar Reasoning Pro',
     pubDate: '20250218',
-    description: 'Premier reasoning model (DeepSeek R1) with Chain of Thought. 128k context.',
+    description: 'Premier reasoning model with enhanced multi-step Chain of Thought. 128k context.',
     contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
     parameterSpecs: [
       { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
       { paramId: 'llmVndPerplexitySearchMode' },
@@ -90,7 +90,7 @@ const _knownPerplexityChatModels = llmsDefineModels<_PerplexityModelDef>()([
     description: 'Advanced search model for complex queries and deep content understanding. 200k context.',
     contextWindow: 200000,
     maxCompletionTokens: 8000,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     parameterSpecs: [
       { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
       { paramId: 'llmVndPerplexitySearchMode' },
@@ -108,7 +108,7 @@ const _knownPerplexityChatModels = llmsDefineModels<_PerplexityModelDef>()([
     pubDate: '20250121',
     description: 'Lightweight, cost-effective search model for quick, grounded answers. 128k context.',
     contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     parameterSpecs: [
       { paramId: 'llmVndOaiWebSearchContext', initialValue: 'low' }, // REUSE!
       { paramId: 'llmVndPerplexitySearchMode' },
