@@ -1,5 +1,5 @@
 ---
-description: Update/validate dynamic vendor model parsers (OpenRouter, TogetherAI, Alibaba, Azure, Novita, ChutesAI, FireworksAI, TLUS, LM Studio, LocalAI, FastAPI)
+description: Update/validate dynamic vendor model parsers (OpenRouter, TogetherAI, Azure, Novita, ChutesAI, FireworksAI, TLUS, LM Studio, LocalAI, FastAPI)
 ---
 
 Validate that the dynamic (API-fetched) vendor model parsers are up to date and not silently broken.
@@ -14,9 +14,10 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 - Most complex parser. Vendor-specific parameter inheritance (Anthropic thinking variants, Gemini thinking/image, OpenAI reasoning effort, xAI/DeepSeek reasoning).
 - `orModelFamilyOrder` doubles as the visibility allow-list - check if new leading vendors are missing (they'd be hidden, not just mis-sorted).
 - `orOldModelIDs` hiding list - check if stale.
-- Ids: `~vendor/model-latest` are router aliases (`alias_target`) and `vendor/model-fast` are resold priority tiers - both must match their base family/vendor definition, not fall through to the generic branch.
+- Ids: `~vendor/model-latest` must be resolved through `alias_target.slug` (dropping the '~' leaves an unlookupable ref like 'claude-opus-latest') and `vendor/model-fast` are resold priority tiers - both must match their base family/vendor definition, not fall through to the generic branch.
 - `reasoning.mandatory` models reject effort 'none' - never offer it, in any vendor branch.
 - Cache pricing detection (Anthropic-style vs OpenAI-style) - verify format still valid.
+- `pricing.overrides` = long-context surcharge tiers (ascending `min_prompt_tokens`, ~57/399 models) - must fold into our `{ upTo, price }[]` arrays, else long prompts are costed at the cheapest tier.
 - Variant injection for Anthropic thinking/non-thinking - verify still correct.
 - Reference: https://openrouter.ai/docs/models ; live list: `GET https://openrouter.ai/api/v1/models`
 
@@ -34,12 +35,12 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 
 **FireworksAI** - `src/modules/llms/server/openai/models/fireworksai.models.ts`
 - Relies on provider capability flags: `supports_chat`, `supports_image_input`, `supports_tools`; `kind` also gates (embedding/reranker models are listed with `supports_chat: true`).
-- Two id shapes: `accounts/fireworks/models/*` and `accounts/fireworks/routers/*` (the Fast/Turbo serving tiers); slugs use 'p' as decimal point.
-- `/inference/v1/models` has no name/description/price: labels+descriptions from `GET /v1/accounts/fireworks/models/{id}` (control plane, same key), prices from https://docs.fireworks.ai/serverless/pricing (NOT fireworks.ai/pricing, which is training-only).
+- Two id shapes: `accounts/fireworks/models/*` and `accounts/fireworks/routers/*` (the Fast/Turbo serving tiers, which need their own editorial price: 1.5x-2.1x Standard, no fixed multiplier); slugs use 'p' as decimal point.
+- `/inference/v1/models` is unpaginated (20 serverless models today) and has no name/description/price: labels+descriptions from `GET /v1/accounts/fireworks/models/{id}` (control plane, same key), prices from https://docs.fireworks.ai/serverless/pricing (NOT fireworks.ai/pricing, which is training-only).
 - Hostname heuristic: `fireworks.ai/`.
 
 **TogetherAI** - `src/modules/llms/server/openai/models/together.models.ts`
-- Type allow-list (`type: 'chat'`; 'language' = base LMs, correctly excluded), vision detection by id pattern - the API exposes no modality field, so cross-check families against OpenRouter/Fireworks.
+- Type allow-list (`type: 'chat'`; 'language' = base LMs, correctly excluded), vision detection by id pattern - the API exposes no modality field, so cross-check families against OpenRouter/Fireworks. `config.chat_template` is not a substitute: GLM-5.2's template handles images but Together serves it text-only.
 - `created` is endpoint churn (0 for the newest arrivals) - pubDate comes only from `_togetherEditorialPubDates`.
 - Custom wire schema with pricing conversion.
 
@@ -47,11 +48,6 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 - Detected by response structure (`total_models`, `free_models`, `pro_models` fields).
 - Capability enum mapping (`text`, `vision`, `audio`, `tool-calling`, `reasoning`, `websearch`).
 - Tier-based pricing (`free` vs paid).
-
-**Alibaba** - `src/modules/llms/server/openai/models/alibaba.models.ts`
-- Model list was cleared (dynamic-only). Exclusion patterns for non-chat models.
-- Assumes 128K context and Vision+Functions for all models (overly permissive).
-- Check if hardcoded data should be restored now that naming has stabilized.
 
 ### Low Risk (local/generic - validate only if issues reported)
 
@@ -62,7 +58,7 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 - Local service, native API (`/api/v1/models`). GGUF metadata parsing, capability flags.
 
 **LocalAI** - `src/modules/llms/server/openai/models/localai.models.ts`
-- Local service. String-based hide list, vision/reasoning detection by name pattern.
+- Local service. Substring hide list for the non-chat gallery models it also serves (image/TTS/STT/embedding/reranker/VAD), vision/reasoning detection by name pattern.
 
 **FastAPI** - `src/modules/llms/server/openai/models/fastapi.models.ts`
 - Generic passthrough. Detected by `owned_by === 'fastchat'`. Minimal parsing.

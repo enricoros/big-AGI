@@ -11,8 +11,9 @@ export type LlmsCohereModelId = typeof _knownCohereModels[number]['idPrefix'];
 // Cohere is accessed via its OpenAI-compatible endpoint (https://api.cohere.ai/compatibility/v1).
 // - Chat Completions + Models list are standard OpenAI shapes (verified 2026-07-08).
 // - Reasoning models emit `reasoning_content` (parsed by the shared OpenAI adapter).
-// - Context windows below are the real tokenizer limits reported by the native /v1/models API
-//   (which can differ from the rounded marketing numbers, e.g. Command A = 288k not 256k).
+// - Context windows below are the API-enforced token limits reported by the native /v1/models API, not
+//   the rounded doc numbers (e.g. Command A+ = 436k not 128k, Command A = 288k not 256k; over-long inputs
+//   are rejected with "The limit for this model is N tokens" - verified 2026-08-06).
 const _IF_Chat = [LLM_IF_OAI_Chat];
 const _IF_Chat_Vision = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision];
 const _IF_Tools = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
@@ -98,7 +99,8 @@ const _knownCohereModels = llmsDefineModels<_CohereModelDef>()([
   {
     idPrefix: 'north-mini-code-1-0',
     label: 'North Mini Code',
-    description: 'Compact agentic coding model from Cohere\'s North platform. Reasoning and tool use over very long context (436K).',
+    pubDate: '20260609',
+    description: 'Compact agentic coding MoE (30B total, 3B active, Apache 2.0) from Cohere\'s North platform. Reasoning and tool use over very long context (436K).',
     contextWindow: 436000,
     interfaces: _IF_Tools_Reasoning,
     maxCompletionTokens: 64000, // API-enforced ceiling (verified 2026-07-08)

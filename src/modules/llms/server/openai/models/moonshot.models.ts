@@ -37,7 +37,7 @@ const _PS_ReasoningEffort: ModelDescriptionSchema['parameterSpecs'] = [
  * - models list: https://platform.kimi.ai/docs/models (was platform.moonshot.ai - now 301 redirect)
  * - pricing: https://platform.kimi.ai/docs/pricing/chat is just an index; per-model pages are chat-k3, chat-k27-code, chat-k26, chat-k25, chat-v1
  * - API docs: https://platform.kimi.ai/docs/api/chat + https://platform.kimi.ai/docs/api/models-overview (per-model parameter matrix)
- * - updated: 2026-08-04
+ * - updated: 2026-08-06
  * - NOTE: K2 series (non-2.5/2.6) discontinued on 2026-05-25, removed from API; kept hidden for fallback.
  * - NOTE: kimi-k2.5 and the moonshot-v1 series are closed to new accounts, with full platform sunset on 2026-08-31.
  * - NOTE: 'sk-kimi-' subscription keys list a separate 3-model catalog from api.kimi.com/coding (see the Kimi Code section below);
@@ -150,7 +150,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     interfaces: IF_K2_5,
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.60, output: 3.00, cache: { cType: 'oai-ac', read: 0.10 } },
-    benchmark: { cbaElo: 1450 }, // kimi-k2.5-thinking
+    benchmark: { cbaElo: 1451 }, // kimi-k2.5-thinking
   },
 
   // Kimi K2 Series - discontinued on 2026-05-25, removed from API

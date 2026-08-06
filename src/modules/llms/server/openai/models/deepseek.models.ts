@@ -12,11 +12,14 @@ const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 
 // [DeepSeek, 2026-07-31] V4-Flash 0731: re-post-trained, swapped IN PLACE - https://api-docs.deepseek.com/updates/
 // - Same 'deepseek-v4-flash' id, same arch/size/pricing, public beta. Reported agentic gains are vs V4-Pro-Preview on
-//   an unreleased harness: direction, not ranking. V4-Pro untouched (release + revised effort mapping: early Aug 2026).
+//   an unreleased harness: direction, not ranking. V4-Pro untouched: official release still pending, effort mapping
+//   as documented (rechecked 2026-08-06).
 // - Unpinnable: swept id spellings, separators, /beta + /v1 bases, dated base paths, request fields and version headers
 //   - all rejected or ignored. April weights survive only off-DeepSeek via the open weights; 0731 has no HF repo.
-// - Undated: 2x peak-hour pricing (Beijing 09-12, 14-18). chatPrice below is the off-peak base only - our pricing has
-//   no time dimension, so peak windows will read 2x low.
+// - Responses API (/responses) is flash-only: pro 400s with 'available starting early August 2026'. The Anthropic-format
+//   base https://api.deepseek.com/anthropic serves both models.
+// - Undated: 2x peak-hour pricing (Beijing 09-12, 14-18) is announced but NOT live - the rate card is still flat as of
+//   2026-08-06, and now warns of a significant overall rise. chatPrice below is that flat rate; we have no time dimension.
 // - Docs need a TRAILING SLASH, else Docusaurus serves a shell.
 
 // [DeepSeek, 2026-04-24] V4 release - https://api-docs.deepseek.com/news/news260424
@@ -42,12 +45,12 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
     contextWindow: 1_048_576, // 1M
     interfaces: [...IF_4, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
-      // 'low' is wire-valid here too, but docs map it onto 'high'; revisit when pro's effort mapping changes (early Aug 2026)
+      // 'low' is wire-valid here too, but docs map it onto 'high' (still identical on 2026-08-06); revisit at pro's official release
       { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] },
     ],
     maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
     chatPrice: { input: 0.435, output: 0.87, cache: { cType: 'oai-ac', read: 0.003625 } },
-    benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro
+    benchmark: { cbaElo: 1457 }, // lmarena: deepseek-v4-pro
   },
   {
     idPrefix: 'deepseek-v4-flash',

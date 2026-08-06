@@ -7,7 +7,9 @@ Update `src/modules/llms/server/openai/models/xai.models.ts` with latest model d
 Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
 **Primary Sources:**
-- Models & Pricing: https://docs.x.ai/developers/models (canonical since ~2026; `/docs/models` still resolves). Per-model pages: https://docs.x.ai/developers/grok-4-5 (dashes, not dots). Knowledge cutoffs live on the per-model pages, not the table.
+- Models & Pricing: https://docs.x.ai/developers/models (canonical since ~2026; `/docs/models` still resolves). Two kinds of per-model pages: detail/pricing pages at `/developers/models/<dotted-id>` (e.g. `/developers/models/grok-4.3`) exist for every served model and carry context/pricing tiers/modalities/capability flags; hand-written guides at `/developers/<dashed-id>` (e.g. `/developers/grok-4-5`) exist for only a few models (`grok-4-3`, `grok-build-0-1` 404) and are the only place with knowledge cutoffs. `/developers/changelog` 404s; `/developers/release-notes` exists but was stale (no 2026 entries) as of 2026-08.
+- Docs' effort lists are incomplete: they omitted `xhigh` for grok-4.5 while the API accepts it. Always probe efforts rather than trusting the table.
+- Note: docs/press now brand the vendor "SpaceXAI" (post-merger); model ids and the `xai` `owned_by` are unchanged.
 
 **Known Issue:** `curl` on docs.x.ai returns 521; WebFetch works. x.ai/news/* still 403s - use fallbacks below for release dates.
 

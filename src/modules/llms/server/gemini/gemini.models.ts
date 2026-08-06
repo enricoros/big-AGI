@@ -34,7 +34,7 @@ const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
 ];
 
 // Phantom models: listed by the API but return HTTP 'not found' on actual use (generateContent 404s).
-// Hidden entirely so users can't select a model that will fail. (Verified 2026-06-17, re-verified 2026-08-04.)
+// Hidden entirely so users can't select a model that will fail. (Verified 2026-06-17, re-verified 2026-08-06.)
 // NOTE: we keep their _knownGeminiModels defs around on purpose - they're still resolved via
 // Vertex AI and OpenRouter->Gemini (llmOrtGemLookup). Expunge the defs from _knownGeminiModels
 // only once the native API stops returning them entirely.
@@ -75,7 +75,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/gemini-api/docs/pricing (August 4, 2026)
+// Pricing based on https://ai.google.dev/gemini-api/docs/pricing (August 6, 2026)
 
 const gemini36FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 1.50, // text/image/video, no per-modality split; cache storage $1.00/MTok-hour (not tracked here)
@@ -256,7 +256,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1483 }, // gemini-3.6-flash (LMArena 2026-08-01)
+    benchmark: { cbaElo: 1485 }, // gemini-3.6-flash (LMArena 2026-08-06)
   },
 
 
@@ -275,7 +275,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1476 }, // gemini-3.5-flash-high (LMArena 2026-07-22; arena scores per-effort, 'high' variant)
+    benchmark: { cbaElo: 1477 }, // gemini-3.5-flash-high (LMArena 2026-08-06; arena scores per-effort, 'high' variant)
   },
 
   // 3.5 Flash-Lite (Stable) - Released July 21, 2026
@@ -293,7 +293,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1457 }, // gemini-3.5-flash-lite (LMArena 2026-08-01)
+    benchmark: { cbaElo: 1459 }, // gemini-3.5-flash-lite (LMArena 2026-08-06)
   },
 
 
@@ -315,7 +315,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiGoogleSearch' },
       // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
     ],
-    benchmark: { cbaElo: 1485 }, // gemini-3.1-pro-preview (LMArena 2026-08-01)
+    benchmark: { cbaElo: 1487 }, // gemini-3.1-pro-preview (LMArena 2026-08-06)
   },
   // 3.1 Pro (Preview) - Custom Tools variant - Released February 19, 2026
   // Better at prioritizing custom tools for users building with a mix of bash and tools
@@ -333,7 +333,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1485 - 1 }, // -1 (deprio this variant) + gemini-3.1-pro-preview
+    benchmark: { cbaElo: 1487 - 1 }, // -1 (deprio this variant) + gemini-3.1-pro-preview
   },
 
   // 3.1 Flash Image (Stable / GA) - Released May 28, 2026 (graduated from preview)
@@ -391,12 +391,13 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     benchmark: undefined, // Non-benchmarkable because generates images
   },
 
-  // 3.1 Flash-Lite (Stable) - Released May 7, 2026 (graduated from preview)
+  // 3.1 Flash-Lite (Stable) - Released May 7, 2026 (graduated from preview); shutdown May 7, 2027 -> 3.5 Flash-Lite
   // First Flash-Lite model in the Gemini 3 series - cost-efficient, high-throughput
   {
     id: 'models/gemini-3.1-flash-lite',
     labelOverride: 'Gemini 3.1 Flash-Lite',
     pubDate: '20260507',
+    deprecated: '2027-05-07',
     chatPrice: gemini31FlashLitePricing,
     interfaces: IF_30,
     parameterSpecs: [
@@ -506,13 +507,12 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
 
   /// Generation 2.5
 
-  // 2.5 Pro (Stable) - Released June 17, 2025; DEPRECATED: shutdown June 17, 2026
+  // 2.5 Pro (Stable) - Released June 17, 2025; no shutdown date announced (deprecations page, 2026-08-06) - still serving
   {
     hidden: true,
     id: 'models/gemini-2.5-pro',
     labelOverride: 'Gemini 2.5 Pro',
     pubDate: '20250617',
-    deprecated: '2026-06-17',
     chatPrice: gemini25ProPricing,
     interfaces: IF_25,
     parameterSpecs: [
@@ -636,11 +636,10 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
 
   // 2.5 Flash
   {
-    hidden: true, // outperformed by 3 Flash Preview (1473 vs 1410) - shutdown June 17, 2026
+    hidden: true, // outperformed by 3 Flash Preview (1473 vs 1410) - no shutdown date announced (2026-08-06)
     id: 'models/gemini-2.5-flash',
     labelOverride: 'Gemini 2.5 Flash',
     pubDate: '20250617',
-    deprecated: '2026-06-17',
     chatPrice: gemini25FlashPricing,
     interfaces: IF_25,
     parameterSpecs: [
@@ -799,11 +798,10 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
 
   // 2.5 Flash-Lite - Released July 2025
   {
-    hidden: true, // superseded by 3.5 Flash-Lite (GA July 21, 2026); shutdown date reached but still serving as of 2026-07-22
+    hidden: true, // superseded by 3.5 Flash-Lite (GA July 21, 2026); no shutdown date announced (2026-08-06)
     id: 'models/gemini-2.5-flash-lite',
     labelOverride: 'Gemini 2.5 Flash-Lite',
     pubDate: '20250722',
-    deprecated: '2026-07-22',
     chatPrice: gemini25FlashLitePricing,
     interfaces: IF_25,
     parameterSpecs: [

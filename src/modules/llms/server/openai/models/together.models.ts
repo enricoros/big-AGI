@@ -60,14 +60,19 @@ const _togetherVisionMatches: readonly (string | RegExp)[] = [
 // The ONLY source of pubDate for this vendor (besides the manual mappings above); keep dates
 // consistent with the publisher's own catalog where we have one (e.g. deepseek.models.ts).
 const _togetherEditorialPubDates: Record<string, string> = {
+  'MiniMaxAI/MiniMax-M2.7': '20260318', // = minimax.models.ts 'MiniMax-M2.7'
   'google/gemma-4-31B-it': '20260402', // = gemini.models.ts 'models/gemma-4-31b-it'
+  'zai-org/GLM-5.1': '20260407', // = zai.models.ts 'glm-5.1'
   'moonshotai/Kimi-K2.6': '20260417', // = fireworksai.models.ts 'kimi-k2p6'
   'deepseek-ai/DeepSeek-V4-Pro': '20260424', // = deepseek.models.ts 'deepseek-v4-pro'
   'MiniMaxAI/MiniMax-M3': '20260601',
+  'Qwen/Qwen3.7-Plus': '20260601', // = alibaba.models.ts 'qwen3.7-plus'
   'nvidia/nemotron-3-ultra-550b-a55b': '20260602', // = fireworksai.models.ts 'nemotron-3-ultra-nvfp4'
   'moonshotai/Kimi-K2.7-Code': '20260612',
   'zai-org/GLM-5.2': '20260613',
   'thinkingmachines/Inkling': '20260714', // = fireworksai.models.ts 'inkling'
+  'moonshotai/Kimi-K3': '20260716', // = moonshot.models.ts 'kimi-k3'
+  'thinkingmachines/Inkling-Small': '20260730', // no publisher catalog: OpenRouter listing date
   'deepseek-ai/DeepSeek-V4-Flash-0731': '20260731',
 };
 

@@ -7,7 +7,7 @@ Update `src/modules/llms/server/openai/models/deepseek.models.ts` with latest mo
 Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
 **Primary Sources:** (trailing slash required - without it Docusaurus 302s)
-- Pricing + model details (context, max output, per-model feature matrix): https://api-docs.deepseek.com/quick_start/pricing/
+- Pricing + model details (context, max output, per-model feature matrix, and the MODEL VERSION row - the authoritative tell for in-place weight swaps, e.g. DeepSeek-V4-Flash-0731): https://api-docs.deepseek.com/quick_start/pricing/
 - Model List: https://api-docs.deepseek.com/api/list-models/
 - Release Notes: https://api-docs.deepseek.com/updates/ (check for version updates like V4-Flash-0731)
 - Thinking Mode: https://api-docs.deepseek.com/guides/thinking_mode/ - authoritative for the `reasoning_effort` enum and the per-model requested->actual effort mapping that drives `parameterSpecs`

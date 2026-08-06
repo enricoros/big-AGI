@@ -46,13 +46,22 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     chatPrice: { input: 3.00, output: 15.00, cache: { cType: 'oai-ac', read: 0.30 } },
   },
   {
+    idPrefix: 'accounts/fireworks/routers/kimi-k3-fast',
+    label: 'Kimi K3 Fast (Vision)',
+    pubDate: '20260719',
+    description: 'Fast serving path for Kimi K3: same model and quality, lower latency, higher per-token price.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION,
+    chatPrice: { input: 4.50, output: 22.50, cache: { cType: 'oai-ac', read: 0.45 } },
+  },
+  {
     idPrefix: 'accounts/fireworks/models/inkling',
     label: 'Inkling (Vision)',
     pubDate: '20260714',
     description: 'Thinking Machines Lab first open-weights model: a 975B MoE (41B active) trained natively across text, image, and audio, with controllable thinking effort.',
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_VISION,
-    benchmark: { cbaElo: 1441 }, // lmarena: inkling
+    benchmark: { cbaElo: 1442 }, // lmarena: inkling
     // chatPrice: not on the serverless pricing table as of 2026-08-04
   },
   {
@@ -65,6 +74,15 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.14 } },
   },
   {
+    idPrefix: 'accounts/fireworks/routers/glm-5p2-fast',
+    label: 'GLM 5.2 Fast',
+    pubDate: '20260616',
+    description: 'Fast serving path for GLM 5.2: same model and quality, lower latency, higher per-token price.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN,
+    chatPrice: { input: 2.10, output: 6.60, cache: { cType: 'oai-ac', read: 0.21 } },
+  },
+  {
     idPrefix: 'accounts/fireworks/models/kimi-k2p7-code',
     label: 'Kimi K2.7 Code (Vision)',
     pubDate: '20260612',
@@ -72,6 +90,15 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     contextWindow: 262_144, // 256K
     interfaces: IF_CHAT_FN_VISION,
     chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.19 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/routers/kimi-k2p7-code-fast',
+    label: 'Kimi K2.7 Code Fast (Vision)',
+    pubDate: '20260612',
+    description: 'Fast serving path for Kimi K2.7 Code: same model and quality, lower latency, higher per-token price.',
+    contextWindow: 262_144, // 256K
+    interfaces: IF_CHAT_FN_VISION,
+    chatPrice: { input: 1.90, output: 8.00, cache: { cType: 'oai-ac', read: 0.38 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/minimax-m3',
@@ -90,7 +117,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     description: 'Alibaba flagship closed model, available outside Alibaba infrastructure exclusively through Fireworks AI.',
     contextWindow: null, // not published by Fireworks
     interfaces: IF_CHAT_FN_VISION,
-    benchmark: { cbaElo: 1459 }, // lmarena: qwen3.7-plus
+    benchmark: { cbaElo: 1458 }, // lmarena: qwen3.7-plus
     chatPrice: { input: 0.40, output: 1.60, cache: { cType: 'oai-ac', read: 0.08 } },
   },
   {
@@ -110,7 +137,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     description: 'DeepSeek flagship open MoE (1.6T params) for frontier reasoning, coding, and long-context work up to 1M tokens. Hybrid attention keeps long contexts efficient.',
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN,
-    benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro
+    benchmark: { cbaElo: 1457 }, // lmarena: deepseek-v4-pro
     chatPrice: { input: 1.74, output: 3.48, cache: { cType: 'oai-ac', read: 0.145 } },
   },
   {
@@ -134,13 +161,23 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.16 } },
   },
   {
+    // NOTE: the only serving tier named '-turbo' instead of '-fast'; the pricing table calls it 'Kimi K2.6 Fast'
+    idPrefix: 'accounts/fireworks/routers/kimi-k2p6-turbo',
+    label: 'Kimi K2.6 Fast (Vision)',
+    pubDate: '20260417',
+    description: 'Fast serving path for Kimi K2.6: same model and quality, lower latency, higher per-token price.',
+    contextWindow: 262_144, // 256K
+    interfaces: IF_CHAT_FN_VISION,
+    chatPrice: { input: 2.00, output: 8.00, cache: { cType: 'oai-ac', read: 0.30 } },
+  },
+  {
     idPrefix: 'accounts/fireworks/models/minimax-m2p7',
     label: 'MiniMax M2.7',
     pubDate: '20260411',
     description: 'MiniMax MoE built for complex agent harnesses and elaborate productivity tasks, leveraging Agent Teams, Skills, and dynamic tool search.',
     contextWindow: 196_608, // 192K
     interfaces: IF_CHAT_FN,
-    benchmark: { cbaElo: 1417 }, // lmarena: minimax-m2.7
+    benchmark: { cbaElo: 1416 }, // lmarena: minimax-m2.7
     chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.06 } },
   },
   {
@@ -150,7 +187,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     description: 'Z.ai 754B-parameter MoE built for agentic engineering, with strong coding and sustained performance across long multi-round tasks.',
     contextWindow: 202_752, // ~198K
     interfaces: IF_CHAT_FN,
-    benchmark: { cbaElo: 1469 }, // lmarena: glm-5.1
+    benchmark: { cbaElo: 1468 }, // lmarena: glm-5.1
     chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.26 } },
   },
   {

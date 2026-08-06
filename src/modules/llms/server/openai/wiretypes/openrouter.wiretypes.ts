@@ -12,6 +12,11 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
   name: z.string(),
   created: z.number().optional(),
   description: z.string(),
+  // [OpenRouter, 2026-08-06] set on the 11 '~vendor/model-latest' router aliases: the model they point to
+  alias_target: z.object({
+    name: z.string(),
+    slug: z.string(),
+  }).nullish(),
   // NOTE: for 'openrouter/auto', this is:  {
   //   "prompt": "-1",
   //   "completion": "-1"
@@ -26,6 +31,15 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
     internal_reasoning: z.string().optional(),
     input_cache_read: z.string().optional(),
     input_cache_write: z.string().optional(),
+    // [OpenRouter, 2026-08-06] long-context surcharge tiers, ascending by `min_prompt_tokens`; a tier
+    // omitting a price field keeps the price of the tier below it
+    overrides: z.array(z.object({
+      min_prompt_tokens: z.number(),
+      prompt: z.string().optional(),
+      completion: z.string().optional(),
+      input_cache_read: z.string().optional(),
+      input_cache_write: z.string().optional(),
+    })).optional(),
   }),
   context_length: z.number(),
   architecture: z.object({

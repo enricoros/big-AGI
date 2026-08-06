@@ -7,14 +7,16 @@ import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappin
 // --- Alibaba Model ID inference (auto-derived from _knownAlibabaChatModels) ---
 export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefix'];
 
-// Sources (verified 2026-08-04 against the live /v1/models list + docs):
+// Sources (verified 2026-08-06 against the live /v1/models list + docs):
 // - Models:  https://www.alibabacloud.com/help/en/model-studio/models
 // - Pricing: https://www.alibabacloud.com/help/en/model-studio/model-pricing (International/Singapore, USD per 1M tokens)
 // - Per-model pages carry the authoritative caps + cache-hit price, e.g. https://www.alibabacloud.com/help/en/model-studio/qwen3-8-max
 // - Cache:   https://www.alibabacloud.com/help/en/model-studio/context-cache (implicit hit = 20% of input; explicit create 125% / hit 10%; deepseek-v4-pro excepted)
-// 2026-08-04 pass: qwen3.8-max GA (id live 08-03, caps live-probed, $2/$6 + $0.25 cache from its model page) - activated from dormant;
-//   qwen3.7-flash pricing CONFIRMED on the pricing page (was GUESSED); qwen3.7-plus and Kimi K2.7 Code output caps corrected; arena ELOs added;
-//   still uncurated by policy: qwen3.5-122b-a10b (open 122B MoE, $0.4/$3.2), qwen3.6-27b, qwen3.6-plus, qwen3.5-plus, qwen3-coder-next/-flash, glm-5.1 (fallback-hidden).
+// 2026-08-06 pass: qwen3.7-flash repriced to its real 3-tier rates - the 0.25/1.50 was qwen3.6-flash's, the model is still absent from the
+//   Intl pricing page (tiers on its model page + Alibaba's own OpenRouter endpoint agree); qwen3.7-max output cap 64K -> 128K; DeepSeek-V4
+//   context 1,048,576 -> 1,000,000 (what Alibaba serves); arena ELOs refreshed; qwen3.8-max caps/price re-confirmed on its model page;
+//   still uncurated by policy: qwen3.5-122b-a10b (open 122B MoE, $0.4/$3.2), qwen3.6-27b, qwen3.6-plus, qwen3.5-plus, qwen3.5-flash,
+//   qwen3-vl-flash, qwen3-coder-next/-flash, glm-5.1 (fallback-hidden).
 // NOTES:
 // - The live API returns only id/created/owned_by (no pricing/caps/context), so EVERYTHING here is editorial.
 // - Alibaba uses tiered pricing keyed on the request's INPUT token count (both input and output prices step up).
@@ -44,7 +46,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K (live-probed with thinking on; 64K with thinking off)
     chatPrice: { input: 2.00, output: 6.00, cache: { cType: 'oai-ac', read: 0.25 } }, // cache-hit input per the model page (not the 20% rule)
-    benchmark: { cbaElo: 1496 }, // lmarena: qwen3.8-max
+    benchmark: { cbaElo: 1497 }, // lmarena: qwen3.8-max
   },
   {
     idPrefix: 'qwen3.7-max',
@@ -54,7 +56,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     description: 'Flagship agent model with native extended thinking and 1M context. Text-only; strong at coding, productivity, and long-horizon autonomous tasks.',
     contextWindow: 1000000, // 1M
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning], // text-only (no vision)
-    maxCompletionTokens: 65536, // ~66K
+    maxCompletionTokens: 131072, // 128K (live-probed; docs still say 64K)
     chatPrice: { input: 2.50, output: 7.50, cache: { cType: 'oai-ac', read: 0.50 } }, // implicit cache hit 0.50 (explicit hit 0.25)
     benchmark: { cbaElo: 1475 }, // lmarena: qwen3.7-max-preview (same model, pre-GA id)
   },
@@ -71,7 +73,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
       input: [{ upTo: 256000, price: 0.40 }, { upTo: null, price: 1.20 }],
       output: [{ upTo: 256000, price: 1.60 }, { upTo: null, price: 4.80 }],
     }, // implicit cache: 0.08 (<=256K) / 0.24 (>256K)
-    benchmark: { cbaElo: 1459 }, // lmarena: qwen3.7-plus
+    benchmark: { cbaElo: 1458 }, // lmarena: qwen3.7-plus
   },
   {
     idPrefix: 'qwen3.7-flash',
@@ -81,14 +83,14 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     description: 'Latest fast multimodal model with 1M context, thinking (on by default), vision, and 128K output.',
     contextWindow: 1000000, // 1M (live-probed input cap: 983,616)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning], // all live-probed 2026-07-24
-    maxCompletionTokens: 131072, // 128K (live-probed; 2x qwen3.6-flash)
+    maxCompletionTokens: 131072, // 128K (max_tokens range live-probed; its model page and OpenRouter both say 64K)
     chatPrice: {
-      input: [{ upTo: 256000, price: 0.25 }, { upTo: null, price: 1.00 }],
-      output: [{ upTo: 256000, price: 1.50 }, { upTo: null, price: 4.00 }],
-    }, // confirmed on the pricing page 2026-08-04 (same rates as qwen3.6-flash)
+      input: [{ upTo: 32000, price: 0.03 }, { upTo: 256000, price: 0.10 }, { upTo: null, price: 0.20 }],
+      output: [{ upTo: 32000, price: 0.13 }, { upTo: 256000, price: 0.40 }, { upTo: null, price: 0.80 }],
+    }, // not on the Intl pricing page; tiers from the model page + Alibaba's own OpenRouter endpoint. implicit cache: 0.006 / 0.02 / 0.04
   },
   {
-    // kept visible alongside qwen3.7-flash: still on Alibaba's recommended list 2026-08-04
+    // kept visible alongside qwen3.7-flash: still on Alibaba's recommended list 2026-08-06
     idPrefix: 'qwen3.6-flash',
     label: 'Qwen3.6 Flash',
     parameterSpecs: _PS_Thinking,
@@ -188,11 +190,11 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Thinking,
     pubDate: '20260623',
     description: 'DeepSeek V4 Pro served via Alibaba Model Studio (Alibaba pricing, ~5x DeepSeek-direct). 1M context, thinking.',
-    contextWindow: 1_048_576, // 1M
+    contextWindow: 1_000_000, // 1M (Alibaba serves a decimal 1M window, not DeepSeek-direct's 1,048,576)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 65536,
     chatPrice: { input: 2.40, output: 4.80, cache: { cType: 'oai-ac', read: 0.20 } },
-    benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro
+    benchmark: { cbaElo: 1457 }, // lmarena: deepseek-v4-pro
   },
   {
     idPrefix: 'deepseek-v4-flash',
@@ -200,7 +202,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Thinking,
     pubDate: '20260622',
     description: 'DeepSeek V4 Flash served via Alibaba Model Studio. 1M context, thinking.',
-    contextWindow: 1_048_576, // 1M
+    contextWindow: 1_000_000, // 1M (Alibaba serves a decimal 1M window)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 65536,
     chatPrice: { input: 0.20, output: 0.40, cache: { cType: 'oai-ac', read: 0.04 } },
@@ -215,8 +217,8 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1048576, // 1M
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K
-    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.28 } }, // repriced 2026-07-24 (was 1.10/3.851); cache = 20% implicit-hit rule (the model page implies 25%, unconfirmed for Singapore)
-    benchmark: { cbaElo: 1469 }, // lmarena: glm-5.2-max
+    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.35 } }, // repriced 2026-07-24 (was 1.10/3.851); implicit hit = 25% of input for GLM (model page, identical in all 4 listed regions), not the usual 20%
+    benchmark: { cbaElo: 1471 }, // lmarena: glm-5.2-max
   },
   {
     idPrefix: 'glm-5.2-fast',
@@ -227,7 +229,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1048576, // 1M (assumed = glm-5.2)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K (live-probed 2026-07-24)
-    chatPrice: { input: 2.80, output: 8.80, cache: { cType: 'oai-ac', read: 0.56 } }, // cache = 20% implicit-hit rule
+    chatPrice: { input: 2.80, output: 8.80, cache: { cType: 'oai-ac', read: 0.70 } }, // cache = the 25% GLM implicit-hit rate (no model page of its own)
     hidden: true, // preview-only for now (live id: glm-5.2-fast-preview); un-hide when GA
   },
   {

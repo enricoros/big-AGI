@@ -8,9 +8,9 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 
 **Primary Sources:** docs moved from `platform.openai.com/docs/*` (301s) to `developers.openai.com/api/docs/*`.
 Appending `.md` to any docs URL returns clean markdown that plain `curl` fetches (no 403, no browser needed):
-- Pricing: https://developers.openai.com/api/docs/pricing.md - standard/batch/flex/fast tables, all rows inline
+- Pricing: https://developers.openai.com/api/docs/pricing.md - standard/batch/flex/fast tables, all rows inline. The flagship table is NOT the full list: Codex/ChatGPT(`*-chat-latest`)/Cyber/Search rows sit in a separate "Specialized models" table, audio in its own
 - Models index: https://developers.openai.com/api/docs/models.md; per-model https://developers.openai.com/api/docs/models/<id>.md (context window, max output, cutoff, endpoints, supported features/tools, price)
-- Deprecations: https://developers.openai.com/api/docs/deprecations.md - upcoming + past shutdown dates and official replacements
+- Deprecations: https://developers.openai.com/api/docs/deprecations.md - shutdown dates + official replacements. Split matters: "Upcoming deprecations" = still callable, "Past deprecations" = already dead (yet often still on /v1/models)
 - Changelog: https://developers.openai.com/api/docs/changelog.md - price cuts and new API features, newest first
 - Doc index: https://developers.openai.com/llms.txt
 

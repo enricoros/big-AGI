@@ -26,6 +26,7 @@ const DEV_DEBUG_XAI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO I
 // Re-confirmed: 2026-06-26 via docs.x.ai (no API key this run): same 5 chat models, same pricing/context windows
 // Verified: 2026-07-08 via live /v1/language-models + live probes: +grok-4.5 (released today); API now reports >200K long-context price tiers for ALL models (carried below as tiered pricing)
 // Verified: 2026-08-04 via live /v1/language-models + docs.x.ai + effort probes: same 6 chat models, contexts unchanged; fixed grok-4.5 cached-input price (0.30/0.60, was 0.50/1.00)
+// Verified: 2026-08-06 via live /v1/language-models + /v1/models + docs.x.ai + effort/tool probes: same 6 chat models, prices/contexts unchanged; grok-4.5 'xhigh' still accepted (docs table only lists low/medium/high)
 
 // Pricing for Grok 4.3 / 4.20 flagship family (unified $1.25/$2.50 since May 2026; >200K tier per live API 2026-07-08)
 const PRICE_FLAGSHIP = {
@@ -85,7 +86,7 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
       output: [{ upTo: 200000, price: 6.00 }, { upTo: null, price: 12.00 }],
       cache: { cType: 'oai-ac', read: [{ upTo: 200000, price: 0.30 }, { upTo: null, price: 0.60 }] },
     },
-    benchmark: { cbaElo: 1469 }, // grok-4.5
+    benchmark: { cbaElo: 1468 }, // grok-4.5
   },
 
   // Grok 4.3 (flagship, April 2026) - reasoning_effort: none/low(default)/medium/high/xhigh
@@ -128,7 +129,7 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
     interfaces: XAI_IF_Vision,
     parameterSpecs: XAI_PAR,
     chatPrice: PRICE_FLAGSHIP,
-    benchmark: { cbaElo: 1474 }, // grok-4.20-beta1 (CBA name)
+    benchmark: { cbaElo: 1475 }, // grok-4.20-beta1 (CBA name)
   },
   {
     idPrefix: 'grok-4.20-multi-agent-0309',
@@ -137,7 +138,7 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
     description: 'Multi-agent model that runs specialized agents in parallel for collaborative verification with reduced hallucination. Reasoning effort selects 4 vs 16 agents.',
     contextWindow: 1000000,
     maxCompletionTokens: undefined,
-    // no LLM_IF_OAI_Fn: multi-agent does not support function calling
+    // no LLM_IF_OAI_Fn: client-side tools on multi-agent are beta-gated (2026-08-06 probe: 400 'require beta access')
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'] }, // 'none' disables reasoning (per 2026-06 sweep); low/medium = 4 agents, high/xhigh = 16 agents

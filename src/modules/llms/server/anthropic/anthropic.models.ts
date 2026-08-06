@@ -107,7 +107,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
       { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // 2x tier on 4.8 (vs 4.7/4.6's 6x)
       ...ANT_TOOLS_DYNAMIC,
     ],
-    benchmark: { cbaElo: 1484 }, // claude-opus-4-8-thinking
+    benchmark: { cbaElo: 1483 }, // claude-opus-4-8-thinking
   },
 
   // Claude 4.7 models with thinking variants (adaptive-only, manual budgets removed)
@@ -140,7 +140,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
       // Toggle dropped here so the UI doesn't advertise a dead control. If Anthropic restores it, re-add 'fast_6x'.
       ...ANT_TOOLS_DYNAMIC,
     ],
-    benchmark: { cbaElo: 1505 }, // claude-opus-4-6-thinking
+    benchmark: { cbaElo: 1504 }, // claude-opus-4-6-thinking
   },
 
   'claude-sonnet-4-6': {
@@ -198,12 +198,12 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     benchmark: { cbaElo: 1412 + 1 }, // 1 (thinking) + claude-haiku-4-5-20251001
   },
 
-  // Claude 4.1 models with thinking variants (deprecated June 5, 2026)
+  // Claude 4.1 models with thinking variants (retired August 5, 2026)
   'claude-opus-4-1-20250805': {
     idVariant: 'thinking',
-    hidden: true, // deprecated - superseded by 4.8
+    hidden: true, // retired - superseded by 4.8
     label: 'Claude Opus 4.1 (Thinking)',
-    description: 'Claude Opus 4.1 with extended thinking mode enabled for complex reasoning. Deprecated June 5, 2026.',
+    description: 'Claude Opus 4.1 with extended thinking mode enabled for complex reasoning. Retired August 5, 2026.',
     maxCompletionTokens: 32000,
     interfaces: IF_4_R,
     parameterSpecs: [
@@ -295,7 +295,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // safety classifiers (stop_reason 'refusal' + stop_details.category incl. 'reasoning_extraction', opt-in `fallbacks` beta),
     // 512-token min cacheable prompt, requires 30-day data retention (no ZDR). No fast mode at launch.
     chatPrice: { input: 10, output: 50, cache: { cType: 'ant-bp', read: 1.00, write: 12.50, duration: 300 } },
-    benchmark: { cbaElo: 1509 }, // claude-fable-5
+    benchmark: { cbaElo: 1508 }, // claude-fable-5
   },
   {
     id: 'claude-mythos-5', // Limited availability (Project Glasswing) - 2026-06-09
@@ -312,7 +312,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     ],
     // Mythos 5: same specs/pricing/constraints as Fable 5; invitation-only, /v1/models lists it only for approved orgs
     chatPrice: { input: 10, output: 50, cache: { cType: 'ant-bp', read: 1.00, write: 12.50, duration: 300 } },
-    benchmark: { cbaElo: 1509 + 1 }, // (no arena data yet) assuming: claude-fable-5 + 1
+    benchmark: { cbaElo: 1508 + 1 }, // (no arena data yet) assuming: claude-fable-5 + 1
   },
 
   // Claude Opus 5 - SINGLE always-thinking entry (like Fable 5), NOT a base + '(Adaptive)' split.
@@ -343,14 +343,14 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // tool changes (beta `mid-conversation-tool-changes-2026-07-01`); `fallbacks` 'default' mode (beta
     // `server-side-fallback-2026-07-01`).
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
-    benchmark: { cbaElo: 1492 }, // claude-opus-5-high (also: claude-opus-5-max=1490)
+    benchmark: { cbaElo: 1493 }, // claude-opus-5-high (also: claude-opus-5-max=1489)
   },
 
   // Claude Sonnet 5 (Claude 5 gen) - unlike Fable/Mythos 5, thinking CAN be disabled, so it keeps a base + thinking variant (like Opus 4.7/4.8)
   {
-    id: 'claude-sonnet-5', // Active - 2026-06-29
+    id: 'claude-sonnet-5', // Active - 2026-06-30
     label: 'Claude Sonnet 5',
-    pubDate: '20260629',
+    pubDate: '20260630',
     description: 'Best combination of speed and intelligence, with the largest gains in coding and agentic tasks',
     contextWindow: 1_000_000, // 1M GA at flat pricing (no opt-in required); 1M is both default and max, no smaller variant
     maxCompletionTokens: 128000,
@@ -390,7 +390,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // adaptive-only thinking (budget_tokens rejected), temperature/top_p/top_k rejected, new tokenizer (~1x to 1.35x tokens), no prefill.
     // New vs 4.7: mid-conversation system messages, refusal stop_details, 1,024-token min cacheable prompt.
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
-    benchmark: { cbaElo: 1475 }, // claude-opus-4-8
+    benchmark: { cbaElo: 1473 }, // claude-opus-4-8
   },
 
   // Claude 4.7 models
@@ -412,7 +412,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // Breaking changes vs 4.6: extended thinking budgets removed (adaptive-only), temperature/top_p/top_k rejected,
     // thinking content omitted by default, new tokenizer (~1x to 1.35x tokens for same text), no prefill.
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
-    benchmark: { cbaElo: 1492 }, // claude-opus-4-7
+    benchmark: { cbaElo: 1493 }, // claude-opus-4-7
   },
 
   // Claude 4.6 models
@@ -433,7 +433,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     ],
     // Opus 4.6: flat $5/$25 pricing (1M context GA at standard pricing since 2026-03-13, no opt-in required)
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
-    benchmark: { cbaElo: 1497 }, // claude-opus-4-6
+    benchmark: { cbaElo: 1498 }, // claude-opus-4-6
   },
   {
     id: 'claude-sonnet-4-6', // Active
@@ -509,11 +509,11 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
 
   // Claude 4.1 models
   {
-    hidden: true, // Deprecated: June 5, 2026 | Retiring: August 5, 2026 | Replacement: claude-opus-4-8
-    id: 'claude-opus-4-1-20250805', // Deprecated
-    label: 'Claude Opus 4.1 [Deprecated]',
+    hidden: true, // Deprecated: June 5, 2026 | Retired: August 5, 2026 | Replacement: claude-opus-4-8
+    id: 'claude-opus-4-1-20250805', // Retired (except on Bedrock and Vertex AI)
+    label: 'Claude Opus 4.1 [Retired]',
     pubDate: '20250805',
-    description: 'Previous Opus model. Deprecated June 5, 2026, retiring August 5, 2026.',
+    description: 'Previous Opus model. Retired August 5, 2026 (except on Bedrock and Vertex AI).',
     contextWindow: 200000,
     maxCompletionTokens: 32000,
     interfaces: IF_4,

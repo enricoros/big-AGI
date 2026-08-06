@@ -9,12 +9,16 @@ import { fromManualMapping, type ManualMappings } from '../../models.mappings';
 // [LocalAI]
 const _knownLocalAIChatModels: ManualMappings = [];
 const _knownLocalAIPrice = { input: 'free', output: 'free' } as const;
+// non-chat models to hide: matched as substrings of the model id, as LocalAI ids are user-chosen
+// gallery names (verified live 2026-08-06 against an instance also serving sd-3.5-*-ggml, dreamshaper,
+// kitten-tts, kokoro and silero-vad, none of which the previous exact-id list caught)
 const _hideLocalAIModels = [
-  'jina-reranker-v1-base-en', // vector search
-  'stablediffusion', // text-to-image
-  'text-embedding-ada-002', // embedding generator
-  'tts-1', // text-to-speech
-  'whisper-1', // speech-to-text
+  'reranker', // vector search
+  'stablediffusion', 'sd-', 'sdxl', 'dreamshaper', 'flux', // text-to-image
+  'embedding', // embedding generators
+  'tts', 'kokoro', // text-to-speech
+  'whisper', // speech-to-text
+  '-vad', // voice activity detection
 ];
 
 export function localAIModelSortFn(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
@@ -45,9 +49,9 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
 
   // very dull heuristics
   const interfaces = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
-  if (modelId.includes('vision') || modelId.includes('llava'))
+  if (['vision', 'llava', '-vl-', 'minicpm-v'].some(match => modelId.includes(match)))
     interfaces.push(LLM_IF_OAI_Vision);
-  if (modelId.includes('r1'))
+  if (['r1', 'thinking', 'reasoning', 'qwq'].some(match => modelId.includes(match)))
     interfaces.push(LLM_IF_OAI_Reasoning);
 
   return fromManualMapping(_knownLocalAIChatModels, modelId, undefined, undefined, {
@@ -60,6 +64,6 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
     // maxCompletionTokens
     // benchmark
     chatPrice: _knownLocalAIPrice,
-    hidden: _hideLocalAIModels.includes(modelId),
+    hidden: _hideLocalAIModels.some(match => modelId.includes(match)),
   });
 }

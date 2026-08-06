@@ -29,7 +29,7 @@ const IF_CHAT_FN = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
  * Cerebras models - fast OpenAI-compatible inference (wafer-scale).
  * - models list: https://inference-docs.cerebras.ai/models/overview
  * - pricing: https://www.cerebras.ai/pricing (per-token rates from /public/v1/models)
- * - updated: 2026-08-04 (empirically verified caps/pricing against the live API)
+ * - updated: 2026-08-06 (empirically verified caps/pricing/effort enums against the live API)
  *
  * EDITORIAL OVERRIDES: the /public/v1/models catalog carries pricing/limits/capabilities, but its
  * metadata lags for preview models (it used to report gemma-4-31b with all caps false and an 8K
@@ -40,7 +40,7 @@ const IF_CHAT_FN = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 type _CerebrasModelDef = (KnownModel & { pubDate?: string }) | KnownLink;
 
 const _knownCerebrasModels = llmsDefineModels<_CerebrasModelDef>()([
-  // Gemma 4 31B - Cerebras' first multimodal model (~1,850 tok/s). Free preview (eval-only).
+  // Gemma 4 31B - Cerebras' first multimodal model (~1,850 tok/s). Preview (eval-only).
   {
     isPreview: true,
     idPrefix: 'gemma-4-31b',

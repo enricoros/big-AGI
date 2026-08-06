@@ -23,6 +23,7 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 - A 1-token `POST /v1/chat/completions` confirms unlisted/legacy ids are still served (400 `unknown model` = dead). Careful: not every served id carries the `MiniMax-` prefix (e.g. `M2-her`), and `MiniMax-01` is dead while `MiniMax-Text-01` is live
 - An over-large `max_completion_tokens` 400s with the exact per-model ceiling in the message (M3 524288, M2.x/M1 196608, Text-01 40000, M2-her 2048) - cheapest way to check max output
 - Tool support: send `tools` + `tool_choice: 'required'`; M2-her silently ignores both (no function calling)
+- Vision: an `image_url` part never 400s, so absence of an error proves nothing - compare `usage.prompt_tokens` with vs without the image (M3 grows, M2.x is identical = image silently dropped)
 
 **Important:**
 - Models are `ModelDescriptionSchema[]` objects (not ManualMappings) - match existing pattern in the file

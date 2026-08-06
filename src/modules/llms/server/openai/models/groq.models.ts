@@ -17,7 +17,7 @@ const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduc
  * Groq models.
  * - models list: https://console.groq.com/docs/models
  * - pricing: https://groq.com/pricing/
- * - updated: 2026-08-04
+ * - updated: 2026-08-06
  */
 type _GroqModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 
@@ -29,7 +29,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
     idPrefix: 'qwen/qwen3.6-27b',
     label: 'Qwen 3.6 · 27B (Preview)',
     pubDate: '20260509', // from API 'created' (no editorial date available)
-    description: 'Qwen3.6 27B by Alibaba Cloud. Multimodal (vision + text, max 5 images / 20MB), flagship-level agentic coding, thinking/non-thinking modes, tool use. 131K context, 16K max output. ~500 t/s on Groq.',
+    description: 'Qwen3.6 27B by Alibaba Cloud. Multimodal (vision + text, max 3 images / 20MB), flagship-level agentic coding, thinking/non-thinking modes, tool use. 131K context, 16K max output. ~500 t/s on Groq.',
     contextWindow: 131072,
     maxCompletionTokens: 16384,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
@@ -47,7 +47,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
     contextWindow: 196608,
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    benchmark: { cbaElo: 1417 }, // lmarena: minimax-m2.7
+    benchmark: { cbaElo: 1416 }, // lmarena: minimax-m2.7
     // Enterprise-only on Groq (contact sales): standard API keys 404 it, so the DEV stale check will flag it
   },
 
@@ -65,7 +65,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
     idPrefix: 'groq/compound',
     label: 'Compound (Agentic System)',
     pubDate: '20250904',
-    description: 'Groq agentic AI with web search, code execution, browser automation. Uses GPT-OSS 120B, Llama 4 Scout, Llama 3.3 70B. Pricing based on underlying model usage.',
+    description: 'Groq agentic AI with web search, visit website, code execution, Wolfram Alpha. Uses GPT-OSS 120B, Llama 4 Scout, Llama 3.3 70B. Pricing based on underlying model usage.',
     contextWindow: 131072,
     maxCompletionTokens: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
@@ -75,7 +75,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
     idPrefix: 'groq/compound-mini',
     label: 'Compound Mini (Agentic System)',
     pubDate: '20250904',
-    description: 'Lighter Groq agentic AI with web search, code execution. Pricing based on underlying model usage.',
+    description: 'Lighter Groq agentic AI, same built-in tools but a single tool call per request (~3x lower latency). Pricing based on underlying model usage.',
     contextWindow: 131072,
     maxCompletionTokens: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
@@ -108,7 +108,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // Groq rejects 'none' on gpt-oss
     ],
-    chatPrice: { input: 0.075, output: 0.30 },
+    chatPrice: { input: 0.075, output: 0.30, cache: { cType: 'oai-ac', read: 0.0375 } },
   },
   {
     idPrefix: 'openai/gpt-oss-20b',
@@ -126,25 +126,28 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
 
   // Production Models - Meta
   // (Feb 18, 2026) meta-llama/llama-guard-4-12b removed from docs
+  // (Aug 16, 2026) both models below shut down (announced Jun 17, 2026) -> gpt-oss-120b / qwen3.6-27b, gpt-oss-20b
   {
     idPrefix: 'llama-3.3-70b-versatile',
     label: 'Llama 3.3 · 70B Versatile',
     pubDate: '20241206',
-    description: 'Meta Llama 3.3 (70B params) with GQA. Strong reasoning, coding, multilingual. 131K context, 32K max output. ~280 t/s on Groq.',
+    description: 'Meta Llama 3.3 (70B params) with GQA. Strong reasoning, coding, multilingual. 131K context, 32K max output. ~280 t/s on Groq. Retiring 2026-08-16 -> GPT-OSS 120B or Qwen3.6 27B.',
     contextWindow: 131072,
     maxCompletionTokens: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.59, output: 0.79 },
+    isLegacy: true,
   },
   {
     idPrefix: 'llama-3.1-8b-instant',
     label: 'Llama 3.1 · 8B Instant',
     pubDate: '20240723',
-    description: 'Meta Llama 3.1 (8B params). Fast, cost-effective for high-volume tasks. 131K context and max output. ~560 t/s on Groq.',
+    description: 'Meta Llama 3.1 (8B params). Fast, cost-effective for high-volume tasks. 131K context and max output. ~560 t/s on Groq. Retiring 2026-08-16 -> GPT-OSS 20B.',
     contextWindow: 131072,
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.05, output: 0.08 },
+    isLegacy: true,
   },
 
   // (Feb 18, 2026) allam-2-7b (SDAIA) removed from docs and pricing, still returned by API -> deny list

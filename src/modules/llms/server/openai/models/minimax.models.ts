@@ -18,7 +18,7 @@ export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
  * - Models: https://platform.minimax.io/docs/release-notes/models.md
  * - Pricing: https://platform.minimax.io/docs/guides/pricing-paygo.md
  * - Text generation: https://platform.minimax.io/docs/guides/text-generation.md
- * - Updated: 2026-08-04
+ * - Updated: 2026-08-06
  */
 type _MiniMaxModelDef = ModelDescriptionSchema & { pubDate: string };
 
@@ -52,7 +52,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.06 } },
-    benchmark: { cbaElo: 1417 }, // lmarena: minimax-m2.7
+    benchmark: { cbaElo: 1416 }, // lmarena: minimax-m2.7
   },
   {
     id: 'MiniMax-M2.7-highspeed',
@@ -63,7 +63,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.06 } },
-    benchmark: { cbaElo: 1417 }, // same weights as minimax-m2.7
+    benchmark: { cbaElo: 1416 }, // same weights as minimax-m2.7
   },
 
   // M2.5 series

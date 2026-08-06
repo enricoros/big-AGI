@@ -16,6 +16,9 @@ Reference files (for context only, do not modify):
 2. Models & IDs: https://platform.claude.com/docs/en/about-claude/models/overview.md
 3. Pricing (base, cache, batch, long context): https://platform.claude.com/docs/en/about-claude/pricing.md
 4. Deprecations & retirement dates: https://platform.claude.com/docs/en/about-claude/model-deprecations.md
+   - Its "tentative retirement date" for an active model is exactly launch + 1 year, so it
+     cross-checks `pubDate`. Prefer it and the release-note heading over the `/v1/models`
+     `created_at`, which can predate the announcement by a few days.
 
 **Discovering feature docs:** The release notes and models overview markdown
 contain inline links to feature-specific pages (thinking modes, effort,
