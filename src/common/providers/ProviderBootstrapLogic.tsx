@@ -1,9 +1,13 @@
 import * as React from 'react';
 import { useRouter } from 'next/router';
 
+import { getChatTokenCountingMethod } from '../../apps/chat/store-app-chat';
+
+import { logger } from '~/common/logger/logger.client';
 import { markNewsAsSeen, shallRedirectToNews, sherpaReconfigureBackendModels, sherpaStorageMaintenanceNoChats_delayed } from '~/common/logic/store-logic-sherpa';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
 import { preloadTiktokenLibrary } from '~/common/tokens/tokens.text';
+import { useClientLoggerInterception } from '~/common/logger/hooks/useClientLoggerInterception';
 import { useNextLoadProgress } from '~/common/components/useNextLoadProgress';
 
 
@@ -11,6 +15,9 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
 
   // external state
   const { route, events } = useRouter();
+
+  // AUTO-LOG events from this scope on; note that we are past the Sherpas
+  useClientLoggerInterception(true, false);
 
   // wire-up the NextJS router to a loading bar to be displayed while routes change
   useNextLoadProgress(route, events);
@@ -32,7 +39,7 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
 
 
   // decide what to launch
-  const launchPreload = isOnChat && !isRedirectingToNews;
+  const launchPreload = isOnChat && !isRedirectingToNews && getChatTokenCountingMethod() === 'accurate'; // only preload if using TikToken by default
   const launchAutoConf = isOnChat && !isRedirectingToNews;
   const launchStorageGC = true;
 
@@ -41,7 +48,14 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
   React.useEffect(() => {
     if (!launchPreload) return;
 
-    void preloadTiktokenLibrary(); // fire/forget (large WASM payload)
+    void preloadTiktokenLibrary() // fire/forget (large WASM payload)
+      .catch(err => {
+        // Suppress WebAssembly loading errors - app will fall back to approximate counting
+        // These commonly occur when users navigate away or have slow connections
+        logger.debug('Tiktoken preload failed (expected on slow/interrupted loads)', err, 'client', {
+          skipReporting: true, // Don't send to PostHog - this is a benign error
+        });
+      });
 
   }, [launchPreload]);
 

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
+import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import type { DLLM } from '~/common/stores/llms/llms.types';
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
 import { useShallowStabilizer } from '~/common/util/hooks/useShallowObject';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
@@ -19,10 +19,11 @@ export function useServiceSetup<TServiceSettings extends object, TAccess>(servic
   service: DModelsService<TServiceSettings> | null;
   serviceAccess: TAccess;
 
-  serviceHasBackendCap: boolean;
+  serviceHasCloudTenantConfig: boolean;
   serviceHasLLMs: boolean;
-  serviceHasVisibleLLMs: boolean;
   serviceSetupValid: boolean;
+
+  updateLabel: (label: string, allowEmpty?: boolean) => void;
 
   partialSettings: Partial<TServiceSettings> | null;
   updateSettings: (partialSettings: Partial<TServiceSettings>) => void;
@@ -32,7 +33,7 @@ export function useServiceSetup<TServiceSettings extends object, TAccess>(servic
   const stabilizeTransportAccess = useShallowStabilizer<TAccess>();
 
   // invalidates only when the setup changes
-  const { updateServiceSettings, ...rest } = useModelsStore(useShallow(({ llms, sources, updateServiceSettings }) => {
+  const { updateServiceLabel, updateServiceSettings, ...rest } = useModelsStore(useShallow(({ llms, sources, updateServiceLabel, updateServiceSettings }) => {
 
     // find the service | null
     const service: DModelsService<TServiceSettings> | null = sources.find(s => s.id === serviceId) ?? null;
@@ -46,23 +47,28 @@ export function useServiceSetup<TServiceSettings extends object, TAccess>(servic
       service,
       serviceAccess,
 
-      serviceHasBackendCap: vendorHasBackendCap(vendor),
+      serviceHasCloudTenantConfig: vendorHasBackendCap(vendor),
       serviceHasLLMs: !!serviceLLms.length,
-      serviceHasVisibleLLMs: !!serviceLLms.find(llm => !llm.hidden),
       serviceSetupValid: serviceSetupValid,
 
       partialSettings: service?.setup ?? null, // NOTE: do not use - prefer ACCESS; only used in 1 edge case now
+      updateServiceLabel,
       updateServiceSettings,
     };
   }));
 
   // convenience functions
+  const updateLabel = React.useCallback((label: string, allowEmpty?: boolean) => {
+    updateServiceLabel(serviceId, label, allowEmpty);
+  }, [serviceId, updateServiceLabel]);
+
   const updateSettings = React.useCallback((partialSetup: Partial<TServiceSettings>) => {
     updateServiceSettings<TServiceSettings>(serviceId, partialSetup);
   }, [serviceId, updateServiceSettings]);
 
   return {
     ...rest,
+    updateLabel,
     updateSettings,
   };
 }

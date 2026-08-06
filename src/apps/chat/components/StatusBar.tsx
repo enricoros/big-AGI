@@ -6,12 +6,12 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import MinimizeIcon from '@mui/icons-material/Minimize';
 
 // import { isMacUser } from '~/common/util/pwaUtils';
-import type { ShortcutObject } from '~/common/components/shortcuts/useGlobalShortcuts';
+import { ShortcutKey, ShortcutObject } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useGlobalShortcutsStore } from '~/common/components/shortcuts/store-global-shortcuts';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 
 // configuration
@@ -74,22 +74,35 @@ const _styles = {
     } as const,
   } as const,
 
-  itemKey: {
+  itemKeyGroup: {
     fontSize: 'xs',
     fontWeight: 'md',
-    border: '1px solid',
-    borderColor: 'neutral.outlinedBorder',
+    outline: '1px solid',
+    outlineColor: 'neutral.outlinedBorder',
     borderRadius: 'xs',
     // backgroundColor: 'var(--joy-palette-neutral-outlinedBorder)',
     backgroundColor: 'background.popup',
     // boxShadow: 'inset 2px 0px 4px -2px var(--joy-palette-background-backdrop)',
     boxShadow: 'xs',
     // minWidth: '1rem',
-    paddingBlock: '1px',
-    paddingInline: '4px',
+    paddingBlock: '2px',
+    paddingInline: '1px',
     // pointerEvents: 'none',
     cursor: 'pointer',
     transition: 'background-color 1s ease',
+    display: 'flex',
+    textAlign: 'center',
+    // Remove the gap and use dividers instead
+    gap: 0,
+    '& > span': {
+      position: 'relative',
+      paddingInline: '4px',
+      minWidth: '1rem',
+      '&:not(:last-child)': {
+        borderRight: '1px solid',
+        borderRightColor: 'neutral.outlinedBorder',
+      },
+    },
   } as const,
 
   itemIcon: {
@@ -140,10 +153,12 @@ function ShortcutItem(props: { shortcut: ShortcutObject }) {
       aria-disabled={props.shortcut.disabled}
       sx={_styles.shortcut}
     >
-      {!!props.shortcut.ctrl && <Box sx={_styles.itemKey}>{_platformAwareModifier('Ctrl')}</Box>}
-      {!!props.shortcut.shift && <Box sx={_styles.itemKey}>{_platformAwareModifier('Shift')}</Box>}
-      {/*{!!props.shortcut.altForNonMac && <Box sx={_styles.itemKey} onClick={handleClicked}>{_platformAwareModifier('Alt')}</ShortcutKey>}*/}
-      <Box sx={_styles.itemKey}>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key === 'Enter' ? '↵' : props.shortcut.key.toUpperCase()}</Box>
+      <Box sx={_styles.itemKeyGroup}>
+        {!!props.shortcut.ctrl && <span>{_platformAwareModifier('Ctrl')}</span>}
+        {!!props.shortcut.shift && <span>{_platformAwareModifier('Shift')}</span>}
+        {/*{!!props.shortcut.altForNonMac && <span>{_platformAwareModifier('Alt')}</span>}*/}
+        <span>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key === 'Enter' ? '↵' : props.shortcut.key.toUpperCase()}</span>
+      </Box>
       &nbsp;<Typography level='body-xs'>{props.shortcut.description}</Typography>
       {!!props.shortcut.endDecoratorIcon && <props.shortcut.endDecoratorIcon sx={_styles.itemIcon} />}
     </Box>
@@ -162,18 +177,34 @@ export function StatusBar(props: { toggleMinimized?: () => void, isMinimized?: b
   // external state
   const labsShowShortcutBar = useUXLabsStore(state => state.labsShowShortcutBar);
   const shortcuts = useGlobalShortcutsStore(useShallow(state => {
+    // get visible shortcuts
     let visibleShortcuts = !labsShowShortcutBar ? [] : state.getAllShortcuts().filter(shortcut => !!shortcut.description);
+
+    // filter by highest level if levels are present
     const maxLevel = Math.max(...visibleShortcuts.map(s => s.level ?? 0));
     if (maxLevel > 0)
       visibleShortcuts = visibleShortcuts.filter(s => s.level === maxLevel);
+
     visibleShortcuts.sort((a, b) => {
-      // if they don't have a 'shift', they are sorted first
-      if (a.shift !== b.shift)
-        return a.shift ? 1 : -1;
-      // (Hack) If the description is 'Beam', it goes last
-      if (a.description === 'Beam Edit')
-        return 1;
-      // alphabetical for the rest
+      // 1. First by level
+      if ((a.level ?? 0) !== (b.level ?? 0))
+        return (b.level ?? 0) - (a.level ?? 0);
+
+      // 2. Then by modifiers presence (no modifiers first)
+      const aModifiers = (a.ctrl ? 1 : 0) + (a.shift ? 1 : 0);
+      const bModifiers = (b.ctrl ? 1 : 0) + (b.shift ? 1 : 0);
+      if (aModifiers !== bModifiers)
+        return aModifiers - bModifiers;
+
+      // 3a. Special case for ShortcutKey.Esc, at the beginning
+      if (a.key === ShortcutKey.Esc) return -1;
+      if (b.key === ShortcutKey.Esc) return 1;
+
+      // 3. Special case for 'Beam Edit'
+      if (a.description === 'Beam Edit') return 1;
+      if (b.description === 'Beam Edit') return -1;
+
+      // 4. Finally alphabetically by key
       return a.key.localeCompare(b.key);
     });
     return visibleShortcuts;

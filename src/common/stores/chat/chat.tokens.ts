@@ -1,4 +1,7 @@
+import { getChatTokenCountingMethod } from '../../../apps/chat/store-app-chat';
+
 import type { DLLM } from '~/common/stores/llms/llms.types';
+import { approximateTextTokens } from '~/common/tokens/tokens.approximate';
 import { imageTokensForLLM } from '~/common/tokens/tokens.image';
 import { textTokensForLLM } from '~/common/tokens/tokens.text';
 
@@ -19,7 +22,17 @@ export function estimateTokensForFragments(llm: DLLM, role: DMessageRole, fragme
 // Text
 
 export function estimateTextTokens(text: string, llm: DLLM, debugFrom: string): number {
-  return textTokensForLLM(text, llm, debugFrom) ?? 0;
+  // Approximate path
+  if (getChatTokenCountingMethod() === 'approximate')
+    return approximateTextTokens(text, llm, debugFrom);
+
+  // Default to accurate method (the JS+WASM 'tiktoken' lib)
+  const accurateTokens = textTokensForLLM(text, llm, debugFrom);
+  if (accurateTokens !== null)
+    return accurateTokens;
+
+  // Fallback to approximate if the accurate method is not available
+  return approximateTextTokens(text, llm, debugFrom);
 }
 
 function estimateImageTokens(width: number | undefined, height: number | undefined, debugTitle: string | undefined, llm: DLLM): number {
@@ -37,20 +50,40 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
   // attachment fragments
   if (isAttachmentFragment(fragment)) {
     const aPart = fragment.part;
-    switch (aPart.pt) {
+    const aPt = aPart.pt;
+    switch (aPt) {
       case 'doc':
         const likelyRendition = marshallWrapText(aPart.data.text, aPart.ref, 'markdown-code');
         return estimateTextTokens(likelyRendition, llm, debugFrom);
+      case 'reference':
+        // "fallback" to inline computation for Asset Reference fragments with legacy image refs
+        if (aPart.rt === 'zync' && aPart.assetType === 'image' && aPart._legacyImageRefPart?.dataRef?.reftype === 'dblob') {
+          const forcedSize = role === 'assistant' ? 512 : undefined;
+          return estimateImageTokens(forcedSize || aPart._legacyImageRefPart.width, forcedSize || aPart._legacyImageRefPart.height, fragment.title, llm);
+        }
+        // TODO: implement this properly - as we don't have resolutions in the part(!) - and this could be really expensive
+        break; // warn
       case 'image_ref':
         // NOTE: should not happen with attachments, unless someone '/a' a message with an image attached
         const forcedSize = role === 'assistant' ? 512 : undefined;
         return estimateImageTokens(forcedSize || aPart.width, forcedSize || aPart.height, fragment.title, llm);
+      default:
+        const _exhaustiveCheck: never = aPt;
     }
   } else if (isContentFragment(fragment)) {
     const cPart = fragment.part;
-    switch (cPart.pt) {
+    const cPt = cPart.pt;
+    switch (cPt) {
       case 'error':
         return estimateTextTokens(cPart.error, llm, debugFrom);
+      case 'reference':
+        // "fallback" to inline computation for Asset Reference fragments with legacy image refs
+        if (cPart.rt === 'zync' && cPart.assetType === 'image' && cPart._legacyImageRefPart?.dataRef?.reftype === 'dblob') {
+          const forcedSize = role === 'assistant' ? 512 : undefined;
+          return estimateImageTokens(forcedSize || cPart._legacyImageRefPart.width, forcedSize || cPart._legacyImageRefPart.height, debugFrom, llm);
+        }
+        // TODO: implement this properly - as we don't have resolutions in the part(!) - and this could be really expensive
+        break; // warn
       case 'image_ref':
         const forcedSize = role === 'assistant' ? 512 : undefined;
         return estimateImageTokens(forcedSize || cPart.width, forcedSize || cPart.height, debugFrom, llm);
@@ -58,17 +91,18 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
         return estimateTextTokens(cPart.text, llm, debugFrom);
       case 'tool_invocation':
       case 'tool_response':
-        console.warn('Unhandled token preview for content type:', cPart.pt);
-        return 0;
+      case 'hosted_resource':
+        break; // warn
+      default:
+        const _exhaustiveCheck: never = cPt;
     }
   } else if (isVoidFragment(fragment)) {
     // all void fragments are ignored by definition and never sent to the llm
     // NOTE: make sure you collapse/don't account for the containing message as well, if left empty
     return 0;
-  } else {
-    console.warn('Unhandled token preview for fragment type:', (fragment as any).ft);
-    return 0;
   }
+  console.warn(`[DEV] Unhandled token preview for fragment/part: ${fragment.ft}/${fragment.part?.pt}`);
+  return 0;
 }
 
 

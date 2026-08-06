@@ -1,22 +1,21 @@
 import React from 'react';
-import { sendGAEvent } from '@next/third-parties/google';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Step, stepClasses, StepIndicator, stepIndicatorClasses, Stepper, Typography } from '@mui/joy';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
-import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
-import { AgiSquircleIcon } from '~/common/components/icons/AgiSquircleIcon';
+import { BigAgiSquircleIcon } from '~/common/components/icons/big-agi/BigAgiSquircleIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { animationTextShadowLimey } from '~/common/util/animUtils';
-import { hasGoogleAnalytics } from '~/common/components/GoogleAnalytics';
+import { hasGoogleAnalytics, sendGAEvent } from '~/common/components/3rdparty/GoogleAnalytics';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIContentScaling } from '~/common/state/store-ui';
+import { useUIContentScaling } from '~/common/stores/store-ui';
 
 
 // configuration
@@ -85,7 +84,7 @@ function AllStepsStepper(props: {
                 onClick={() => props.onStepClicked(stepIndex)}
                 sx={{ cursor: 'pointer' }}
               >
-                {completed ? <CheckRoundedIcon sx={{ fontSize: 'md' }} /> : active ? <KeyboardArrowDownRoundedIcon sx={{ fontSize: 'lg' }} /> : undefined}
+                {completed ? <CheckRoundedIcon sx={{ fontSize: 'md' }} /> : active ? <KeyboardArrowDownIcon sx={{ fontSize: 'lg' }} /> : undefined}
               </StepIndicator>
             }
           >
@@ -199,7 +198,7 @@ export function ExplainerCarousel(props: {
           whiteSpace: 'balance',
         }}>
         {activeStep?.titlePrefix}{' '}
-        {!!activeStep?.titleSquircle && <AgiSquircleIcon inverted sx={{ color: 'white', fontSize: isMobile ? '1.55rem' : '2.04rem', borderRadius: 'md' }} />}
+        {!!activeStep?.titleSquircle && <BigAgiSquircleIcon inverted sx={{ color: 'white', fontSize: isMobile ? '1.55rem' : '2.04rem', borderRadius: 'md' }} />}
         {!!activeStep?.titleSquircle && '-'}
         {!!activeStep?.titleSpark && <Box component='span' sx={{
           fontWeight: 'lg',

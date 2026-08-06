@@ -1,12 +1,13 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 // Used to align Particles to the Typescript definitions from the frontend-side, on 'chat.fragments.ts'
 import type { DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
 
-import { anthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.router';
-import { geminiAccessSchema } from '~/modules/llms/server/gemini/gemini.router';
-import { ollamaAccessSchema } from '~/modules/llms/server/ollama/ollama.router';
-import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
+import { anthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.access';
+import { bedrockAccessSchema } from '~/modules/llms/server/bedrock/bedrock.access';
+import { geminiAccessSchema } from '~/modules/llms/server/gemini/gemini.access';
+import { ollamaAccessSchema } from '~/modules/llms/server/ollama/ollama.access';
+import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.access';
 
 
 //
@@ -18,13 +19,14 @@ import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.router';
 
 // Export types
 export type AixParts_DocPart = z.infer<typeof AixWire_Parts.DocPart_schema>;
+export type AixParts_InlineAudioPart = z.infer<typeof AixWire_Parts.InlineAudioPart_schema>;
 export type AixParts_InlineImagePart = z.infer<typeof AixWire_Parts.InlineImagePart_schema>;
+export type AixParts_ModelAuxPart = z.infer<typeof AixWire_Parts.ModelAuxPart_schema>;
 export type AixParts_MetaCacheControl = z.infer<typeof AixWire_Parts.MetaCacheControl_schema>;
 export type AixParts_MetaInReferenceToPart = z.infer<typeof AixWire_Parts.MetaInReferenceToPart_schema>;
 
 export type AixMessages_SystemMessage = z.infer<typeof AixWire_Content.SystemInstruction_schema>;
 export type AixMessages_ModelMessage = z.infer<typeof AixWire_Content.ModelMessage_schema>;
-export type AixMessages_ToolMessage = z.infer<typeof AixWire_Content.ToolMessage_schema>;
 export type AixMessages_UserMessage = z.infer<typeof AixWire_Content.UserMessage_schema>;
 export type AixMessages_ChatMessage = z.infer<typeof AixWire_Content.ChatMessage_schema>;
 
@@ -35,6 +37,8 @@ export type AixTools_ToolsPolicy = z.infer<typeof AixWire_Tooling.ToolsPolicy_sc
 export type AixAPI_Access = z.infer<typeof AixWire_API.Access_schema>;
 export type AixAPI_Context_ChatGenerate = z.infer<typeof AixWire_API.ContextChatGenerate_schema>;
 export type AixAPI_Model = z.infer<typeof AixWire_API.Model_schema>;
+export type AixAPI_ResumeHandle = z.infer<typeof AixWire_API.UpstreamHandle_schema>;
+export type AixAPI_ConnectionOptions_ChatGenerate = z.infer<typeof AixWire_API.ConnectionOptionsChatGenerate_schema>;
 export type AixAPIChatGenerate_Request = z.infer<typeof AixWire_API_ChatContentGenerate.Request_schema>;
 
 
@@ -68,7 +72,7 @@ export namespace OpenAPI_Schema {
     format: z.string().optional(),
 
     // [object] properties (recursively)
-    properties: z.record(z.any() /* could refer to self using z.lazy().... */).optional(),
+    properties: z.record(z.string(), z.any() /* could refer to self using z.lazy().... */).optional(),
     // [object] required properties
     required: z.array(z.string()).optional(),
 
@@ -89,15 +93,68 @@ export namespace OpenAPI_Schema {
 
 export namespace AixWire_Parts {
 
+  /** Parts that come from the model shall inherit this, so they can echo-back vendor data */
+  const _BasePart_schema = z.object({
+
+    /** DMessageFragment.vendorState <- model-generated, vendor-specific opaque state (protocol continuity, not content) */
+    _vnd: z.object({
+      gemini: z.object({
+        thoughtSignature: z.string().optional(),
+      }).optional(),
+      openai: z.object({
+        // Responses API reasoning item continuity handle. Sub-object mirrors the shape of the source output item
+        // and parallels _vnd Anthropic's { container: { id, expiresAt } } pattern.
+        // IMPORTANT: this blob is OpenAI-server-encrypted; do NOT round-trip to xAI (different keys + private item ids).
+        reasoningItem: z.object({
+          id: z.string().optional(),               // rs_... - item id
+          encryptedContent: z.string().optional(), // blob returned when include:['reasoning.encrypted_content']
+        }).optional(),
+      }).optional(),
+      xai: z.object({
+        // xAI Responses API reasoning item continuity handle. Same WIRE shape as OpenAI's, but the encrypted_content
+        // is encrypted with xAI's keys and the item id references xAI server state - NOT cross-portable to OpenAI.
+        reasoningItem: z.object({
+          id: z.string().optional(),
+          encryptedContent: z.string().optional(),
+        }).optional(),
+      }).optional(),
+      // NOTE: we do NOT use this mechanism for per-vendor customization/ALT for parts
+      // anthropic: z.object({
+      //   containerUpload: z.object({
+      //     fileId: z.string(),
+      //     containerId: z.string().optional(),
+      //   }).optional(),
+      // }).optional(),
+    }).optional(),
+    // _vnd: z.record(z.string(), z.unknown()).optional(),
+
+  });
+
+
   // User Input Parts
 
-  export const TextPart_schema = z.object({
+  export const TextPart_schema = _BasePart_schema.extend({
     pt: z.literal('text'),
     text: z.string(),
   });
 
-  // NOTE: different from DMessageImageRefPart, in that the image data is inlined rather than bein referred to
-  export const InlineImagePart_schema = z.object({
+  export const InlineAudioPart_schema = _BasePart_schema.extend({
+    pt: z.literal('inline_audio'),
+    /**
+     * Minimal audio format support for browser compatibility:
+     * - audio/wav: Most compatible, converted from Gemini PCM
+     * - audio/mp3: Widely supported, efficient
+     * - audio/ogg: Open format, good compression
+     */
+    mimeType: z.enum(['audio/wav', 'audio/mp3']), // was (['audio/wav', 'audio/mp3', 'audio/aiff', 'audio/aac', 'audio/ogg', 'audio/flac'])
+    base64: z.string(),
+    // sampleRate: z.number().optional(), // for PCM formats
+    // channels: z.number().optional(),   // for PCM formats
+    // durationMs: z.number().optional(),
+  });
+
+  // NOTE: different from DMessageImageRefPart, in that the image data is inlined rather than being referred to
+  export const InlineImagePart_schema = _BasePart_schema.extend({
     pt: z.literal('inline_image'),
     /**
      * The MIME type of the image.
@@ -108,13 +165,6 @@ export namespace AixWire_Parts {
     mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
     base64: z.string(),
   });
-
-  // Disabling inline audio for now, as it's only supported by Gemini
-  // const InlineAudioPart_schema = z.object({
-  //   pt: z.literal('inline_audio'),
-  //   mimeType: z.enum(['audio/wav', 'audio/mp3', 'audio/aiff', 'audio/aac', 'audio/ogg', 'audio/flac']),
-  //   base64: z.string(),
-  // });
 
   // The reason of existence of a doc part, is to be encoded differently depending on
   // the target llm (e.g. xml for anthropic, markdown titled block for others, ...)
@@ -152,7 +202,7 @@ export namespace AixWire_Parts {
 
   const _FunctionCallInvocation_schema = z.object({
     type: z.literal('function_call'),
-    name: z.string(),
+    name: z.string(), // function name
     args: z.string(), //.nullable(), // 2024-11-03: disabled .nullable(), as we'll use '' for no args (which some APIs weirdly don't support so we'll mock downstream as '{}')
     // _description: z.string().optional(),
     // _args_schema: z.object({}).optional(),
@@ -160,12 +210,12 @@ export namespace AixWire_Parts {
 
   const _CodeExecutionInvocation_schema = z.object({
     type: z.literal('code_execution'),
-    variant: z.literal('gemini_auto_inline').optional(),
+    variant: z.enum(['gemini_auto_inline', 'code_interpreter']).optional(),
     language: z.string().optional(),
     code: z.string(),
   });
 
-  export const ToolInvocationPart_schema = z.object({
+  export const ToolInvocationPart_schema = _BasePart_schema.extend({
     pt: z.literal('tool_invocation'),
     id: z.string(),
     invocation: z.discriminatedUnion('type', [
@@ -179,7 +229,12 @@ export namespace AixWire_Parts {
   const _FunctionCallResponse_schema = z.object({
     type: z.literal('function_call'),
     result: z.string(),
-    _name: z.string().optional(),
+    /**
+     * Function name of the response
+     * - for Gemini this must match the _FunctionCallDeclaration.name
+     * - other APIs usually match the id (of the parent ToolResponsePart) to the ID of the call
+     */
+    name: z.string(),
   });
 
   const _CodeExecutionResponse_schema = z.object({
@@ -188,7 +243,7 @@ export namespace AixWire_Parts {
     // _variant: z.literal('gemini_auto_inline').optional(),
   });
 
-  export const ToolResponsePart_schema = z.object({
+  export const ToolResponsePart_schema = _BasePart_schema.extend({
     pt: z.literal('tool_response'),
     id: z.string(),
     response: z.discriminatedUnion('type', [
@@ -197,6 +252,19 @@ export namespace AixWire_Parts {
     ]),
     error: z.string().or(z.boolean()).optional(),
     // _environment: z.enum(['upstream', 'server', 'client']).optional(),
+  });
+
+  // Model Auxiliary Part (for thinking blocks)
+
+  // Inherits _BasePart_schema so vendor-opaque protocol state (e.g. OpenAI Responses encrypted_content,
+  // future Anthropic/Gemini continuity handles) can ride on the ma part via _vnd, instead of adding
+  // more vendor-specific top-level fields alongside the existing Anthropic textSignature/redactedData.
+  export const ModelAuxPart_schema = _BasePart_schema.extend({
+    pt: z.literal('ma'),
+    aType: z.literal('reasoning'),
+    aText: z.string(),
+    textSignature: z.string().optional(),
+    redactedData: z.array(z.string()).optional(),
   });
 
   // Metas
@@ -225,6 +293,7 @@ export namespace AixWire_Content {
     parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.TextPart_schema,
       AixWire_Parts.DocPart_schema, // Jan 10, 2025: added support for Docs in AIX system
+      AixWire_Parts.InlineImagePart_schema, // Sept 12, 2025: added support for Inline Images in AIX system
       AixWire_Parts.MetaCacheControl_schema,
     ])),
   });
@@ -235,6 +304,7 @@ export namespace AixWire_Content {
     role: z.literal('user'),
     parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.TextPart_schema,
+      // AixWire_Parts.InlineAudioPart_schema,
       AixWire_Parts.InlineImagePart_schema,
       AixWire_Parts.DocPart_schema,
       AixWire_Parts.MetaCacheControl_schema,
@@ -246,16 +316,11 @@ export namespace AixWire_Content {
     role: z.literal('model'),
     parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.TextPart_schema,
+      AixWire_Parts.InlineAudioPart_schema,
       AixWire_Parts.InlineImagePart_schema,
       AixWire_Parts.ToolInvocationPart_schema,
-      AixWire_Parts.MetaCacheControl_schema,
-    ])),
-  });
-
-  export const ToolMessage_schema = z.object({
-    role: z.literal('tool'),
-    parts: z.array(z.discriminatedUnion('pt', [
       AixWire_Parts.ToolResponsePart_schema,
+      AixWire_Parts.ModelAuxPart_schema,
       AixWire_Parts.MetaCacheControl_schema,
     ])),
   });
@@ -263,7 +328,6 @@ export namespace AixWire_Content {
   export const ChatMessage_schema = z.discriminatedUnion('role', [
     UserMessage_schema,
     ModelMessage_schema,
-    ToolMessage_schema,
   ]);
 
 }
@@ -272,7 +336,7 @@ export namespace AixWire_Tooling {
 
   /// Function Call Tool Definition
 
-  const _FunctionCall_schema = z.object({
+  const _FunctionCallDeclaration_schema = z.object({
     /**
      * The name of the function to call. Up to 64 characters long, and can only contain letters, numbers, underscores, and hyphens.
      */
@@ -292,14 +356,22 @@ export namespace AixWire_Tooling {
      */
     input_schema: z.object({
       // type: z.literal('object'), // Note: every protocol adapter adds this in the structure, here's we're just opting to not add it
-      properties: z.record(OpenAPI_Schema.Object_schema),
+      properties: z.record(z.string(), OpenAPI_Schema.Object_schema),
       required: z.array(z.string()).optional(),
     }).optional(),
+
+    /**
+     * WARNING: Anthropic-ONLY for now - support for "Programmatic Tool Calling" - 2 new fields:
+     * - allowed_callers: which contexts can invoke this tool, where 'direct' is the model itself, and 'code_execution' is when invoked from a container, and even both
+     * - input_examples: array of example input objects that demonstrate format conventions, nested object population, etc.
+     */
+    allowed_callers: z.array(z.enum(['direct', 'code_execution'])).optional(),
+    input_examples: z.array(z.record(z.string(), z.any())).optional(),
   });
 
   const _FunctionCallTool_schema = z.object({
     type: z.literal('function_call'),
-    function_call: _FunctionCall_schema,
+    function_call: _FunctionCallDeclaration_schema,
     // domain: z.enum(['server', 'client']).optional(),
   });
 
@@ -311,7 +383,7 @@ export namespace AixWire_Tooling {
      * For now we are supporting a single provider:
      * - gemini_auto_inline: Google Gemini, auto-invoked, and inline (runs the code and goes back to the model to continue the generation)
      */
-    variant: z.enum(['gemini_auto_inline']),
+    variant: z.enum(['gemini_auto_inline', 'code_interpreter']),
   });
 
   /// Tool Definition
@@ -328,7 +400,7 @@ export namespace AixWire_Tooling {
    *       of DMessageToolCallPart messages.
    *
    * __Code Execution Tools__
-   * Models of the Gemini family will emit a code exeuction Tool Call, then execute
+   * Models of the Gemini family will emit a code execution Tool Call, then execute
    * the code into a sandboxed code interpreter, then emit a Tool Response with the
    * generated code and then resume execution of the code, inline.
    *
@@ -348,8 +420,8 @@ export namespace AixWire_Tooling {
   /**
    * Policy for tools that the model can use:
    * - auto: can use a tool or not (default, same as not specifying a policy)
-   * - any: must use one tool at least
-   * - function_call: must use a specific Function Tool
+   * - any: MUST use one tool at least
+   * - function_call: MUST use a specific Function Tool
    * - none: same as not giving the model any tool [REMOVED - just give no tools]
    */
   export const ToolsPolicy_schema = z.discriminatedUnion('type', [
@@ -366,6 +438,7 @@ export namespace AixWire_API {
 
   export const Access_schema = z.discriminatedUnion('dialect', [
     anthropicAccessSchema,
+    bedrockAccessSchema,
     geminiAccessSchema,
     ollamaAccessSchema,
     openAIAccessSchema,
@@ -375,14 +448,133 @@ export namespace AixWire_API {
 
   export const Model_schema = z.object({
     id: z.string(),
+    acceptsOutputs: z.array(z.enum(['text', 'image', 'audio'])),
     temperature: z.number().min(0).max(2).optional()
       .nullable(), // [Deepseek, 2025-01-20] temperature unsupported, so we use 'null' to omit it from the request
     maxTokens: z.number().min(1).optional(),
     topP: z.number().min(0).max(1).optional(),
-    vndGeminiShowThoughts: z.boolean().optional(),
-    vndOaiReasoningEffort: z.enum(['low', 'medium', 'high']).optional(),
+    forceNoStream: z.boolean().optional(),
+
+    /**
+     * Constrain model response to a JSON schema for data extraction. Response will be valid JSON. Schema limitations vary by vendor.
+     * Supported: Anthropic (output_format), OpenAI (response_format), Gemini (responseSchema)
+     */
+    strictJsonOutput: z.object({
+      name: z.string().optional(),        // Required by OpenAI, optional elsewhere
+      description: z.string().optional(), // Helps model understand the schema's purpose
+      schema: z.any(),                    // JSON Schema object
+    }).optional(),
+
+    /**
+     * Enable strict schema validation for tool/function call invocations. Guarantees tool inputs exactly match the input_schema. Eliminates validation/retry logic.
+     * Supported: Anthropic (strict:true), OpenAI (strict:true). Gemini: not supported yet.
+     */
+    strictToolInvocations: z.boolean().optional(),
+
+    /**
+     * [OpenAI, 2025-03-11] This is the generic version of the `web_search_options.user_location` field
+     * This AIX field mimics on purpose: https://platform.openai.com/docs/api-reference/chat/create
+     */
+    userGeolocation: z.object({
+      city: z.string().optional(),      // free text input for the city of the user, e.g. San Francisco.
+      region: z.string().optional(),    // free text input for the reg. of the user the user, e.g. California
+      country: z.string().optional(),   // two-letter ISO country code of the user, e.g. US
+      timezone: z.string().optional(),  // IANA timezone of the user, e.g. America/Los_Angeles
+    }).optional(),
+
+
+    // Cross-provider unified (but with semantic specialization) options
+
+    /**
+     * Union of all the possible reasoning effort values. Different dispatches will validate the
+     * domain (subset) of values they support, but the client can send any of them and let the server handle it.
+     */
+    reasoningEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']).optional(),
+    // REMOVE for 2.0.5: we used to have the parameters below - here for doc purposes only - parsing doesn't break if they are set (backward comp)
+    // vndAntEffort: z.enum(['low', 'medium', 'high', 'max']).optional(),
+    // vndGeminiThinkingLevel: z.enum(['high', 'medium', 'low', 'minimal']).optional(), // new param
+    // vndOaiReasoningEffort: z.enum(['none', 'minimal', 'low', 'medium', 'high', 'xhigh']).optional(),
+    // vndOaiReasoningSummary: z.enum(['none', 'detailed']).optional(),
+    // vndGeminiShowThoughts: z.boolean().optional(),
+
+    // Anthropic
+    vndAnt1MContext: z.boolean().optional(),
+    vndAntContainerId: z.string().optional(),
+    vndAntInfSpeed: z.enum(['fast']).optional(),
+    vndAntSkills: z.string().optional(),
+    vndAntThinkingBudget: z.number().or(z.literal('adaptive')).nullable().optional(),
+    vndAntToolSearch: z.enum(['regex', 'bm25']).optional(), // Tool Search Tool variant
+    vndAntTransformInlineFiles: z.enum(['inline-file', 'inline-file-and-delete']).optional(),
+    vndAntWebDynamic: z.boolean().optional(),
+    vndAntWebFetch: z.enum(['auto']).optional(),
+    vndAntWebFetchMaxUses: z.number().int().min(1).max(50).optional(),
+    vndAntWebSearch: z.enum(['auto']).optional(),
+    vndAntWebSearchMaxUses: z.number().int().min(1).max(50).optional(),
+
+    // Bedrock
+    vndBedrockAPI: z.enum(['converse', 'invoke-anthropic', 'mantle']).optional(),
+
+    // Gemini
+    vndGeminiAPI: z.enum(['interactions-agent']).optional(), // opt-in per-model API dialect; unset = generateContent
+    vndGeminiAgentViz: z.enum(['auto', 'off']).optional(), // agent_config.visualization; default 'auto' upstream
+    vndGeminiAspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
+    vndGeminiCodeExecution: z.enum(['auto']).optional(),
+    vndGeminiComputerUse: z.enum(['browser']).optional(),
+    vndGeminiEnvironmentId: z.string().optional(), // [vndGeminiAPI === 'interactions-agent'] Gemini Interactions API session/sandbox handle from a prior turn (forward-carry; best-effort - if upstream rejects the env, the request fails and the error surfaces)
+    vndGeminiGoogleSearch: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
+    vndGeminiImageSize: z.enum(['1K', '2K', '4K']).optional(),
+    vndGeminiMediaResolution: z.enum(['mr_high', 'mr_medium', 'mr_low']).optional(),
+    vndGeminiThinkingBudget: z.number().optional(), // -1 for 'adaptive'
+    vndGeminiUrlContext: z.enum(['auto']).optional(),
+
+    // Moonshot
+    vndMoonshotWebSearch: z.enum(['auto']).optional(),
+
+    // OpenAI
+    vndOaiCodeInterpreter: z.enum(['off', 'auto']).optional(),
+    vndOaiImageGeneration: z.enum(['mq', 'hq', 'hq_edit', 'hq_png']).optional(),
+    vndOaiResponsesAPI: z.boolean().optional(),
     vndOaiRestoreMarkdown: z.boolean().optional(),
+    vndOaiVerbosity: z.enum(['low', 'medium', 'high']).optional(),
+    vndOaiWebSearchContext: z.enum(['low', 'medium', 'high']).optional(),
+
+    // OpenRouter
+    vndOrtWebSearch: z.enum(['auto']).optional(),
+
+    // Perplexity
+    vndPerplexityDateFilter: z.enum(['unfiltered', '1m', '3m', '6m', '1y']).optional(),
+    vndPerplexitySearchMode: z.enum(['default', 'academic']).optional(),
+
+    // xAI
+    vndXaiCodeExecution: z.enum(['off', 'auto']).optional(),
+    vndXaiSearchInterval: z.enum(['unfiltered', '1d', '1w', '1m', '6m', '1y']).optional(),
+    vndXaiWebSearch: z.enum(['off', 'auto']).optional(),
+    vndXaiXSearch: z.enum(['off', 'auto']).optional(),
+    vndXaiXSearchHandles: z.string().optional(),
+
   });
+
+  /// Resume Handle
+
+  /**
+   * Discriminated by upstream handle type:
+   *  - vnd.oai.responses: OpenAI Responses API - GET /v1/responses/{id}
+   *  - vnd.gem.interactions: Gemini Interactions API for background agents - GET-poll /v1beta/interactions/{id}
+   */
+  // Wire input for reattach: server only consumes `runId` (+ `startingAfter` for OpenAI). Timestamps live
+  // on the persisted `DMessageGenerator.upstreamHandle` (client concerns) and on the `set-upstream-handle`
+  // particle (server-to-client transport), but don't need to travel back in the reattach request.
+  export const UpstreamHandle_schema = z.discriminatedUnion('uht', [
+    z.object({
+      uht: z.literal('vnd.oai.responses'),
+      runId: z.string(), // upstream: OpenAI Responses `response.id`
+      startingAfter: z.number().optional(), // the sequence number of event after which to start streaming
+    }),
+    z.object({
+      uht: z.literal('vnd.gem.interactions'),
+      runId: z.string(), // upstream: Gemini Interactions `interaction.id`
+    }),
+  ]);
 
   /// Context
 
@@ -403,6 +595,7 @@ export namespace AixWire_API {
       // streaming AI operations
       'ai-diagram',               // making a diagram - messageId
       'ai-flattener',             // flattening a thread - messageId of the first message
+      'aifn-image-caption',       // generating image captions - attachmentId
       'beam-gather',              // fusing beam rays - fusionId
       'beam-scatter',             // scattering beam rays - rayId
       'call',                     // having a phone conversation - messageId of the first message
@@ -423,11 +616,33 @@ export namespace AixWire_API {
 
   /// Connection options
 
-  export const ConnectionOptions_schema = z.object({
-    debugDispatchRequestbody: z.boolean().optional(),
-    throttlePartTransmitter: z.number().optional(), // in ms
-    // retry: z.number().optional(),
-    // retryDelay: z.number().optional(),
+  export const ConnectionOptionsChatGenerate_schema = z.object({
+
+    /**
+     * Request an echo of the upstream AIX dispatch request. Fulfillment is decided by the server, and 'production' builds will NOT include 'headers', just the 'body'.
+     */
+    debugDispatchRequest: z.boolean().optional(),
+
+    /**
+     * Request profiling data for a streaming call: time spent preparing, connecting, waiting, receiving, etc. Fulfillment is decided by the server, and won't be available on 'production' builds.
+     */
+    debugProfilePerformance: z.boolean().optional(),
+
+    /**
+     * Applies a JSON override to the dispatch request body.
+     */
+    debugRequestBodyOverride: z.record(z.string(), z.unknown()).optional(),
+
+    /**
+     * Request a resumable connection, if the model/service supports it.
+     * - enables response storage for resumability (first found in the OpenAI Responses API)
+     */
+    enableResumability: z.boolean().optional(),
+
+    // Old ideas:
+    // throttleParticleTransmitter: z.number().optional(), // in ms
+    // retry: z.number().optional(), // retry upstream
+
   });
 
 }
@@ -483,42 +698,45 @@ export namespace AixWire_Particles {
 
   // ChatControl
 
-  type ChatControlOp =
+  export type ChatControlOp =
   // | { cg: 'start' } // not really used for now
-    | { cg: 'end', reason: CGEndReason, tokenStopReason: GCTokenStopReason }
+    | { cg: 'end', terminationReason: CGEndReason /* we know why we're sending 'end' */, tokenStopReason?: GCTokenStopReason /* we may or not have gotten a logical token stop reason from the dispatch */, tokenStopError?: string /* optional vendor-composed human-readable detail paired with tokenStopReason */ }
     | { cg: 'issue', issueId: CGIssueId, issueText: string }
+    | { cg: 'aix-info', ait: 'flow-cont' /* important: establishes a checkpoint */, text: string }
+    | { cg: 'aix-retry-reset', rScope: 'srv-dispatch' | 'srv-op' | 'cli-ll', rClearStrategy: 'none' | 'since-checkpoint' | 'all', reason: string, attempt: number, maxAttempts: number, delayMs: number, causeHttp?: number, causeConn?: string }
     | { cg: 'set-metrics', metrics: CGSelectMetrics }
     | { cg: 'set-model', name: string }
-    | { cg: '_debugRequest', security: 'dev-env', request: { url: string, headers: string, body: string } }; // may generalize this in the future
+    | { cg: 'set-provider-infra', label: string }
+    | { cg: 'set-upstream-handle', handle: { uht: 'vnd.oai.responses' | 'vnd.gem.interactions', runId: string, createdAt: number | null, expiresAt: number | null } }
+    | { cg: '_debugDispatchRequest', security: 'dev-env', dispatchRequest: { url: string, headers: string, body: string, bodySize: number } } // may generalize this in the future
+    | { cg: '_debugProfiler', measurements: Record<string, number | string>[] };
 
   export type CGEndReason =     // the reason for the end of the chat generation
-    | 'abort-client'            // user aborted before the end of stream
-    | 'done-dialect'            // OpenAI signals the '[DONE]' event, or Anthropic sensds the 'message_stop' event
+    | 'done-dialect'            // OpenAI signals the '[DONE]' event, or Anthropic sends the 'message_stop' event
     | 'done-dispatch-aborted'   // this shall never see the light of day, as it was a reaction to the intake being aborted first
-    | 'done-dispatch-closed'    // dispatch connection closed
+    | 'done-dispatch-closed'    // dispatch connection closed, which is not a 'good' ending reason, as logic should have ended it with done-dialect/issue-dialect
     | 'issue-dialect'           // [1] ended because a dispatch encountered an issue, such as out-of-tokens, recitation, etc.
-    | 'issue-rpc';              // [2] ended because of an issue
+    | 'issue-dispatch-rpc';     // [2] ended because of an issue
 
   export type CGIssueId =
     | 'dialect-issue'           // [1] when end reason = 'issue-dialect'
-    | 'dispatch-prepare'        // [2] when end reason = 'issue-rpc', 4 phases of GC dispatch
+    | 'dispatch-prepare'        // [2] when end reason = 'issue-dispatch-rpc', 4 phases of GC dispatch
     | 'dispatch-fetch'          // [2] "
     | 'dispatch-read'           // [2] "
-    | 'dispatch-parse'          // [2] "
-    | 'client-read';            // the aix client encountered an unexpected error (e.g. tRPC)
+    | 'dispatch-parse';         // [2] "
 
   export type GCTokenStopReason =
     | 'ok'                      // clean, including reaching 'stop sequences'
     | 'ok-tool_invocations'     // clean & tool invocations
     // premature:
-    | 'cg-issue'                // [1][2] chat-generation issue (see CGIssueId)
-    | 'client-abort-signal'     // the client aborted - likely a user/auto initiation
+    | 'cg-issue'                // [1][2] chat-generation issue (see CGIssueId, mostly a dispatch or dialect issue)
     | 'filter-content'          // content filter (e.g. profanity)
     | 'filter-recitation'       // recitation filter (e.g. recitation)
+    | 'filter-refusal'          // safety refusal filter (e.g. Anthropic safety concerns)
     | 'out-of-tokens';          // got out of tokens
 
   /**
-   * NOTE: break compatbility with this D-stored-type only when we'll
+   * NOTE: break compatibility with this D-stored-type only when we'll
    * start to need backwards-incompatible Particle->Reassembler flexibility,
    * which can't be just extended in the D-stored-type.
    *
@@ -540,6 +758,9 @@ export namespace AixWire_Particles {
 
     // v = Tokens/s
     vTOutInner?: number,  // TOut / dtInner
+
+    // $c = Cents of USD
+    $cReported?: number,  // Total cost in cents as reported by provider (e.g. Perplexity usage.cost.total_cost)
   };
 
   // TextParticle / PartParticle - keep in line with the DMessage*Part counterparts
@@ -548,14 +769,38 @@ export namespace AixWire_Particles {
     | { t: string }; // special: incremental text, but with a more optimized/succinct representation compared to { p: 't_', i_t: string }
 
   export type PartParticleOp =
-    | { p: 'tr_', _t: string } // reasoning text, incremental
-  // | { p: 'ii', mimeType: string, i_b64?: string /* never undefined */ }
-  // | { p: '_ii', i_b64: string }
-  // | { p: 'di', type: string, ref: string, l1Title: string, i_text?: string /* never undefined */ }
-  // | { p: '_di', i_text: string }
+    | { p: '❤' } // heart beat
+    | { p: 'tr_', _t: string, weak?: 'tag', restart?: boolean } // reasoning text, incremental; could be a 'weak' detection, e.g. heuristic from '<think>' rather than API-provided
+    | { p: 'trs', signature: string } // reasoning signature
+    | { p: 'trr_', _data: string } // reasoning raw (or redacted) data
+    // | { p: 'ii', mimeType: string, i_b64?: string /* never undefined */ }
+    // | { p: '_ii', i_b64: string }
+    // | { p: 'di', type: string, ref: string, l1Title: string, i_text?: string /* never undefined */ }
+    // | { p: '_di', i_text: string }
     | { p: 'fci', id: string, name: string, i_args?: string /* never undefined */ }
     | { p: '_fci', _args: string }
-    | { p: 'cei', id: string, language: string, code: string, author: 'gemini_auto_inline' }
-    | { p: 'cer', id: string, error: DMessageToolResponsePart['error'], result: string, executor: 'gemini_auto_inline', environment: DMessageToolResponsePart['environment'] };
+    | { p: 'cei', id: string, language: string, code: string, author: 'gemini_auto_inline' | 'code_interpreter' }
+    | { p: 'cer', id: string, error: DMessageToolResponsePart['error'], result: string, executor: 'gemini_auto_inline' | 'code_interpreter', environment: DMessageToolResponsePart['environment'] }
+    | { p: 'ia', mimeType: string, a_b64: string, label?: string, generator?: string, durationMs?: number } // inline audio, complete
+    | { p: 'ii', mimeType: string, i_b64: string, label?: string, generator?: string, prompt?: string, hintSkipResize?: boolean } // inline image, complete
+    /**
+     * Model Operation - tracks instant model's operation(s) state, primarily for hosted tools.
+     * - state is 'active' unless specified otherwise, 'error' is done too
+     * - shall be called 'mos' but for legacy/compatibility it's still 'vp' (backwards comp to simple void placeholder particles)
+     */
+    | { p: /*'mo'*/ 'vp', opId: string, text: string, mot: 'search-web' | 'gen-image' | 'code-exec', state?: 'done' | 'error', parentOpId?: string, iTexts?: string[], oTexts?: string[] }
+    | { p: 'urlc', title: string, url: string, num?: number, from?: number, to?: number, text?: string, pubTs?: number } // url citation - pubTs: publication timestamp
+    | { p: 'hres' } & ( // hosted resource - provider-hosted resource
+      | { kind: 'vnd.ant.file', fileId: string, containerId?: string }
+      )
+    | { p: 'svs' } & ( // set vendor state - vendor-specific opaque protocol state
+      | { vendor: 'anthropic', state: { container: { id: string; expiresAt: string } } } // message-level - container reuse
+      | { vendor: 'gemini-envid', state: { environment: { id: string; expiresAt: string | null } } } // message-level - Gemini Interactions sandbox handle (today: Antigravity); 7d TTL stamped by parser
+      | { vendor: 'gemini', state: { thoughtSignature: string } } // fragment-level
+      | { vendor: 'openai', state: { reasoningItem: { id?: string, encryptedContent?: string } } } // fragment-level (attach to ma reasoning fragment)
+      | { vendor: 'xai', state: { reasoningItem: { id?: string, encryptedContent?: string } } } // fragment-level - DISTINCT from openai (different encryption keys, different server-side ids)
+      // | { vendor: string, state: Record<string, unknown> } // disable catch-all becasue it forces casts in type discriminations
+      )
+    ;
 
 }

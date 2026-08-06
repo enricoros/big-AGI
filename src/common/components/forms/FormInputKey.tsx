@@ -1,57 +1,90 @@
 import * as React from 'react';
 
-import { Box, FormControl, FormHelperText, FormLabel, IconButton, Input } from '@mui/joy';
+import { Box, FormControl, FormHelperText, FormLabel, IconButton, Input, InputSlotsAndSlotProps } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+
+import { getIsMobile } from '~/common/components/useMatchMedia';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+
+
+const slotPropsInputSx: InputSlotsAndSlotProps['slotProps'] = {
+  input: {
+    sx: {
+      width: '100%',
+    },
+  },
+} as const;
 
 
 export function FormInputKey(props: {
   autoCompleteId: string, // introduced to avoid clashes
+  size?: 'sm' | 'md' | 'lg',
   label?: string, rightLabel?: string | React.JSX.Element,
+  tooltip?: string,
   description?: string | React.JSX.Element,
   value: string, onChange: (value: string) => void,
-  placeholder?: string, isVisible?: boolean,
+  placeholder?: string,
+  initiallyShowKey?: boolean,
   required: boolean, isError?: boolean,
   noKey?: boolean,
 }) {
 
   // internal state is only whether the text is visible or not - the actual value is stored in the parent
-  const [isVisible, setIsVisible] = React.useState(!!props.isVisible);
+  const [isVisible, setIsVisible] = React.useState(!!props.initiallyShowKey);
+
+  // if mobile, start without autocompletion
+  const disableAutoFocus = getIsMobile();
 
   const handleChange = (e: React.ChangeEvent) => props.onChange((e.target as HTMLInputElement).value);
 
   const endDecorator = React.useMemo(() => !!props.value && !props.noKey && (
     <IconButton onClick={() => setIsVisible(!isVisible)}>
-      {isVisible ? <VisibilityIcon /> : <VisibilityOffIcon />}
+      {isVisible ? <VisibilityOutlinedIcon sx={{ fontSize: 'lg' }} /> : <VisibilityOffOutlinedIcon sx={{ fontSize: 'md' }} />}
     </IconButton>
   ), [props.value, props.noKey, isVisible]);
 
   const acId = (props.noKey ? 'input-text-' : 'input-key-') + props.autoCompleteId;
+  const ghostUsername = props.noKey ? null : props.autoCompleteId.replace('-key', '').replace('-', ' ');
 
   return (
-    <FormControl id={acId}>
+    <FormControl size={props.size} id={acId}>
 
       {!!props.label && <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-        <FormLabel>{props.label}</FormLabel>
+        {props.tooltip ? (
+          <TooltipOutlined title={props.tooltip}>
+            <FormLabel>{props.label}</FormLabel>
+          </TooltipOutlined>
+        ) : (
+          <FormLabel>{props.label}</FormLabel>
+        )}
         {!!props.rightLabel && <FormHelperText sx={{ display: 'block' }}>
           {props.rightLabel}
         </FormHelperText>}
       </Box>}
 
-      <Input
-        key={acId}
-        name={acId}
-        autoComplete='off'
-        // autoComplete={props.noKey ? 'off' : 'new-password'}
-        variant={props.required ? 'outlined' : 'outlined' /* 'soft */}
-        value={props.value} onChange={handleChange}
-        placeholder={props.required ? props.placeholder ? 'required: ' + props.placeholder : 'required' : props.placeholder || '...'}
-        type={(isVisible || !!props.noKey) ? 'text' : 'password'}
-        error={props.isError}
-        startDecorator={!props.noKey && <KeyIcon />}
-        endDecorator={endDecorator}
-      />
+      <>
+        {/* Hidden username field to help password managers distinguish between services */}
+        {!!ghostUsername && (
+          <input type='text' autoComplete='username' value={ghostUsername} readOnly tabIndex={-1} style={{ display: 'none' }} />
+        )}
+        <Input
+          key={acId}
+          name={acId}
+          autoComplete={props.noKey ? 'on' /* e.g. host names */ : 'new-password' /* tells password managers this is a 'new password' entry */}
+          autoFocus={disableAutoFocus ? undefined : !props.required ? undefined : props.value ? undefined : true}
+          // size={props.size}
+          variant={props.required ? 'outlined' : 'outlined' /* 'soft */}
+          value={props.value} onChange={handleChange}
+          placeholder={props.required ? props.placeholder ? 'required: ' + props.placeholder : 'required' : props.placeholder || '...'}
+          type={(isVisible || !!props.noKey) ? 'text' : 'password'}
+          error={props.isError}
+          startDecorator={!props.noKey && <KeyIcon sx={{ fontSize: 'md' }} />}
+          endDecorator={endDecorator}
+          slotProps={slotPropsInputSx}
+        />
+      </>
 
       {props.description && <FormHelperText sx={{ display: 'block' }}>{props.description}</FormHelperText>}
 

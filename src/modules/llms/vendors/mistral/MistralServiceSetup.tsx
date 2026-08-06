@@ -2,12 +2,14 @@ import * as React from 'react';
 
 import { Typography } from '@mui/joy';
 
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
@@ -22,12 +24,16 @@ const MISTRAL_REG_LINK = 'https://console.mistral.ai/';
 export function MistralServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
-  const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, serviceSetupValid, updateSettings } =
+  const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, serviceSetupValid, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorMistral);
 
   // derived state
-  const { oaiKey: mistralKey } = serviceAccess;
-  const needsUserKey = !serviceHasBackendCap;
+  const { clientSideFetch, oaiKey: mistralKey } = serviceAccess;
+  const needsUserKey = !serviceHasCloudTenantConfig;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on;
 
   const shallFetchSucceed = !needsUserKey || (!!mistralKey && serviceSetupValid);
   const showKeyError = !!mistralKey && !serviceSetupValid;
@@ -51,12 +57,19 @@ export function MistralServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    <Typography level='body-sm'>
-      In order of capabilities we have Large, Medium, Small (Open 8x7B = Small 2312) and Tiny (Open 7B = Tiny 2312) models.
-      Note the elegance of the numbers, representing the Year and Month or release (YYMM).
-    </Typography>
+    {/*<Typography level='body-sm'>*/}
+    {/*  In order of capabilities we have Large, Medium, Small (Open 8x7B = Small 2312) and Tiny (Open 7B = Tiny 2312) models.*/}
+    {/*  Note the elegance of the numbers, representing the Year and Month or release (YYMM).*/}
+    {/*</Typography>*/}
 
-    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!mistralKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText='Connect directly to Mistral API from your browser instead of through the server.'
+    />}
+
+    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 

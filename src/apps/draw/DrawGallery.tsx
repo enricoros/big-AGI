@@ -1,13 +1,16 @@
 import * as React from 'react';
 import { Box, Table } from '@mui/joy';
 
-import { DBlobAssetType, DBlobImageAsset } from '~/modules/dblobs/dblobs.types';
-import { useDBAssetsByScopeAndType } from '~/modules/dblobs/dblobs.hooks';
+import { DBlobAssetType, DBlobImageAsset, useDBAssetsByScopeAndType } from '~/common/stores/blob/dblobs-portability';
 
 import { ZeroGallery } from './gallery/ZeroGallery';
 
 
 export function DrawGallery(props: { domain: 'draw' | 'app' }) {
+
+  // FIXME: [ASSET] convert to use thumbnails in the DAsset (online reference) rather than downloading - but disable for now
+  //        (still using the former DBlob system here)
+
   const [items] = useDBAssetsByScopeAndType<DBlobImageAsset>(
     DBlobAssetType.IMAGE,
     'global',

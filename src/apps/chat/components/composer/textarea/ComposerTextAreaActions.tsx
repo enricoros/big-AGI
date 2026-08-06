@@ -15,7 +15,7 @@ export const AGI_SUGGESTIONS_COLOR: ColorPaletteProp = 'success';
 
 // Styles
 
-const textAreaSx: SxProps = {
+export const composerTextAreaSx: SxProps = {
   flex: 1,
 
   // layout
@@ -29,8 +29,8 @@ const textAreaSx: SxProps = {
     '--Button-gap': '1.2rem',
     transition: 'background-color 0.2s, color 0.2s',
     // minWidth: 160,
-  },
-};
+  } as const,
+} as const;
 
 
 const promptButtonSx: SxProps = {
@@ -75,7 +75,7 @@ export function ComposerTextAreaActions(props: {
     return null;
 
   return (
-    <Box sx={textAreaSx}>
+    <Box sx={composerTextAreaSx}>
 
       {/* In-Reference-To bubbles */}
       {props.inReferenceTo?.map((item, index) => (

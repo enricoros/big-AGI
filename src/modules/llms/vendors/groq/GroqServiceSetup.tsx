@@ -1,13 +1,13 @@
 import * as React from 'react';
 
-import { Typography } from '@mui/joy';
-
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
 import { ModelVendorGroq } from './groq.vendor';
@@ -22,13 +22,17 @@ export function GroqServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // external state
   const {
-    service, serviceAccess, serviceHasBackendCap, serviceHasLLMs,
+    service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs,
     serviceSetupValid, updateSettings,
   } = useServiceSetup(props.serviceId, ModelVendorGroq);
 
   // derived state
-  const { oaiKey: groqKey } = serviceAccess;
-  const needsUserKey = !serviceHasBackendCap;
+  const { clientSideFetch, oaiKey: groqKey } = serviceAccess;
+  const needsUserKey = !serviceHasCloudTenantConfig;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on;
 
   // key validation
   const shallFetchSucceed = !needsUserKey || (!!groqKey && serviceSetupValid);
@@ -54,12 +58,14 @@ export function GroqServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    <Typography level='body-sm'>
-      <Link href='https://console.groq.com/docs/quickstart'>Groq</Link> offers inference
-      as a service for a variety of models. See the <Link href='https://www.groq.com/' target='_blank'>Groq</Link> website for more information.
-    </Typography>
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!groqKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText='Connect directly to Groq API from your browser instead of through the server.'
+    />}
 
-    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />
+    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 

@@ -1,9 +1,22 @@
+import { Release } from '~/common/app.release';
+
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import type { IParticleTransmitter } from '../IParticleTransmitter';
+import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
+import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
+import type { GeminiWire_ContentParts } from '../../wiretypes/gemini.wiretypes';
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
+
+import { geminiConvertPCM2WAV } from './gemini.audioutils';
+
+
+// configuration
+const COLLAPSE_EMPTY_TEXT_PARTS = true;
+const ENABLE_RECITATIONS_AS_CITATIONS = false;
+const DEV_DEBUG_MISSING_IDS = Release.IsNodeDevBuild; // not in staging to reduce noise
+
 
 /**
  * Gemini Completions -  Messages Architecture
@@ -22,150 +35,88 @@ import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wirety
  *
  *  Note that non-streaming calls will contain a complete sequence of complete parts.
  */
-export function createGeminiGenerateContentResponseParser(modelId: string, isStreaming: boolean): ChatGenerateParseFunction {
+export function createGeminiGenerateContentResponseParser(requestedModelName: string, isStreaming: boolean): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
-  const modelName = modelId.replace('models/', '');
-  let hasBegun = false;
+  let sentRequestedModelName = false;
+  let sentActualModelName = false;
   let timeToFirstEvent: number;
+  let collapsedTextPartForReasoning = false;
   let skipComputingTotalsOnce = isStreaming;
+  let groundingIndexNumber = 0;
 
   // this can throw, it's caught by the caller
-  return function(pt: IParticleTransmitter, eventData: string): void {
+  return function(pt: IParticleTransmitter, rawEventData: string): void {
 
     // Time to first event
     if (timeToFirstEvent === undefined)
       timeToFirstEvent = Date.now() - parserCreationTimestamp;
 
-    // -> Model
-    if (!hasBegun) {
-      hasBegun = true;
-      pt.setModelName(modelName);
-    }
-
     // Throws on malformed event data
-    const generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(JSON.parse(eventData));
+    const eventData = JSON.parse(rawEventData);
 
-    // -> Prompt Safety Blocking
-    if (generationChunk.promptFeedback?.blockReason) {
-      const { blockReason, safetyRatings } = generationChunk.promptFeedback;
-      return pt.setDialectTerminatingIssue(`Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, IssueSymbols.PromptBlocked);
+    // [Gemini, 2025-10-22] Early detection of proxy errors - being sent as an assistant message
+    if (eventData?.candidates?.length === 1) {
+      const finishReason = eventData.candidates[0]?.finishReason;
+      if (typeof finishReason === 'string')
+
+        // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
+        //        in case of transient errors (502, 503, proxy queue, etc.) - not for good codes.
+
+        switch (true) {
+          case finishReason.includes('503 Service Unavailable'):
+            // pt.setTokenStopReason('cg-issue');
+            // TODO: tell the client about a classification code?
+            //       E.g. send a TRPCFetcherError-compatible `error` downstream, or also send
+            //       the equivalent of .aixFCategory/.aixFHttpStatus/.aixFNetError (see trpc.server.ts)
+            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${finishReason}`, null, 'srv-warn');
+
+          case finishReason.startsWith('Proxy queue error'):
+            // pt.setTokenStopReason('cg-issue');
+            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Queue Error detected: ${finishReason}`, null, 'srv-warn');
+
+          case finishReason.startsWith('Proxy error'):
+            // pt.setTokenStopReason('cg-issue');
+            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${finishReason}`, null, 'srv-warn');
+
+          default:
+            // NOTE: the 'GOOD' default values shall be GeminiWire_API_Generate_Content.FinishReason_enum, e.g. STOP, MAX_TOKENS, SAFETY, .. TOO_MANY_TOOL_CALLS, etc.
+            break;
+        }
     }
 
-    // candidates may be an optional field (started happening on 2024-09-27)
-    if (generationChunk.candidates) {
+    // Validate schema and parse
+    const generationChunk = GeminiWire_API_Generate_Content.Response_schema.parse(eventData);
 
-      // expect: single completion
-      if (generationChunk.candidates.length !== 1)
-        throw new Error(`expected 1 completion, got ${generationChunk.candidates?.length}`);
-      const candidate0 = generationChunk.candidates[0];
-      if (candidate0.index !== undefined && candidate0.index !== 0)
-        throw new Error(`expected completion index 0, got ${candidate0.index}`);
+    // -> Model
+    if (generationChunk.modelVersion && !sentActualModelName) {
+      pt.setModelName(generationChunk.modelVersion);
+      sentActualModelName = true;
+    }
+    if (!sentActualModelName && !sentRequestedModelName) {
+      pt.setModelName(requestedModelName);
+      sentRequestedModelName = true;
+    }
 
-      // see the message architecture
-      for (const mPart of (candidate0.content?.parts || [])) {
-        switch (true) {
-
-          // <- TextPart
-          case 'text' in mPart:
-            // [Gemini, 2025-01-23] CoT support
-            if (mPart.thought)
-              pt.appendReasoningText(mPart.text || '');
-            else
-              pt.appendText(mPart.text || '');
-            break;
-
-          // <- FunctionCallPart
-          case 'functionCall' in mPart:
-            pt.startFunctionCallInvocation(null, mPart.functionCall.name, 'json_object', mPart.functionCall.args ?? null);
-            pt.endMessagePart();
-            break;
-
-          // <- ExecutableCodePart
-          case 'executableCode' in mPart:
-            pt.addCodeExecutionInvocation(null, mPart.executableCode.language || '', mPart.executableCode.code || '', 'gemini_auto_inline');
-            break;
-
-          // <- CodeExecutionResultPart
-          case 'codeExecutionResult' in mPart:
-            switch (mPart.codeExecutionResult.outcome) {
-              case 'OUTCOME_OK':
-                pt.addCodeExecutionResponse(null, false, mPart.codeExecutionResult.output || '', 'gemini_auto_inline', 'upstream');
-                break;
-              case 'OUTCOME_FAILED':
-                pt.addCodeExecutionResponse(null, true, mPart.codeExecutionResult.output || '', 'gemini_auto_inline', 'upstream');
-                break;
-              case 'OUTCOME_DEADLINE_EXCEEDED':
-                const deadlineError = 'Code execution deadline exceeded' + (mPart.codeExecutionResult.output ? `: ${mPart.codeExecutionResult.output}` : '');
-                pt.addCodeExecutionResponse(null, deadlineError, '', 'gemini_auto_inline', 'upstream');
-                break;
-              default:
-                throw new Error(`unexpected code execution outcome: ${mPart.codeExecutionResult.outcome}`);
-            }
-            break;
-
-          default:
-            throw new Error(`unexpected content part: ${JSON.stringify(mPart)}`);
-        }
-      }
-
-      // -> Token Stop Reason
-      if (candidate0.finishReason) {
-        switch (candidate0.finishReason) {
-          case 'STOP':
-            // this is expected for every fragment up to the end, when it may switch to one of the reasons below in the last packet
-            // we cannot assume this signals a good ending, however it will be `pt` to set it to 'ok' if not set to an issue by the end
-            break;
-
-          case 'MAX_TOKENS':
-            pt.setTokenStopReason('out-of-tokens');
-            // NOTE: we call setEnded instread of setDialectTerminatingIssue, because we don't want an extra message appended,
-            // as we know that 'out-of-tokens' will likely append a brick wall (simple/universal enough).
-            return pt.setEnded('issue-dialect');
-
-          case 'SAFETY':
-            pt.setTokenStopReason('filter-content');
-            return pt.setDialectTerminatingIssue(`Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`, null);
-
-          case 'RECITATION':
-            pt.setTokenStopReason('filter-recitation');
-            return pt.setDialectTerminatingIssue(`Generation stopped due to RECITATION`, IssueSymbols.Recitation);
-
-          case 'LANGUAGE':
-            pt.setTokenStopReason('filter-content');
-            return pt.setDialectTerminatingIssue(`Generation stopped due to LANGUAGE`, IssueSymbols.Language);
-
-          case 'OTHER':
-            pt.setTokenStopReason('filter-content');
-            return pt.setDialectTerminatingIssue(`Generation stopped due to 'OTHER' (unknown reason)`, null);
-
-          case 'BLOCKLIST':
-            pt.setTokenStopReason('filter-content');
-            return pt.setDialectTerminatingIssue(`Generation stopped due the content containing forbidden terms`, null);
-
-          case 'PROHIBITED_CONTENT':
-            pt.setTokenStopReason('filter-content');
-            return pt.setDialectTerminatingIssue(`Generation stopped due to potentially containing prohibited content`, null);
-
-          case 'SPII':
-            pt.setTokenStopReason('filter-content');
-            return pt.setDialectTerminatingIssue(`Generation stopped due to potentially containing Sensitive Personally Identifiable Information (SPII)`, null);
-
-          case 'MALFORMED_FUNCTION_CALL':
-            pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`Generation stopped due to the function call generated by the model being invalid`, null);
-
-          default:
-            throw new Error(`unexpected empty generation (finish reason: ${candidate0?.finishReason})`);
-        }
-      }
-    } /* end of .candidates */
-
-    // -> Stats
+    // -> Stats - before candidates to endings won't interfere/block
     if (generationChunk.usageMetadata) {
       const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
         TIn: generationChunk.usageMetadata.promptTokenCount,
         TOut: generationChunk.usageMetadata.candidatesTokenCount,
       };
+
+      // Add reasoning tokens if available
+      if (generationChunk.usageMetadata.thoughtsTokenCount) {
+        metricsUpdate.TOutR = generationChunk.usageMetadata.thoughtsTokenCount;
+        metricsUpdate.TOut = (metricsUpdate.TOut ?? 0) + metricsUpdate.TOutR; // in gemini candidatesTokenCount does not include reasoning tokens
+      }
+
+      // Subtract auto-cached (read) input tokens
+      if (generationChunk.usageMetadata.cachedContentTokenCount) {
+        metricsUpdate.TCacheRead = generationChunk.usageMetadata.cachedContentTokenCount;
+        if ((metricsUpdate.TIn ?? 0) > metricsUpdate.TCacheRead)
+          metricsUpdate.TIn = (metricsUpdate.TIn ?? 0) - metricsUpdate.TCacheRead;
+      }
+
       if (isStreaming && timeToFirstEvent !== undefined)
         metricsUpdate.dtStart = timeToFirstEvent;
 
@@ -183,6 +134,286 @@ export function createGeminiGenerateContentResponseParser(modelId: string, isStr
       pt.updateMetrics(metricsUpdate);
     }
 
+    // -> Prompt Safety Blocking
+    if (generationChunk.promptFeedback?.blockReason) {
+      const { blockReason, safetyRatings } = generationChunk.promptFeedback;
+      return pt.setDialectTerminatingIssue(`Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, IssueSymbols.PromptBlocked, false);
+    }
+
+    // candidates may be an optional field (started happening on 2024-09-27)
+    if (generationChunk.candidates) {
+
+      // expect: single completion
+      if (generationChunk.candidates.length !== 1)
+        throw new Error(`expected 1 completion, got ${generationChunk.candidates?.length}`);
+      const candidate0 = generationChunk.candidates[0];
+      if (candidate0.index !== undefined && candidate0.index !== 0)
+        throw new Error(`expected completion index 0, got ${candidate0.index}`);
+
+      // -> Candidates[0] -> Content
+      for (const mPart of (candidate0.content?.parts || [])) {
+
+        // [Gemini 3, 2025-11-18] Extract thoughtSignature once (can appear on any part type)
+        // https://ai.google.dev/gemini-api/docs/gemini-3?thinking=high#thought_signatures
+        const thoughtSignature = ('thoughtSignature' in mPart && mPart.thoughtSignature) ? mPart.thoughtSignature : undefined;
+
+        switch (true) {
+
+          // <- TextPart
+          case 'text' in mPart:
+            // [Gemini, 2025-01-23] CoT support
+            if (mPart.thought) {
+              pt.appendReasoningText(mPart.text || '', collapsedTextPartForReasoning ? { restart: true } : undefined);
+              collapsedTextPartForReasoning = false;
+            } else {
+              // NOTE: considering the below, but not yet
+              // don't send an empty text part, which may happen in between reasoning parts
+              // and this way we can merge them
+              // if (mPart.text?.length)
+              if (!COLLAPSE_EMPTY_TEXT_PARTS || mPart.text)
+                pt.appendText(mPart.text || '');
+              else
+                collapsedTextPartForReasoning = true;
+            }
+            break;
+
+          // <- InlineDataPart
+          case 'inlineData' in mPart:
+            // [Gemini, 2025-03-14] Experimental Image generation: Response
+            if (mPart.inlineData.mimeType.startsWith('image/')) {
+              pt.appendImageInline(
+                mPart.inlineData.mimeType,
+                mPart.inlineData.data,
+                'Gemini Generated Image',
+                'Gemini',
+                '', // IMPORTANT: we don't have the prompt with Gemini - set it to empty
+              );
+            } else if (mPart.inlineData.mimeType.startsWith('audio/')) {
+              try {
+                // Convert the API response from PCM to WAV: {
+                //   "mimeType": "audio/L16;codec=pcm;rate=24000",
+                //   "data": "7P/z/wQACg...==" (57,024 bytes)
+                // }
+                const convertedAudio = geminiConvertPCM2WAV(mPart.inlineData.mimeType, mPart.inlineData.data);
+                pt.appendAudioInline(
+                  convertedAudio.mimeType,
+                  convertedAudio.base64Data,
+                  'Gemini Generated Audio',
+                  'Gemini',
+                  convertedAudio.durationMs,
+                );
+              } catch (error) {
+                console.warn('[Gemini] Failed to convert audio:', error);
+                pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null, 'srv-warn');
+              }
+            } else
+              pt.setDialectTerminatingIssue(`Unsupported inline data type: ${mPart.inlineData.mimeType}`, null, 'srv-warn');
+            break;
+
+          // <- FunctionCallPart
+          case 'functionCall' in mPart:
+            let { id: fcId, name: fcName, args: fcArgs } = mPart.functionCall;
+
+            // [DEV] Track whether Gemini always provides IDs - if confirmed, make schema fields required
+            if (DEV_DEBUG_MISSING_IDS && !fcId)
+              console.log('[DEV] Gemini functionCall missing id for:', fcName);
+
+            // Validate the function call arguments - we expect a JSON object, not just any JSON value
+            if (!fcArgs || typeof fcArgs !== 'object')
+              console.warn(`[Gemini] Invalid function call arguments: ${JSON.stringify(fcArgs)} for ${fcName}`);
+            else
+              pt.startFunctionCallInvocation(fcId ?? null, fcName, 'json_object', fcArgs);
+            pt.endMessagePart();
+            break;
+
+          // <- ExecutableCodePart
+          case 'executableCode' in mPart:
+            // [DEV] Track whether Gemini always provides IDs - if confirmed, make schema fields required
+            if (DEV_DEBUG_MISSING_IDS && !mPart.executableCode.id)
+              console.log('[DEV] Gemini executableCode missing id');
+            pt.addCodeExecutionInvocation(mPart.executableCode.id ?? null, mPart.executableCode.language || '', mPart.executableCode.code || '', 'gemini_auto_inline');
+            break;
+
+          // <- CodeExecutionResultPart
+          case 'codeExecutionResult' in mPart:
+            const ceId = mPart.codeExecutionResult.id ?? null;
+            // [DEV] Track whether Gemini always provides IDs - if confirmed, make schema fields required
+            if (DEV_DEBUG_MISSING_IDS && !ceId)
+              console.log('[DEV] Gemini codeExecutionResult missing id');
+            switch (mPart.codeExecutionResult.outcome) {
+              case 'OUTCOME_OK':
+                pt.addCodeExecutionResponse(ceId, false, mPart.codeExecutionResult.output || '', 'gemini_auto_inline', 'upstream');
+                break;
+              case 'OUTCOME_FAILED':
+                pt.addCodeExecutionResponse(ceId, true, mPart.codeExecutionResult.output || '', 'gemini_auto_inline', 'upstream');
+                break;
+              case 'OUTCOME_DEADLINE_EXCEEDED':
+                const deadlineError = 'Code execution deadline exceeded' + (mPart.codeExecutionResult.output ? `: ${mPart.codeExecutionResult.output}` : '');
+                pt.addCodeExecutionResponse(ceId, deadlineError, '', 'gemini_auto_inline', 'upstream');
+                break;
+              default:
+                const _exhaustiveCheck: never = mPart.codeExecutionResult.outcome;
+                aixResilientUnknownValue('Gemini', 'codeExecutionOutcome', mPart.codeExecutionResult.outcome);
+                break;
+            }
+            break;
+
+          // <- ToolCallPart (server-side hosted tool invocation, e.g. Google Search, URL Context)
+          case 'toolCall' in mPart: {
+            const tc = mPart.toolCall;
+            if (!tc.id) {
+              if (DEV_DEBUG_MISSING_IDS) console.log('[DEV] Gemini toolCall missing id for:', tc.toolType);
+              break;
+            }
+            const cfg = _geminiGetServerToolConfig(tc.toolType);
+            const parsed = cfg.parseArgs?.(tc.args);
+            const statusText = parsed?.text ?? cfg.callLabel;
+            const iTexts = parsed?.iTexts ?? (tc.args ? [_geminiJsonSummary(tc.args)].filter(Boolean) as string[] : undefined);
+
+            pt.sendOperationState(cfg.mot, statusText, { opId: tc.id, ...(iTexts?.length ? { iTexts } : {}) });
+            break;
+          }
+
+          // <- ToolResponsePart (server-side hosted tool result)
+          case 'toolResponse' in mPart: {
+            const tr = mPart.toolResponse;
+            if (!tr.id) {
+              if (DEV_DEBUG_MISSING_IDS) console.log('[DEV] Gemini toolResponse missing id for:', tr.toolType);
+              break;
+            }
+            const cfg = _geminiGetServerToolConfig(tr.toolType);
+            const oTexts = cfg.parseResponse?.(tr.response)?.oTexts;
+
+            pt.sendOperationState(cfg.mot, cfg.doneLabel, { opId: tr.id, state: 'done', ...(oTexts?.length ? { oTexts } : {}) });
+            break;
+          }
+
+          default:
+            // noinspection JSUnusedLocalSymbols
+            const _exhaustiveCheck: never = mPart;
+            aixResilientUnknownValue('Gemini', 'contentPartType', mPart);
+            break;
+        }
+
+        // Set the thought signature if available
+        thoughtSignature && pt.sendSetVendorState({ p: 'svs', vendor: 'gemini', state: { thoughtSignature } });
+      }
+
+      // -> Candidates[0] -> Safety Ratings
+      // only parsed when the finish reason is 'SAFETY'
+
+      // -> Candidates[0] -> Citation Metadata
+      // this is automated recitation detection by the API, not explicit grounding - very weak signal - as websites appear to be poor quality
+      if (ENABLE_RECITATIONS_AS_CITATIONS && candidate0.citationMetadata?.citationSources?.length) {
+        for (let { startIndex, endIndex, uri /*, license*/ } of candidate0.citationMetadata.citationSources) {
+          // TODO: have a particle/part flag to state the purpose of a citation? (e.g. 'recitation' is weaker than 'grounding')
+          pt.appendUrlCitation('', uri || '', undefined, startIndex, endIndex, undefined, undefined);
+        }
+      }
+
+      // -> Candidates[0] -> Grounding Metadata
+      if (candidate0.groundingMetadata?.groundingChunks?.length) {
+        /**
+         * TODO: improve parsing of grounding metadata, including:
+         * - annotations and ranges .groundingSupports
+         * - sort chunks by their overal confidence in the .groundingSupports?
+         * - follow up Google Search queries (.webSearchQueries)
+         * - follow up Google Search queries (.webSearchQueries) for suggested refinements
+         */
+        for (const { web } of candidate0.groundingMetadata.groundingChunks)
+          pt.appendUrlCitation(web.title, web.uri, ++groundingIndexNumber, undefined, undefined, undefined, undefined);
+      }
+
+      // -> Candidates[0] -> URL Context Metadata
+      if (candidate0.urlContextMetadata?.urlMetadata?.length) {
+        for (const urlMeta of candidate0.urlContextMetadata.urlMetadata) {
+          // Only add URLs that were successfully retrieved
+          if (urlMeta.urlRetrievalStatus === 'URL_RETRIEVAL_STATUS_SUCCESS')
+            pt.appendUrlCitation('', urlMeta.retrievedUrl, ++groundingIndexNumber, undefined, undefined, undefined, undefined);
+          else if (urlMeta.urlRetrievalStatus !== 'URL_RETRIEVAL_STATUS_UNSPECIFIED')
+            console.warn(`[Gemini] URL retrieval ${urlMeta.urlRetrievalStatus}: ${urlMeta.retrievedUrl}`); // log for debugging
+        }
+      }
+
+      // -> Candidates[0] -> Token Stop Reason
+      if (candidate0.finishReason) {
+        // Helper to append finishMessage if available
+        // NOTE: unused for now, hasn't been tested
+        // const withFinishMessage = (baseMessage: string) =>
+        //   candidate0.finishMessage ? `${baseMessage}: ${candidate0.finishMessage}` : baseMessage;
+
+        switch (candidate0.finishReason) {
+          case 'STOP':
+            // FORMER NOTE:
+            // this is expected for every fragment up to the end, when it may switch to one of the reasons below in the last packet
+            // we cannot assume this signals a good ending, however it will be `pt` to set it to 'ok' if not set to an issue by the end
+
+            // NEW NOTE:
+            // 'STOP' seems to only be sent at the end now
+            pt.setTokenStopReason('ok');
+            pt.setDialectEnded('done-dialect'); // Gemini: generation finished successfully
+            break;
+
+          case 'MAX_TOKENS':
+            pt.setTokenStopReason('out-of-tokens');
+            // NOTE: we call setDialectEnded instead of setDialectTerminatingIssue, because we don't want an extra message appended,
+            // as we know that 'out-of-tokens' will likely append a brick wall (simple/universal enough).
+            pt.setDialectEnded('issue-dialect'); // Gemini: max tokens reached
+            break;
+
+          // will set both TokenStop and TerminatingIssue
+          case 'SAFETY':
+          case 'RECITATION':
+          case 'LANGUAGE':
+          case 'OTHER':
+          case 'BLOCKLIST': // Token generation stopped because the content contains forbidden terms
+          case 'PROHIBITED_CONTENT': // Token generation stopped for potentially containing prohibited content
+          case 'SPII': // Token generation stopped because the content potentially contains Sensitive Personally Identifiable Information
+          case 'MALFORMED_FUNCTION_CALL': // The function call generated by the model is invalid
+          case 'IMAGE_SAFETY': // Token generation stopped because generated images contain safety violations
+          case 'IMAGE_PROHIBITED_CONTENT': // Image generation stopped because generated images have prohibited content
+          case 'IMAGE_RECITATION': // Image generation stopped due to recitation
+          case 'IMAGE_OTHER': // Image generation stopped because of other miscellaneous issue
+          case 'NO_IMAGE': // The model was expected to generate an image, but none was generated
+          case 'UNEXPECTED_TOOL_CALL': // Model generated a tool call but no tools were enabled in the request
+          case 'TOO_MANY_TOOL_CALLS': // Model called too many tools consecutively, execution limit exceeded
+          case 'MISSING_THOUGHT_SIGNATURE': // [Gemini 3] Thinking model validation failed - thoughtSignature missing
+          case 'FINISH_REASON_UNSPECIFIED':
+            const reasonMap: Record<typeof candidate0.finishReason, [AixWire_Particles.GCTokenStopReason, string, string | null]> = {
+              'SAFETY': ['filter-content', `Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`, null],
+              'RECITATION': ['filter-recitation', 'Generation stopped due to RECITATION', IssueSymbols.Recitation],
+              'LANGUAGE': ['filter-refusal', 'Generation stopped due to unsupported LANGUAGE', IssueSymbols.Language],
+              'OTHER': ['cg-issue', `Generation stopped due to 'OTHER' (unknown reason)`, null],
+              'BLOCKLIST': ['filter-content', 'Generation stopped: content contains forbidden terms', null],
+              'PROHIBITED_CONTENT': ['filter-content', 'Generation stopped: potentially prohibited content', null],
+              'SPII': ['filter-content', 'Generation stopped: potentially contains Sensitive PII (SPII)', null],
+              'MALFORMED_FUNCTION_CALL': ['cg-issue', 'Generation stopped: invalid function call generated by model', null],
+              'IMAGE_SAFETY': ['filter-content', 'Image generation stopped: safety violations', null],
+              'IMAGE_PROHIBITED_CONTENT': ['filter-content', 'Image generation stopped: prohibited content', null],
+              'IMAGE_RECITATION': ['filter-recitation', 'Image generation stopped: recitation detected', IssueSymbols.Recitation],
+              'IMAGE_OTHER': ['cg-issue', 'Image generation stopped: miscellaneous issue', null],
+              'NO_IMAGE': ['cg-issue', 'Image generation failed: no image generated', null],
+              'UNEXPECTED_TOOL_CALL': ['cg-issue', 'Generation stopped: tool call made but no tools enabled', null],
+              'TOO_MANY_TOOL_CALLS': ['cg-issue', 'Generation stopped: too many consecutive tool calls', null],
+              'MISSING_THOUGHT_SIGNATURE': ['cg-issue', 'Generation stopped: request has at least one Gemini thought signature missing', null],
+              'FINISH_REASON_UNSPECIFIED': ['cg-issue', 'Generation stopped and no reason was given', null],
+            } as const;
+            const reason = reasonMap[candidate0.finishReason] || ['cg-issue', `Generation stopped due to unknown reason: ${candidate0.finishReason || 'reason unknown'}`, null];
+            pt.setTokenStopReason(reason[0]);
+            // append finishMessage if available for more context
+            const issueMessage = candidate0.finishMessage ? `${reason[1]}. ${candidate0.finishReason}: ${candidate0.finishMessage}.` : reason[1];
+            return pt.setDialectTerminatingIssue(issueMessage, reason[2], false);
+
+          default:
+            // Exhaustiveness check - if we get here, Gemini added a new finishReason
+            const _exhaustiveCheck: never = candidate0.finishReason as Exclude<typeof candidate0.finishReason, string>;
+            aixResilientUnknownValue('Gemini', 'finishReason', candidate0.finishReason);
+            pt.setTokenStopReason('cg-issue');
+            return pt.setDialectTerminatingIssue(`unexpected Gemini finish reason: ${candidate0?.finishReason})`, null, 'srv-warn');
+        }
+      }
+    } /* end of .candidates (single candidate is ensured) */
+
   };
 }
 
@@ -195,10 +426,124 @@ function _explainGeminiSafetyIssues(safetyRatings?: GeminiWire_Safety.SafetyRati
   return safetyRatings
     .filter(rating => rating.probability !== 'NEGLIGIBLE')
     .map(rating => `${rating.category/*.replace('HARM_CATEGORY_', '')*/} (${rating.probability?.toLowerCase()})`)
-    .join(', ');
+    .join(', ') || 'Undocumented Gemini Safety Category.';
 }
 
 function _geminiHarmProbabilitySortFunction(a: { probability: string }, b: { probability: string }) {
   const order = ['NEGLIGIBLE', 'LOW', 'MEDIUM', 'HIGH'];
   return order.indexOf(b.probability) - order.indexOf(a.probability);
+}
+
+
+// --- Gemini Hosted Tools (server-side tool invocations) ---
+
+// Exhaustive config for all known ServerToolType values.
+// Adding a value to _ServerToolType_enum in gemini.wiretypes.ts without updating this map is a compile error.
+
+type _GeminiServerToolConfig = {
+  mot: 'search-web' | 'code-exec',
+  callLabel: string,
+  doneLabel: string,
+  parseArgs?: (args: unknown) => { text: string, iTexts?: string[] },
+  parseResponse?: (response: unknown) => { oTexts?: string[] },
+};
+
+// Wire format (verified): search tools use { queries: string[] }, e.g. { queries: ["\"Enrico Ros\"", "\"Enrico Ros\" tech"] }
+// Wire format (verified): toolResponse contains grounding data (+ searchEntryPoint HTML which we skip)
+// NOTE: when includeServerSideToolInvocations is true, grounding data may be in toolResponse
+// instead of candidate.groundingMetadata - citations are still extracted from groundingMetadata if present
+
+/** Shared parseArgs for query-based tools (search web/images/files) */
+function _geminiParseQueryArgs(label: string, iTextPrefix: string): NonNullable<_GeminiServerToolConfig['parseArgs']> {
+  return (args) => {
+    const a = _geminiAsObj(args);
+    const queries = _geminiStrArray(a?.queries) || _geminiStrArray(a?.query ? [a.query] : undefined);
+    return queries?.length
+      ? { text: label, iTexts: queries.map(q => `${iTextPrefix}: "${q}"`) }
+      : { text: label };
+  };
+}
+
+const _geminiServerToolConfigs: Record<GeminiWire_ContentParts.ServerToolType, _GeminiServerToolConfig> = {
+  'GOOGLE_SEARCH_WEB': {
+    mot: 'search-web',
+    callLabel: 'Searching the web...',
+    doneLabel: 'Search completed',
+    parseArgs: _geminiParseQueryArgs('Searching the web...', 'Search query'),
+  },
+  'GOOGLE_SEARCH_IMAGE': {
+    mot: 'search-web',
+    callLabel: 'Searching images...',
+    doneLabel: 'Image search completed',
+    parseArgs: _geminiParseQueryArgs('Searching images...', 'Search query'),
+  },
+  'URL_CONTEXT': {
+    mot: 'search-web',
+    callLabel: 'Fetching web content...',
+    doneLabel: 'Retrieved content',
+    // Wire format (verified): { urls: string[] } e.g. { urls: ["https://big-agi.com"] }
+    parseArgs: (args) => {
+      const a = _geminiAsObj(args);
+      const urls = _geminiStrArray(a?.urls);
+      return urls?.length
+        ? { text: `Fetching ${urls[0]}...`, iTexts: urls.map(u => `URL: ${u}`) }
+        : { text: 'Fetching web content...' };
+    },
+    // Wire format (verified): { url_metadata: [{ retrieved_url: string, url_retrieval_status: string }] }
+    parseResponse: (response) => {
+      const r = _geminiAsObj(response);
+      const urlMetadata = Array.isArray(r?.url_metadata) ? r.url_metadata as Record<string, unknown>[] : [];
+      const urls = urlMetadata
+        .filter(m => m.url_retrieval_status === 'URL_RETRIEVAL_STATUS_SUCCESS')
+        .map(m => _geminiStr(m.retrieved_url))
+        .filter((u): u is string => !!u);
+      return urls.length ? { oTexts: urls } : {};
+    },
+  },
+  'GOOGLE_MAPS': {
+    mot: 'search-web',
+    callLabel: 'Looking up location...',
+    doneLabel: 'Maps lookup completed',
+  },
+  'FILE_SEARCH': {
+    mot: 'search-web',
+    callLabel: 'Searching files...',
+    doneLabel: 'File search completed',
+    parseArgs: _geminiParseQueryArgs('Searching files...', 'Search query'),
+  },
+};
+
+
+function _geminiGetServerToolConfig(toolType: string): _GeminiServerToolConfig {
+  return _geminiServerToolConfigs[toolType as GeminiWire_ContentParts.ServerToolType] ?? {
+    mot: 'search-web',
+    callLabel: `Using ${toolType}...`,
+    doneLabel: `${toolType} completed`,
+  };
+}
+
+// Helpers for speculative arg/response parsing
+
+function _geminiAsObj(v: unknown): Record<string, unknown> | null {
+  return (v && typeof v === 'object' && !Array.isArray(v)) ? v as Record<string, unknown> : null;
+}
+
+function _geminiStr(v: unknown): string | undefined {
+  return typeof v === 'string' && v.length ? v : undefined;
+}
+
+function _geminiStrArray(v: unknown): string[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  const strings = v.filter((s): s is string => typeof s === 'string' && s.length > 0);
+  return strings.length ? strings : undefined;
+}
+
+/** Summarize an unknown JSON value for iTexts/oTexts display (keeps start + end, shows char count in the middle) */
+function _geminiJsonSummary(v: unknown, maxLen = 512): string | undefined {
+  if (v === undefined || v === null) return undefined;
+  const s = JSON.stringify(v);
+  if (s.length <= maxLen) return s;
+  const ellipsis = `...[${(s.length - maxLen).toLocaleString()} chars]...`;
+  const half = Math.floor((maxLen - ellipsis.length) / 2);
+  return s.slice(0, half) + ellipsis + s.slice(-half);
 }

@@ -1,0 +1,165 @@
+{
+  "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
+  "_evaluated": "Evaluated: oai-reasoning-effort, temperature. If missing, the parameter is not supported by that model.",
+  "_modelFilter": "anthropic/claude, openai/gpt-5, google/gemini",
+  "anthropic/claude-3-haiku": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "anthropic/claude-3.5-haiku": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "anthropic/claude-3.5-sonnet": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "anthropic/claude-3.7-sonnet": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "anthropic/claude-3.7-sonnet:thinking": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "anthropic/claude-haiku-4.5": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "anthropic/claude-opus-4": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "anthropic/claude-opus-4.1": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "anthropic/claude-opus-4.5": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "anthropic/claude-opus-4.6": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "anthropic/claude-sonnet-4": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "anthropic/claude-sonnet-4.5": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "anthropic/claude-sonnet-4.6": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "google/gemini-2.0-flash-001": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "google/gemini-2.0-flash-lite-001": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "google/gemini-2.5-flash": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "google/gemini-2.5-flash-image": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "google/gemini-2.5-flash-lite": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "google/gemini-2.5-flash-lite-preview-09-2025": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "google/gemini-2.5-pro": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "google/gemini-2.5-pro-preview": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "google/gemini-2.5-pro-preview-05-06": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "google/gemini-3-flash-preview": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "google/gemini-3-pro-image-preview": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "google/gemini-3-pro-preview": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5-chat": {
+    "oai-reasoning-effort": ["none","minimal","low","medium","high","xhigh"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5-codex": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5-mini": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5-nano": {
+    "oai-reasoning-effort": ["minimal","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5-pro": {
+    "oai-reasoning-effort": ["minimal","low","medium","high","xhigh"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5.1": {
+    "oai-reasoning-effort": ["none","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5.1-chat": {
+    "oai-reasoning-effort": ["none","minimal","low","medium","high","xhigh"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5.1-codex": {
+    "oai-reasoning-effort": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5.1-codex-max": {
+    "oai-reasoning-effort": ["low","medium","high","xhigh"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5.1-codex-mini": {
+    "oai-reasoning-effort": ["none","low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5.2": {
+    "oai-reasoning-effort": ["none","low","medium","high","xhigh"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5.2-chat": {
+    "oai-reasoning-effort": ["none","minimal","low","medium","high","xhigh"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5.2-codex": {
+    "oai-reasoning-effort": ["minimal","low","medium","high","xhigh"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-5.2-pro": {
+    "oai-reasoning-effort": ["minimal","low","medium","high","xhigh"],
+    "temperature-range": [0,2]
+  }
+}

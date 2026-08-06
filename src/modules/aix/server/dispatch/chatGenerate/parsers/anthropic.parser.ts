@@ -2,10 +2,35 @@ import { safeErrorString } from '~/server/wire';
 
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import type { IParticleTransmitter } from '../IParticleTransmitter';
+import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
+import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
 import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wiretypes';
+import { DispatchContinuationSignal } from '../chatGenerate.continuation';
+import { OperationRetrySignal } from '../chatGenerate.operation-retry';
+
+
+// configuration
+const ANTHROPIC_DEBUG_EVENT_SEQUENCE = false; // true: shows the sequence of events
+// NOTE: the following weakens protocol validation - remove if possible. testing with web search active to see if blocks come out of order
+// NOTE: 2026-03-23: disabled, not useful any longer
+const ANTHROPIC_FIX_REUSED_BLOCK_INDEX = false; // [Anthropic, 2026-01-12] Block Start Index issue workaround
+
+/**
+ * [Anthropic, Opus-4.6] First text packet is '\n\n' - elide it
+ *
+ * NOTE: disabled because the sequence seems:
+ * {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}
+ * {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"\\n\\n"}
+ * {"type":"content_block_stop","index":0 }
+ */
+const hotFixAntElideLeadingDoubleNewline = false;
+/**
+ * This was needed because tools and text were too close together
+ * FIXME: check if this is still needed with 4.6
+ */
+const hotFixAntInjectToolsTextSpacer = true;
 
 
 /**
@@ -13,7 +38,7 @@ import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wire
  *
  * Anthropic uses a events-based, chunk-based streaming protocol for its chat completions:
  * 1. 'message_start': Initializes a new message with metadata (id, model, usage) and empty content.
- * 2. 'content_block_start': Begins a new content block (text or tool_use).
+ * 2. 'content_block_start': Begins a new content block (text, tool_use, server_tool_use, or tool results).
  * 3. 'content_block_delta': Streams incremental updates to the current content block.
  * 4. 'content_block_stop': Signals the end of the current content block.
  * 5. 'message_delta': Provides updates to message-level information (e.g., stop_reason, usage).
@@ -23,12 +48,28 @@ import { AnthropicWire_API_Message_Create } from '../../wiretypes/anthropic.wire
  *
  * Delta Types:
  * - 'text_delta': Incremental text updates for text blocks.
- * - 'input_json_delta': Partial JSON strings for tool_use inputs.
+ * - 'input_json_delta': Partial JSON strings for tool_use and server_tool_use inputs.
+ * - 'thinking_delta': Incremental thinking content updates.
+ * - 'signature_delta': Signature for thinking blocks.
+ * - 'citations_delta': Citations that stream incrementally for text blocks.
+ *
+ * Client Tools vs Server Tools
+ *
+ * Client Tools: Traditional function calling where the model returns a `tool_use` block, the client
+ *               executes the function, and returns results via `tool_result` in the next message.
+ *
+ * FIXME: we haven't decided yet at the AIX and DMessage/DMessageFragment level how to handle Server-side tools, Server/Client mixed tools, or even Client tools, incl client-driven MCP
+ *        so for now we have a TEMPORARY IMPLEMENTATION: Server tools are currently handled with void placeholders rather than creating particles to build execution graphs.
+ *
+ * Server Tools: Tools executed by Anthropic's infrastructure. The model emits `server_tool_use`
+ *               blocks and the server executes them internally, returning specialized result blocks
+ *               like `web_search_tool_result` or `web_fetch_tool_result`. No client execution required.
  *
  * Assumptions:
  * - Content blocks are indexed and streamed sequentially, with no gaps, 'index' is 0-based and reliable.
  * - 'text' parts are incremental and meant to be concatenated via 'text_delta'
- * - 'tool_use' parts are only function calls, and meant to have arguments as an incremental string via 'input_json_delta'
+ * - 'tool_use' and 'server_tool_use' parts have arguments as an incremental string via 'input_json_delta'
+ * - Server tool result blocks arrive fully formed in 'content_block_start' (no deltas)
  * - There could be multiple messages, but we only handle 1 at this time, with multiple parts.
  * - Message Deltas will provide a 'stop reason' on the message
  * - Begin/End are explicit
@@ -40,8 +81,18 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   let timeToFirstEvent: number;
   let messageStartTime: number | undefined = undefined;
   let chatInTokens: number | undefined = undefined;
+  let needsTextSeparator = false; // insert text separator when text follows server tool
 
-  return function(pt: IParticleTransmitter, eventData: string, eventName?: string): void {
+  let elideFirstTextBlock = hotFixAntElideLeadingDoubleNewline;
+  const elisionCheck = (fullText: string) => {
+    if (!elideFirstTextBlock) return false;
+    elideFirstTextBlock = false;
+    if (fullText !== '\n\n') return false;
+    console.log('[DEV] Anthropic: 🔷 Eliding leading \\n\\n text block');
+    return true;
+  };
+
+  return function(pt: IParticleTransmitter, eventData: string, eventName?: string, context?: { retriesAvailable: boolean }): void {
 
     // Time to first event
     if (timeToFirstEvent === undefined)
@@ -54,6 +105,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
     switch (eventName) {
       // Ignore pings
       case 'ping':
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log('ant ping');
         break;
 
       // M1. Initialize the message content for a new message
@@ -61,7 +113,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         messageStartTime = Date.now();
         const isFirstMessage = !responseMessage;
         if (!isFirstMessage)
-          throw new Error('Unexpected second message - we only support 1 Antrhopic message at a time');
+          throw new Error('Unexpected second message - we only support 1 Anthropic message at a time');
 
         // Throws on malformed event data, or even role != 'assistant'
         responseMessage = AnthropicWire_API_Message_Create.event_MessageStart_schema.parse(JSON.parse(eventData)).message;
@@ -77,6 +129,13 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         // -> Model
         if (isFirstMessage)
           pt.setModelName(responseMessage.model);
+
+        // -> Container metadata (for Skills) - propagate to client via svs for cross-turn reuse
+        if (responseMessage.container) {
+          _emitContainerState(pt, responseMessage.container);
+          if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant message_start: container=${responseMessage.container.id}`);
+        }
+
         if (responseMessage.usage) {
           chatInTokens = responseMessage.usage.input_tokens;
           const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
@@ -85,127 +144,349 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             dtStart: timeToFirstEvent,
           };
           if (responseMessage.usage.cache_read_input_tokens || responseMessage.usage.cache_creation_input_tokens) {
-            if (responseMessage.usage.cache_read_input_tokens !== undefined)
+            if (typeof responseMessage.usage.cache_read_input_tokens === 'number')
               metricsUpdate.TCacheRead = responseMessage.usage.cache_read_input_tokens;
-            if (responseMessage.usage.cache_creation_input_tokens !== undefined)
+            if (typeof responseMessage.usage.cache_creation_input_tokens === 'number')
               metricsUpdate.TCacheWrite = responseMessage.usage.cache_creation_input_tokens;
           }
           pt.updateMetrics(metricsUpdate);
         }
+
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant message_start: model=${responseMessage.model}, TIn=${chatInTokens || 0}, container=${responseMessage.container?.id || 'none'}`);
         break;
 
       // M2. Initialize content block if needed
-      case 'content_block_start':
-        if (responseMessage) {
-          const { index, content_block } = AnthropicWire_API_Message_Create.event_ContentBlockStart_schema.parse(JSON.parse(eventData));
-          if (responseMessage.content[index] !== undefined)
-            throw new Error(`Unexpected content block start location (${index})`);
-          responseMessage.content[index] = content_block;
-
-          switch (content_block.type) {
-            case 'text':
-              pt.appendText(content_block.text);
-              break;
-            case 'tool_use':
-              // [Anthropic] Note: .input={} and is parsed as an object - if that's the case, we zap it to ''
-              if (content_block && typeof content_block.input === 'object' && Object.keys(content_block.input).length === 0)
-                content_block.input = null;
-              pt.startFunctionCallInvocation(content_block.id, content_block.name, 'incr_str', content_block.input! ?? null);
-              break;
-            default:
-              throw new Error(`Unexpected content block type: ${(content_block as any).type}`);
-          }
-        } else
+      case 'content_block_start': {
+        if (!responseMessage)
           throw new Error('Unexpected content_block_start');
+
+        const { index: requestedIndex, content_block: contentBlock } = AnthropicWire_API_Message_Create.event_ContentBlockStart_schema.parse(JSON.parse(eventData));
+
+        // [Anthropic, 2026-01-12] Block Start Index issue
+        let index = requestedIndex;
+        if (responseMessage.content[index] !== undefined)
+          if (ANTHROPIC_FIX_REUSED_BLOCK_INDEX) {
+            // Workaround: Anthropic server tools reuse indices - promote to next available
+            index = responseMessage.content.length;
+            // Note: always on, because now this seems to have been fixed, so we need this warn if that's not the case
+            console.log(`[Anthropic] ♨️ content_block_start: index ${requestedIndex} occupied, promoting to ${index}`);
+          } else
+            throw new Error(`Unexpected content block start location (${requestedIndex})`);
+        responseMessage.content[index] = contentBlock;
+
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) {
+          const debugInfo = contentBlock.type === 'tool_use' ? `tool=${contentBlock.name}`
+            : contentBlock.type === 'server_tool_use' ? `server_tool=${contentBlock.name}`
+              : contentBlock.type === 'text' ? `text_len=${contentBlock.text.length}`
+                : contentBlock.type === 'thinking' ? `thinking_len=${contentBlock.thinking.length}`
+                  : contentBlock.type === 'container_upload' ? `file_id=${contentBlock.file_id}`
+                    : contentBlock.type;
+          console.log(`ant content_block_start[${index}]: type=${contentBlock.type}, ${debugInfo}`);
+        }
+
+        switch (contentBlock.type) { // .content_block_start.type
+          case 'text':
+            // Hotfix Opus-4.6: elide first text block if it's '\n\n'
+            if (elisionCheck(contentBlock.text)) break;
+            // add separator when text follows server tool execution
+            pt.appendText(!needsTextSeparator ? contentBlock.text : '\n\n' + contentBlock.text);
+            needsTextSeparator = false;
+            // Note: In streaming mode, citations arrive via citations_delta events, not on content_block_start
+            break;
+
+          case 'thinking':
+            pt.appendReasoningText(contentBlock.thinking);
+            if (contentBlock.signature)
+              pt.setReasoningSignature(contentBlock.signature);
+            break;
+
+          case 'redacted_thinking':
+            pt.addReasoningRedactedData(contentBlock.data);
+            break;
+
+          case 'tool_use':
+            // [Anthropic] Note: .input={} is parsed as an object - zap to '' for later string concatenation via input_json_delta
+            if (contentBlock && contentBlock.input && typeof contentBlock.input === 'object' && Object.keys(contentBlock.input).length === 0)
+              contentBlock.input = '';
+
+            // [Anthropic, 2025-11-24] Programmatic Tool Calling - detect if called from code execution
+            const isProgrammaticCall = contentBlock.caller?.type === 'code_execution_20250825' || contentBlock.caller?.type === 'code_execution_20260120';
+            if (isProgrammaticCall && ANTHROPIC_DEBUG_EVENT_SEQUENCE)
+              console.log(`[Anthropic] Programmatic tool call: ${contentBlock.name} called from ${contentBlock.caller!.type} (tool_id: ${contentBlock.caller!.type !== 'direct' ? contentBlock.caller!.tool_id : 'n/a'})`);
+
+            pt.startFunctionCallInvocation(contentBlock.id, contentBlock.name, 'incr_str', contentBlock.input || null);
+            break;
+
+          case 'server_tool_use':
+            // Streaming: zap empty input object since JSON will be streamed via input_json_delta
+            if (contentBlock && contentBlock.input && typeof contentBlock.input === 'object' && Object.keys(contentBlock.input).length === 0)
+              contentBlock.input = '';
+
+            _handleCBS_ServerToolUse(pt, contentBlock);
+            break;
+
+          case 'web_search_tool_result':
+            _handleCBS_WebSearchToolResult(pt, contentBlock);
+            break;
+
+          case 'web_fetch_tool_result':
+            _handleCBS_WebFetchToolResult(pt, contentBlock);
+            break;
+
+          case 'code_execution_tool_result':
+            _handleCBS_CodeExecutionToolResult(pt, contentBlock);
+            break;
+
+          case 'bash_code_execution_tool_result':
+            _handleCBS_BashCodeExecutionToolResult(pt, contentBlock);
+            break;
+
+          case 'text_editor_code_execution_tool_result':
+            _handleCBS_TextEditorCodeExecutionToolResult(pt, contentBlock);
+            break;
+
+          case 'mcp_tool_use':
+            throw new Error(`Server tool 'mcp_tool_use' is not yet implemented.`);
+
+          case 'mcp_tool_result':
+            throw new Error(`Server tool 'mcp_tool_result' is not yet implemented.`);
+
+          case 'container_upload':
+            _handleCBS_ContainerUpload(pt, contentBlock, responseMessage.container?.id);
+            break;
+
+          case 'tool_search_tool_result':
+            _handleCBS_ToolSearchToolResult(pt, contentBlock);
+            break;
+
+          default:
+            const _exhaustiveCheck: never = contentBlock;
+            aixResilientUnknownValue('Anthropic', 'contentBlockType', (contentBlock as any)?.type);
+            break;
+        }
+
+        // set separator flag when server tools complete (text after tools needs visual separation)
+        if (contentBlock.type.includes('tool_use') || contentBlock.type.includes('tool_result'))
+          needsTextSeparator = hotFixAntInjectToolsTextSpacer;
+
         break;
+      }
 
       // M3+. Append delta text to the current message content
-      case 'content_block_delta':
-        if (responseMessage) {
-          const { index, delta } = AnthropicWire_API_Message_Create.event_ContentBlockDelta_schema.parse(JSON.parse(eventData));
-          if (responseMessage.content[index] === undefined)
-            throw new Error(`Unexpected content block delta location (${index})`);
-
-          switch (delta.type) {
-            case 'text_delta':
-              if (responseMessage.content[index].type === 'text') {
-                responseMessage.content[index].text += delta.text;
-                pt.appendText(delta.text);
-              } else
-                throw new Error('Unexpected text delta');
-              break;
-
-            case 'input_json_delta':
-              if (responseMessage.content[index].type === 'tool_use') {
-                responseMessage.content[index].input += delta.partial_json;
-                pt.appendFunctionCallInvocationArgs(responseMessage.content[index].id, delta.partial_json);
-              } else
-                throw new Error('Unexpected input_json_delta');
-              break;
-
-            default:
-              throw new Error(`Unexpected content block delta type: ${(delta as any).type}`);
-          }
-        } else
+      case 'content_block_delta': {
+        if (!responseMessage)
           throw new Error('Unexpected content_block_delta');
+
+        const { index, delta } = AnthropicWire_API_Message_Create.event_ContentBlockDelta_schema.parse(JSON.parse(eventData));
+        const contentBlock = responseMessage.content[index];
+        if (contentBlock === undefined)
+          throw new Error(`Unexpected content block delta location (${index})`);
+
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) {
+          const debugInfo = delta.type === 'text_delta' ? `len=${delta.text.length}`
+            : delta.type === 'input_json_delta' ? `json_len=${delta.partial_json.length}`
+              : delta.type === 'thinking_delta' ? `len=${delta.thinking.length}`
+                : delta.type === 'signature_delta' ? `sig=${delta.signature}`
+                  : delta.type === 'citations_delta' ? `citation_type=${delta.citation.type}`
+                    : (delta as any)?.type;
+          console.log(`ant content_block_delta[${index}]: type=${delta.type}, ${debugInfo}`);
+        }
+
+        switch (delta.type) {
+          case 'text_delta':
+            if (contentBlock.type === 'text') {
+              // Hotfix Opus-4.6: elide first text block if it's '\n\n'
+              if (elisionCheck(delta.text)) break;
+              contentBlock.text += delta.text;
+              pt.appendText(delta.text);
+            } else
+              throw new Error('Unexpected text delta');
+            break;
+
+          case 'input_json_delta':
+            if (contentBlock.type === 'tool_use') {
+              contentBlock.input += delta.partial_json;
+              pt.appendFunctionCallInvocationArgs(contentBlock.id, delta.partial_json);
+            } else if (contentBlock.type === 'server_tool_use') {
+              // Server tools stream their input (e.g., for code_execution, this is the Python code being executed).
+              // For PFC flows (Opus), this contains web_search()/web_fetch() calls that reveal the actual search queries.
+              contentBlock.input += delta.partial_json;
+              // [ATOL] Will stream code/args to the Tool Execution Graph for live display.
+              // pt.appendFunctionCallInvocationArgs(contentBlock.id, delta.partial_json);
+            } else
+              throw new Error('Unexpected input_json_delta');
+            break;
+
+          case 'thinking_delta':
+            if (contentBlock.type === 'thinking') {
+              contentBlock.thinking += delta.thinking;
+              pt.appendReasoningText(delta.thinking);
+            } else
+              throw new Error('Unexpected thinking delta');
+            break;
+
+          case 'signature_delta':
+            if (contentBlock.type === 'thinking') {
+              contentBlock.signature = delta.signature;
+              pt.setReasoningSignature(delta.signature);
+            } else
+              throw new Error('Unexpected signature delta');
+            break;
+
+          case 'citations_delta':
+            // Citations arrive incrementally during streaming - add to current text block
+            if (contentBlock.type === 'text') {
+              const citation = delta.citation;
+              if (citation.type === 'web_search_result_location') {
+                // Web search citation from server-side search
+                pt.appendUrlCitation(
+                  citation.title || citation.url,
+                  citation.url,
+                  undefined, // citationNumber
+                  undefined, // startIndex
+                  undefined, // endIndex
+                  citation.cited_text, // textSnippet
+                  undefined, // pubTs
+                );
+              }
+              // TODO: Handle other citation types (char_location, page_location, content_block_location, search_result_location)
+            } else
+              throw new Error('Unexpected citations_delta on non-text block');
+            break;
+
+          // note: redacted_thinking doesn't have deltas, only start (with payload) and stop
+
+          default:
+            const _exhaustiveCheck: never = delta;
+            aixResilientUnknownValue('Anthropic', 'deltaType', (delta as any)?.type);
+            break;
+        }
         break;
+      }
 
       // Finalize content block if needed.
-      case 'content_block_stop':
-        if (responseMessage) {
-          const { index } = AnthropicWire_API_Message_Create.event_ContentBlockStop_schema.parse(JSON.parse(eventData));
-          if (responseMessage.content[index] === undefined)
-            throw new Error(`Unexpected content block stop location (${index})`);
+      case 'content_block_stop': {
+        if (!responseMessage) throw new Error('Unexpected content_block_stop');
 
-          // Signal that the tool is ready? (if it is...)
-          pt.endMessagePart();
-        } else
-          throw new Error('Unexpected content_block_stop');
+        const { index } = AnthropicWire_API_Message_Create.event_ContentBlockStop_schema.parse(JSON.parse(eventData));
+        const stoppedBlock = responseMessage.content[index];
+        if (stoppedBlock === undefined)
+          throw new Error(`Unexpected content block stop location (${index})`);
+
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant content_block_stop[${index}]: type=${stoppedBlock.type}`);
+
+        // Special cases - we usually do not handle block ends
+        switch (stoppedBlock.type) {
+          // For server_tool_use: decode accumulated input (JSON) from the server tool -> code execution code
+          case 'server_tool_use':
+            // Re-send operation state with fully accumulated input (during streaming, content_block_start had empty input)
+            _handleCBE_ServerToolUse_S(pt, stoppedBlock.id, stoppedBlock.name, stoppedBlock.input);
+            break;
+        }
+
+        // Signal that the tool is ready? (if it is...)
+        pt.endMessagePart();
         break;
+      }
 
       // Optionally handle top-level message changes. Example: updating stop_reason
-      case 'message_delta':
-        if (responseMessage) {
-          const { delta, usage } = AnthropicWire_API_Message_Create.event_MessageDelta_schema.parse(JSON.parse(eventData));
+      case 'message_delta': {
+        if (!responseMessage) throw new Error('Unexpected message_delta');
 
-          Object.assign(responseMessage, delta);
+        const { delta, usage } = AnthropicWire_API_Message_Create.event_MessageDelta_schema.parse(JSON.parse(eventData));
 
-          // -> Token Stop Reason
-          const tokenStopReason = _fromAnthropicStopReason(delta.stop_reason);
-          if (tokenStopReason !== null)
-            pt.setTokenStopReason(tokenStopReason);
+        Object.assign(responseMessage, delta);
 
-          if (usage?.output_tokens && messageStartTime) {
-            const elapsedTimeMilliseconds = Date.now() - messageStartTime;
-            const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
-            const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
-            pt.updateMetrics({
-              TIn: chatInTokens !== undefined ? chatInTokens : -1,
-              TOut: usage.output_tokens,
-              vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
-              dtStart: timeToFirstEvent,
-              dtInner: elapsedTimeMilliseconds,
-              dtAll: Date.now() - parserCreationTimestamp,
-            });
-          }
-        } else
-          throw new Error('Unexpected message_delta');
+        // -> Container state update - arrives here when container was created mid-stream
+        if (delta.container)
+          _emitContainerState(pt, delta.container);
+
+        // -> Token Stop Reason
+        const tokenStopReason = _fromAnthropicStopReason(delta.stop_reason, 'message_delta');
+        if (tokenStopReason !== null)
+          pt.setTokenStopReason(tokenStopReason, _formatAnthropicStopError(delta.stop_details));
+
+        // NOTE: we have more fields we're not parsing yet - https://platform.claude.com/docs/en/api/typescript/messages#message_delta_usage
+        if (usage?.output_tokens && messageStartTime) {
+          const elapsedTimeMilliseconds = Date.now() - messageStartTime;
+          const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
+          const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
+          pt.updateMetrics({
+            TIn: chatInTokens !== undefined ? chatInTokens : -1,
+            TOut: usage.output_tokens,
+            // reasoning tokens are a subset of output_tokens (already in TOut) - surfaced as a breakdown, like OpenAI/Gemini
+            ...(typeof usage.output_tokens_details?.thinking_tokens === 'number' ? { TOutR: usage.output_tokens_details.thinking_tokens } : {}),
+            vTOutInner: Math.round(chatOutRate * 100) / 100, // Round to 2 decimal places
+            dtStart: timeToFirstEvent,
+            dtInner: elapsedTimeMilliseconds,
+            dtAll: Date.now() - parserCreationTimestamp,
+          });
+        }
+
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant message_delta: stop_reason=${delta.stop_reason || 'none'}, TOut=${usage?.output_tokens || 'none'}`);
         break;
+      }
 
       // We can now close the message
       case 'message_stop':
         AnthropicWire_API_Message_Create.event_MessageStop_schema.parse(JSON.parse(eventData));
-        return pt.setEnded('done-dialect');
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log('ant message_stop', { stop_reason: responseMessage.stop_reason });
 
-      // UNDOCUMENTED - Occasionaly, the server will send errors, such as {"type": "error", "error": {"type": "overloaded_error", "message": "Overloaded"}}
+        // Continuation: when pause_turn, throw to trigger re-dispatch with accumulated content
+        if (responseMessage.stop_reason === 'pause_turn')
+          throw new DispatchContinuationSignal(
+            _createAnthropicPauseTurnContinuation(responseMessage.content, responseMessage.container?.id),
+          );
+
+        return pt.setDialectEnded('done-dialect'); // Anthropic: stop message
+
+      // UNDOCUMENTED - Occasionally, the server will send errors, such as {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}}
       case 'error':
         hasErrored = true;
         const { error } = JSON.parse(eventData);
         const errorText = (error.type && error.message) ? `${error.type}: ${error.message}` : safeErrorString(error);
-        return pt.setDialectTerminatingIssue(errorText || 'unknown server issue.', IssueSymbols.Generic);
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant error: ${errorText}`);
+
+        // Errors documented by Anthropic - these follow a 200 HTTP response, so they're sent as JSON
+        // https://docs.claude.com/en/api/errors
+        //
+        // 400 - invalid_request_error (bad input)
+        // 401 - authentication_error (api key issue)
+        // 403 - permission_error (api key lacks permissions)
+        // 404 - not_found_error
+        // 413 - request_too_large (> 32MB for standard streaming)
+        // 429* - rate_limit_error (account hit limits)
+        // 500* - api_error (anthropic systems internal unexpected error)
+        // 529* - overloaded_error: The API is temporarily overloaded.
+        // *: retryable errors
+        const isRetryableError = ['overloaded_error', 'rate_limit_error', 'api_error'].includes(error.type);
+
+        // Throw retryable error to instruct the correct ancestor to restart (only if retries available
+        if (isRetryableError) {
+          if (context?.retriesAvailable) {
+            console.log(`[Aix.Anthropic] Can retry error '${errorText}'`);
+            // map error types to HTTP status codes for diagnostics
+            const errorTypeToHttpStatus: Record<string, number> = {
+              'rate_limit_error': 429,
+              'api_error': 500,
+              'overloaded_error': 529,
+            };
+            // request a retry by unwinding to the retrier
+            throw new OperationRetrySignal(`Anthropic: ${errorText}`, {
+              causeHttp: errorTypeToHttpStatus[error.type],
+              causeConn: error.type,
+            });
+          } else
+            console.log(`[Aix.Anthropic] ⛔ No retries available for error '${errorText}'`);
+        }
+
+        // Non-retryable errors (or no retries left): show to user
+        return pt.setDialectTerminatingIssue(errorText || 'unknown server issue.', IssueSymbols.Generic, 'srv-warn');
 
       default:
-        throw new Error(`Unexpected event name: ${eventName}`);
+        if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant unknown event: ${eventName}`);
+        aixResilientUnknownValue('Anthropic', 'eventName', eventName);
+        break;
     }
   };
 }
@@ -213,14 +494,26 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
 export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
+  let needsTextSeparator = false; // insert text separator when text follows server tool
 
-  return function(pt: IParticleTransmitter, fullData: string): void {
+  let elideFirstTextBlock = hotFixAntElideLeadingDoubleNewline;
+  const elisionCheck = (fullText: string) => {
+    if (!elideFirstTextBlock) return false;
+    elideFirstTextBlock = false;
+    if (fullText !== '\n\n') return false;
+    console.log('[DEV] Anthropic: 🔷 Eliding leading \\n\\n text block');
+    return true;
+  };
+
+  return function(pt: IParticleTransmitter, fullData: string /*, eventName?: string, context?: { retriesAvailable: boolean } */): void {
 
     // parse with validation (e.g. type: 'message' && role: 'assistant')
     const {
       model,
       content,
+      container,
       stop_reason,
+      stop_details,
       usage,
     } = AnthropicWire_API_Message_Create.Response_schema.parse(JSON.parse(fullData));
 
@@ -228,28 +521,109 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     if (model)
       pt.setModelName(model);
 
-    // -> Content Blocks
+    // -> Container metadata (for Skills) - propagate to client via svs for cross-turn reuse
+    if (container)
+      _emitContainerState(pt, container);
+
+    // -> Content Blocks - Non-Streaming
     for (let i = 0; i < content.length; i++) {
       const contentBlock = content[i];
       const isLastBlock = i === content.length - 1;
-      switch (contentBlock.type) {
+      switch (contentBlock.type) { // .content_block (non-streaming)
         case 'text':
-          pt.appendText(contentBlock.text);
+          // Hotfix Opus-4.6: elide first text block if it's '\n\n'
+          if (elisionCheck(contentBlock.text)) break;
+          // add separator when text follows server tool execution
+          pt.appendText(!needsTextSeparator ? contentBlock.text : '\n\n' + contentBlock.text);
+          needsTextSeparator = false;
+          // Handle citations if present (non-streaming mode has all citations attached)
+          if (contentBlock.citations && Array.isArray(contentBlock.citations)) {
+            for (const citation of contentBlock.citations) {
+              if (citation.type === 'web_search_result_location') {
+                pt.appendUrlCitation(
+                  citation.title || citation.url,
+                  citation.url,
+                  undefined, // citationNumber
+                  undefined, // startIndex
+                  undefined, // endIndex
+                  citation.cited_text, // textSnippet
+                  undefined, // pubTs
+                );
+              }
+              // TODO: Handle other citation types (char_location, page_location, content_block_location, search_result_location)
+            }
+          }
           break;
+
+        case 'thinking':
+          pt.appendReasoningText(contentBlock.thinking);
+          contentBlock.signature && pt.setReasoningSignature(contentBlock.signature);
+          break;
+
+        case 'redacted_thinking':
+          pt.addReasoningRedactedData(contentBlock.data);
+          break;
+
         case 'tool_use':
           // NOTE: this gets parsed as an object, not string deltas of a json!
+
+          // [Anthropic, 2025-11-24] Programmatic Tool Calling - detect if called from code execution
+          const isProgrammaticCallNS = contentBlock.caller?.type === 'code_execution_20250825' || contentBlock.caller?.type === 'code_execution_20260120';
+          if (isProgrammaticCallNS)
+            console.log(`[Anthropic] Programmatic tool call (non-streaming): ${contentBlock.name} called from ${contentBlock.caller!.type} (tool_id: ${contentBlock.caller!.type !== 'direct' ? contentBlock.caller!.tool_id : 'n/a'})`);
+
           pt.startFunctionCallInvocation(contentBlock.id, contentBlock.name, 'json_object', (contentBlock.input as object) || null);
           pt.endMessagePart();
           break;
-        default:
-          throw new Error(`Unexpected content block type: ${(contentBlock as any).type}`);
-      }
-    }
 
-    // -> Token Stop Reason
-    const tokenStopReason = _fromAnthropicStopReason(stop_reason);
-    if (tokenStopReason !== null)
-      pt.setTokenStopReason(tokenStopReason);
+        case 'server_tool_use':
+          _handleCBS_ServerToolUse(pt, contentBlock);
+          break;
+
+        case 'web_search_tool_result':
+          _handleCBS_WebSearchToolResult(pt, contentBlock);
+          break;
+
+        case 'web_fetch_tool_result':
+          _handleCBS_WebFetchToolResult(pt, contentBlock);
+          break;
+
+        case 'code_execution_tool_result':
+          _handleCBS_CodeExecutionToolResult(pt, contentBlock);
+          break;
+
+        case 'bash_code_execution_tool_result':
+          _handleCBS_BashCodeExecutionToolResult(pt, contentBlock);
+          break;
+
+        case 'text_editor_code_execution_tool_result':
+          _handleCBS_TextEditorCodeExecutionToolResult(pt, contentBlock);
+          break;
+
+        case 'mcp_tool_use':
+          throw new Error(`Server tool 'mcp_tool_use' is not yet implemented.`);
+
+        case 'mcp_tool_result':
+          throw new Error(`Server tool 'mcp_tool_result' is not yet implemented.`);
+
+        case 'container_upload':
+          _handleCBS_ContainerUpload(pt, contentBlock, container?.id);
+          break;
+
+        case 'tool_search_tool_result':
+          _handleCBS_ToolSearchToolResult(pt, contentBlock);
+          break;
+
+        default:
+          const _exhaustiveCheck: never = contentBlock;
+          aixResilientUnknownValue('Anthropic-NS', 'contentBlockType', (contentBlock as any)?.type);
+          break;
+      }
+
+      // set separator flag when server tools complete (text after tools needs visual separation)
+      if (contentBlock.type.includes('tool_use') || contentBlock.type.includes('tool_result'))
+        needsTextSeparator = hotFixAntInjectToolsTextSpacer;
+    }
 
     // -> Stats
     if (usage) {
@@ -265,18 +639,446 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
         dtAll: elapsedTimeMilliseconds,
       };
       if (usage.cache_read_input_tokens || usage.cache_creation_input_tokens) {
-        if (usage.cache_read_input_tokens !== undefined)
+        if (typeof usage.cache_read_input_tokens === 'number')
           metricsUpdate.TCacheRead = usage.cache_read_input_tokens;
-        if (usage.cache_creation_input_tokens !== undefined)
+        if (typeof usage.cache_creation_input_tokens === 'number')
           metricsUpdate.TCacheWrite = usage.cache_creation_input_tokens;
       }
+      // reasoning tokens are a subset of output_tokens (already in TOut) - surfaced as a breakdown, like OpenAI/Gemini
+      if (typeof usage.output_tokens_details?.thinking_tokens === 'number')
+        metricsUpdate.TOutR = usage.output_tokens_details.thinking_tokens;
       pt.updateMetrics(metricsUpdate);
     }
+
+    // Continuation: when pause_turn, throw to trigger re-dispatch with accumulated content
+    if (stop_reason === 'pause_turn')
+      throw new DispatchContinuationSignal(
+        _createAnthropicPauseTurnContinuation(content, container?.id),
+      );
+
+    // -> Token Stop Reason (pause_turn already thrown above)
+    const tokenStopReason = _fromAnthropicStopReason(stop_reason, 'parser_NS');
+    if (tokenStopReason !== null)
+      pt.setTokenStopReason(tokenStopReason, _formatAnthropicStopError(stop_details));
   };
 }
 
 
-function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.Response['stop_reason']) {
+// --- Shared helpers (used by both S and NS parsers) ---
+
+/** Ellipsize long strings for iTexts/oTexts display (keeps start + end, shows byte count in the middle) */
+function _ellipsizeContext(text: string, maxBytes = 512): string {
+  if (text.length <= maxBytes) return text;
+  const ellipsis = `...[${(text.length - maxBytes).toLocaleString()} chars]...`;
+  const half = Math.floor((maxBytes - ellipsis.length) / 2);
+  return text.slice(0, half) + ellipsis + text.slice(-half);
+}
+
+/**
+ * Emit container state via svs particle - reassembler promotes this to generator.upstreamContainer.
+ * NOTE: DMessage.sessionMetadata was designed for this (see chat.message.ts) but we use generator
+ * fields instead - simpler plumbing, no new persistence/migration, and ephemeral containers fit well.
+ */
+function _emitContainerState(pt: IParticleTransmitter, container: { id: string; expires_at: string }): void {
+  pt.sendSetVendorState({
+    p: 'svs',
+    vendor: 'anthropic',
+    state: { container: { id: container.id, expiresAt: container.expires_at } },
+  });
+}
+
+/** Compose a human-readable error string from Anthropic's stop_details. Returns undefined when nothing useful to surface. */
+function _formatAnthropicStopError(stopDetails: { type: string; category?: string | null; explanation?: string | null } | null | undefined): string | undefined {
+  if (!stopDetails) return undefined;
+  if (stopDetails.type !== 'refusal') {
+    aixResilientUnknownValue('Anthropic', 'stopDetailsType', stopDetails.type);
+    return undefined;
+  }
+  const parts: string[] = [];
+  if (stopDetails.category) parts.push(`[${stopDetails.category}]`);
+  if (stopDetails.explanation) parts.push(stopDetails.explanation);
+  return parts.length ? `Refusal: ${parts.join(' ')}` : undefined;
+}
+
+
+// --- Shared server tool result handlers (used by both S and NS parsers) ---
+
+type _ContentBlock = AnthropicWire_API_Message_Create.Response['content'][number];
+
+function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'server_tool_use' }>): void {
+  // Server-side tool execution (e.g., web_search, web_fetch, Skills API tools)
+  // NOTE: We don't create tool invocations for server tools - just show operation state
+
+  // Extract input fields when available (non-streaming has the full object; streaming starts empty and accumulates via input_json_delta)
+  const inputObj = typeof block.input === 'object' ? block.input as Record<string, any> : undefined;
+  const srvOp: Parameters<typeof pt.sendOperationState>[2] = {
+    opId: block.id,
+    ...((block.caller?.type && block.caller.type !== 'direct') && { parentOpId: block.caller.tool_id }),
+  };
+
+  switch (block.name) { // .server_tool_use.name
+    case 'web_search':
+      // start input: { query: string } - dynamically extracted
+      const searchQuery = typeof inputObj?.query === 'string' ? inputObj.query : undefined;
+      pt.sendOperationState('search-web', 'Searching the web...', { ...srvOp, ...(searchQuery ? { iTexts: [`Search query: "${searchQuery}"`] } : undefined) });
+      break;
+    case 'web_fetch':
+      // start input: { url: string } - dynamically extracted
+      const fetchUrl = typeof inputObj?.url === 'string' ? inputObj.url : undefined;
+      pt.sendOperationState('search-web', `Fetching ${fetchUrl || 'web content'}...`, { ...srvOp, ...(fetchUrl ? { iTexts: [`URL: ${fetchUrl}`] } : undefined) });
+      break;
+    case 'code_execution':
+      // input: { code: string } - Python code for sandbox execution
+      const pyCode = typeof inputObj?.code === 'string' ? inputObj.code : undefined;
+      pt.sendOperationState('code-exec', !pyCode ? 'Writing code...' : 'Running code...', { ...srvOp, ...(pyCode ? { iTexts: [_ellipsizeContext(pyCode)] } : undefined) });
+      break;
+    case 'bash_code_execution':
+      // input: { command: string } - bash command for sandbox execution
+      const bashCmd = typeof inputObj?.command === 'string' ? inputObj.command : undefined;
+      pt.sendOperationState('code-exec', !bashCmd ? 'Writing bash...' : 'Running bash...', { ...srvOp, ...(bashCmd ? { iTexts: [_ellipsizeContext(bashCmd)] } : undefined) });
+      break;
+    case 'text_editor_code_execution':
+      // input: { command: 'view'|'create'|'str_replace'|'insert'|'undo_edit', path: string, file_text?: string, old_str?: string, new_str?: string, ... }
+      const teCommand = typeof inputObj?.command === 'string' ? inputObj.command : undefined;
+      const tePath = typeof inputObj?.path === 'string' ? inputObj.path : undefined;
+      const iTexts: string[] = [];
+      if (tePath)
+        iTexts.push(tePath);
+      switch (teCommand) {
+        default:
+          console.log('[DEV] Anthropic: server_tool_use(content_block_start): unrecognized text editor command', { teCommand, inputObj });
+        // fallthrough
+        case undefined: // EXPECTED in Streaming: we don't know the command yet, the input object is empty - in NS, we have the details upfront (cases below)
+          pt.sendOperationState('code-exec', `Editor: ${teCommand || 'working'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'create':
+          if (typeof inputObj?.file_text === 'string') iTexts.push(_ellipsizeContext(inputObj.file_text));
+          pt.sendOperationState('code-exec', `Creating ${tePath || 'file'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'view':
+          if (inputObj?.view_range) iTexts.push(`lines: ${JSON.stringify(inputObj.view_range)}`);
+          pt.sendOperationState('code-exec', `Viewing ${tePath || 'file'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'str_replace':
+          if (typeof inputObj?.old_str === 'string') iTexts.push(`- ${_ellipsizeContext(inputObj.old_str, 256)}`);
+          if (typeof inputObj?.new_str === 'string') iTexts.push(`+ ${_ellipsizeContext(inputObj.new_str, 256)}`);
+          pt.sendOperationState('code-exec', `Editing ${tePath || 'file'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'insert':
+          if (typeof inputObj?.insert_text === 'string') iTexts.push(_ellipsizeContext(inputObj.insert_text, 256));
+          pt.sendOperationState('code-exec', `Inserting in ${tePath || 'file'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'undo_edit':
+          pt.sendOperationState('code-exec', `Undoing edit in ${tePath || 'file'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
+          break;
+      }
+      break;
+    // [Anthropic, 2025-11-24] Tool Search Tool
+    case 'tool_search_tool_regex':
+      const pattern = typeof inputObj?.pattern === 'string' ? inputObj.pattern : undefined;
+      pt.sendOperationState('code-exec', 'Searching tools...', { ...srvOp, ...(pattern ? { iTexts: [`pattern: ${pattern}`] } : undefined) });
+      break;
+    case 'tool_search_tool_bm25':
+      const query = typeof inputObj?.query === 'string' ? inputObj.query : undefined;
+      pt.sendOperationState('code-exec', 'Searching tools...', { ...srvOp, ...(query ? { iTexts: [`query: "${query}"`] } : undefined) });
+      break;
+    default:
+      // For unknown server tools (e.g., future Skills), show a generic placeholder instead of throwing
+      console.warn(`[Anthropic Parser] Unknown server tool ${block.name}`, { input: block.input });
+      pt.sendOperationState('code-exec', `Using ${block.name}...`, srvOp);
+      break;
+  }
+
+  // [ATOL] Server tool invocations will be captured by the Tool Execution Graph.
+  // Key data available here: block.id (srvtoolu_*), block.name, block.input (streamed via input_json_delta),
+  // block.caller?.type ('direct' | 'code_execution_*') - indicates nesting (e.g., code_execution orchestrating web_search via PFC).
+  // For PFC (Programmatic Function Calling): Opus uses code_execution to write Python that calls web_search()/web_fetch() - the streamed
+  // input contains the actual code being executed, and caller.type on nested tool_use blocks shows the call chain.
+  // Nesting -> opLog level (inferred by the reassembler from the presence of a parent op)
+}
+
+/** Streaming only: called at content_block_stop to re-send the operation state with the fully accumulated input JSON */
+function _handleCBE_ServerToolUse_S(pt: IParticleTransmitter, opId: string, name: string, inputStr: string | object): void {
+  let input: Record<string, any> | undefined;
+  try {
+    input = typeof inputStr === 'string' ? JSON.parse(inputStr) : inputStr;
+  } catch { /* ignore parse errors */
+  }
+  if (typeof input !== 'object') {
+    // No parseable input - still update state so UI doesn't stay on "Writing..."
+    pt.sendOperationState('code-exec', 'Executing...', { opId });
+    return;
+  }
+
+  switch (name) {
+    case 'code_execution': {
+      const code = typeof input.code === 'string' ? input.code : undefined;
+      pt.sendOperationState('code-exec', 'Executing code...', { opId, ...code && { iTexts: [_ellipsizeContext('input code:\n' + code)] } });
+      break;
+    }
+    case 'bash_code_execution': {
+      const cmd = typeof input.command === 'string' ? input.command : undefined;
+      pt.sendOperationState('code-exec', 'Executing bash...', { opId, ...cmd && { iTexts: [_ellipsizeContext('bash command:\n' + cmd)] } });
+      break;
+    }
+    case 'text_editor_code_execution': {
+      const path = typeof input.path === 'string' ? input.path : 'file';
+      const iTexts: string[] = [];
+      if (path !== 'file') iTexts.push(`path: ${path}`);
+      switch (input.command) {
+        default: // not expected: the input shall be valid here
+          console.log('[DEV] Anthropic: server_tool_use(content_block_stop): unrecognized text editor command', { command: input.command, input });
+          pt.sendOperationState('code-exec', `Editor: ${input.command || 'working'}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'create':
+          if (typeof input.file_text === 'string') iTexts.push(_ellipsizeContext('file contents:\n' + input.file_text));
+          pt.sendOperationState('code-exec', `Creating ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'view':
+          if (input.view_range) iTexts.push(`lines: ${JSON.stringify(input.view_range)}`);
+          pt.sendOperationState('code-exec', `Viewing ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'str_replace':
+          if (typeof input.old_str === 'string') iTexts.push(`- ${_ellipsizeContext(input.old_str, 256)}`);
+          if (typeof input.new_str === 'string') iTexts.push(`+ ${_ellipsizeContext(input.new_str, 256)}`);
+          pt.sendOperationState('code-exec', `Editing ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'insert':
+          if (typeof input.insert_text === 'string') iTexts.push(_ellipsizeContext(input.insert_text, 256));
+          pt.sendOperationState('code-exec', `Inserting in ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          break;
+        case 'undo_edit':
+          pt.sendOperationState('code-exec', `Undoing edit in ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          break;
+      }
+      break;
+    }
+    default:
+      // we silently ignore the updates for unknown tools (unknown input structures), or tools that have the full
+      // input object at the start event (e.g., web_search with query in input)
+      break;
+  }
+}
+
+function _handleCBS_WebSearchToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'web_search_tool_result' }>): void {
+  // Web search results arrive fully formed (no deltas)
+  // NOTE: We don't add citations for bulk search results (too noisy - could be 20+ URLs)
+  //       Only high-quality citations that appear in text annotations should be shown
+  const opId = block.tool_use_id;
+  if (Array.isArray(block.content)) {
+    // Success - array of search results
+    const oTexts = block.content.map((r: any) => r.url).filter(Boolean);
+    pt.sendOperationState('search-web', `Search completed: ${block.content.length} results`, { opId, state: 'done', ...oTexts.length ? { oTexts } : undefined });
+  } else if (block.content.type === 'web_search_tool_result_error') {
+    // Error during web search
+    pt.sendOperationState('search-web', `Search error: ${block.content.error_code}`, { opId, state: 'error' });
+  }
+}
+
+function _handleCBS_WebFetchToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'web_fetch_tool_result' }>): void {
+  // Web fetch results arrive fully formed (no deltas)
+  const opId = block.tool_use_id;
+  switch (block.content.type) {
+    case 'web_fetch_result':
+      // Success - fetched a URL
+      const content = block.content.content;
+      const fetchedText = (content?.type === 'document' && content.source?.type === 'text' && content.source.data)
+        ? _ellipsizeContext(content.source.data, 280) : undefined;
+      pt.sendOperationState('search-web', `Retrieved ${block.content.url}`, { opId, state: 'done', ...fetchedText && { oTexts: [fetchedText] } });
+
+      // Add citation for the fetched content
+      const fetchedContent = block.content.content;
+      pt.appendUrlCitation(
+        fetchedContent?.title || 'Web Content',
+        block.content.url,
+        undefined, // citationNumber
+        undefined, // startIndex
+        undefined, // endIndex
+        undefined, // textSnippet
+        block.content.retrieved_at ? Date.parse(block.content.retrieved_at) : undefined,
+      );
+      break;
+
+    case 'web_fetch_tool_result_error':
+      // Error - URL is already captured as iTexts on the invocation entry
+      pt.sendOperationState('search-web', `Fetch error: ${block.content.error_code}`, { opId, state: 'error' });
+      break;
+
+    default:
+      const _exhaustiveCheck: never = block.content;
+  }
+}
+
+function _handleCBS_CodeExecutionToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'code_execution_tool_result' }>): void {
+  // Code execution result from container (Skill or traditional, such as dynamic web search)
+  const opId = block.tool_use_id;
+  switch (block.content.type) {
+    case 'code_execution_result':
+    case 'encrypted_code_execution_result': {
+      // encrypted variant (PFC + web_search): stdout is encrypted, only stderr is readable
+      const oTexts: string[] = [];
+      if (block.content.return_code !== 0)
+        oTexts.push(`exit code: ${block.content.return_code}`);
+      if (block.content.type === 'code_execution_result' && block.content.stdout)
+        oTexts.push(_ellipsizeContext(block.content.stdout));
+      else if (block.content.type === 'encrypted_code_execution_result')
+        oTexts.push('[Anthropic encrypted output]');
+      if (block.content.stderr)
+        oTexts.push('stderr: ' + _ellipsizeContext(block.content.stderr));
+      const codeExecFailed = block.content.return_code !== 0;
+      pt.sendOperationState('code-exec', codeExecFailed ? `Code executed` /* was: failed */ : 'Code executed', { opId, state: codeExecFailed ? 'error' : 'done', ...oTexts.length ? { oTexts } : undefined });
+
+      // emit structured hosted resource references for generated files (e.g. from a skill)
+      if (Array.isArray(block.content?.content))
+        for (const ob of block.content.content)
+          if (ob.type === 'code_execution_output' && ob.file_id)
+            pt.appendHostedResource({ p: 'hres', kind: 'vnd.ant.file', fileId: ob.file_id });
+      break;
+    }
+
+    case 'code_execution_tool_result_error':
+      pt.sendOperationState('code-exec', `Execution error: ${block.content.error_code}`, { opId, state: 'error' });
+      break;
+
+    default:
+      const _exhaustiveCheck: never = block.content;
+  }
+}
+
+function _handleCBS_BashCodeExecutionToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'bash_code_execution_tool_result' }>): void {
+  // Bash code execution result from container
+  const opId = block.tool_use_id;
+  switch (block.content.type) {
+    case 'bash_code_execution_result':
+      const oTexts: string[] = [];
+      if (block.content.return_code !== 0)
+        oTexts.push(`exit code: ${block.content.return_code}`);
+      if (block.content.stdout)
+        oTexts.push(_ellipsizeContext(block.content.stdout));
+      if (block.content.stderr)
+        oTexts.push('stderr: ' + _ellipsizeContext(block.content.stderr));
+      const bashFailed = block.content.return_code !== 0;
+      pt.sendOperationState('code-exec', bashFailed ? `Bash executed` /* was: failed */ : 'Bash executed', { opId, state: bashFailed ? 'error' : 'done', ...oTexts.length ? { oTexts } : undefined });
+
+      // emit structured hosted resource references for generated files
+      if (Array.isArray(block.content.content))
+        for (const ob of block.content.content)
+          if (ob.type === 'bash_code_execution_output' && ob.file_id)
+            pt.appendHostedResource({ p: 'hres', kind: 'vnd.ant.file', fileId: ob.file_id });
+      break;
+
+    case 'bash_code_execution_tool_result_error':
+      pt.sendOperationState('code-exec', `Bash error: ${block.content.error_code}`, { opId, state: 'error' });
+      break;
+
+    default:
+      const _exhaustiveCheck: never = block.content;
+  }
+}
+
+function _handleCBS_TextEditorCodeExecutionToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'text_editor_code_execution_tool_result' }>): void {
+  // Text editor code execution result from Skills container
+  const opId = block.tool_use_id;
+  const oTexts: string[] = [];
+  switch (block.content.type) {
+    case 'text_editor_code_execution_create_result':
+      pt.sendOperationState('code-exec', block.content.is_file_update ? 'File updated' : 'File created', { opId, state: 'done' });
+      break;
+    case 'text_editor_code_execution_view_result':
+      if (block.content.total_lines != null) oTexts.push(`${block.content.total_lines} lines total`);
+      // only include text content in oTexts - image/pdf would be base64 noise
+      if (block.content.file_type === 'text')
+        oTexts.push(_ellipsizeContext(block.content.content || 'content: (not provided)'));
+      pt.sendOperationState('code-exec', `Viewed file${block.content.file_type !== 'text' ? ` (${block.content.file_type})` : ''}`, { opId, state: 'done', ...oTexts.length ? { oTexts } : undefined });
+      break;
+    case 'text_editor_code_execution_str_replace_result':
+      if (block.content.old_start != null && block.content.old_lines != null)
+        oTexts.push(`replaced lines ${block.content.old_start}-${block.content.old_start + block.content.old_lines}`);
+      if (block.content.lines?.length)
+        oTexts.push(_ellipsizeContext(block.content.lines.join('\n'), 256));
+      pt.sendOperationState('code-exec', 'Edit applied', { opId, state: 'done', ...oTexts.length ? { oTexts } : undefined });
+      break;
+    case 'text_editor_code_execution_tool_result_error':
+      pt.sendOperationState('code-exec', `Editor error: ${block.content.error_code}${block.content.error_message ? ' - ' + block.content.error_message : ''}`, { opId, state: 'error' });
+      break;
+    default:
+      const _exhaustiveCheck: never = block.content;
+  }
+}
+
+function _handleCBS_ContainerUpload(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'container_upload' }>, containerId: string | undefined): void {
+  // Container upload - Skill has generated a file, emit as a downloadable hosted resource
+  pt.appendHostedResource({ p: 'hres', kind: 'vnd.ant.file', fileId: block.file_id, ...(containerId ? { containerId } : {}) });
+}
+
+function _handleCBS_ToolSearchToolResult(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'tool_search_tool_result' }>): void {
+  // [Anthropic, 2025-11-24] Tool Search Tool
+  const opId = block.tool_use_id;
+  if (block.content?.type === 'tool_search_tool_search_result') {
+    // success
+    const toolNames = block.content.tool_references.map(ref => ref.tool_name);
+    pt.sendOperationState('code-exec', `Discovered ${toolNames.length} tool(s): ${toolNames.join(', ')}`, { opId, state: 'done' });
+  } else if (block.content?.type === 'tool_search_tool_result_error') {
+    // error during tool search
+    pt.sendOperationState('code-exec', `Tool search error: ${block.content.error_code}`, { opId, state: 'error' });
+  }
+}
+
+
+// --- Anthropic pause_turn continuation ---
+
+/**
+ * Creates a DispatchContinuation for Anthropic's pause_turn stop reason.
+ * Appends accumulated content blocks as an assistant message for the next turn.
+ * On subsequent turns, detects the trailing assistant message and extends its content.
+ */
+function _createAnthropicPauseTurnContinuation(
+  accumulatedContent: AnthropicWire_API_Message_Create.Response['content'],
+  containerId: string | undefined,
+): { reason: string; mutateBody: (body: Record<string, unknown>) => Record<string, unknown> } {
+  return {
+    reason: 'pause_turn',
+    mutateBody(body: Record<string, unknown>): Record<string, unknown> {
+      const messages = [...(body.messages as { role: string; content: unknown }[])];
+
+      // Streaming accumulates tool_use/server_tool_use `input` as a JSON string via input_json_delta.
+      // The API expects `input` as a parsed object when sent back in messages - we convert it here
+      const fixedContent = accumulatedContent.map(block => {
+        if (('type' in block) && (block.type === 'tool_use' || block.type === 'server_tool_use') && typeof block.input === 'string') {
+          try {
+            return { ...block, input: JSON.parse(block.input) };
+          } catch {
+            return block;
+          }
+        }
+        return block;
+      });
+
+      // Detect trailing assistant message from a prior continuation turn
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.role === 'assistant' && Array.isArray(lastMessage.content)) {
+        // Extend existing assistant message with new content blocks
+        messages[messages.length - 1] = {
+          ...lastMessage,
+          content: [...lastMessage.content, ...fixedContent],
+        };
+      } else {
+        // First continuation: append new assistant message with accumulated content
+        messages.push({ role: 'assistant', content: [...fixedContent] });
+      }
+
+      return {
+        ...body,
+        messages,
+        // Pass container ID as string to reuse the existing container
+        ...(containerId ? { container: containerId } : {}),
+      };
+    },
+  };
+}
+
+
+function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.Response['stop_reason'], debugCaller: string) {
   switch (stopReason) {
 
     case 'end_turn':
@@ -289,8 +1091,23 @@ function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.R
     case 'max_tokens':
       return 'out-of-tokens';
 
+    case 'model_context_window_exceeded':
+      return 'out-of-tokens'; // Best practice: Allows requesting maximum tokens without calculating input size
+
+    case 'refusal':
+      return 'filter-refusal'; // Safety concerns - refusal to answer
+
+    case 'pause_turn':
+      // pause_turn hits this function from message_delta, but the return is irrelevant -
+      // message_stop will throw DispatchContinuationSignal before the tokenStopReason matters
+      // https://docs.claude.com/en/api/handling-stop-reasons#pause-turn
+      return null;
+
     default:
-      console.warn(`_fromAnthropicStopReason: unknown stop reason: ${stopReason}`);
+      const _exhaustiveCheck: never = stopReason;
+    // fallthrough
+    case null:
+      console.warn(`_fromAnthropicStopReason(${debugCaller}): unexpected stop_reason: ${stopReason}`);
       return null;
   }
 }

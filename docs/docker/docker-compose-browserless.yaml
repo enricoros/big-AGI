@@ -19,7 +19,6 @@ services:
       - .env
     environment:
       - PUPPETEER_WSS_ENDPOINT=ws://browserless:3000
-    command: [ "next", "start", "-p", "3000" ]
     depends_on:
       - browserless
 

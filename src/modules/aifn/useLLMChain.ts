@@ -5,7 +5,9 @@ import type { AixChatGenerate_TextMessages } from '~/modules/aix/client/aix.clie
 import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { abortWithReason } from '~/common/util/errorUtils';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
+import { getLLMContextTokens, getLLMMaxOutputTokens } from '~/common/stores/llms/llms.types';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 
 
@@ -44,7 +46,7 @@ export function useLLMChain(
   // abort an ongoing chain, if any
   const abortChain = React.useCallback((reason: string) => {
     DEBUG_CHAIN && console.log('chain: abort (' + reason + ')');
-    chainAbortController.current.abort(reason);
+    abortWithReason(chainAbortController.current, reason);
     chainAbortController.current = new AbortController();
   }, []);
 
@@ -133,7 +135,7 @@ export function useLLMChain(
     // monitor for cleanup before the result
     let stepDone = false;
     const stepAbortController = new AbortController();
-    const globalToStepListener = () => stepAbortController.abort('chain aborted');
+    const globalToStepListener = () => abortWithReason(stepAbortController, 'chain aborted');
     _chainAbortController.signal.addEventListener('abort', globalToStepListener);
 
     // interim text
@@ -169,7 +171,7 @@ export function useLLMChain(
     // abort if unmounted before the LLM call ends, or if the full chain has been aborted
     return () => {
       if (!stepDone)
-        stepAbortController.abort('step aborted');
+        abortWithReason(stepAbortController, 'step aborted');
       _chainAbortController.signal.removeEventListener('abort', globalToStepListener);
     };
   }, [aixContextName, aixContextRef, chain, llmId, onSuccess]);
@@ -216,9 +218,10 @@ function _initChainState(llmId: DLLMId, input: string, steps: LLMChainStep[]): C
   // max token allocation fo the job
   const llm = findLLMOrThrow(llmId);
 
-  const overrideResponseTokens = llm.maxOutputTokens;
-  const safeInputLength = (llm.contextTokens && overrideResponseTokens)
-    ? Math.floor((llm.contextTokens - overrideResponseTokens) * 2)
+  const overrideResponseTokens = getLLMMaxOutputTokens(llm) ?? null;
+  const llmContextTokens = getLLMContextTokens(llm);
+  const safeInputLength = (llmContextTokens && overrideResponseTokens)
+    ? Math.floor((llmContextTokens - overrideResponseTokens) * 2)
     : null;
 
   return {

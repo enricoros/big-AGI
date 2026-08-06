@@ -1,17 +1,21 @@
-import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateContent_DMessage_FromConversation, AixChatGenerateContent_DMessageGuts } from '~/modules/aix/client/aix.client';
 import { autoChatFollowUps } from '~/modules/aifn/auto-chat-follow-ups/autoChatFollowUps';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
+
+import { createTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 import { DConversationId, splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
-import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
+import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
+
+import { runSLMPipeline, extractLastUserMessageText, buildConversationContext } from '~/modules/slm/slm.pipeline';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
-import { getChatAutoAI, getIsNotificationEnabledForModel } from '../store-app-chat';
-import { getInstantAppChatPanesCount } from '../components/panes/usePanesManager';
+import { getChatAutoAI, getChatThinkingPolicy, getIsNotificationEnabledForModel } from '../store-app-chat';
+import { getInstantAppChatPanesCount } from '../components/panes/store-panes-manager';
 
 
 // configuration
@@ -19,7 +23,7 @@ export const CHATGENERATE_RESPONSE_PLACEHOLDER = '...'; // 💫 ..., 🖊️ ...
 
 
 export interface PersonaProcessorInterface {
-  handleMessage(accumulatedMessage: AixChatGenerateContent_DMessage, messageComplete: boolean): void;
+  handleMessage(accumulatedMessage: AixChatGenerateContent_DMessageGuts, messageComplete: boolean): void;
 }
 
 
@@ -52,7 +56,7 @@ export async function runPersonaOnConversationHead(
     },
   );
 
-  const parallelViewCount = getUXLabsHighPerformance() ? 0 : getInstantAppChatPanesCount();
+  const parallelViewCount = getLabsHighPerformance() ? 0 : getInstantAppChatPanesCount();
 
   // ai follow-up operations (fire/forget)
   const { autoSpeak, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions, autoTitleChat } = getChatAutoAI();
@@ -64,6 +68,41 @@ export async function runPersonaOnConversationHead(
   const abortController = new AbortController();
   cHandler.setAbortController(abortController, 'chat-persona');
 
+  // SLM Orchestrator: intercept and run the full multi-agent pipeline
+  if (chatSystemInstruction?.purposeId === 'SLMOrchestrator') {
+    try {
+      const userMessage = extractLastUserMessageText(chatHistory);
+      const conversationContext = buildConversationContext(chatHistory);
+
+      await runSLMPipeline({
+        userMessage,
+        conversationContext,
+        llmId: assistantLlmId,
+        abortSignal: abortController.signal,
+        onProgress: (progressText: string, done: boolean) => {
+          const progressMessage: AixChatGenerateContent_DMessage = {
+            fragments: [createTextContentFragment(progressText)],
+            generator: { mgt: 'named', name: assistantLlmId },
+            pendingIncomplete: !done,
+          };
+          cHandler.messageEdit(assistantMessageId, progressMessage, done, false);
+        },
+      });
+    } catch (err: any) {
+      const errText = `**SLM Pipeline Error**\n\n${err?.message ?? 'Unknown error'}\n\nFalling back to standard mode.`;
+      const errMessage: AixChatGenerateContent_DMessage = {
+        fragments: [createTextContentFragment(errText)],
+        generator: { mgt: 'named', name: assistantLlmId },
+        pendingIncomplete: false,
+      };
+      cHandler.messageEdit(assistantMessageId, errMessage, true, false);
+    }
+
+    cHandler.clearAbortController('chat-persona');
+    if (autoTitleChat) void autoConversationTitle(conversationId, false);
+    return !abortController.signal.aborted;
+  }
+
   // stream the assistant's messages directly to the state store
   const messageStatus = await aixChatGenerateContent_DMessage_FromConversation(
     assistantLlmId,
@@ -72,21 +111,20 @@ export async function runPersonaOnConversationHead(
     'conversation',
     conversationId,
     { abortSignal: abortController.signal, throttleParallelThreads: parallelViewCount },
-    (messageOverwrite: AixChatGenerateContent_DMessage, messageComplete: boolean) => {
+    (messageOverwrite: AixChatGenerateContent_DMessageGuts, messageComplete: boolean) => {
 
       // Note: there was an abort check here, but it removed the last packet, which contained the cause and final text.
       // if (abortController.signal.aborted)
       //   console.warn('runPersonaOnConversationHead: Aborted', { conversationId, assistantLlmId, messageOverwrite });
 
-      // deep copy the object to avoid partial updates
-      let deepCopy = structuredClone(messageOverwrite);
+      // fragments and generator are already immutable (new refs per update) - no deep clone needed
+      const { fragments, ...rest } = messageOverwrite;
 
       // [Cosmetic Logic] if the content hasn't come yet, don't replace the fragments to still show the placeholder
-      if (!messageComplete && deepCopy.pendingIncomplete && deepCopy.fragments?.length === 0)
-        delete (deepCopy as any).fragments;
+      const includeFragments = !!fragments?.length || messageComplete || !messageOverwrite.pendingIncomplete;
 
       // update the message
-      cHandler.messageEdit(assistantMessageId, deepCopy, messageComplete, false);
+      cHandler.messageEdit(assistantMessageId, { ...(includeFragments && { fragments }), ...rest }, messageComplete, false);
 
       // if requested, speak the message
       autoSpeaker?.handleMessage(messageOverwrite, messageComplete);
@@ -97,12 +135,12 @@ export async function runPersonaOnConversationHead(
   );
 
   // final message update (needed only in case of error)
-  const lastDeepCopy = structuredClone(messageStatus.lastDMessage);
-  if (messageStatus.outcome === 'errored')
-    cHandler.messageEdit(assistantMessageId, lastDeepCopy, true, false);
+  const lastDMessage = messageStatus.lastDMessage;
+  if (messageStatus.outcome === 'failed')
+    cHandler.messageEdit(assistantMessageId, lastDMessage, true, false);
 
   // special case: if the last message was aborted and had no content, delete it
-  if (messageWasInterruptedAtStart(lastDeepCopy)) {
+  if (messageWasInterruptedAtStart(lastDMessage)) {
     cHandler.messagesDelete([assistantMessageId]);
     // NOTE: ok to exit here, as the abort was already done
     return false;
@@ -129,6 +167,12 @@ export async function runPersonaOnConversationHead(
   if (!hasBeenAborted && (autoSuggestDiagrams || autoSuggestHTMLUI || autoSuggestQuestions))
     void autoChatFollowUps(conversationId, assistantMessageId, autoSuggestDiagrams, autoSuggestHTMLUI, autoSuggestQuestions);
 
+  const chatThinkingPolicy = getChatThinkingPolicy();
+  if (chatThinkingPolicy === 'last-only')
+    cHandler.historyStripThinking(1);
+  else if (chatThinkingPolicy === 'discard-all')
+    cHandler.historyStripThinking(0);
+
   // return true if this succeeded
-  return messageStatus.outcome === 'success';
+  return messageStatus.outcome === 'completed';
 }

@@ -10,6 +10,22 @@ const Popup = styled(Popper)({
   zIndex: 1000,
 });
 
+// data-attribute marking a CloseablePopup's DOM root, so sibling/parent popups don't treat a tap inside it as a click-away (see handleClickAway)
+const closeablePopupDataAttr = 'data-closeable-popup';
+
+
+/**
+ * Use this for submenus on any Menu/Popup, to prevent the parent popup from closing when clicking on this item. e.g.
+ * <MenuItem onClick={joyKeepPopup(() => setShowModelsHidden(!showModelsHidden))}> ...
+ */
+export function joyKeepPopup<TEvent extends React.MouseEvent>(fn: (event: TEvent) => void) {
+  return (event: TEvent) => {
+    // the key to not close the popup when activating this menu item - REV ENG
+    (event as any).defaultMuiPrevented = true;
+    fn(event);
+  };
+}
+
 
 /**
  * Workaround to the Menu in Joy 5-beta.0.
@@ -21,13 +37,19 @@ const Popup = styled(Popper)({
  *  - ...
  */
 export function CloseablePopup(props: {
-  menu?: boolean, // whether to render as a MenuList (or as a Box otherwise)
+  menu?: true, // whether to render as a MenuList (or as a Box otherwise)
   anchorEl: HTMLElement | null,
   onClose: () => void,
 
   // looks
+  size?: 'sm' | 'md' | 'lg', // if set, overrides 'dense' and applies to the MenuList
   dense?: boolean,
   bigIcons?: boolean,
+  boxShadow?: string, // boxShadow style, defaults to 'md'
+
+  // behavior changes
+  disableMenuTypeahead?: boolean, // disable alphanumeric typeahead navigation in MenuList
+  noAutoFocus?: boolean, // if true, does not auto-focus on mount
 
   placement?: PopperPlacementType,
   maxHeightGapPx?: number,
@@ -44,20 +66,48 @@ export function CloseablePopup(props: {
   children?: React.ReactNode,
 }) {
 
-  const handleClose = (event: MouseEvent | TouchEvent | React.KeyboardEvent) => {
-    event.stopPropagation();
-    props.onClose();
-  };
+  const { onClose } = props;
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
+  /**
+   * Callback ref for focus management - called upon mount, to transfer focus.
+   * Note: needs menuItems in there for full and good navigation of a list, as the menu expects to land focus on those items.
+   */
+  const autoFocusOnMount = React.useCallback((element: HTMLElement | null) => {
+    if (element && props.anchorEl)
+      requestAnimationFrame(() => element.focus());
+  }, [props.anchorEl]);
+
+  const handleClose = React.useCallback((event: MouseEvent | TouchEvent | React.KeyboardEvent) => {
+    event.stopPropagation();
+    onClose();
+  }, [onClose]);
+
+  const handleClickAway = React.useCallback((event: MouseEvent | TouchEvent) => {
+    // a tap inside ANOTHER CloseablePopup (e.g. an open submenu) is not an "outside" tap for us: those popups
+    // render in a SEPARATE portal, so without this they look like a click-away. On mobile this fires on touchend
+    // and would close us - unmounting the tapped item before its onClick fires (swallowing the action).
+    const targetEl = event.target as Element | null;
+    if (targetEl?.closest?.(`[${closeablePopupDataAttr}]`)) return;
+    handleClose(event);
+  }, [handleClose]);
+
+  const handleKeyDown = React.useCallback((event: React.KeyboardEvent) => {
     if (event.key === 'Tab') {
-      handleClose(event);
+      // NOTE: the following is not needed since we fixed 'tab'
+      // Close menu on Tab - this prevents focus from escaping the popup
+      // while keeping the popup simple (no full focus trap implementation)
+      if (props.noAutoFocus)
+        handleClose(event);
     } else if (event.key === 'Escape') {
-      if (props.anchorEl)
-        props.anchorEl?.focus();
       handleClose(event);
+      if (props.anchorEl)
+        props.anchorEl.focus();
+    } else if (props.disableMenuTypeahead && event.key.length === 1) {
+      // Prevent MenuList's typeahead navigation when disabled
+      event.stopPropagation();
+      // event.preventDefault(); // this is needed.. e.g. typing on input boxes
     }
-  };
+  }, [handleClose, props.anchorEl, props.disableMenuTypeahead, props.noAutoFocus]);
 
 
   // memos
@@ -68,19 +118,23 @@ export function CloseablePopup(props: {
     },
   }], [props.placementOffset]);
 
+  const popperMemoSx: undefined | SxProps = React.useMemo(() => !props.zIndex ? undefined : ({ zIndex: props.zIndex }), [props.zIndex]);
+
   const styleMemoSx: SxProps = React.useMemo(() => ({
 
     // style
     backgroundColor: 'background.popup',
-    boxShadow: 'md',
+    boxShadow: props.boxShadow ?? 'md',
     ...(props.maxHeightGapPx !== undefined ? { maxHeight: `calc(100dvh - ${props.maxHeightGapPx}px)`, overflowY: 'auto' } : {}),
     ...(props.maxWidth !== undefined && { maxWidth: props.maxWidth }),
     ...(props.minWidth !== undefined && { minWidth: props.minWidth }),
 
     // MenuList customizations
-    '--ListItem-minHeight': props.dense
-      ? '2.25rem' /* 2.25 is the default */
-      : '2.5rem', /* we enlarge the default  */
+    ...(!props.size && {
+      '--ListItem-minHeight': props.dense
+        ? '2.25rem' /* 2.25 is the default */
+        : '2.5rem', /* we enlarge the default  */
+    }),
     ...(props.bigIcons && {
       '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
       // '--ListItemDecorator-size': '2.75rem',
@@ -91,8 +145,7 @@ export function CloseablePopup(props: {
     // inject
     ...(props.sx || {}),
 
-  }), [props.dense, props.bigIcons, props.maxHeightGapPx, props.maxWidth, props.minWidth, props.noBottomPadding, props.noTopPadding, props.sx]);
-
+  }), [props.boxShadow, props.maxHeightGapPx, props.maxWidth, props.minWidth, props.size, props.dense, props.bigIcons, props.noBottomPadding, props.noTopPadding, props.sx]);
 
   return (
     <Popup
@@ -102,15 +155,15 @@ export function CloseablePopup(props: {
       placement={props.placement}
       disablePortal={false}
       modifiers={modifiersMemo}
-      sx={props.zIndex ? { zIndex: props.zIndex } : undefined}
+      sx={popperMemoSx}
     >
-      <ClickAwayListener onClickAway={handleClose}>
+      <ClickAwayListener onClickAway={handleClickAway}>
         {props.menu ? (
-          <MenuList onKeyDown={handleKeyDown} sx={styleMemoSx}>
+          <MenuList ref={props.noAutoFocus ? undefined : autoFocusOnMount} size={props.size} onKeyDown={handleKeyDown} sx={styleMemoSx} {...{ [closeablePopupDataAttr]: '' }}>
             {props.children}
           </MenuList>
         ) : (
-          <Box onKeyDown={handleKeyDown} sx={styleMemoSx}>
+          <Box ref={props.noAutoFocus ? undefined : autoFocusOnMount} onKeyDown={handleKeyDown} sx={styleMemoSx} {...{ [closeablePopupDataAttr]: '' }}>
             {props.children}
           </Box>
         )}

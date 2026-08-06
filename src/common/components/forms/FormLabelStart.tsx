@@ -5,33 +5,49 @@ import { FormHelperText, FormLabel } from '@mui/joy';
 import InfoIcon from '@mui/icons-material/Info';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
+
+
+const _styles = {
+  label: {
+    flexWrap: 'nowrap',
+    whiteSpace: 'nowrap',
+  } as const,
+  labelClickable: {
+    flexWrap: 'nowrap',
+    whiteSpace: 'nowrap',
+    cursor: 'pointer',
+    textDecoration: 'underline',
+  } as const,
+} as const;
 
 
 /**
  * Shared label part (left side)
  */
-const FormLabelStartBase = (props: {
+export const FormLabelStart = React.memo(function FormLabelStartBase(props: {
   title: React.ReactNode,
   description?: React.ReactNode,
   tooltip?: React.ReactNode,
+  tooltipWarning?: boolean,
   onClick?: (event: React.MouseEvent) => void,
   sx?: SxProps,
-}) =>
-  <div>
+}) {
+  return <div>
     {/* Title */}
     <FormLabel
       onClick={props.onClick}
-      sx={{
-        // minWidth: formLabelStartWidth,
-        flexWrap: 'nowrap',
-        whiteSpace: 'nowrap',
-        ...(!!props.onClick && { cursor: 'pointer', textDecoration: 'underline' }),
-        ...props.sx,
-      }}
+      sx={props.onClick ? _styles.labelClickable
+        : props.sx ? { ..._styles.label, ...props.sx }
+          : _styles.label
+      }
     >
       {props.title} {!!props.tooltip && (
       <GoodTooltip title={props.tooltip} arrow placement='top'>
-        <InfoIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'primary.solidBg' }} />
+        {props.tooltipWarning
+          ? <WarningRoundedIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'red' }} />
+          : <InfoIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'primary.solidBg' }} />
+        }
       </GoodTooltip>
     )}
     </FormLabel>
@@ -48,6 +64,4 @@ const FormLabelStartBase = (props: {
       </FormHelperText>
     )}
   </div>;
-FormLabelStartBase.displayName = 'FormLabelStart';
-
-export const FormLabelStart = React.memo(FormLabelStartBase);
+});

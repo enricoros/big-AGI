@@ -1,48 +1,77 @@
-import {
-  LLM_IF_HOTFIX_NoTemperature,
-  LLM_IF_OAI_Chat,
-  LLM_IF_OAI_Fn,
-  LLM_IF_OAI_Json,
-} from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, ManualMappings } from './models.data';
+import { llmsDefineManualMappings, fromManualMapping } from '../../models.mappings';
+
+// --- Deepseek Model ID inference (auto-derived from _knownDeepseekChatModels) ---
+export type LlmsDeepseekModelId = typeof _knownDeepseekChatModels[number]['idPrefix'];
 
 
-const _knownDeepseekChatModels: ManualMappings = [
-  // [Models and Pricing](https://api-docs.deepseek.com/quick_start/pricing)
-  // [List Models](https://api-docs.deepseek.com/api/list-models)
+const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
+
+// [DeepSeek, 2026-04-24] V4 release - https://api-docs.deepseek.com/news/news260424
+// - V4-Pro: 1.6T total / 49B active params; V4-Flash: 284B total / 13B active params (Novel Attention: token-wise compression + DSA)
+// - Model IDs listed by /models: deepseek-v4-flash, deepseek-v4-pro
+// - 1M context is the default across services; text-only (no vision/multimodal)
+// - Legacy aliases still accepted until 2026-07-24: deepseek-chat -> v4-flash (thinking disabled), deepseek-reasoner -> v4-flash (thinking enabled)
+// - Reasoning control: object `thinking: { type: 'enabled'|'disabled', reasoning_effort?: 'high'|'max' }`
+//   (the live API also accepts type: 'adaptive', but it is undocumented and empirically behaves the same as 'enabled'
+//    on current builds -- deliberately not exposed here; add it once docs + semantics stabilize)
+// - V3.2 endpoints no longer accessible via direct model ID (API returns only v4-flash/v4-pro)
+const _knownDeepseekChatModels = llmsDefineManualMappings([
+  {
+    idPrefix: 'deepseek-v4-pro',
+    label: 'DeepSeek V4 Pro',
+    pubDate: '20260424',
+    description: 'Premium reasoning model with 1M context. Supports extended thinking modes, JSON output, and function calling.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: [...IF_4, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] },
+    ],
+    maxCompletionTokens: 65536, // conservative default; docs advertise up to 384K
+    chatPrice: { input: 1.74, output: 3.48, cache: { cType: 'oai-ac', read: 0.145 } },
+    benchmark: { cbaElo: 1463 }, // lmarena: deepseek-v4-pro (thinking variant 1462, near-tied)
+  },
+  {
+    idPrefix: 'deepseek-v4-flash',
+    label: 'DeepSeek V4 Flash',
+    pubDate: '20260424',
+    description: 'Fast general-purpose model with 1M context. Supports extended thinking modes, JSON output, and function calling.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: [...IF_4, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] },
+    ],
+    maxCompletionTokens: 65536, // conservative default; docs advertise up to 384K
+    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
+    benchmark: { cbaElo: 1439 }, // lmarena: deepseek-v4-flash-thinking (non-thinking variant 1433)
+  },
+  // Legacy aliases - API routes both to deepseek-v4-flash with thinking pre-set
   {
     idPrefix: 'deepseek-reasoner',
-    label: 'DeepSeek Reasoner R1',
-    description: 'Reasoning model with Chain-of-Thought capabilities, 64K context length. No discount.',
-    contextWindow: 65536,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_NoTemperature],
-    maxCompletionTokens: 8192,
-    chatPrice: { input: 0.55, output: 2.19, cache: { cType: 'oai-ac', read: 0.14 } },
+    label: 'DeepSeek Reasoner (legacy)',
+    description: 'Legacy alias: routes to DeepSeek V4 Flash with thinking enabled. Retires 2026-07-24.',
+    contextWindow: 1_048_576,
+    interfaces: [...IF_4, LLM_IF_OAI_Reasoning],
+    maxCompletionTokens: 65536,
+    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
+    benchmark: { cbaElo: 1439 }, // lmarena: deepseek-v4-flash-thinking
+    isLegacy: true,
   },
   {
     idPrefix: 'deepseek-chat',
-    label: 'DeepSeek Chat V3',
-    description: 'General-purpose model with 64K context length. Discounted pricing until Feb 8, 2025.',
-    contextWindow: 65536,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json],
-    maxCompletionTokens: 8192,
-    // chatPrice: { input: 0.27, output: 1.10, cache: { cType: 'oai-ac', read: 0.07 } },
-    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.014 } },
+    label: 'DeepSeek Chat (legacy)',
+    description: 'Legacy alias: routes to DeepSeek V4 Flash with thinking disabled. Retires 2026-07-24.',
+    contextWindow: 1_048_576,
+    interfaces: IF_4,
+    maxCompletionTokens: 65536,
+    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
+    benchmark: { cbaElo: 1433 }, // lmarena: deepseek-v4-flash (non-thinking)
+    isLegacy: true,
   },
-  {
-    idPrefix: 'deepseek-coder',
-    label: 'DeepSeek Coder V2',
-    description: 'Good at coding and math tasks, 128K context length',
-    contextWindow: 128000,
-    interfaces: [LLM_IF_OAI_Chat],
-    maxCompletionTokens: 4096,
-    // chatPrice: { input: 0.14, output: 0.28 },
-    hidden: true,
-  },
-];
+]);
 
 const _unsupportedModelIds = [
   'deepseek-coder',
@@ -59,7 +88,7 @@ export function deepseekModelToModelDescription(deepseekModelId: string): ModelD
     description: 'New Deepseek Model',
     contextWindow: 128000,
     maxCompletionTokens: 4096,
-    interfaces: [LLM_IF_OAI_Chat], // assume..
+    interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
   });
 }
@@ -72,3 +101,8 @@ export function deepseekModelSort(a: ModelDescriptionSchema, b: ModelDescription
     return aIndex - bIndex;
   return a.id.localeCompare(b.id);
 }
+
+
+// [DeepSeek, 2025-12-15] V3.2-Speciale endpoint has expired and been removed
+// The temporary endpoint (v3.2_speciale_expires_on_20251215) was decommissioned on Dec 15, 2025 15:59 UTC
+// To re-enable variants, use createVariantInjector() from llm.server.variants.ts

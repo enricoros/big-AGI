@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, SvgIconProps, Typography } from '@mui/joy';
+import { Box, IconButton, Typography } from '@mui/joy';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
@@ -11,19 +11,26 @@ import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
+import type { AixReattachMode } from '~/modules/aix/client/aix.client';
+import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
+import { LLMVendorIconSprite } from '~/modules/llms/components/LLMVendorIconSprite';
+
 import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessage';
 
-import type { DLLMId } from '~/common/stores/llms/llms.types';
+import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import type { DMessageId } from '~/common/stores/chat/chat.message';
+import { DLLMId, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { animationEnterBelow } from '~/common/util/animUtils';
-import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { clipboardInterceptCtrlCForCleanup, copyToClipboard } from '~/common/util/clipboardUtils';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
+import { BeamUpstreamResume } from '../BeamUpstreamResume';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
-import { GATHER_COLOR, SCATTER_COLOR, SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
+import { BEAM_SHOW_REASONING_ICON, GATHER_COLOR, SCATTER_COLOR, SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.scatter';
 import { useBeamCardScrolling, useBeamScatterShowLettering } from '../store-module-beam';
@@ -69,7 +76,9 @@ function RayControls(props: {
   isRemovable: boolean,
   isScattering: boolean,
   llmComponent: React.ReactNode,
-  llmVendorIcon?: React.FunctionComponent<SvgIconProps>,
+  llmShowReasoning?: boolean,
+  llmVendorId: undefined | ModelVendorId,
+  onIconClick: (event: React.MouseEvent) => void,
   onRemove: () => void,
   onToggleGenerate: () => void,
   rayLetter?: string,
@@ -88,18 +97,22 @@ function RayControls(props: {
 
     {/* Letter / LLM Icon (default) */}
     <TooltipOutlined asLargePane enableInteractive title={props.rayAvatarTooltip} placement='top-start'>
-      <Box sx={{ display: 'flex' }}>
+      <Box sx={{ display: 'flex', '--Icon-fontSize': 'var(--joy-fontSize-lg)' }} onClick={props.onIconClick}>
         {props.rayLetter ? (
           <Typography level='title-sm' color={SCATTER_COLOR !== 'neutral' ? SCATTER_COLOR : undefined}>
             {props.rayLetter}
           </Typography>
-        ) : props.llmVendorIcon ? <props.llmVendorIcon sx={{ fontSize: 'lg' }} />
+        ) : props.llmVendorId ? <LLMVendorIconSprite vendorId={props.llmVendorId} />
           : null
           // : <TextureIcon sx={{ fontSize: 'lg' }} />
         }
       </Box>
     </TooltipOutlined>
 
+    {/* Display a Reasoning LLM */}
+    {(BEAM_SHOW_REASONING_ICON && props.llmShowReasoning) ? '🧠' : null}
+
+    {/* LLM Select */}
     <Box sx={{ flex: 1 }}>
       {props.llmComponent}
     </Box>
@@ -169,9 +182,14 @@ export function BeamRay(props: {
 
   const llmId = ray?.rayLlmId ?? null;
   const setLlmId = React.useCallback((llmId: DLLMId | null) => raySetLlmId(props.rayId, llmId), [props.rayId, raySetLlmId]);
-  const [_, llmComponent, llmVendorIcon] = useLLMSelect(
-    llmId, setLlmId, '', true, isScattering,
-  );
+  const [llmOrNull, llmComponent] = useLLMSelect(llmId, setLlmId, {
+    label: '',
+    disabled: isScattering,
+    showStarFilter: true,
+  });
+
+  // more derived
+  const llmShowReasoning = !BEAM_SHOW_REASONING_ICON ? false : llmOrNull?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;
 
 
   // handlers
@@ -191,6 +209,20 @@ export function BeamRay(props: {
       onSuccessCallback(ray.message);
   }, [props.beamStore, props.rayId]);
 
+  const handleRayReattach = React.useCallback((mode: AixReattachMode) => {
+    props.beamStore.getState().rayReattach(props.rayId, mode);
+  }, [props.beamStore, props.rayId]);
+
+  const handleRayClearUpstreamHandle = React.useCallback(() => {
+    props.beamStore.getState().rayClearUpstreamHandle(props.rayId);
+  }, [props.beamStore, props.rayId]);
+
+  const handleDebugPrint = React.useCallback((event: React.MouseEvent) => {
+    if (!event.shiftKey) return;
+    const ray = props.beamStore.getState().rays.find(ray => ray.rayId === props.rayId);
+    console.log({ ray });
+  }, [props.beamStore, props.rayId]);
+
   const handleRayRemove = React.useCallback(() => {
     removeRay(props.rayId);
   }, [props.rayId, removeRay]);
@@ -198,6 +230,20 @@ export function BeamRay(props: {
   const handleRayToggleGenerate = React.useCallback(() => {
     rayToggleScattering(props.rayId);
   }, [props.rayId, rayToggleScattering]);
+
+  const handleFragmentDelete = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId) => {
+    const { rays, rayDeleteFragment } = props.beamStore.getState();
+    const ray = rays.find(ray => ray.message.id === messageId);
+    if (ray)
+      rayDeleteFragment(ray.rayId, fragmentId);
+  }, [props.beamStore]);
+
+  const handleFragmentReplace = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
+    const { rays, rayReplaceFragment } = props.beamStore.getState();
+    const ray = rays.find(ray => ray.message.id === messageId);
+    if (ray)
+      rayReplaceFragment(ray.rayId, fragmentId, newFragment);
+  }, [props.beamStore]);
 
   /*const handleRayToggleSelect = React.useCallback(() => {
     toggleUserSelection(props.rayId);
@@ -222,7 +268,9 @@ export function BeamRay(props: {
         isRemovable={props.isRemovable}
         isScattering={isScattering}
         llmComponent={llmComponent}
-        llmVendorIcon={llmVendorIcon}
+        llmShowReasoning={llmShowReasoning}
+        llmVendorId={llmOrNull?.vId}
+        onIconClick={handleDebugPrint}
         onRemove={handleRayRemove}
         onToggleGenerate={handleRayToggleGenerate}
         rayLetter={showLettering ? 'R' + (1 + props.rayIndexWeak) : undefined}
@@ -236,7 +284,7 @@ export function BeamRay(props: {
 
       {/* Ray Message */}
       {(!!ray?.message?.fragments.length || ray?.status === 'scattering') && (
-        <Box sx={beamCardMessageWrapperSx}>
+        <Box onCopy={clipboardInterceptCtrlCForCleanup} sx={beamCardMessageWrapperSx}>
           {!!ray.message && (
             <ChatMessageMemo
               message={ray.message}
@@ -245,11 +293,22 @@ export function BeamRay(props: {
               hideAvatar
               showUnsafeHtmlCode={true}
               adjustContentScaling={-1}
+              onMessageFragmentDelete={handleFragmentDelete}
+              onMessageFragmentReplace={handleFragmentReplace}
               sx={!cardScrolling ? beamCardMessageSx : beamCardMessageScrollingSx}
             />
           )}
         </Box>
       )}
+
+      {/* Gemini Interactions (Deep Research) resume - state-gated: only when idle with a live upstream handle */}
+      <BeamUpstreamResume
+        llmId={ray?.rayLlmId ?? null}
+        generator={ray?.message.generator}
+        isPending={isScattering}
+        onReattach={handleRayReattach}
+        onClearHandle={handleRayClearUpstreamHandle}
+      />
 
       {/* Use Ray */}
       {showUseButtons && (

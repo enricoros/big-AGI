@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2024 Enrico Ros
+ * Copyright (c)2024-2026 Enrico Ros
  *
  * This file is include by both the frontend and backend, however depending on the time
  * of the build, the values may be different.
@@ -10,26 +10,36 @@
  * We centralize here the version information of the app, to have a uniform configuration surface.
  */
 export const Release = {
-  // CHANGE ME - this is the tenant ID, 'open' reserved for GitHub
-  TenantId: 'open',
-
-  App: {
-    pl: 'v2-dev',
-    versionCode: '2.0.0-ea1',       // 1.91.0 sequentially...
-    versionName: 'Big-AGI V2 EA1',
-  },
+  // CHANGE ME - this is the tenant ID, 'dev' reserved for development only, 'open' reserved for GitHub
+  TenantSlug: 'open',
 
   // Future compatibility
   Features: {
     // ...
     BACKEND_REVALIDATE_INTERVAL: 6 * 60 * 60 * 1000, // 6 hours
+    // DISABLE_PRECISE_TOKENIZER: false, // future optimization: disables the correct tokenizer fully or over a certain input size (e.g. 1k)
+    LIGHTER_ANIMATIONS: false, // optimization: disables some animations for performance
   },
 
   // this is here to trigger revalidation of data, e.g. models refresh
   Monotonics: {
-    Aix: 8,
-    NewsVersion: 191,
+    Aix: 77,
+    NewsVersion: 205,
   },
+
+  // Frontend: pretty features
+  TechLevels: {
+    AIX: '2', Apply: '0.8', Beam: '2', LFS: '0.9', /*Precog: '0.1',*/ React: '1.6',
+  },
+  AiFunctions: [
+    // from `ContextChatGenerate_schema`
+    'auto-chart', 'auto-diagram', 'auto-ui',
+    'chat-call', 'chat-compress', 'chat-persona', 'chat-summary', 'chat-title',
+    'create-attach-prompts', 'create-image-prompt', 'create-persona',
+    'diff-whole',
+    'fixup',
+    'reason-beam', 'reason-merge', 'reason-react',
+  ],
 
   /**
    * We force explicit declaration of the caller.
@@ -37,11 +47,26 @@ export const Release = {
   buildInfo: (_type: 'frontend' | 'backend') => ({
     // **NOTE**: do not change var names here, as they're matched from this point forward
     //           between the frontend and backend to ensure runtime consistency.
-    gitSha: process.env.NEXT_PUBLIC_BUILD_HASH,
+    deploymentType: process.env.NEXT_PUBLIC_DEPLOYMENT_TYPE,
     pkgVersion: process.env.NEXT_PUBLIC_BUILD_PKGVER,
+    gitSha: process.env.NEXT_PUBLIC_BUILD_HASH,
     timestamp: process.env.NEXT_PUBLIC_BUILD_TIMESTAMP,
   }),
 
-  IsNodeDevBuild: process.env.NODE_ENV === 'development',
+  IsNodeDevBuild: process.env.NODE_ENV === 'development' as const,
 
+} as const;
+
+
+export const BaseProduct = {
+  ProductName: 'Big-AGI',
+  ProductURL: 'https://big-agi.com',
+  PrivacyPolicy: 'https://big-agi.com/privacy',
+  TermsOfService: 'https://big-agi.com/terms',
+  // ecosystem
+  DocsBaseSite: 'https://big-agi.com/docs',
+  OpenSupportDiscord: 'https://discord.gg/MkH4qj2Jp9',
+  OpenSourceRepo: 'https://github.com/enricoros/big-agi',
+  ReleaseNotes: '',
+  SupportForm: (_userId?: string) => 'https://github.com/enricoros/big-AGI/issues/new?template=ai-triage.yml',
 } as const;

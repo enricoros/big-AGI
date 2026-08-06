@@ -1,14 +1,14 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
 import { AixClientFunctionCallToolDefinition, aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_SystemMessageText } from '~/modules/aix/client/aix.client.chatGenerateRequest';
-import { aixChatGenerateContent_DMessage, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateContent_DMessage_orThrow, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
 
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { createDMessageTextContent, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment, createPlaceholderVoidFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
-import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
+import { getDomainModelIdOrThrow } from '~/common/stores/llms/store-llms';
 import { marshallWrapText } from '~/common/stores/chat/chat.tokens';
 import { processPromptTemplate } from '~/common/util/promptUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -70,9 +70,9 @@ Analyze the following short exchange and call the function {{functionName}} with
   fun: {
     name: 'draw_plantuml_diagram',
     description: 'Generates a PlantUML diagram or mindmap from the last message, if applicable, very useful to the user, and no other diagrams are present.',
-    inputSchema: z.object({
+    inputSchema: z.object({ // zod-4
       rating_short_reason: z.string().describe('A 4-10 words reason on whether the diagram would be desired by the user or not.'),
-      rating_number: z.number().int().describe('The relevance of the diagram to the conversation, on a scale of 1 to 5 . If lower than 4, STOP.'),
+      rating_number: z.number().describe('The relevance of the diagram to the conversation, on a scale of 1 to 5 . If lower than 4, STOP.'),
       type: z.string().describe('The most suitable PlantUML diagram type: sequence, usecase, class, activity, component, state, object, deployment, timing, network, wireframe, gantt, wbs or mindmap.').optional(),
       code: z.string().describe('A valid PlantUML string (@startuml...@enduml) to be rendered as a diagram or mindmap (@startmindmap...@endmindmap), or empty. No external references allowed. Use one or more asterisks to indent and separate with spaces.').optional(),
     }),
@@ -113,10 +113,10 @@ Please follow closely the following requirements:
   fun: {
     name: suggestUIFunctionName,
     description: 'Renders a web UI when provided with a single concise HTML5 string (can include CSS and JS), if applicable and relevant.',
-    inputSchema: z.object({
+    inputSchema: z.object({ // zod-4
       possible_ui_requirements: z.string().describe('Brief (10 words) to medium length (40 words) requirements for the UI. Include main features, looks, and layout.'),
       rating_short_reason: z.string().describe('A 4-10 word reason on whether the UI would be desired by the user or not.'),
-      rating_number: z.number().int().describe('The relevance of the UI to the conversation, on a scale of 1 (does not add much value), 2 (superfluous), 3 (helps a lot in understanding), 4 (essential) to 5 (fundamental to the understanding). If 1 or 2, do not proceed and STOP.'),
+      rating_number: z.number().describe('The relevance of the UI to the conversation, on a scale of 1 (does not add much value), 2 (superfluous), 3 (helps a lot in understanding), 4 (essential) to 5 (fundamental to the understanding). If 1 or 2, do not proceed and STOP.'),
       html: z.string().describe('A valid HTML string containing the user interface code. The code should be complete, with no dependencies, lower case, and include minimal inline CSS if needed. The UI should be visual and interactive.').optional(),
       file_name: z.string().describe('Short letters-and-dashes file name of the HTML without the .html extension.').optional(),
     }),
@@ -140,9 +140,9 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
   if (!conversation || conversation.messages.length < 2) return;
 
   // require a valid fast model (only)
-  let llmId;
+  let codeLlmId;
   try {
-    llmId = getLLMIdOrThrow(['fast'], true, false, 'chat-followups');
+    codeLlmId = getDomainModelIdOrThrow(['codeApply'], true, false, 'chat-followups');
   } catch (error) {
     return console.log(`autoSuggestions: ${error}`);
   }
@@ -187,8 +187,8 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
     ]);
 
     // Strict call to a function
-    aixChatGenerateContent_DMessage(
-      llmId,
+    aixChatGenerateContent_DMessage_orThrow(
+      codeLlmId,
       { systemMessage, chatSequence, tools: [aixFunctionCallTool(diagramsTool.fun)], toolsPolicy: { type: 'any' } },
       aixCreateChatGenerateContext('chat-followup-diagram', conversationId),
       false,
@@ -238,8 +238,8 @@ export async function autoChatFollowUps(conversationId: string, assistantMessage
     ]);
 
     // Strict call to a function
-    aixChatGenerateContent_DMessage(
-      llmId,
+    aixChatGenerateContent_DMessage_orThrow(
+      codeLlmId,
       { systemMessage, chatSequence, tools: [aixFunctionCallTool(uiTool.fun)], toolsPolicy: { type: 'any' } },
       aixCreateChatGenerateContext('chat-followup-htmlui', conversationId),
       false,

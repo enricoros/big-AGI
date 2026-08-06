@@ -1,3 +1,7 @@
+---
+unlisted: true
+---
+
 # AIX dispatch server - API features comparison
 
 This is updated as of 2024-07-09, and includes the latest features and capabilities of the three major AI APIs: Anthropic, Gemini, and OpenAI.

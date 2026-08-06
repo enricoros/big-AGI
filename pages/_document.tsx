@@ -37,14 +37,31 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         <meta property='og:site_name' content={Brand.Meta.SiteName} />
         <meta property='og:type' content='website' />
 
-        {/* Twitter */}
-        <meta property='twitter:card' content='summary_large_image' />
+        {/* Twitter / X */}
+        <meta name='twitter:card' content='summary_large_image' />
         <meta property='twitter:url' content={Brand.URIs.Home} />
         <meta property='twitter:title' content={Brand.Title.Common} />
         <meta property='twitter:description' content={Brand.Meta.Description} />
         {Brand.URIs.CardImage && <meta property='twitter:image' content={Brand.URIs.CardImage} />}
         <meta name='twitter:site' content={Brand.Meta.TwitterSite} />
-        <meta name='twitter:card' content='summary_large_image' />
+        <meta name='twitter:creator' content='@enricoros' />
+        <link rel='canonical' href={Brand.URIs.Home} />
+
+        {/* Author & Structured Data */}
+        <meta name='author' content='Enrico Ros' />
+        <link rel='author' href='https://www.enricoros.com' />
+        <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          'name': 'Big-AGI',
+          'url': 'https://big-agi.com',
+          'applicationCategory': 'ProductivityApplication',
+          'operatingSystem': 'All, Web',
+          'description': Brand.Meta.Description,
+          'sameAs': ['https://github.com/enricoros/big-agi', 'https://discord.gg/MkH4qj2Jp9',],
+          'author': { '@type': 'Person', 'name': 'Enrico Ros', 'url': 'https://www.enricoros.com' },
+          'publisher': { '@type': 'Organization', 'name': 'Token Fabrics LLC', 'url': 'https://www.tokenfabrics.com' },
+        }) }} />
 
         {/* Style Sheets (injected and server-side) */}
         <meta name='emotion-insertion-point' content='' />
@@ -100,6 +117,10 @@ MyDocument.getInitialProps = async (ctx: DocumentContext) => {
     });
 
   const initialProps = await Document.getInitialProps(ctx);
+
+  // Inject the comment before the HTML tag
+  initialProps.html = `<!-- ❤ Built with Big-AGI -->\n${initialProps.html}`;
+
   // This is important. It prevents Emotion to render invalid HTML.
   // See https://github.com/mui/material-ui/issues/26561#issuecomment-855286153
   const emotionStyles = extractCriticalToChunks(initialProps.html);
@@ -107,7 +128,6 @@ MyDocument.getInitialProps = async (ctx: DocumentContext) => {
     <style
       data-emotion={`${style.key} ${style.ids.join(' ')}`}
       key={style.key}
-      // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{ __html: style.css }}
     />
   ));

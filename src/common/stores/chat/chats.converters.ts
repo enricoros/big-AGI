@@ -1,14 +1,16 @@
 import type { SystemPurposeId } from '../../../data';
 
+import { nanoidToUuidV4 } from '~/common/util/idUtils';
+
 import type { DFolder } from '~/common/stores/folders/store-chat-folders';
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
 
-import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsService } from '~/common/stores/llms/llms.service.types';
 
 import { createDConversation, DConversation, type DConversationId } from './chat.conversation';
 import { createDMessageTextContent, DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageSetUserFlag } from './chat.message';
-import { createErrorContentFragment, isAttachmentFragment, isContentFragment, isContentOrAttachmentFragment, isDocPart, isPlaceholderPart, isTextContentFragment, isVoidFragment } from './chat.fragments';
+import { createDMessageZyncAssetReferencePart, createErrorContentFragment, isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart, isTextContentFragment, isVoidPlaceholderFragment } from './chat.fragments';
 
 
 // configuration
@@ -17,7 +19,7 @@ const EMERGENCY_CLEANUP_PARTS = false;
 
 export namespace V4ToHeadConverters {
 
-  export function inMemHeadCleanDConversations(cs: DConversation[]): void {
+  export function inMemHeadCleanDConversations(cs: ReadonlyArray<DConversation>): void {
     const validLiveFileIDs = liveFileGetAllValidIDs();
     for (const c of cs)
       _inMemHeadCleanDConversation(c, validLiveFileIDs);
@@ -62,10 +64,32 @@ export namespace V4ToHeadConverters {
         if (!validLiveFileIDs.includes(fragment.liveFileId))
           delete fragment.liveFileId;
 
-      // show the aborted ops: convert a Placeholder fragment [part.pt='ph'] to an Error fragment
-      if ((isVoidFragment(fragment) && isPlaceholderPart(fragment.part))
-        || (isContentFragment(fragment) && (fragment.part as any)?.pt === 'ph') /* NOTE: REMOVE FOR 2.0: helper during the 'void' fragment transition */)
-        m.fragments[i] = createErrorContentFragment(`${(fragment.part as any).pText} (did not complete)`);
+      // [Show Terminated] convert a Placeholder fragment [part.pt='ph'] to an Error fragment
+      const isLastFragment = (i === m.fragments.length - 1);
+      if (isLastFragment && isVoidPlaceholderFragment(fragment)) // [PH-LIFECYCLE]
+        m.fragments[i] = createErrorContentFragment(
+          'opLog' in fragment.part ? '(message incomplete)'
+            : fragment.part.pText ? `(did not complete: ${fragment.part.pText})`
+              : '(did not complete)'
+        );
+
+      // [ASSET] [MIGRATION] Convert DBlob image references to Asset references - converts legacy image_ref parts with dblob references to the new reference system
+      if (isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part) && fragment.part.dataRef?.reftype === 'dblob') {
+        const { dataRef, altText, width, height } = fragment.part;
+        const newReferencePart = createDMessageZyncAssetReferencePart(
+          nanoidToUuidV4(dataRef.dblobAssetId, 'convert-dblob-to-dasset'),
+          altText,
+          'image',
+          {
+            pt: 'image_ref' as const,
+            dataRef: dataRef,
+            ...(altText ? { altText: altText } : {}),
+            ...(width ? { width: width } : {}),
+            ...(height ? { height: height } : {}),
+          }
+        );
+        m.fragments[i] = { ...fragment, part: newReferencePart };
+      }
 
       // [Emergency] validate part types, can mess up in development
       if (EMERGENCY_CLEANUP_PARTS) {

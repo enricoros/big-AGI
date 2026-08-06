@@ -68,7 +68,10 @@ export function EnhancedRenderCode(props: {
 
   const handleToggleContextMenu = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
-    event.stopPropagation();
+
+    // NOTE: disabled because a click here won't close other menus (won't trigger other component's ClickAwayListeners)
+    // event.stopPropagation();
+
     setContextMenuAnchor(anchor => anchor ? null : event.currentTarget);
   }, []);
 
@@ -124,7 +127,7 @@ export function EnhancedRenderCode(props: {
     return <>
       {/* Icon and Title */}
       <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, overflow: 'hidden' }}>
           <Icon
             aria-hidden
             onClick={handleToggleCodeCollapse}
@@ -134,7 +137,7 @@ export function EnhancedRenderCode(props: {
               cursor: 'pointer',
             }}
           />
-          <Typography level={'title-sm'}>
+          <Typography level={'title-sm'} className='agi-ellipsize'>
             {props.title || 'Code'}
           </Typography>
         </Box>
@@ -147,7 +150,7 @@ export function EnhancedRenderCode(props: {
       <IconButton
         size='sm'
         onClick={handleToggleContextMenu}
-        onContextMenu={handleToggleContextMenu}
+        // onContextMenu={handleToggleContextMenu} // NOTE: disabled because onContextMenu prevents */ClickAwayListeners
         sx={{ mr: -0.5 }}
       >
         <MoreVertIcon />
@@ -197,7 +200,7 @@ export function EnhancedRenderCode(props: {
     >
 
       {/* Body of the message (it's a RenderCode with patched sx, for looks) */}
-      <ExpanderControlledBox expanded={!isCodeCollapsed}>
+      <ExpanderControlledBox noContain={true /* Important, allow fixed positioning on OverlayButttons */} expanded={!isCodeCollapsed}>
         <RenderCodeMemo
           semiStableId={props.semiStableId}
           code={props.code} title={props.title} isPartial={props.isPartial}
@@ -206,6 +209,7 @@ export function EnhancedRenderCode(props: {
           noCopyButton={props.noCopyButton}
           optimizeLightweight={props.optimizeLightweight}
           onReplaceInCode={props.onReplaceInCode}
+          renderHideTitle={true /* because we show it already, outside */}
           sx={patchCodeSx}
         />
       </ExpanderControlledBox>

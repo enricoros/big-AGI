@@ -1,10 +1,12 @@
 import * as React from 'react';
 
+import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
+
 import type { DFolder } from '~/common/stores/folders/store-chat-folders';
 import { DMessage, DMessageUserFlag, MESSAGE_FLAG_STARRED, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
-import { getLocalMidnightInUTCTimestamp, getTimeBucketEn } from '~/common/util/timeUtils';
-import { isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart } from '~/common/stores/chat/chat.fragments';
+import { createTimeBucketClassifierEn } from '~/common/util/timeUtils';
+import { isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
@@ -46,7 +48,9 @@ function messageHasDocAttachmentFragments(message: DMessage): boolean {
 }
 
 function messageHasImageFragments(message: DMessage): boolean {
-  return message.fragments.some(fragment => isContentOrAttachmentFragment(fragment) && isImageRefPart(fragment.part) /*&& fragment.part.dataRef.reftype === 'dblob'*/);
+  return message.fragments.some(fragment => isContentOrAttachmentFragment(fragment) && (
+    isZyncAssetImageReferencePart(fragment.part) || isImageRefPart(fragment.part)
+  ));
 }
 
 function messageHasStarredFragments(message: DMessage): boolean {
@@ -82,18 +86,38 @@ export function useChatDrawerRenderItems(
   filterByQuery: string,
   activeFolder: DFolder | null,
   allFolders: DFolder[],
+  filterHasBeamOpen: boolean,
   filterHasStars: boolean,
   filterHasImageAssets: boolean,
   filterHasDocFragments: boolean,
+  filterIsArchived: boolean,
   grouping: ChatNavGrouping,
   searchSorting: ChatSearchSorting,
   showRelativeSize: boolean,
   searchDepth: ChatSearchDepth,
 ): ChatDrawerRenderItems {
 
-  const stabilizeRenderItems = React.useRef<ChatDrawerRenderItems>();
+  // state
+  const [_, setJustAMinuteCounter] = React.useState(0);
 
-  return useChatStore(({ conversations }) => {
+  // external state
+  const openBeamConversationIds = useModuleBeamStore(state => state.openBeamConversationIds);
+
+
+  // [effect] Refresh every minute because the `getTimeBucketEn` function uses the current time
+  React.useEffect(() => {
+    const interval = setInterval(() => setJustAMinuteCounter(c => c + 1), 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+
+  const stabilizeRenderItems = React.useRef<ChatDrawerRenderItems>(undefined);
+
+  return useChatStore(({ conversations: convPreFilter }) => {
+
+      // filter 0: archival status
+      const conversations = filterIsArchived ? convPreFilter.filter(c => !!c.isArchived)
+        : convPreFilter.filter(c => !c.isArchived);
 
       // filter 1: select all conversations or just the ones in the active folder
       const conversationsInFolder = !activeFolder ? conversations
@@ -123,7 +147,8 @@ export function useChatDrawerRenderItems(
           }
 
           // filter for required attributes
-          if ((filterHasStars && !hasStars) || (filterHasImageAssets && !hasImages) || (filterHasDocFragments && !hasDocs))
+          const hasBeamOpen = openBeamConversationIds[_c.id];
+          if ((filterHasBeamOpen && !hasBeamOpen) || (filterHasStars && !hasStars) || (filterHasImageAssets && !hasImages) || (filterHasDocFragments && !hasDocs))
             return null;
 
           // rich properties
@@ -152,6 +177,7 @@ export function useChatDrawerRenderItems(
             isIncognito: !!_c._isIncognito,
             isEmpty: !messageCount && !_c.userTitle,
             title,
+            isArchived: !!_c.isArchived,
             userSymbol: _c.userSymbol || undefined,
             userFlagsSummary: userFlagsUnique,
             containsDocAttachments: hasDocs && filterHasDocFragments, // special case: only show this icon when filtering - too many icons otherwise
@@ -162,6 +188,7 @@ export function useChatDrawerRenderItems(
                 ? allFolders.find(folder => folder.conversationIds.includes(_c.id)) ?? null
                 : null,
             updatedAt: _c.updated || _c.created || 0,
+            hasBeamOpen,
             messageCount,
             beingGenerated: !!_c._abortController, // FIXME: when the AbortController is moved at the message level, derive the state in the conv
             systemPurposeId: _c.systemPurposeId,
@@ -210,14 +237,14 @@ export function useChatDrawerRenderItems(
             break;
         }
 
-        const midnightTime = getLocalMidnightInUTCTimestamp();
+        const getTimeBucket = createTimeBucketClassifierEn();
         const grouped = chatNavItems.reduce((acc, item) => {
 
           // derive the bucket name
           let bucket: string;
           switch (grouping) {
             case 'date':
-              bucket = getTimeBucketEn(item.updatedAt || midnightTime, midnightTime);
+              bucket = getTimeBucket(item.updatedAt || Date.now());
               break;
             case 'persona':
               bucket = item.systemPurposeId;
@@ -262,18 +289,26 @@ export function useChatDrawerRenderItems(
         renderNavItems.push({
           type: 'nav-item-info-message',
           message: (filterHasStars && (filterHasImageAssets || filterHasDocFragments)) ? 'No results'
-            : filterHasDocFragments ? 'No attachment results'
-              : filterHasImageAssets ? 'No image results'
-                : filterHasStars ? 'No starred results'
-                  : isSearching ? 'Text not found'
-                    : 'No conversations in folder',
+            : filterHasBeamOpen ? 'No beam conversations'
+              : filterHasDocFragments ? 'No attachment results'
+                : filterHasImageAssets ? 'No image results'
+                  : filterHasStars ? 'No starred results'
+                    : filterIsArchived ? 'No archived conversations'
+                      : isSearching ? 'Text not found'
+                        : 'No conversations in folder',
         });
       } else {
         // filtering reminder (will be rendered with a clear button too)
-        if (filterHasStars || filterHasImageAssets || filterHasDocFragments) {
+        if (filterHasBeamOpen || filterHasStars || filterHasImageAssets || filterHasDocFragments || filterIsArchived) {
           renderNavItems.unshift({
             type: 'nav-item-info-message',
-            message: `Filtering by ${filterHasStars ? 'stars' : ''}${filterHasStars && filterHasImageAssets ? ', ' : ''}${filterHasImageAssets ? 'images' : ''}${(filterHasStars || filterHasImageAssets) && filterHasDocFragments ? ', ' : ''}${filterHasDocFragments ? 'attachments' : ''}`,
+            message: `${filterIsArchived ? 'Showing' : 'Filtering by'} ${[
+              filterHasBeamOpen && 'beam',
+              filterHasStars && 'stars',
+              filterHasImageAssets && 'images',
+              filterHasDocFragments && 'attachments',
+              filterIsArchived && 'archived',
+            ].filter(Boolean).join(', ')}`,
           });
         }
       }

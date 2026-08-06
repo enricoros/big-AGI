@@ -56,6 +56,8 @@ export function shallowEquals<T>(objA: T, objB: T) {
 }
 
 
+type StableType<T> = T extends any[] ? T : T extends object ? T : never;
+
 /**
  * Returns a stable object reference when the value has not 'shallow' changed.
  * Useful to avoid unnecessary re-renders when the object reference changes but
@@ -78,7 +80,37 @@ export function useShallowStable<T>(value: T): StableType<T> {
   }, [value]) as StableType<T>;
 }
 
-type StableType<T> = T extends any[] ? T : T extends object ? T : never;
+
+/**
+ * Like `React.useMemo`, but additionally preserves the previous reference when
+ * the newly computed value is shallow-equal to the previous one.
+ *
+ * Useful when the memo deps are granular enough to invalidate the factory, but
+ * the resulting object/array often comes out structurally identical - so
+ * downstream consumers (memoized components, further memos, effects) should
+ * not see a new reference.
+ *
+ * @example
+ *   const summary = useMemoShallowStable(() => ({
+ *     total: items.reduce((n, i) => n + i.size, 0),
+ *     count: items.length,
+ *   }), [items]);
+ */
+export function useMemoShallowStable<T>(factory: () => T, deps: React.DependencyList): StableType<T> {
+
+  // holds the last returned value, to preserve identity when shallow-equal
+  const ref = React.useRef<T | undefined>(undefined);
+
+  return React.useMemo(() => {
+    const next = factory();
+    if (ref.current === undefined || !shallowEquals<T>(ref.current, next))
+      ref.current = next;
+    return ref.current;
+  },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    deps
+  ) as StableType<T>;
+}
 
 
 /**

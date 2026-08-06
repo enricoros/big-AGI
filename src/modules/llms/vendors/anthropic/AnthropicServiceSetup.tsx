@@ -1,18 +1,18 @@
 import * as React from 'react';
 
-import { Alert, FormControl, Typography } from '@mui/joy';
+import { Alert, Box, FormControl, Typography } from '@mui/joy';
 
 import { useChatAutoAI } from '../../../../apps/chat/store-app-chat';
 
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
-import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
@@ -25,18 +25,19 @@ import { isValidAnthropicApiKey, ModelVendorAnthropic } from './anthropic.vendor
 
 export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
 
-  // state
-  const advanced = useToggleableBoolean();
-
   // external state
-  const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, updateSettings } =
+  const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorAnthropic);
 
   const { autoVndAntBreakpoints, setAutoVndAntBreakpoints } = useChatAutoAI();
 
   // derived state
-  const { anthropicKey, anthropicHost, heliconeKey } = serviceAccess;
-  const needsUserKey = !serviceHasBackendCap;
+  const { anthropicKey, anthropicHost, anthropicInferenceGeo, clientSideFetch, heliconeKey } = serviceAccess;
+  const needsUserKey = !serviceHasCloudTenantConfig;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on;
 
   const keyValid = isValidAnthropicApiKey(anthropicKey);
   const keyError = (/*needsUserKey ||*/ !!anthropicKey) && !keyValid;
@@ -48,12 +49,10 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   return <>
 
-    <ApproximateCosts serviceId={service?.id} whoSaved='Big-AGI saved you'>
-      <Alert variant='soft' color='success'>
-        <div>
-          Enjoy <b>Sonnet 3.5</b>, <b>Opus</b> and <b>Haiku 3</b>. Anthropic <ExternalLink level='body-sm' href='https://status.anthropic.com/'>server status</ExternalLink>.
-        </div>
-      </Alert>
+    <ApproximateCosts serviceId={service?.id}>
+      <Box sx={{ level: 'body-sm' }}>
+        Supports <b>Sonnet</b>, <b>Opus</b> and <b>Haiku</b>. Experiencing Issues? Check <Link href='https://status.anthropic.com/' level='body-sm' target='_blank'>Anthropic status</Link>.
+      </Box>
     </ApproximateCosts>
 
     <FormInputKey
@@ -68,42 +67,58 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='sk-...'
     />
 
-    <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
+    {showAdvanced && <FormSwitchControl
+      title='Auto-Caching' on='Enabled' off='Disabled'
+      tooltip='Auto-breakpoints: 3 breakpoints are always set on the System instruction and on the last 2 User messages. This leaves the user with 1 breakpoint of their choice. (max 4)'
+      description={autoVndAntBreakpoints ? <>Last 2 user messages</> : 'Disabled'}
+      checked={autoVndAntBreakpoints}
+      onChange={setAutoVndAntBreakpoints}
+    />}
+
+
+    {showAdvanced && <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart
-        title='Prompt Caching'
+        title='Caching'
         description='Toggle per-Message'
         tooltip='You can turn on/off caching on the fly for each message. Caching makes new input a bit more expensive, and reusing the cached input much cheaper. See Anthropic docs for details and pricing.'
       />
       <Typography level='title-sm'>
         {autoVndAntBreakpoints ? 'User & Auto' : 'User-driven'}
       </Typography>
-    </FormControl>
+    </FormControl>}
 
-    <FormSwitchControl
-      title='Auto-Caching' on='Enabled' off='Disabled'
-      tooltip='Auto-breakpoints: 3 breakpoints are always set on the System instruction and on the last 2 User messages. This leaves the user with 1 breakpoint of their choice. (max 4)'
-      description={autoVndAntBreakpoints ? <>Last 2 user messages</> : 'Disabled'}
-      checked={autoVndAntBreakpoints}
-      onChange={setAutoVndAntBreakpoints}
-    />
-
-    {advanced.on && <FormTextField
+    {showAdvanced && <FormTextField
       autoCompleteId='anthropic-host'
       title='API Host'
-      description={<>e.g., <Link level='body-sm' href='https://github.com/enricoros/big-agi/blob/main/docs/config-aws-bedrock.md' target='_blank'>bedrock-claude</Link></>}
+      description='For proxies or custom endpoints'
       placeholder='deployment.service.region.amazonaws.com'
       isError={false}
       value={anthropicHost || ''}
       onChange={text => updateSettings({ anthropicHost: text })}
     />}
 
-    {advanced.on && <FormTextField
+    {showAdvanced && <FormTextField
       autoCompleteId='anthropic-helicone-key'
       title='Helicone Key' disabled={!!anthropicHost}
       description={<>Generate <Link level='body-sm' href='https://www.helicone.ai/keys' target='_blank'>here</Link></>}
       placeholder='sk-...'
       value={heliconeKey || ''}
       onChange={text => updateSettings({ heliconeKey: text })}
+    />}
+
+    {(showAdvanced || !!anthropicInferenceGeo) && <FormSwitchControl
+      title='US-only Inference' on='US' off='Off'
+      tooltip='Restrict model inference to US data centers at 1.1x pricing. Supported on Claude Opus 4.6 and newer models only - older models will return an error.'
+      description={anthropicInferenceGeo ? 'US region (1.1x)' : 'Global (default)'}
+      checked={!!anthropicInferenceGeo}
+      onChange={on => updateSettings({ inferenceGeoUS: on })}
+    />}
+
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!anthropicKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText="Fetch models and make requests directly to Anthropic's API using your browser instead of through the server. Useful for bypassing server limitations or ensuring requests use your API key directly."
     />}
 
     {!!heliconeKey && <Alert variant='soft' color='success'>

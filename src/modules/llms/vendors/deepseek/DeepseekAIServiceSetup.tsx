@@ -1,10 +1,12 @@
 import * as React from 'react';
 
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
+import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
@@ -20,18 +22,19 @@ const DEEPSEEK_REG_LINK = 'https://platform.deepseek.com/api_keys';
 
 export function DeepseekAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
-  // state
-  const advanced = useToggleableBoolean();
-
   // external state
   const {
-    service, serviceAccess, serviceHasBackendCap, serviceHasLLMs,
+    service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs,
     serviceSetupValid, updateSettings,
   } = useServiceSetup(props.serviceId, ModelVendorDeepseek);
 
   // derived state
-  const { oaiKey: deepseekKey } = serviceAccess;
-  const needsUserKey = !serviceHasBackendCap;
+  const { clientSideFetch, oaiKey: deepseekKey, oaiHost: deepseekHost } = serviceAccess;
+  const needsUserKey = !serviceHasCloudTenantConfig;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on || !!deepseekHost;
 
   // validate if url is a well formed proper url with zod
   const shallFetchSucceed = !needsUserKey || (!!deepseekKey && serviceSetupValid);
@@ -56,6 +59,22 @@ export function DeepseekAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       required={needsUserKey} isError={showKeyError}
       placeholder='...'
     />
+
+    {showAdvanced && <FormTextField
+      autoCompleteId='deepseek-host'
+      title='API Host'
+      tooltip={`An alternative Deepseek API endpoint to use instead of the default 'api.deepseek.com'.\n\nExamples:\n - https://api.deepseek.com/beta`}
+      placeholder='e.g., https://api.deepseek.com/beta'
+      value={deepseekHost}
+      onChange={text => updateSettings({ deepseekHost: text })}
+    />}
+
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!deepseekKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText='Connect directly to Deepseek API from your browser instead of through the server.'
+    />}
 
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />
 

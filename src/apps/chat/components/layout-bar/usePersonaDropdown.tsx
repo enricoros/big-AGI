@@ -6,7 +6,7 @@ import { SystemPurposeId, SystemPurposes } from '../../../../data';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { OptimaBarControlMethods, OptimaBarDropdownMemo } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { useChatStore } from '~/common/stores/chat/store-chats';
-import { useUIComplexityIsMinimal } from '~/common/state/store-ui';
+import { useUIComplexityIsMinimal } from '~/common/stores/store-ui';
 
 import { usePurposeStore } from '../persona-selector/store-purposes';
 

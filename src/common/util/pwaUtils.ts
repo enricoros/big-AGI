@@ -11,6 +11,7 @@ const _safeUA = isBrowser ? window.navigator?.userAgent.toLowerCase() || '' : ''
 export const Is = {
   Desktop: !/mobile|android|iphone|ipad|ipod/.test(_safeUA),
   Browser: {
+    Brave: isBrowser && !!(navigator as any).brave,
     Chrome: _safeUA.includes('chrome') || _safeUA.includes('crios'),
     get Safari() {
       return _safeUA.includes('safari') && !this.Chrome && !_safeUA.includes('chromium');
@@ -52,6 +53,57 @@ export function isPwa(): boolean {
   return isBrowser ? window.matchMedia('(display-mode: standalone)').matches : false;
 }
 
+/**
+ * Generates a human-readable device name with improved accuracy.
+ * Handles browser precedence correctly, considers PWA status.
+ *
+ * Examples: "Windows Edge", "iPhone Safari", "Android Chrome (App)"
+ */
+export function generateDeviceName(): string {
+  if (!isBrowser) return 'Server';
+
+  // Get platform information
+  let platform: string;
+
+  // Check specific mobile devices first
+  if (Is.OS.iOS) {
+    if (_safeUA.includes('ipad')) platform = 'iPad';
+    else if (_safeUA.includes('ipod')) platform = 'iPod';
+    else platform = 'iPhone';
+  }
+  // Then check for Android
+  else if (Is.OS.Android) {
+    platform = 'Android';
+  }
+  // Then desktop OSes
+  else if (Is.OS.Windows) {
+    platform = 'Windows';
+  } else if (Is.OS.MacOS) {
+    platform = 'Mac';
+  } else if (Is.OS.Linux) {
+    platform = 'Linux';
+  }
+  // Fallback to form factor if OS detection fails
+  else {
+    platform = Is.Desktop ? 'Desktop' : 'Mobile';
+  }
+
+  // Get browser with correct precedence (order matters!)
+  let browser: string;
+  if (Is.Browser.Edge) browser = 'Edge';
+  else if (Is.Browser.Opera) browser = 'Opera';
+  else if (Is.Browser.Firefox) browser = 'Firefox';
+  else if (Is.Browser.Chrome) browser = 'Chrome';
+  else if (Is.Browser.Safari) browser = 'Safari';
+  else browser = 'Browser';
+
+  // Check for PWA status
+  const isPwaInstalled = isPwa();
+  const pwaIndicator = isPwaInstalled ? ' (App)' : '';
+
+  // Format the name based on platform and browser
+  return `${platform} ${browser}${pwaIndicator}`;
+}
 
 /// Web Share ///
 

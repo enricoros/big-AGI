@@ -1,23 +1,28 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box } from '@mui/joy';
 
 import { BlocksContainer } from '~/modules/blocks/BlocksContainers';
-import { RenderImageRefDBlob, showImageDataRefInNewTab } from '~/modules/blocks/image/RenderImageRefDBlob';
+import { RenderImageRefDBlob } from '~/modules/blocks/image/RenderImageRefDBlob';
 import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 
 import type { DMessageContentFragment, DMessageFragmentId, DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 
+import { ViewImageRefPartModal } from './ViewImageRefPartModal';
+
 
 export function BlockPartImageRef(props: {
   imageRefPart: DMessageImageRefPart,
   fragmentId?: DMessageFragmentId,
+  disableViewer?: boolean,
   contentScaling: ContentScaling,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 }) {
+
+  // state
+  const [viewingImageRefPart, setViewingImageRefPart] = React.useState<DMessageImageRefPart | null>(null);
 
   // derived state
   const { fragmentId, imageRefPart, onFragmentDelete, onFragmentReplace } = props;
@@ -34,9 +39,9 @@ export function BlockPartImageRef(props: {
       onFragmentReplace(fragmentId, newImageFragment);
   }, [fragmentId, onFragmentReplace]);
 
-  const handleOpenInNewTab = React.useCallback(() => {
-    void showImageDataRefInNewTab(dataRef); // fire/forget
-  }, [dataRef]);
+  const handleViewImage = React.useCallback(() => {
+    setViewingImageRefPart(imageRefPart);
+  }, [imageRefPart]);
 
 
   // memo the scaled image style
@@ -49,16 +54,19 @@ export function BlockPartImageRef(props: {
 
   return (
     <BlocksContainer>
+
+      {/* Render DBlob / URL / Error -> downloads -> Calls RenderImageURL */}
       {dataRef.reftype === 'dblob' ? (
         <RenderImageRefDBlob
           dataRefDBlobAssetId={dataRef.dblobAssetId}
           dataRefMimeType={dataRef.mimeType}
+          dataRefBytesSize={dataRef.bytesSize}
           imageAltText={imageRefPart.altText}
           imageWidth={imageRefPart.width}
           imageHeight={imageRefPart.height}
-          onOpenInNewTab={handleOpenInNewTab}
           onDeleteFragment={onFragmentDelete ? handleDeleteFragment : undefined}
           onReplaceFragment={onFragmentReplace ? handleReplaceFragment : undefined}
+          onViewImage={props.disableViewer ? undefined : handleViewImage}
           scaledImageSx={scaledImageSx}
           variant='content-part'
         />
@@ -69,11 +77,18 @@ export function BlockPartImageRef(props: {
           scaledImageSx={scaledImageSx}
           variant='content-part'
         />
-      ) : (
-        <Box>
-          ContentPartImageRef: unknown reftype
-        </Box>
+      ) : 'BlockPartImageRef: unknown reftype'}
+
+      {/* Image viewer modal */}
+      {!props.disableViewer && viewingImageRefPart && (
+        <ViewImageRefPartModal
+          imageRefPart={viewingImageRefPart}
+          onClose={() => setViewingImageRefPart(null)}
+          onDeleteFragment={onFragmentDelete ? handleDeleteFragment : undefined}
+          onReplaceFragment={onFragmentReplace ? handleReplaceFragment : undefined}
+        />
       )}
+
     </BlocksContainer>
   );
 }

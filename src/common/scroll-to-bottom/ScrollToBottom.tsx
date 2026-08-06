@@ -54,6 +54,8 @@ const scrollableBoxSx: SxProps = {
   overflowY: 'auto',
   // actually make sure this scrolls & fills
   height: '100%',
+  // prevents pull-to-refresh on mobile when scrolling up in the chat
+  overscrollBehaviorY: 'none',
 } as const;
 
 
@@ -95,6 +97,9 @@ export function ScrollToBottom(props: {
 
   const bootToBottom = props.bootToBottom || false;
   const scrollBehavior: ScrollBehavior = (state.booting && !props.bootSmoothly) ? 'auto' : 'smooth';
+
+  const stateRef = React.useRef(state);
+  stateRef.current = state;
 
 
   // [Debugging]
@@ -167,14 +172,12 @@ export function ScrollToBottom(props: {
         if (DEBUG_SCROLL_TO_BOTTOM)
           console.log('   -> large enough window', entries.length);
 
-        // udpate state only if this changed
-        setState(state => (state.atBottom !== true)
-          ? ({ ...state, atBottom: true })
-          : state,
-        );
+        // update state only if this changed
+        if (stateRef.current.atBottom !== true)
+          setState(state => ({ ...state, atBottom: true }));
       }
 
-      if (entries.length > 0 && state.stickToBottom)
+      if (entries.length > 0 && stateRef.current.stickToBottom)
         doScrollToBottom();
     });
 
@@ -182,7 +185,7 @@ export function ScrollToBottom(props: {
     Array.from(scrollable.children).forEach(child => _containerResizeObserver.observe(child));
     return () => _containerResizeObserver.disconnect();
 
-  }, [state.stickToBottom, doScrollToBottom]);
+  }, [doScrollToBottom]);
 
   /**
    * (User) Scroll events listener

@@ -1,0 +1,35 @@
+{
+  "_comment": "LLM Parameter Sweep config template. Copy to sweep-config.json and fill in API keys.",
+  "_comment2": "Sweeps are referenced by name from SWEEP_DEFINITIONS in sweep.ts. Run with --help to see available sweeps.",
+  "delayMs": 1000,
+  "maxTokens": 1024,
+  "vendors": {
+    "openai": {
+      "access": { "dialect": "openai", "oaiKey": "sk-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
+      "modelFilter": ["gpt-5", "o"],
+      "sweeps": ["temperature", "oai-temperature-think-high", "oai-temperature-think-none", "oai-reasoning-effort", "oai-verbosity", "oai-image-generation", "oai-web-search"],
+      "baseModelOverrides": { "maxTokens": 4096 }
+    },
+    "anthropic": {
+      "access": { "dialect": "anthropic", "anthropicKey": "sk-ant-...", "anthropicHost": null, "heliconeKey": null },
+      "sweeps": ["temperature", "ant-effort", "ant-thinking-budget"],
+      "baseModelOverrides": { "maxTokens": 4096 }
+    },
+    "gemini": {
+      "access": { "dialect": "gemini", "geminiKey": "AIza...", "geminiHost": "", "minSafetyLevel": "HARM_BLOCK_THRESHOLD_UNSPECIFIED" },
+      "modelFilter": ["models/gemini-3", "models/gemini-2", "models/gemma"],
+      "sweeps": ["temperature", "gemini-thinking-level", "gemini-thinking-budget"],
+      "baseModelOverrides": { "maxTokens": 2048 }
+    },
+    "xai": {
+      "access": { "dialect": "xai", "oaiKey": "xai-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
+      "sweeps": ["temperature", "xai-reasoning-effort", "xai-web-search"],
+      "baseModelOverrides": { "maxTokens": 2048 }
+    },
+    "openrouter": {
+      "access": { "dialect": "openrouter", "oaiKey": "sk-or-...", "oaiOrg": "", "oaiHost": "", "heliKey": "" },
+      "modelFilter": ["anthropic/claude", "openai/gpt-5", "google/gemini"],
+      "__AUTO_IGNORE_sweeps": ["temperature", "oai-reasoning-effort"]
+    }
+  }
+}

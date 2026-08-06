@@ -38,6 +38,7 @@ export function ActilePopup(props: {
       maxHeightGapPx={320}
       minWidth={320}
       noBottomPadding
+      noAutoFocus={true /* we control keyboard navigation */}
       noTopPadding
     >
 

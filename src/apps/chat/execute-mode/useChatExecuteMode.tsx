@@ -5,8 +5,12 @@ import { ExecuteModeMenu } from './ExecuteModeMenu';
 import { ExecuteModeItems } from './execute-mode.items';
 
 
-export function chatExecuteModeCanAttach(chatExecuteMode: ChatExecuteMode) {
-  return !!ExecuteModeItems[chatExecuteMode]?.canAttach;
+export function chatExecuteModeCanAttach(chatExecuteMode: ChatExecuteMode, capabilityHasT2IEdit: boolean): boolean | 'only-images' {
+  const executeMode = ExecuteModeItems[chatExecuteMode];
+  if (!executeMode) return false;
+  if (executeMode.canAttach === 'requires-tti-edit' && capabilityHasT2IEdit)
+    return 'only-images';
+  return executeMode.canAttach === true;
 }
 
 

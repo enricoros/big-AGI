@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import type { WordsDiff } from '~/modules/blocks/wordsdiff/RenderWordsDiff';
 import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
+import { isSLMOutput, SLMOutputRenderer } from '~/modules/slm/SLMOutputRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
@@ -27,11 +28,11 @@ export function BlockPartText_AutoBlocks(props: {
   isMobile: boolean,
   fitScreen: boolean,
   disableMarkdownText: boolean,
-  enhanceCodeBlocks: boolean,
   renderAsWordsDiff?: WordsDiff,
 
   showUnsafeHtmlCode?: boolean,
   optiAllowSubBlocksMemo: boolean,
+  optiStreamingLastFragment?: boolean,
 
   onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
@@ -57,6 +58,11 @@ export function BlockPartText_AutoBlocks(props: {
     [fromAssistant, messageText],
   );
 
+  // SLM pipeline output: render with collapsible phase accordion UI
+  if (fromAssistant && isSLMOutput(messageText)) {
+    return <SLMOutputRenderer text={messageText} />;
+  }
+
   // if errored, render an Auto-Error message
   if (errorExplainer) {
     return (
@@ -75,12 +81,13 @@ export function BlockPartText_AutoBlocks(props: {
       isMobile={props.isMobile}
       showUnsafeHtmlCode={props.showUnsafeHtmlCode}
       renderAsWordsDiff={props.renderAsWordsDiff}
-      codeRenderVariant={props.enhanceCodeBlocks ? 'enhanced' : 'outlined'}
+      codeRenderVariant='enhanced' // was: { props.enhanceCodeBlocks ? 'enhanced' : 'outlined' }
       textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
+      optiStreamingLastFragment={props.optiStreamingLastFragment}
       onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
-      setText={props.setEditedText ? handleSetText : undefined}
+      setText={!props.setEditedText ? undefined : handleSetText}
     />
   );
 }

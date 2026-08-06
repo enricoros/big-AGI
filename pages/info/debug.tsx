@@ -18,18 +18,18 @@ import { ROUTE_APP_CHAT, ROUTE_INDEX } from '~/common/app.routes';
 import { Release } from '~/common/app.release';
 
 // capabilities access
-import { useCapabilityBrowserSpeechRecognition, useCapabilityElevenLabs, useCapabilityTextToImage } from '~/common/components/useCapabilities';
+import { useCapabilityBrowserSpeechRecognition, useCapabilityTextToImage } from '~/common/components/useCapabilities';
 
 // stores access
 import { getLLMsDebugInfo } from '~/common/stores/llms/store-llms';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { useLogicSherpaStore } from '~/common/logic/store-logic-sherpa';
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 // utils access
 import { BrowserLang, clientHostName, Is, isPwa } from '~/common/util/pwaUtils';
-import { getGA4MeasurementId } from '~/common/components/GoogleAnalytics';
+import { getGA4MeasurementId } from '~/common/components/3rdparty/GoogleAnalytics';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
@@ -95,7 +95,6 @@ function AppDebug() {
   const cProduct = {
     capabilities: {
       mic: useCapabilityBrowserSpeechRecognition(),
-      elevenLabs: useCapabilityElevenLabs(),
       textToImage: useCapabilityTextToImage(),
     },
     models: getLLMsDebugInfo(),
@@ -109,7 +108,6 @@ function AppDebug() {
       reloads: usageCount,
     },
     release: {
-      app: Release.App,
       build: frontendBuild,
     },
   };

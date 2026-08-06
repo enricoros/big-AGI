@@ -1,19 +1,33 @@
-## Changelog
+## Archived Versions - Changelog
 
 This is a high-level changelog. Calls out some of the high level features batched
 by release.
 
+- For the live changelog, see [big-agi.com/changes](https://big-agi.com/changes)
 - For the live roadmap, please see [the GitHub project](https://github.com/users/enricoros/projects/4/views/2)
 
-### 1.17.0 - Jun 2024
+> NOTE: with the release of 2.0.0 we switching to [big-agi.com/changes](https://big-agi.com/changes) for the
+> continuously updated changelog.
 
-- milestone: [1.17.0](https://github.com/enricoros/big-agi/milestone/17)
-- work in progress: [big-AGI open roadmap](https://github.com/users/enricoros/projects/4/views/2), [help here](https://github.com/users/enricoros/projects/4/views/4)
+### What's New in 2 · Oct 31, 2025 · Open
 
-### What's New in 1.16.1...1.16.9 · Jan 21, 2025 (patch releases)
+- **Big-AGI Open** is ready and more productive and faster than ever, with:
+- **Beam 2**: multi-modal, program-based, follow-ups, save presets
+- Top-notch AI models support including **agentic models** and **reasoning models**
+- **Image Generation** and editing with Nano Banana and gpt-image-1
+- **Web Search** with citations for supported models
+- **UI** & Mobile UI overhaul with peeking and side panels
+- And all of the [Big-AGI 2 changes](https://github.com/enricoros/big-AGI/issues/567#issuecomment-2262187617) and more
+- Built for the future, madly optimized
 
-- 1.16.9: Docker Gemini fix (R1 models are supported in Big-AGI 2)
-- 1.16.8: OpenAI ChatGPT-4o Latest (o1 models are supported in Big-AGI 2)
+### What's New in 1.16.1...1.16.13 · (patch releases)
+
+- 1.16.13: Docker fix (#840)
+- 1.16.12: Dockerfile update (#840)
+- 1.16.11: v1 final release, documentation updates
+- 1.16.10: OpenRouter models support
+- 1.16.9: Docker Gemini fix, R1 models support
+- 1.16.8: OpenAI ChatGPT-4o Latest, o1 models support
 - 1.16.7: OpenAI support for GPT-4o 2024-08-06
 - 1.16.6: Groq support for Llama 3.1 models
 - 1.16.5: GPT-4o Mini support
@@ -47,7 +61,7 @@ by release.
 ### What's New in 1.15.0 · April 1, 2024 · Beam
 
 - ⚠️ [**Beam**: the multi-model AI chat](https://big-agi.com/blog/beam-multi-model-ai-reasoning). find better answers, faster - a game-changer for brainstorming, decision-making, and creativity. [#443](https://github.com/enricoros/big-AGI/issues/443)
-- Managed Deployments **Auto-Configuration**: simplify the UI mdoels setup with backend-set models. [#436](https://github.com/enricoros/big-AGI/issues/436)
+- Managed Deployments **Auto-Configuration**: simplify the UI models setup with backend-set models. [#436](https://github.com/enricoros/big-AGI/issues/436)
 - Message **Starring ⭐**: star important messages within chats, to attach them later. [#476](https://github.com/enricoros/big-AGI/issues/476)
 - Enhanced the default Persona
 - Fixes to Gemini models and SVGs, improvements to UI and icons
@@ -59,7 +73,7 @@ by release.
 - New **[Perplexity](https://www.perplexity.ai/)** and **[Groq](https://groq.com/)** integration (thanks @Penagwin). [#407](https://github.com/enricoros/big-AGI/issues/407), [#427](https://github.com/enricoros/big-AGI/issues/427)
 - **[LocalAI](https://localai.io/models/)** deep integration, including support for [model galleries](https://github.com/enricoros/big-AGI/issues/411)
 - **Mistral** Large and Google **Gemini 1.5** support
-- Performance optimizations: runs [much faster](https://twitter.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
+- Performance optimizations: runs [much faster](https://x.com/enricoros/status/1756553038293303434?utm_source=localhost:3000&utm_medium=big-agi), saves lots of power, reduces memory usage
 - Enhanced UX with auto-sizing charts, refined search and folder functionalities, perfected scaling
 - And with more UI improvements, documentation, bug fixes (20 tickets), and developer enhancements
 - [Release notes](https://github.com/enricoros/big-AGI/releases/tag/v1.14.0), and changes [v1.13.1...v1.14.0](https://github.com/enricoros/big-AGI/compare/v1.13.1...v1.14.0) (233 commits, 8,000+ lines changed)
@@ -217,7 +231,6 @@ For Developers:
 - **[Install Mobile APP](../docs/pixels/feature_pwa.png)** 📲 looks like native (@harlanlewis)
 - **[UI language](../docs/pixels/feature_language.png)** with auto-detect, and future app language! (@tbodyston)
 - **PDF Summarization** 🧩🤯 - ask questions to a PDF! (@fredliubojin)
-- **Code Execution: [Codepen](https://codepen.io/)** 💻 (@harlanlewis)
 - **[SVG Drawing](../docs/pixels/feature_svg_drawing.png)** - draw with AI 🎨
 - Chats: multiple chats, AI titles, Import/Export, Selection mode
 - Rendering: Markdown, SVG, improved Code blocks

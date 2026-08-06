@@ -5,7 +5,13 @@ import { useShallow } from 'zustand/react/shallow';
 import { Release } from '~/common/app.release';
 import { estimatePersistentStorageOrThrow, requestPersistentStorageSafe } from '~/common/util/storageUtils';
 import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
-import { reconfigureBackendModels } from '~/common/logic/reconfigureBackendModels';
+import { isBrowser } from '~/common/util/pwaUtils';
+
+import { reconfigureBackendModels } from './reconfigureBackendModels';
+
+
+// configuration
+const DEBUG_SUCCESS_STORAGE_STATS = false;
 
 
 // Sherpa State: navigation thought the app, remembers the counters for progressive disclosure of complex features
@@ -41,8 +47,9 @@ export const useLogicSherpaStore = create<SherpaStore>()(
   ),
 );
 
-// increment the usage count
-useLogicSherpaStore.setState((state) => ({ usageCount: (state.usageCount || 0) + 1 }));
+// increment the usage count (client-only - localStorage is unavailable during SSR)
+if (isBrowser)
+  useLogicSherpaStore.setState((state) => ({ usageCount: (state.usageCount || 0) + 1 }));
 
 
 /// News Navigation
@@ -66,12 +73,13 @@ export function markNewsAsSeen() {
 }
 
 
-// Reconfgure Backend Models
+// Reconfigure Backend Models
 
 export async function sherpaReconfigureBackendModels() {
   return reconfigureBackendModels(
     useLogicSherpaStore.getState().lastLlmReconfigHash,
     (hash: string) => useLogicSherpaStore.setState({ lastLlmReconfigHash: hash }),
+    true, true,
   );
 }
 
@@ -86,8 +94,8 @@ export async function sherpaStorageMaintenanceNoChats_delayed() {
     try {
       const usage = await estimatePersistentStorageOrThrow();
       if (!usage)
-        console.warn('Issue requesting persistent storage');
-      else
+        console.log('Issue requesting persistent storage');
+      else if (DEBUG_SUCCESS_STORAGE_STATS)
         console.log('Persistent storage statistics:', usage);
     } catch (error) {
       console.error('Error estimating persistent storage:', error);

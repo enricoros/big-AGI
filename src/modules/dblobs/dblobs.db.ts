@@ -3,6 +3,10 @@ import Dexie from 'dexie';
 import type { DBlobAsset, DBlobAssetId, DBlobAssetType, DBlobDBAsset, DBlobDBContextId, DBlobDBScopeId } from './dblobs.types';
 
 
+// configuration
+export const DBLOBS_DEBUG_GC = false;
+
+
 /**
  * Dexie DB for Big-AGI
  * - assets: we store large assets like images/audio/video/documents...
@@ -133,6 +137,10 @@ export async function gcDBAssetsByScope(contextId: DBlobDBContextId, scopeId: DB
 
   // find the unreferenced keys
   const unreferencedAssetIds = keepIds.length ? dbAssetIds.filter(id => !keepIds.includes(id)) : dbAssetIds;
+
+  // debug logging
+  if (DBLOBS_DEBUG_GC)
+    console.log(`[DBlobs] GC scope=${contextId}/${scopeId} type=${assetType ?? 'all'}: ${dbAssetIds.length} found, ${keepIds.length} kept, ${unreferencedAssetIds.length} to delete`, unreferencedAssetIds);
 
   // delete the unreferenced keys
   if (unreferencedAssetIds.length > 0)

@@ -32,7 +32,6 @@ assignees: enricoros
   - [ ] verify deployment on Vercel
   - [ ] verify container on GitHub Packages
   - [ ] update the GitHub release
-  - [ ] push as stable `git push opensource main:main-stable`
 - Announce:
   - [ ] Discord announcement
   - [ ] Twitter announcement
@@ -51,7 +50,7 @@ To familiarize yourself with the application, the following are the Website and 
 ```
 
 - paste the URL: https://big-agi.com
-- drag & drop: [README.md](https://raw.githubusercontent.com/enricoros/big-AGI/v2-dev/README.md)
+- drag & drop: [README.md](https://raw.githubusercontent.com/enricoros/big-AGI/main/README.md)
 
 ```markdown
 I am announcing a new version, 1.2.3.

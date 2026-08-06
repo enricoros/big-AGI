@@ -1,10 +1,84 @@
+import { Release } from '~/common/app.release';
+
+
+/**
+ * Abort an AbortController with a proper DOMException('AbortError') instead of a raw string,
+ * so all downstream `error.name === 'AbortError'` checks work correctly.
+ */
+export function abortWithReason(controller: AbortController | undefined | null, message: string): void {
+  controller?.abort(new DOMException(message, 'AbortError'));
+}
+
+/**
+ * Detect cancellation errors that are expected when users stop generation,
+ * navigate away, or an operation is intentionally torn down.
+ */
+export function isAbortErrorLike(error: unknown): boolean {
+  if (!error) return false;
+
+  if (typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError')
+    return true;
+
+  if (error instanceof Error) {
+    if (error.name === 'AbortError')
+      return true;
+    if (error.cause)
+      return isAbortErrorLike(error.cause);
+  }
+
+  if (typeof error === 'object') {
+    const maybeError = error as { name?: unknown; message?: unknown; cause?: unknown; error?: unknown };
+    if (maybeError.name === 'AbortError')
+      return true;
+    if (maybeError.error)
+      return isAbortErrorLike(maybeError.error);
+    if (maybeError.cause)
+      return isAbortErrorLike(maybeError.cause);
+  }
+
+  return false;
+}
+
+/**
+ * React can throw these when browser extensions or translation tools mutate
+ * the DOM tree behind React's back. They are not actionable app crashes.
+ */
+export function isBenignDomMutationError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
+  const message = error.message || '';
+  if (error.name !== 'NotFoundError') return false;
+
+  return message.includes('removeChild')
+    || message.includes('insertBefore')
+    || message.includes('The node before which the new node is to be inserted is not a child of this node');
+}
+
+/**
+ * Detect lazy bundle loading failures. These usually happen when a deployment
+ * changes chunk filenames while a browser tab is still running the old app.
+ */
+export function isChunkLoadError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+
+  const name = error.name || '';
+  const message = error.message || '';
+
+  return name === 'ChunkLoadError'
+    || name === 'CSS_CHUNK_LOAD_FAILED'
+    || message.includes('ChunkLoadError')
+    || (message.includes('Loading chunk') && message.includes('failed'))
+    || (message.includes('Loading CSS chunk') && message.includes('failed'));
+}
+
+
 /**
  * Present an error to the user in a human-readable format.
  * Be exhaustive and not repetitive. Ignore the stack trace.
  */
 export function presentErrorToHumans(error: any, mdBold: boolean = false, devWarnError: boolean = false): string {
   if (devWarnError)
-    console.error('presentErrorToDevelopers', { error });
+    console.error('presentErrorToHumans', { errorType: typeof error, isError: error instanceof Error, error: error });
 
   // Handle Error objects
   if (error instanceof Error) {
@@ -37,7 +111,7 @@ export function presentErrorToHumans(error: any, mdBold: boolean = false, devWar
     return safeObjectToString(error);
 
   // Handle other types
-  return `Unknown Error: ${String(error)}`;
+  return `Unknown Error: ${String(error)} (type: ${typeof error})`;
 }
 
 function safeObjectToString(obj: object): string {
@@ -54,4 +128,54 @@ function safeObjectToString(obj: object): string {
     pairs.push(`${key}: ${valueStr}`);
   }
   return `{ ${pairs.join(', ')} }`;
+}
+
+
+/**
+ * Serialize an error object to a plain object for storage or transmission.
+ */
+export function serializeError(value: any): any {
+  // handle Error objects
+  if (value instanceof Error) {
+    return {
+      _isError: true,  // Mark as serialized error for identification
+      name: value.name ?? 'SError',
+      message: value.message ?? 'No SMessage',
+      ...(value.stack !== undefined && { stack: value.stack }), // Include stack if available
+      ...(value.cause !== undefined && { cause: serializeError(value.cause) }), // Recursively serialize cause
+      // Capture other properties
+      ...Object.fromEntries(
+        Object.entries(value).filter(([k]) => !['name', 'message', 'stack', 'cause'].includes(k)),
+      ),
+    };
+  }
+
+  // handle objects that might contain errors
+  if (value && typeof value === 'object') {
+    if (Array.isArray(value)) {
+      return value.map(serializeError);
+    }
+
+    const result: Record<string, any> = {};
+    for (const [key, val] of Object.entries(value)) {
+      result[key] = serializeError(val);
+    }
+    return result;
+  }
+
+  // Return primitives as-is
+  return value;
+}
+
+/**
+ * Conditionally triggers the debugger
+ */
+export function maybeDebuggerBreak(): void {
+
+  const isBreakEnabled = process.env.NEXT_PUBLIC_DEBUG_BREAKS === 'true';
+
+  if (Release.IsNodeDevBuild && isBreakEnabled) {
+    debugger; // This line will be hit only if DevTools are open.
+    // Build tools often remove debugger statements in production.
+  }
 }

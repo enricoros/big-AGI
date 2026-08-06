@@ -35,7 +35,7 @@ export function MobileNav(props: {
         return (
           <MobileNavIcon
             key={'n-m-' + app.route.slice(1)}
-            aria-label={app.name}
+            aria-label={app.mobileName || app.name}
             variant={isActive ? 'solid' : undefined}
             onClick={() => Router.push(app.landingRoute || app.route)}
             className={`${mobileNavItemClasses.typeApp} ${isActive ? mobileNavItemClasses.active : ''}`}

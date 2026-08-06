@@ -6,12 +6,13 @@ import { Box, Button, ButtonGroup, FormControl, Typography } from '@mui/joy';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
 
+import { LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 import { animationColorBeamGather } from '~/common/util/animUtils';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
-import { FFactoryId, FUSION_FACTORIES } from './instructions/beam.gather.factories';
-import { GATHER_COLOR } from '../beam.config';
+import { CUSTOM_FACTORY_ID, FFactoryId, FUSION_FACTORIES } from './instructions/beam.gather.factories';
+import { BEAM_SHOW_REASONING_ICON, GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
 import { useModuleBeamStore } from '../store-module-beam';
 
@@ -82,11 +83,14 @@ export function BeamGatherPane(props: {
   })));
   const gatherAutoStartAfterScatter = useModuleBeamStore(state => state.gatherAutoStartAfterScatter);
   const disableUnlessAutoStart = !props.canGather && !gatherAutoStartAfterScatter;
-  const [_, gatherLlmComponent/*, gatherLlmIcon*/] = useLLMSelect(
-    currentGatherLlmId, setCurrentGatherLlmId, props.isMobile ? '' : 'Merge Model', true, disableUnlessAutoStart,
-  );
+  const [llmOrNull, gatherLlmComponent] = useLLMSelect(currentGatherLlmId, setCurrentGatherLlmId, {
+    label: props.isMobile ? '' : 'Merge Model',
+    disabled: disableUnlessAutoStart,
+    showStarFilter: true,
+  });
 
   // derived state
+  const llmShowReasoning = !BEAM_SHOW_REASONING_ICON ? false : llmOrNull?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;
   // const isNoFactorySelected = currentFactoryId === null;
 
   // const CurrentFactoryIcon = currentFactory?.Icon ?? null;
@@ -155,10 +159,15 @@ export function BeamGatherPane(props: {
         </ButtonGroup>
       </FormControl>
 
-      {/* LLM */}
-      <Box sx={{ my: '-0.25rem', minWidth: 190, maxWidth: 300 }}>
-        {gatherLlmComponent}
-      </Box>
+      {/* Display a Reasoning LLM */}
+      {(BEAM_SHOW_REASONING_ICON && llmShowReasoning) ? '🧠' : null}
+
+      {/* LLM - hidden for Custom since each fusion has its own LLM selector */}
+      {currentFactoryId !== CUSTOM_FACTORY_ID && (
+        <Box sx={{ my: '-0.25rem', minWidth: 190, maxWidth: 300 }}>
+          {gatherLlmComponent}
+        </Box>
+      )}
 
       {/* Add Fusion */}
       {/*<FusionAddButton*/}

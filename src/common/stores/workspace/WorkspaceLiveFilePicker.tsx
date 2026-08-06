@@ -9,7 +9,7 @@ import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { LiveFileChooseIcon, LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { getFirstFileSystemFileHandle } from '~/common/util/fileSystemUtils';
-import { useDragDropDataTransfer } from '~/common/components/useDragDropDataTransfer';
+import { useDragDropDataTransfer } from '~/common/components/dnd-dt/useDragDropDataTransfer';
 
 import type { DWorkspaceId } from './workspace.types';
 import { useContextWorkspaceId } from './WorkspaceIdProvider';

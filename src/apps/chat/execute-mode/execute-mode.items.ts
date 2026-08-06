@@ -9,7 +9,7 @@ interface ModeDescription {
   // menu data
   label: string;
   description: string | React.JSX.Element;
-  canAttach?: boolean;
+  canAttach?: true | 'requires-tti-edit';
   highlight?: boolean;
   shortcut?: string;
   hideOnDesktop?: boolean;
@@ -38,16 +38,17 @@ export const ExecuteModeItems: { [key in ChatExecuteMode]: ModeDescription } = {
     sendText: 'Beam',
   },
   'append-user': {
-    label: 'Write',
-    description: 'Append a message',
+    label: 'Add',
+    description: 'Insert content',
     shortcut: 'Alt + Enter',
     canAttach: true,
     sendColor: 'primary',
-    sendText: 'Write',
+    sendText: 'Add',
   },
   'generate-image': {
     label: 'Draw',
     description: 'AI Image Generation',
+    canAttach: 'requires-tti-edit',
     requiresTTI: true,
     sendColor: 'warning',
     sendText: 'Draw',

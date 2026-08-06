@@ -1,53 +1,86 @@
 import * as React from 'react';
 
+import type { Immutable } from '~/common/types/immutable.types';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
-import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, isAttachmentFragment, isContentFragment, isImageRefPart, isModelAuxPart, isPlaceholderPart, isVoidFragment, } from '../chat.fragments';
+import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, DVoidFragmentModelAnnotations, isContentFragment, isErrorPart, isImageRefPart, isVoidAnnotationsFragment, isZyncAssetImageReferencePart } from '../chat.fragments';
 
+/**
+ * Fragments that can be interleaved: void fragments (reasoning, placeholders) and content fragments (text, code, tools).
+ * Excludes annotations (rendered separately at top) and attachments (rendered separately).
+ */
+export type InterleavedFragment = DMessageVoidFragment | DMessageContentFragment;
 
 interface FragmentBuckets {
-  contentOrVoidFragments: (DMessageContentFragment | DMessageVoidFragment)[];
+  annotationFragments: DVoidFragmentModelAnnotations[];
+  interleavedFragments: InterleavedFragment[];
   imageAttachments: DMessageAttachmentFragment[];
   nonImageAttachments: DMessageAttachmentFragment[];
+  // lastFragmentIsError: boolean;
 }
 
 /**
- * Split Fragments into renderable groups, while only recalculating when the input changes, and when content really changes
+ * Split Fragments into renderable groups, while only recalculating when the input changes, and when content really changes.
+ *
+ * The optional `isVisible` predicate filters fragments BEFORE bucketing - one pass instead of post-bucketing `.filter()`
+ * memos at call sites. Pass a stable function (typically from a hook); a fresh closure each render invalidates the memo.
+ *
+ * `lastFragmentIsError` is computed on the raw `messageFragments`, independent of filtering - error UI state isn't
+ * affected by visibility prefs.
  */
-export function useFragmentBuckets(messageFragments: DMessageFragment[]): FragmentBuckets {
+export function useFragmentBuckets(
+  messageFragments: Immutable<DMessageFragment[]>,
+  isVisible?: (fragment: Immutable<DMessageFragment>) => boolean,
+): FragmentBuckets {
 
   // Refs to store the last stable value for each bucket
-  const contentOrVoidFragmentsRef = React.useRef<(DMessageContentFragment | DMessageVoidFragment)[]>([]);
+  const annotationFragmentsRef = React.useRef<DVoidFragmentModelAnnotations[]>([]);
+  const interleavedFragmentsRef = React.useRef<InterleavedFragment[]>([]);
   const imageAttachmentsRef = React.useRef<DMessageAttachmentFragment[]>([]);
   const nonImageAttachmentsRef = React.useRef<DMessageAttachmentFragment[]>([]);
 
-  // Use useMemo to recalculate buckets only when messageFragments changes
+  // Use useMemo to recalculate buckets only when messageFragments or isVisible changes
   return React.useMemo(() => {
 
-    const contentOrVoidFragments: (DMessageContentFragment | DMessageVoidFragment)[] = [];
+    const annotationFragments: DVoidFragmentModelAnnotations[] = [];
+    const interleavedFragments: InterleavedFragment[] = [];
     const imageAttachments: DMessageAttachmentFragment[] = [];
     const nonImageAttachments: DMessageAttachmentFragment[] = [];
 
     messageFragments.forEach(fragment => {
-      if (isContentFragment(fragment))
-        contentOrVoidFragments.push(fragment);
-      else if (isAttachmentFragment(fragment)) {
-        if (isImageRefPart(fragment.part))
-          imageAttachments.push(fragment);
-        else
-          nonImageAttachments.push(fragment);
-      } else if (isVoidFragment(fragment)) {
-        if (isModelAuxPart(fragment.part) || isPlaceholderPart(fragment.part))
-          contentOrVoidFragments.push(fragment);
-        else
-          console.warn('[DEV] Unexpected void fragment:', fragment);
-      } else
-        console.warn('[DEV] Unexpected fragment type:', fragment.ft);
+      // Visibility filter (optional): drop fragments hidden by global AI block policies before bucketing.
+      if (isVisible && !isVisible(fragment)) return;
+      const ft = fragment.ft;
+      switch (ft) {
+        case 'content':
+          // Content fragments go into interleaved list (in order)
+          return interleavedFragments.push(fragment);
+        case 'attachment':
+          // Attachments stay separated for special rendering
+          if (isZyncAssetImageReferencePart(fragment.part) || isImageRefPart(fragment.part))
+            return imageAttachments.push(fragment);
+          else
+            return nonImageAttachments.push(fragment);
+        case 'void':
+          // Use type guard to properly narrow the fragment type
+          if (isVoidAnnotationsFragment(fragment))
+            return annotationFragments.push(fragment);
+          else
+            return interleavedFragments.push(fragment);
+        case '_ft_sentinel':
+          break; // nothing to do here - this is a sentinel type
+        default:
+          const _exhaustiveCheck: never = ft;
+          console.warn('[DEV] Unexpected fragment type:', { fragment });
+      }
     });
 
     // For each bucket, return the new value if it's different, otherwise return the stable ref
-    if (!shallowEquals(contentOrVoidFragments, contentOrVoidFragmentsRef.current))
-      contentOrVoidFragmentsRef.current = contentOrVoidFragments;
+    if (!shallowEquals(annotationFragments, annotationFragmentsRef.current))
+      annotationFragmentsRef.current = annotationFragments;
+
+    if (!shallowEquals(interleavedFragments, interleavedFragmentsRef.current))
+      interleavedFragmentsRef.current = interleavedFragments;
 
     if (!shallowEquals(imageAttachments, imageAttachmentsRef.current))
       imageAttachmentsRef.current = imageAttachments;
@@ -55,10 +88,14 @@ export function useFragmentBuckets(messageFragments: DMessageFragment[]): Fragme
     if (!shallowEquals(nonImageAttachments, nonImageAttachmentsRef.current))
       nonImageAttachmentsRef.current = nonImageAttachments;
 
+    // const lastFragment: DMessageFragment | undefined = messageFragments.at(-1);
+
     return {
-      contentOrVoidFragments: contentOrVoidFragmentsRef.current,
+      annotationFragments: annotationFragmentsRef.current,
+      interleavedFragments: interleavedFragmentsRef.current,
       imageAttachments: imageAttachmentsRef.current,
       nonImageAttachments: nonImageAttachmentsRef.current,
+      // lastFragmentIsError: !!lastFragment && isContentFragment(lastFragment) && isErrorPart(lastFragment.part),
     };
-  }, [messageFragments]);
+  }, [isVisible, messageFragments]);
 }

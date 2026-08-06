@@ -2,11 +2,18 @@ import * as React from 'react';
 import { useRouter } from 'next/router';
 import { PanelGroup } from 'react-resizable-panels';
 
+import { GlobalDragOverlay } from '~/common/components/dnd-dt/GlobalDragOverlay';
 import { Is } from '~/common/util/pwaUtils';
 import { checkVisibleNav, navItems } from '~/common/app.nav';
+import { useBrowserTranslationWarning } from '~/common/components/useIsBrowserTranslating';
 import { useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { usePWADesktopModeWarning } from '~/common/components/useIsBrowserInPWADesktop';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
+
+import { ScratchClip } from './scratchclip/ScratchClip';
+import { scratchClipSupported } from './scratchclip/store-scratchclip';
+import { useGlobalClipboardSaver } from './scratchclip/useGlobalClipboardSaver';
 
 import { DesktopDrawer } from './drawer/DesktopDrawer';
 import { DesktopNav } from './nav/DesktopNav';
@@ -15,7 +22,7 @@ import { MobileDrawer } from './drawer/MobileDrawer';
 import { MobilePanel } from './panel/MobilePanel';
 import { Modals } from './Modals';
 import { PageWrapper } from './PageWrapper';
-import { optimaActions, optimaOpenModels, optimaOpenPreferences } from './useOptima';
+import { optimaActions, optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, optimaTogglePanel } from './useOptima';
 
 
 // this undoes the PanelGroup styling on mobile, as it's not needed
@@ -49,23 +56,40 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
   const { route } = useRouter();
   const isMobile = useIsMobile();
 
+  // external: clipboard snippet support
+  const supportsClip = scratchClipSupported();
+  useGlobalClipboardSaver(supportsClip);
+
   // derived state
   const currentApp = navItems.apps.find(item => item.route === route);
+
+  // global warnings
+  const translationWarning = useBrowserTranslationWarning();
+  const pwaDesktopModeWarning = usePWADesktopModeWarning();
 
   // global shortcuts for Optima
   useGlobalShortcuts('OptimaApp', React.useMemo(() => [
     // Preferences & Model dialogs
     { key: ',', ctrl: true, action: optimaOpenPreferences },
     { key: 'm', ctrl: true, shift: true, action: optimaOpenModels },
+    { key: 'g', ctrl: true, shift: true, action: optimaActions().openLogger },
+    { key: 'a', ctrl: true, shift: true, action: optimaActions().toggleAIXDebugger },
     // Font Scale
     { key: '+', ctrl: true, shift: true, action: useUIPreferencesStore.getState().increaseContentScaling },
     { key: '-', ctrl: true, shift: true, action: useUIPreferencesStore.getState().decreaseContentScaling },
     // Shortcuts
     { key: Is.OS.MacOS ? '/' : '?', ctrl: true, shift: true, action: optimaActions().openKeyboardShortcuts },
     { key: 'h', ctrl: true, shift: true, action: '_specialPrintShortcuts' },
+    // Layout
+    { key: '(', ctrl: true, shift: true, action: () => optimaToggleDrawer() },
+    { key: ')', ctrl: true, shift: true, action: () => optimaTogglePanel() },
   ], []));
 
   return <>
+
+    {/* Global Warnings */}
+    {translationWarning}
+    {pwaDesktopModeWarning}
 
     <PanelGroup direction='horizontal' id='root-layout' style={isMobile ? undoPanelGroupSx : undefined}>
 
@@ -94,8 +118,14 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
 
     </PanelGroup>
 
+    {/* Global Window Overlay */}
+    {Is.Desktop && <GlobalDragOverlay />}
+
     {/* Overlay Modals */}
     <Modals suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
+
+    {/* Shared Clipboard History */}
+    {supportsClip && <ScratchClip />}
 
   </>;
 }

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { DLLM, LLM_IF_HOTFIX_NoTemperature } from '~/common/stores/llms/llms.types';
+import { DLLM, getLLMMaxOutputTokens, LLM_IF_HOTFIX_NoTemperature } from '~/common/stores/llms/llms.types';
 import type { DModelParameterId, DModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { InlineError } from '~/common/components/InlineError';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
@@ -30,7 +30,7 @@ export function LLMOptionsGlobal(props: { llm: DLLM }) {
 
   return (
     <LLMParametersEditor
-      maxOutputTokens={llm.maxOutputTokens}
+      maxOutputTokens={getLLMMaxOutputTokens(llm) ?? null}
       parameterSpecs={llm.parameterSpecs}
       parameterOmitTemperature={llm.interfaces.includes(LLM_IF_HOTFIX_NoTemperature)}
       baselineParameters={llm.initialParameters}

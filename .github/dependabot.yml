@@ -1,0 +1,69 @@
+version: 2
+updates:
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+    ignore:
+      - dependency-name: "node"
+        versions: [">=25", "<26"]  # Node 25 breaks the build because of a dummy localStorage object
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+
+# Disabled npm updates for now - will need precise package pinning, as some packages changed behavior upstream
+#  - package-ecosystem: npm
+#    directory: /
+#    schedule:
+#      interval: weekly
+#    commit-message:
+#      prefix: "chore(deps)"
+#    cooldown:
+#      semver-patch: 3
+#      semver-minor: 7
+#      semver-major: 14
+#    # Ignore packages intentionally pinned due to upstream issues
+#    ignore:
+#      # Issue #857: v11.6+ breaks streaming; tried 11.4.4/11.6/11.7, only 11.5.1 works
+#      - dependency-name: "@trpc/*"
+#        versions: [">=11.5.1", "<12"]
+#      # Pinned during tRPC #857 debugging - may be safe to unpin, test first
+#      - dependency-name: "@tanstack/react-query"
+#        versions: [">=5.90.10", "<6"]
+#      # Pinned because 5.0.8 changes signatures so return set({ .. }) != void;
+#      - dependency-name: "zustand"
+#        versions: [">=5.0.7", "<6"]
+#    groups:
+#      next:
+#        patterns:
+#          - "@next/*"
+#          - "eslint-config-next"
+#          - "next"
+#      react:
+#        patterns:
+#          - "react"
+#          - "react-dom"
+#          - "@types/react"
+#          - "@types/react-dom"
+#      emotion:
+#        patterns:
+#          - "@emotion/*"
+#      mui:
+#        patterns:
+#          - "@mui/*"
+#      dnd-kit:
+#        patterns:
+#          - "@dnd-kit/*"
+#      prisma:
+#        patterns:
+#          - "@prisma/*"
+#          - "prisma"
+#      vercel:
+#        patterns:
+#          - "@vercel/*"

@@ -44,6 +44,8 @@ export function AppDraw() {
   const { drawSection, drawSectionDropdown } = useDrawSectionDropdown(queueState.items.length, queueCancelAll);
 
   return <>
+
+    {/* -> Toolbar */}
     <OptimaToolbarIn>{drawSectionDropdown}</OptimaToolbarIn>
 
     {drawSection === 'create' ? (

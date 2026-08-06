@@ -1,0 +1,88 @@
+import * as React from 'react';
+
+import { Box, Chip, ColorPaletteProp, FormControl } from '@mui/joy';
+
+import type { Immutable } from '~/common/types/immutable.types';
+
+import { FormLabelStart } from './FormLabelStart';
+import { FormRadioOption, optionWithTooltip } from './FormRadioControl';
+
+
+const _styles = {
+
+  control: {
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  } as const,
+
+  chipGroup: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: 1,
+  } as const,
+
+  chipGroupEnd: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: 1,
+  } as const,
+
+  chip: {
+    '--Chip-minHeight': '1.75rem', // this makes it prob better
+    px: 1.5,
+  } as const,
+
+} as const;
+
+
+/**
+ * Exact drop-in replacement for FormRadioControl, but with Chips.
+ */
+export const FormChipControl = <TValue extends string>(props: {
+  // specific
+  size?: 'sm' | 'md' | 'lg',
+  color?: ColorPaletteProp,
+  alignEnd?: boolean,
+  // =FormRadioControl
+  title: string | React.JSX.Element;
+  description?: string | React.JSX.Element;
+  tooltip?: string | React.JSX.Element;
+  disabled?: boolean;
+  options: Immutable<FormRadioOption<TValue>[]>;
+  value?: TValue;
+  onChange: (value: Immutable<TValue>) => void;
+}) => {
+
+  const { onChange } = props;
+
+  const selectedOption = props.options.find(option => option.value === props.value);
+  const description = selectedOption?.description ?? props.description;
+
+  const handleChipClick = React.useCallback((value: Immutable<TValue>) => {
+    if (!props.disabled)
+      onChange(value);
+  }, [onChange, props.disabled]);
+
+  return (
+    <FormControl orientation='horizontal' disabled={props.disabled} sx={_styles.control}>
+      {(!!props.title || !!description) && <FormLabelStart title={props.title} description={description} tooltip={props.tooltip} />}
+      <Box sx={props.alignEnd ? _styles.chipGroupEnd : _styles.chipGroup}>
+        {props.options.map((option) => optionWithTooltip(option.tooltip,
+          <Chip
+            key={'opt-' + option.value}
+            color={props.color}
+            size={props.size}
+            disabled={option.disabled || props.disabled}
+            variant={props.value === option.value ? 'solid' : 'outlined'}
+            // color={props.value === option.value ? 'neutral' : 'neutral'}
+            onClick={() => handleChipClick(option.value)}
+            sx={_styles.chip}
+          >
+            {option.label}
+          </Chip>,
+        ))}
+      </Box>
+    </FormControl>
+  );
+};

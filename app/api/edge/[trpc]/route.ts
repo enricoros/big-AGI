@@ -10,9 +10,11 @@ const handlerEdgeRoutes = (req: Request) => fetchRequestHandler({
   createContext: createTRPCFetchContext,
   onError:
     process.env.NODE_ENV === 'development'
-      ? ({ path, error }) => console.error(`❌ tRPC-edge failed on ${path ?? 'unk-path'}: ${error.message}`)
+      ? ({ path, error }) => console.error(`\n❌ tRPC-edge failed on ${path ?? 'unk-path'}: ${error.message}`)
       : undefined,
 });
 
+// NOTE: we don't set maxDuration explicitly here - however we set it in the Vercel project settings, raising to the limit of 300s
+// export const maxDuration = 60;
 export const runtime = 'edge';
 export { handlerEdgeRoutes as GET, handlerEdgeRoutes as POST };

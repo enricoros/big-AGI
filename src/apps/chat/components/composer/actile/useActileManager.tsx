@@ -4,7 +4,7 @@ import type { ActileItem, ActileProvider } from './ActileProvider';
 import { ActilePopup } from './ActilePopup';
 
 
-export const useActileManager = (providers: ActileProvider[], anchorRef: React.RefObject<HTMLElement>) => {
+export const useActileManager = (providers: ActileProvider[], anchorRef: React.RefObject<HTMLElement | null>) => {
 
   // state
   const [popupOpen, setPopupOpen] = React.useState(false);

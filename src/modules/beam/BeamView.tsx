@@ -1,14 +1,16 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Alert, Box, CircularProgress } from '@mui/joy';
+import { Alert, Box, Button, CircularProgress } from '@mui/joy';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import TelegramIcon from '@mui/icons-material/Telegram';
 
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
-import { useUICounter } from '~/common/state/store-ui';
+import { useUICounter } from '~/common/stores/store-ui';
 
 import { BeamExplainer } from './BeamExplainer';
 import { BeamFusionGrid } from './gather/BeamFusionGrid';
@@ -87,9 +89,9 @@ export function BeamView(props: {
     }
   }, [props.beamStore]);
 
-  const handleScatterStart = React.useCallback(() => {
+  const handleScatterStart = React.useCallback((restart: boolean) => {
     setHasAutoMerged(false);
-    startScatteringAll();
+    startScatteringAll(restart);
   }, [startScatteringAll]);
 
 
@@ -141,7 +143,7 @@ export function BeamView(props: {
 
   // intercept ctrl+enter and esc
   useGlobalShortcuts('BeamView', React.useMemo(() => [
-    { key: ShortcutKey.Enter, ctrl: true, action: handleScatterStart, disabled: isScattering, level: 1 },
+    { key: ShortcutKey.Enter, ctrl: true, action: () => handleScatterStart(false), disabled: isScattering, level: 1 },
     ...(isScattering ? [{ key: ShortcutKey.Esc, action: stopScatteringAll, level: 10 + 1 /* becasuse > ChatBarAltBeam */ }] : []),
   ], [handleScatterStart, isScattering, stopScatteringAll]));
 
@@ -158,7 +160,8 @@ export function BeamView(props: {
       // ...props.sx,
 
       // enter animation
-      animation: `${animationEnterScaleUp} 0.2s cubic-bezier(.17,.84,.44,1)`,
+      // NOTE: disabled: off-putting/confusing when the beam content is large - things won't combine nicely
+      // animation: `${animationEnterScaleUp} 5s cubic-bezier(.17,.84,.44,1)`,
 
       // config
       '--Pad': { xs: '1rem', md: '1.5rem' },
@@ -190,24 +193,42 @@ export function BeamView(props: {
         showRayAdd={!cardAdd}
         startEnabled={inputReady}
         startBusy={isScattering}
+        startRestart={!props.isMobile && raysReady >= 1 && raysReady < raysCount && !isScattering}
         onStart={handleScatterStart}
         onStop={stopScatteringAll}
         onExplainerShow={explainerShow}
       />
 
 
-      {/* Rays Grid */}
+      {/* Rays Grid - BeamRay[] > <ChatMessage /> */}
       <BeamRayGrid
         beamStore={props.beamStore}
         isMobile={props.isMobile}
         rayIds={rayIds}
         showRayAdd={cardAdd}
-        showRaysOps={(isScattering || raysReady < 2) ? undefined : raysReady}
         hadImportedRays={hadImportedRays}
         onIncreaseRayCount={handleRayIncreaseCount}
-        onRaysOperation={handleRaysOperation}
         // linkedLlmId={currentGatherLlmId}
       />
+
+      {/* Rays Action Bar (2+ ready beams) - sibling of the grid (NOT a grid child); an in-grid spanning element with gridColumn:'1/-1' pins all auto-fit tracks open and leaves dead whitespace when raysCount < tracksCount. Fixes #1073. */}
+      {(!isScattering && raysReady >= 2) && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mx: 'var(--Pad)' }}>
+          <Button size='sm' variant='outlined' color='neutral' onClick={() => handleRaysOperation('copy')} endDecorator={<ContentCopyIcon sx={{ fontSize: 'md' }} />} sx={{
+            backgroundColor: 'background.surface',
+            '&:hover': { backgroundColor: 'background.popup' },
+          }}>
+            Copy {raysReady}
+          </Button>
+          <Button size='sm' variant='outlined' color='success' onClick={() => handleRaysOperation('use')} endDecorator={<TelegramIcon sx={{ fontSize: 'xl' }} />} sx={{
+            justifyContent: 'space-between',
+            backgroundColor: 'background.surface',
+            '&:hover': { backgroundColor: 'background.popup' },
+          }}>
+            Use {raysReady === 2 ? 'both' : 'all ' + raysReady} messages
+          </Button>
+        </Box>
+      )}
 
 
       {/* Gapper between Rays and Merge, without compromising the auto margin of the Ray Grid */}
@@ -223,7 +244,7 @@ export function BeamView(props: {
         raysReady={raysReady}
       />
 
-      {/* Fusion Grid */}
+      {/* Fusion Grid - Fusion[] > <ChatMessage /> */}
       <BeamFusionGrid
         beamStore={props.beamStore}
         canGather={canGather}
@@ -244,9 +265,9 @@ export function BeamView(props: {
         onPositive={handleStartMergeConfirmation}
         // lowStakes
         noTitleBar
-        confirmationText='Some responses are still being generated. Do you want to stop and proceed with merging the available responses now?'
-        positiveActionText='Proceed with Merge'
-        negativeActionText='Wait for All Responses'
+        confirmationText={'Some replies are still generating. Merge what\'s ready?'}
+        positiveActionText='Merge now'
+        negativeActionText='Waiting for all...'
         negativeActionStartDecorator={
           <CircularProgress color='neutral' sx={{ '--CircularProgress-size': '24px', '--CircularProgress-trackThickness': '1px' }} />
         }

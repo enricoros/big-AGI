@@ -20,6 +20,7 @@ import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DFolder } from '~/common/stores/folders/store-chat-folders';
 import { ANIM_BUSY_TYPING } from '~/common/util/dMessageUtils';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -58,12 +59,14 @@ export interface ChatNavigationItemData {
   isEmpty: boolean;
   isIncognito: boolean;
   title: string;
+  isArchived: boolean;
   userSymbol: string | undefined;
   userFlagsSummary: string | undefined;
   containsDocAttachments: boolean;
   containsImageAssets: boolean;
   folder: DFolder | null | undefined; // null: 'All', undefined: do not show folder select
   updatedAt: number;
+  hasBeamOpen: boolean;
   messageCount: number;
   beingGenerated: boolean;
   systemPurposeId: SystemPurposeId;
@@ -106,6 +109,7 @@ function ChatDrawerItem(props: {
     containsDocAttachments,
     containsImageAssets,
     folder,
+    hasBeamOpen,
     messageCount,
     beingGenerated,
     systemPurposeId,
@@ -210,8 +214,12 @@ function ChatDrawerItem(props: {
     {/* Symbol, if globally enabled */}
     {(props.showSymbols || isIncognito) && (
       <ListItemDecorator>
-        {isIncognito ? (
-          <VisibilityOffIcon sx={{ fontSize: 'xl' }} />
+        {hasBeamOpen ? (
+          <ChatBeamIcon sx={{ fontSize: 'xl' }} />
+        ) : isIncognito ? (
+          <Avatar variant='soft' sx={{ backgroundColor: `#9C27B022`, width: '1.5rem', height: '1.5rem' }}>
+            <VisibilityOffIcon sx={{ fontSize: 'md', color: `#9C27B0` }} />
+          </Avatar>
         ) : (beingGenerated && props.showSymbols === 'gif') ? (
           <Avatar
             alt='chat activity'
@@ -274,7 +282,7 @@ function ChatDrawerItem(props: {
     {searchFrequency > 0 ? (
       // Display search frequency if it exists and is greater than 0
       <Typography level='body-sm'>
-        {searchFrequency}
+        {Math.round(searchFrequency * 10) / 10}
       </Typography>
     ) : (props.showSymbols && (userFlagsSummary || containsDocAttachments || containsImageAssets)) ? (
       <Box sx={{
@@ -286,7 +294,7 @@ function ChatDrawerItem(props: {
       </Box>
     ) : null}
 
-  </>, [beingGenerated, containsDocAttachments, containsImageAssets, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, isActive, isEditingTitle, isIncognito, isNew, personaImageURI, personaSymbol, props.showSymbols, searchFrequency, title, userFlagsSummary]);
+  </>, [beingGenerated, containsDocAttachments, containsImageAssets, handleTitleEditBegin, handleTitleEditCancel, handleTitleEditChange, hasBeamOpen, isActive, isEditingTitle, isIncognito, isNew, personaImageURI, personaSymbol, props.showSymbols, searchFrequency, title, userFlagsSummary]);
 
   const progressBarFixedComponent = React.useMemo(() =>
     progress > 0 && (
@@ -300,6 +308,7 @@ function ChatDrawerItem(props: {
 
     // Active or Also Open
     <Sheet
+      aria-current={isActive ? 'true' : undefined}
       variant={isActive ? 'solid' : 'outlined'}
       invertedColors={isActive}
       onClick={!isActive ? handleConversationActivate : undefined}
@@ -324,8 +333,26 @@ function ChatDrawerItem(props: {
         '&:hover > button': {
           opacity: 1, // fade in buttons when hovering, but by default wash them out a bit
         },
+        // NOTE: we experimented with this code to have the actions fade in on hover, but idk about mobile..
+        //       Buttons Row had the "className='chat-actions'"
+        // '& .chat-actions': {
+        //   opacity: 0,
+        //   transition: 'opacity 0.2s ease-in-out',
+        // },
+        // '&:hover .chat-actions': {
+        //   opacity: 1,
+        // },
         ...(isIncognito && {
-          filter: 'brightness(0.5) contrast(0.5)',
+          backgroundColor: 'background.level2',
+          backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 10px, transparent 10px, transparent 20px)',
+          // border: 'none',
+          // border: '1px dashed',
+          borderColor: 'background.level3',
+          // purple icon to further indicate incognito mode
+          '& .MuiListItemDecorator-root': {
+            color: '#9C27B0',
+          },
+          // filter: 'brightness(0.5) contrast(0.5)',
         }),
       }}
     >

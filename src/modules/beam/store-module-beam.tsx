@@ -1,13 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { agiUuid } from '~/common/util/idUtils';
 
 import type { FFactoryId } from './gather/instructions/beam.gather.factories';
 
 
-/// Presets (persistes as zustand store) ///
+/// Presets (persisted as zustand store) ///
 
 export interface BeamConfigSnapshot {
   id: string;
@@ -19,6 +20,8 @@ export interface BeamConfigSnapshot {
 
 
 interface ModuleBeamState {
+
+  // stored
   presets: BeamConfigSnapshot[];
   lastConfig: BeamConfigSnapshot | null;
   cardAdd: boolean;
@@ -27,6 +30,10 @@ interface ModuleBeamState {
   scatterShowPrevMessages: boolean;
   gatherAutoStartAfterScatter: boolean;
   gatherShowAllPrompts: boolean;
+
+  // non-stored, temporary but useful for the UI
+  openBeamConversationIds: Record<string, boolean>;
+
 }
 
 interface ModuleBeamStore extends ModuleBeamState {
@@ -43,6 +50,9 @@ interface ModuleBeamStore extends ModuleBeamState {
   toggleScatterShowPrevMessages: () => void;
   toggleGatherAutoStartAfterScatter: () => void;
   toggleGatherShowAllPrompts: () => void;
+
+  setBeamOpenForConversation: (conversationId: DConversationId, isOpen: boolean) => void;
+  clearBeamOpenForConversation: (conversationId: DConversationId) => void;
 }
 
 
@@ -57,6 +67,7 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
     scatterShowPrevMessages: false,
     gatherShowAllPrompts: false,
     gatherAutoStartAfterScatter: false,
+    openBeamConversationIds: {},
 
 
     addPreset: (name, rayLlmIds, gatherLlmId, gatherFactoryId) => _set(state => ({
@@ -99,11 +110,32 @@ export const useModuleBeamStore = create<ModuleBeamStore>()(persist(
 
     toggleGatherShowAllPrompts: () => _set(state => ({ gatherShowAllPrompts: !state.gatherShowAllPrompts })),
 
+    setBeamOpenForConversation: (conversationId, isOpen) => _set(state => {
+      const openBeams = { ...state.openBeamConversationIds };
+      if (isOpen)
+        openBeams[conversationId] = true;
+      else
+        delete openBeams[conversationId];
+      return { openBeamConversationIds: openBeams };
+    }),
+
+    clearBeamOpenForConversation: (conversationId) => _set(state => {
+      const openBeams = { ...state.openBeamConversationIds };
+      delete openBeams[conversationId];
+      return { openBeamConversationIds: openBeams };
+    }),
+
   }), {
     name: 'app-module-beam',
     version: 1,
 
-    migrate: (state: any, fromVersion: number): ModuleBeamState => {
+    partialize: (state) => {
+      // exclude openBeamConversationIds from persistence
+      const { openBeamConversationIds, ...persistedState } = state;
+      return persistedState;
+    },
+
+    migrate: (state: any, fromVersion: number): Omit<ModuleBeamState, 'openBeamConversationIds'> => {
       // 0 -> 1: rename 'scatterPresets' to 'presets'
       if (state && fromVersion === 0 && !state.presets)
         return { ...state, presets: state.scatterPresets || [] };
@@ -123,6 +155,10 @@ export function useBeamCardScrolling() {
 
 export function useBeamScatterShowLettering() {
   return useModuleBeamStore((state) => state.scatterShowLettering);
+}
+
+export function useIsBeamOpenForConversation(conversationId: DConversationId | null): boolean {
+  return useModuleBeamStore(state => conversationId ? state.openBeamConversationIds[conversationId] ?? false : false);
 }
 
 export function updateBeamLastConfig(update: Partial<BeamConfigSnapshot>) {

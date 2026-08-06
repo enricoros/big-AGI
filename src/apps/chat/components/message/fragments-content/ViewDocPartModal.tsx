@@ -7,6 +7,7 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 
 import type { DMessageDocPart } from '~/common/stores/chat/chat.fragments';
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { useIsMobile } from '~/common/components/useMatchMedia';
 
 
 const containerSx: SxProps = {
@@ -22,9 +23,19 @@ const propGridSx: SxProps = {
   alignItems: 'center',
   columnGap: 2,
   rowGap: 1,
+  // labels
   '& > :nth-of-type(odd)': {
     color: 'text.secondary',
     fontSize: 'xs',
+  },
+  // values
+  '& > :nth-of-type(even)': {
+    // fontWeight: 'bold',
+    color: 'text.primary',
+    // agi-ellipsize
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
 };
 
@@ -49,6 +60,9 @@ export function ViewDocPartModal(props: {
   // state
   // const [forceCodeRender, setForceCodeRender] = React.useState(false);
 
+  // external state
+  const isMobile = useIsMobile();
+
   const { docPart } = props;
 
   const mimeType = docPart.data?.mimeType || '(unknown)';
@@ -62,6 +76,7 @@ export function ViewDocPartModal(props: {
       onClose={props.onClose}
       title='Text Attachment'
       noTitleBar={false}
+      fullscreen={isMobile ? undefined : 'button'}
       sx={{ maxWidth: '90vw', backgroundColor: 'background.level2' }}
     >
 

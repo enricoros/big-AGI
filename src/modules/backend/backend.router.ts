@@ -1,9 +1,9 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 import { Release } from '~/common/app.release';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
-import { env } from '~/server/env.mjs';
+import { env } from '~/server/env.server';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 // critical to make sure we `import type` here
@@ -28,8 +28,7 @@ function generateLlmEnvConfigHash(env: Record<string, unknown>): string {
     .sort();                              // ignore order
   const hashInputs = [
     Release.Monotonics.Aix.toString(),  // triggers at every change (large downstream effect, know what you are doing)
-    Release.TenantId.toString(),          // triggers when branch changes
-    Release.App.pl.toString(),          // triggers when app changes
+    Release.TenantSlug.toString(),          // triggers when branch changes
     ...envAPIKeys,                      // triggers when env keys change
   ];
   return sdbmHash(hashInputs.join(';'));
@@ -49,17 +48,19 @@ export const backendRouter = createTRPCRouter({
     .query(async ({ ctx: _unused }): Promise<BackendCapabilities> => {
       return {
         // llms
+        hasLlmAlibaba: !!env.ALIBABA_API_KEY || !!env.ALIBABA_API_HOST,
         hasLlmAnthropic: !!env.ANTHROPIC_API_KEY,
         hasLlmAzureOpenAI: !!env.AZURE_OPENAI_API_KEY && !!env.AZURE_OPENAI_API_ENDPOINT,
+        hasLlmBedrock: !!env.BEDROCK_BEARER_TOKEN || (!!env.BEDROCK_ACCESS_KEY_ID && !!env.BEDROCK_SECRET_ACCESS_KEY),
         hasLlmDeepseek: !!env.DEEPSEEK_API_KEY,
         hasLlmGemini: !!env.GEMINI_API_KEY,
         hasLlmGroq: !!env.GROQ_API_KEY,
         hasLlmLocalAIHost: !!env.LOCALAI_API_HOST,
         hasLlmLocalAIKey: !!env.LOCALAI_API_KEY,
         hasLlmMistral: !!env.MISTRAL_API_KEY,
+        hasLlmMoonshot: !!env.MOONSHOT_API_KEY,
         hasLlmOllama: !!env.OLLAMA_API_HOST,
         hasLlmOpenAI: !!env.OPENAI_API_KEY || !!env.OPENAI_API_HOST,
-        hasLlmOpenPipe: !!env.OPENPIPE_API_KEY,
         hasLlmOpenRouter: !!env.OPENROUTER_API_KEY,
         hasLlmPerplexity: !!env.PERPLEXITY_API_KEY,
         hasLlmTogetherAI: !!env.TOGETHERAI_API_KEY,
@@ -68,7 +69,6 @@ export const backendRouter = createTRPCRouter({
         hasDB: (!!env.MDB_URI) || (!!env.POSTGRES_PRISMA_URL && !!env.POSTGRES_URL_NON_POOLING),
         hasBrowsing: !!env.PUPPETEER_WSS_ENDPOINT,
         hasGoogleCustomSearch: !!env.GOOGLE_CSE_ID && !!env.GOOGLE_CLOUD_API_KEY,
-        hasImagingProdia: !!env.PRODIA_API_KEY,
         hasVoiceElevenLabs: !!env.ELEVENLABS_API_KEY,
         // hashes
         hashLlmReconfig: generateLlmEnvConfigHash(env),
@@ -81,7 +81,8 @@ export const backendRouter = createTRPCRouter({
   // The following are used for various OAuth integrations
 
   /**
-   * Exchange the OpenrRouter 'code' (from PKCS) for an OpenRouter API Key
+   * Exchange the OpenRouter authorization code for an OpenRouter API Key
+   * Reference: https://openrouter.ai/docs/quickstart#oauth
    */
   exchangeOpenRouterKey: publicProcedure
     .input(z.object({ code: z.string() }))
@@ -90,6 +91,7 @@ export const backendRouter = createTRPCRouter({
       return await fetchJsonOrTRPCThrow<{ key: string }, { code: string }>({
         url: 'https://openrouter.ai/api/v1/auth/keys',
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' }, // important to fix 400 error
         body: { code: input.code },
         name: 'Backend.exchangeOpenRouterKey',
       });

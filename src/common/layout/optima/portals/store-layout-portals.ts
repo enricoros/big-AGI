@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 
-
-// configuration
-const DEBUG_OPTIMA_PORTALS = false;
+import { OPTIMA_DEBUG_PORTALS } from '../optima.config';
 
 
 export type OptimaPortalId =
@@ -45,7 +43,7 @@ export const useLayoutPortalsStore = create<OptimaPortalState & OptimaPortalActi
     // sanity check
     if (element && _get().portals[id].element)
       console.warn(`useOptimaPortalsStore.setElement: expected element to be null for ${id}`);
-    if (DEBUG_OPTIMA_PORTALS)
+    if (OPTIMA_DEBUG_PORTALS)
       console.log(`${element ? 'Set' : 'Remove'} portal element`, id);
     return {
       portals: {
@@ -60,7 +58,7 @@ export const useLayoutPortalsStore = create<OptimaPortalState & OptimaPortalActi
     // sanity check
     if (newInputs > 1)
       console.warn(`useOptimaPortalsStore.incrementInputs: expected inputs to not exceed 1 for ${id}`);
-    if (DEBUG_OPTIMA_PORTALS)
+    if (OPTIMA_DEBUG_PORTALS)
       console.log(' + store.incrementInputs', id, newInputs);
     return {
       portals: {
@@ -72,7 +70,7 @@ export const useLayoutPortalsStore = create<OptimaPortalState & OptimaPortalActi
 
   decrementInputs: (id) => _set((state) => {
     const newInputs = Math.max(0, state.portals[id].inputs - 1);
-    if (DEBUG_OPTIMA_PORTALS)
+    if (OPTIMA_DEBUG_PORTALS)
       console.log(' - store.decrementInputs', id, newInputs);
     return {
       portals: {

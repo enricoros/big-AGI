@@ -1,8 +1,7 @@
 # OpenRouter Configuration
 
 [OpenRouter](https://openrouter.ai) is a standalone, premium service
-that provides access to <Link href='https://openrouter.ai/docs#models' target='_blank'>exclusive AI models</Link>
-such as GPT-4 32k, Claude, and more. These models are typically not available to the public.
+that provides access to a wide range of AI models from multiple providers through a single API.
 This document details the process of integrating OpenRouter with big-AGI.
 
 ### 1. OpenRouter Account Setup and API Key Generation
@@ -20,7 +19,7 @@ This document details the process of integrating OpenRouter with big-AGI.
    ![feature-openrouter-add.png](pixels/feature-openrouter-add.png)
 3. Input the API key into the **OpenRouter API Key** field, and load the Models.
    ![feature-openrouter-configure.png](pixels/feature-openrouter-configure.png)
-4. OpenAI GPT4-32k and other models will now be accessible and selectable in the application.
+4. Models from all supported providers will now be accessible and selectable in the application.
 
 In addition to using the UI, configuration can also be done using
 [environment variables](environment-variables.md).
@@ -30,5 +29,5 @@ In addition to using the UI, configuration can also be done using
 OpenRouter independently manages its service and pricing and is not affiliated with big-AGI.
 For more detailed information, please visit [this page](https://openrouter.ai/docs#models).
 
-Please note that running large models such as GPT-4 32k can be costly and may rapidly consume
-credits - a single prompt may cost $1 or more, at the time of writing.
+Please note that running large models can be costly and may rapidly consume credits.
+Check model pricing on the OpenRouter website before use.

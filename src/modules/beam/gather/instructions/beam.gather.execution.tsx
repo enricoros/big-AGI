@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Typography } from '@mui/joy';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { abortWithReason } from '~/common/util/errorUtils';
 import { createDMessageEmpty, DMessage } from '~/common/stores/chat/chat.message';
 import { createPlaceholderVoidFragment } from '~/common/stores/chat/chat.fragments';
 
@@ -44,7 +45,7 @@ export function gatherStartFusion(
 
   // abort any current fusion
   const { instructions } = initialFusion;
-  initialFusion.fusingAbortController?.abort();
+  abortWithReason(initialFusion.fusingAbortController, 'Merge Stopped');
 
   // validate preconditions
   const onError = (errorText: string) => onUpdateBFusion({
@@ -57,7 +58,7 @@ export function gatherStartFusion(
   if (chatMessages.length < 1)
     return onError('No conversation history available');
   if (rayMessages.length <= 1)
-    return onError('No responses available');
+    return onError('Needs two Beams at least');
   if (!initialFusion.llmId)
     return onError('No Merge model selected');
 
@@ -149,6 +150,7 @@ export function gatherStartFusion(
       onUpdateBFusion({
         stage: 'error',
         errorText: 'Issue: ' + (error?.message || error?.toString() || 'Unknown error'),
+        fusingProgressComponent: undefined, // stops the spinner
       });
     })
     .finally(() => onUpdateBFusion({
@@ -161,10 +163,10 @@ export function gatherStartFusion(
 
 
 export function gatherStopFusion(fusion: BFusion): BFusion {
-  fusion.fusingAbortController?.abort();
+  abortWithReason(fusion.fusingAbortController, 'Merge Stopped');
   return {
     ...fusion,
-    ...(fusion.stage === 'fusing' ? { status: 'stopped' /* speculative as the abort shall do the same */ } : {}),
+    ...(fusion.stage === 'fusing' ? { stage: 'stopped' /* optimistic as the abort shall do the same */ } : {}),
     fusingAbortController: undefined,
   };
 }

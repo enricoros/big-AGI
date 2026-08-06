@@ -180,6 +180,16 @@ export const animationBackgroundCameraFlash = keyframes`
     }`;*/
 
 
+// Opactiy
+
+export const animationOpacityFadeIn = keyframes`
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }`;
+
 // Transform
 
 export const animationEnterBelow = keyframes`
@@ -210,6 +220,17 @@ export const animationEnterModal = keyframes`
     }
 `;
 
+export const animationOpacityPulse = keyframes`
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }`;
+
 export const animationScalePulse = keyframes`
     0%, 100% {
         transform: scale(1);
@@ -230,6 +251,17 @@ export const animationEnterScaleUp = keyframes`
         //transform: translateY(0);
         scale: 1;
         //rotate: 0;
+    }`;
+
+export const animationSpinHalfPause = keyframes`
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+    66% {
+        transform: rotate(180deg) scale(1);
+    }
+    100% {
+        transform: rotate(180deg);
     }`;
 
 

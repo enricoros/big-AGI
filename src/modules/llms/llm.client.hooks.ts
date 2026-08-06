@@ -1,7 +1,7 @@
 import type { TRPCClientErrorBase } from '@trpc/client';
 import { useQuery } from '@tanstack/react-query';
 
-import type { DModelsService } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsService } from '~/common/stores/llms/llms.service.types';
 
 import type { ModelDescriptionSchema } from './server/llm.server.types';
 import { llmsUpdateModelsForServiceOrThrow } from './llm.client';
@@ -14,7 +14,7 @@ import { llmsUpdateModelsForServiceOrThrow } from './llm.client';
 export function useLlmUpdateModels<TServiceSettings extends object>(
   enabled: boolean,
   service: DModelsService<TServiceSettings> | null,
-  discardUserEdits?: boolean,
+  // discardUserEdits?: boolean,
 ): {
   isFetching: boolean,
   refetch: () => void,
@@ -27,7 +27,7 @@ export function useLlmUpdateModels<TServiceSettings extends object>(
     queryFn: async () => {
       if (!service)
         throw new Error('No service provided to fetch models for');
-      return await llmsUpdateModelsForServiceOrThrow(service.id, !discardUserEdits);
+      return await llmsUpdateModelsForServiceOrThrow(service.id, true /*!discardUserEdits*/);
     },
     staleTime: Infinity,
   });

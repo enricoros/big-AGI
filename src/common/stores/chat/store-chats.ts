@@ -14,7 +14,7 @@ import { workspaceActions } from '~/common/stores/workspace/store-client-workspa
 import { workspaceForConversationIdentity } from '~/common/stores/workspace/workspace.types';
 
 import { DMessage, DMessageId, DMessageMetadata, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from './chat.message';
-import type { DMessageFragment, DMessageFragmentId } from './chat.fragments';
+import { DMessageFragment, DMessageFragmentId, isVoidThinkingFragment } from './chat.fragments';
 import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversation } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
@@ -41,6 +41,7 @@ export interface ChatActions {
   abortConversationTemp: (cId: DConversationId) => void;
   historyReplace: (cId: DConversationId, messages: DMessage[]) => void;
   historyTruncateToIncluded: (cId: DConversationId, mId: DMessageId, offset: number) => void;
+  historyStripThinking: (cId: DConversationId, keepCount: number /* 0 = discard all, 1 = keep last */) => void;
   historyView: (cId: DConversationId) => Readonly<DMessage[]> | undefined;
   appendMessage: (cId: DConversationId, message: DMessage) => void;
   deleteMessage: (cId: DConversationId, mId: DMessageId) => void;
@@ -53,6 +54,7 @@ export interface ChatActions {
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
   setUserTitle: (cId: DConversationId, userTitle: string) => void;
   setUserSymbol: (cId: DConversationId, userSymbol: string | null) => void;
+  setArchived: (cId: DConversationId, isArchived: boolean) => void;
   title: (cId: DConversationId) => string | undefined;
 
   // utility function
@@ -61,14 +63,13 @@ export interface ChatActions {
 
 type ConversationsStore = ChatState & ChatActions;
 
-const defaultConversations: DConversation[] = [createDConversation()];
 
 export const useChatStore = create<ConversationsStore>()(/*devtools(*/
   persist(
     (_set, _get) => ({
 
       // default state
-      conversations: defaultConversations,
+      conversations: [], // we used to have a default conversation here for zero-state, but we moved it to the merge function
 
       prependNewConversation: (personaId: SystemPurposeId | undefined, isIncognito: boolean): DConversationId => {
         const newConversation = createDConversation(personaId);
@@ -245,6 +246,43 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           };
         }),
 
+      historyStripThinking: (conversationId: DConversationId, keepCount: number) =>
+        _get()._editConversation(conversationId, ({ messages: _currentMessages }) => {
+          let madeChanges = false;
+          const updatedMessages = [..._currentMessages];
+          let assistantsSeen = 0;
+
+          // reverse iterate to find and skip `keepCount` most recent assistant messages
+          for (let i = updatedMessages.length - 1; i >= 0; i--) {
+            const message = updatedMessages[i];
+
+            // skip non-assistant messages
+            if (message.role !== 'assistant') continue;
+
+            // preserve the N most recent assistant messages
+            if (assistantsSeen++ < keepCount) continue;
+
+            // strip thinking blocks from older messages
+            if (!message.fragments.some(isVoidThinkingFragment)) continue;
+
+            // filter out thinking blocks
+            updatedMessages[i] = {
+              ...message,
+              fragments: message.fragments.filter(fragment => !isVoidThinkingFragment(fragment)),
+            };
+            madeChanges = true;
+          }
+
+          if (!madeChanges) return {};
+
+          return {
+            messages: updatedMessages,
+            // No need to update the following as void fragments don't contribute
+            // tokenCount: updateMessagesTokenCounts(updatedMessages, true, 'historyStripThinking'),
+            // updated: Date.now(),
+          };
+        }),
+
       historyView: (conversationId: DConversationId): Readonly<DMessage[]> | undefined =>
         _get().conversations.find(_c => _c.id === conversationId)?.messages ?? undefined,
 
@@ -401,6 +439,13 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
             userSymbol: userSymbol || undefined,
           }),
 
+      setArchived: (conversationId: DConversationId, isArchived: boolean) =>
+        _get()._editConversation(conversationId,
+          {
+            isArchived: isArchived,
+            // updated: Date.now(), // don't update this - the 'entity state' shall update, but not this soft time
+          }),
+
     }),
     {
       name: 'app-chats',
@@ -427,6 +472,36 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         }
 
         return state;
+      },
+
+      /**
+       * Note: default impl:
+       *   merge: (persistedState: unknown, currentState: S) => ({
+       *     ...currentState,
+       *     ...(persistedState as object),
+       *   }),
+       */
+      merge: (persistedState, currentState: ConversationsStore): ConversationsStore => {
+
+        // insert all stored conversations [ current (if any), ...stored ]
+        const mergedConversations = [...(currentState?.conversations || [])];
+        if (persistedState && typeof persistedState === 'object' && 'conversations' in persistedState) {
+          const storedConversations = persistedState.conversations as ChatState['conversations'];
+          if (storedConversations?.length)
+            mergedConversations.push(...storedConversations);
+        }
+
+        // zero-state: prepend an empty conversations if there are none
+        if (!mergedConversations.length)
+          mergedConversations.unshift(createDConversation(undefined));
+
+        return {
+          // default shallow merge
+          ...currentState,
+          ...(persistedState as object),
+          // ad-hoc concat merge
+          conversations: mergedConversations,
+        };
       },
 
       // Pre-Saving: remove transient properties

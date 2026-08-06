@@ -4,7 +4,7 @@ import { closestCenter, DndContext, DragEndEvent, KeyboardSensor, PointerSensor,
 import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, List, ListItem, ListItemButton, ListItemDecorator } from '@mui/joy';
+import { Box, List, ListItem, ListItemButton, ListItemDecorator, Typography } from '@mui/joy';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
@@ -54,6 +54,7 @@ const _dndModifiers = [restrictToVerticalAxis, restrictToParentElement];
 
 export function ChatFolderList(props: {
   folders: DFolder[];
+  folderChatCounts?: Record<DFolder['id'], number>;
   contentScaling: ContentScaling;
   activeFolderId: string | null;
   onFolderSelect: (folderId: string | null) => void;
@@ -61,8 +62,7 @@ export function ChatFolderList(props: {
 }) {
 
   // derived props
-  const { folders, onFolderSelect, activeFolderId } = props;
-
+  const { folders, folderChatCounts, onFolderSelect, activeFolderId } = props;
 
   // DnD Kit
   const sensors = useSensors(
@@ -107,20 +107,32 @@ export function ChatFolderList(props: {
         sx={listSx}
       >
 
+        {/* Zero State message */}
+        {!folders.length && (
+          <ListItem sx={{ flexDirection: 'column', textAlign: 'center', px: 2, py: 3 }}>
+            <FolderOutlinedIcon sx={{ fontSize: 'xl2' }} />
+            <Typography level='body-sm'>
+              Create folders to organize your chats
+            </Typography>
+          </ListItem>
+        )}
+
         {/* 'All' Button */}
-        <ListItem>
-          <ListItemButton
-            selected={!activeFolderId}
-            onClick={(event) => {
-              event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
-              onFolderSelect(null);
-            }}
-            sx={_styles.allItem}
-          >
-            <ListItemDecorator>{!activeFolderId ? <FolderOpenOutlinedIcon /> : <FolderOutlinedIcon />}</ListItemDecorator>
-            All
-          </ListItemButton>
-        </ListItem>
+        {(!!activeFolderId || !!folders.length) && (
+          <ListItem>
+            <ListItemButton
+              selected={!activeFolderId}
+              onClick={(event) => {
+                event.stopPropagation(); // Prevent the ListItemButton's onClick from firing
+                onFolderSelect(null);
+              }}
+              sx={_styles.allItem}
+            >
+              <ListItemDecorator>{!activeFolderId ? <FolderOpenOutlinedIcon /> : <FolderOutlinedIcon />}</ListItemDecorator>
+              <Box sx={{ flex: 1 }}>All Chats</Box>
+            </ListItemButton>
+          </ListItem>
+        )}
 
         {/* Sortable folders */}
         <DndContext
@@ -139,6 +151,7 @@ export function ChatFolderList(props: {
               <FolderListItem
                 key={folder.id}
                 folder={folder}
+                chatCount={folderChatCounts?.[folder.id] || 0}
                 isActive={folder.id === activeFolderId}
                 onFolderSelect={onFolderSelect}
               />

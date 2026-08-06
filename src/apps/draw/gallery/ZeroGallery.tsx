@@ -5,7 +5,7 @@ import { Card } from '@mui/joy';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import { useIsMobile } from '~/common/components/useMatchMedia';
-import { useUIContentScaling } from '~/common/state/store-ui';
+import { useUIContentScaling } from '~/common/stores/store-ui';
 
 
 const zeroGalleryMd = `

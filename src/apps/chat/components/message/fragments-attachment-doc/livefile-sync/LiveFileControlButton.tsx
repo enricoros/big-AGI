@@ -6,7 +6,7 @@ import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
 
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { getFirstFileSystemFileHandle } from '~/common/util/fileSystemUtils';
-import { useDragDropDataTransfer } from '~/common/components/useDragDropDataTransfer';
+import { useDragDropDataTransfer } from '~/common/components/dnd-dt/useDragDropDataTransfer';
 
 import { LiveFileChooseIcon, LiveFileIcon } from '~/common/livefile/liveFile.icons';
 
@@ -71,7 +71,7 @@ export function LiveFileControlButton(props: {
         title={
           props.hasContent ? 'Reload and compare file contents'
             : props.isPaired ? 'Sync and monitor file changes'
-              : 'Set up live file pairing'
+              : 'Set up live file pairing (you can also drag and drop a file here)'
         }
         color='success'
         placement='top-end'

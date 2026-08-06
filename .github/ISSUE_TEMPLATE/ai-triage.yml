@@ -1,0 +1,70 @@
+name: 🔥 Make AI Fix This
+description: Bug, question, or feedback - AI analyzes and changes Big-AGI appropriately
+labels: [ 'claude-triage' ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for opening an issue! Our AI will analyze it and change Big-AGI appropriately.
+
+        **What happens next:**
+        - AI searches the codebase and documentation
+        - You get a response, typically within 30 minutes
+        - Ticket gets follow-up and community votes
+
+  - type: textarea
+    attributes:
+      label: What's happening?
+      description: Describe the bug, feature request, or question. Be as detailed as you can.
+      placeholder: |
+        Bug example: "In Beam, Anthropic models seem to have search off..."
+        Model request: "Add Claude Opus 4.5 out today, see https://..."
+        Feature example: "Add the option to to save frequent prompt templates for reuse..."
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Where does this happen?
+      description: If this is a bug or issue, where are you experiencing it?
+      options:
+        - Big-AGI Pro (big-agi.com)
+        - Self-deployed from GitHub
+        - Docker deployment
+        - Local development
+        - Not applicable (question/feedback)
+        - Other
+    validations:
+      required: false
+
+  - type: dropdown
+    attributes:
+      label: Impact on your workflow
+      description: How does this affect your use of Big-AGI?
+      options:
+        - Blocking - Can't use Big-AGI
+        - High - Major feature broken
+        - Medium - Workaround exists
+        - Low - Minor inconvenience
+        - None - Just a question/suggestion
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Environment (if applicable)
+      description: Device, OS, browser - only if reporting a bug
+      placeholder: |
+        Device: Macbook Pro M3
+        OS: macOS 15.2
+        Browser: Chrome 131
+    validations:
+      required: false
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Screenshots, error messages, or anything else that helps
+      placeholder: Paste screenshots or error messages here
+    validations:
+      required: false

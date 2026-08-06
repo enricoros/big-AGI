@@ -28,6 +28,69 @@ export function getOriginUrl(): string {
 
 
 /**
+ * Returns the domain of a website
+ * */
+export function urlExtractDomain(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * Simplifies a URL to its origin and path (removes query and hash)
+ */
+export function urlPrettyHref(href: string, removeHttps: boolean, removeTrailingSlash: boolean): string {
+  try {
+    const url = new URL(href);
+    let cleaner = decodeURIComponent(url.origin + url.pathname);
+    if (removeHttps) cleaner = cleaner.replace(/^https?:\/\//, '');
+    if (removeTrailingSlash) cleaner = cleaner.replace(/\/$/, '');
+    return cleaner;
+  } catch {
+    return href;
+  }
+}
+
+
+/**
+ * Checks if a URL hostname points to a local/private network address.
+ * Matches: localhost, 127.x.x.x, 192.168.x.x, 10.x.x.x, 172.16-31.x.x, ::1, etc.
+ */
+export function isLocalUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+
+    // localhost
+    if (hostname === 'localhost') return true;
+
+    // IPv6 loopback
+    if (hostname === '::1' || hostname === '[::1]') return true;
+
+    // IPv4 patterns
+    const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4Match) {
+      const [, a, b] = ipv4Match.map(Number);
+      // 127.x.x.x (loopback)
+      if (a === 127) return true;
+      // 10.x.x.x (private class A)
+      if (a === 10) return true;
+      // 172.16.x.x - 172.31.x.x (private class B)
+      if (a === 172 && b >= 16 && b <= 31) return true;
+      // 192.168.x.x (private class C)
+      if (a === 192 && b === 168) return true;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+
+/**
  * If the string is a valid URL, return it. Otherwise, return null.
  */
 export function asValidURL(textString: string | null, relaxProtocol: boolean = false /*, strictMode: boolean = false*/): string | null {
@@ -71,49 +134,67 @@ export function asValidURL(textString: string | null, relaxProtocol: boolean = f
 }
 
 /**
- * Add https if missing, and remove trailing slash if present and the path starts with a slash.
+ * Extracts URLs from a text string.
  */
-export function fixupHost(host: string, apiPath: string): string {
-  if (!host.startsWith('http'))
-    host = `https://${host}`;
-  if (host.endsWith('/') && apiPath.startsWith('/'))
-    host = host.slice(0, -1);
-  return host;
+export function extractUrlsFromText(text: string): string[] {
+  const urlRegex = /(https?:\/\/\S+)/g;
+  return text.match(urlRegex) || [];
 }
 
 
-/**
- * Creates a Blob Object URL (that can be opened in a new tab with window.open, for instance)
- */
-export function createBlobURLFromData(base64Data: string, mimeType: string) {
-  const byteArray = base64ToUint8Array(base64Data);
-  const blob = new Blob([byteArray], { type: mimeType });
-  return URL.createObjectURL(blob);
-}
 
-export function base64ToUint8Array(base64Data: string) {
-  const binaryString = atob(base64Data);
-  return Uint8Array.from(binaryString, char => char.charCodeAt(0));
-}
-
-export function base64ToArrayBuffer(base64Data: string) {
-  return base64ToUint8Array(base64Data).buffer;
-}
-
-
-/**
- * Creates a Blob Object URL (that can be opened in a new tab with window.open, for instance) from a Data URL
- */
-export function createBlobURLFromDataURL(dataURL: string) {
-  if (!dataURL.startsWith('data:')) {
-    console.error('createBlobURLFromDataURL: Invalid data URL', dataURL);
-    return null;
-  }
-  const mimeType = dataURL.slice(5, dataURL.indexOf(';'));
-  const base64Data = dataURL.slice(dataURL.indexOf(',') + 1);
-  if (!mimeType || !base64Data) {
-    console.error('createBlobURLFromDataURL: Invalid data URL', dataURL);
-    return null;
-  }
-  return createBlobURLFromData(base64Data, mimeType);
-}
+// added for future in-app routing
+// export namespace SearchParams {
+//
+//   /** Checks if a search parameter exists */
+//   export function hasParam(key: string): boolean {
+//     return _parse().has(key);
+//   }
+//
+//   /** Gets a search parameter by key */
+//   export function getParam(key: string, defaultValue = ''): string {
+//     const value = _parse().get(key);
+//     return value !== null ? value : defaultValue;
+//   }
+//
+//   /** Updates or adds a search parameter */
+//   export function updateParam(key: string, value: string): void {
+//     const searchParams = _parse();
+//     searchParams.set(key, value);
+//     _update(searchParams);
+//   }
+//
+//   /** Removes a search parameter */
+//   export function removeParam(key: string): void {
+//     const searchParams = _parse();
+//     searchParams.delete(key);
+//     _update(searchParams);
+//   }
+//
+//
+//   function _parse(): URLSearchParams {
+//     if (!isBrowser) return new URLSearchParams();
+//
+//     try {
+//       return new URL(window.location.href).searchParams;
+//     } catch (error) {
+//       console.error('[DEV] SearchParams: error parsing URL:', error);
+//       return new URLSearchParams();
+//     }
+//   }
+//
+//   /** Updates the URL with the provided search parameters */
+//   function _update(searchParams: URLSearchParams): void {
+//     if (!isBrowser) return;
+//
+//     try {
+//       window.history.replaceState(
+//         {},
+//         '',
+//         `${window.location.pathname}?${searchParams.toString()}`,
+//       );
+//     } catch (error) {
+//       console.error('[DEV] SearchParams: error updating URL:', error);
+//     }
+//   }
+// }

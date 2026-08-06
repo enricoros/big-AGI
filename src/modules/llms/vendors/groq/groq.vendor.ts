@@ -1,28 +1,25 @@
-import { GroqIcon } from '~/common/components/icons/vendors/GroqIcon';
-
 import type { IModelVendor } from '../IModelVendor';
-import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
+import type { OpenAIAccessSchema } from '../../server/openai/openai.access';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
-
-import { GroqServiceSetup } from './GroqServiceSetup';
 
 
 interface DGroqServiceSettings {
   groqKey: string;
+  csf?: boolean;
 }
 
 export const ModelVendorGroq: IModelVendor<DGroqServiceSettings, OpenAIAccessSchema> = {
   id: 'groq',
   name: 'Groq',
   displayRank: 32,
+  displayGroup: 'cloud',
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCapKey: 'hasLlmGroq',
+  hasServerConfigKey: 'hasLlmGroq',
 
-  // components
-  Icon: GroqIcon,
-  ServiceSetupComponent: GroqServiceSetup,
+  /// client-side-fetch ///
+  csfAvailable: _csfGroqAvailable,
 
   // functions
   initializeSetup: () => ({
@@ -33,14 +30,18 @@ export const ModelVendorGroq: IModelVendor<DGroqServiceSettings, OpenAIAccessSch
   },
   getTransportAccess: (partialSetup) => ({
     dialect: 'groq',
+    clientSideFetch: _csfGroqAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: partialSetup?.groqKey || '',
     oaiOrg: '',
     oaiHost: '',
     heliKey: '',
-    moderationCheck: false,
   }),
 
   // OpenAI transport ('Groq' dialect in 'access')
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
 
 };
+
+function _csfGroqAvailable(s?: Partial<DGroqServiceSettings>) {
+  return !!s?.groqKey;
+}

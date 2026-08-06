@@ -1,45 +1,24 @@
 import * as React from 'react';
 
-import type { YouTubePlayerProps as ReactPlayerYouTubeProps } from 'react-player/youtube';
+import ReactPlayer from 'react-player';
+import type { ReactPlayerProps } from 'react-player/types';
 
+export function VideoPlayerYouTube(props: ReactPlayerProps & {
+  youTubeVideoId: string; // set this to not set the full URL
+  responsive?: boolean; // make the player responsive
+}) {
 
-type VideoPlayerProps = ReactPlayerYouTubeProps & {
-  // make the player responsive
-  responsive?: boolean;
-  // set this to not set the full URL
-  youTubeVideoId?: string;
-};
+  const { responsive, youTubeVideoId, ...playerProps } = props;
 
-const DynamicYouTubePlayer = React.lazy(async () => {
+  // responsive patch
+  if (responsive) {
+    playerProps.width = '100%';
+    playerProps.height = '100%';
+  }
 
-  // dynamically import react-player (saves 7kb but still..)
-  const { default: ReactPlayerYouTube } = await import('react-player/youtube');
+  // src from video id
+  if (youTubeVideoId)
+    playerProps.src = `https://www.youtube.com/watch?v=${youTubeVideoId}`;
 
-  return {
-    default: (props: ReactPlayerYouTubeProps) => {
-
-      const { responsive, youTubeVideoId, ...baseProps } = props;
-
-      // responsive patch
-      if (responsive) {
-        baseProps.width = '100%';
-        baseProps.height = '100%';
-      }
-
-      // YouTube Video ID
-      if (youTubeVideoId)
-        baseProps.url = `https://www.youtube.com/watch?v=${youTubeVideoId}`;
-
-      return <ReactPlayerYouTube {...baseProps} />;
-    },
-  };
-});
-
-
-export function VideoPlayerYouTube(props: VideoPlayerProps) {
-  return (
-    <React.Suspense fallback={<div>Loading...</div>}>
-      <DynamicYouTubePlayer {...props} />
-    </React.Suspense>
-  );
+  return <ReactPlayer {...playerProps} />;
 }

@@ -1,17 +1,58 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
 
+import { OPTIMA_PANEL_GROUPS_SPACING } from '../optima.config';
 import { OptimaPortalId, useLayoutPortalsStore } from './store-layout-portals';
+import { optimaActions } from '../useOptima';
+
+
+const drawerWrapperStyle = {
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+} as const;
+
+const panelWrapperStyle = {
+  flex: 1,
+  ...drawerWrapperStyle,
+
+  // replicates PanelContentPortal.portalContentSx.gap, as we have added a div which deletes the gap
+  gap: `${OPTIMA_PANEL_GROUPS_SPACING / 2}rem`, //
+} as const;
 
 
 export function OptimaDrawerIn(props: { children: React.ReactNode }) {
   const portalElement = useOptimaPortalTargetElement('optima-portal-drawer');
-  return portalElement ? createPortal(props.children, portalElement) : null;
+  if (!portalElement) return null;
+
+  // wrap portal contents in a div that updates the hover state of the drawer
+  const { peekDrawerEnter, peekDrawerLeave } = optimaActions();
+  return createPortal(
+    <div
+      data-optima-piw='drawer' // portal input wrapper
+      onMouseEnter={peekDrawerEnter}
+      onMouseLeave={peekDrawerLeave}
+      style={drawerWrapperStyle}
+    >
+      {props.children}
+    </div>, portalElement);
 }
 
 export function OptimaPanelIn(props: { children: React.ReactNode }) {
   const portalElement = useOptimaPortalTargetElement('optima-portal-panel');
-  return portalElement ? createPortal(props.children, portalElement) : null;
+  if (!portalElement) return null;
+
+  // wrap portal contents in a div that updates the hover state of the panel
+  const { peekPanelEnter, peekPanelLeave } = optimaActions();
+  return createPortal(
+    <div
+      data-optima-piw='panel' // portal input wrapper
+      onMouseEnter={peekPanelEnter}
+      onMouseLeave={peekPanelLeave}
+      style={panelWrapperStyle}
+    >
+      {props.children}
+    </div>, portalElement);
 }
 
 export function OptimaToolbarIn(props: { children: React.ReactNode }) {

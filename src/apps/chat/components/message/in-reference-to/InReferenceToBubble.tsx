@@ -14,6 +14,7 @@ const INLINE_COLOR = 'primary';
 
 const bubbleComposerSx: SxProps = {
   // contained
+  minWidth: 0,
   width: '100%',
   zIndex: 2, // stays on top of the 'tokens' bubble in the composer
 

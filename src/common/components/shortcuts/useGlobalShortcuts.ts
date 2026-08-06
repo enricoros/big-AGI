@@ -8,6 +8,7 @@ import { ensureGlobalShortcutHandler } from './globalShortcutsHandler';
 
 
 export const ShortcutKey = {
+  Backspace: 'Backspace',
   Enter: 'Enter',
   Esc: 'Escape',
   Left: 'ArrowLeft',
@@ -18,14 +19,19 @@ export const ShortcutKey = {
   PageDown: 'PageDown',
 };
 
-export interface ShortcutObject {
+/** Base key-combo definition shared by registration and catalog. */
+export interface ShortcutDefinition {
   key: string;
   ctrl?: boolean;
   shift?: boolean;
-  // altForNonMac?: boolean;
-  disabled?: boolean;
-  action: (() => void) | '_specialPrintShortcuts';
+  alt?: boolean;
   description?: string;
+}
+
+export interface ShortcutObject extends ShortcutDefinition {
+  disabled?: boolean;
+  skipIfInput?: boolean; // skip if a text input, textarea, contenteditable (or child thereof) is focused
+  action: (() => void) | '_specialPrintShortcuts';
   endDecoratorIcon?: typeof SvgIcon;
   level?: number; // if set, it will exclusively show icons at that level of priority and hide the others
 }

@@ -1,10 +1,11 @@
 :root {
     --AGI-Nav-width: 52px;
-    --AGI-Drawer-width: 320px;
-    --AGI-Panel-width: 320px;
-    --AGI-Desktop-Drawer-width: clamp(260px, 18vw, 350px);
-    --AGI-Desktop-Panel-width: clamp(260px, 18vw, 350px);
-    --AGI-Optima-Radius: 0.75rem; /* var(--joy-radius-lg) */
+    /*noinspection CssInvalidFunction*/
+    --AGI-Desktop-Drawer-width: round(clamp(260px, 18vw, 350px), 1px);
+    /*noinspection CssInvalidFunction*/
+    --AGI-Desktop-Panel-width: round(clamp(260px, 18vw, 350px), 1px);
+    --AGI-Mobile-Drawer-width: 320px;
+    --AGI-Mobile-Panel-width: 320px;
     --AGI-overlay-start-opacity: 0;
 }
 
@@ -14,7 +15,49 @@
     text-overflow: ellipsis;
 }
 
+/*noinspection CssUnresolvedCustomProperty*/
+.agi-vendor-icon-sprite {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    fill: currentColor;
+    flex-shrink: 0;
+    /* Auto-adapt to the properties passed by the container, usually an IconButton, Typography, etc. */
+    margin: var(--Icon-margin, 0);
+    font-size: var(--Icon-fontSize, 1.5rem);
+    color: var(--Icon-color, inherit);
+    user-select: none;
+}
+
 /* Prevents pull-to-refresh on mobile, so it's not triggered while scrolling the chat inadvertently */
 body {
     overscroll-behavior-y: none;
+}
+
+
+/* Customize the Google Drive Picker background */
+
+.picker-dialog-bg {
+    /* fixes a weird scrollbars issue */
+    margin-top: -1px !important;
+    margin-left: -1px !important;
+}
+
+iframe.picker-dialog-bg {
+    background: none !important;
+}
+
+div.picker-dialog-bg {
+    /* we have alpha in the background, don't also use opacity */
+    opacity: 1 !important;
+    /*noinspection CssUnresolvedCustomProperty*/
+    background-color: rgba(var(--joy-palette-neutral-darkChannel, 11 13 14) / 0.25) !important;
+    /*backdrop-filter: blur(8px);*/
+}
+
+div.picker-dialog {
+    /*noinspection CssUnresolvedCustomProperty*/
+    /*box-shadow: var(--joy-shadow-md);*/
+    border-radius: 1.25rem;
+    border: none !important;
 }

@@ -1,0 +1,15 @@
+# LLM Registry Sync - Sensitive Data
+# Do not commit API keys or database files
+
+# Production configuration with API keys
+llm-services.json
+
+# Any LLM configuration files
+llm*.json
+
+# SQLite database
+llm-registry.db
+
+# Debug/test scripts (optional)
+debug-*.ts
+validate-json.ts

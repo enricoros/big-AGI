@@ -41,6 +41,8 @@ In addition to using the UI, configuration can also be done using
 
 ### Integration: Models Gallery
 
+> Note: The Gallery Admin feature described below may have been removed or renamed in recent versions of big-AGI.
+
 If the running LocalAI instance is configured with a [Model Gallery](https://localai.io/models/):
 
 - Go to Models > LocalAI
@@ -54,7 +56,7 @@ If the running LocalAI instance is configured with a [Model Gallery](https://loc
 
 At the time of writing, LocalAI does not publish the model `context window size`.
 Every model is assumed to be capable of chatting, and with a context window of 4096 tokens.
-Please update the [src/modules/llms/transports/server/openai/models/models.data.ts](../src/modules/llms/server/openai/models/models.data.ts)
+Please update the [src/modules/llms/server/models.mappings.ts](../src/modules/llms/server/models.mappings.ts)
 file with the mapping information between LocalAI model IDs and names/descriptions/tokens, etc.
 
 # 🤝 Support

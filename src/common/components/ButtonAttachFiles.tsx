@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { fileOpen, FileWithHandle } from 'browser-fs-access';
 
-import { Box, Button, IconButton, Tooltip } from '@mui/joy';
+import { Box, Button, ColorPaletteProp, IconButton, Tooltip } from '@mui/joy';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 
 import { KeyStroke } from '~/common/components/KeyStroke';
@@ -40,6 +40,7 @@ export async function openFileForAttaching(
 export const ButtonAttachFilesMemo = React.memo(ButtonAttachFiles);
 
 function ButtonAttachFiles(props: {
+  color?: ColorPaletteProp,
   multiple?: boolean,
   isMobile?: boolean,
   disabled?: boolean,
@@ -55,7 +56,7 @@ function ButtonAttachFiles(props: {
   }, [onAttachFiles, props.multiple]);
 
   return props.isMobile ? (
-    <IconButton disabled={props.disabled} onClick={handleAttachFilePicker}>
+    <IconButton color={props.color} disabled={props.disabled} onClick={handleAttachFilePicker}>
       <AttachFileRoundedIcon />
     </IconButton>
   ) : (
@@ -67,8 +68,8 @@ function ButtonAttachFiles(props: {
       </Box>
     )}>
       <Button
-        variant='plain'
-        color='neutral'
+        variant={props.color ? 'soft' : 'plain'}
+        color={props.color || 'neutral'}
         disabled={props.disabled}
         fullWidth={props.fullWidth}
         onClick={handleAttachFilePicker}

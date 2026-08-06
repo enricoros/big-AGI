@@ -1,11 +1,53 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
+
+
+const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a newline
 
 
 /**
  * See the latest Anthropic Typescript definitions on:
- * https://github.com/anthropics/anthropic-sdk-typescript/blob/main/src/resources/messages.ts
+ * - https://github.com/anthropics/anthropic-sdk-typescript/blob/main/src/resources/messages/messages.ts
+ * For the latest Beta flags:
+ * - https://raw.githubusercontent.com/anthropics/anthropic-sdk-typescript/refs/heads/main/src/resources/beta/beta.ts
+ * - or blame: https://github.com/anthropics/anthropic-sdk-python/blame/main/src/anthropic/types/anthropic_beta_param.py
  *
  * ## Updates
+ *
+ * ### 2026-05-28 - API Sync: reasoning token breakdown
+ * - Response.usage + event_MessageDelta.usage: added `output_tokens_details` ({ thinking_tokens }) - subset of output_tokens, surfaced as the TOutR metric (like OpenAI/Gemini)
+ *
+ * ### 2026-04-24 - API Sync: stop_details for structured refusals
+ * - Response: added `stop_details` ({ type: 'refusal', category: 'cyber'|'bio'|null, explanation: string|null })
+ * - event_MessageDelta.delta: added `stop_details` (arrives alongside stop_reason in streaming)
+ *
+ * ### 2026-03-21 - API Sync: GA tool versions, thinking display, caller updates, cache_control
+ * - Tools: Added web_search_20260209 (GA), web_fetch_20260209/20260309 (GA), code_execution_20260120 (GA REPL)
+ * - Request: Added top-level `cache_control` for automatic caching (Feb 2026)
+ * - Request.thinking: Added `display` field ("summarized"|"omitted") for adaptive/enabled thinking (Mar 2026)
+ * - ToolUseBlock/ServerToolUseBlock.caller: Added `code_execution_20260120` caller type
+ * - ServerToolUseBlock: Added `caller` field (same shape as ToolUseBlock.caller)
+ * - event_MessageDelta.delta: Added `container` field for container state updates
+ *
+ * ### 2026-02-06 - API Sync: output_config.format, inference_geo, eager_input_streaming
+ * - Request: deprecated top-level `output_format`, moved to `output_config.format` (GA: 2026-01-29)
+ * - Request: added `inference_geo` for region-of-availability inference routing
+ * - Response.usage: added `inference_geo` field
+ * - CustomToolDefinition: added `eager_input_streaming` for fine-grained tool input streaming
+ * - WebSearchToolResultError: added `request_too_large` error code
+ *
+ * ### 2025-11-24 - Programmatic Tool Calling (Beta: advanced-tool-use-2025-11-20)
+ * - ToolUseBlock: added 'caller' field to indicate direct vs programmatic invocation
+ * - CustomToolDefinition: added 'allowed_callers' field to restrict tool invocation contexts
+ * - CustomToolDefinition: added 'input_examples' field for improved accuracy
+ * - New ToolUseCaller_schema for discriminating caller types
+ *
+ * ### 2025-10-17 - MAJOR: Server Tools & 2025 API Additions
+ * - ContentBlockOutput: added 9 new server tool response block types
+ * - ToolDefinition: added 9 new 2025 tool types (web_search, web_fetch, memory, code_execution, etc.)
+ * - Aligned all block types with official OpenAPI spec
+ * - Unified common blocks (TextBlock, ThinkingBlock, RedactedThinkingBlock, Citations)
+ * - Separated input-only blocks with _I suffix (ImageBlock, DocumentBlock, SearchResultBlock, ToolResultBlock)
+ * - Note: cache_control is input-only and never appears in response blocks
  *
  * ### 2024-10-22
  * - ToolDefinition: added 'cache_control' and 'type' fields
@@ -15,50 +57,425 @@ import { z } from 'zod';
  */
 export namespace AnthropicWire_Blocks {
 
-  /// Content parts - Input and Output
+  /// Common Schemas
 
   export const _CacheControl_schema = z.object({
     type: z.literal('ephemeral'),
+    ttl: z.union([z.enum(['5m', '1h']), z.string()]).optional(), // default: '5m',
   });
 
+  /**
+   * Base schema for blocks that can have cache_control.
+   * Note: cache_control is INPUT-ONLY and never appears in response blocks.
+   */
   const _CommonBlock_schema = z.object({
     cache_control: _CacheControl_schema.optional(),
   });
 
+  /** Citations schema used in both input and output. Output includes a file_id field for document citations, which input will omit. */
+  export const _TextBlockCitations_schema = z.discriminatedUnion('type', [
+    // PDF citation (page location)
+    z.object({
+      type: z.literal('page_location'),
+      cited_text: z.string(),
+      document_index: z.number(),
+      document_title: z.string().nullish(),
+      start_page_number: z.number(),
+      end_page_number: z.number(),
+      file_id: z.string().nullish(), // Present in response only
+    }),
+    // Plain text citation (character location)
+    z.object({
+      type: z.literal('char_location'),
+      cited_text: z.string(),
+      document_index: z.number(),
+      document_title: z.string().nullish(),
+      start_char_index: z.number(),
+      end_char_index: z.number(),
+      file_id: z.string().nullish(), // Present in response only
+    }),
+    // Content block citation (content document results)
+    z.object({
+      type: z.literal('content_block_location'),
+      cited_text: z.string(),
+      document_index: z.number(),
+      document_title: z.string().nullish(),
+      start_block_index: z.number(),
+      end_block_index: z.number(),
+      file_id: z.string().nullish(), // Present in response only
+    }),
+    // Web search result citation - produced by the hosted web_search tool
+    z.object({
+      type: z.literal('web_search_result_location'),
+      cited_text: z.string(),
+      encrypted_index: z.string(),
+      title: z.string().nullish(), // max len: 512
+      url: z.string(),
+    }),
+    // Search result citation
+    z.object({
+      type: z.literal('search_result_location'),
+      cited_text: z.string(),
+      search_result_index: z.number(),
+      source: z.string(),
+      title: z.string().nullish(),
+      start_block_index: z.number(),
+      end_block_index: z.number(),
+    }),
+  ]);
+
+
+  /// Common Blocks (used in both input and output)
+
+  /** TextBlock - Used in both input and output. Different min/max length, and no cache_control on output, but too important to split */
   export const TextBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('text'),
-    text: z.string(),
+    text: z.string(), // minLength is 1 for requests, 0 for responses. max for responses is 5000000 - we keep this forward compatible
+    citations: z.array(_TextBlockCitations_schema).nullish(), // nullish is okay for I/O
   });
 
-  export const ImageBlock_schema = _CommonBlock_schema.extend({
-    type: z.literal('image'),
-    source: z.object({
-      type: z.literal('base64'),
-      media_type: z.enum(['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
-      data: z.string(),
-    }),
+  export const ThinkingBlock_schema = z.object({
+    type: z.literal('thinking'),
+    thinking: z.string(),
+    signature: z.string().optional(),
   });
+
+  export const RedactedThinkingBlock_schema = z.object({
+    type: z.literal('redacted_thinking'),
+    data: z.string(),
+  });
+
+  /**
+   * [Anthropic, 2025-11-24] Programmatic Tool Calling
+   * Indicates how a tool was invoked - direct by model, or programmatically from code execution.
+   */
+  const _ToolUseCaller_schema = z.discriminatedUnion('type', [
+    z.object({ type: z.literal('direct') }),
+    z.object({
+      type: z.enum(['code_execution_20250825', 'code_execution_20260120']),
+      tool_id: z.string(), // ref the server_tool_use (code_execution) that made this call
+    }),
+  ]);
 
   export const ToolUseBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('tool_use'),
     id: z.string(),
-    name: z.string(),
-    input: z.any(), // NOTE: formally an 'object', not any, probably relaxed for parsing
+    name: z.string(), // length: 1-64
+    /**
+     * Formally an 'object', but relaxed for robust parsing, and code-enforced.
+     * 2026-03-23: Anthropic seems to actually want a dictionary here, in case by mistake we pass strings.
+     *             We first found this while implementing the Anthropic Continuation logic (see chatGenerate.continuation.ts)
+     */
+    input: z.any(),
+    caller: _ToolUseCaller_schema.optional(),
   });
 
-  export const ToolResultBlock_schema = _CommonBlock_schema.extend({
+
+  /// Input-Only Blocks
+
+  /** ImageBlock - INPUT ONLY. Never appears in output content blocks. */
+  export const ImageBlock_I_schema = _CommonBlock_schema.extend({
+    type: z.literal('image'),
+    source: z.discriminatedUnion('type', [
+      z.object({
+        type: z.literal('base64'),
+        media_type: z.enum(['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
+        data: z.string(),
+      }),
+      z.object({
+        type: z.literal('url'),
+        url: z.string(),
+      }),
+      z.object({
+        type: z.literal('file'),
+        file_id: z.string(),
+      }),
+    ]),
+  });
+
+  /**
+   * DocumentBlock - INPUT ONLY as a top-level content block.
+   * NOTE: some Output Content Blocks include this same 'document' structure in their fields (e.g. WebFetchToolResultBlock),
+   *       but it's not per se a top-level output content block.
+   * NOTE2: in WebFetchToolResultBlock, .context is absent, and source is either Base64PDFSource or PlainTextSource only.
+   */
+  export const DocumentBlock_I_schema = _CommonBlock_schema.extend({
+    type: z.literal('document'),
+    title: z.string().nullish(), // length: 1-500
+    context: z.string().nullish(), // length: 1+ -- NOT present within WebFetchToolResultBlock.content[number].content
+    citations: z.object({ enabled: z.boolean() }).optional(),
+    source: z.discriminatedUnion('type', [
+      // Base64PDFSource
+      z.object({
+        type: z.literal('base64'),
+        media_type: z.enum(['application/pdf']),
+        data: z.string(),
+      }),
+      // PlainTextSource
+      z.object({
+        type: z.literal('text'),
+        media_type: z.enum(['text/plain']),
+        data: z.string(),
+      }),
+      // ContentBlockSource
+      z.object({
+        type: z.literal('content'),
+        content: z.union([
+          z.string(),
+          z.array(z.union([z.lazy(() => TextBlock_schema), z.lazy(() => ImageBlock_I_schema)])),
+        ]),
+      }),
+      z.object({
+        type: z.literal('url'),
+        url: z.string(),
+      }),
+      z.object({
+        type: z.literal('file'),
+        file_id: z.string(),
+      }),
+    ]),
+  });
+
+  /** SearchResultBlock - INPUT ONLY. Never appears in output content blocks. */
+  export const SearchResultBlock_I_schema = _CommonBlock_schema.extend({
+    type: z.literal('search_result'),
+    source: z.string(),
+    title: z.string(),
+    content: z.array(TextBlock_schema),
+    citations: z.object({ enabled: z.boolean() }).optional(),
+  });
+
+  /** ToolResultBlock - INPUT ONLY. Never appears in output content blocks. (That's why ServerToolUse exists) */
+  export const ToolResultBlock_I_schema = _CommonBlock_schema.extend({
     type: z.literal('tool_result'),
     tool_use_id: z.string(),
-    // NOTE: could be a string too, but we force it to be an array for a better implementation
-    content: z.array(z.union([TextBlock_schema, ImageBlock_schema])).optional(),
+    content: z.union([
+      z.string(),
+      z.array(z.union([TextBlock_schema, ImageBlock_I_schema, SearchResultBlock_I_schema, DocumentBlock_I_schema])),
+    ]).optional(),
     is_error: z.boolean().optional(), // default: false
   });
 
-  export function TextBlock(text: string): z.infer<typeof TextBlock_schema> {
+
+  /// Server Tool Result Blocks (used in both input and output)
+
+  /**
+   * ServerToolUseBlock - Server-side tool invocation
+   * Note: Beta headers may be required for some tools - check AnthropicBetaParam for current requirements
+   */
+  export const ServerToolUseBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('server_tool_use'),
+    id: z.string(), // .regex(/^srvtoolu_[a-zA-Z0-9_]+$/),
+    name: z.union([
+      z.enum([
+        'web_search',
+        'web_fetch',
+        'code_execution',
+        'bash_code_execution', // sub-tool of 'code_execution'
+        'text_editor_code_execution', // sub-tool of 'code_execution'
+        'tool_search_tool_regex', // Tool Search Tool - regex variant
+        'tool_search_tool_bm25', // Tool Search Tool - BM25 (natural text) variant
+      ]),
+      z.string(), // forward-compatibility parsing
+    ]),
+    input: z.union([
+      z.object({ query: z.string() }), // web_search
+      z.object({ url: z.string() }), // web_fetch
+      z.object({ code: z.string() }), // code_execution
+      z.object({ command: z.string() }), // bash_code_execution
+      z.object({ command: z.string(), path: z.string() }), // text_editor_code_execution (+ file_text, old_str, new_str, view_range, etc.)
+      z.object({ pattern: z.string() }), // tool_search_tool_regex
+      z.object({ query: z.string() }), // tool_search_tool_bm25
+    ]).or(z.any()), // see the comment on ToolUseBlock_schema.input
+    caller: _ToolUseCaller_schema.optional(),
+  });
+
+  export const WebSearchToolResultBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('web_search_tool_result'),
+    tool_use_id: z.string(),
+    content: z.union([
+      z.array(z.object({
+        type: z.literal('web_search_result'),
+        encrypted_content: z.string(),
+        title: z.string(),
+        url: z.string(),
+        page_age: z.string().nullish(),
+      })),
+      z.object({
+        type: z.literal('web_search_tool_result_error'),
+        error_code: z.union([
+          z.enum(['invalid_tool_input', 'unavailable', 'max_uses_exceeded', 'too_many_requests', 'query_too_long', 'request_too_large']),
+          z.string(), // forward-compatibility
+        ]),
+      }),
+    ]),
+    caller: _ToolUseCaller_schema.optional(),
+  });
+
+  export const WebFetchToolResultBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('web_fetch_tool_result'),
+    tool_use_id: z.string(),
+    content: z.union([
+      z.object({
+        type: z.literal('web_fetch_result'),
+        url: z.string(),
+        retrieved_at: z.string().nullish(),
+        content: DocumentBlock_I_schema,
+      }),
+      z.object({
+        type: z.literal('web_fetch_tool_result_error'),
+        error_code: z.union([
+          z.enum(['invalid_tool_input', 'url_too_long', 'url_not_allowed', 'url_not_accessible', 'unsupported_content_type', 'too_many_requests', 'max_uses_exceeded', 'unavailable']),
+          z.string(), // forward-compatibility
+        ]),
+      }),
+    ]),
+    caller: _ToolUseCaller_schema.optional(),
+  });
+
+  const _CodeExecutionOutputBlock_schema = z.object({
+    type: z.literal('code_execution_output'),
+    file_id: z.string(),
+  });
+
+  export const CodeExecutionToolResultBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('code_execution_tool_result'),
+    tool_use_id: z.string(),
+    content: z.union([
+      z.object({
+        type: z.literal('code_execution_result'),
+        stdout: z.string(),
+        stderr: z.string(),
+        return_code: z.number(),
+        content: z.array(_CodeExecutionOutputBlock_schema),
+        // abort_reason: z.string().nullish(), // seen as null in responses, but undocumented - revisit if non-null values appear
+      }),
+      // Encrypted variant - used when code execution is combined with programmatic tool calling + web_search
+      z.object({
+        type: z.literal('encrypted_code_execution_result'),
+        encrypted_stdout: z.string(),
+        stderr: z.string(),
+        return_code: z.number(),
+        content: z.array(_CodeExecutionOutputBlock_schema),
+        // abort_reason: z.string().nullish(), // seen as null in responses, but undocumented - revisit if non-null values appear
+      }),
+      z.object({
+        type: z.literal('code_execution_tool_result_error'),
+        error_code: z.string(),
+      }),
+    ]),
+  });
+
+  const _BashCodeExecutionOutputBlock_schema = z.object({
+    type: z.literal('bash_code_execution_output'),
+    file_id: z.string(),
+  });
+
+  export const BashCodeExecutionToolResultBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('bash_code_execution_tool_result'),
+    tool_use_id: z.string(),
+    content: z.union([
+      z.object({
+        type: z.literal('bash_code_execution_result'),
+        stdout: z.string(),
+        stderr: z.string(),
+        return_code: z.number(),
+        content: z.array(_BashCodeExecutionOutputBlock_schema),
+      }),
+      z.object({
+        type: z.literal('bash_code_execution_tool_result_error'),
+        error_code: z.string(),
+      }),
+    ]),
+  });
+
+  export const TextEditorCodeExecutionToolResultBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('text_editor_code_execution_tool_result'),
+    tool_use_id: z.string(),
+    content: z.union([
+      z.object({
+        type: z.literal('text_editor_code_execution_view_result'),
+        file_type: z.enum(['text', 'image', 'pdf']),
+        content: z.string(),
+        start_line: z.number().nullish(),
+        num_lines: z.number().nullish(),
+        total_lines: z.number().nullish(),
+      }),
+      z.object({
+        type: z.literal('text_editor_code_execution_create_result'),
+        is_file_update: z.boolean(),
+      }),
+      z.object({
+        type: z.literal('text_editor_code_execution_str_replace_result'),
+        old_start: z.number().nullish(),
+        old_lines: z.number().nullish(),
+        new_start: z.number().nullish(),
+        new_lines: z.number().nullish(),
+        lines: z.array(z.string()).nullish(),
+      }),
+      z.object({
+        type: z.literal('text_editor_code_execution_tool_result_error'),
+        error_code: z.string(),
+        error_message: z.string().nullish(),
+      }),
+    ]),
+  });
+
+  export const MCPToolUseBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('mcp_tool_use'),
+    id: z.string(),
+    name: z.string(),
+    input: z.any(),
+    server_name: z.string(),
+  });
+
+  export const MCPToolResultBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('mcp_tool_result'),
+    tool_use_id: z.string(),
+    content: z.union([z.string(), z.array(TextBlock_schema)]).optional(),
+    is_error: z.boolean().optional(),
+  });
+
+  export const ContainerUploadBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('container_upload'),
+    file_id: z.string(),
+  });
+
+  /** [Anthropic, 2025-11-24] Tool Search Tool - Result of tool search operation. */
+  export const ToolSearchToolResultBlock_schema = _CommonBlock_schema.extend({
+    type: z.literal('tool_search_tool_result'),
+    tool_use_id: z.string(),
+    content: z.union([
+      // success
+      z.object({
+        type: z.literal('tool_search_tool_search_result'),
+        tool_references: z.array(z.object({
+          type: z.literal('tool_reference'),
+          tool_name: z.string(),
+        })),
+      }),
+      // error
+      z.object({
+        type: z.literal('tool_search_tool_result_error'),
+        error_code: z.union([z.enum(['invalid_tool_input', 'unavailable', 'too_many_requests', 'execution_time_exceeded']), z.string()]),
+        error_message: z.string().nullish(),
+      }),
+    ]),
+  });
+
+
+  /// Block Constructors
+
+  export function TextBlock(text: string, debugSender: string): z.infer<typeof TextBlock_schema> {
+    // HOTFIX - is we are here, issues have already happened, and we can't let this stay
+    if (hotFixAntShipNoEmptyTextBlocks && !text) {
+      console.log(`[Anthropic] Empty text block from: ${debugSender}. Forcing '\\n' to unbreak.`);
+      text = '\n';
+    }
     return { type: 'text', text };
   }
 
-  export function ImageBlock(mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp', base64: string): z.infer<typeof ImageBlock_schema> {
+  export function ImageBlock(mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp', base64: string): z.infer<typeof ImageBlock_I_schema> {
     return { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };
   }
 
@@ -70,8 +487,16 @@ export namespace AnthropicWire_Blocks {
     return { type: 'tool_use', id, name, input: !input ? {} : JSON.parse(input) /* 2024-11-03: Anthropic requires an object in 'input' */ };
   }
 
-  export function ToolResultBlock(tool_use_id: string, content: z.infer<typeof ToolResultBlock_schema>['content'], is_error?: boolean): z.infer<typeof ToolResultBlock_schema> {
-    return { type: 'tool_result', tool_use_id, content: content?.length ? content : undefined, is_error };
+  export function ToolResultBlock(tool_use_id: string, content: z.infer<typeof ToolResultBlock_I_schema>['content'], is_error?: boolean): z.infer<typeof ToolResultBlock_I_schema> {
+    return { type: 'tool_result', tool_use_id, content, is_error };
+  }
+
+  export function ThinkingBlock(thinking: string, signature: string): z.infer<typeof ThinkingBlock_schema> {
+    return { type: 'thinking', thinking, signature };
+  }
+
+  export function RedactedThinkingBlock(data: string): z.infer<typeof RedactedThinkingBlock_schema> {
+    return { type: 'redacted_thinking', data };
   }
 
   export function blockSetCacheControl(block: z.infer<typeof _CommonBlock_schema>, cacheControl: z.infer<typeof _CacheControl_schema>['type']): void {
@@ -81,23 +506,107 @@ export namespace AnthropicWire_Blocks {
 }
 
 export namespace AnthropicWire_Messages {
-
+  /**
+   * Input content blocks are a superset of output blocks.
+   * Input content blocks as of 2025-10-17:
+   * - Text, Image, Document, Search result
+   * - Thinking, Redacted thinking
+   * - Tool use, Tool result
+   * - Server tool use, Web search tool result, Web fetch tool result
+   * - Code execution tool result, Bash code execution tool result, Text editor code execution tool result
+   * - MCP tool use, MCP tool result
+   * - Container upload
+   */
   const _ContentBlockInput_schema = z.discriminatedUnion('type', [
+    // Common Blocks (both input and output)
     AnthropicWire_Blocks.TextBlock_schema,
-    AnthropicWire_Blocks.ImageBlock_schema,
+    AnthropicWire_Blocks.ThinkingBlock_schema,
+    AnthropicWire_Blocks.RedactedThinkingBlock_schema,
     AnthropicWire_Blocks.ToolUseBlock_schema,
-    AnthropicWire_Blocks.ToolResultBlock_schema,
+    // Input-Only Blocks
+    AnthropicWire_Blocks.ImageBlock_I_schema,
+    AnthropicWire_Blocks.DocumentBlock_I_schema,
+    AnthropicWire_Blocks.SearchResultBlock_I_schema,
+    AnthropicWire_Blocks.ToolResultBlock_I_schema,
+    // Server Tool Blocks (originates from output -> copied to input)
+    AnthropicWire_Blocks.ServerToolUseBlock_schema,
+    AnthropicWire_Blocks.WebSearchToolResultBlock_schema,
+    AnthropicWire_Blocks.WebFetchToolResultBlock_schema,
+    AnthropicWire_Blocks.CodeExecutionToolResultBlock_schema,
+    AnthropicWire_Blocks.BashCodeExecutionToolResultBlock_schema,
+    AnthropicWire_Blocks.TextEditorCodeExecutionToolResultBlock_schema,
+    AnthropicWire_Blocks.MCPToolUseBlock_schema,
+    AnthropicWire_Blocks.MCPToolResultBlock_schema,
+    AnthropicWire_Blocks.ContainerUploadBlock_schema,
+    AnthropicWire_Blocks.ToolSearchToolResultBlock_schema,
   ]);
 
   export const MessageInput_schema = z.object({
     role: z.enum(['user', 'assistant']),
-    content: z.array(_ContentBlockInput_schema), // NOTE: could be a string, but we force it to be an array
+    content: z.array(_ContentBlockInput_schema), // NOTE: could be a string (see below), but we force it to be an array
+    // content: z.union([z.string(), z.array(_ContentBlockInput_schema)]),
   });
 
+  /**
+   * Output content blocks are generated by the model.
+   * Output content blocks as of 2025-10-17:
+   * - Text
+   * - Thinking, Redacted thinking
+   * - Tool use
+   * - Server tool use, Web search tool result, Web fetch tool result
+   * - Code execution tool result, Bash code execution tool result, Text editor code execution tool result
+   * - MCP tool use, MCP tool result
+   * - Container upload
+   * - Tool reference
+   */
   export const ContentBlockOutput_schema = z.discriminatedUnion('type', [
+    // Common Blocks (both input and output)
     AnthropicWire_Blocks.TextBlock_schema,
+    AnthropicWire_Blocks.ThinkingBlock_schema,
+    AnthropicWire_Blocks.RedactedThinkingBlock_schema,
     AnthropicWire_Blocks.ToolUseBlock_schema,
+    // Server Tool Blocks (originate here)
+    AnthropicWire_Blocks.ServerToolUseBlock_schema,
+    AnthropicWire_Blocks.WebSearchToolResultBlock_schema,
+    AnthropicWire_Blocks.WebFetchToolResultBlock_schema,
+    AnthropicWire_Blocks.CodeExecutionToolResultBlock_schema,
+    AnthropicWire_Blocks.BashCodeExecutionToolResultBlock_schema,
+    AnthropicWire_Blocks.TextEditorCodeExecutionToolResultBlock_schema,
+    AnthropicWire_Blocks.MCPToolUseBlock_schema,
+    AnthropicWire_Blocks.MCPToolResultBlock_schema,
+    AnthropicWire_Blocks.ContainerUploadBlock_schema,
+    AnthropicWire_Blocks.ToolSearchToolResultBlock_schema, // [Anthropic, 2025-11-24] Tool Search Tool
   ]);
+}
+
+export namespace AnthropicWire_Skills {
+
+  // Container parameters for request
+  export const ContainerParams_schema = z.object({
+    /**
+     * Optional. Container ID to reuse existing container
+     */
+    id: z.string().nullish(),
+    skills: z.array(z.object({
+      skill_id: z.string(), // max 64 chars - not enforced here
+      type: z.enum(['anthropic', 'custom']),
+      version: z.literal('latest').or(z.string()).optional(),
+    })).nullish(), // max 8 skills - we don't enforce this here
+  });
+
+  // Container information in response
+  export const Container_schema = z.object({
+    /** Container identifier */
+    id: z.string(),
+    /** ISO 8601 timestamp when the container will expire */
+    expires_at: z.string(),
+    /** Skills that were loaded in the container */
+    skills: z.array(z.object({
+      skill_id: z.string(),
+      type: z.enum(['anthropic', 'custom']),
+      version: z.string(), // loaded version
+    })).nullish(),
+  });
 
 }
 
@@ -108,7 +617,19 @@ export namespace AnthropicWire_Tools {
     name: z.string(),
 
     /** 2024-10-22: cache-control can be set on the Tools block as well. We could make use of this instead of the System Instruction blocks for prompts with longer tools. */
-    cache_control: AnthropicWire_Blocks._CacheControl_schema.optional(),
+    cache_control: AnthropicWire_Blocks._CacheControl_schema.nullish(),
+
+    /** When true, tool is not loaded into context initially - discovered via tool_search when needed. */
+    defer_loading: z.boolean().optional(),
+
+    /** Specifies which contexts can invoke this tool. */
+    allowed_callers: z.array(z.enum([
+      'direct', // (default) direct by model
+      'code_execution_20250825', 'code_execution_20260120', // allow programmatically from code execution
+    ])).optional(),
+
+    /** Structured Outputs - guarantees tool names and inputs match schema exactly. */
+    strict: z.boolean().optional(),
   });
 
   const _CustomToolDefinition_schema = _ToolDefinitionBase_schema.extend({
@@ -117,7 +638,7 @@ export namespace AnthropicWire_Tools {
      * Note: we force the value to be 'custom' although the API would allow for undefined or null as well. For ease
      *       of development, we force the value to be 'custom' to use a discriminating union.
      */
-    type: z.literal('custom'),  // .nullable().optional() // see note above
+    type: z.literal('custom'),  // ..nullish() // see note above
 
     /**
      * Description of what this tool does. Tool descriptions should be as detailed as possible.
@@ -131,38 +652,154 @@ export namespace AnthropicWire_Tools {
      *
      * This defines the shape of the `input` that your tool accepts and that the model will provide.
      */
-    input_schema: z.object({
+    input_schema: z.looseObject({
       type: z.literal('object'),
-      properties: z.record(z.unknown()).nullable(),
-      required: z.array(z.string()).optional(),
-    }).and(z.record(z.unknown())),
+      properties: z.record(z.string(), z.any()).nullish(), // FC-DEF params schema - WAS: z.json().nullable(),
+      required: z.array(z.string()).optional(), // 2025-02-24: seems to be removed; we may still have this, but it may also be within the 'properties' object
+    }),
+
+    /** Eager Input Streaming - tool inputs streamed earlier during generation for lower latency. */
+    eager_input_streaming: z.boolean().optional(),
+
+    /** Provide sample tool calls */
+    input_examples: z.array(z.record(z.string(), z.any())).optional(),
   });
 
-  const _ComputerUseTool_20241022_schema = _ToolDefinitionBase_schema.extend({
-    type: z.enum(['computer_20241022']),
-    name: z.literal('computer'),
 
-    // tool configuration
-    display_height_px: z.number().int(),
-    display_width_px: z.number().int(),
-    display_number: z.number().int().nullable().optional(),
-  });
+  // Latest Tool Versions (sorted alphabetically by tool name)
+  // Deprecated versions (removed):
+  // - bash_20241022 -> bash_20250124
+  // - code_execution_20250522 (legacy, python only) -> code_execution_20250825 (bash and many programming languages)
+  // - computer_20241022 -> computer_20250124
+  // - text_editor_20241022, text_editor_20250124, text_editor_20250429 -> text_editor_20250728
 
-  const _BashTool_20241022_schema = _ToolDefinitionBase_schema.extend({
-    type: z.enum(['bash_20241022']),
+  /** BETA (standalone): requires "computer-use-*" beta header. GA as sub-tool of code_execution. */
+  const _BashTool_20250124_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('bash_20250124'),
     name: z.literal('bash'),
   });
 
-  const _TextEditor_20241022_schema = _ToolDefinitionBase_schema.extend({
-    type: z.enum(['text_editor_20241022']),
-    name: z.literal('str_replace_editor'),
+  // -- Code Execution Tools --
+
+  /**
+   * Supports Bash commands, file operations, and multiple languages.
+   * When this tool is provided, Claude automatically gains access to two sub-tools:
+   * - 'bash_code_execution': Run shell commands
+   * - 'text_editor_code_execution': View, create, and edit files, including writing code
+   */
+  const _CodeExecutionTool_20250825_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('code_execution_20250825'),
+    name: z.literal('code_execution'),
   });
 
+  /**
+   * [Anthropic, Jan 2026 BETA] Code execution REPL-based code execution with persistent state across calls (daemon mode + gVisor checkpoint).
+   * BETA: As of 2026-03-21, this is not the default - all models still support code_execution_20250825
+   */
+  const _CodeExecutionTool_20260120_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('code_execution_20260120'),
+    name: z.literal('code_execution'),
+  });
+
+  // -- Computer Use Tools (BETA: requires computer-use-* beta header) --
+
+  /** BETA: requires "computer-use-2025-01-24" beta header. */
+  const _ComputerUseTool_20250124_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('computer_20250124'),
+    name: z.literal('computer'),
+    display_height_px: z.number(),
+    display_width_px: z.number(),
+    display_number: z.number().nullish(),
+  });
+
+  /** BETA: requires "computer-use-2025-11-24" beta header. Adds enable_zoom. */
+  const _ComputerUseTool_20251124_schema = _ComputerUseTool_20250124_schema.extend({
+    type: z.literal('computer_20251124'),
+    enable_zoom: z.boolean().optional(),
+  });
+
+  const _MemoryTool_20250818_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('memory_20250818'),
+    name: z.literal('memory'),
+  });
+
+  /** BETA (standalone): requires "computer-use-*" beta header. GA as sub-tool of code_execution. */
+  const _TextEditor_20250728_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('text_editor_20250728'),
+    name: z.literal('str_replace_based_edit_tool'),
+    max_characters: z.number().nullish(),
+  });
+
+  /** [Anthropic, 2025-11-24] Tool Search Tool - constructs regex patterns (e.g., "weather", "get_.*_data") to search tool names/descriptions. */
+  const _ToolSearchToolRegex_20251119_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('tool_search_tool_regex_20251119'),
+    name: z.literal('tool_search_tool_regex'),
+  });
+
+  /** [Anthropic, 2025-11-24] Tool Search Tool - BM25 variant (natural language search) - uses natural language queries to search for tools. */
+  const _ToolSearchToolBM25_20251119_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('tool_search_tool_bm25_20251119'),
+    name: z.literal('tool_search_tool_bm25'),
+  });
+
+  // -- Web Fetch Tools --
+
+  const _WebFetchTool_20250910_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('web_fetch_20250910'),
+    name: z.literal('web_fetch'),
+    allowed_domains: z.array(z.string()).nullish(),
+    blocked_domains: z.array(z.string()).nullish(),
+    citations: z.object({ enabled: z.boolean() }).nullish(),
+    max_content_tokens: z.number().nullish(),
+    max_uses: z.number().nullish(),
+  });
+
+  /** [Anthropic, Feb 2026 GA] */
+  const _WebFetchTool_20260209_schema = _WebFetchTool_20250910_schema.extend({
+    type: z.literal('web_fetch_20260209'),
+  });
+
+  /** [Anthropic, Mar 2026] Adds `use_cache` - only in SDK types, not yet in public docs. */
+  const _WebFetchTool_20260309_schema = _WebFetchTool_20260209_schema.extend({
+    type: z.literal('web_fetch_20260309'),
+    use_cache: z.boolean().optional(), // default true; set false to bypass cache and fetch fresh content
+  });
+
+  // -- Web Search Tools --
+
+  const _WebSearchTool_20250305_schema = _ToolDefinitionBase_schema.extend({
+    type: z.literal('web_search_20250305'),
+    name: z.literal('web_search'),
+    allowed_domains: z.array(z.string()).nullish(),
+    blocked_domains: z.array(z.string()).nullish(),
+    max_uses: z.number().nullish(),
+    user_location: z.any().nullish(), // UserLocation schema
+  });
+
+  /** [Anthropic, Feb 2026 GA] Web search v2 - latest. */
+  const _WebSearchTool_20260209_schema = _WebSearchTool_20250305_schema.extend({
+    type: z.literal('web_search_20260209'),
+  });
+
+
   export const ToolDefinition_schema = z.discriminatedUnion('type', [
+    // Client-side tools
     _CustomToolDefinition_schema,
-    _ComputerUseTool_20241022_schema,
-    _BashTool_20241022_schema,
-    _TextEditor_20241022_schema,
+    // Hosted tool definitions & Hosted Tools
+    _BashTool_20250124_schema,
+    _CodeExecutionTool_20250825_schema,
+    _CodeExecutionTool_20260120_schema,
+    _ComputerUseTool_20250124_schema, // BETA
+    _ComputerUseTool_20251124_schema, // BETA
+    _MemoryTool_20250818_schema,
+    _TextEditor_20250728_schema,
+    _ToolSearchToolBM25_20251119_schema, // [Anthropic, 2025-11-24] Tool Search Tool - BM25 variant
+    _ToolSearchToolRegex_20251119_schema, // [Anthropic, 2025-11-24] Tool Search Tool - Regex variant
+    _WebFetchTool_20250910_schema,
+    _WebFetchTool_20260209_schema,
+    _WebFetchTool_20260309_schema,
+    _WebSearchTool_20250305_schema,
+    _WebSearchTool_20260209_schema,
   ]);
 
 }
@@ -172,6 +809,38 @@ export namespace AnthropicWire_Tools {
 // Messages > Create
 //
 export namespace AnthropicWire_API_Message_Create {
+
+  /// Shared Schemas
+
+  /**
+   * Stop reason values that indicate why Claude stopped generating.
+   * - 'end_turn': the model reached a natural stopping point
+   * - 'max_tokens': exceeded the requested max_tokens limit
+   * - 'stop_sequence': one of the custom stop_sequences was generated
+   * - 'tool_use': the model wants to use a tool
+   * - 'pause_turn': paused for server tools (e.g. web search)
+   * - 'refusal': Claude refused due to safety concerns
+   * - 'model_context_window_exceeded': hit the model's context window limit
+   */
+  const StopReason_schema = z.enum([
+    'end_turn',
+    'max_tokens',
+    'stop_sequence',
+    'tool_use',
+    'pause_turn',
+    'refusal',
+    'model_context_window_exceeded',
+  ]);
+
+  /**
+   * Structured stop details, paired with stop_reason. Currently only populated when stop_reason === 'refusal'.
+   * Both `type` and `category` are loosely typed for forward-compat - parser warns on unknown `type`.
+   */
+  const StopDetails_schema = z.object({
+    type: z.enum(['refusal']).or(z.string()),
+    category: z.enum(['cyber', 'bio']).or(z.string()).nullish(),
+    explanation: z.string().nullish(),
+  });
 
   /// Request
 
@@ -189,9 +858,37 @@ export namespace AnthropicWire_API_Message_Create {
     model: z.string(),
 
     /**
-     * If you want to include a system prompt, you can use the top-level system parameter — there is no "system" role for input messages in the Messages API.
+     * Container configuration for code execution tools.
+     * Can be a container ID string to reuse, or a ContainerParams object to configure.
      */
-    system: z.array(AnthropicWire_Blocks.TextBlock_schema).optional(),
+    container: z.union([
+      z.string(),
+      AnthropicWire_Skills.ContainerParams_schema,
+    ]).nullish(),
+
+    /**
+     * Context management configuration.
+     * Controls how Claude manages context across requests (e.g., clearing tool results).
+     */
+    context_management: z.object({
+      edits: z.array(z.any()).optional(), // ClearToolUses20250919 and future edit types
+    }).nullish(),
+
+    mcp_servers: z.array(z.object({
+      type: z.literal('url'),
+      url: z.string(),
+      name: z.string(),
+      authorization_token: z.string().nullish(),
+      tool_configuration: z.any().nullish(),
+    })).optional(),
+
+    service_tier: z.enum(['auto', 'standard_only']).optional(),
+
+    /**
+     * If you want to include a system prompt, you can use the top-level system parameter - there is no "system" role for input messages in the Messages API.
+     */
+    system: z.array(AnthropicWire_Blocks.TextBlock_schema).optional(), // NOTE: we force ourselves to always write the array representation
+    // system: z.union([z.string(), z.array(AnthropicWire_Blocks.TextBlock_schema)]).optional(),
 
     /**
      * (required) Input messages. - operates on alternating user and assistant conversational turns - the first message must always use the user role
@@ -224,6 +921,7 @@ export namespace AnthropicWire_API_Message_Create {
       z.object({ type: z.literal('auto'), disable_parallel_tool_use: z.boolean().optional() }),
       z.object({ type: z.literal('any'), disable_parallel_tool_use: z.boolean().optional() }),
       z.object({ type: z.literal('tool'), name: z.string(), disable_parallel_tool_use: z.boolean().optional() }),
+      z.object({ type: z.literal('none') }),
     ]).optional(),
 
     /**
@@ -232,11 +930,17 @@ export namespace AnthropicWire_API_Message_Create {
     tools: z.array(AnthropicWire_Tools.ToolDefinition_schema).optional(),
 
     /**
+     * [Anthropic, Feb 2026] Top-level cache control for automatic caching.
+     * When set, automatically caches the last cacheable block in the request.
+     */
+    cache_control: AnthropicWire_Blocks._CacheControl_schema.optional(),
+
+    /**
      * (optional) Metadata to include with the request.
      * user_id: This should be a uuid, hash value, or other opaque identifier.
      */
     metadata: z.object({
-      user_id: z.string().optional(),
+      user_id: z.string().nullish(),
     }).optional(),
 
     /**
@@ -249,6 +953,39 @@ export namespace AnthropicWire_API_Message_Create {
      */
     stream: z.boolean().optional(),
 
+    /**
+     * When enabled, responses include thinking content blocks showing Claude's thinking process before the final answer.
+     *
+     * - display: 'omitted': empty thinking field, preserves signature for multi-turn, faster streaming
+     */
+    thinking: z.union([
+      // [Anthropic, 4.6+] Adaptive thinking - Claude decides when and how much to think
+      z.object({
+        type: z.literal('adaptive'),
+        display: z.enum(['summarized' /* default */, 'omitted']).optional(),
+      }),
+      // Requires a minimum budget of 1,024 tokens and counts towards your max_tokens limit.
+      z.object({
+        type: z.literal('enabled'),
+        budget_tokens: z.number(),
+        display: z.enum(['summarized' /* default */, 'omitted']).optional(),
+      }),
+      // having this for completeness, but seems like it's not needed / can be omitted
+      z.object({ type: z.literal('disabled') }),
+    ]).optional(),
+
+    /**
+     * Output configuration for effort-based token control and structured outputs.
+     * - effort: [Anthropic, effort-2025-11-24] Allows trading off response thoroughness for efficiency.
+     * - format: [Anthropic, 2026-01-29 GA] JSON schema constraint on output. Replaces deprecated top-level `output_format`.
+     */
+    output_config: z.object({
+      effort: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).optional(), // 'xhigh' added for Opus 4.7 (2026-04-16)
+      format: z.object({
+        type: z.literal('json_schema'),
+        schema: z.any(), // JSON Schema object - validated by Anthropic
+      }).optional(),
+    }).optional(),
 
     /**
      * Defaults to 1.0. Ranges from 0.0 to 1.0. Use temperature closer to 0.0 for analytical / multiple choice, and closer to 1.0 for creative and generative tasks.
@@ -266,6 +1003,20 @@ export namespace AnthropicWire_API_Message_Create {
      * Recommended for advanced use cases only. You usually only need to use `temperature`.
      * */
     top_p: z.number().optional(),
+
+    /**
+     * [Anthropic, fast-mode-2026-02-01] Accelerated inference mode.
+     * Preview/waitlist. Only supported on Claude Opus 4.6.
+     */
+    speed: z.enum(['fast']).optional(),
+
+    /**
+     * [Anthropic, 2026-02-01] Geographic region for model inference.
+     * - "global": default, inference may run in any available geography
+     * - "us": US-only inference at 1.1x pricing
+     * Only supported on Claude Opus 4.6 and subsequent models; older models return 400.
+     */
+    inference_geo: z.enum(['global', 'us']).or(z.string()).nullish(),
   });
 
   /// Response
@@ -283,32 +1034,68 @@ export namespace AnthropicWire_API_Message_Create {
     model: z.string(),
 
     /**
-     * Content generated by the model.
+     * OUTPUT Content generated by the model.
      * This is an array of content blocks, each of which has a type that determines its shape. Currently, the only type in responses is "text".
      */
     content: z.array(AnthropicWire_Messages.ContentBlockOutput_schema),
 
     /**
-     * This may be one the following values:
-     *
-     * "end_turn": the model reached a natural stopping point
-     * "max_tokens": we exceeded the requested max_tokens or the model's maximum
-     * "stop_sequence": one of your provided custom stop_sequences was generated
-     * Note that these values are different than those in /v1/complete, where end_turn and stop_sequence were not differentiated.
-     *
+     * The reason why Claude stopped generating.
      * In non-streaming mode this value is always non-null. In streaming mode, it is null in the message_start event and non-null otherwise.
      */
-    stop_reason: z.enum(['end_turn', 'max_tokens', 'stop_sequence', 'tool_use']).nullable(),
+    stop_reason: StopReason_schema.nullable(),
     // Which custom stop sequence was generated, if any.
     stop_sequence: z.string().nullable(),
 
-    // Billing and rate-limit usage.
+    /**
+     * Structured stop details. Present when stop_reason === 'refusal' (carries category + explanation).
+     * In streaming, stop_details is null at message_start and appears on message_delta alongside stop_reason.
+     */
+    stop_details: StopDetails_schema.nullish(),
+
+    /**
+     * Billing and rate-limit usage.
+     * Token counts represent the underlying cost to Anthropic's systems.
+     */
     usage: z.object({
       input_tokens: z.number(),
-      cache_creation_input_tokens: z.number().optional(),
-      cache_read_input_tokens: z.number().optional(),
       output_tokens: z.number(),
+      // [Anthropic, 2026-05-28] reasoning token breakdown - thinking_tokens is a subset of output_tokens (already counted in it)
+      output_tokens_details: z.object({
+        thinking_tokens: z.number(),
+      }).nullish(),
+      cache_creation_input_tokens: z.number().nullish(),
+      cache_read_input_tokens: z.number().nullish(),
+      cache_creation: z.object({
+        ephemeral_1h_input_tokens: z.number(),
+        ephemeral_5m_input_tokens: z.number(),
+      }).nullish(),
+      server_tool_use: z.object({
+        web_fetch_requests: z.number(),
+        web_search_requests: z.number(),
+        tool_search_requests: z.number().optional(), // [Anthropic, 2025-11-24] Tool Search Tool usage
+      }).nullish(),
+      service_tier: z.enum(['standard', 'priority', 'batch']).nullish(),
+      inference_geo: z.string().nullish(),
     }),
+
+    /**
+     * Context management response.
+     * Information about context management strategies applied during the request.
+     */
+    context_management: z.object({
+      applied_edits: z.array(z.object({
+        type: z.string(), // e.g., 'clear_tool_uses_20250919'
+        cleared_tool_uses: z.number().optional(),
+        cleared_input_tokens: z.number().optional(),
+      })).optional(),
+    }).nullish(),
+
+    /**
+     * Container information.
+     * Non-null if a container tool (e.g., code execution) was used.
+     */
+    container: AnthropicWire_Skills.Container_schema.nullish(),
   });
 
   /// Streaming Response
@@ -326,11 +1113,34 @@ export namespace AnthropicWire_API_Message_Create {
     type: z.literal('message_delta'),
     // MessageDelta
     delta: z.object({
-      stop_reason: z.enum(['end_turn', 'max_tokens', 'stop_sequence', 'tool_use']).nullable(),
+      stop_reason: StopReason_schema.nullable(),
       stop_sequence: z.string().nullable(),
+      /**
+       * Structured stop details - present alongside stop_reason === 'refusal' (category + explanation).
+       */
+      stop_details: StopDetails_schema.nullish(),
+      /**
+       * Container state updates - present when Skills/code_execution tools are used.
+       * Provides container id/expiry that may differ from message_start if the container was created mid-stream.
+       */
+      container: AnthropicWire_Skills.Container_schema.nullish(),
     }),
-    // MessageDeltaUsage
-    usage: z.object({ output_tokens: z.number() }),
+    // MessageDeltaUsage - extended to include cache and server tool metrics
+    usage: z.object({
+      cache_creation_input_tokens: z.number().nullish(),
+      cache_read_input_tokens: z.number().nullish(),
+      input_tokens: z.number().nullish(),
+      output_tokens: z.number(),
+      // [Anthropic, 2026-05-28] reasoning token breakdown - cumulative thinking_tokens (subset of output_tokens)
+      output_tokens_details: z.object({
+        thinking_tokens: z.number(),
+      }).nullish(),
+      server_tool_use: z.object({
+        web_fetch_requests: z.number().optional(),
+        web_search_requests: z.number().optional(),
+        tool_search_requests: z.number().optional(),
+      }).nullish(),
+    }),
   });
 
   export const event_ContentBlockStart_schema = z.object({
@@ -355,6 +1165,19 @@ export namespace AnthropicWire_API_Message_Create {
       z.object({
         type: z.literal('input_json_delta'),
         partial_json: z.string(),
+      }),
+      z.object({
+        type: z.literal('thinking_delta'),
+        thinking: z.string(),
+      }),
+      z.object({
+        type: z.literal('signature_delta'),
+        signature: z.string(),
+      }),
+      z.object({
+        // created by the hosted web_search tool, at least, in which case the citation is: Extract<typeof _TextBlockCitations_schema, { type: 'web_search_result_location' }>
+        type: z.literal('citations_delta'),
+        citation: AnthropicWire_Blocks._TextBlockCitations_schema,
       }),
     ]),
   });

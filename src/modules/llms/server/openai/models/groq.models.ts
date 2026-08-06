@@ -1,36 +1,139 @@
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
+import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { fromManualMapping, ManualMappings } from './models.data';
-import { wireGroqModelsListOutputSchema } from '../groq.wiretypes';
+import { fromManualMapping, llmDevCheckModels_DEV, llmsDefineManualMappings } from '../../models.mappings';
+
+// --- Groq Model ID inference (auto-derived from _knownGroqModels) ---
+export type LlmsGroqModelId = typeof _knownGroqModels[number]['idPrefix'];
+import { wireGroqModelsListOutputSchema } from '../wiretypes/groq.wiretypes';
+
+
+// dev options
+const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduce noise
 
 
 /**
  * Groq models.
  * - models list: https://console.groq.com/docs/models
  * - pricing: https://groq.com/pricing/
+ * - updated: 2026-04-16
  */
-const _knownGroqModels: ManualMappings = [
+const _knownGroqModels = llmsDefineManualMappings([
+
+  // Preview Models
   {
     isPreview: true,
-    idPrefix: 'deepseek-r1-distill-llama-70b',
-    label: 'DeepSeek R1 Distill Llama 70B (Preview)',
-    description: 'DeepSeek R1 Distill Llama 70B with a context window of 131,072 tokens. Preview model.',
+    idPrefix: 'meta-llama/llama-4-scout-17b-16e-instruct',
+    label: 'Llama 4 Scout · 17B × 16E (Preview)',
+    pubDate: '20250405',
+    description: 'Llama 4 Scout 17B MoE with 16 experts (109B total params), native multimodal with vision support. 131K context, 8K max output. ~750 t/s on Groq.',
     contextWindow: 131072,
+    maxCompletionTokens: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.11, output: 0.34 },
   },
   {
-    idPrefix: 'gemma2-9b-it',
-    label: 'Gemma 2 · 9B Instruct',
-    description: 'Gemma 2 9B developed by Google with a context window of 8,192 tokens. Production model.',
-    contextWindow: 8192,
+    isPreview: true,
+    idPrefix: 'qwen/qwen3-32b',
+    label: 'Qwen 3 · 32B (Preview)',
+    pubDate: '20250428',
+    description: 'Qwen3 32B by Alibaba Cloud. Supports thinking/non-thinking modes, 100+ languages. 131K context, 40K max output. ~400 t/s on Groq.',
+    contextWindow: 131072,
+    maxCompletionTokens: 40960,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.20, output: 0.20 },
+    chatPrice: { input: 0.29, output: 0.59 },
   },
+  {
+    isPreview: true,
+    idPrefix: 'moonshotai/kimi-k2-instruct-0905',
+    label: 'Kimi K2 Instruct 0905 (Preview)',
+    pubDate: '20250905',
+    description: 'Kimi K2 1T MoE model (32B active, 384 experts). Advanced agentic coding. 262K context, 16K max output. ~200 t/s on Groq.',
+    contextWindow: 262144,
+    maxCompletionTokens: 16384,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 1.00, output: 3.00, cache: { cType: 'oai-ac', read: 0.50 } },
+  },
+  // Deprecated redirects (still returned by API)
+  {
+    idPrefix: 'moonshotai/kimi-k2-instruct',
+    label: 'Kimi K2 Instruct (Deprecated)',
+    pubDate: '20250711',
+    symLink: 'moonshotai/kimi-k2-instruct-0905',
+    contextWindow: 131072, // API returns 131K (vs 262K for the 0905 version)
+    maxCompletionTokens: 16384,
+  },
+
+  // REMOVED MODELS (no longer returned by API):
+  // - (Jan 21, 2026) qwen-qwq-32b, qwen-2.5-32b, qwen-2.5-coder-32b
+  // - (Jan 21, 2026) deepseek-r1-distill-llama-70b, deepseek-r1-distill-qwen-32b
+  // - (Feb 18, 2026) moonshotai/kimi-k2-instruct (deprecated redirect, removed from docs; still returned by API -> symlink above)
+  // - (Apr 02, 2026) meta-llama/llama-4-maverick-17b-128e-instruct (removed from docs and pricing)
+
+
+  // Production Models - Compound Systems (pass-through pricing to underlying models)
+  {
+    idPrefix: 'groq/compound',
+    label: 'Compound (Agentic System)',
+    pubDate: '20250904',
+    description: 'Groq agentic AI with web search, code execution, browser automation. Uses GPT-OSS 120B, Llama 4 Scout, Llama 3.3 70B. Pricing based on underlying model usage.',
+    contextWindow: 131072,
+    maxCompletionTokens: 8192,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    hidden: true, // Pass-through pricing
+  },
+  {
+    idPrefix: 'groq/compound-mini',
+    label: 'Compound Mini (Agentic System)',
+    pubDate: '20250904',
+    description: 'Lighter Groq agentic AI with web search, code execution. Pricing based on underlying model usage.',
+    contextWindow: 131072,
+    maxCompletionTokens: 8192,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    hidden: true, // Pass-through pricing
+  },
+
+  // Production Models - OpenAI GPT-OSS
+  {
+    idPrefix: 'openai/gpt-oss-120b',
+    label: 'GPT OSS 120B',
+    pubDate: '20250805',
+    description: 'OpenAI flagship open-weight MoE (120B total, 5.1B active). Reasoning, browser search, code execution. 131K context, 65K max output. ~500 t/s on Groq.',
+    contextWindow: 131072,
+    maxCompletionTokens: 65536,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.15, output: 0.60, cache: { cType: 'oai-ac', read: 0.075 } },
+  },
+  {
+    isPreview: true,
+    idPrefix: 'openai/gpt-oss-safeguard-20b',
+    label: 'GPT OSS Safeguard 20B (Preview)',
+    pubDate: '20251029',
+    description: 'OpenAI safety classification model (20B MoE). Purpose-built for content moderation with Harmony response format. 131K context, 65K max output. ~1000 t/s on Groq.',
+    contextWindow: 131072,
+    maxCompletionTokens: 65536,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.075, output: 0.30 },
+  },
+  {
+    idPrefix: 'openai/gpt-oss-20b',
+    label: 'GPT OSS 20B',
+    pubDate: '20250805',
+    description: 'OpenAI efficient open-weight MoE (20B total, 3.6B active). Tool use, browser search, code execution. 131K context, 65K max output. ~1000 t/s on Groq.',
+    contextWindow: 131072,
+    maxCompletionTokens: 65536,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    chatPrice: { input: 0.075, output: 0.30, cache: { cType: 'oai-ac', read: 0.0375 } },
+  },
+
+  // Production Models - Meta
+  // (Feb 18, 2026) meta-llama/llama-guard-4-12b removed from docs
   {
     idPrefix: 'llama-3.3-70b-versatile',
     label: 'Llama 3.3 · 70B Versatile',
-    description: 'LLaMA 3.3 70B developed by Meta with a context window of 131,072 tokens. Production model.',
+    pubDate: '20241206',
+    description: 'Meta Llama 3.3 (70B params) with GQA. Strong reasoning, coding, multilingual. 131K context, 32K max output. ~280 t/s on Groq.',
     contextWindow: 131072,
     maxCompletionTokens: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
@@ -39,98 +142,26 @@ const _knownGroqModels: ManualMappings = [
   {
     idPrefix: 'llama-3.1-8b-instant',
     label: 'Llama 3.1 · 8B Instant',
-    description: 'LLaMA 3.1 8B developed by Meta with a context window of 131,072 tokens. Production model.',
+    pubDate: '20240723',
+    description: 'Meta Llama 3.1 (8B params). Fast, cost-effective for high-volume tasks. 131K context and max output. ~560 t/s on Groq.',
     contextWindow: 131072,
-    maxCompletionTokens: 8192,
+    maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.05, output: 0.08 },
-  },
-  {
-    idPrefix: 'llama-guard-3-8b',
-    label: 'Llama Guard 3 · 8B',
-    description: 'LLaMA Guard 3 8B developed by Meta with a context window of 8,192 tokens.',
-    contextWindow: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.20, output: 0.20 },
-  },
-  {
-    idPrefix: 'llama3-70b-8192',
-    label: 'Llama 3 · 70B',
-    description: 'LLaMA 3 70B developed by Meta with a context window of 8,192 tokens. Production model.',
-    contextWindow: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.59, output: 0.79 },
-  },
-  {
-    idPrefix: 'llama3-8b-8192',
-    label: 'Llama 3 · 8B',
-    description: 'LLaMA 3 8B developed by Meta with a context window of 8,192 tokens. Production model.',
-    contextWindow: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.05, output: 0.08 },
-  },
-  {
-    idPrefix: 'mixtral-8x7b-32768',
-    label: 'Mixtral 8x7B Instruct 32k',
-    description: 'Mixtral 8x7B developed by Mistral with a context window of 32,768 tokens. Production model.',
-    contextWindow: 32768,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.24, output: 0.24 },
   },
 
-  // Preview Models
-  {
-    isPreview: true,
-    idPrefix: 'llama-3.3-70b-specdec',
-    label: 'Llama 3.3 · 70B SpecDec (Preview)',
-    description: 'LLaMA 3.3 70B SpecDec with a context window of 8,192 tokens. Preview model.',
-    contextWindow: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.59, output: 0.99 },
-  },
-  {
-    isPreview: true,
-    idPrefix: 'llama-3.2-1b-preview',
-    label: 'Llama 3.2 · 1B (Preview)',
-    description: 'LLaMA 3.2 1B with a context window of 131,072 tokens. Preview model.',
-    contextWindow: 131072,
-    maxCompletionTokens: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.04, output: 0.04 },
-  },
-  {
-    isPreview: true,
-    idPrefix: 'llama-3.2-3b-preview',
-    label: 'Llama 3.2 · 3B (Preview)',
-    description: 'LLaMA 3.2 3B with a context window of 131,072 tokens. Preview model.',
-    contextWindow: 131072,
-    maxCompletionTokens: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.06, output: 0.06 },
-  },
-  {
-    isPreview: true,
-    idPrefix: 'llama-3.2-11b-vision-preview',
-    label: 'Llama 3.2 · 11B Vision (Preview)',
-    description: 'Vision model, 8,192 tokens context. Preview model.',
-    contextWindow: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 0.18, output: 0.18 },
-  },
-  {
-    isPreview: true,
-    idPrefix: 'llama-3.2-90b-vision-preview',
-    label: 'Llama 3.2 · 90B Vision (Preview)',
-    description: 'Vision model, 8,192 tokens context. Preview model.',
-    contextWindow: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: { input: 0.90, output: 0.90 },
-  },
-];
+  // (Feb 18, 2026) allam-2-7b (SDAIA) removed from docs and pricing, still returned by API -> deny list
+
+]);
 
 
 const groqDenyList: string[] = [
   'whisper-',
+  'distil-whisper',
+  'playai-tts',
+  'canopylabs/orpheus', // TTS models
+  'llama-prompt-guard', // Text classification models
+  'allam-2-7b', // SDAIA model, removed from docs and pricing (Feb 2026), API still returns it
 ];
 
 export function groqModelFilter(model: { id: string }): boolean {
@@ -146,8 +177,10 @@ export function groqModelToModelDescription(_model: unknown): ModelDescriptionSc
     console.log(`groq.models: unknown model ${model.id}`, model);
   if (knownModel && model.context_window !== knownModel.contextWindow)
     console.warn(`groq.models: context window mismatch for ${model.id}: expected ${model.context_window} !== ${knownModel.contextWindow}`);
+  if (knownModel?.maxCompletionTokens && model.max_completion_tokens !== knownModel.maxCompletionTokens)
+    console.warn(`groq.models: max completion tokens mismatch for ${model.id}: expected ${model.max_completion_tokens} !== ${knownModel.maxCompletionTokens}`);
 
-  return fromManualMapping(_knownGroqModels, model.id, model.created, undefined, {
+  const description = fromManualMapping(_knownGroqModels, model.id, model.created, undefined, {
     idPrefix: model.id,
     label: model.id.replaceAll(/[_-]/g, ' '),
     description: 'New Model',
@@ -155,7 +188,20 @@ export function groqModelToModelDescription(_model: unknown): ModelDescriptionSc
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
   });
+
+  // prepend [model.owned_by] to the label
+  if (model?.owned_by?.length)
+    description.label = `[${model.owned_by}] ${description.label}`;
+
+  return description;
 }
+
+export function groqValidateModelDefs_DEV(apiModelIds: string[]): void {
+  if (DEV_DEBUG_GROQ_MODELS) {
+    llmDevCheckModels_DEV('Groq', apiModelIds, _knownGroqModels.map(m => m.idPrefix), { checkUnknown: false });
+  }
+}
+
 
 export function groqModelSortFn(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
   // sort hidden at the end
@@ -163,10 +209,12 @@ export function groqModelSortFn(a: ModelDescriptionSchema, b: ModelDescriptionSc
     return 1;
   if (!a.hidden && b.hidden)
     return -1;
+
   // sort as per their order in the known models
   const aIndex = _knownGroqModels.findIndex(base => a.id.startsWith(base.idPrefix));
   const bIndex = _knownGroqModels.findIndex(base => b.id.startsWith(base.idPrefix));
   if (aIndex !== -1 && bIndex !== -1)
     return aIndex - bIndex;
+
   return a.id.localeCompare(b.id);
 }

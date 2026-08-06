@@ -1,11 +1,11 @@
-import type { ZodObject } from 'zod';
+import * as z from 'zod/v4';
 
 import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
-import { aixChatGenerateContent_DMessage, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateContent_DMessage_orThrow, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
 import { aixCGR_FromSimpleText } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 import { aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 
-import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
+import { getDomainModelIdOrThrow } from '~/common/stores/llms/store-llms';
 import { processPromptTemplate } from '~/common/util/promptUtils';
 
 
@@ -17,7 +17,9 @@ interface CodeFix {
   userInstructionTemplate: string; // Template with placeholders for `codeToFix` and `errorString`
   functionName: string;
   functionPolicy: 'invoke' | 'think-then-invoke';
-  outputSchema: ZodObject<any>;
+  outputSchema: z.ZodObject<{
+    corrected_code: z.ZodString;
+  }>;
 }
 
 const CodeFixes: Record<string, CodeFix> = {};
@@ -33,7 +35,7 @@ export async function agiFixupCode(issueType: CodeFixType, codeToFix: string, er
   if (!config) throw new Error('Invalid issue type.');
 
   // Require the Chat LLM (for a change) - as this is a small but important call
-  const llmId = getLLMIdOrThrow(['chat', 'fast'], true, false, 'autofix-code');
+  const llmId = getDomainModelIdOrThrow(['codeApply'], true, false, 'autofix-code');
 
   // Construct the AI chat generate request
   const templateVariables = {
@@ -60,7 +62,7 @@ export async function agiFixupCode(issueType: CodeFixType, codeToFix: string, er
   };
 
   // Invoke the AI model
-  const { fragments } = await aixChatGenerateContent_DMessage(
+  const { fragments } = await aixChatGenerateContent_DMessage_orThrow(
     llmId,
     aixRequest,
     aixCreateChatGenerateContext('fixup-code', '_DEV_'),

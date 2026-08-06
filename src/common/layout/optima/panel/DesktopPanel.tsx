@@ -1,44 +1,51 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Sheet, styled } from '@mui/joy';
+import { Box, List, Sheet, styled } from '@mui/joy';
 
 import { NavItemApp } from '~/common/app.nav';
-import { themeZIndexDesktopPanel } from '~/common/app.theme';
+import { adjustContentScaling, themeScalingMap, themeZIndexDesktopPanel, } from '~/common/app.theme';
+import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useUIContentScaling } from '~/common/stores/store-ui';
 
+import { PanelContentPortal } from './PanelContentPortal';
 import { optimaClosePanel, useOptimaPanelOpen } from '../useOptima';
-import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 
 
-// set to 0 to always keep the panel mounted (smoother on/off)
-const UNMOUNT_DELAY_MS = 0;
-
-
-// Desktop Panel
+// Desktop side Panel with the Portal content
 
 const DesktopPanelFixRoot = styled(Box)({
   // fix the panel size
   width: 'var(--AGI-Desktop-Panel-width)',
   flexShrink: 0,
   flexGrow: 0,
+  
+  // Base state
+  zIndex: themeZIndexDesktopPanel,
+
+  '&[data-closed="true"]': {
+    contain: 'strict',
+    pointerEvents: 'none',
+  },
+  
+  '&.panel-peeking': {
+    zIndex: themeZIndexDesktopPanel + 1, // elevate z-index when peeking
+  },
 });
 
 const DesktopPanelTranslatingSheet = styled(Sheet)(({ theme }) => ({
   // layout
   width: '100%',
   height: '100dvh',
-
-  // sliding
-  transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1)',
-  zIndex: themeZIndexDesktopPanel,
+  zIndex: 1, // just to allocate a layer; this was: themeZIndexDesktopPanel
 
   // styling
   backgroundColor: 'var(--joy-palette-background-surface)',
   borderLeft: '1px solid',
   // the border left color is from: theme.palette.divider, which is this /0.2 (light) and /0.16 (dark)
   borderLeftColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
-  // borderTopLeftRadius: 'var(--AGI-Optima-Radius)',
-  // borderBottomLeftRadius: 'var(--AGI-Optima-Radius)',
+  // borderTopLeftRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
+  // borderBottomLeftRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
   // contain: 'strict',
   // boxShadow: theme.shadow.md, // too thin and complex; also tried 40px blurs
   boxShadow: `0px 0px 6px 0 rgba(${theme.palette.neutral.darkChannel} / 0.12)`,
@@ -46,71 +53,64 @@ const DesktopPanelTranslatingSheet = styled(Sheet)(({ theme }) => ({
   // content layout
   display: 'flex',
   flexDirection: 'column',
-})) as typeof Sheet;
 
-const panelFixRootSx: SxProps = {
-  contain: 'strict',
-  pointerEvents: 'none',
-};
+  overflowY: 'auto', // NOTE: this was not present on DesktopDrawer -- we added it here
+
+  // base state (normal open/close, and peeking exit)
+  transform: 'none',
+  transition: 'transform 0.42s cubic-bezier(.17,.84,.44,1), box-shadow 0.42s cubic-bezier(.17,.84,.44,1)',
+  willChange: 'transform, box-shadow',
+
+  // Closed state via data attribute
+  '&[data-closed="true"]': {
+    transform: 'translateX(101%)', // the extra 1% takes care of fractional units (custom monitor scaling)
+    borderLeftColor: 'transparent',
+  },
+
+  // Peek state via class
+  '&.panel-peeking': {
+    transition: 'transform 0.25s cubic-bezier(.4,0,.2,1)', // faster enter animation, shadow as-is
+    boxShadow: '0 0 48px rgba(var(--joy-palette-neutral-darkChannel) / 0.4)', // stronger shadow when peeking, was theme.shadow.lg
+    borderLeftColor: 'transparent',
+  },
+})) as typeof Sheet;
 
 
 export function DesktopPanel(props: { component: React.ElementType, currentApp?: NavItemApp }) {
 
-  // state
-  const panelPortalRef = useOptimaPortalOutRef('optima-portal-panel', 'DesktopPanel');
-
   // external state
-  const isPanelOpen = useOptimaPanelOpen();
+  const isMobile = useIsMobile();
+  const contentScaling = adjustContentScaling(useUIContentScaling(), isMobile ? 1 : 0);
+  const { panelShownAsPanel, panelShownAsPeeking, panelAsPopup } = useOptimaPanelOpen(false, props.currentApp);
+  const isOpen = panelShownAsPanel || panelShownAsPeeking;
 
-  // const hasPanelContent = useOptimaPortalHasInputs('optima-portal-panel');
-
-  // local state
-  const [_softPanelUnmount, setSoftPanelUnmount] = React.useState(false);
-
-  // 'soft unmount': remove contents after a delay
-  // React.useEffect(() => {
-  //   if (!UNMOUNT_DELAY_MS)
-  //     return;
-  //
-  //   // panel open: do not unmount
-  //   if (isPanelOpen) {
-  //     setSoftPanelUnmount(false);
-  //     return;
-  //   }
-  //
-  //   // panel closed: delayed unmount
-  //   const unmountTimeoutId = setTimeout(() =>
-  //       setSoftPanelUnmount(true)
-  //     , UNMOUNT_DELAY_MS);
-  //   return () => clearTimeout(unmountTimeoutId);
-  // }, [isPanelOpen]);
-
-  // Desktop-only?: close the drawer if the current app doesn't use it
-  const appPanelAsMenu = !!props.currentApp?.panelAsMenu;
+  // Close the panel if the current page goes for a popup instead
   React.useEffect(() => {
-    if (appPanelAsMenu)
+    if (panelAsPopup)
       optimaClosePanel();
-  }, [appPanelAsMenu]);
+  }, [panelAsPopup]);
 
   return (
     <DesktopPanelFixRoot
-      sx={isPanelOpen ? undefined : panelFixRootSx}
+      data-closed={!isOpen}
+      className={panelShownAsPeeking ? 'panel-peeking' : undefined}
     >
 
       <DesktopPanelTranslatingSheet
-        ref={panelPortalRef}
         component={props.component}
-        sx={{
-          transform: isPanelOpen ? 'none' : 'translateX(100%)',
-          // backgroundColor: hasDrawerContent ? undefined : 'background.surface',
-        }}
+        data-closed={!isOpen}
+        className={panelShownAsPeeking ? 'panel-peeking' : undefined}
       >
 
-        {/* NOTE: this sort of algo was not used when we migrated this to Portals on 2024-07-30, so not restoring it ... */}
-        {/*/!* [UX Responsiveness] Keep Mounted for now *!/*/}
-        {/*{(!softDrawerUnmount || isDrawerOpen || !UNMOUNT_DELAY_MS) &&*/}
-        {/*  appDrawerContent*/}
-        {/*}*/}
+        <List size={themeScalingMap[contentScaling]?.optimaPanelGroupSize} sx={{ '--ListItem-minHeight': '2.5rem', py: 0 /*0.75*/, flex: 0 }}>
+          {/*<OptimaPanelGroupedList>*/}
+          {/*<UserAccountListItem />*/}
+          {/*<PreferencesListItem />*/}
+          {/*</OptimaPanelGroupedList>*/}
+        </List>
+
+        {/* [Desktop] Portal in the Panel */}
+        {!panelAsPopup && <PanelContentPortal />}
 
       </DesktopPanelTranslatingSheet>
 

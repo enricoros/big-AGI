@@ -43,7 +43,7 @@ function ButtonBeam(props: {
   onClick: () => void,
 }) {
   return props.isMobile ? (
-    <IconButton variant='soft' color={props.color ?? 'primary'} disabled={props.disabled} onClick={props.onClick} sx={mobileSx}>
+    <IconButton variant='outlined' color={props.color ?? 'primary'} disabled={props.disabled} onClick={props.onClick} sx={mobileSx}>
       <ChatBeamIcon />
     </IconButton>
   ) : (

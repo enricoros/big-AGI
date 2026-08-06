@@ -2,7 +2,8 @@ import * as React from 'react';
 
 import { Alert } from '@mui/joy';
 
-import { FormRadioControl, FormRadioOption } from '~/common/components/forms/FormRadioControl';
+import { FormChipControl } from '~/common/components/forms/FormChipControl';
+import { FormRadioOption } from '~/common/components/forms/FormRadioControl';
 import { useCapabilityTextToImage } from '~/common/components/useCapabilities';
 
 
@@ -27,7 +28,7 @@ export function T2ISettings() {
         disabled: !provider.configured,
       });
     });
-    return options;
+    return options.toReversed();
   }, [providers]);
 
 
@@ -37,15 +38,15 @@ export function T2ISettings() {
 
       <Alert variant='soft'>
         There are no configured services for text-to-image generation.
-        Please configure one service, such as an OpenAI LLM service, or the Prodia service below.
+        Please configure one service, such as an OpenAI LLM service, below.
       </Alert>
 
     ) : (
 
-      <FormRadioControl
+      <FormChipControl
         title='Text-to-Image'
         description='Active Service'
-        tooltip='Select the service to use for text-to-image generation.'
+        // tooltip='Select the service to use for text-to-image generation.'
         disabled={!mayWork}
         options={providerOptions}
         value={activeProviderId ?? undefined} onChange={setActiveProviderId}

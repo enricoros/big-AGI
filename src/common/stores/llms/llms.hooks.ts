@@ -1,61 +1,77 @@
 import { useShallow } from 'zustand/react/shallow';
 
-import type { DLLM, DLLMId } from './llms.types';
-
+import type { DModelsServiceId } from './llms.service.types';
+import { DLLM, DLLMId, isLLMVisible } from './llms.types';
+import { isLLMChatFree_cached } from './llms.pricing';
 import { useModelsStore } from './store-llms';
 
 
-/**
- * Current 'Chat' LLM, or null
- */
-export function useChatLLM(): { chatLLM: DLLM | null } {
-  const chatLLM = useModelsStore(state => state.chatLLMId ? state.llms.find(llm => llm.id === state.chatLLMId) ?? null : null);
-  return { chatLLM };
+export function useLLM(llmId: undefined | DLLMId | null): DLLM | undefined {
+  return useModelsStore(state => !llmId ? undefined : state.llms.find(llm => llm.id === llmId));
 }
 
-export function useLLM(llmId: DLLMId): DLLM | null {
-  return useModelsStore(state => {
-    if (!llmId) return null;
-    return state.llms.find(llm => llm.id === llmId) ?? null;
-  });
+export function useLLMExists(llmId: undefined | DLLMId | null): boolean {
+  return useModelsStore(state => !llmId ? false : state.llms.some(llm => llm.id === llmId));
 }
 
-export function useDefaultLLMIDs(): { chatLLMId: DLLMId | null; fastLLMId: DLLMId | null; } {
-  return useModelsStore(useShallow(state => ({
-    chatLLMId: state.chatLLMId,
-    fastLLMId: state.fastLLMId,
-  })));
-}
-
-export function useDefaultLLMs(): { chatLLM: DLLM | null; fastLLM: DLLM | null } {
+export function useLLMs(llmIds: ReadonlyArray<DLLMId>): ReadonlyArray<DLLM | undefined> {
   return useModelsStore(useShallow(state => {
-    const { chatLLMId, fastLLMId } = state;
-    const chatLLM = chatLLMId ? state.llms.find(llm => llm.id === chatLLMId) ?? null : null;
-    const fastLLM = fastLLMId ? state.llms.find(llm => llm.id === fastLLMId) ?? null : null;
-    return { chatLLM, fastLLM };
+    return llmIds.map(llmId => !llmId ? undefined : state.llms.find(llm => llm.id === llmId));
   }));
 }
 
-export function useFilteredLLMs(filterId: false | DLLMId): DLLM[] {
+function _sortStarredFirstComparator(a: { userStarred?: boolean }, b: { userStarred?: boolean }) {
+  if (a.userStarred && !b.userStarred) return -1;
+  if (!a.userStarred && b.userStarred) return 1;
+  return 0;
+}
+
+export function useLLMsByService(serviceId: false | DModelsServiceId): DLLM[] {
   return useModelsStore(useShallow(
-    state => !filterId ? state.llms : state.llms.filter(llm => llm.sId === filterId),
+    state => !serviceId ? state.llms : state.llms.filter(llm => llm.sId === serviceId),
   ));
 }
 
-export function useNonHiddenLLMs(): DLLM[] {
-  return useModelsStore(useShallow(
-    ({ llms, chatLLMId }) => llms.filter(llm => !llm.hidden || (chatLLMId && llm.id === chatLLMId)),
-  ));
-}
+export function useVisibleLLMs(includeLlmId: undefined | DLLMId | null, starredOnly: boolean, starredFirst: boolean): { llms: ReadonlyArray<DLLM>; hasStarred: boolean } {
+  // for performance, we don't include this in the memo selector, as they'll change in tandem anyway
+  let hasStarred = false;
 
-export function useLLMsCount(): number {
-  return useModelsStore(state => state.llms.length);
+  const llms = useModelsStore(useShallow(({ llms }) => {
+    // filter by visibility and starred status
+    const filtered = llms.filter((llm) => {
+      // finds out if any starred LLM exists
+      if (llm.userStarred) hasStarred = true;
+
+      // always include the specified LLM ID if provided
+      if (includeLlmId && llm.id === includeLlmId) return true;
+
+      // visibility filter
+      return isLLMVisible(llm) && (!starredOnly || llm.userStarred);
+    });
+
+    // sort starred first if requested
+    return !starredFirst ? filtered : filtered.sort(_sortStarredFirstComparator);
+  }));
+
+  return { llms, hasStarred };
 }
 
 export function useHasLLMs(): boolean {
   return useModelsStore(state => !!state.llms.length);
 }
 
+export function useHasFreeLLMs(serviceId: false | DModelsServiceId | null): boolean {
+  return useModelsStore(state => {
+    if (serviceId === null) return false; // explicitly no service, so no free llms
+    const llms = !serviceId ? state.llms : state.llms.filter(llm => llm.sId === serviceId);
+    return llms.some(isLLMChatFree_cached);
+  });
+}
+
 export function useModelsServices() {
-  return useModelsStore(state => state.sources);
+  return useModelsStore(useShallow(state => ({
+    modelsServices: state.sources,
+    confServiceId: state.confServiceId,
+    setConfServiceId: state.setConfServiceId,
+  })));
 }

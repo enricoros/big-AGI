@@ -1,5 +1,7 @@
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
+import { abortWithReason } from '~/common/util/errorUtils';
+
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
 import { parseTextToChecklist, UserInputChecklistComponent } from './UserInputChecklistComponent';
 
@@ -31,7 +33,7 @@ export async function executeUserInputChecklistInstruction(
 
     // if no options, there's an error
     if (options.length < 2) {
-      reject(new Error('Oops! It looks like we had trouble understanding the Model. Could you please try again?'));
+      reject(new Error('Unable to parse model output. Please try again with a different prompt or model.'));
       return;
     }
 
@@ -61,7 +63,7 @@ export async function executeUserInputChecklistInstruction(
 
     const onCancel = () => {
       clearState();
-      inputs.chainAbortController.abort('User cancelled the input.');
+      abortWithReason(inputs.chainAbortController, 'User cancelled the input.');
       reject();
     };
 

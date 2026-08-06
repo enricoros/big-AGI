@@ -1,60 +1,15 @@
-import { z } from 'zod';
-import { env } from '~/server/env.mjs';
+import * as z from 'zod/v4';
 
-import packageJson from '../../../../../package.json';
-
-import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
+import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import { GeminiWire_API_Models_List, GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
-
-import { fixupHost } from '~/common/util/urlUtils';
-
 import { ListModelsResponse_schema } from '../llm.server.types';
-import { geminiFilterModels, geminiModelToModelDescription, geminiSortModels } from './gemini.models';
+import { listModelsRunDispatch } from '../listModels.dispatch';
 
-
-// Default hosts
-const DEFAULT_GEMINI_HOST = 'https://generativelanguage.googleapis.com';
+import { geminiAccess, geminiAccessSchema, GeminiAccessSchema } from './gemini.access';
 
 
 // Mappers
-
-export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | null, apiPath: string, useV1Alpha: boolean): { headers: HeadersInit, url: string } {
-
-  const geminiHost = fixupHost(access.geminiHost || DEFAULT_GEMINI_HOST, apiPath);
-  let geminiKey = access.geminiKey || env.GEMINI_API_KEY || '';
-
-  // multi-key with random selection - https://github.com/enricoros/big-AGI/issues/653
-  if (geminiKey.includes(',')) {
-    const multiKeys = geminiKey
-      .split(',')
-      .map(key => key.trim())
-      .filter(Boolean);
-    geminiKey = multiKeys[Math.floor(Math.random() * multiKeys.length)];
-  }
-
-  // update model-dependent paths
-  if (apiPath.includes('{model=models/*}')) {
-    if (!modelRefId)
-      throw new Error(`geminiAccess: modelRefId is required for ${apiPath}`);
-    apiPath = apiPath.replace('{model=models/*}', modelRefId);
-  }
-
-  // [Gemini, 2025-01-23] CoT support - requires `v1alpha` Gemini API
-  if (useV1Alpha)
-    apiPath = apiPath.replaceAll('v1beta', 'v1alpha');
-
-  return {
-    headers: {
-      'Content-Type': 'application/json',
-      'x-goog-api-client': `big-agi/${packageJson['version'] || '1.0.0'}`,
-      'x-goog-api-key': geminiKey,
-    },
-    url: geminiHost + apiPath,
-  };
-}
-
 
 async function geminiGET<TOut extends object>(access: GeminiAccessSchema, modelRefId: string | null, apiPath: string /*, signal?: AbortSignal*/, useV1Alpha: boolean): Promise<TOut> {
   const { headers, url } = geminiAccess(access, modelRefId, apiPath, useV1Alpha);
@@ -67,16 +22,7 @@ async function geminiPOST<TOut extends object, TPostBody extends object>(access:
 }
 
 
-// Input/Output Schemas
-
-export const geminiAccessSchema = z.object({
-  dialect: z.enum(['gemini']),
-  geminiKey: z.string(),
-  geminiHost: z.string(),
-  minSafetyLevel: GeminiWire_Safety.HarmBlockThreshold_enum,
-});
-export type GeminiAccessSchema = z.infer<typeof geminiAccessSchema>;
-
+// Router Input/Output Schemas
 
 const accessOnlySchema = z.object({
   access: geminiAccessSchema,
@@ -90,28 +36,14 @@ const accessOnlySchema = z.object({
 export const llmGeminiRouter = createTRPCRouter({
 
   /* [Gemini] models.list = /v1beta/models */
-  listModels: publicProcedure
+  listModels: edgeProcedure
     .input(accessOnlySchema)
     .output(ListModelsResponse_schema)
-    .query(async ({ input }) => {
+    .query(async ({ input, signal }) => {
 
-      // get the models
-      const wireModels = await geminiGET(input.access, null, GeminiWire_API_Models_List.getPath, false);
-      const detailedModels = GeminiWire_API_Models_List.Response_schema.parse(wireModels).models;
+      const models = await listModelsRunDispatch(input.access, signal);
 
-      // NOTE: no need to retrieve info for each of the models (e.g. /v1beta/model/gemini-pro).,
-      //       as the List API already all the info on all the models
-
-      // map to our output schema
-      const models = detailedModels
-        .filter(geminiFilterModels)
-        .map(geminiModel => geminiModelToModelDescription(geminiModel))
-        .filter(model => !!model)
-        .sort(geminiSortModels);
-
-      return {
-        models: models,
-      };
+      return { models };
     }),
 
 });

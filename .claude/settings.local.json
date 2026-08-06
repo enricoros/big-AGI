@@ -1,0 +1,49 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(cp:*)",
+      "Bash(curl:*)",
+      "Bash(eslint:*)",
+      "Bash(find:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(git branch:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git describe:*)",
+      "Bash(git grep:*)",
+      "Bash(git log:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git mv:*)",
+      "Bash(git show:*)",
+      "Bash(grep:*)",
+      "Bash(head:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(node:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx tsc:*)",
+      "Bash(rg:*)",
+      "Bash(rm:*)",
+      "Bash(sed:*)",
+      "Bash(tail:*)",
+      "Bash(tree:*)",
+      "Bash(tsc:*)",
+      "Read(//tmp/**)",
+      "Skill(llms:update-models*)",
+      "WebFetch",
+      "WebFetch(domain:big-agi.com)",
+      "WebSearch",
+      "mcp__chrome-devtools",
+      "mcp__github",
+      "mcp__ide__getDiagnostics"
+    ],
+    "deny": [
+      "Read(node_modules)",
+      "Read(node_modules/**)"
+    ]
+  }
+}

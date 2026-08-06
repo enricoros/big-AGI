@@ -12,9 +12,11 @@ import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { getLLMLabel } from '~/common/stores/llms/llms.types';
 import { useFormRadioLlmType } from '~/common/components/forms/useFormRadioLlmType';
 
 import { FLATTEN_PROFILES, FlattenStyleType } from './flatten.data';
+import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
 
 function StylesList(props: { selectedStyle: FlattenStyleType | null, onSelectedStyle: (type: FlattenStyleType) => void }) {
@@ -51,7 +53,7 @@ function FlatteningProgress(props: { llmLabel: string, partialText: string | nul
     <Box sx={{ mx: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
       <CircularProgress />
       <Typography>
-        {props.partialText?.length ? `${props.partialText.length} characters` : 'Flattening'}...
+        {props.partialText?.length ? `${props.partialText.length} characters` : 'Compacting'}...
       </Typography>
       <Typography level='body-sm'>
         This may take up to a minute.
@@ -92,7 +94,8 @@ export function FlattenerModal(props: {
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   // external state
-  const [llm, llmComponent] = useFormRadioLlmType();
+  const { domainModelId: runModelId } = useModelDomain('primaryChat');
+  const [llm, llmComponent] = useFormRadioLlmType('Model', runModelId ?? null, 'util');
   const {
     isStreaming, text: flattenedText, partialText, streamError,
     startStreaming, setText, resetText,
@@ -115,7 +118,7 @@ export function FlattenerModal(props: {
       return setErrorMessage('No style selected');
 
     setSelectedStyle(flattenStyle);
-    setSelectedLLMLabel(llm.label);
+    setSelectedLLMLabel(getLLMLabel(llm));
     setErrorMessage(null);
 
     // start (auto-abort previous and at unmount)
@@ -157,7 +160,7 @@ export function FlattenerModal(props: {
   return (
     <GoodModal
       open={!!props.conversationId} dividers
-      title={!selectedStyle ? 'Compression' : 'Flattening...'}
+      title={!selectedStyle ? 'Compact' : 'Compacting...'}
       onClose={props.onClose}
     >
 
@@ -206,7 +209,7 @@ export function FlattenerModal(props: {
         )}
 
         {/* Review or Edit Text */}
-        {isSuccess && <InlineTextarea initialText={flattenedText} onEdit={setText} />}
+        {isSuccess && <InlineTextarea initialText={flattenedText} selectAllOnFocus={false} onEdit={setText} />}
 
       </Box>}
 
@@ -218,7 +221,7 @@ export function FlattenerModal(props: {
       {/* [confirmation] Overwrite Conversation */}
       {confirmOverwrite && <ConfirmationModal
         open onClose={() => setConfirmOverwrite(false)} onPositive={() => handleReplaceConversation(false)}
-        confirmationText='Are you sure you want to overwrite the conversation with the flattened text?'
+        confirmationText='Are you sure you want to overwrite the conversation with the compacted text?'
         positiveActionText='Replace conversation'
       />}
 

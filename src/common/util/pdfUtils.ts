@@ -3,6 +3,16 @@ import { canvasToDataURLAndMimeType } from './canvasUtils';
 // configuration
 const SKIP_LOADING_IN_DEV = false;
 
+
+/**
+ * Result of PDF text extraction with quality metadata
+ */
+export interface PdfTextResult {
+  text: string;
+  pageCount: number;
+  avgCharsPerPage: number;
+}
+
 /**
  * Extracts text from a PDF file
  *
@@ -14,14 +24,18 @@ const SKIP_LOADING_IN_DEV = false;
  *
  * @param pdfBuffer The content of a PDF file
  * @param onProgress A callback function to report the progress of the text extraction
+ * @returns Text content with quality metadata (pageCount, avgCharsPerPage)
  */
-export async function pdfToText(pdfBuffer: ArrayBuffer, onProgress: (progress: number) => void): Promise<string> {
-  const { getDocument } = await dynamicImportPdfJs();
+export async function pdfToText(pdfBuffer: ArrayBuffer, onProgress: (progress: number) => void): Promise<PdfTextResult> {
+  const { getDocument } = await dynamicImportPdfJs().catch(error => {
+    console.warn('pdfToText: Failed to load pdfjs-dist', error);
+    return { getDocument: null };
+  });
   if (!getDocument) {
-    console.log('pdfToText: [dev] pdfjs-dist loading skipped');
-    return '';
+    console.log('[DEV] pdfToText: pdfjs-dist loading skipped');
+    return { text: '', pageCount: 0, avgCharsPerPage: 0 };
   }
-  const pdf = await getDocument(pdfBuffer).promise;
+  const pdf = await getDocument({ data: pdfBuffer }).promise;
   const textPages: string[] = []; // Initialize an array to hold text from all pages
   onProgress(0);
 
@@ -62,7 +76,14 @@ export async function pdfToText(pdfBuffer: ArrayBuffer, onProgress: (progress: n
   }
 
   onProgress(1);
-  return textPages.join('\n\n'); // Join all the page texts at the end
+  const text = textPages.join('\n\n');
+  const pageCount = pdf.numPages;
+  const trimmedLength = text.trim().length;
+  return {
+    text,
+    pageCount,
+    avgCharsPerPage: pageCount > 0 ? trimmedLength / pageCount : 0,
+  };
 }
 
 
@@ -84,9 +105,12 @@ interface PdfPageImage {
  * @param onProgress A callback function to report the progress of the image rendering
  */
 export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: string, imageQuality: number /* = 0.95 */, scale: number /*= 1.5*/, onProgress: (progress: number) => void): Promise<PdfPageImage[]> {
-  const { getDocument } = await dynamicImportPdfJs();
+  const { getDocument } = await dynamicImportPdfJs().catch(error => {
+    console.warn('pdfToImageDataURLs: Failed to load pdfjs-dist', error);
+    return { getDocument: null };
+  });
   if (!getDocument) {
-    console.log('pdfToImageDataURLs: [dev] pdfjs-dist loading skipped');
+    console.log('[DEV] pdfToImageDataURLs: pdfjs-dist loading skipped');
     return [];
   }
   const pdf = await getDocument({ data: pdfBuffer }).promise;
@@ -106,6 +130,7 @@ export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: 
 
     await page.render({
       canvasContext: context,
+      canvas,
       viewport,
     }).promise;
 

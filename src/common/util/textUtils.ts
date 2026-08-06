@@ -42,6 +42,14 @@ export function humanReadableHyphenated(text: string, removeSchema: boolean = fa
     .toLowerCase();
 }
 
+export function humanReadableBytes(bytes: number): string {
+  if (bytes < 0) return 'N/A';
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
 
 export function ellipsizeFront(text: string, maxLength: number) {
   if (text.length <= maxLength)
@@ -110,4 +118,18 @@ export function textIsSingleEmoji(text: string): boolean {
   const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
   const segments = Array.from(segmenter.segment(text));
   return segments.length === 1;
+}
+
+
+/**
+ * Simple hash generation for a string - used in the Frontend! For backend see `sdbmHash` in `backend.router.ts`.
+ */
+export function frontendHashString(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return 'h-' + hash.toString(16);
 }

@@ -12,7 +12,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { getConversation } from '~/common/stores/chat/store-chats';
 
 import { ChatLinkExport } from './link/ChatLinkExport';
-import { PublishExport } from './publish/PublishExport';
+import { FlashBackup } from './BackupRestore';
 import { downloadAllJsonV1B, downloadSingleChat } from './trade.client';
 
 
@@ -113,10 +113,6 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
             />
           )}
 
-          <PublishExport
-            conversationId={props.config.conversationId}
-            onClose={props.onClose}
-          />
 
           {/*<Button*/}
           {/*  variant='soft'*/}
@@ -145,8 +141,11 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
               sx={{ minWidth: 240, justifyContent: 'space-between' }}
               onClick={handleDownloadAllConversationsJSON}
             >
-              Backup All · JSON
+              Backup All Chats
             </Button>
+
+            {/* Insert to Download a Flash */}
+            <FlashBackup />
 
           </Box>
         </Grid>

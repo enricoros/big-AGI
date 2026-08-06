@@ -36,9 +36,9 @@ export function OptimaDrawerList(props: {
     ...(props.tallRows && PageDrawerTallItemSx),
 
     // style
-    backgroundColor: 'background.popup',
+    // backgroundColor: 'background.popup', // no need, the desktop/mobile drawer already has background
     border: 'none',
-    // borderBottomRightRadius: 'var(--AGI-Optima-Radius)',
+    // borderBottomRightRadius: OPTIMA_DRAWER_MOBILE_RADIUS,
     ...(!!props.noTopPadding && { pt: 0 }),
     ...(!!props.noBottomPadding && { pb: 0 }),
 

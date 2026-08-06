@@ -3,7 +3,8 @@ import * as React from 'react';
 import { Alert, IconButton } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
-import { useUICounter } from '~/common/state/store-ui';
+
+import { useUICounter } from '~/common/stores/store-ui';
 
 
 export function useIsBrowserTranslating(timeout: number = 5000): boolean {

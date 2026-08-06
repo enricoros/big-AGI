@@ -1,33 +1,67 @@
 import * as React from 'react';
 
-import { ModelsModal } from '~/modules/llms/models-modal/ModelsModal';
-import { SettingsModal } from '../../../apps/settings-modal/SettingsModal';
+import { optimaActions, optimaOpenPreferences, useOptimaModals } from './useOptima';
+
+// auto-open models trigger
+import { optimaOpenModels } from '~/common/layout/optima/useOptima';
+import { runWhenIdle } from '~/common/util/pwaUtils';
+import { useModelsZeroState } from '~/common/stores/llms/hooks/useModelsZeroState';
+
+// Modals
+import { AixDebuggerDialog } from '~/modules/aix/client/debugger/AixDebuggerDialog';
+import { LogViewerDialog } from '~/common/logger/viewer/LoggerViewerDialog';
 import { ShortcutsModal } from '../../../apps/settings-modal/ShortcutsModal';
 
-import { optimaActions, optimaOpenPreferences, useOptimaModalsState } from './useOptima';
+// Lazy-loaded Modals
+const ModelsModalsLazy = React.lazy(() => import('~/modules/llms/models-modal/ModelsModals').then(module => ({ default: module.ModelsModals })));
+const SettingsModalLazy = React.lazy(() => import('../../../apps/settings-modal/SettingsModal').then(module => ({ default: module.SettingsModal })));
 
 
 export function Modals(props: { suspendAutoModelsSetup?: boolean }) {
 
   // external state
-  const { showKeyboardShortcuts, showPreferences, preferencesTab } = useOptimaModalsState();
+  const { preferencesTab, showAIXDebugger, showKeyboardShortcuts, showLogger, showPreferences, showModels, showModelOptions } = useOptimaModals();
 
   // derived state
-  const { closeKeyboardShortcuts, closePreferences, openKeyboardShortcuts } = optimaActions();
+  const { closeAIXDebugger, closeKeyboardShortcuts, closeLogger, closePreferences, openKeyboardShortcuts } = optimaActions();
+
+
+  // [effect] Auto-open the configurator - anytime no service is selected
+  const hasNoServices = useModelsZeroState();
+  const autoOpenTrigger = hasNoServices && !props.suspendAutoModelsSetup;
+  React.useEffect(() => {
+    if (autoOpenTrigger)
+      return runWhenIdle(() => optimaOpenModels(), 2000);
+  }, [autoOpenTrigger]);
+
 
   return <>
 
     {/* Overlay - Preferences Modal */}
-    <SettingsModal
-      open={showPreferences}
-      tab={preferencesTab}
-      setTab={optimaOpenPreferences}
-      onClose={closePreferences}
-      onOpenShortcuts={openKeyboardShortcuts}
-    />
+    {showPreferences && (
+      <React.Suspense fallback={null}>
+        <SettingsModalLazy
+          open={showPreferences}
+          tab={preferencesTab}
+          setTab={optimaOpenPreferences}
+          onClose={closePreferences}
+          onOpenShortcuts={openKeyboardShortcuts}
+        />
+      </React.Suspense>
+    )}
 
     {/* Overlay Models + LLM Options */}
-    <ModelsModal suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
+    {(showModels || showModelOptions) && (
+      <React.Suspense fallback={null}>
+        <ModelsModalsLazy />
+      </React.Suspense>
+    )}
+
+    {/* Logger */}
+    {showLogger && <LogViewerDialog onClose={closeLogger} />}
+
+    {/* AIX Debugger Dialog */}
+    {showAIXDebugger && <AixDebuggerDialog onClose={closeAIXDebugger} />}
 
     {/* Overlay Shortcuts */}
     {showKeyboardShortcuts && (

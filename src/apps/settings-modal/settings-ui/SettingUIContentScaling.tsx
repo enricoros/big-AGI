@@ -5,7 +5,7 @@ import { FormControl, IconButton, Step, Stepper } from '@mui/joy';
 
 import type { ContentScaling } from '~/common/app.theme';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 
 export function SettingUIContentScaling(props: { noLabel?: boolean }) {

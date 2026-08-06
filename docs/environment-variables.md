@@ -3,7 +3,7 @@
 This document provides an explanation of the environment variables used in the big-AGI application.
 
 **All variables are optional**; and _UI options_ take precedence over _backend environment variables_,
-which take place over _defaults_. This file is kept in sync with [`../src/server/env.mjs`](../src/server/env.mjs).
+which take place over _defaults_. This file is kept in sync with [`../src/server/env.server.ts`](../src/server/env.server.ts).
 
 ### Setting Environment Variables
 
@@ -23,18 +23,25 @@ MDB_URI=
 OPENAI_API_KEY=
 OPENAI_API_HOST=
 OPENAI_API_ORG_ID=
+ALIBABA_API_HOST=
+ALIBABA_API_KEY=
 AZURE_OPENAI_API_ENDPOINT=
 AZURE_OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 ANTHROPIC_API_HOST=
+BEDROCK_BEARER_TOKEN=
+BEDROCK_ACCESS_KEY_ID=
+BEDROCK_SECRET_ACCESS_KEY=
+BEDROCK_SESSION_TOKEN=
+BEDROCK_REGION=
 DEEPSEEK_API_KEY=
 GEMINI_API_KEY=
 GROQ_API_KEY=
 LOCALAI_API_HOST=
 LOCALAI_API_KEY=
 MISTRAL_API_KEY=
+MOONSHOT_API_KEY=
 OLLAMA_API_HOST=
-OPENPIPE_API_KEY=
 OPENROUTER_API_KEY=
 PERPLEXITY_API_KEY=
 TOGETHERAI_API_KEY=
@@ -54,17 +61,18 @@ GOOGLE_CSE_ID=
 ELEVENLABS_API_KEY=
 ELEVENLABS_API_HOST=
 ELEVENLABS_VOICE_ID=
-# Text-To-Image: Prodia
-PRODIA_API_KEY=
 
 # Backend HTTP Basic Authentication (see `deploy-authentication.md` for turning on authentication)
 HTTP_BASIC_AUTH_USERNAME=
 HTTP_BASIC_AUTH_PASSWORD=
 
 
-# Frontend variables
+# Frontend variables 
+NEXT_PUBLIC_MOTD=
 NEXT_PUBLIC_GA4_MEASUREMENT_ID=
+NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID=
 NEXT_PUBLIC_PLANTUML_SERVER_URL=
+NEXT_PUBLIC_POSTHOG_KEY=
 ```
 
 ## Backend Variables
@@ -88,18 +96,28 @@ requiring the user to enter an API key
 | `OPENAI_API_KEY`            | API key for OpenAI                                                                                             | Recommended                                                       |
 | `OPENAI_API_HOST`           | Changes the backend host for the OpenAI vendor, to enable platforms such as Helicone and CloudFlare AI Gateway | Optional                                                          |
 | `OPENAI_API_ORG_ID`         | Sets the "OpenAI-Organization" header field to support organization users                                      | Optional                                                          |
+| `ALIBABA_API_HOST`          | The Alibaba AI OpenAI-compatible endpoint                                                                      | Optional                                                          |
+| `ALIBABA_API_KEY`           | The API key for Alibaba AI                                                                                     | Optional                                                          |
 | `AZURE_OPENAI_API_ENDPOINT` | Azure OpenAI endpoint - host only, without the path                                                            | Optional, but if set `AZURE_OPENAI_API_KEY` must also be set      |
 | `AZURE_OPENAI_API_KEY`      | Azure OpenAI API key, see [config-azure-openai.md](config-azure-openai.md)                                     | Optional, but if set `AZURE_OPENAI_API_ENDPOINT` must also be set |
+| `AZURE_OPENAI_DISABLE_V1`   | Disables the next-generation v1 API for GPT-5-like models (set to 'true' to disable)                          | Optional, defaults to enabled                                     |
+| `AZURE_OPENAI_API_VERSION`  | API version for traditional deployment-based endpoints                                                          | Optional, defaults to '2025-04-01-preview'                       |
+| `AZURE_DEPLOYMENTS_API_VERSION` | API version for the deployments listing endpoint                                                            | Optional, defaults to '2023-03-15-preview'                       |
 | `ANTHROPIC_API_KEY`         | The API key for Anthropic                                                                                      | Optional                                                          |
-| `ANTHROPIC_API_HOST`        | Changes the backend host for the Anthropic vendor, to enable platforms such as AWS Bedrock                     | Optional                                                          |
+| `ANTHROPIC_API_HOST`        | Changes the backend host for the Anthropic vendor, for proxies or custom endpoints                             | Optional                                                          |
+| `BEDROCK_BEARER_TOKEN`      | Bedrock long-term API key (`ABSK...`). Takes priority over IAM credentials. Short-term keys only work for runtime, not model listing | Optional                                                          |
+| `BEDROCK_ACCESS_KEY_ID`     | AWS IAM Access Key ID for Bedrock (Claude models via AWS)                                                      | Optional, but if set `BEDROCK_SECRET_ACCESS_KEY` must also be set  |
+| `BEDROCK_SECRET_ACCESS_KEY` | AWS IAM Secret Access Key for Bedrock                                                                          | Optional, but if set `BEDROCK_ACCESS_KEY_ID` must also be set      |
+| `BEDROCK_SESSION_TOKEN`     | AWS Session Token for temporary/STS credentials                                                                | Optional                                                          |
+| `BEDROCK_REGION`            | AWS region for Bedrock (e.g., `us-east-1`, `us-west-2`, `eu-west-1`)                                          | Optional, defaults to `us-east-1`                                 |
 | `DEEPSEEK_API_KEY`          | The API key for Deepseek AI                                                                                    | Optional                                                          |
 | `GEMINI_API_KEY`            | The API key for Google AI's Gemini                                                                             | Optional                                                          |
 | `GROQ_API_KEY`              | The API key for Groq Cloud                                                                                     | Optional                                                          |
 | `LOCALAI_API_HOST`          | Sets the URL of the LocalAI server, or defaults to http://127.0.0.1:8080                                       | Optional                                                          |
 | `LOCALAI_API_KEY`           | The (Optional) API key for LocalAI                                                                             | Optional                                                          |
 | `MISTRAL_API_KEY`           | The API key for Mistral                                                                                        | Optional                                                          |
+| `MOONSHOT_API_KEY`          | The API key for Moonshot AI                                                                                    | Optional                                                          |
 | `OLLAMA_API_HOST`           | Changes the backend host for the Ollama vendor. See [config-local-ollama.md](config-local-ollama.md)           |                                                                   |
-| `OPENPIPE_API_KEY`          | The API key for OpenPipe                                                                                       | Optional                                                          |
 | `OPENROUTER_API_KEY`        | The API key for OpenRouter                                                                                     | Optional                                                          |
 | `PERPLEXITY_API_KEY`        | The API key for Perplexity                                                                                     | Optional                                                          |
 | `TOGETHERAI_API_KEY`        | The API key for Together AI                                                                                    | Optional                                                          |
@@ -123,12 +141,11 @@ Enable the app to Talk, Draw, and Google things up.
 
 | Variable                   | Description                                                                                                             |
 |:---------------------------|:------------------------------------------------------------------------------------------------------------------------|
-| **Text-To-Speech**         | [ElevenLabs](https://elevenlabs.io/) is a high quality speech synthesis service                                         |
+| **Text-To-Speech**         | ElevenLabs, Inworld, OpenAI TTS, LocalAI, and browser Web Speech API are supported                                      |
 | `ELEVENLABS_API_KEY`       | ElevenLabs API Key - used for calls, etc.                                                                               |
 | `ELEVENLABS_API_HOST`      | Custom host for ElevenLabs                                                                                              |
 | `ELEVENLABS_VOICE_ID`      | Default voice ID for ElevenLabs                                                                                         |
-| **Text-To-Image**          | [Prodia](https://prodia.com/) is a reliable image generation service                                                    |
-| `PRODIA_API_KEY`           | Prodia API Key - used with '/imagine ...'                                                                               |
+|                            | *Note: OpenAI TTS and LocalAI TTS reuse credentials from your configured LLM services (no separate env vars needed)*   |
 | **Google Custom Search**   | [Google Programmable Search Engine](https://programmablesearchengine.google.com/about/)  produces links to pages        |
 | `GOOGLE_CLOUD_API_KEY`     | Google Cloud API Key, used with the '/react' command - [Link to GCP](https://console.cloud.google.com/apis/credentials) |
 | `GOOGLE_CSE_ID`            | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)               |
@@ -142,10 +159,14 @@ Enable the app to Talk, Draw, and Google things up.
 
 The value of these variables are passed to the frontend (Web UI) - make sure they do not contain secrets.
 
-| Variable                          | Description                                                                              |
-|:----------------------------------|:-----------------------------------------------------------------------------------------|
-| `NEXT_PUBLIC_GA4_MEASUREMENT_ID`  | The measurement ID for Google Analytics 4. (see [deploy-analytics](deploy-analytics.md)) |
-| `NEXT_PUBLIC_PLANTUML_SERVER_URL` | The URL of the PlantUML server, used for rendering UML diagrams. (code in RederCode.tsx) |
+| Variable                          | Description                                                                                                                                                                                                                                     |
+|:----------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `NEXT_PUBLIC_DEBUG_BREAKS`        | (optional, development) When set to 'true', enables automatic debugger breaks on DEV/error/critical logs in development builds                                                                                                                  |
+| `NEXT_PUBLIC_MOTD`                | Message of the Day - displays a dismissible banner at the top of the app (see [customizations](customizations.md) for the template variables). Example: 🔔 Welcome to our deployment! Version {{app_build_pkgver}} built on {{app_build_time}}. |
+| `NEXT_PUBLIC_GA4_MEASUREMENT_ID`  | (optional) The measurement ID for Google Analytics 4. (see [deploy-analytics](deploy-analytics.md))                                                                                                                                             |
+| `NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID` | (optional) Google OAuth Client ID for Drive Picker. Can reuse `AUTH_GOOGLE_ID`. See [Google Drive](config-feature-google-drive.md)                                                                                                          |
+| `NEXT_PUBLIC_PLANTUML_SERVER_URL` | The URL of the PlantUML server, used for rendering UML diagrams. Allows using custom local servers.                                                                                                                                             |
+| `NEXT_PUBLIC_POSTHOG_KEY`         | (optional) Key for PostHog analytics. (see [deploy-analytics](deploy-analytics.md))                                                                                                                                                             |
 
 > Important: these variables must be set at build time, which is required by Next.js to pass them to the frontend.
 > This is in contrast to the backend variables, which can be set when starting the local server/container.

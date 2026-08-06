@@ -1,15 +1,12 @@
-import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
 import { apiAsync } from '~/common/util/trpc.client';
 
 import type { IModelVendor } from '../IModelVendor';
-import type { OllamaAccessSchema } from '../../server/ollama/ollama.router';
-
-import { OllamaServiceSetup } from './OllamaServiceSetup';
+import type { OllamaAccessSchema } from '../../server/ollama/ollama.access';
 
 
 interface DOllamaServiceSettings {
   ollamaHost: string;
-  ollamaJson: boolean;
+  csf?: boolean;
 }
 
 
@@ -17,22 +14,32 @@ export const ModelVendorOllama: IModelVendor<DOllamaServiceSettings, OllamaAcces
   id: 'ollama',
   name: 'Ollama',
   displayRank: 54,
+  displayGroup: 'local',
   location: 'local',
   instanceLimit: 2,
-  hasBackendCapKey: 'hasLlmOllama',
+  hasServerConfigKey: 'hasLlmOllama',
 
-  // components
-  Icon: OllamaIcon,
-  ServiceSetupComponent: OllamaServiceSetup,
+  /// client-side-fetch ///
+  csfAvailable: _csfOllamaAvailable,
 
   // functions
+  initializeSetup: () => ({
+    ollamaHost: '',
+    // csf: true, // eventually
+  }),
   getTransportAccess: (partialSetup): OllamaAccessSchema => ({
     dialect: 'ollama',
+    clientSideFetch: _csfOllamaAvailable(partialSetup) && !!partialSetup?.csf,
     ollamaHost: partialSetup?.ollamaHost || '',
-    ollamaJson: partialSetup?.ollamaJson || false,
   }),
 
   // List Models
   rpcUpdateModelsOrThrow: async (access) => await apiAsync.llmOllama.listModels.query({ access }),
 
 };
+
+function _csfOllamaAvailable(_s?: Partial<DOllamaServiceSettings>) {
+  // always available for local vendors - CSF falls back to DEFAULT_OLLAMA_HOST (http://127.0.0.1:11434)
+  // was: return !!s?.ollamaHost;
+  return true;
+}

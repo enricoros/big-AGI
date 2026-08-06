@@ -1,7 +1,6 @@
-import type { DBlobAssetId } from '~/modules/dblobs/dblobs.types';
-
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { agiId } from '~/common/util/idUtils';
+import { ellipsizeMiddle } from '~/common/util/textUtils';
 
 
 /// Fragments - forward compatible ///
@@ -32,9 +31,11 @@ export type DMessageFragment =
  */
 export type DMessageContentFragment = _DMessageFragmentWrapper<'content',
   | DMessageTextPart              // plain text or mixed content -> BlockRenderer
+  | DMessageReferencePart         // reference (e.g. zync entity) Content, such as a Asset (image, audio, PFD, etc.), chat, persona, etc.
   | DMessageImageRefPart          // large image
-  | DMessageToolInvocationPart    // shown to dev only, singature of the llm function call
+  | DMessageToolInvocationPart    // shown to dev only, signature of the llm function call
   | DMessageToolResponsePart      // shown to dev only, response of the llm
+  | DMessageHostedResourcePart    // provider-hosted resource (e.g. Anthropic file from Skills) with download affordance
   | DMessageErrorPart             // red message, e.g. non-content application issues
   | _SentinelPart
 >;
@@ -46,6 +47,7 @@ export type DMessageContentFragment = _DMessageFragmentWrapper<'content',
  */
 export type DMessageAttachmentFragment = _DMessageFragmentWrapper<'attachment',
   | DMessageDocPart               // document Attachment
+  | DMessageReferencePart         // reference (e.g. zync entity) Attachment
   | DMessageImageRefPart          // image Attachment
   | _SentinelPart
 > & {
@@ -59,10 +61,16 @@ export type DMessageAttachmentFragment = _DMessageFragmentWrapper<'attachment',
  * Void Fragments: no meaning, pure cosmetic, not stored, not processed
  */
 export type DMessageVoidFragment = _DMessageFragmentWrapper<'void',
+  | DVoidModelAnnotationsPart     // (non submitted) model references, citations, etc.
   | DVoidModelAuxPart             // (non submitted) model auxiliary information, from the model itself
   | DVoidPlaceholderPart          // (non submitted) placeholder to be replaced by another part
   | _SentinelPart
 >;
+
+export type DVoidFragmentModelAnnotations = _NarrowFragmentToPart<DMessageVoidFragment, DVoidModelAnnotationsPart>;
+type _DVoidFragmentModelAux = _NarrowFragmentToPart<DMessageVoidFragment, DVoidModelAuxPart>;
+type _DVoidFragmentPlaceholder = _NarrowFragmentToPart<DMessageVoidFragment, DVoidPlaceholderPart>;
+type _NarrowFragmentToPart<TFragment extends DMessageFragment, TPart> = TFragment & { part: TPart };
 
 
 // Future Examples: up to 1 per message, containing the Rays and Merges that would be used to restore the Beam state - could be volatile (omitted at save)
@@ -81,6 +89,30 @@ type _DMessageFragmentWrapper<TFragment, TPart extends { pt: string }> = {
   ft: TFragment;
   fId: DMessageFragmentId;
   part: TPart;
+  originId?: string;                  // optional, for multi-model, identifies which actor produced this fragment
+  vendorState?: DMessageFragmentVendorState; // optional vendor-specific protocol state (opaque, lossy-safe)
+}
+
+/**
+ * Carries opaque vendor metadata required for protocol correctness - i.e. state continuity tokens, encrypted signatures, protocol quirks.
+ * - Lossy-safe: Can be dropped during conversion/export without breaking functionality.
+ * - Graceful-degrade on missing.
+ */
+export type DMessageFragmentVendorState = Record<string, unknown> & {
+  gemini?: {
+    thoughtSignature?: string; // Gemini 3+ - echoed back to maintain reasoning context
+  };
+  openai?: {
+    // Responses API reasoning item continuity handle.
+    // IMPORTANT: OpenAI-private encryption + server-side item id; never round-trip to xAI.
+    reasoningItem?: { id?: string; encryptedContent?: string; };
+  };
+  xai?: {
+    // xAI Responses API reasoning item continuity handle.
+    // IMPORTANT: xAI-private encryption + server-side item id; never round-trip to OpenAI.
+    reasoningItem?: { id?: string; encryptedContent?: string; };
+  };
+  // Future: anthropic?: { ... }
 }
 
 
@@ -92,8 +124,22 @@ type _DMessageFragmentWrapper<TFragment, TPart extends { pt: string }> = {
 
 export type DMessageTextPart = { pt: 'text', text: string };
 
-export type DMessageErrorPart = { pt: 'error', error: string };
+export type DMessageErrorPart = { pt: 'error', error: string, hint?: DMessageErrorPartHint };
 
+type DMessageErrorPartHint =
+  // AIX streaming errors (from aixClassifyStreamingError)
+  | 'aix-client-aborted'
+  | 'aix-net-disconnected'
+  | 'aix-request-exceeded'
+  | 'aix-response-captive'
+  | 'aix-net-unknown'
+  | 'aix-processing-error'
+  // Allow custom hints
+  | string;
+
+/**
+ * @deprecated replaced by DMessageZyncAssetReferencePart to an image asset; here for migration purposes
+ */
 export type DMessageImageRefPart = { pt: 'image_ref', dataRef: DMessageDataRef, altText?: string, width?: number, height?: number };
 
 export type DMessageDocPart = { pt: 'doc', vdt: DMessageDocMimeType, data: DMessageDataInline, ref: string, l1Title: string, version?: number, meta?: DMessageDocMeta };
@@ -113,15 +159,58 @@ type DMessageDocMeta = {
   codeLanguage?: string;
   srcFileName?: string;
   srcFileSize?: number;
-  srcOcrFrom?: 'image' | 'pdf';
+  srcOcrFrom?: 'image' | 'pdf' | 'image-caption';
 }
+
+
+export type DMessageReferencePart =
+  | DMessageZyncAssetReferencePart
+  // | DMessageURLReferencePart // External: URLs, cloud storage, local files
+  // | DMessageCloudStorageReferencePart // External: Google Drive, Dropbox, OneDrive
+  // | DMessageLocalFileReferencePart // Local: File system references, Live Files
+  | _DMessageReferencePartBase<'_sentinel'>;
+
+type _DMessageReferencePartBase<TRt extends string, TRefSpecificFields = {}> = {
+  pt: 'reference';
+  rt: TRt;
+} & TRefSpecificFields;
+
+type _DMessageZyncReferencePart<TZT extends ZYNC.Typename, TZTSpecificFields = {}> = _DMessageReferencePartBase<'zync', {
+  zType: TZT;
+  zUuid: ZYNC_Entity.UUID;
+  // zRelationship: 'live', ...
+  zRefSummary?: DMessageTextPart;  // text summary of the reference for text-only models and accessibility
+} & TZTSpecificFields>;
+const MAX_ZYNC_REFERENCE_SUMMARY_LEN = 512; // max alt text length for Zync Asset Reference Parts
+
+export type DMessageZyncAssetReferencePart = _DMessageZyncReferencePart<'asset', {
+  // denorm fields for quick display
+  assetType: 'image' | 'audio'
+  // to be used during migration, then ignored
+  _legacyImageRefPart?: {
+    pt: 'image_ref';
+    dataRef: Extract<DMessageDataRef, { reftype: 'dblob' }>;
+    altText?: string;
+    width?: number;
+    height?: number;
+  };
+}>;
+
+// type _DMessageZyncChatReferencePart = _DMessageZyncReferencePart<'chat', { messageAnchor?: string; }>;
+// type _DMessageZyncPersonaReferencePart = _DMessageZyncReferencePart<'persona', { Persona referencing, e.g. what aspect, what purpose, what content, ... }>;
+
+// TEMP: placehoders to avoid circular deps during the transition times
+namespace ZYNC { export type Typename = 'asset' | '_sanity_sentinel_'; }
+namespace ZYNC_Entity { export type UUID = string; }
+
 
 export type DMessageToolInvocationPart = {
   pt: 'tool_invocation',
+  /** Matches the corresponding tool_response's id for pairing - set by the LLM, unique per message, at least */
   id: string,
   invocation: {
     type: 'function_call'
-    name: string;             // Name of the function as passed from the definition
+    name: string;             // REQUIRED. Name of the function as passed from the definition
     args: string /*| null*/;  // JSON-encoded object (only objects are supported), if null there are no args and it's just a plain invocation
     // temporary, not stored
     _description?: string;    // Description from the definition
@@ -130,12 +219,13 @@ export type DMessageToolInvocationPart = {
     type: 'code_execution';
     language: string;
     code: string;
-    author: 'gemini_auto_inline';
+    author: DMessageToolCodeExecutor;
   }
 };
 
 export type DMessageToolResponsePart = {
   pt: 'tool_response',
+  /** Set by the response (or upstream server hosted response), matches the corresponding tool_invocation's id for pairing */
   id: string,
   error: boolean | string,
   response: {
@@ -145,15 +235,85 @@ export type DMessageToolResponsePart = {
   } | {
     type: 'code_execution';
     result: string;           // The output
-    executor: 'gemini_auto_inline';
+    executor: DMessageToolCodeExecutor;
   },
   environment: DMessageToolEnvironment,
 };
 type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
+type DMessageToolCodeExecutor = 'gemini_auto_inline' | 'code_interpreter';
 
-type DVoidModelAuxPart = { pt: 'ma', aType: 'reasoning' | string, aText: string };
 
-type DVoidPlaceholderPart = { pt: 'ph', pText: string };
+/** Hosted resource - a provider-hosted resource (e.g. Anthropic container file from Skills/code execution). */
+export type DMessageHostedResourcePart = {
+  pt: 'hosted_resource';
+  resource:
+    | { via: 'anthropic', fileId: string, containerId?: string };
+};
+
+
+type DVoidModelAnnotationsPart = {
+  pt: 'annotations',
+  annotations: readonly DVoidWebCitation[],
+};
+
+export type DVoidWebCitation = {
+  type: 'citation',
+  url: string,
+  title: string,
+  refNumber?: number,
+  pubTs?: number, // publication timestamp
+  ranges: readonly { startIndex: number, endIndex: number, textSnippet?: string }[],
+};
+
+
+export type DVoidModelAuxPart = {
+  pt: 'ma',
+  aType: 'reasoning', // note, we don't specialize to 'ant-thinking' here, as we can infer it from the presence of textSignature or redactedData
+  aText: string,
+  // [Anthropic] attributes, if present, they imply "Extended Thinking" object(s)
+  textSignature?: string,
+  redactedData?: readonly string[],
+};
+
+
+export type DVoidPlaceholderPart = {
+  pt: 'ph',
+  pText: string,
+
+  // render type
+  pType?:
+    | 'chat-gen-follow-up',  // a follow-up is being generated
+
+  // operation history for stacked progress UI
+  opLog?: readonly DVoidPlaceholderMOp[],
+
+  // NOTE: the following should be extracted as its own part over time
+  aixControl?:
+    | { ctl: 'ac-info', ait: 'flow-cont' }
+    | DVoidPlaceholderAixControlRetry,
+};
+
+export type DVoidPlaceholderMOp = {
+  readonly opId: string,  // upstream operation ID (srvtoolu_*, item_id, etc.)
+  readonly mot: 'search-web' | 'gen-image' | 'code-exec',
+  text: string,  // latest status text
+  state: 'active' | 'done' | 'error',  // lifecycle state
+  iTexts?: readonly string[],  // decorative input context (e.g., search queries, code snippets, gen image prompt)
+  oTexts?: readonly string[],  // decorative output context (e.g., result urls, code exec outputs, file IDs, error details)
+  readonly parentOpId?: string,  // parent operation ID for nesting (e.g., code_execution that triggered this web_search)
+  readonly level: number,  // nesting depth (0 = root, inferred from parentOpId)
+  readonly cts: number,  // client timestamp (first seen)
+};
+
+type DVoidPlaceholderAixControlRetry = {
+  ctl: 'ec-retry',  // control type: error correction retry
+  rScope: 'srv-dispatch' | 'srv-op' | 'cli-ll',  // srv-dispatch: dispatch fetch, srv-op: operation-level, cli-ll: client low-level
+  rAttempt?: number,  // attempt number (starts from 2 to be clear it's a retry)
+  rStrat?: 'cli-ll-reconnect' | 'cli-ll-resume',  // strategy for cli-ll scope (reconnect: new request, resume: continue from handle)
+  rCauseHttp?: number,  // HTTP status code if available (e.g., 429, 503, 502)
+  rCauseConn?: string,  // connection error type if available (e.g., 'net-disconnected', 'timeout')
+};
+
 
 type _SentinelPart = { pt: '_pt_sentinel' };
 
@@ -171,30 +331,60 @@ export type DMessageDataRef =
   | { reftype: 'url'; url: string } // remotely accessible URL - NOTE: not used right now, this is more of a sentinel
   | { reftype: 'dblob'; dblobAssetId: DBlobAssetId, mimeType: string; bytesSize: number; } // reference to a DBlob
   ;
+type DBlobAssetId = string; // legacy type, expended here (not included) for migration purposes
 
 
 /// Helpers - Fragment Type Guards - (we don't need 'fragment is X' since TypeScript 5.5.2)
 
-export function isContentFragment(fragment: DMessageFragment) {
-  return fragment.ft === 'content';
+export function isContentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment {
+  return fragment.ft === 'content' && !!fragment.part?.pt;
 }
 
 export function isTextContentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment & { part: DMessageTextPart } {
   return fragment.ft === 'content' && fragment.part.pt === 'text';
 }
 
-export function isAttachmentFragment(fragment: DMessageFragment) {
-  return fragment.ft === 'attachment';
+export function isErrorContentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment & { part: DMessageErrorPart } {
+  return fragment.ft === 'content' && fragment.part.pt === 'error';
+}
+
+export function isAttachmentFragment(fragment: DMessageFragment): fragment is DMessageAttachmentFragment {
+  return fragment.ft === 'attachment' && !!fragment.part?.pt;
 }
 
 export function isContentOrAttachmentFragment(fragment: DMessageFragment) {
   return fragment.ft === 'content' || fragment.ft === 'attachment';
 }
 
-export function isVoidFragment(fragment: DMessageFragment) {
-  return fragment.ft === 'void';
+
+export function isVoidFragment(fragment: DMessageFragment): fragment is DMessageVoidFragment {
+  return fragment.ft === 'void' && !!fragment.part?.pt;
 }
 
+export function isVoidAnnotationsFragment(fragment: DMessageFragment): fragment is DVoidFragmentModelAnnotations {
+  return fragment.ft === 'void' && fragment.part.pt === 'annotations';
+}
+
+export function isVoidPlaceholderFragment(fragment: DMessageFragment): fragment is _DVoidFragmentPlaceholder {
+  return fragment.ft === 'void' && fragment.part.pt === 'ph';
+}
+
+export function isVoidThinkingFragment(fragment: DMessageFragment): fragment is _DVoidFragmentModelAux {
+  return fragment.ft === 'void' && fragment.part.pt === 'ma' && fragment.part.aType === 'reasoning';
+}
+
+
+export function isZyncAssetReferencePart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']): part is DMessageZyncAssetReferencePart {
+  return part.pt === 'reference' && part.rt === 'zync' && part.zType === 'asset';
+}
+
+export function isZyncAssetImageReferencePart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']): part is DMessageZyncAssetReferencePart {
+  return part.pt === 'reference' && part.rt === 'zync' && part.zType === 'asset' && part.assetType === 'image';
+}
+
+export function isZyncAssetImageReferencePartWithLegacyDBlob(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']): part is DMessageZyncAssetReferencePart {
+  return part.pt === 'reference' && part.rt === 'zync' && part.zType === 'asset' && part.assetType === 'image' && part._legacyImageRefPart?.dataRef?.reftype === 'dblob';
+}
 
 export function isDocPart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']) {
   return part.pt === 'doc';
@@ -212,8 +402,24 @@ export function isErrorPart(part: DMessageContentFragment['part']) {
   return part.pt === 'error';
 }
 
+export function isToolInvocationPart(part: DMessageContentFragment['part']): part is DMessageToolInvocationPart {
+  return part.pt === 'tool_invocation';
+}
+
+export function isToolResponsePart(part: DMessageContentFragment['part']): part is DMessageToolResponsePart {
+  return part.pt === 'tool_response';
+}
+
 export function isToolResponseFunctionCallPart(part: DMessageContentFragment['part']): part is DMessageToolResponsePart & { response: { type: 'function_call' } } {
   return part.pt === 'tool_response' && part.response.type === 'function_call';
+}
+
+export function isHostedResourcePart(part: DMessageContentFragment['part']): part is DMessageHostedResourcePart {
+  return part.pt === 'hosted_resource';
+}
+
+export function isAnnotationsPart(part: DMessageVoidFragment['part']) {
+  return part.pt === 'annotations';
 }
 
 export function isModelAuxPart(part: DMessageVoidFragment['part']) {
@@ -231,19 +437,19 @@ export function createTextContentFragment(text: string): DMessageContentFragment
   return _createContentFragment(_create_Text_Part(text));
 }
 
-export function createErrorContentFragment(error: string): DMessageContentFragment {
-  return _createContentFragment(_create_Error_Part(error));
+export function createErrorContentFragment(error: string, hint?: DMessageErrorPartHint): DMessageContentFragment {
+  return _createContentFragment(_create_Error_Part(error, hint));
 }
 
-export function createImageContentFragment(dataRef: DMessageDataRef, altText?: string, width?: number, height?: number): DMessageContentFragment {
-  return _createContentFragment(_create_ImageRef_Part(dataRef, altText, width, height));
+export function createZyncAssetReferenceContentFragment(assetUuid: ZYNC_Entity.UUID, refSummary: string | undefined, assetType: 'image' | 'audio', legacyImageRefPart?: DMessageZyncAssetReferencePart['_legacyImageRefPart']): DMessageContentFragment {
+  return _createContentFragment(createDMessageZyncAssetReferencePart(assetUuid, refSummary, assetType, legacyImageRefPart));
 }
 
 export function create_FunctionCallInvocation_ContentFragment(id: string, functionName: string, args: string /*| null*/): DMessageContentFragment {
   return _createContentFragment(_create_FunctionCallInvocation_Part(id, functionName, args));
 }
 
-export function create_CodeExecutionInvocation_ContentFragment(id: string, language: string, code: string, author: 'gemini_auto_inline'): DMessageContentFragment {
+export function create_CodeExecutionInvocation_ContentFragment(id: string, language: string, code: string, author: DMessageToolCodeExecutor): DMessageContentFragment {
   return _createContentFragment(_create_CodeExecutionInvocation_Part(id, language, code, author));
 }
 
@@ -251,8 +457,12 @@ export function create_FunctionCallResponse_ContentFragment(id: string, error: b
   return _createContentFragment(_create_FunctionCallResponse_Part(id, error, name, result, environment));
 }
 
-export function create_CodeExecutionResponse_ContentFragment(id: string, error: boolean | string, result: string, executor: 'gemini_auto_inline', environment: DMessageToolEnvironment): DMessageContentFragment {
+export function create_CodeExecutionResponse_ContentFragment(id: string, error: boolean | string, result: string, executor: DMessageToolCodeExecutor, environment: DMessageToolEnvironment): DMessageContentFragment {
   return _createContentFragment(_create_CodeExecutionResponse_Part(id, error, result, executor, environment));
+}
+
+export function createHostedResourceContentFragment(resource: DMessageHostedResourcePart['resource']): DMessageContentFragment {
+  return _createContentFragment({ pt: 'hosted_resource', resource });
 }
 
 function _createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
@@ -262,20 +472,20 @@ function _createContentFragment(part: DMessageContentFragment['part']): DMessage
 
 /// Attachment Fragments - Creation & Duplication
 
-export function createDocAttachmentFragment(l1Title: string, caption: string, vdt: DMessageDocMimeType, data: DMessageDataInline, ref: string, version: number, meta?: DMessageDocMeta, liveFileId?: LiveFileId): DMessageAttachmentFragment {
-  return _createAttachmentFragment(l1Title, caption, _create_Doc_Part(vdt, data, ref, l1Title, version, meta), liveFileId);
+export function createZyncAssetReferenceAttachmentFragment(title: string, caption: string, assetUuid: ZYNC_Entity.UUID, refSummary: string | undefined, assetType: 'image' | 'audio', legacyImageRefPart?: DMessageZyncAssetReferencePart['_legacyImageRefPart']): DMessageAttachmentFragment {
+  return _createAttachmentFragment(title, caption, createDMessageZyncAssetReferencePart(assetUuid, refSummary, assetType, legacyImageRefPart), undefined);
 }
 
-export function createImageAttachmentFragment(title: string, caption: string, dataRef: DMessageDataRef, imgAltText?: string, width?: number, height?: number): DMessageAttachmentFragment {
-  return _createAttachmentFragment(title, caption, _create_ImageRef_Part(dataRef, imgAltText, width, height), undefined);
+export function createDocAttachmentFragment(l1Title: string, caption: string, vdt: DMessageDocMimeType, data: DMessageDataInline, ref: string, version: number, meta?: DMessageDocMeta, liveFileId?: LiveFileId): DMessageAttachmentFragment {
+  return _createAttachmentFragment(l1Title, caption, _create_Doc_Part(vdt, data, ref, l1Title, version, meta), liveFileId);
 }
 
 export function specialContentPartToDocAttachmentFragment(title: string, caption: string, vdt: DMessageDocMimeType, contentPart: DMessageContentFragment['part'], ref: string, docMeta?: DMessageDocMeta): DMessageAttachmentFragment {
   switch (true) {
     case isTextPart(contentPart):
       return createDocAttachmentFragment(title, caption, vdt, createDMessageDataInlineText(contentPart.text, 'text/plain'), ref, 2 /* As we attach our messages, we start from 2 */, docMeta);
-    case isImageRefPart(contentPart):
-      return createImageAttachmentFragment(title, caption, _duplicate_DataReference(contentPart.dataRef), contentPart.altText, contentPart.width, contentPart.height);
+    case isZyncAssetReferencePart(contentPart):
+      return createZyncAssetReferenceAttachmentFragment(title, caption, contentPart.zUuid, contentPart.zRefSummary?.text, contentPart.assetType, contentPart._legacyImageRefPart);
     default:
       return createDocAttachmentFragment('Error', 'Content to Attachment', vdt, createDMessageDataInlineText(`Conversion of '${contentPart.pt}' is not supported yet.`, 'text/plain'), ref, 1 /* error has no version really */, docMeta);
   }
@@ -288,12 +498,16 @@ function _createAttachmentFragment(title: string, caption: string, part: DMessag
 
 /// Void Fragments - Creation & Duplication
 
-export function createModelAuxVoidFragment(aType: DVoidModelAuxPart['aType'], aText: string): DMessageVoidFragment {
-  return _createVoidFragment(_create_ModelAux_Part(aType, aText));
+export function createAnnotationsVoidFragment(annotations: DVoidWebCitation[]): DMessageVoidFragment {
+  return _createVoidFragment(_create_Annotations_Part(annotations));
 }
 
-export function createPlaceholderVoidFragment(placeholderText: string): DMessageVoidFragment {
-  return _createVoidFragment(_create_Placeholder_Part(placeholderText));
+export function createModelAuxVoidFragment(aType: DVoidModelAuxPart['aType'], aText: string, textSignature?: string, redactedData?: string[]): DMessageVoidFragment {
+  return _createVoidFragment(_create_ModelAux_Part(aType, aText, textSignature, redactedData));
+}
+
+export function createPlaceholderVoidFragment(placeholderText: string, placeholderType?: DVoidPlaceholderPart['pType'], aixControl?: DVoidPlaceholderPart['aixControl'], opLog?: readonly DVoidPlaceholderMOp[]): DMessageVoidFragment {
+  return _createVoidFragment(_create_Placeholder_Part(placeholderText, placeholderType, aixControl, opLog));
 }
 
 function _createVoidFragment(part: DMessageVoidFragment['part']): DMessageVoidFragment {
@@ -313,16 +527,21 @@ export function duplicateDMessageFragments(fragments: Readonly<DMessageFragment[
     : fragments.map(_duplicateFragment).filter(f => f.ft !== 'void');
 }
 
+/**
+ * Duplicates a fragment with a new ID while preserving content-related metadata:
+ * - Preserved: originId, vendorState, mutability
+ * - Cleared: fId (new ID), identity (per spec: "removed on duplication (new edit)")
+ */
 function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
   switch (fragment.ft) {
     case 'content':
-      return _createContentFragment(_duplicate_Part(fragment.part));
+      return _carryMeta(fragment, _createContentFragment(_duplicate_Part(fragment.part)));
 
     case 'attachment':
-      return _createAttachmentFragment(fragment.title, fragment.caption, _duplicate_Part(fragment.part), fragment.liveFileId);
+      return _carryMeta(fragment, _createAttachmentFragment(fragment.title, fragment.caption, _duplicate_Part(fragment.part), fragment.liveFileId));
 
     case 'void':
-      return _createVoidFragment(_duplicate_Part(fragment.part));
+      return _carryMeta(fragment, _createVoidFragment(_duplicate_Part(fragment.part)));
 
     case '_ft_sentinel':
       return _createSentinelFragment();
@@ -333,6 +552,22 @@ function _duplicateFragment(fragment: DMessageFragment): DMessageFragment {
   }
 }
 
+/** Duplication: Preserves optional DMessageFragment metadata from source to target. */
+function _carryMeta<T extends DMessageFragment>(source: Readonly<DMessageFragment>, target: T): T {
+  // quick-out: sentinels don't have metadata
+  if (source.ft === '_ft_sentinel' || target.ft === '_ft_sentinel')
+    return target;
+
+  let enriched = target;
+  if ('originId' in source && source.originId)
+    enriched = { ...enriched, originId: source.originId };
+
+  if ('vendorState' in source && source.vendorState)
+    enriched = { ...enriched, vendorState: structuredClone(source.vendorState) };
+
+  return enriched;
+}
+
 
 /// Helpers - Parts Creation & Duplication
 
@@ -340,8 +575,20 @@ function _create_Text_Part(text: string): DMessageTextPart {
   return { pt: 'text', text };
 }
 
-function _create_Error_Part(error: string): DMessageErrorPart {
-  return { pt: 'error', error };
+function _create_Error_Part(error: string, hint?: DMessageErrorPartHint): DMessageErrorPart {
+  return { pt: 'error', error, ...(hint && { hint }) };
+}
+
+export function createDMessageZyncAssetReferencePart(zUuid: ZYNC_Entity.UUID, refSummary: string | undefined, assetType: 'image' | 'audio', legacyImageRefPart?: DMessageZyncAssetReferencePart['_legacyImageRefPart']): DMessageZyncAssetReferencePart {
+  return {
+    pt: 'reference',
+    rt: 'zync',
+    zType: 'asset',
+    zUuid,
+    ...(refSummary && { zRefSummary: { pt: 'text', text: ellipsizeMiddle(refSummary, MAX_ZYNC_REFERENCE_SUMMARY_LEN) } }),
+    assetType,
+    ...(legacyImageRefPart && { _legacyImageRefPart: { ...legacyImageRefPart } }),
+  };
 }
 
 function _create_Doc_Part(vdt: DMessageDocMimeType, data: DMessageDataInline, ref: string, l1Title: string, version: number, meta?: DMessageDocMeta): DMessageDocPart {
@@ -356,7 +603,7 @@ function _create_FunctionCallInvocation_Part(id: string, functionName: string, a
   return { pt: 'tool_invocation', id, invocation: { type: 'function_call', name: functionName, args } };
 }
 
-function _create_CodeExecutionInvocation_Part(id: string, language: string, code: string, author: 'gemini_auto_inline'): DMessageToolInvocationPart {
+function _create_CodeExecutionInvocation_Part(id: string, language: string, code: string, author: DMessageToolCodeExecutor): DMessageToolInvocationPart {
   return { pt: 'tool_invocation', id, invocation: { type: 'code_execution', language, code, author } };
 }
 
@@ -364,16 +611,35 @@ function _create_FunctionCallResponse_Part(id: string, error: boolean | string, 
   return { pt: 'tool_response', id, error, response: { type: 'function_call', name, result }, environment };
 }
 
-function _create_CodeExecutionResponse_Part(id: string, error: boolean | string, result: string, executor: 'gemini_auto_inline', environment: DMessageToolEnvironment): DMessageToolResponsePart {
+function _create_CodeExecutionResponse_Part(id: string, error: boolean | string, result: string, executor: DMessageToolCodeExecutor, environment: DMessageToolEnvironment): DMessageToolResponsePart {
   return { pt: 'tool_response', id, error, response: { type: 'code_execution', result, executor }, environment };
 }
 
-function _create_ModelAux_Part(aType: DVoidModelAuxPart['aType'], aText: string): DVoidModelAuxPart {
-  return { pt: 'ma', aType, aText };
+export function createDVoidWebCitation(url: string, title: string, refNumber?: number, rangeStartIndex?: number, rangeEndIndex?: number, rangeTextSnippet?: string, pubTs?: number): DVoidWebCitation {
+  return {
+    type: 'citation', url, title, ...(refNumber !== undefined ? { refNumber } : {}), ...(pubTs !== undefined ? { pubTs } : {}),
+    ranges: (rangeStartIndex !== undefined && rangeEndIndex !== undefined) ? [{
+      startIndex: rangeStartIndex,
+      endIndex: rangeEndIndex,
+      ...(rangeTextSnippet ? { textSnippet: rangeTextSnippet } : {}),
+    }] : [],
+  };
 }
 
-function _create_Placeholder_Part(placeholderText: string): DVoidPlaceholderPart {
-  return { pt: 'ph', pText: placeholderText };
+function _create_Annotations_Part(annotations: DVoidWebCitation[]): DVoidModelAnnotationsPart {
+  return { pt: 'annotations', annotations };
+}
+
+function _create_ModelAux_Part(aType: DVoidModelAuxPart['aType'], aText: string, textSignature?: string, redactedData?: Readonly<string[]>): DVoidModelAuxPart {
+  return {
+    pt: 'ma', aType, aText,
+    ...(textSignature !== undefined ? { textSignature } : undefined),
+    ...(redactedData ? { redactedData: Array.from(redactedData) /* creates a mutable copy of the array */ } : undefined),
+  };
+}
+
+function _create_Placeholder_Part(placeholderText: string, pType?: DVoidPlaceholderPart['pType'], aixControl?: DVoidPlaceholderPart['aixControl'], opLog?: readonly DVoidPlaceholderMOp[]): DVoidPlaceholderPart {
+  return { pt: 'ph', pText: placeholderText, ...(pType ? { pType } : undefined), ...(opLog ? { opLog: opLog.map(e => ({ ...e })) } : undefined), ...(aixControl ? { aixControl: { ...aixControl } } : undefined) };
 }
 
 function _create_Sentinel_Part(): _SentinelPart {
@@ -381,22 +647,54 @@ function _create_Sentinel_Part(): _SentinelPart {
 }
 
 function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttachmentFragment | DMessageVoidFragment)['part']>(part: TPart): TPart {
-  switch (part.pt) {
+  const pt = part.pt;
+  switch (pt) {
     case 'doc':
-      const newDocVersion = Number(part.version || 1); // we don't increase the version on duplication (not sure we should?)
+      const newDocVersion = Number(part.version ?? 1); // we don't increase the version on duplication (not sure we should?)
       return _create_Doc_Part(part.vdt, _duplicate_InlineData(part.data), part.ref, part.l1Title, newDocVersion, part.meta ? { ...part.meta } : undefined) as TPart;
 
     case 'error':
-      return _create_Error_Part(part.error) as TPart;
+      return _create_Error_Part(part.error, part.hint) as TPart;
+
+    case 'reference':
+      const rt = part.rt;
+      switch (rt) {
+        case 'zync':
+          switch (part.zType) {
+            case 'asset':
+              // Zync Asset Reference: new fragment, with the exact same reference (and fallback, if still in the migration period)
+              return createDMessageZyncAssetReferencePart(part.zUuid, part.zRefSummary?.text, part.assetType, part._legacyImageRefPart ? { ...part._legacyImageRefPart } : undefined) as TPart;
+
+            default:
+              const _exhaustiveCheck: never = part.zType;
+              console.warn(`[DEV] _duplicate_Part: Unsupported zync reference type '${part.zType}', using fallback`, { part });
+              return structuredClone(part) as TPart; // fallback to structured clone for unknown parts
+          }
+        case '_sentinel':
+          break; // nothing to do here - this is a sentinel type
+        default:
+          const _exhaustiveCheck: never = rt;
+          console.warn(`[DEV] _duplicate_Part: Unsupported reference type '${rt}', using fallback`, { part });
+      }
+      return structuredClone(part) as TPart;
 
     case 'image_ref':
       return _create_ImageRef_Part(_duplicate_DataReference(part.dataRef), part.altText, part.width, part.height) as TPart;
 
+    case 'annotations':
+      const annotationsDeepCopy = part.annotations.map(citation => ({
+        ...citation,
+        ranges: citation.ranges.map(range => ({
+          ...range,
+        })),
+      }));
+      return _create_Annotations_Part(annotationsDeepCopy) as TPart;
+
     case 'ma':
-      return _create_ModelAux_Part(part.aType, part.aText) as TPart;
+      return _create_ModelAux_Part(part.aType, part.aText, part.textSignature, part.redactedData) as TPart;
 
     case 'ph':
-      return _create_Placeholder_Part(part.pText) as TPart;
+      return _create_Placeholder_Part(part.pText, part.pType, part.aixControl, part.opLog) as TPart;
 
     case 'text':
       return _create_Text_Part(part.text) as TPart;
@@ -411,8 +709,21 @@ function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttach
         ? _create_FunctionCallResponse_Part(part.id, part.error, part.response.name, part.response.result, part.environment) as TPart
         : _create_CodeExecutionResponse_Part(part.id, part.error, part.response.result, part.response.executor, part.environment) as TPart;
 
+    case 'hosted_resource':
+      return { pt: 'hosted_resource', resource: { ...part.resource } } as TPart;
+
     case '_pt_sentinel':
       return _create_Sentinel_Part() as TPart;
+
+    default:
+      const _exhaustiveCheck: never = pt;
+
+      // console.warn('[DEV] _duplicate_Part: Unknown part type, will duplicate as Error', { part });
+      // return _create_Error_Part(`Unknown part type '${(part as any)?.pt || '(undefined)'}'`) as TPart;
+
+      // unexpected case: if we are here, the best to do is probably to return a clone of the part, as returning
+      // nothing would corrupt the Fragment
+      return structuredClone(part) as TPart; // fallback to structured clone for unknown parts
   }
 }
 
@@ -445,11 +756,11 @@ function _duplicate_InlineData(data: DMessageDataInline): DMessageDataInline {
   }
 }
 
-export function createDMessageDataRefDBlob(dblobAssetId: DBlobAssetId, mimeType: string, bytesSize: number): DMessageDataRef {
+export function createDMessageDataRefDBlob(dblobAssetId: DBlobAssetId, mimeType: string, bytesSize: number): Extract<DMessageDataRef, { reftype: 'dblob' }> {
   return { reftype: 'dblob', dblobAssetId: dblobAssetId, mimeType, bytesSize };
 }
 
-export function createDMessageDataRefUrl(url: string): DMessageDataRef {
+function _createDMessageDataRefUrl(url: string): Extract<DMessageDataRef, { reftype: 'url' }> {
   return { reftype: 'url', url };
 }
 
@@ -459,12 +770,28 @@ function _duplicate_DataReference(ref: DMessageDataRef): DMessageDataRef {
       return createDMessageDataRefDBlob(ref.dblobAssetId, ref.mimeType, ref.bytesSize);
 
     case 'url':
-      return createDMessageDataRefUrl(ref.url);
+      return _createDMessageDataRefUrl(ref.url);
   }
 }
 
 
 /// Editor Helpers - Fragment Editing
+
+/** Sets the originId on a single fragment (mutates in place). */
+export function fragmentSetOriginId<T extends DMessageContentFragment | DMessageAttachmentFragment | DMessageVoidFragment>(fragment: T, originId: DMessageContentFragment['originId']): T {
+  fragment.originId = originId;
+  return fragment;
+}
+
+/** Creates a new array of fragments with a specific originId assigned to each. */
+export function fragmentsSetOriginId(fragments: ReadonlyArray<Readonly<DMessageFragment>>, originId: DMessageContentFragment['originId']): Readonly<DMessageFragment>[] {
+
+  // shallow copy if empty or no originId
+  if (!fragments.length || !originId) return [...fragments];
+
+  // shallow-copy + set origin
+  return fragments.map(fragment => ({ ...fragment, originId: originId }));
+}
 
 export function splitFragmentsByType(fragments: DMessageFragment[]) {
   // also see `useFragmentBuckets.ts` which inspired this function
@@ -493,96 +820,134 @@ export function filterDocAttachmentFragments(fragments: DMessageAttachmentFragme
  * Updates a fragment with the edited text, ensuring the fragment retains its type and structure.
  * @returns A new fragment with the edited text applied or null if the fragment type isn't handled.
  */
+export function updateFragmentWithEditedText(fragment: DMessageContentFragment, editedText: string): DMessageContentFragment | null;
+export function updateFragmentWithEditedText(fragment: DMessageAttachmentFragment, editedText: string): DMessageAttachmentFragment | null;
+export function updateFragmentWithEditedText(fragment: DMessageFragment, editedText: string): DMessageFragment | null;
 export function updateFragmentWithEditedText(
   fragment: DMessageFragment,
   editedText: string,
 ): DMessageFragment | null {
 
-  if (editedText.length === 0) {
-    // If the edited text is empty, we may choose to delete the fragment (depending on the caller's logic)
-    return null;
-  }
+  // NOTE: we transfer the responsibility of this to the caller
+  // if (editedText.length === 0) {
+  //   // If the edited text is empty, we may choose to delete the fragment (depending on the caller's logic)
+  //   return null;
+  // }
 
   if (isContentFragment(fragment)) {
-    const { fId, part } = fragment;
+    const { fId, part, originId } = fragment;
+    const preserveId = { fId, ...(originId && { originId }) } as const;
 
-    if (isTextPart(part)) {
-      // Create a new text content fragment with the same fId and the edited text
-      const newFragment = createTextContentFragment(editedText);
-      return { ...newFragment, fId }; // Preserve original fId
-    } else if (part.pt === 'error') {
-      const newFragment = createErrorContentFragment(editedText);
-      return { ...newFragment, fId }; // Preserve original fId
-    } else if (part.pt === 'tool_invocation') {
-      if (part.invocation.type === 'function_call') {
-        // Create a new tool invocation fragment with the edited args
-        const newFragment = create_FunctionCallInvocation_ContentFragment(
-          part.id, // Keep same id
-          part.invocation.name,
-          editedText, // args (if empty, it calls the funciton without params)
-        );
-        return { ...newFragment, fId }; // Preserve original fId
-      } else if (part.invocation.type === 'code_execution') {
-        const newFragment = create_CodeExecutionInvocation_ContentFragment(
-          part.id, // Keep same id
-          part.invocation.language,
-          editedText, // code
-          part.invocation.author,
-        );
-        return { ...newFragment, fId };
-      }
-    } else if (part.pt === 'tool_response') {
-      if (part.error) {
-        // Update the error field in 'tool_response' part
-        const newPart = {
-          ...part,
-          error: editedText,
-        };
-        return { ...fragment, part: newPart };
-      } else {
-        // Update the result field in 'tool_response' part
-        const response = part.response;
-        if (response.type === 'function_call') {
-          const newFragment = create_FunctionCallResponse_ContentFragment(
-            part.id,
-            part.error,
-            response.name,
-            editedText, // result
-            part.environment,
+    const pt = part.pt;
+    switch (pt) {
+
+      case 'text':
+        // Create a new text content fragment with the same fId and the edited text
+        const newText = createTextContentFragment(editedText);
+        return { ...newText, ...preserveId };
+
+      case 'error':
+        const newError = createErrorContentFragment(editedText);
+        return { ...newError, ...preserveId };
+
+      case 'reference':
+        // For content reference fragments, there's no text to edit
+        return null;
+
+      case 'tool_invocation':
+        if (part.invocation.type === 'function_call') {
+          // Create a new tool invocation fragment with the edited args
+          const newFragment = create_FunctionCallInvocation_ContentFragment(
+            part.id, // Keep same id
+            part.invocation.name,
+            editedText, // args (if empty, it calls the funciton without params)
           );
-          return { ...newFragment, fId };
-        } else if (response.type === 'code_execution') {
-          const newFragment = create_CodeExecutionResponse_ContentFragment(
-            part.id,
-            part.error,
-            editedText, // result
-            response.executor,
-            part.environment,
+          return { ...newFragment, ...preserveId };
+        } else if (part.invocation.type === 'code_execution') {
+          const newFragment = create_CodeExecutionInvocation_ContentFragment(
+            part.id, // Keep same id
+            part.invocation.language,
+            editedText, // code
+            part.invocation.author,
           );
-          return { ...newFragment, fId };
+          return { ...newFragment, ...preserveId };
         }
-      }
+        break;
+
+      case 'tool_response':
+        if (part.error) {
+          // Update the error field in 'tool_response' part
+          const newPart = {
+            ...part,
+            error: editedText,
+          };
+          return { ...fragment, part: newPart };
+        } else {
+          // Update the result field in 'tool_response' part
+          const response = part.response;
+          if (response.type === 'function_call') {
+            const newFragment = create_FunctionCallResponse_ContentFragment(
+              part.id,
+              part.error,
+              response.name,
+              editedText, // result
+              part.environment,
+            );
+            return { ...newFragment, ...preserveId };
+          } else if (response.type === 'code_execution') {
+            const newFragment = create_CodeExecutionResponse_ContentFragment(
+              part.id,
+              part.error,
+              editedText, // result
+              response.executor,
+              part.environment,
+            );
+            return { ...newFragment, ...preserveId };
+          }
+        }
+        break;
+
+      case 'image_ref':
+      case 'hosted_resource':
+      case '_pt_sentinel':
+        // nothing to do here - not editable
+        break;
+
+      default:
+        const _exhaustiveCheck: never = pt;
+        break;
     }
   } else if (isAttachmentFragment(fragment)) {
-    const { fId, part, title, caption, liveFileId } = fragment;
+    const { fId, part, title, caption, liveFileId, originId } = fragment;
+    const preserveId = { fId, ...(originId && { originId }) } as const;
 
-    if (isDocPart(part)) {
-      // Create a new doc attachment fragment with the edited text
-      const newDataInline: DMessageDataInline = createDMessageDataInlineText(
-        editedText,
-        part.data.mimeType,
-      );
-      const newFragment = createDocAttachmentFragment(
-        part.l1Title || title,
-        caption,
-        part.vdt,
-        newDataInline,
-        part.ref,
-        Number(part.version || 1) + 1, // Increment version as this has been edited - note: we could have used ?? to be more correct, but || is safer
-        part.meta,
-        liveFileId,
-      );
-      return { ...newFragment, fId }; // Preserve original fId
+    const pt = part.pt;
+    switch (pt) {
+      case 'doc':
+        // Create a new doc attachment fragment with the edited text
+        const newDataInline: DMessageDataInline = createDMessageDataInlineText(
+          editedText,
+          part.data.mimeType,
+        );
+        const newDocFragment = createDocAttachmentFragment(
+          part.l1Title || title,
+          caption,
+          part.vdt,
+          newDataInline,
+          part.ref,
+          Number(part.version ?? 1) + 1, // Increment version as this has been edited - note: we could have used ?? to be more correct, but || is safer
+          part.meta,
+          liveFileId,
+        );
+        return { ...newDocFragment, ...preserveId };
+      case 'reference':
+      case 'image_ref':
+      case '_pt_sentinel':
+        // nothing to do here, as these parts are not editable in the same way
+        break;
+      default:
+        const _exhaustiveCheck: never = pt;
+        break;
     }
     // Handle other attachment parts if needed
   }

@@ -12,37 +12,130 @@ name: Create and publish Docker images
 on:
   push:
     branches:
-      - v2-dev
-      #- v1-stable  # Disabled as the v* tag is used for stable releases
+      - main          # Primary branch (Big-AGI Open)
     tags:
-      - 'v*'  # Trigger on version tags (e.g., v1.7.0)
+      - 'v2.*'        # Stable releases (v2.0.0, v2.1.0, etc.)
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-and-push-image:
-    runs-on: ubuntu-latest
+  # Build job: runs on native runners for each platform (no QEMU emulation)
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runner }}
+    name: Build ${{ matrix.platform }}
+    timeout-minutes: 30
+
     permissions:
       contents: read
       packages: write
-      security-events: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Prepare
+        run: |
+          platform=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
+          echo "IMAGE_NAME_LC=${IMAGE_NAME,,}" >> $GITHUB_ENV
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 1
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
 
       - name: Log in to the Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.title=Big-AGI Open
+            org.opencontainers.image.description=Big-AGI Open - Multi-model AI workspace for experts who need to think broader, decide smarter, and build with confidence.
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.documentation=https://big-agi.com
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: .
+          file: Dockerfile
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}
+          build-args: |
+            NEXT_PUBLIC_GA4_MEASUREMENT_ID=${{ secrets.GA4_MEASUREMENT_ID }}
+            NEXT_PUBLIC_BUILD_HASH=${{ github.sha }}
+            NEXT_PUBLIC_BUILD_REF_NAME=${{ github.ref_name }}
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
+          provenance: false
+          cache-from: type=gha,scope=${{ github.repository }}-${{ matrix.platform }}
+          cache-to: type=gha,scope=${{ github.repository }}-${{ matrix.platform }},mode=max
+
+      - name: Export digest
+        run: |
+          mkdir -p ${{ runner.temp }}/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: digests-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # Merge job: combines platform-specific images into a unified multi-arch manifest
+  merge:
+    name: Merge manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: build
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Prepare
+        run: echo "IMAGE_NAME_LC=${IMAGE_NAME,,}" >> $GITHUB_ENV
+
+      - name: Download digests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -50,35 +143,34 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6.1.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=development,enable=${{ github.ref == 'refs/heads/v2-dev' }} # For v2-dev branch
-            type=raw,value=stable,enable=${{ github.ref == 'refs/heads/v1-stable' }}
-            type=ref,event=tag  # Use the tag name as a tag for tag builds
-            type=semver,pattern={{version}}  # Generate semantic versioning tags for tag builds
-            type=sha,format=short,prefix=sha- # Just in case none of the above applies
-          labels: |
-            org.opencontainers.image.title=Big-AGI
-            org.opencontainers.image.description=Generative AI suite powered by state-of-the-art models
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.documentation=https://big-agi.com
+            # Development: main branch
+            type=raw,value=development,enable=${{ github.ref == 'refs/heads/main' }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            NEXT_PUBLIC_GA4_MEASUREMENT_ID=${{ secrets.GA4_MEASUREMENT_ID }}
-          # Enable build cache (future)
-          #cache-from: type=gha
-          #cache-to: type=gha,mode=max
-          # Enable provenance and SBOM (future)
-          #provenance: true
-          #sbom: true
+            # Latest: v2.x releases (safe default)
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v2.') }}
+
+            # Stable: v2.x releases (alias)
+            type=raw,value=stable,enable=${{ startsWith(github.ref, 'refs/tags/v2.') }}
+
+            # Version tags (v2.0.0, 2.0.0)
+            type=ref,event=tag
+            type=semver,pattern={{version}}
+
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        run: |
+          docker buildx imagetools create \
+            $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            --annotation='index:org.opencontainers.image.title=Big-AGI Open' \
+            --annotation='index:org.opencontainers.image.description=Big-AGI Open - Multi-model AI workspace for experts who need to think broader, decide smarter, and build with confidence.' \
+            --annotation='index:org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}' \
+            --annotation='index:org.opencontainers.image.documentation=https://big-agi.com' \
+            $(printf '${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}@sha256:%s ' *)
+
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LC }}:${{ steps.meta.outputs.version }}

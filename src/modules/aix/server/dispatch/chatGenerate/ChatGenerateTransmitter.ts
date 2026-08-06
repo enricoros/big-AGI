@@ -1,13 +1,24 @@
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
 import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
+import { objectDeepCloneWithStringLimit, objectEstimateJsonSize, objectStringifyWithIndentDepth } from '~/common/util/objectUtils';
+
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
-import type { IParticleTransmitter } from './IParticleTransmitter';
+import type { IParticleTransmitter, ParticleCGDialectEndReason, ParticleServerLogLevel } from './parsers/IParticleTransmitter';
 
 
 // configuration
 const ENABLE_EXTRA_DEV_MESSAGES = true;
+const DEBUG_REQUEST_MAX_STRING_BYTES = 2048;
+
+/**
+ * This is enabled by default because probabilistically unlikely -- however there will be false positives/negatives.
+ *
+ * To activate, one needs a text message with the full `<think>` tag at the beginning of the session. It's likely to
+ * happen if the tokenizer has been trained for it, but for general tokenizers (and for now) this escapes.
+ */
+const LLM_HOTFIX_TRANSFORM_THINKING = true;
 export const IssueSymbols = {
   Generic: '❌',
   PromptBlocked: '🚫',
@@ -38,12 +49,14 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
   // State machinery
   private lastFunctionCallParticle: Extract<AixWire_Particles.PartParticleOp, { p: 'fci' }> | null = null;
+  private isThinkingText: boolean | undefined = !LLM_HOTFIX_TRANSFORM_THINKING ? false : undefined;
 
   // Termination
   private terminationReason: AixWire_Particles.CGEndReason | null /* if reset (not impl.) */ | undefined = undefined;
 
   // Token stop reason
   private tokenStopReason: AixWire_Particles.GCTokenStopReason | undefined = undefined;
+  private tokenStopError: string | undefined = undefined;
 
   // Metrics
   private accMetrics: AixWire_Particles.CGSelectMetrics | undefined = undefined;
@@ -51,7 +64,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   private freshMetrics: boolean = false;
 
 
-  constructor(private readonly prettyDialect: string, _throttleTimeMs: number | undefined) {
+  constructor(private readonly prettyDialect: string /*, _throttleTimeMs: number | undefined */) {
     // TODO: implement throttling on a particle basis
 
     // Not really used for now
@@ -87,11 +100,13 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
     // Termination
     if (this.terminationReason) {
-      const dispatchOrDialectIssue = this.terminationReason === 'issue-dialect' || this.terminationReason === 'issue-rpc';
+      // NOTE: we used to infer the stop reason, now we mandate it - or else is undefined, and we leave it to the reassembler to decide
+      // const dispatchOrDialectIssue = this.terminationReason === 'issue-dialect' || this.terminationReason === 'issue-dispatch-rpc';
       this.transmissionQueue.push({
         cg: 'end',
-        reason: this.terminationReason,
-        tokenStopReason: this.tokenStopReason || (dispatchOrDialectIssue ? 'cg-issue' : 'ok'),
+        terminationReason: this.terminationReason,
+        tokenStopReason: this.tokenStopReason, // See NOTE above - || (dispatchOrDialectIssue ? 'cg-issue' : 'ok'),
+        ...(this.tokenStopError && { tokenStopError: this.tokenStopError }),
       });
       // Keep this in a terminated state, so that every subsequent call will yield errors (not implemented)
       // this.terminationReason = null;
@@ -113,46 +128,90 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     return !!this.terminationReason;
   }
 
-  setRpcTerminatingIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, forceLogWarn: boolean) {
-    this._addIssue(issueId, issueText, forceLogWarn);
-    this.setEnded('issue-rpc');
+  get hasExplicitTokenStopReason(): boolean {
+    return this.tokenStopReason !== undefined;
   }
 
-  addDebugRequestInDev(url: string, headers: HeadersInit, body: object) {
-    // [security] only emit in development, as it may contain sensitive information
-    if (process.env.NODE_ENV !== 'development') return;
+
+  addDebugRequest(hideSensitiveData: boolean, url: string, headers: HeadersInit, body?: object) {
+    // Ellipsize individual strings in the body object (e.g., base64 images) to reduce debug packet size
+    const ellipsizedBody = body ? objectDeepCloneWithStringLimit(body, 'aix.addDebugRequest', DEBUG_REQUEST_MAX_STRING_BYTES) : undefined;
+    const processedBody = ellipsizedBody ? objectStringifyWithIndentDepth(ellipsizedBody, 'aix.addDebugRequest', 4, 2) : '';
+
     this.transmissionQueue.push({
-      cg: '_debugRequest',
+      cg: '_debugDispatchRequest',
       security: 'dev-env',
-      request: {
-        url,
-        headers: JSON.stringify(headers, null, 2),
-        body: JSON.stringify(body, null, 2),
+      dispatchRequest: {
+        url: url,
+        headers: hideSensitiveData ? '(hidden sensitive data)' : JSON.stringify(headers, null, 2),
+        body: processedBody,
+        bodySize: body ? objectEstimateJsonSize(body, 'aix.addDebugRequest') : 0,
       },
     });
+  }
+
+  addDebugProfilerData(measurements: Record<string, string | number>[]) {
+    this.transmissionQueue.push({
+      cg: '_debugProfiler',
+      measurements,
+    });
+  }
+
+
+  /// Dispatch termination
+
+  /** Set the end reason (NOTE: does not overlap with dialect-initiated end: IParticleTransmitter.setDialectEnded['reason']) */
+  setDispatchEnded(reason: Extract<AixWire_Particles.CGEndReason,
+    | 'done-dispatch-closed'    // stream ended
+    | 'done-dispatch-aborted'   // stream aborted (abort signal)
+    | 'issue-dispatch-rpc'      // issues in one of 4 dispatch stages: prepare, fetch, read, parse - see below
+  >) {
+    if (SERVER_DEBUG_WIRE)
+      console.log('|terminate-dispatch|', reason, this.terminationReason ? `(WARNING: already terminated ${this.terminationReason})` : '');
+    if (this.terminationReason)
+      console.warn(`[Aix.${this.prettyDialect}] setDispatchEnded('${reason}'): already terminated with reason '${this.terminationReason}' (overriding)`);
+    this.terminationReason = reason;
+  }
+
+  setDispatchRpcTerminatingIssue(issueId: Extract<AixWire_Particles.CGIssueId,
+    | 'dispatch-prepare'
+    | 'dispatch-fetch'
+    | 'dispatch-read'
+    | 'dispatch-parse'
+  >, issueText: string, serverLog: ParticleServerLogLevel) {
+    this._addIssue(issueId, issueText, serverLog);
+    this.setDispatchEnded('issue-dispatch-rpc');
   }
 
 
   /// IPartTransmitter
 
-  /** Set the end reason (NOTE: more comprehensive than just the IPartTransmitter.setEnded['reason'])*/
-  setEnded(reason: AixWire_Particles.CGEndReason) {
+  setDialectEnded(reason: ParticleCGDialectEndReason) {
     if (SERVER_DEBUG_WIRE)
-      console.log('|terminate|', reason, this.terminationReason ? `(WARNING: already terminated ${this.terminationReason})` : '');
+      console.log('|terminate-dialect|', reason, this.terminationReason ? `(WARNING: already terminated ${this.terminationReason})` : '');
+    if (this.terminationReason)
+      console.warn(`[Aix.${this.prettyDialect}] setDialectEnded('${reason}'): already terminated with reason '${this.terminationReason}' (overriding)`);
     this.terminationReason = reason;
   }
 
-  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason) {
-    if (SERVER_DEBUG_WIRE)
-      console.log('|token-stop|', reason);
-    this.tokenStopReason = reason;
+  /**
+   * End the current part and flush it
+   * - note the default is to NOT log to server, as those are user-facing and not server issues
+   */
+  setDialectTerminatingIssue(dialectText: string, symbol: string | null, _serverLog: ParticleServerLogLevel = false) {
+    this._addIssue('dialect-issue', ` ${symbol || ''} **[${this.prettyDialect} Issue]:** ${dialectText}`, _serverLog);
+    this.setDialectEnded('issue-dialect');
   }
 
-  /** End the current part and flush it */
-  setDialectTerminatingIssue(dialectText: string, symbol: string | null) {
-    this._addIssue('dialect-issue', ` ${symbol || ''} **[${this.prettyDialect} Issue]:** ${dialectText}`, false);
-    this.setEnded('issue-dialect');
+  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason, errorText?: string) {
+    if (SERVER_DEBUG_WIRE)
+      console.log('|token-stop|', reason, errorText ?? '');
+    if (this.tokenStopReason && this.tokenStopReason !== reason)
+      console.warn(`[Aix.${this.prettyDialect}] setTokenStopReason('${reason}'): already has token stop reason '${this.tokenStopReason}' (overriding)`);
+    this.tokenStopReason = reason;
+    if (errorText) this.tokenStopError = errorText;
   }
+
 
   /** Closes the current part, also flushing it out */
   endMessagePart() {
@@ -178,22 +237,134 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   /** Appends reasoning text, which is its own kind of content */
-  appendReasoningText(textChunk: string) {
+  appendReasoningText(textChunk: string, options?: { weak?: 'tag', restart?: boolean }) {
+    // NOTE: don't skip on empty chunks, as we want to transition states
     // if there was another Part in the making, queue it
     if (this.currentPart)
       this.endMessagePart();
     this.currentPart = {
       p: 'tr_',
       _t: textChunk,
+      ...(options?.weak ? { weak: options.weak } : {}),
+      ...(options?.restart ? { restart: true } : {}),
     };
     // [throttle] send it immediately for now
     this._queueParticleS();
   }
 
-  /** Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead */
-  private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, forceLogWarn: boolean) {
-    if (forceLogWarn || ENABLE_EXTRA_DEV_MESSAGES || SERVER_DEBUG_WIRE)
-      console.warn(`Aix.${this.prettyDialect} (${issueId}): ${issueText}`);
+  /** Sets a reasoning signature, associated with the current reasoning text */
+  setReasoningSignature(signature: string): void {
+    this.endMessagePart();
+    this.currentPart = {
+      p: 'trs',
+      signature,
+    };
+    this._queueParticleS();
+  }
+
+  /** Adds a raw (redacted) reasoning data parcel */
+  addReasoningRedactedData(data: string): void {
+    this.endMessagePart();
+    this.currentPart = {
+      p: 'trr_',
+      _data: data,
+    };
+    this._queueParticleS();
+  }
+
+  /**
+   * Support function to extract potential reasoning text in between <think> and </think> tags,
+   * if and only if it's the very first text in the whole session.
+   */
+  appendAutoText_weak(textChunk: string) {
+    // fast-path
+    if (this.isThinkingText === false) {
+      this.appendText(textChunk);
+      return;
+    }
+
+    // inspect only at the very beginning
+    let remaining = textChunk;
+    if (this.isThinkingText === undefined) {
+      const trimmed = remaining.trimStart();
+      if (trimmed.startsWith('<think>')) {
+        this.isThinkingText = true;
+        remaining = trimmed.substring('<think>'.length);
+      } else
+        this.isThinkingText = false;  // or never use thinking extraction
+    }
+
+    while (remaining.length > 0) {
+      if (this.isThinkingText) {
+        const closingIdx = remaining.indexOf('</think>');
+        if (closingIdx >= 0) {
+          const reasoningText = remaining.substring(0, closingIdx);
+          this.appendReasoningText(reasoningText, { weak: 'tag' });
+          this.isThinkingText = false;
+          remaining = remaining.substring(closingIdx + '</think>'.length);
+          // this is the only branch that can still loop
+        } else {
+          this.appendReasoningText(remaining, { weak: 'tag' });
+          return;
+        }
+      } else {
+        this.appendText(remaining);
+        return;
+      }
+    }
+  }
+
+
+  /** Appends an audio file generated by the model */
+  appendAudioInline(mimeType: string, base64Data: string, label: string, generator: string, durationMs: number): void {
+    // audio is a breaking content part
+    this.endMessagePart();
+
+    // enqueue and send right away as it's a large part
+    this.transmissionQueue.push({
+      p: 'ia',  // inline audio
+      mimeType,
+      a_b64: base64Data,
+      ...(label ? { label } : {}),
+      ...(generator ? { generator } : {}),
+      ...(durationMs ? { durationMs } : {}),
+    });
+    this._queueParticleS();
+  }
+
+  /** Appends an image generated by the model */
+  appendImageInline(mimeType: string, base64Data: string, label: string, generator: string, prompt: string, hintSkipResize?: boolean): void {
+    // images are a breaking content part
+    this.endMessagePart();
+
+    // enqueue and send right away as it's a large part
+    this.transmissionQueue.push({
+      p: 'ii',  // inline image
+      mimeType,
+      i_b64: base64Data,
+      ...(label ? { label } : {}),
+      ...(generator ? { generator } : {}),
+      ...(prompt ? { prompt } : {}),
+      ...(hintSkipResize ? { hintSkipResize } : {}),
+    });
+    this._queueParticleS();
+  }
+
+  /** Appends a hosted resource (e.g. Anthropic container file) - inline content between text fragments */
+  appendHostedResource(hres: Extract<AixWire_Particles.PartParticleOp, { p: 'hres' }>) {
+    this.endMessagePart();
+    this.transmissionQueue.push(hres);
+  }
+
+
+  /**
+   * Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead
+   */
+  private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, serverLog: ParticleServerLogLevel) {
+    if (serverLog || ENABLE_EXTRA_DEV_MESSAGES || SERVER_DEBUG_WIRE) {
+      const logLevel = serverLog === 'srv-warn' ? 'warn' as const : 'log' as const;
+      console[logLevel](`Aix.${this.prettyDialect} ${issueId}: ${issueText}`);
+    }
 
     // queue the issue
     this.endMessagePart();
@@ -215,6 +386,10 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     // validate state
     if (this.currentPart?.p === 'fci')
       throw new Error('Cannot start a new function call while the previous one is still open [parser-logic]');
+    if (!functionName) {
+      console.warn(`Aix.${this.prettyDialect}: function call missing name, using fallback`);
+      functionName = 'unknown_function';
+    }
 
     this.endMessagePart();
     this.currentPart = {
@@ -252,7 +427,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   /** Creates a CE request part, flushing the previous one if needed, and completes it */
-  addCodeExecutionInvocation(id: string | null, language: string, code: string, author: 'gemini_auto_inline') {
+  addCodeExecutionInvocation(id: string | null, language: string, code: string, author: 'gemini_auto_inline' | 'code_interpreter') {
     this.endMessagePart();
     this.transmissionQueue.push({
       p: 'cei',
@@ -264,7 +439,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   }
 
   /** Creates a CE result part, flushing the previous one if needed, and completes it */
-  addCodeExecutionResponse(id: string | null, error: boolean | string, result: string, executor: 'gemini_auto_inline', environment: 'upstream') {
+  addCodeExecutionResponse(id: string | null, error: boolean | string, result: string, executor: 'gemini_auto_inline' | 'code_interpreter', environment: 'upstream') {
     this.endMessagePart();
     this.transmissionQueue.push({
       p: 'cer',
@@ -276,12 +451,97 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     });
   }
 
+  /** Creates a CE result part, flushing the previous one if needed, and completes it */
+  appendUrlCitation(title: string, url: string, citationNumber?: number, startIndex?: number, endIndex?: number, textSnippet?: string, pubTs?: number) {
+    this.endMessagePart();
+    this.transmissionQueue.push({
+      p: 'urlc',
+      title,
+      url,
+      ...(citationNumber !== undefined ? { num: citationNumber } : {}),
+      ...(startIndex !== undefined ? { from: startIndex } : {}),
+      ...(endIndex !== undefined ? { to: endIndex } : {}),
+      ...(textSnippet ? { text: textSnippet } : {}),
+      ...(pubTs !== undefined ? { pubTs } : {}),
+    } satisfies Extract<AixWire_Particles.PartParticleOp, { p: 'urlc' }>);
+  }
+
+
+  /** Sends control particles right away, such as aix-info/aix-retry-reset/... control particles */
+  sendCGControl(cgCOp: AixWire_Particles.ChatControlOp, flushQueue: boolean = true) {
+    // queue current particles before sending control particle (interfere with content flow)
+    if (flushQueue) this._queueParticleS();
+    this.transmissionQueue.push(cgCOp);
+  }
+
+  /** Sends an operation status particle - temporary progress with operation tracking */
+  sendOperationState(
+    mot: 'search-web' | 'gen-image' | 'code-exec', text: string,
+    opts: { opId: string, state?: 'done' | 'error', parentOpId?: string, iTexts?: string[], oTexts?: string[] },
+  ) {
+    // Don't end message part - operation status should not interfere with content flow
+    this.transmissionQueue.push({
+      p: 'vp',
+      mot,
+      opId: opts.opId,
+      text,
+      ...opts.state ? { state: opts.state } : undefined,
+      ...opts.parentOpId ? { parentOpId: opts.parentOpId } : undefined,
+      ...opts.iTexts?.length ? { iTexts: opts.iTexts } : undefined,
+      ...opts.oTexts?.length ? { oTexts: opts.oTexts } : undefined,
+    } satisfies Extract<AixWire_Particles.PartParticleOp, { p: 'vp' }>);
+  }
+
+  /**
+   * Sends vendor-specific state modifier for the last emitted part.
+   * This attaches opaque protocol state (e.g., Gemini thoughtSignature) without polluting core part schemas.
+   */
+  sendSetVendorState(svs: Extract<AixWire_Particles.PartParticleOp, { p: 'svs' }>) {
+    // queue vendor state particle immediately after the content part has been queued (and if text, it will be emitted sooner anyway)
+    this.transmissionQueue.push(svs);
+  }
+
   /** Communicates the model name to the client */
   setModelName(modelName: string) {
     this.transmissionQueue.push({
       cg: 'set-model',
       name: modelName,
     });
+    // send it right away if there's no other content (this may be the first particle)
+    if (this.currentPart === null && this.currentText === null)
+      this._queueParticleS();
+  }
+
+  /** Communicates the provider name to the client (e.g., OpenRouter provider routing) */
+  setProviderInfraLabel(label: string) {
+    this.transmissionQueue.push({
+      cg: 'set-provider-infra',
+      label: label,
+    });
+  }
+
+  /** Communicates the upstream response handle, for remote control/resumability */
+  setUpstreamHandle(handle: string, type: 'vnd.oai.responses' | 'vnd.gem.interactions') {
+    if (SERVER_DEBUG_WIRE)
+      console.log('|response-handle|', type, handle);
+    // NOTE: if needed, we could store the handle locally for server-side resumability, but we just implement client-side (correction, manual) for now
+    // createdAt/expiresAt are server-clock at emit time; on reattach the server has no knowledge of the original create,
+    // so it emits fresh values. The client reassembler preserves the earliest values for a given runId.
+    const now = Date.now();
+    const expireDays = type === 'vnd.gem.interactions'
+      ? 1 // Gemini Interactions: 1d free / 55d paid - use the conservative lower bound
+      : 30; // OpenAI Responses: default 30 days
+    this.transmissionQueue.push({
+      cg: 'set-upstream-handle',
+      handle: {
+        uht: type,
+        runId: handle,
+        createdAt: now,
+        expiresAt: now + expireDays * 24 * 3600 * 1000,
+      },
+    });
+    // send it right away, in case the connection closes soon
+    this._queueParticleS();
   }
 
   /** Update the metrics, sent twice (after the first call, and then at the end of the transmission) */

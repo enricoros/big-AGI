@@ -163,7 +163,6 @@ export class AudioRecorderEngine implements IRecognitionEngine {
 
 }
 
-// Modified function to send audioBlob to your backend
 async function _transcribeDeepframFrontend(audioBlob: Blob): Promise<string> {
   const formData = new FormData();
   formData.append('file', audioBlob, 'audio.webm');

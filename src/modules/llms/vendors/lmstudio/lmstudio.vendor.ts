@@ -1,26 +1,24 @@
 import type { IModelVendor } from '../IModelVendor';
-import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
+import type { OpenAIAccessSchema } from '../../server/openai/openai.access';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
-
-import { LMStudioServiceSetup } from './LMStudioServiceSetup';
-import { LMStudioIcon } from '~/common/components/icons/vendors/LMStudioIcon';
 
 
 interface DLMStudioServiceSettings {
   oaiHost: string;  // use OpenAI-compatible non-default hosts (full origin path)
+  csf?: boolean;
 }
 
 export const ModelVendorLMStudio: IModelVendor<DLMStudioServiceSettings, OpenAIAccessSchema> = {
   id: 'lmstudio',
   name: 'LM Studio',
   displayRank: 52,
+  displayGroup: 'local',
   location: 'local',
   instanceLimit: 1,
 
-  // components
-  Icon: LMStudioIcon,
-  ServiceSetupComponent: LMStudioServiceSetup,
+  /// client-side-fetch ///
+  csfAvailable: _csfLMStudioAvailable,
 
   // functions
   initializeSetup: () => ({
@@ -28,14 +26,20 @@ export const ModelVendorLMStudio: IModelVendor<DLMStudioServiceSettings, OpenAIA
   }),
   getTransportAccess: (partialSetup) => ({
     dialect: 'lmstudio',
+    clientSideFetch: _csfLMStudioAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: '',
     oaiOrg: '',
     oaiHost: partialSetup?.oaiHost || '',
     heliKey: '',
-    moderationCheck: false,
   }),
 
   // OpenAI transport ('lmstudio' dialect in 'access')
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
 
 };
+
+function _csfLMStudioAvailable(_s?: Partial<DLMStudioServiceSettings>) {
+  // always available for local vendors - LM Studio defaults to http://localhost:1234
+  // was: return !!s?.oaiHost;
+  return true;
+}

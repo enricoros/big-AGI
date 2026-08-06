@@ -18,10 +18,11 @@ import { Release } from '~/common/app.release';
 import { clientUtmSource } from '~/common/util/pwaUtils';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
 
-import { beamBlogUrl } from './beam.data';
-
 
 // Cover Images
+// A capybara created from the intersection of two perfect spheres, creating a unique geometric form. Made of frosted glass with black sunglasses. Sitting on a platform where two squares overlap - their intersection glows softly. The overlapping area contains the word "OPEN" in clean sans-serif. White background with geometric shadows.
+// - rewritten: A geometric sculpture that resembles a capybara, formed through the intersection of two perfect spheres. The form appears to be made of frosted glass and dons black sunglasses. It is situated on a platform where two squares intersect, creating a softly glowing area. Inscribed in this overlap is the word 'OPEN' in a clean sans-serif font. The entire scene is set against a white backdrop and includes geometric shadows, providing a modern and abstract feel.
+import coverV200 from '../../../public/images/covers/release-cover-v2.0.0.png';
 // A landscape image of a capybara made entirely of clear, translucent crystal, wearing oversized black sunglasses, sitting at a sleek, minimalist desk. The desk is bathed in a soft, ethereal light emanating from within the capybara, symbolizing clarity and transparency. The capybara is typing on a futuristic, holographic keyboard, with floating code snippets and diagrams surrounding it, illustrating an improved developer experience and Auto-Diagrams feature. The background is a clean, white space with subtle, geometric patterns. Close-up photography style with a bokeh effect.
 import coverV116 from '../../../public/images/covers/release-cover-v1.16.0.png';
 // (not exactly) Imagine a futuristic, holographically bounded space. Inside this space, four capybaras stand. Three of them are in various stages of materialization, their forms made up of thousands of tiny, vibrant particles of electric blues, purples, and greens. These particles represent the merging of different intelligent inputs, symbolizing the concept of 'Beaming'. Positioned slightly towards the center and ahead of the others, the fourth capybara is fully materialized and composed of shimmering golden cotton candy, representing the optimal solution the 'Beam' feature seeks to achieve. The golden capybara gazes forward confidently, embodying a target achieved. Illuminated grid lines softly glow on the floor and walls of the setting, amplifying the futuristic aspect. In front of the golden capybara, floating, holographic interfaces depict complex networks of points and lines symbolizing the solution space 'Beaming' explores. The capybara interacts with these interfaces, implying the user's ability to control and navigate towards the best outcomes.
@@ -32,6 +33,9 @@ import coverV114 from '../../../public/images/covers/release-cover-v1.14.0.png';
 import coverV113 from '../../../public/images/covers/release-cover-v1.13.0.png';
 // An image of a capybara sculpted entirely from black cotton candy, set against a minimalist backdrop with splashes of bright, contrasting sparkles. The capybara is calling on a 3D origami old-school pink telephone and the camera is zooming on the telephone. Close up photography, bokeh, white background.
 import coverV112 from '../../../public/images/covers/release-cover-v1.12.0.png';
+
+
+const beamBlogUrl = 'https://big-agi.com/blog/beam-multi-model-ai-reasoning/';
 
 
 interface NewsItem {
@@ -50,18 +54,93 @@ interface NewsItem {
   }[];
 }
 
+
+const _frontendBuild = Release.buildInfo('frontend');
+const _frontendPkgVersion = _frontendBuild.pkgVersion ?? 'open/main';
+export const newsFrontendTimestamp = _frontendBuild.timestamp;
+
+export const DevNewsItem: NewsItem = {
+  versionCode: 'DEV',
+  versionName: 'Development Build',
+  versionDate: undefined,
+  items: [
+    { text: <>You&apos;re running an unsupported <B>developer build</B> of Big-AGI Open {_frontendPkgVersion}</> },
+    { text: <>Please report screenshots of breakages and console error messages</> },
+    { text: <ExternalLink href='https://big-agi.com'>Back to the official version</ExternalLink> },
+  ],
+} as const;
+
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   {
-    versionCode: Release.App.versionCode,
-    versionName: Release.App.versionName,
-    versionDate: new Date('2024-10-15T01:00:00Z'),
+    versionCode: '2.0.5',
+    versionName: 'Roberto',
+    versionDate: new Date('2026-05-13T12:00:00Z'),
     items: [
-      { text: <>You&apos;re running an <B>unsupported Early Access</B> build of Big-AGI V2. This version is used by developers to implement long-term breaking features.</> },
-      { text: <>This branch previews experimental features that are subject to change and may break without notice.</> },
-      { text: <>Please report screenshots of breakages and console error messages.</> },
-      { text: <>Please note that this is not the official release.</> },
-      { text: <>For stable releases: <ExternalLink href='https://big-agi.com'>big-agi.com</ExternalLink>.</> },
+      { text: <><B>Opus 4.7</B> with 1M context, <B>GPT-5.5</B>, <B>DeepSeek V4</B> Flash & Pro, <B>Gemini 3.1 Flash</B> family, <B>Grok 4.3</B>, <B>Kimi K2.6</B></> },
+      { text: <><B>Anthropic Containers</B>: persistent files, Skills, bash sessions, dynamic filtering across turns</> },
+      { text: <><B>MiniMax</B> and <B>Arcee AI</B> vendors; expanded Ollama, OpenRouter, Chutes catalogs</> },
+      { text: <>Beam: auto-titles, no accidental wipe, no ghost columns, edit fixes, regression fixes</> },
+      { text: <>Fixes: OpenAI Responses tools, encrypted reasoning</> },
+    ],
+  },
+  {
+    versionCode: '2.0.4',
+    versionName: 'Hyper Params',
+    versionDate: new Date('2026-03-25T12:00:00Z'),
+    items: [
+      { text: <><B>Opus 4.6</B> adaptive thinking 1M tokens, <B>Sonnet 4.6</B>, <B>GPT-5.4</B> family, <B>Gemini 3.1 Pro</B>, <B>Nano Banana 2</B>, <B>Grok 4.20</B>, <B>Z.ai</B> models</> },
+      { text: <>Improved parameter accuracy for reasoning effort, verbosity, and temperature</> },
+      { text: <><B issue={965}>AWS Bedrock</B>: native Anthropic, Amazon Nova, and OpenAI-compatible</> },
+      { text: <>Anthropic: <B>Fast mode</B>, <B>continuation</B>, search depth US-inference</> },
+      { text: <><B issue={945}>Attachments on any message</B>, lossless images, focus mode</> },
+      { text: <>Rich text copy, reasoning trace controls, and more fixes</> },
+    ],
+  },
+  {
+    versionCode: '2.0.3',
+    versionName: 'Red Carpet',
+    versionDate: new Date('2026-02-03T12:00:00Z'),
+    items: [
+      { text: <><B>Kimi K2.5</B>, <B>Gemini 3 Flash</B>, <B>GPT Image 1.5</B>, <B>GPT 5.2 Codex</B>, <B issue={921}>Novita.ai</B> models, and xAI search and code execution</> },
+      { text: <><B issue={943}>Google Drive</B>: attach docs, sheets, images with optimal LLM conversion</> },
+      { text: <>Speech: new <B href='https://inworld.ai'>Inworld</B> support, cancelable, unlimited length</> },
+      { text: <>Copy as-seen, reorder messages, AI Injector, PDF auto-OCR</> },
+      { text: <>Models: <B issue={941}>duplication</B>, improved parameters, cleaner UI</> },
+      { text: <>Fixes, security patches, CJK/IME input</> },
+      { text: <>Developers: new Docker build, faster, and smaller containers, AI request injection capabilities in the inspector</>, dev: true },
+    ],
+  },
+  {
+    versionCode: '2.0.2',
+    versionName: 'Heavy Critters',
+    versionDate: new Date('2025-12-01T06:00:00Z'), // 2.0.2
+    // versionDate: new Date('2025-11-24T23:30:00Z'), // 2.0.1
+    items: [
+      { text: <><B>New in 2.0.2</B> Speech synthesis with Web Speech, LocalAI, OpenAI and more</> },
+      { text: <><B>Opus 4.5</B>, <B>Gemini 3 Pro</B>, <B>Nano Banana Pro</B>, <B>Grok 4.1</B>, <B>GPT-5.1</B>, <B>Kimi K2</B></> },
+      { text: <><B>Image Generation</B> with Azure and LocalAI providers, in addition to OpenAI</> },
+      { text: <>Enhanced <B>OpenRouter</B> integration with auto-capabilities and reasoning</> },
+      { text: <>Call transcripts, generate persona images, search button in beams</> },
+      { text: <>Starred models, errors resilience, 278 fixes</> },
+      { text: <ExternalLink href='https://github.com/enricoros/big-agi/issues/new?template=ai-triage.yml'>AI-Automatic feature development</ExternalLink> },
+    ],
+  },
+  {
+    versionCode: '2.0.0',
+    versionName: 'Open',
+    versionDate: new Date('2025-10-31T15:00:00Z'),
+    versionCoverImage: coverV200,
+    items: [
+      { text: <><B wow>Big-AGI Open</B> is ready and more productive and faster than ever, with:</> },
+      { text: <><B>Beam 2</B>: multi-modal, program-based, follow-ups, save presets</> },
+      { text: <>Top-notch AI models support including <B>agentic models</B> and <B>reasoning models</B></> },
+      { text: <><B>Image Generation</B> and editing with Nano Banana and gpt-image-1</> },
+      { text: <><B>Web Search</B> with citations for supported models</> },
+      { text: <><B>UI</B> &amp; Mobile UI overhaul with peeking and side panels</> },
+      // { text: <><B>Performance</B>: 10x faster tokenization, lazy modals, fragment system</> },
+      { text: <>And many more <ExternalLink href='https://github.com/enricoros/big-AGI/issues/567#issuecomment-2262187617'>Big-AGI 2 changes</ExternalLink></> },
+      { text: <>Built for the future, madly optimized</> },
     ],
   },
   {
@@ -90,7 +169,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>1.16.7: Gpt-4o <B>2024-08-06</B></> },
       { text: <>1.16.8: <B>ChatGPT-4o</B> latest</> },
       { text: <>1.16.9: <B>Gemini</B> fixes</> },
-      { text: <>OpenAI <B>o1</B>, DeepSeek R1, and newer models require Big-AGI 2. <B href='https://y2rjg0zillz.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=news&utm_campaign=ea2'>Sign up here</B></> },
+      { text: <>OpenAI <B>o1</B>, DeepSeek R1, and newer models require Big-AGI Open. <B href='https://form.typeform.com/to/ZSADpr5u?utm_source=gh-2&utm_medium=news&utm_campaign=ea2'>Sign up here</B></> },
     ],
   },
   {
@@ -121,10 +200,10 @@ export const NewsItems: NewsItem[] = [
       { text: <>Support for new Mistral-Large models</>, icon: MistralIcon },
       { text: <>Support for Google Gemini 1.5 models and various improvements</>, icon: GoogleIcon as any },
       { text: <>Deeper LocalAI integration including support for <B issue={411}>model galleries</B></>, icon: LocalAIIcon },
-      { text: <>Major <B href='https://twitter.com/enricoros/status/1756553038293303434'>performance optimizations</B>: runs faster, saves power, saves memory</> },
+      { text: <>Major <B href='https://x.com/enricoros/status/1756553038293303434'>performance optimizations</B>: runs faster, saves power, saves memory</> },
       { text: <>Improvements: auto-size charts, search and folder experience</> },
       { text: <>Perfect chat scaling, with rapid keyboard shortcuts</> },
-      { text: <>Also: diagrams auto-resize, open code with StackBlitz and JSFiddle, quick model visibility toggle, open links externally, docs on the web</> },
+      { text: <>Also: diagrams auto-resize, quick model visibility toggle, open links externally, docs on the web</> },
       { text: <>Fixes: standalone LaTeX blocks, close views by dragging, knowledge cutoff dates, crashes on Google translate (thanks dad)</> },
     ],
   },
@@ -147,7 +226,7 @@ export const NewsItems: NewsItem[] = [
   {
     versionCode: '1.12',
     versionName: 'AGI Hotline',
-    versionMoji: '✨🗣️',
+    // versionMoji: '✨🗣️',
     versionDate: new Date('2024-01-26T12:30:00Z'),
     versionCoverImage: coverV112,
     items: [
@@ -265,7 +344,6 @@ export const NewsItems: NewsItem[] = [
       { text: <><B issue={194}>Text Tools</B> including highlight differences</> },
       { text: <><B href='https://mermaid.js.org/'>Mermaid</B> Diagramming Rendering</> },
       { text: <><B>OpenAI 1106</B> Chat Models</> },
-      { text: <><B>SDXL</B> support with Prodia</> },
       { text: <>Cloudflare OpenAI API Gateway</> },
       { text: <>Helicone for Anthropic</> },
     ],
@@ -309,7 +387,7 @@ export const NewsItems: NewsItem[] = [
       { text: <Box sx={{ display: 'flex', alignItems: 'center' }}>Labs: experiments</Box> }, // ⚗️🧬🔬🥼 🥽🧪 <ScienceIcon sx={{ fontSize: 24, opacity: 0.5 }} />
     ],
   },
-];
+] as const;
 
 
 function B(props: {

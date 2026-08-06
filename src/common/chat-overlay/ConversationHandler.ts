@@ -5,6 +5,8 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 import { SystemPurposes } from '../../data';
 
 import { BeamStore, createBeamVanillaStore } from '~/modules/beam/store-beam_vanilla';
+import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
+import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
@@ -14,7 +16,7 @@ import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from 
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
-import { getChatAutoAI } from '../../apps/chat/store-app-chat';
+import { getChatAutoAI, getChatThinkingPolicy } from '../../apps/chat/store-app-chat';
 
 import { createDEphemeral, EPHEMERALS_DEFAULT_TIMEOUT } from './store-perchat-ephemerals_slice';
 import { createPerChatVanillaStore, PerChatOverlayStore } from './store-perchat_vanilla';
@@ -38,6 +40,12 @@ export class ConversationHandler {
   constructor(private readonly conversationId: DConversationId) {
     this.beamStore = createBeamVanillaStore();
     this.overlayStore = createPerChatVanillaStore();
+
+    // track the open status of beams - this is meant to be an accelerator for the UI
+    this.beamStore.subscribe((state, prevState) => {
+      if (state.isOpen === prevState.isOpen) return;
+      useModuleBeamStore.getState().setBeamOpenForConversation(this.conversationId, state.isOpen);
+    });
   }
 
 
@@ -131,7 +139,7 @@ export class ConversationHandler {
 
   /**
    * @param text assistant text
-   * @param generatorName LlmId or string, such as 'DALL·E' | 'Prodia' | 'react-...' | 'web'
+   * @param generatorName LlmId or string, such as 'GPT Image' | 'DALL·E' | 'react-...' | 'web'
    */
   messageAppendAssistantText(text: string, generatorName: Extract<DMessageGenerator, { mgt: 'named' }>['name']): void {
     const message = createDMessageTextContent('assistant', text);
@@ -220,6 +228,11 @@ export class ConversationHandler {
     return _chatStoreActions.historyView(this.conversationId)?.find(m => m.id === messageId);
   }
 
+  /** Strips thinking fragments from assistant messages, preserving `keepCount` most recent (0 = discard all, 1 = keep last only). */
+  historyStripThinking(keepCount: number): void {
+    return _chatStoreActions.historyStripThinking(this.conversationId, keepCount);
+  }
+
   title(): string | undefined {
     return _chatStoreActions.title(this.conversationId);
   }
@@ -254,8 +267,19 @@ export class ConversationHandler {
         this.messageAppend(newMessage);
       }
 
+      // post-result: strip reasoning traces per user's thinking policy (issue #1003)
+      const chatThinkingPolicy = getChatThinkingPolicy();
+      if (chatThinkingPolicy === 'last-only')
+        this.historyStripThinking(1);
+      else if (chatThinkingPolicy === 'discard-all')
+        this.historyStripThinking(0);
+
       // close beam
       terminateKeepingSettings();
+
+      // auto-title the conversation if enabled (parity with chat-persona flow — fixes #1078)
+      if (getChatAutoAI().autoTitleChat)
+        void autoConversationTitle(this.conversationId, false);
     };
 
     beamOpen(viewHistory, getChatLLMId(), !!destReplaceMessageId, onBeamSuccess);

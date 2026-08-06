@@ -1,17 +1,19 @@
 import type { StateCreator } from 'zustand/vanilla';
 
-import { AixChatGenerateContent_DMessage, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessageGuts, AixReattachMode, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
+import { abortWithReason } from '~/common/util/errorUtils';
 import { agiUuid } from '~/common/util/idUtils';
 import { createDMessageEmpty, DMessage, duplicateDMessage, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
-import { createPlaceholderVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { createPlaceholderVoidFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
-import { getUXLabsHighPerformance } from '~/common/state/store-ux-labs';
+import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
 
 import type { RootStoreSlice } from '../store-beam_vanilla';
 import { SCATTER_DEBUG_STATE, SCATTER_PLACEHOLDER } from '../beam.config';
+import { beamMergeStreamedGuts, beamReattachStream } from '../beam.reattach';
 import { updateBeamLastConfig } from '../store-module-beam';
 
 
@@ -40,7 +42,7 @@ export function createBRayEmpty(llmId: DLLMId | null): BRay {
   };
 }
 
-function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage[], onlyIdle: boolean, scatterStore: ScatterStoreSlice): BRay {
+function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage[], onlyIdle: boolean, playNice: boolean, scatterStore: ScatterStoreSlice): BRay {
   if (ray.genAbortController)
     return ray;
   if (onlyIdle && ray.status !== 'empty')
@@ -60,15 +62,17 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
 
   const abortController = new AbortController();
 
-  const onMessageUpdated = (incrementalMessage: AixChatGenerateContent_DMessage, completed: boolean) => {
-    const { fragments: incrementalFragments, ...incrementalRest } = incrementalMessage;
+  const onMessageUpdated = (messageOverwriteShallow: AixChatGenerateContent_DMessageGuts, completed: boolean) => {
+
+    // fragments and generator are already immutable (new refs per update) - no deep clone needed
+    const { fragments, ...rest } = messageOverwriteShallow;
+    const hasFragments = !!fragments?.length;
     _rayUpdate(ray.rayId, (ray) => ({
       message: {
         ...ray.message,
-        ...(incrementalFragments?.length ? { fragments: [...incrementalFragments] } : {}),
-        ...incrementalRest,
+        ...(hasFragments ? { fragments, updated: Date.now() } : {}),
+        ...rest,
         ...(completed ? { pendingIncomplete: undefined } : {}), // clear the pending flag once the message is complete
-        ...(incrementalFragments?.length ? { updated: Date.now() } : {}), // refresh the update timestamp once the content comes
       },
     }));
   };
@@ -79,17 +83,17 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
     scatterSystemInstruction,
     scatterInputHistory,
     'beam-scatter', ray.rayId,
-    { abortSignal: abortController.signal, throttleParallelThreads: getUXLabsHighPerformance() ? 0 : rays.length },
+    { abortSignal: abortController.signal, throttleParallelThreads: getLabsHighPerformance() ? 0 : !playNice ? 1 : rays.length },
     onMessageUpdated,
   )
     .then((status) => {
       const clearFragments = messageWasInterruptedAtStart(status.lastDMessage);
       _rayUpdate(ray.rayId, {
         ...(clearFragments && { message: createDMessageEmpty('assistant') }),
-        status: (status.outcome === 'success') ? 'success'
+        status: (status.outcome === 'completed') ? 'success'
           : (status.outcome === 'aborted') ? 'stopped'
-            : (status.outcome === 'errored') ? 'error' : 'empty',
-        scatterIssue: status.errorMessage || undefined,
+            : (status.outcome === 'failed') ? 'error' : 'empty',
+        scatterIssue: status.outcomeFailedMessage || undefined,
         genAbortController: undefined,
       });
     })
@@ -118,7 +122,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
 }
 
 function rayScatterStop(ray: BRay): BRay {
-  ray.genAbortController?.abort();
+  abortWithReason(ray.genAbortController, 'Beam Stopped');
   return {
     ...ray,
     ...(ray.status === 'scattering' ? { status: 'stopped' } : {}),
@@ -186,10 +190,14 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
   removeRay: (rayId: BRayId) => void;
   importRays: (messages: DMessage[], raysLlmIdFallback: DLLMId | null) => void;
   setRayLlmIds: (rayLlmIds: DLLMId[]) => void;
-  startScatteringAll: () => void;
+  startScatteringAll: (restart: boolean) => void;
   stopScatteringAll: () => void;
   rayToggleScattering: (rayId: BRayId) => void;
+  rayReattach: (rayId: BRayId, mode: AixReattachMode) => void;
+  rayClearUpstreamHandle: (rayId: BRayId) => void;
   raySetLlmId: (rayId: BRayId, llmId: DLLMId | null) => void;
+  rayDeleteFragment: (rayId: BRayId, fragmentId: DMessageFragmentId) => void;
+  rayReplaceFragment: (rayId: BRayId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void;
   _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => void;
 
   _storeLastScatterConfig: () => void;
@@ -307,11 +315,15 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
   },
 
 
-  startScatteringAll: () => {
+  startScatteringAll: (restart: boolean) => {
     const { inputHistory } = _get();
     _set(state => ({
       // Start all rays
-      rays: state.rays.map(ray => rayScatterStart(ray, ray.rayLlmId, inputHistory || [], false, _get())),
+      rays: state.rays.map(ray =>
+        (!restart || ray.status !== 'empty')
+          ? rayScatterStart(ray, ray.rayLlmId, inputHistory || [], false, true, _get())
+          : ray
+      ),
     }));
     _get()._syncRaysStateToScatter();
   },
@@ -328,10 +340,53 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
     _rayUpdate(rayId, (ray) =>
       ray.status === 'scattering'
         ? /* User Terminated the ray */ rayScatterStop(ray)
-        : /* User Started the ray */ rayScatterStart(ray, ray.rayLlmId, inputHistory || [], false, _get()),
+        : /* User Started the ray */ rayScatterStart(ray, ray.rayLlmId, inputHistory || [], false, false, _get()),
     );
     _syncRaysStateToScatter();
   },
+
+  // Gemini Interactions (Deep Research) resume: re-stream (replay) or one-shot fetch (snapshot) the
+  // upstream-stored run into this ray. Enters 'scattering' so the header Stop aborts it (= detach, the
+  // background run survives) and the resume block hides. See kb/modules/LLM-gemini-interactions.md.
+  rayReattach: (rayId: BRayId, mode: AixReattachMode) => {
+    const { rays, _rayUpdate, _syncRaysStateToScatter } = _get();
+    const ray = rays.find(_r => _r.rayId === rayId);
+    if (!ray || ray.genAbortController) return; // missing, or already running
+    const generator = ray.message.generator;
+    if (!generator?.upstreamHandle) return;
+    const llmId = ray.rayLlmId || (generator.mgt === 'aix' ? generator.aix.mId : null);
+    if (!llmId) return;
+
+    const abortController = new AbortController();
+    beamReattachStream({
+      llmId, generator, contextName: 'beam-scatter', contextRef: rayId, mode,
+      abortSignal: abortController.signal,
+      onMessageUpdate: (guts, completed) => _rayUpdate(rayId, (ray) => ({ message: beamMergeStreamedGuts(ray.message, guts, completed) })),
+      onTerminal: (outcome) => {
+        _rayUpdate(rayId, (ray) => ({
+          status: (outcome === 'completed') ? 'success' : (outcome === 'failed') ? 'error' : 'stopped',
+          genAbortController: undefined,
+          message: { ...ray.message, pendingIncomplete: undefined },
+        }));
+        _syncRaysStateToScatter();
+      },
+    });
+
+    // optimistic: enter scattering (header shows Stop, resume block hides)
+    _rayUpdate(rayId, (ray) => ({
+      status: 'scattering',
+      scatterIssue: undefined,
+      genAbortController: abortController,
+      message: { ...ray.message, pendingIncomplete: true },
+    }));
+    _syncRaysStateToScatter();
+  },
+
+  rayClearUpstreamHandle: (rayId: BRayId) =>
+    _get()._rayUpdate(rayId, (ray) => {
+      if (!ray.message.generator?.upstreamHandle) return {};
+      return { message: { ...ray.message, generator: { ...ray.message.generator, upstreamHandle: undefined } } };
+    }),
 
   raySetLlmId: (rayId: BRayId, llmId: DLLMId | null) => {
     const { _rayUpdate, _storeLastScatterConfig } = _get();
@@ -340,6 +395,46 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
     });
     _storeLastScatterConfig();
   },
+
+  rayDeleteFragment: (rayId: BRayId, fragmentId: DMessageFragmentId) =>
+    _get()._rayUpdate(rayId, (ray) => {
+      // Find the fragment to delete
+      const fragmentIndex = ray.message.fragments.findIndex(f => f.fId === fragmentId);
+      if (fragmentIndex < 0) {
+        console.error(`rayDeleteFragment: Fragment not found for ID ${fragmentId} in ray ${rayId}`);
+        return {};
+      }
+
+      return {
+        message: {
+          ...ray.message,
+          fragments: ray.message.fragments.filter((_, index) => index !== fragmentIndex),
+          updated: Date.now(),
+        },
+      };
+    }),
+
+  rayReplaceFragment: (rayId: BRayId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) =>
+    _get()._rayUpdate(rayId, (ray) => {
+      // Find the fragment to replace
+      const fragmentIndex = ray.message.fragments.findIndex(f => f.fId === fragmentId);
+      if (fragmentIndex < 0) {
+        console.error(`rayReplaceFragment: Fragment not found for ID ${fragmentId} in ray ${rayId}`);
+        return {};
+      }
+
+      return {
+        message: {
+          ...ray.message,
+          fragments: ray.message.fragments.map((fragment, index) =>
+            (index === fragmentIndex)
+              ? { ...newFragment }
+              : fragment,
+          ),
+          updated: Date.now(),
+        },
+      };
+    }),
 
   _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) =>
     _set(state => ({

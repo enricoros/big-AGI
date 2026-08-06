@@ -1,3 +1,7 @@
+---
+unlisted: true
+---
+
 # Big-AGI Advanced Tips & Tricks
 
 > 🚨 This file is not meant for publication, and it's just been created as a handbook with tips

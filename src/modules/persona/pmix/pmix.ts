@@ -8,6 +8,10 @@ import { getChatAutoAI } from '../../../apps/chat/store-app-chat';
 import { PPromptMixerContext, PromptVariableRegistry } from './pmix.parameters';
 
 
+// configuration
+const REMOVE_ALL_LINE_IF_MISSING_LLM = true; // remove all lines if LLM is missing
+
+
 export function replacePromptVariables(template: string, context: PPromptMixerContext): string {
   let mixed = template;
 
@@ -22,11 +26,17 @@ export function replacePromptVariables(template: string, context: PPromptMixerCo
 
     // validate presence of dependencies
     if (definition.dependencies?.assistantLlmId && !context.assistantLlmId) {
-      console.log(`[DEV] replacePromptVariables: skipping ${variable} due to missing LLM ID`);
+      if (REMOVE_ALL_LINE_IF_MISSING_LLM)
+        mixed = mixed.replaceAll(new RegExp(`.*${variable}.*\n?`, 'g'), '');
+      else
+        console.log(`[DEV] replacePromptVariables: skipping ${variable} due to missing LLM ID`);
       continue;
     }
     if (definition.dependencies?.lowHourPrecision && context.lowHourPrecision === undefined) {
-      console.log(`[DEV] replacePromptVariables: skipping ${variable} due to missing lowHourPrecision`);
+      if (REMOVE_ALL_LINE_IF_MISSING_LLM)
+        mixed = mixed.replaceAll(new RegExp(`.*${variable}.*\n?`, 'g'), '');
+      else
+        console.log(`[DEV] replacePromptVariables: skipping ${variable} due to missing lowHourPrecision`);
       continue;
     }
 
@@ -56,6 +66,10 @@ export function replacePromptVariables(template: string, context: PPromptMixerCo
   if (context.customFields)
     for (const [placeholder, replacement] of Object.entries(context.customFields))
       mixed = mixed.replaceAll(placeholder, replacement);
+
+  // Remove deprecated variables (whole line removal)
+  // - {{LLM.Cutoff}} - deprecated on 2026-01-29; not used, maybe back to gpt-4, but then we could just update those prompts
+  mixed = mixed.replaceAll(/.*\{\{LLM\.Cutoff}}.*\n/g, '');
 
   // At most leave 2 newlines in a row
   mixed = mixed.replace(/\n{3,}/g, '\n\n');

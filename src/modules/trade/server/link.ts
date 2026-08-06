@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 import { LinkStorageDataType, LinkStorageVisibility } from '@prisma/client';
 
@@ -15,14 +15,13 @@ const DEFAULT_EXPIRES_SECONDS = 60 * 60 * 24 * 30; // 30 days
 /// Zod schemas
 
 const dataTypesSchema = z.enum([LinkStorageDataType.CHAT_V1]);
-const dataSchema = z.object({}).passthrough();
 
 
 const storagePutInputSchema = z.object({
   ownerId: z.string().optional(),
   dataType: dataTypesSchema,
   dataTitle: z.string().optional(),
-  dataObject: dataSchema,
+  dataObject: z.any(), // was .passthrough()
   expiresSeconds: z.number().optional(),
 });
 
@@ -52,7 +51,7 @@ export const storageGetOutputSchema = z.union([
     type: z.literal('success'),
     dataType: dataTypesSchema,
     dataTitle: z.string().nullable(),
-    dataObject: dataSchema,
+    dataObject: z.any(), // was .passthrough()
     storedAt: z.date(),
     expiresAt: z.date().nullable(),
   }),

@@ -31,6 +31,12 @@ file.
 
 ### Official Images: [ghcr.io/enricoros/big-agi](https://github.com/enricoros/big-agi/pkgs/container/big-agi)
 
+#### Available Tags
+
+- **`:latest`** / **`:stable`** - Latest stable release (recommended)
+- **`:development`** - Main branch (bleeding edge)
+- **`:v2.0.0`** - Specific versions
+
 #### Run using *docker* 🚀
 
 ```bash

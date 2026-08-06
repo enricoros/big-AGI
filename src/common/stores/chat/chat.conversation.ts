@@ -16,6 +16,8 @@ export interface DConversation {
   userTitle?: string;
   autoTitle?: string;
 
+  isArchived?: boolean;               // TODO: this is too simple - convert to improved meta information - for now this will do
+
   // temp flags
   _isIncognito?: boolean;             // simple implementation: won't store this conversation (note: side effects should be evaluated, images seem to be gc'd correctly, but not sure if this is really incognito)
   userSymbol?: string;                // TODO: let the user customize this - there may be a mapping elsewhere, but this is small enough and will do for now
@@ -37,7 +39,7 @@ export interface DConversation {
 
   // future additions:
   // draftUserMessage?: { text: string; attachments: any[] };
-  // isMuted: boolean; isArchived: boolean; isStarred: boolean;
+  // isMuted: boolean; isStarred: boolean;
   // participants: personaIds...[];
 }
 
@@ -56,6 +58,7 @@ export function createDConversation(systemPurposeId?: SystemPurposeId): DConvers
     // userTitle: undefined,
     // autoTitle: undefined,
     // userSymbol: undefined,
+    // isArchived: undefined,
 
     // @deprecated
     systemPurposeId: systemPurposeId || defaultSystemPurposeId,
@@ -92,6 +95,7 @@ export function duplicateDConversation(conversation: DConversation, lastMessageI
     // userTitle: conversation.userTitle, // undefined
     autoTitle: newTitle,
     userSymbol: conversation.userSymbol,
+    ...(conversation.isArchived !== undefined ? { isArchived: conversation.isArchived } : {}), // copy archival state if set
 
     systemPurposeId: conversation.systemPurposeId,
     tokenCount: conversation.tokenCount,

@@ -2,7 +2,7 @@ import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
 import { excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { getConversation, useChatStore } from '~/common/stores/chat/store-chats';
-import { getLLMIdOrThrow } from '~/common/stores/llms/store-llms';
+import { getDomainModelIdOrThrow } from '~/common/stores/llms/store-llms';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 
 
@@ -15,7 +15,7 @@ export async function autoConversationTitle(conversationId: string, forceReplace
   // use valid fast model
   let autoTitleLlmId;
   try {
-    autoTitleLlmId = getLLMIdOrThrow(['fast', 'chat'], false, false, 'conversation-titler');
+    autoTitleLlmId = getDomainModelIdOrThrow(['fastUtil'], false, false, 'conversation-titler');
   } catch (error) {
     console.log(`autoConversationTitle: ${error}`);
     return false;
@@ -29,7 +29,7 @@ export async function autoConversationTitle(conversationId: string, forceReplace
   const { setAutoTitle, setUserTitle } = useChatStore.getState();
   if (forceReplace) {
     setUserTitle(conversationId, '');
-    setAutoTitle(conversationId, '✨...');
+    setAutoTitle(conversationId, '✏️...');
   }
 
   // first line of the last 5 messages
@@ -49,7 +49,7 @@ export async function autoConversationTitle(conversationId: string, forceReplace
       autoTitleLlmId,
       'You are an AI conversation titles assistant who specializes in creating expressive yet few-words chat titles.',
       `Analyze the given short conversation (every line is truncated) and extract a concise chat title that summarizes the conversation in as little as a couple of words.
-Only respond with the lowercase short title and nothing else.
+Only respond with the short title and nothing else.
 
 \`\`\`
 ${historyLines.join('\n')}

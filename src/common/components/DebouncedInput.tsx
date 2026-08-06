@@ -23,8 +23,8 @@ const DebouncedInput: React.FC<DebounceInputProps> = (props: DebounceInputProps)
   // state
   const [inputValue, setInputValue] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
-  const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
-  const refocusTimerRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const debounceTimerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
+  const refocusTimerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // derived state
   const { debounceTimeout, minChars, onDebounce, aggressiveRefocus, ...rest } = props;
@@ -85,7 +85,7 @@ const DebouncedInput: React.FC<DebounceInputProps> = (props: DebounceInputProps)
       value={inputValue}
       onChange={handleChange}
       aria-label={rest['aria-label'] || 'Search'}
-      startDecorator={<SearchIcon />}
+      startDecorator={rest.startDecorator === undefined ? <SearchIcon /> : rest.startDecorator}
       onKeyDownCapture={!aggressiveRefocus ? undefined : (event) => {
         /* We stop the propagation of the event to prevent the parent component from handling it.
          * This is useful only when used inside a Select with options, as the select is eager to capture

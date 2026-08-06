@@ -12,7 +12,7 @@ import type { DMessageId } from '~/common/stores/chat/chat.message';
 import { getAllFilesFromDirectoryRecursively, getDataTransferFilesOrPromises } from '~/common/util/fileSystemUtils';
 import { useChatAttachmentsStore } from '~/common/chat-overlay/store-perchat_vanilla';
 
-import type { AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile, AttachmentDraftSourceOriginUrl } from './attachment.types';
+import type { AttachmentDraftSource, AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile, AttachmentDraftSourceOriginUrl } from './attachment.types';
 import type { AttachmentDraftsStoreApi } from './store-attachment-drafts_slice';
 
 
@@ -20,13 +20,27 @@ import type { AttachmentDraftsStoreApi } from './store-attachment-drafts_slice';
 const ATTACHMENTS_DEBUG_INTAKE = false;
 
 
+function notifyOnlyImages(item: any) {
+  if (ATTACHMENTS_DEBUG_INTAKE) console.log('useAttachmentDrafts: Filtered out non-image clipboard item.', { item });
+  addSnackbar({ key: 'attach-filtered', message: `Only image attachments are allowed right now.`, type: 'precondition-fail' });
+}
+
+
+export type AttachmentStoreCloudInput = Omit<Extract<AttachmentDraftSource, { media: 'cloud' }>, 'media' | 'origin'>;
+
+
+/** Inferred return type - used by composable source handler hooks. */
+export type AttachmentDraftsApi = ReturnType<typeof useAttachmentDrafts>;
+
+
 /**
  * @param attachmentsStoreApi A Per-Chat or standalone Attachment Drafts store.
  * @param enableLoadURLsOnPaste Only used if invoking attachAppendDataTransfer or attachAppendClipboardItems.
  * @param hintAddImages Attach an additional image representation of the attachment; only if Release.Features.ENABLE_TEXT_AND_IMAGES.
- * @param onFilterAGIFile If defined, run this async functiion on '.agi.json' files to decide whether to load them (if returns true) or attach them (if returns false).
+ * @param onFilterAGIFile If defined, run this async function on '.agi.json' files to decide whether to load them (if returns true) or attach them (if returns false).
+ * @param filterOnlyImages If true, only image attachments are allowed.
  */
-export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLsOnPaste: boolean, hintAddImages: boolean, onFilterAGIFile?: (file: File) => Promise<boolean>) {
+export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLsOnPaste: boolean, hintAddImages: boolean, onFilterAGIFile?: (file: File) => Promise<boolean>, filterOnlyImages?: boolean) {
 
   // state
   const { _createAttachmentDraft, attachmentDrafts, attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeFragmentsByType } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
@@ -52,10 +66,14 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
       if (onFilterAGIFile && await onFilterAGIFile(fileWithHandle))
         return;
 
+    // only-images: ignore by mime
+    if (filterOnlyImages && !fileWithHandle.type.startsWith('image/'))
+      return notifyOnlyImages(fileWithHandle);
+
     return _createAttachmentDraft({
       media: 'file', origin, fileWithHandle, refPath: overrideFileName || fileWithHandle.name,
     }, { hintAddImages });
-  }, [_createAttachmentDraft, hintAddImages, onFilterAGIFile]);
+  }, [_createAttachmentDraft, filterOnlyImages, hintAddImages, onFilterAGIFile]);
 
   /**
    * Append a URL, likely a web page or youtube transcript, to the attachments.
@@ -68,10 +86,16 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
     if (!validUrl)
       return false;
 
+    // only-images: ignore URLs as they are not direct images in this flow
+    if (filterOnlyImages) {
+      notifyOnlyImages(url);
+      return false;
+    }
+
     return _createAttachmentDraft({
       media: 'url', origin, url: validUrl, refUrl: refUrl || url,
     }, { hintAddImages });
-  }, [_createAttachmentDraft, hintAddImages]);
+  }, [_createAttachmentDraft, filterOnlyImages, hintAddImages]);
 
   /**
    * Append data transfer to the attachments.
@@ -144,9 +168,23 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
           // attach file with handle
           case 'file':
-            const fileWithHandle = await fileSystemHandle.getFile() as FileWithHandle;
-            fileWithHandle.handle = fileSystemHandle;
-            await attachAppendFile(method, fileWithHandle, overrideFileNames[fIdx]);
+            try {
+              const fileWithHandle = await fileSystemHandle.getFile() as FileWithHandle;
+              fileWithHandle.handle = fileSystemHandle;
+              await attachAppendFile(method, fileWithHandle, overrideFileNames[fIdx]);
+            } catch (error: any) {
+              // #845 - Handle NotAllowedError from Edge 141+ and other browsers with strict file permissions
+              if (error?.name === 'NotAllowedError') {
+                console.warn('[Attachments] File access denied, skipping file:', fileSystemHandle.name, error);
+                addSnackbar({
+                  key: 'attach-permission-denied',
+                  message: 'File access denied. Please try attaching again.',
+                  type: 'issue',
+                  overrides: { autoHideDuration: 3000 },
+                });
+              } else
+                console.error('[Attachments] Error accessing file:', fileSystemHandle.name, error);
+            }
             break;
 
           // attach all files in a directory as files with handles
@@ -177,6 +215,13 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // attach as Text/Html (further conversion, e.g. to markdown is done later)
     if (attachText && (textHtml || textPlain)) {
+
+      // only-images: skip this data transfer text attachment
+      if (filterOnlyImages) {
+        notifyOnlyImages(textPlain || textHtml);
+        return false;
+      }
+
       void _createAttachmentDraft({
         media: 'text', method, textPlain, textHtml,
       }, { hintAddImages });
@@ -189,7 +234,7 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // did not attach anything from this data transfer
     return false;
-  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, hintAddImages]);
+  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, filterOnlyImages, hintAddImages]);
 
   /**
    * Append clipboard items to the attachments.
@@ -214,7 +259,11 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
     for (const clipboardItem of clipboardItems) {
 
       // https://github.com/enricoros/big-AGI/issues/286
-      const textHtml = clipboardItem.types.includes('text/html') ? await clipboardItem.getType('text/html').then(blob => blob.text()) : '';
+      const textHtml = clipboardItem.types.includes('text/html')
+        ? await clipboardItem.getType('text/html')
+          .then(blob => blob?.text() ?? '')
+          .catch(() => '')
+        : '';
       const heuristicBypassImage = textHtml.startsWith('<table ');
 
       if (ATTACHMENTS_DEBUG_INTAKE)
@@ -238,8 +287,18 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
       if (imageAttached)
         continue;
 
+      // only-images: skip the rest
+      if (filterOnlyImages) {
+        notifyOnlyImages(clipboardItem);
+        continue;
+      }
+
       // get the Plain text
-      const textPlain = clipboardItem.types.includes('text/plain') ? await clipboardItem.getType('text/plain').then(blob => blob.text()) : '';
+      const textPlain = clipboardItem.types.includes('text/plain')
+        ? await clipboardItem.getType('text/plain')
+          .then(blob => blob?.text() ?? '')
+          .catch(() => '')
+        : '';
 
       // attach as URL
       if (textPlain && enableLoadURLsOnPaste) {
@@ -252,6 +311,13 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
       // attach as Text
       if (textHtml || textPlain) {
+
+        // only-images: skip this clipboard text attachment
+        if (filterOnlyImages) {
+          notifyOnlyImages(textPlain || textHtml);
+          return false;
+        }
+
         void _createAttachmentDraft({
           media: 'text', method: 'clipboard-read', textPlain, textHtml,
         }, { hintAddImages });
@@ -260,7 +326,28 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
       console.warn('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, hintAddImages]);
+  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, filterOnlyImages, hintAddImages]);
+
+  /**
+   * Append a cloud file (Google Drive, OneDrive, etc.) to the attachments.
+   * This is the entry point for cloud file picker integrations.
+   */
+  const attachAppendCloudFile = React.useCallback((cloudFile: AttachmentStoreCloudInput) => {
+    if (ATTACHMENTS_DEBUG_INTAKE)
+      console.log('attachAppendCloudFile', cloudFile);
+
+    // only-images: ignore cloud files as they may not be images
+    if (filterOnlyImages && !cloudFile.mimeType.startsWith('image/')) {
+      notifyOnlyImages(cloudFile);
+      return Promise.resolve();
+    }
+
+    return _createAttachmentDraft({
+      media: 'cloud',
+      origin: `picker-${cloudFile.provider}`,
+      ...cloudFile,
+    }, { hintAddImages });
+  }, [_createAttachmentDraft, filterOnlyImages, hintAddImages]);
 
   /**
    * Append ego content to the attachments.
@@ -289,6 +376,7 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // create drafts
     attachAppendClipboardItems,
+    attachAppendCloudFile,
     attachAppendDataTransfer,
     attachAppendEgoFragments,
     attachAppendFile,

@@ -1,11 +1,9 @@
-import { OpenRouterIcon } from '~/common/components/icons/vendors/OpenRouterIcon';
-
 import type { IModelVendor } from '../IModelVendor';
-import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
+import type { OpenAIAccessSchema } from '../../server/openai/openai.access';
+
+import { isLLMChatFree_cached } from '~/common/stores/llms/llms.pricing';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
-
-import { OpenRouterServiceSetup } from './OpenRouterServiceSetup';
 
 
 // special symbols
@@ -15,6 +13,8 @@ export const isValidOpenRouterKey = (apiKey?: string) => !!apiKey && apiKey.star
 export interface DOpenRouterServiceSettings {
   oaiKey: string;
   oaiHost: string;
+  csf?: boolean;
+  requireParameters?: boolean;
 }
 
 /**
@@ -32,14 +32,14 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
   id: 'openrouter',
   name: 'OpenRouter',
   displayRank: 40,
+  displayGroup: 'popular',
   location: 'cloud',
   instanceLimit: 1,
   hasFreeModels: true,
-  hasBackendCapKey: 'hasLlmOpenRouter',
+  hasServerConfigKey: 'hasLlmOpenRouter',
 
-  // components
-  Icon: OpenRouterIcon,
-  ServiceSetupComponent: OpenRouterServiceSetup,
+  /// client-side-fetch ///
+  csfAvailable: _csfOpenRouterAvailable,
 
   // functions
   initializeSetup: (): DOpenRouterServiceSettings => ({
@@ -48,18 +48,19 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
   }),
   getTransportAccess: (partialSetup): OpenAIAccessSchema => ({
     dialect: 'openrouter',
+    clientSideFetch: _csfOpenRouterAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: partialSetup?.oaiKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.oaiHost || '',
     heliKey: '',
-    moderationCheck: false,
+    ...(partialSetup?.requireParameters ? { orRequireParameters: true } : {}),
   }),
 
   // there is delay for OpenRouter Free API calls
   rateLimitChatGenerate: async (llm) => {
     const now = Date.now();
     const elapsed = now - nextGenerationTs;
-    const wait = llm.pricing?.chat?._isFree
+    const wait = isLLMChatFree_cached(llm)
       ? 5000 + 100 /* 5 seconds for free call, plus some safety margin */
       : 100;
 
@@ -80,3 +81,7 @@ export const ModelVendorOpenRouter: IModelVendor<DOpenRouterServiceSettings, Ope
 
 // rate limit timestamp
 let nextGenerationTs = 0;
+
+function _csfOpenRouterAvailable(s?: Partial<DOpenRouterServiceSettings>) {
+  return !!s?.oaiKey;
+}

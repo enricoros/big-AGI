@@ -8,17 +8,19 @@ import { useShallow } from 'zustand/react/shallow';
 
 export interface BackendCapabilities {
   // llms
+  hasLlmAlibaba: boolean;
   hasLlmAnthropic: boolean;
   hasLlmAzureOpenAI: boolean;
+  hasLlmBedrock: boolean;
   hasLlmDeepseek: boolean;
   hasLlmGemini: boolean;
   hasLlmGroq: boolean;
   hasLlmLocalAIHost: boolean;
   hasLlmLocalAIKey: boolean;
   hasLlmMistral: boolean;
+  hasLlmMoonshot: boolean;
   hasLlmOllama: boolean;
   hasLlmOpenAI: boolean;
-  hasLlmOpenPipe: boolean;
   hasLlmOpenRouter: boolean;
   hasLlmPerplexity: boolean;
   hasLlmTogetherAI: boolean;
@@ -27,7 +29,6 @@ export interface BackendCapabilities {
   hasDB: boolean;
   hasBrowsing: boolean;
   hasGoogleCustomSearch: boolean;
-  hasImagingProdia: boolean;
   hasVoiceElevenLabs: boolean;
   // hashes
   hashLlmReconfig: string;
@@ -48,7 +49,9 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
   (set) => ({
 
     // initial values
+    hasLlmAlibaba: false,
     hasLlmAnthropic: false,
+    hasLlmBedrock: false,
     hasLlmAzureOpenAI: false,
     hasLlmDeepseek: false,
     hasLlmGemini: false,
@@ -56,9 +59,9 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
     hasLlmLocalAIHost: false,
     hasLlmLocalAIKey: false,
     hasLlmMistral: false,
+    hasLlmMoonshot: false,
     hasLlmOllama: false,
     hasLlmOpenAI: false,
-    hasLlmOpenPipe: false,
     hasLlmOpenRouter: false,
     hasLlmPerplexity: false,
     hasLlmTogetherAI: false,
@@ -66,7 +69,6 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
     hasDB: false,
     hasBrowsing: false,
     hasGoogleCustomSearch: false,
-    hasImagingProdia: false,
     hasVoiceElevenLabs: false,
     hashLlmReconfig: '',
     build: undefined,

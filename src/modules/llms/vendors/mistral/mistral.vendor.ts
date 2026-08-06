@@ -1,16 +1,12 @@
-import { MistralIcon } from '~/common/components/icons/vendors/MistralIcon';
-
 import type { IModelVendor } from '../IModelVendor';
-import type { OpenAIAccessSchema } from '../../server/openai/openai.router';
+import type { OpenAIAccessSchema } from '../../server/openai/openai.access';
 
 import { DOpenAIServiceSettings, ModelVendorOpenAI } from '../openai/openai.vendor';
-
-import { MistralServiceSetup } from './MistralServiceSetup';
 
 
 // special symbols
 
-type DMistralServiceSettings = Pick<DOpenAIServiceSettings, 'oaiKey' | 'oaiHost'>;
+type DMistralServiceSettings = Pick<DOpenAIServiceSettings, 'oaiKey' | 'oaiHost' | 'csf'>;
 
 
 /** Implementation Notes for the Mistral vendor
@@ -19,13 +15,13 @@ export const ModelVendorMistral: IModelVendor<DMistralServiceSettings, OpenAIAcc
   id: 'mistral',
   name: 'Mistral',
   displayRank: 18,
+  displayGroup: 'cloud',
   location: 'cloud',
   instanceLimit: 1,
-  hasBackendCapKey: 'hasLlmMistral',
+  hasServerConfigKey: 'hasLlmMistral',
 
-  // components
-  Icon: MistralIcon,
-  ServiceSetupComponent: MistralServiceSetup,
+  /// client-side-fetch ///
+  csfAvailable: _csfMistralAvailable,
 
   // functions
   initializeSetup: () => ({
@@ -37,14 +33,18 @@ export const ModelVendorMistral: IModelVendor<DMistralServiceSettings, OpenAIAcc
   },
   getTransportAccess: (partialSetup): OpenAIAccessSchema => ({
     dialect: 'mistral',
+    clientSideFetch: _csfMistralAvailable(partialSetup) && !!partialSetup?.csf,
     oaiKey: partialSetup?.oaiKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.oaiHost || '',
     heliKey: '',
-    moderationCheck: false,
   }),
 
   // OpenAI transport ('mistral' dialect in 'access')
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
 
 };
+
+function _csfMistralAvailable(s?: Partial<DMistralServiceSettings>) {
+  return !!s?.oaiKey;
+}

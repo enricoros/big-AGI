@@ -8,7 +8,7 @@ body { min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased;
 img, picture, svg, video { display: block;max-width: 100%; }
 `;
 
-const customIFrameCss: React.CSSProperties = {
+export const blocksRenderHTMLIFrameCss: React.CSSProperties = {
   flexGrow: 1,
   width: '100%',
   height: '54svh',
@@ -16,7 +16,14 @@ const customIFrameCss: React.CSSProperties = {
   boxSizing: 'border-box',
   maxWidth: '100%',
   maxHeight: '100%',
-};
+} as const;
+
+const blocksRenderHTMLIFrameFullScreenCss: React.CSSProperties = {
+  ...blocksRenderHTMLIFrameCss,
+  height: undefined,
+  flex: 1,
+} as const;
+
 
 function _renderHtmlInIFrame(iframeDoc: Document, htmlString: string) {
   // Note: not using this for now (2024-06-15), or it would remove the JS code
@@ -53,7 +60,7 @@ function _renderHtmlInIFrame(iframeDoc: Document, htmlString: string) {
   });
 }
 
-export function RenderCodeHtmlIFrame(props: { htmlCode: string }) {
+export function RenderCodeHtmlIFrame(props: { htmlCode: string, isFullscreen?: boolean }) {
 
   // state
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
@@ -79,7 +86,7 @@ export function RenderCodeHtmlIFrame(props: { htmlCode: string }) {
   return (
     <iframe
       ref={iframeRef}
-      style={customIFrameCss}
+      style={props.isFullscreen ? blocksRenderHTMLIFrameFullScreenCss : blocksRenderHTMLIFrameCss}
       title='Sandboxed Web Content'
       aria-label='Interactive content frame'
       sandbox='allow-scripts allow-same-origin allow-forms' // restrict to only these

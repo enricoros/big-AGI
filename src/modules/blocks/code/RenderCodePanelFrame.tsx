@@ -13,9 +13,19 @@ export const enhancedCodePanelTitleTooltipSx: SxProps = {
   alignItems: 'center',
   columnGap: 2,
   rowGap: 1,
+  // labels
   '& > :nth-of-type(odd)': {
     color: 'text.tertiary',
     fontSize: 'xs',
+  },
+  // values
+  '& > :nth-of-type(even)': {
+    // fontWeight: 'bold',
+    color: 'text.primary',
+    // agi-ellipsize
+    // whiteSpace: 'nowrap',
+    // textOverflow: 'ellipsis',
+    overflow: 'hidden',
   },
 };
 
@@ -90,7 +100,8 @@ export function RenderCodePanelFrame(props: {
       // borderBottomRightRadius: 0,
       // layout
       display: 'flex',
-      flexWrap: 'wrap',
+      flexWrap: 'nowrap', // changed on 2025-06-18 to have a single row
+      // flexWrap: 'wrap',
       justifyContent: 'space-between',
       alignItems: 'center',
       gap: 1,

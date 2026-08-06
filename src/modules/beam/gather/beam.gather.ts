@@ -1,13 +1,17 @@
 import * as React from 'react';
 import type { StateCreator } from 'zustand/vanilla';
 
+import type { AixReattachMode } from '~/modules/aix/client/aix.client';
+
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage } from '~/common/stores/chat/chat.message';
+import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { agiUuid } from '~/common/util/idUtils';
 
 import { CUSTOM_FACTORY_ID, FFactoryId, findFusionFactory, FUSION_FACTORIES, FUSION_FACTORY_DEFAULT } from './instructions/beam.gather.factories';
 import { RootStoreSlice } from '../store-beam_vanilla';
 import { ScatterStoreSlice } from '../scatter/beam.scatter';
+import { beamMergeStreamedGuts, beamReattachStream } from '../beam.reattach';
 import { gatherStartFusion, gatherStopFusion, Instruction } from './instructions/beam.gather.execution';
 import { updateBeamLastConfig } from '../store-module-beam';
 
@@ -131,10 +135,14 @@ export interface GatherStoreSlice extends GatherStateSlice {
   fusionRecreateAsCustom: (sourceFusionId: BFusionId) => void;
   fusionInstructionUpdate: (fusionId: BFusionId, instructionIndex: number, update: Partial<Instruction>) => void;
   fusionSetLlmId: (fusionId: BFusionId, llmId: DLLMId | null) => void;
+  fusionDeleteFragment: (fusionId: BFusionId, fragmentId: DMessageFragmentId) => void;
+  fusionReplaceFragment: (fusionId: BFusionId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void;
 
   createFusion: () => void;
   removeFusion: (fusionId: BFusionId) => void;
   toggleFusionGathering: (fusionId: BFusionId) => void;
+  fusionReattach: (fusionId: BFusionId, mode: AixReattachMode) => void;
+  fusionClearUpstreamHandle: (fusionId: BFusionId) => void;
 
 }
 
@@ -213,6 +221,58 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
       llmId,
     }),
 
+  fusionDeleteFragment: (fusionId: BFusionId, fragmentId: DMessageFragmentId) =>
+    _get()._fusionUpdate(fusionId, (fusion) => {
+      // Ensure there's an output message
+      if (!fusion.outputDMessage) {
+        console.error(`fusionDeleteFragment: No output message for fusion ${fusionId}`);
+        return {};
+      }
+
+      // Find the fragment to delete
+      const fragmentIndex = fusion.outputDMessage.fragments.findIndex(f => f.fId === fragmentId);
+      if (fragmentIndex < 0) {
+        console.error(`fusionDeleteFragment: Fragment not found for ID ${fragmentId} in fusion ${fusionId}`);
+        return {};
+      }
+
+      return {
+        outputDMessage: {
+          ...fusion.outputDMessage,
+          fragments: fusion.outputDMessage.fragments.filter((_, index) => index !== fragmentIndex),
+          updated: Date.now(),
+        },
+      };
+    }),
+
+  fusionReplaceFragment: (fusionId: BFusionId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) =>
+    _get()._fusionUpdate(fusionId, (fusion) => {
+      // Ensure there's an output message
+      if (!fusion.outputDMessage) {
+        console.error(`fusionReplaceFragment: No output message for fusion ${fusionId}`);
+        return {};
+      }
+
+      // Find the fragment to replace
+      const fragmentIndex = fusion.outputDMessage.fragments.findIndex(f => f.fId === fragmentId);
+      if (fragmentIndex < 0) {
+        console.error(`fusionReplaceFragment: Fragment not found for ID ${fragmentId} in fusion ${fusionId}`);
+        return {};
+      }
+
+      return {
+        outputDMessage: {
+          ...fusion.outputDMessage,
+          fragments: fusion.outputDMessage.fragments.map((fragment, index) =>
+            (index === fragmentIndex)
+              ? { ...newFragment }
+              : fragment,
+          ),
+          updated: Date.now(),
+        },
+      };
+    }),
+
 
   createFusion: () => {
     // get factory
@@ -262,5 +322,44 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
     const onUpdate = (update: FusionUpdateOrFn) => _fusionUpdate(fusion.fusionId, update);
     gatherStartFusion(fusion, chatMessages, rayMessages, onUpdate);
   },
+
+  // Gemini Interactions (Deep Research) resume for a merge: re-stream (replay) or one-shot fetch (snapshot)
+  // the upstream-stored run into the fusion output. Enters 'fusing' so the header Stop aborts it (= detach,
+  // the background run survives) and the resume block hides. See kb/modules/LLM-gemini-interactions.md.
+  fusionReattach: (fusionId: BFusionId, mode: AixReattachMode) => {
+    const { fusions, _fusionUpdate } = _get();
+    const fusion = fusions.find(_f => _f.fusionId === fusionId);
+    if (!fusion || fusion.fusingAbortController) return; // missing, or already running
+    const generator = fusion.outputDMessage?.generator;
+    if (!generator?.upstreamHandle) return;
+    const llmId = fusion.llmId || (generator.mgt === 'aix' ? generator.aix.mId : null);
+    if (!llmId) return;
+
+    const abortController = new AbortController();
+    beamReattachStream({
+      llmId, generator, contextName: 'beam-gather', contextRef: fusionId, mode,
+      abortSignal: abortController.signal,
+      onMessageUpdate: (guts, completed) => _fusionUpdate(fusionId, (fusion) => fusion.outputDMessage ? ({ outputDMessage: beamMergeStreamedGuts(fusion.outputDMessage, guts, completed) }) : {}),
+      onTerminal: (outcome) => _fusionUpdate(fusionId, (fusion) => ({
+        stage: (outcome === 'completed') ? 'success' : (outcome === 'failed') ? 'error' : 'stopped',
+        fusingAbortController: undefined,
+        outputDMessage: fusion.outputDMessage ? { ...fusion.outputDMessage, pendingIncomplete: undefined } : fusion.outputDMessage,
+      })),
+    });
+
+    // optimistic: enter fusing (header shows Stop, resume block hides)
+    _fusionUpdate(fusionId, (fusion) => ({
+      stage: 'fusing',
+      errorText: undefined,
+      fusingAbortController: abortController,
+      outputDMessage: fusion.outputDMessage ? { ...fusion.outputDMessage, pendingIncomplete: true } : fusion.outputDMessage,
+    }));
+  },
+
+  fusionClearUpstreamHandle: (fusionId: BFusionId) =>
+    _get()._fusionUpdate(fusionId, (fusion) => {
+      if (!fusion.outputDMessage?.generator?.upstreamHandle) return {};
+      return { outputDMessage: { ...fusion.outputDMessage, generator: { ...fusion.outputDMessage.generator, upstreamHandle: undefined } } };
+    }),
 
 });

@@ -18,6 +18,7 @@ import { useFormRadio } from '~/common/components/forms/useFormRadio';
 import type { ChatGptSharedChatSchema } from './server/chatgpt';
 import { importConversationsFromFilesAtRest, openConversationsAtRestPicker } from './trade.client';
 
+import { FlashRestore } from './BackupRestore';
 import { ImportedOutcome, ImportOutcomeModal } from './ImportOutcomeModal';
 
 
@@ -148,6 +149,9 @@ export function ImportChats(props: { onConversationActivate: (conversationId: DC
           ChatGPT · Shared Link
         </Button>
       )}
+
+      {/* Insert to Restore a Flash */}
+      <FlashRestore unlockRestore={true} />
 
     </Box>
 

@@ -20,10 +20,10 @@ import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox
 import { createDMessageTextContent } from '~/common/stores/chat/chat.message';
 import { lineHeightTextareaMd } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
-import { useChatLLM } from '~/common/stores/llms/llms.hooks';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useChipBoolean } from '~/common/components/useChipBoolean';
-import { useUIPreferencesStore } from '~/common/state/store-ui';
+import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
+import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { usePurposeStore } from './store-purposes';
 
@@ -145,7 +145,8 @@ export function PersonaSelector(props: {
     hiddenPurposeIDs: state.hiddenPurposeIDs,
     toggleHiddenPurposeId: state.toggleHiddenPurposeId,
   })));
-  const { chatLLM } = useChatLLM();
+  const { domainModelId: chatLLMId } = useModelDomain('primaryChat');
+  const chatLLM = { id: chatLLMId ?? undefined }; // adapter for porting
 
 
   // derived state
@@ -246,7 +247,7 @@ export function PersonaSelector(props: {
       maxWidth: 'md',
       minWidth: `${2 + 1 + tileSize * 2}rem`, // accomodate at least 2 columns (scroll-x in case)
       mx: 'auto',
-      minHeight: '60svh',
+      minHeight: '90%', // was 60svh - looked too big on desktop stacked
       display: 'grid',
       px: { xs: 0.5, sm: 1, md: 2 },
       py: 2,
@@ -352,7 +353,8 @@ export function PersonaSelector(props: {
 
         {/* [row -3] Example incipits */}
         {systemPurposeId !== 'Custom' && (
-          <ExpanderControlledBox expanded={showExamples || (!isCustomPurpose && showPrompt)} sx={{ gridColumn: '1 / -1', pt: 1 }}>
+          <Box sx={{ gridColumn: '1 / -1', pt: 1 }}>
+          <ExpanderControlledBox expanded={showExamples || (!isCustomPurpose && showPrompt)}>
             {showExamples && (
               <List
                 aria-label='Persona Conversation Starters'
@@ -418,6 +420,7 @@ export function PersonaSelector(props: {
               </Card>
             )}
           </ExpanderControlledBox>
+          </Box>
         )}
 
         {/* [row -1] Custom Prompt box */}

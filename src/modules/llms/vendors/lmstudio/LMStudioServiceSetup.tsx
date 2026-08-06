@@ -1,16 +1,19 @@
 import * as React from 'react';
-import { z } from 'zod';
+import * as z from 'zod/v4';
 
 import { Typography } from '@mui/joy';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { ExpanderAccordion } from '~/common/components/ExpanderAccordion';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
+import { isLocalUrl } from '~/common/util/urlUtils';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { VideoPlayerYouTube } from '~/common/components/VideoPlayerYouTube';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
@@ -25,10 +28,14 @@ export function LMStudioServiceSetup(props: { serviceId: DModelsServiceId }) {
     useServiceSetup(props.serviceId, ModelVendorLMStudio);
 
   // derived state
-  const { oaiHost } = serviceAccess;
+  const { clientSideFetch, oaiHost } = serviceAccess;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on;
 
   // validate if url is a well formed proper url with zod
-  const urlSchema = z.string().url().startsWith('http');
+  const urlSchema = z.url().startsWith('http');
   const { success: isValidHost } = urlSchema.safeParse(oaiHost);
   const shallFetchSucceed = isValidHost;
 
@@ -44,7 +51,7 @@ export function LMStudioServiceSetup(props: { serviceId: DModelsServiceId }) {
       expandedVariant='solid'
       startCollapsed
     >
-      <VideoPlayerYouTube width='100%' youTubeVideoId='MqXzxVokMDk' playing={true} />
+      <VideoPlayerYouTube width='100%' height={360} youTubeVideoId='MqXzxVokMDk' playing={true} />
     </ExpanderAccordion>
 
     <Typography level='body-sm'>
@@ -62,7 +69,15 @@ export function LMStudioServiceSetup(props: { serviceId: DModelsServiceId }) {
       value={oaiHost} onChange={value => updateSettings({ oaiHost: value })}
     />
 
-    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} />
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!oaiHost}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText='Connect directly to LM Studio from your browser. Requires CORS to be enabled in LM Studio.'
+      localHostDetected={isLocalUrl(oaiHost)}
+    />}
+
+    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 

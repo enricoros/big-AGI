@@ -3,13 +3,14 @@ import * as React from 'react';
 import { FormControl, FormHelperText, Option, Select } from '@mui/joy';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 
-import type { DModelsServiceId } from '~/common/stores/llms/modelsservice.types';
+import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
@@ -35,16 +36,17 @@ const SAFETY_OPTIONS: { value: GeminiWire_Safety.HarmBlockThreshold, label: stri
 
 export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
 
-  // advanced mode
-  const advanced = useToggleableBoolean(false);
-
   // external state
-  const { service, serviceAccess, serviceHasBackendCap, serviceHasLLMs, serviceSetupValid, updateSettings } =
+  const { service, serviceAccess, serviceHasCloudTenantConfig, serviceHasLLMs, serviceSetupValid, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorGemini);
 
   // derived state
-  const { geminiKey, geminiHost, minSafetyLevel } = serviceAccess;
-  const needsUserKey = !serviceHasBackendCap;
+  const { clientSideFetch, geminiKey, geminiHost, minSafetyLevel} = serviceAccess;
+  const needsUserKey = !serviceHasCloudTenantConfig;
+
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
+  const showAdvanced = advanced.on;
 
   const shallFetchSucceed = !needsUserKey || (!!geminiKey && serviceSetupValid);
   const showKeyError = !!geminiKey && !serviceSetupValid;
@@ -68,7 +70,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    {advanced.on && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+    {showAdvanced && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Safety Settings'
                       description='Threshold' />
       <Select
@@ -88,7 +90,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       </Select>
     </FormControl>}
 
-    {advanced.on && <FormHelperText sx={{ display: 'block' }}>
+    {showAdvanced && <FormHelperText sx={{ display: 'block' }}>
       Gemini has advanced <Link href='https://ai.google.dev/docs/safety_setting_gemini' target='_blank' noLinkStyle>
       safety settings</Link> on: harassment, hate speech,
       sexually explicit, civic integrity, and dangerous content, in addition to non-adjustable built-in filters.
@@ -96,12 +98,19 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       {/*of being unsafe.*/}
     </FormHelperText>}
 
-    {advanced.on && <FormTextField
+    {showAdvanced && <FormTextField
       autoCompleteId='gemini-host'
       title='API Endpoint'
       placeholder={`https://generativelanguage.googleapis.com`}
       value={geminiHost}
       onChange={text => updateSettings({ geminiHost: text })}
+    />}
+
+    {showAdvanced && <SetupFormClientSideToggle
+      visible={!!geminiKey}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText="Fetch models and make requests directly to Google's Gemini API using your browser instead of through the server."
     />}
 
     <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced} />

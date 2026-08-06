@@ -1,34 +1,39 @@
 import * as React from 'react';
-import { Accordion, AccordionDetails, accordionDetailsClasses, AccordionGroup, AccordionSummary, accordionSummaryClasses, Avatar, Box, Button, ListItemContent, styled, Tab, TabList, TabPanel, Tabs } from '@mui/joy';
+
+import { Accordion, AccordionDetails, AccordionGroup, AccordionSummary, accordionSummaryClasses, Avatar, Box, Button, ListItemContent, styled, Tab, TabList, TabPanel, Tabs, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import KeyboardCommandKeyOutlinedIcon from '@mui/icons-material/KeyboardCommandKeyOutlined';
 import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
 import MicIcon from '@mui/icons-material/Mic';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import ScienceIcon from '@mui/icons-material/Science';
 import SearchIcon from '@mui/icons-material/Search';
+import TerminalOutlinedIcon from '@mui/icons-material/TerminalOutlined';
 
 import { BrowseSettings } from '~/modules/browse/BrowseSettings';
 import { DallESettings } from '~/modules/t2i/dalle/DallESettings';
-import { ElevenlabsSettings } from '~/modules/elevenlabs/ElevenlabsSettings';
 import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
-import { ProdiaSettings } from '~/modules/t2i/prodia/ProdiaSettings';
 import { T2ISettings } from '~/modules/t2i/T2ISettings';
 
 import type { PreferencesTabId } from '~/common/layout/optima/store-layout-optima';
-import { DarkModeToggleButton } from '~/common/components/DarkModeToggleButton';
+import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
+import { DarkModeToggleButton, darkModeToggleButtonSx } from '~/common/components/DarkModeToggleButton';
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
+import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { AppChatSettingsAI } from './AppChatSettingsAI';
 import { AppChatSettingsUI } from './settings-ui/AppChatSettingsUI';
 import { UxLabsSettings } from './UxLabsSettings';
-import { VoiceSettings } from './VoiceSettings';
+import { VoiceInSettings } from './VoiceInSettings';
+import { VoiceOutSettings } from './VoiceOutSettings';
 
 
 // configuration
-const COLOR_TAB_LIST = 'primary';
 const TAB_RADIUS = 'md';
+const COLOR_TAB_LIST = 'primary';
+const COLOR_TOPIC_ICON = 'primary';
 
 
 // styled <AccordionGroup variant='plain'> into a Topics component
@@ -39,18 +44,17 @@ const Topics = styled(AccordionGroup)({
 
   // larger summary, with a spinning icon
   [`& .${accordionSummaryClasses.button}`]: {
-    minHeight: 64,
+    minHeight: '52px',
+    border: 'none',
+    paddingRight: '0.75rem',
+    backgroundColor: 'rgba(var(--joy-palette-primary-lightChannel) / 0.2)',
+    gap: '1rem',
   },
   [`& .${accordionSummaryClasses.indicator}`]: {
     transition: '0.2s',
   },
   [`& [aria-expanded="true"] .${accordionSummaryClasses.indicator}`]: {
     transform: 'rotate(45deg)',
-  },
-
-  // larger padded block
-  [`& .${accordionDetailsClasses.content}.${accordionDetailsClasses.expanded}`]: {
-    paddingBlock: '1rem',
   },
 });
 
@@ -81,17 +85,20 @@ function Topic(props: { title?: React.ReactNode, icon?: string | React.ReactNode
           color='primary'
           variant={expanded ? 'plain' : 'soft'}
           indicator={<AddIcon />}
+          slotProps={!expanded ? undefined : {
+            button: { sx: { backgroundColor: 'rgba(var(--joy-palette-primary-lightChannel) / 0.2)' } },
+          }}
         >
           {!!props.icon && (
             <Avatar
-              color={COLOR_TAB_LIST}
+              size='sm'
+              color={COLOR_TOPIC_ICON}
               variant={expanded ? 'plain' /* was: soft */ : 'plain'}
-              // size='sm'
             >
               {props.icon}
             </Avatar>
           )}
-          <ListItemContent sx={{ color: `${COLOR_TAB_LIST}.softColor` }}>
+          <ListItemContent sx={{ color: `${COLOR_TOPIC_ICON}.softColor` }}>
             {props.title}
           </ListItemContent>
         </AccordionSummary>
@@ -101,7 +108,7 @@ function Topic(props: { title?: React.ReactNode, icon?: string | React.ReactNode
         slotProps={{
           content: {
             sx: {
-              px: { xs: 1.5, md: 2 },
+              p: { xs: 1.5, md: 2.5 },
             },
           },
         }}
@@ -123,6 +130,7 @@ const _styles = {
 
   // modal: undefined,
   modal: {
+    flexGrow: 1,
     backgroundColor: 'background.level1',
   } as const,
 
@@ -134,6 +142,7 @@ const _styles = {
     backgroundColor: `${COLOR_TAB_LIST}.softHoverBg`,
     mb: 2,
     p: 0.5,
+    // borderRadius: '2rem',
     borderRadius: TAB_RADIUS,
     fontSize: 'md',
     fontWeight: 'md',
@@ -142,19 +151,23 @@ const _styles = {
   } as const,
 
   tabsListTab: {
+    // borderRadius: '2rem',
     borderRadius: 'sm',
+    fontSize: 'sm',
     flex: 1,
     p: 0,
     '&[aria-selected="true"]': {
       // color: 'primary.plainColor',
       bgcolor: 'background.popup',
-      boxShadow: 'sm',
+      // color: `${COLOR_TAB_LIST}.solidColor`,
+      // bgcolor: `${COLOR_TAB_LIST}.solidBg`,
+      boxShadow: 'xs',
       fontWeight: 'lg',
       zIndex: 1,
     } as const,
-    '&:hover': {
-      backgroundColor: 'background.level1',
-    } as const,
+    // '&:hover': {
+    //   backgroundColor: 'background.level1',
+    // } as const,
   } as const,
 
   tabPanel: {
@@ -186,6 +199,8 @@ export function SettingsModal(props: {
   // handlers
 
   const { setTab } = props;
+  const isToolsTab = props.tab === 'tools';
+  const enableAixDebuggerDialog = true;
 
   const handleSetTab = React.useCallback((_event: any, value: string | number | null) => {
     setTab((value ?? undefined) as PreferencesTabId);
@@ -193,16 +208,29 @@ export function SettingsModal(props: {
 
   return (
     <GoodModal
-      title='Preferences' strongerTitle
+      // title='Preferences' strongerTitle
+      title={
+        <AppBreadcrumbs size='md' rootTitle={isMobile ? 'App' : 'Application'}>
+          <AppBreadcrumbs.Leaf><b>Preferences</b></AppBreadcrumbs.Leaf>
+        </AppBreadcrumbs>
+      }
       open={props.open} onClose={props.onClose}
-      startButton={isMobile ? undefined : (
+      fullscreen={isMobile}
+      startButton={
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <DarkModeToggleButton hasText={true} />
-          <Button size='sm' variant='soft' color='neutral' onClick={props.onOpenShortcuts}>
-            👉 Shortcuts
-          </Button>
+          {!isToolsTab && <DarkModeToggleButton hasText />}
+          {!isMobile && !isToolsTab && <Button variant='soft' color='neutral' onClick={props.onOpenShortcuts} startDecorator={<KeyboardCommandKeyOutlinedIcon color='primary' />} sx={darkModeToggleButtonSx}>
+            Shortcuts
+          </Button>}
+          {isToolsTab && <Button variant='soft' color='neutral' disabled={!enableAixDebuggerDialog} onClick={optimaActions().openAIXDebugger} startDecorator={<TerminalOutlinedIcon color={enableAixDebuggerDialog ? 'primary' : undefined} />} sx={darkModeToggleButtonSx}>
+            AI Inspector
+          </Button>}
+          {isToolsTab && <Button variant='soft' color='neutral' onClick={optimaActions().openLogger} startDecorator={<TerminalOutlinedIcon color='primary' />} sx={darkModeToggleButtonSx}>
+            Logs Viewer
+          </Button>}
         </Box>
-      )}
+      }
+      unfilterBackdrop
       sx={_styles.modal}
     >
 
@@ -215,16 +243,17 @@ export function SettingsModal(props: {
         sx={_styles.tabs}
       >
         <TabList
+          size='sm'
           disableUnderline
           sx={_styles.tabsList}
         >
-          <Tab disableIndicator value='chat' sx={_styles.tabsListTab}>Chat</Tab>
-          <Tab disableIndicator value='voice' sx={_styles.tabsListTab}>Voice</Tab>
-          <Tab disableIndicator value='draw' sx={_styles.tabsListTab}>Draw</Tab>
-          <Tab disableIndicator value='tools' sx={_styles.tabsListTab}>Tools</Tab>
+          <Tab value='chat' disableIndicator sx={_styles.tabsListTab}>Chat</Tab>
+          <Tab value='voice' disableIndicator sx={_styles.tabsListTab}>Voice</Tab>
+          <Tab value='draw' disableIndicator sx={_styles.tabsListTab}>Draw</Tab>
+          <Tab value='tools' disableIndicator sx={_styles.tabsListTab}>Tools</Tab>
         </TabList>
 
-        <TabPanel value='chat' variant='outlined' sx={_styles.tabPanel}>
+        <TabPanel value='chat' color='primary' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
             <Topic>
               <AppChatSettingsUI />
@@ -241,37 +270,72 @@ export function SettingsModal(props: {
           </Topics>
         </TabPanel>
 
-        <TabPanel value='voice' variant='outlined' sx={_styles.tabPanel}>
+        <TabPanel value='voice' color='primary' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
             <Topic icon={/*'🎙️'*/ <MicIcon />} title='Microphone'>
-              <VoiceSettings />
+              <VoiceInSettings isMobile={isMobile} />
             </Topic>
-            <Topic icon={/*'📢'*/ <RecordVoiceOverIcon />} title='ElevenLabs API'>
-              <ElevenlabsSettings />
+            <Topic icon={/*'📢'*/ <PhVoice />} title={'Speech'/*<>Voices <GoodBadge badge='New' /></>*/}>
+              <VoiceOutSettings isMobile={isMobile} />
             </Topic>
           </Topics>
         </TabPanel>
 
-        <TabPanel value='draw' variant='outlined' sx={_styles.tabPanel}>
+        <TabPanel value='draw' color='primary' variant='outlined' sx={_styles.tabPanel}>
           <Topics>
             <Topic>
               <T2ISettings />
             </Topic>
-            <Topic icon='🖍️️' title='OpenAI DALL·E'>
+            <Topic icon='🖍️️' title='OpenAI'>
               <DallESettings />
-            </Topic>
-            <Topic icon='🖍️️' title='Prodia API' startCollapsed>
-              <ProdiaSettings noSkipKey />
             </Topic>
           </Topics>
         </TabPanel>
 
-        <TabPanel value='tools' variant='outlined' sx={_styles.tabPanel}>
+        <TabPanel value='tools' color='primary' variant='outlined' sx={_styles.tabPanel}>
+
+          {/* Search Modifier Info */}
+          <Box sx={{
+            p: 2,
+            borderRadius: 'calc(var(--joy-radius-md) - 1px)',
+            // backgroundColor: 'background.level1',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+          }}>
+            <Button
+              variant='soft'
+              color='success'
+              startDecorator={<SearchIcon />}
+              sx={{
+                // this is copied frmo ButtonSearchControl._styles.desktop
+                minWidth: 100,
+                justifyContent: 'flex-start',
+                borderRadius: '18px',
+                pointerEvents: 'none',
+                '[data-joy-color-scheme="light"] &': {
+                  bgcolor: '#d5ec31',
+                },
+                boxShadow: 'inset 0 2px 4px -1px rgba(0,0,0,0.15)',
+                textWrap: 'nowrap',
+              }}
+            >
+              Search
+            </Button>
+            <Box sx={{ flex: 1 }}>
+              <Typography level='body-sm' sx={{ fontWeight: 'md', mb: 0.5 }}>
+                Use the Search button
+              </Typography>
+              <Typography level='body-xs' sx={{ color: 'text.secondary' }}>
+                Modern AI models have native search built-in. Click the Search button when chatting to enable real-time web search.
+              </Typography>
+            </Box>
+          </Box>
           <Topics>
-            <Topic icon={<LanguageRoundedIcon />} title='Web Browser'>
+            <Topic icon={<LanguageRoundedIcon />} title='Load Web Pages (with images)' startCollapsed>
               <BrowseSettings />
             </Topic>
-            <Topic icon={<SearchIcon />} title='Web Search - Google API' startCollapsed>
+            <Topic icon={<SearchIcon />} title='Custom Search (Optional)' startCollapsed>
               <GoogleSearchSettings />
             </Topic>
             {/*<Topic icon='🛠' title='Other tools...' />*/}

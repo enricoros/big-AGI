@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { fileOpen } from 'browser-fs-access';
-import { Box, Button, ColorPaletteProp, Sheet } from '@mui/joy';
 
-import { useUXLabsStore } from '~/common/state/store-ux-labs';
+import { Box, Button, ColorPaletteProp, Sheet } from '@mui/joy';
 
 // Workspace
 import type { DWorkspaceId } from '~/common/stores/workspace/workspace.types';
@@ -26,7 +25,7 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
   const [liveFileId, setLiveFileId] = React.useState<LiveFileId | null>(null);
 
   // external state
-  const isEnabled = useUXLabsStore((state) => state.labsEnhanceCodeLiveFile && isLiveFileSupported());
+  const isEnabled = isLiveFileSupported();
 
 
   const { status, patchState, targetOverwriteWithPatch } = usePatchingWorkflow(liveFileId, code);
@@ -111,7 +110,7 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
 
   const handleSelectFilePicker = React.useCallback(async (workspaceId: DWorkspaceId | null) => {
     // pick a file
-    const fileWithHandle = await fileOpen({ description: 'Insert into file...' }).catch(() => null /* The User closed the files picker */);
+    const fileWithHandle = await fileOpen({ description: 'Link file...' }).catch(() => null /* The User closed the files picker */);
     if (!fileWithHandle)
       return;
     const fileSystemFileHandle = fileWithHandle.handle;
