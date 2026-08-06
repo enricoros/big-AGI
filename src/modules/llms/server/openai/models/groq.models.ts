@@ -1,4 +1,4 @@
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
+import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
@@ -17,7 +17,7 @@ const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduc
  * Groq models.
  * - models list: https://console.groq.com/docs/models
  * - pricing: https://groq.com/pricing/
- * - updated: 2026-06-26
+ * - updated: 2026-08-04
  */
 type _GroqModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 
@@ -26,36 +26,29 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
   // Preview Models
   {
     isPreview: true,
-    idPrefix: 'meta-llama/llama-4-scout-17b-16e-instruct',
-    label: 'Llama 4 Scout · 17B × 16E (Preview)',
-    pubDate: '20250405',
-    description: 'Llama 4 Scout 17B MoE with 16 experts (109B total params), native multimodal with vision support. 131K context, 8K max output. ~750 t/s on Groq.',
-    contextWindow: 131072,
-    maxCompletionTokens: 8192,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.11, output: 0.34 },
-  },
-  {
-    isPreview: true,
-    idPrefix: 'qwen/qwen3-32b',
-    label: 'Qwen 3 · 32B (Preview)',
-    pubDate: '20250428',
-    description: 'Qwen3 32B by Alibaba Cloud. Supports thinking/non-thinking modes, 100+ languages. 131K context, 40K max output. ~400 t/s on Groq.',
-    contextWindow: 131072,
-    maxCompletionTokens: 40960,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.29, output: 0.59 },
-  },
-  {
-    isPreview: true,
     idPrefix: 'qwen/qwen3.6-27b',
     label: 'Qwen 3.6 · 27B (Preview)',
     pubDate: '20260509', // from API 'created' (no editorial date available)
-    description: 'Qwen3.6 27B by Alibaba Cloud. Multimodal (vision + text), flagship-level agentic coding, thinking/non-thinking modes, tool use. 131K context, 32K max output. ~500 t/s on Groq.',
+    description: 'Qwen3.6 27B by Alibaba Cloud. Multimodal (vision + text, max 5 images / 20MB), flagship-level agentic coding, thinking/non-thinking modes, tool use. 131K context, 16K max output. ~500 t/s on Groq.',
     contextWindow: 131072,
-    maxCompletionTokens: 32768,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    maxCompletionTokens: 16384,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none'] }, // Groq accepts only none|default here; unset = default = thinking on
+    ],
     chatPrice: { input: 0.60, output: 3.00 },
+  },
+  {
+    isPreview: true,
+    idPrefix: 'minimaxai/minimax-m2.7',
+    label: 'MiniMax M2.7 (Preview)',
+    pubDate: '20260409',
+    description: 'MiniMax M2.7 MoE (229B total, ~10B active). Interleaved thinking for agentic workflows, tool use, coding. 196K context, 131K max output. ~260 t/s on Groq. Enterprise-only: pricing on request.',
+    contextWindow: 196608,
+    maxCompletionTokens: 131072,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
+    benchmark: { cbaElo: 1417 }, // lmarena: minimax-m2.7
+    // Enterprise-only on Groq (contact sales): standard API keys 404 it, so the DEV stale check will flag it
   },
 
   // REMOVED MODELS (no longer returned by API):
@@ -64,6 +57,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
   // - (Feb 18, 2026) moonshotai/kimi-k2-instruct (deprecated redirect, removed from docs; still returned by API -> symlink above)
   // - (Apr 02, 2026) meta-llama/llama-4-maverick-17b-128e-instruct (removed from docs and pricing)
   // - (Jun 26, 2026) moonshotai/kimi-k2-instruct-0905 + moonshotai/kimi-k2-instruct (both removed from docs AND API)
+  // - (Jul 17, 2026) qwen/qwen3-32b, meta-llama/llama-4-scout-17b-16e-instruct (announced Jun 17, shut down Jul 17 -> gpt-oss-120b / qwen3.6-27b)
 
 
   // Production Models - Compound Systems (pass-through pricing to underlying models)
@@ -96,7 +90,10 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
     description: 'OpenAI flagship open-weight MoE (120B total, 5.1B active). Reasoning, browser search, code execution. 131K context, 65K max output. ~500 t/s on Groq.',
     contextWindow: 131072,
     maxCompletionTokens: 65536,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // Groq rejects 'none' on gpt-oss
+    ],
     chatPrice: { input: 0.15, output: 0.60, cache: { cType: 'oai-ac', read: 0.075 } },
   },
   {
@@ -107,7 +104,10 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
     description: 'OpenAI safety classification model (20B MoE). Purpose-built for content moderation with Harmony response format. 131K context, 65K max output. ~1000 t/s on Groq.',
     contextWindow: 131072,
     maxCompletionTokens: 65536,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // Groq rejects 'none' on gpt-oss
+    ],
     chatPrice: { input: 0.075, output: 0.30 },
   },
   {
@@ -117,7 +117,10 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
     description: 'OpenAI efficient open-weight MoE (20B total, 3.6B active). Tool use, browser search, code execution. 131K context, 65K max output. ~1000 t/s on Groq.',
     contextWindow: 131072,
     maxCompletionTokens: 65536,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // Groq rejects 'none' on gpt-oss
+    ],
     chatPrice: { input: 0.075, output: 0.30, cache: { cType: 'oai-ac', read: 0.0375 } },
   },
 
