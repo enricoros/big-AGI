@@ -14,11 +14,11 @@ export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
 
 
 /**
- * MiniMax hardcoded models - no /v1/models API yet.
+ * MiniMax hardcoded models - /v1/models now exists, but returns bare ids (no context/pricing/capabilities), and omits the still-served legacy ids.
  * - Models: https://platform.minimax.io/docs/release-notes/models.md
  * - Pricing: https://platform.minimax.io/docs/guides/pricing-paygo.md
  * - Text generation: https://platform.minimax.io/docs/guides/text-generation.md
- * - Updated: 2026-06-26
+ * - Updated: 2026-08-04
  */
 type _MiniMaxModelDef = ModelDescriptionSchema & { pubDate: string };
 
@@ -31,7 +31,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     pubDate: '20260601',
     description: 'Flagship: frontier coding and agentic reasoning, natively multimodal (text, image, video input). 1M context, 131K max output.',
     contextWindow: 1000000,
-    maxCompletionTokens: 131072,
+    maxCompletionTokens: 131072, // vendor-recommended; live ceiling is 524288 (512K)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
     // tiered PAYG pricing: boundary at 512K input tokens, >512K tier doubles. Priority tier (1.5x) not modeled.
     chatPrice: {
@@ -39,6 +39,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
       output: [{ upTo: 512000, price: 1.20 }, { upTo: null, price: 2.40 }],
       cache: { cType: 'oai-ac', read: [{ upTo: 512000, price: 0.06 }, { upTo: null, price: 0.12 }] },
     },
+    benchmark: { cbaElo: 1445 }, // lmarena: minimax-m3
   },
 
   // M2.7 series
@@ -51,6 +52,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.06 } },
+    benchmark: { cbaElo: 1417 }, // lmarena: minimax-m2.7
   },
   {
     id: 'MiniMax-M2.7-highspeed',
@@ -61,6 +63,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.06 } },
+    benchmark: { cbaElo: 1417 }, // same weights as minimax-m2.7
   },
 
   // M2.5 series
@@ -68,32 +71,34 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     id: 'MiniMax-M2.5',
     label: 'MiniMax M2.5',
     pubDate: '20260212',
-    description: 'Strong coding and reasoning, best value. 200K context, 65K max output.',
+    description: 'Strong coding and reasoning, best value. 200K context, 131K max output.',
     contextWindow: 204800,
-    maxCompletionTokens: 65536,
+    maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.03 } },
+    benchmark: { cbaElo: 1390 }, // lmarena: minimax-m2.5
   },
   {
     id: 'MiniMax-M2.5-highspeed',
     label: 'MiniMax M2.5 (Highspeed)',
     pubDate: '20260212',
-    description: 'Faster M2.5 variant at ~100 t/s. 200K context, 65K max output.',
+    description: 'Faster M2.5 variant at ~100 t/s. 200K context, 131K max output.',
     contextWindow: 204800,
-    maxCompletionTokens: 65536,
+    maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.03 } },
+    benchmark: { cbaElo: 1390 }, // same weights as minimax-m2.5
   },
 
   // M2-her - dialogue-first, roleplay and character-driven chat (Jan 2026)
   {
-    id: 'MiniMax-M2-her',
+    id: 'M2-her', // (!) not 'MiniMax-M2-her': the served id has no vendor prefix
     label: 'MiniMax M2-her',
     pubDate: '20260127',
     description: 'Dialogue-first model for immersive roleplay, character-driven chat, and expressive multi-turn conversations. 64K context.',
     contextWindow: 65536,
     maxCompletionTokens: 2048,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    interfaces: [LLM_IF_OAI_Chat], // no function calling: ignores tools even with tool_choice: 'required'
     chatPrice: { input: 0.30, output: 1.20 },
   },
 
@@ -102,9 +107,9 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     id: 'MiniMax-M2.1',
     label: 'MiniMax M2.1',
     pubDate: '20251222',
-    description: '230B params (10B active), multilingual coding. 200K context, 65K max output.',
+    description: '230B params (10B active), multilingual coding. 200K context, 131K max output.',
     contextWindow: 204800,
-    maxCompletionTokens: 65536,
+    maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.03 } },
     hidden: true, // yield to newer
@@ -113,9 +118,9 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     id: 'MiniMax-M2.1-highspeed',
     label: 'MiniMax M2.1 (Highspeed)',
     pubDate: '20251222',
-    description: 'Faster M2.1 variant. 200K context, 65K max output.',
+    description: 'Faster M2.1 variant. 200K context, 131K max output.',
     contextWindow: 204800,
-    maxCompletionTokens: 65536,
+    maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.03 } },
     hidden: true, // yield to newer
@@ -142,18 +147,19 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     description: '456B total / 45.9B active MoE with lightning attention. 1M context, 40K max output.',
     contextWindow: 1000000,
     maxCompletionTokens: 40000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.40, output: 2.20 },
     hidden: true, // yield to newer
   },
 
-  // MiniMax-01 - legacy
+  // MiniMax-Text-01 - legacy
   {
-    id: 'MiniMax-01',
-    label: 'MiniMax 01',
+    id: 'MiniMax-Text-01', // (!) not 'MiniMax-01', which is not served
+    label: 'MiniMax Text 01',
     pubDate: '20250114',
-    description: 'Legacy flagship. 1M context.',
+    description: 'Legacy flagship. 1M context, 40K max output.',
     contextWindow: 1000192,
+    maxCompletionTokens: 40000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.20, output: 1.10 },
     hidden: true, // yield to newer

@@ -31,6 +31,25 @@ const _togetherAIDenyList: string[] = [
   'test/test',
 ];
 
+// Vision (image input) id patterns - Together publishes no modality field, so these are the explicit
+// '-vision'/'-vl' tags plus families that are natively multimodal across every served variant, each
+// cross-checked against the same model on OpenRouter/Fireworks (which do publish modalities).
+// Under-detect rather than over-detect: a false positive lets the composer attach images that the
+// endpoint then rejects. Matched against the lowercased model id.
+const _togetherVisionMatches: readonly (string | RegExp)[] = [
+  'vision', '-vl', 'llava', 'pixtral', // explicitly tagged
+  'llama-4', // Llama 4 Scout/Maverick
+  'kimi-k2.6', 'kimi-k2.7', 'kimi-k3', // Moonshot: native visual understanding from K2.6 on
+  'inkling', // Thinking Machines: text + image + audio
+  'molmo', // AI2 vision-language
+  'gemma-4', // verified live, see gemini.models.ts
+  /gemma-3-(4b|12b|27b)/, // Gemma 3 4B+ are multimodal (1B/270M are text-only)
+  /qwen3\.[56]-/, 'qwen3.7-plus', // Qwen 3.5/3.6 (all variants) and 3.7-Plus take image (3.7-Max does not)
+  /glm-\d[\d.]*v\b/, // Z.ai vision line (GLM-4.5V, GLM-5V)
+  '-omni', // omni-modal (Nemotron 3 Nano Omni)
+  '-ocr', // OCR models are image-in by definition
+];
+
 // TogetherAI 'created' is the endpoint-record date, not the model release date (verified live
 // 2026-07-12: DeepSeek-V4-Pro - released 2026-04-24 - stamped created=today; base 'zai-org/GLM-5'
 // stamped 4 months AFTER its own 'GLM-5-FP4' quant; and 28/269 endpoints report created: 0,
@@ -41,10 +60,15 @@ const _togetherAIDenyList: string[] = [
 // The ONLY source of pubDate for this vendor (besides the manual mappings above); keep dates
 // consistent with the publisher's own catalog where we have one (e.g. deepseek.models.ts).
 const _togetherEditorialPubDates: Record<string, string> = {
+  'google/gemma-4-31B-it': '20260402', // = gemini.models.ts 'models/gemma-4-31b-it'
+  'moonshotai/Kimi-K2.6': '20260417', // = fireworksai.models.ts 'kimi-k2p6'
   'deepseek-ai/DeepSeek-V4-Pro': '20260424', // = deepseek.models.ts 'deepseek-v4-pro'
   'MiniMaxAI/MiniMax-M3': '20260601',
+  'nvidia/nemotron-3-ultra-550b-a55b': '20260602', // = fireworksai.models.ts 'nemotron-3-ultra-nvfp4'
   'moonshotai/Kimi-K2.7-Code': '20260612',
   'zai-org/GLM-5.2': '20260613',
+  'thinkingmachines/Inkling': '20260714', // = fireworksai.models.ts 'inkling'
+  'deepseek-ai/DeepSeek-V4-Flash-0731': '20260731',
 };
 
 /** 'YYYYMMDD' -> Unix epoch seconds (UTC midnight), 0 when absent - for list placement only */
@@ -105,10 +129,9 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
           };
       }
       const interfaces = [LLM_IF_OAI_Chat];
-      // vision detection by id string (Together's API exposes no modality field): 'vision'/'-vl' plus
-      // families that are natively multimodal across all variants (Llama 4 Scout/Maverick, Pixtral)
+      // vision detection by id string, see _togetherVisionMatches
       const lcId = model.id.toLowerCase();
-      if (lcId.includes('vision') || lcId.includes('-vl') || lcId.includes('llama-4') || lcId.includes('pixtral'))
+      if (_togetherVisionMatches.some(match => typeof match === 'string' ? lcId.includes(match) : match.test(lcId)))
         interfaces.push(LLM_IF_OAI_Vision);
 
       const md = fromManualMapping(_knownTogetherAIChatModels, model.id, model.created, undefined, {

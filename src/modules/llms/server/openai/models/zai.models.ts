@@ -48,7 +48,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] }],
     chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.26 } },
     initialTemperature: 1.0,
-    benchmark: { cbaElo: 1471 }, // lmarena: glm-5.2 (max)
+    benchmark: { cbaElo: 1469 }, // lmarena: glm-5.2-max
   },
 
   // GLM-5.1 / GLM-5 Series - Flagship (Agentic Engineering)
@@ -64,7 +64,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.26 } },
     initialTemperature: 1.0,
-    benchmark: { cbaElo: 1475 }, // lmarena: glm-5.1
+    benchmark: { cbaElo: 1469 }, // lmarena: glm-5.1
   },
   {
     idPrefix: 'glm-5',
@@ -105,7 +105,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.6, output: 2.2, cache: { cType: 'oai-ac', read: 0.11 } },
     initialTemperature: 1.0,
-    benchmark: { cbaElo: 1443 }, // lmarena: glm-4.7
+    benchmark: { cbaElo: 1442 }, // lmarena: glm-4.7
   },
   {
     idPrefix: 'glm-4.7-flashx',
@@ -146,6 +146,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 1.2, output: 4, cache: { cType: 'oai-ac', read: 0.24 } },
     initialTemperature: 0.8, // Z.ai default for vision models
+    benchmark: { cbaElo: 1433 }, // lmarena: glm-5v-turbo
   },
 
   // GLM-4.6V Series (Vision + Reasoning)

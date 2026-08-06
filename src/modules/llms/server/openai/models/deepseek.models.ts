@@ -47,7 +47,7 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
     ],
     maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
     chatPrice: { input: 0.435, output: 0.87, cache: { cType: 'oai-ac', read: 0.003625 } },
-    benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro-thinking
+    benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro
   },
   {
     idPrefix: 'deepseek-v4-flash',
@@ -65,29 +65,29 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
     ],
     maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
     chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.0028 } },
-    benchmark: { cbaElo: 1436 }, // lmarena: deepseek-v4-flash-thinking (pre-0731 weights; no arena entry for 0731 yet)
+    benchmark: { cbaElo: 1436 }, // lmarena: deepseek-v4-flash (distinct from the -high-preview entry, 1438)
   },
   // Legacy aliases - API routes both to deepseek-v4-flash with thinking pre-set
   {
     idPrefix: 'deepseek-reasoner',
     label: 'DeepSeek Reasoner (legacy)',
-    description: 'Legacy alias: routes to DeepSeek V4 Flash with thinking enabled. Retires 2026-07-24.',
+    description: 'Legacy alias: routes to DeepSeek V4 Flash with thinking enabled. Past its announced 2026-07-24 retirement, still served.',
     contextWindow: 1_048_576,
     interfaces: [...IF_4, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 65536,
     chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.0028 } },
-    benchmark: { cbaElo: 1436 - 1 }, // lmarena: deepseek-v4-flash-thinking - 1 (yield)
+    benchmark: { cbaElo: 1436 - 1 }, // lmarena: deepseek-v4-flash - 1 (yield)
     isLegacy: true,
   },
   {
     idPrefix: 'deepseek-chat',
     label: 'DeepSeek Chat (legacy)',
-    description: 'Legacy alias: routes to DeepSeek V4 Flash with thinking disabled. Retires 2026-07-24.',
+    description: 'Legacy alias: routes to DeepSeek V4 Flash with thinking disabled. Past its announced 2026-07-24 retirement, still served.',
     contextWindow: 1_048_576,
     interfaces: IF_4,
     maxCompletionTokens: 65536,
     chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.0028 } },
-    benchmark: { cbaElo: 1436 - 2 }, // lmarena: deepseek-v4-flash-thinking - 2 (yield)
+    benchmark: { cbaElo: 1436 - 2 }, // lmarena: deepseek-v4-flash - 2 (yield)
     isLegacy: true,
   },
 ]);
