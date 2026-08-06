@@ -16,6 +16,7 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 - `orOldModelIDs` hiding list - check if stale.
 - Ids: `~vendor/model-latest` must be resolved through `alias_target.slug` (dropping the '~' leaves an unlookupable ref like 'claude-opus-latest') and `vendor/model-fast` are resold priority tiers - both must match their base family/vendor definition, not fall through to the generic branch.
 - `reasoning.mandatory` models reject effort 'none' - never offer it, in any vendor branch.
+- OR outlives vendor shutdowns: Azure serves `openai/*` codex ids that are dead on OpenAI direct. Vendor-side defs must stay (hidden + deny-listed natively) for the `llmOrt*Lookup` inheritance to keep working - flag any OR id whose vendor lookup went dead.
 - Cache pricing detection (Anthropic-style vs OpenAI-style) - verify format still valid.
 - `pricing.overrides` = long-context surcharge tiers (ascending `min_prompt_tokens`, ~57/399 models) - must fold into our `{ upTo, price }[]` arrays, else long prompts are costed at the cheapest tier.
 - Variant injection for Anthropic thinking/non-thinking - verify still correct.

@@ -474,7 +474,27 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     symLink: 'gpt-5.2-2025-12-11',
   },
 
-  // GPT-5.2 Codex: removed, shut down July 23, 2026
+  // GPT-5.2 Codex - dead on OpenAI (shut down 2026-07-23, deny-listed below), but the def is kept:
+  // OpenRouter still serves it via Azure (llmOrtOaiLookup needs it) - probed alive 2026-08-06
+  {
+    hidden: true, // dead on OpenAI direct; reachable via OpenRouter (Azure)
+    idPrefix: 'gpt-5.2-codex',
+    label: 'GPT-5.2 Codex [Deprecated]',
+    pubDate: '20251211',
+    isLegacy: true,
+    description: '[Use: GPT-5.6 Sol - Shut down: 2026-07-23] GPT-5.2 optimized for long-horizon, agentic coding tasks in Codex or similar environments. Supports low, medium, high, and xhigh reasoning effort settings.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmForceNoStream' },
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiImageGeneration' },
+    ],
+    chatPrice: { input: 1.75, cache: { cType: 'oai-ac', read: 0.175 }, output: 14 },
+    // benchmark: TBD
+  },
 
   // GPT-5.2 Chat Latest
   {
@@ -554,8 +574,67 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     symLink: 'gpt-5.1-2025-11-13',
   },
 
-  // GPT-5.1 Chat Latest: removed, shut down July 23, 2026
-  // GPT-5.1 Codex Max / Codex / Codex Mini: removed, shut down July 23, 2026
+  // GPT-5.1 Chat Latest: removed, shut down July 23, 2026 (dead on OpenRouter too - 'No endpoints found', probed 2026-08-06)
+
+  // GPT-5.1 Codex Max / Codex / Codex Mini - dead on OpenAI (shut down 2026-07-23, deny-listed below), but
+  // the defs are kept: OpenRouter still serves all three via Azure (llmOrtOaiLookup) - probed alive 2026-08-06
+  {
+    hidden: true, // dead on OpenAI direct; reachable via OpenRouter (Azure)
+    idPrefix: 'gpt-5.1-codex-max',
+    label: 'GPT-5.1 Codex Max [Deprecated]',
+    pubDate: '20251119',
+    isLegacy: true,
+    description: '[Use: GPT-5.6 Sol - Shut down: 2026-07-23] Our most intelligent coding model optimized for long-horizon, agentic coding tasks.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
+    // benchmark: TBD
+  },
+  {
+    hidden: true, // dead on OpenAI direct; reachable via OpenRouter (Azure)
+    idPrefix: 'gpt-5.1-codex-mini',
+    label: 'GPT-5.1 Codex Mini [Deprecated]',
+    pubDate: '20251113',
+    isLegacy: true,
+    description: '[Use: GPT-5.6 Terra - Shut down: 2026-07-23] Smaller, faster version of GPT-5.1 Codex for efficient coding tasks.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // low, medium, high (no minimal)
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 0.25, cache: { cType: 'oai-ac', read: 0.025 }, output: 2 },
+    // benchmark: TBD
+  },
+  {
+    hidden: true, // dead on OpenAI direct; reachable via OpenRouter (Azure)
+    idPrefix: 'gpt-5.1-codex',
+    label: 'GPT-5.1 Codex [Deprecated]',
+    pubDate: '20251113',
+    isLegacy: true,
+    description: '[Use: GPT-5.6 Sol - Shut down: 2026-07-23] A version of GPT-5.1 optimized for agentic coding tasks in Codex or similar environments.',
+    contextWindow: 400000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // low, medium, high (no minimal)
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { input: 1.25, cache: { cType: 'oai-ac', read: 0.125 }, output: 10 },
+    // benchmark: TBD
+  },
 
 
   /// GPT-5 series - Released August 7, 2025
@@ -979,7 +1058,25 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   },
   // chatgpt-4o-latest: removed, shut down February 17, 2026
 
-  // GPT-4o Search Preview: removed, shut down July 23, 2026
+  // GPT-4o Search Preview - the dated -2025-03-11 snapshot is shut down (2026-07-23, deny-listed below,
+  // 404s when addressed directly), but the bare alias still serves real completions (probed 2026-08-06;
+  // it echoes model: gpt-4o-search-preview-2025-03-11). The deprecations doc only names the dated snapshot,
+  // so the alias is a standalone def here; it may vanish without notice.
+  {
+    hidden: true, // zombie alias to a retired snapshot
+    idPrefix: 'gpt-4o-search-preview',
+    label: 'GPT-4o Search Preview [Deprecated]',
+    pubDate: '20250311',
+    isLegacy: true,
+    description: '[Use: GPT-5.6 Terra] GPT-4o model optimized for web search capabilities. Alias still serving after its snapshot\'s 2026-07-23 shutdown.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_NoTemperature], // NOTE: 2025-03-15: confirmed on 'playground' that this model does not support images
+    parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
+    chatPrice: { input: 2.5, output: 10 },
+    // benchmarks don't apply to search models
+    isPreview: true,
+  },
 
   // GPT-4o Audio Preview: removed, no longer returned by API (superseded by GPT Audio family)
 
@@ -1002,7 +1099,22 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   },
   // GPT-4o Mini Audio Preview: removed, no longer returned by API (superseded by GPT Audio Mini family)
 
-  // GPT-4o Mini Search Preview: removed, shut down July 23, 2026
+  // GPT-4o Mini Search Preview - same zombie-alias situation as gpt-4o-search-preview above (probed 2026-08-06)
+  {
+    hidden: true, // zombie alias to a retired snapshot
+    idPrefix: 'gpt-4o-mini-search-preview',
+    label: 'GPT-4o Mini Search Preview [Deprecated]',
+    pubDate: '20250311',
+    isLegacy: true,
+    description: '[Use: GPT-5.6 Terra] GPT-4o Mini model optimized for web search capabilities. Alias still serving after its snapshot\'s 2026-07-23 shutdown.',
+    contextWindow: 128000,
+    maxCompletionTokens: 16384,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_NoTemperature], // NOTE: this support function calling, but only its own, not a Custom Function
+    parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
+    chatPrice: { input: 0.15, output: 0.6 },
+    // benchmarks don't apply to search models
+    isPreview: true,
+  },
 
   // GPT-4 Turbo
   {
@@ -1140,17 +1252,23 @@ const openAIModelsDenyList: string[] = [
   // [OpenAI Deprecations] Explicitly deny shut-down model IDs that we removed
   'codex-mini-latest', // shut down February 12, 2026
   'chatgpt-4o-latest', // shut down February 17, 2026
-  // shut down July 23, 2026 (still listed by /v1/models, but 404 'has been deprecated' on generate)
-  'gpt-5-chat-latest',
-  'gpt-5-codex',
-  'gpt-5.1-chat-latest',
-  'gpt-5.1-codex', // catches -max and -mini too
-  'gpt-5.2-codex',
-  'gpt-4o-search-preview',
-  'gpt-4o-mini-search-preview',
+  // shut down July 23, 2026 (still listed by /v1/models - even GET /v1/models/<id> returns 200 for dead
+  // models - only a generation attempt is a liveness signal: 404 'has been deprecated' = dead).
+  // POLICY before adding here: probe generation on OpenAI direct AND on OpenRouter (openai/<id> - Azure
+  // kept the 5.1/5.2 codex family alive post-shutdown), and distinguish 404-deprecated from permission
+  // errors (an entitled key may retain access - a permission error means alive, do not deny).
+  // Denying only filters the OpenAI listing; keep the def in _knownOpenAIChatModels when OpenRouter
+  // still serves the id, so llmOrtOaiLookup keeps its native interfaces/params.
+  'gpt-5-chat-latest', // dead on OpenRouter too
+  'gpt-5-codex', // on OpenRouter only as unusable :batch
+  'gpt-5.1-chat-latest', // dead on OpenRouter too
+  'gpt-5.1-codex', // catches -max and -mini too; defs kept above (OpenRouter serves all three via Azure)
+  'gpt-5.2-codex', // def kept above (OpenRouter serves it via Azure)
+  'gpt-4o-search-preview-2025-03-11', // the bare alias still serves (def kept above) - deny only the snapshot
+  'gpt-4o-mini-search-preview-2025-03-11', // same: deny only the snapshot
   'gpt-audio-mini-2025-10-06', // the -2025-12-15 snapshot and the alias stay
-  'o3-deep-research',
-  'o4-mini-deep-research',
+  'o3-deep-research', // dead everywhere (OpenRouter: no endpoints; Bedrock: absent)
+  'o4-mini-deep-research', // dead everywhere
   // 'gpt-4.5-preview',
   // 'o1-preview',
   // 'gpt-4-32k',
@@ -1427,10 +1545,9 @@ export function llmOrtOaiLookup(orModelName: string): OrtVendorLookupResult | un
     'gpt-5.6-luna-pro': 'gpt-5.6-luna',
     'gpt-5.5-chat': 'gpt-5.5-2026-04-23', // gpt-5.5-chat-latest not yet in API, map to snapshot
     'gpt-5.4-chat': 'gpt-5.4-2026-03-05', // no chat-latest yet, map to snapshot
-    'gpt-5.3-chat': 'gpt-5.3-chat-latest',
-    'gpt-5.2-chat': 'gpt-5.2-chat-latest',
-    'gpt-5.1-chat': 'gpt-5.1-chat-latest',
-    'gpt-5-chat': 'gpt-5-chat-latest',
+    'gpt-5.3-chat': 'gpt-5.3-chat-latest', // OR expiration_date 2026-08-10 - remove with the target entry
+    'gpt-5.2-chat': 'gpt-5.2-chat-latest', // OR expiration_date 2026-08-10 - remove with the target entry
+    // 'gpt-5.1-chat' / 'gpt-5-chat': removed - OR delisted both slugs ('No endpoints found', 2026-08-06)
     // remove openai variants
     'o4-mini-high': null,
     'o3-mini-high': null,

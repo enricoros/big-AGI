@@ -16,9 +16,20 @@ Appending `.md` to any docs URL returns clean markdown that plain `curl` fetches
 
 **Fallbacks if blocked:** third-party aggregators via search, or Chrome DevTools MCP on the official docs.
 
-**Ground truth vs docs:** `/v1/models` keeps listing models for weeks after shutdown. A 1-token
-`v1/chat/completions` (or `v1/responses`) call returns 404 "has been deprecated" for dead ids - probe before
-concluding a model is alive.
+**Ground truth vs docs:** `/v1/models` keeps listing models after shutdown (even `GET /v1/models/<id>`
+returns 200 for dead ids) - only a generation attempt is a liveness signal. A 1-token `v1/chat/completions`
+call returns 404 "has been deprecated" for dead ids; `v1/responses` says only "Model not found" for the
+same dead ids (equivalent verdict, weaker message). Probe before concluding a model is alive OR dead.
+
+**Before removing a model def, all three must hold** (removal = delete the entry + add it to `openAIModelsDenyList`):
+1. OpenAI direct generation is dead (404 deprecated) - and the error is not a permission/entitlement error,
+   which means the model EXISTS and some keys still have access (keep the def).
+2. The docs name that exact id: bare aliases can outlive their deny-listed snapshot (gpt-4o-search-preview
+   still served after gpt-4o-search-preview-2025-03-11 shut down) - probe alias and snapshot separately.
+3. OpenRouter `openai/<id>` has no working endpoint (probe a 1-token generation, not just the listing) -
+   Azure kept the 5.1/5.2 codex family alive post-shutdown. If OR still serves it, keep the def (hidden,
+   deny-listed) so `llmOrtOaiLookup` keeps native interfaces/params - same pattern as gemini.models.ts
+   phantom models.
 
 **Live endpoint (extra signal):** If `.env.api-keys` has `OPENAI_API_KEY`, scan the served model list for what's new and cross-check the docs above: `curl https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY"`. Never commit or echo the key.
 
