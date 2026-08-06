@@ -18,7 +18,8 @@ import { useGoogleSearchStore } from './store-module-google';
 export function GoogleSearchSettings() {
 
   // external state
-  const backendHasGoogle = getBackendCapabilities().hasGoogleCustomSearch;
+  const { hasGoogleCustomSearch, hasBraveSearch } = getBackendCapabilities();
+  const backendHasGoogle = hasGoogleCustomSearch || hasBraveSearch; // Brave server-side also fulfills web search - Google keys become optional overrides
   const { googleCloudApiKey, setGoogleCloudApiKey, googleCSEId, setGoogleCSEId, restrictToDomain, setRestrictToDomain } = useGoogleSearchStore(useShallow(state => ({
     googleCloudApiKey: state.googleCloudApiKey, setGoogleCloudApiKey: state.setGoogleCloudApiKey,
     googleCSEId: state.googleCSEId, setGoogleCSEId: state.setGoogleCSEId,
@@ -43,6 +44,12 @@ export function GoogleSearchSettings() {
     <Typography level='body-sm'>
       For custom search engines or domain-specific searches. Most models have native search capabilities. Uses the Google <ExternalLink href='https://developers.google.com/custom-search/v1/overview'>Programmable Search Engine</ExternalLink> API.
     </Typography>
+
+    {hasBraveSearch && (
+      <Typography level='body-sm'>
+        This server is configured with <ExternalLink href='https://brave.com/search/api/'>Brave Search</ExternalLink>, which is used automatically. The Google keys below are optional overrides.
+      </Typography>
+    )}
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='GCP API Key'

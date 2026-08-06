@@ -55,6 +55,7 @@ PUPPETEER_WSS_ENDPOINT=
 # Search
 GOOGLE_CLOUD_API_KEY=
 GOOGLE_CSE_ID=
+BRAVE_SEARCH_API_KEY=
 
 # Text-To-Speech: ElevenLabs
 ELEVENLABS_API_KEY=
@@ -135,7 +136,8 @@ Enable the app to Talk, Draw, and Google things up.
 | `ELEVENLABS_API_HOST`      | Custom host for ElevenLabs                                                                                              |
 | `ELEVENLABS_VOICE_ID`      | Default voice ID for ElevenLabs                                                                                         |
 |                            | *Note: OpenAI TTS and LocalAI TTS reuse credentials from your configured LLM services (no separate env vars needed)*   |
-| **Google Custom Search**   | [Google Programmable Search Engine](https://programmablesearchengine.google.com/about/)  produces links to pages        |
+| **Web Search**             | Web search produces links to pages, used with the '/react' command                                                      |
+| `BRAVE_SEARCH_API_KEY`     | [Brave Search API](https://brave.com/search/api/) key - preferred over Google CSE when both are set (Google is sunsetting whole-web Programmable Search Engines) |
 | `GOOGLE_CLOUD_API_KEY`     | Google Cloud API Key, used with the '/react' command - [Link to GCP](https://console.cloud.google.com/apis/credentials) |
 | `GOOGLE_CSE_ID`            | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)               |
 | **Browse**                 |                                                                                                                         |

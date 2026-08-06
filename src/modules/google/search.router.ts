@@ -17,7 +17,12 @@ const GROUNDING_PER_URL_TIMEOUT_MS = 4000;
 export const googleSearchRouter = createTRPCRouter({
 
   /**
-   * Google Search via the Google Programmable Search product
+   * Web Search: Google Programmable Search, or Brave Search when server-configured.
+   *
+   * Provider selection: client-provided Google keys take precedence (explicit user
+   * configuration), otherwise a server-side BRAVE_SEARCH_API_KEY is preferred over
+   * server-side Google CSE keys - Google is sunsetting whole-web Programmable
+   * Search Engines, so Brave is the forward path when both are configured.
    */
   search: publicProcedure
     .input(z.object({
@@ -29,6 +34,12 @@ export const googleSearchRouter = createTRPCRouter({
     }))
     .query(async ({ input }): Promise<{ pages: Search.API.BriefResult[] }> => {
 
+      // [Brave] server-side, unless the client explicitly configured Google keys
+      const clientHasGoogleKeys = !!input.key?.trim() && !!input.cx?.trim();
+      if (!clientHasGoogleKeys && env.BRAVE_SEARCH_API_KEY)
+        return _braveSearch(env.BRAVE_SEARCH_API_KEY, input.query, input.items, input.restrictToDomain);
+
+      // [Google] client keys, or server CSE keys
       const customSearchParams: Search.Wire.RequestParams = {
         q: input.query.trim(),
         cx: (input.cx || env.GOOGLE_CSE_ID || '').trim(),
@@ -103,4 +114,44 @@ function objectToQueryString(params: Record<string, any>): string {
   return Object.entries(params)
     .map(([key, value]) => encodeURIComponent(key) + '=' + encodeURIComponent(value))
     .join('&');
+}
+
+
+/// Brave Search - https://api-dashboard.search.brave.com/app/documentation/web-search/get-started ///
+
+const BRAVE_MAX_RESULTS = 20; // Brave caps `count` at 20 (Google caps `num` at 10)
+
+async function _braveSearch(apiKey: string, query: string, items: number, restrictToDomain: string | null): Promise<{ pages: Search.API.BriefResult[] }> {
+
+  // domain restriction: no dedicated parameter in the Brave API, use the `site:` query operator
+  const q = (restrictToDomain ? `${query.trim()} site:${restrictToDomain.trim()}` : query.trim());
+
+  const params = new URLSearchParams({
+    q,
+    count: String(Math.min(Math.max(Math.round(items), 1), BRAVE_MAX_RESULTS)),
+  });
+
+  const data: Search.Wire.Brave.SearchResponse = await fetchJsonOrTRPCThrow({
+    url: `https://api.search.brave.com/res/v1/web/search?${params.toString()}`,
+    name: 'Brave Search',
+    headers: {
+      'Accept': 'application/json',
+      'Accept-Encoding': 'gzip',
+      'X-Subscription-Token': apiKey,
+    },
+  });
+
+  return {
+    pages: (data.web?.results || []).map((result): Search.API.BriefResult => ({
+      title: _braveStripHtml(result.title || ''),
+      link: result.url,
+      snippet: _braveStripHtml(result.description || ''), // Google snippets are plain text; Brave descriptions carry highlight markup
+    })),
+  };
+}
+
+function _braveStripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#x?0*(27|39);/g, '\'');
 }
