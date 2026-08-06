@@ -532,8 +532,8 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // [OpenAI or OpenAI-compatible]: chat-only models, custom sort, manual mapping
               const isNotOpenai = !llmsIsNativeOpenAIHost(access.oaiHost); // native = empty host (uses default) or explicitly api.openai.com
               const models = maybeModels
-                // limit to only 'gpt' and 'non instruct' models
-                .filter(openAIModelFilter)
+                // limit to only 'gpt' and 'non instruct' models (shutdown denies apply to native OpenAI only)
+                .filter(model => openAIModelFilter(model, !isNotOpenai))
                 // to model description
                 .map((model: any): ModelDescriptionSchema => openAIModelToModelDescription(model.id, { isNotOpenai, modelCreated: model.created }))
                 // inject variants
@@ -542,7 +542,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .sort(openAISortModels);
 
               // [DEV] check for stale/unknown model definitions
-              openaiValidateModelDefs_DEV(maybeModels, models);
+              openaiValidateModelDefs_DEV(maybeModels, models, !isNotOpenai);
               return models;
 
             case 'openrouter':

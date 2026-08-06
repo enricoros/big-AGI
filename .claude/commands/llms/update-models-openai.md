@@ -21,7 +21,7 @@ returns 200 for dead ids) - only a generation attempt is a liveness signal. A 1-
 call returns 404 "has been deprecated" for dead ids; `v1/responses` says only "Model not found" for the
 same dead ids (equivalent verdict, weaker message). Probe before concluding a model is alive OR dead.
 
-**Before removing a model def, all three must hold** (removal = delete the entry + add it to `openAIModelsDenyList`):
+**Before removing a model def, all three must hold** (removal = delete the entry + add it to `openAIModelsShutdownDenyList`, which filters native api.openai.com listings only - compatible hosts/proxies that still serve the id keep it):
 1. OpenAI direct generation is dead (404 deprecated) - and the error is not a permission/entitlement error,
    which means the model EXISTS and some keys still have access (keep the def).
 2. The docs name that exact id: bare aliases can outlive their deny-listed snapshot (gpt-4o-search-preview

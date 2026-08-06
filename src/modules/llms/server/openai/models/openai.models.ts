@@ -1249,26 +1249,6 @@ const openAIModelsDenyList: string[] = [
   // [OpenAI, 2025-03-11] Computer Use (Responses API) - NOT YET SUPPORTED; still returned by some accounts until shutdown 2026-07-23
   'computer-use-preview', // single entry catches '-2025-03-11' too via includes()
 
-  // [OpenAI Deprecations] Explicitly deny shut-down model IDs that we removed
-  'codex-mini-latest', // shut down February 12, 2026
-  'chatgpt-4o-latest', // shut down February 17, 2026
-  // shut down July 23, 2026 (still listed by /v1/models - even GET /v1/models/<id> returns 200 for dead
-  // models - only a generation attempt is a liveness signal: 404 'has been deprecated' = dead).
-  // POLICY before adding here: probe generation on OpenAI direct AND on OpenRouter (openai/<id> - Azure
-  // kept the 5.1/5.2 codex family alive post-shutdown), and distinguish 404-deprecated from permission
-  // errors (an entitled key may retain access - a permission error means alive, do not deny).
-  // Denying only filters the OpenAI listing; keep the def in _knownOpenAIChatModels when OpenRouter
-  // still serves the id, so llmOrtOaiLookup keeps its native interfaces/params.
-  'gpt-5-chat-latest', // dead on OpenRouter too
-  'gpt-5-codex', // on OpenRouter only as unusable :batch
-  'gpt-5.1-chat-latest', // dead on OpenRouter too
-  'gpt-5.1-codex', // catches -max and -mini too; defs kept above (OpenRouter serves all three via Azure)
-  'gpt-5.2-codex', // def kept above (OpenRouter serves it via Azure)
-  'gpt-4o-search-preview-2025-03-11', // the bare alias still serves (def kept above) - deny only the snapshot
-  'gpt-4o-mini-search-preview-2025-03-11', // same: deny only the snapshot
-  'gpt-audio-mini-2025-10-06', // the -2025-12-15 snapshot and the alias stay
-  'o3-deep-research', // dead everywhere (OpenRouter: no endpoints; Bedrock: absent)
-  'o4-mini-deep-research', // dead everywhere
   // 'gpt-4.5-preview',
   // 'o1-preview',
   // 'gpt-4-32k',
@@ -1311,8 +1291,34 @@ const openAIModelsDenyList: string[] = [
   'omni-moderation-latest', 'omni-moderation-2024-09-26', 'text-moderation-latest',
 ];
 
-export function openAIModelFilter(model: OpenAIWire_API_Models_List.Model) {
+// [OpenAI Deprecations] Shut-down ids, filtered ONLY on native api.openai.com listings: other OpenAI-compatible
+// hosts (Azure re-exports, gateways, proxies) may legitimately keep serving these and must not lose them.
+// /v1/models is not a liveness signal - it keeps listing dead models (even GET /v1/models/<id> returns 200);
+// only a generation attempt is: 404 'has been deprecated' = dead.
+// POLICY before adding here: probe generation on OpenAI direct AND on OpenRouter (openai/<id> - Azure kept the
+// 5.1/5.2 codex family alive post-shutdown), and distinguish 404-deprecated from permission errors (an entitled
+// key may retain access - a permission error means alive, do not deny). Keep the def in _knownOpenAIChatModels
+// when OpenRouter still serves the id, so llmOrtOaiLookup keeps its native interfaces/params.
+const openAIModelsShutdownDenyList: string[] = [
+  'codex-mini-latest', // shut down February 12, 2026
+  'chatgpt-4o-latest', // shut down February 17, 2026
+  // shut down July 23, 2026
+  'gpt-5-chat-latest', // dead on OpenRouter too
+  'gpt-5-codex', // on OpenRouter only as unusable :batch
+  'gpt-5.1-chat-latest', // dead on OpenRouter too
+  'gpt-5.1-codex', // catches -max and -mini too; defs kept above (OpenRouter serves all three via Azure)
+  'gpt-5.2-codex', // def kept above (OpenRouter serves it via Azure)
+  'gpt-4o-search-preview-2025-03-11', // the bare alias still serves (def kept above) - deny only the snapshot
+  'gpt-4o-mini-search-preview-2025-03-11', // same: deny only the snapshot
+  'gpt-audio-mini-2025-10-06', // the -2025-12-15 snapshot and the alias stay
+  'o3-deep-research', // dead everywhere (OpenRouter: no endpoints; Bedrock: absent)
+  'o4-mini-deep-research', // dead everywhere
+];
+
+export function openAIModelFilter(model: OpenAIWire_API_Models_List.Model, isNativeOpenAI: boolean) {
   if (openAIModelsDenyExactList.includes(model.id)) return false;
+  // shut-down ids only vanish from native OpenAI listings - compatible hosts may still serve them
+  if (isNativeOpenAI && openAIModelsShutdownDenyList.some(deny => model.id.includes(deny))) return false;
   return !openAIModelsDenyList.some(deny => model.id.includes(deny));
 }
 
@@ -1482,7 +1488,7 @@ export function openAISortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
  * 2. Unknown models: in API but not in our known models (should add)
  * 3. Parsing gaps: in API but lost during parsing pipeline (bug detection)
  */
-export function openaiValidateModelDefs_DEV(apiModels: unknown, parsedModels?: object[]): void {
+export function openaiValidateModelDefs_DEV(apiModels: unknown, parsedModels: object[] | undefined, isNativeOpenAI: boolean): void {
 
   if (DEV_DEBUG_OPENAI_MODELS) {
 
@@ -1498,14 +1504,14 @@ export function openaiValidateModelDefs_DEV(apiModels: unknown, parsedModels?: o
       .map(model => model.idPrefix);
 
     // 1 & 2: Check stale and unknown definitions
-    llmDevCheckModels_DEV('OpenAI', apiIds, knownIds, { apiFilter: id => openAIModelFilter({ id } as any) });
+    llmDevCheckModels_DEV('OpenAI', apiIds, knownIds, { apiFilter: id => openAIModelFilter({ id } as any, isNativeOpenAI) });
 
     // 3: Check for parsing gaps (models lost during filter/map pipeline)
     if (parsedModels) {
       const parsedIds = new Set(parsedModels.map((m: any) => m.id));
       const parsingGaps = apiIds.filter(id =>
         !parsedIds.has(id) && // not in parsed output
-        openAIModelFilter({ id } as any), // not filtered by deny list
+        openAIModelFilter({ id } as any, isNativeOpenAI), // not filtered by deny list
       );
       if (parsingGaps.length)
         console.log(`[DEV] OpenAI: parsing gaps (in API, passed filter, but not in output): [ ${parsingGaps.join(', ')} ]`);
