@@ -94,6 +94,7 @@ const ModelParameterSpec_schema = z.object({
     'llmVndAntWebSearchMaxUses',
     // Bedrock
     'llmVndBedrockAPI',
+    'llmVndBedrockWebSearch',
     // Gemini
     'llmVndGeminiAgentViz',
     'llmVndGeminiAspectRatio',
