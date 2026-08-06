@@ -34,7 +34,7 @@ const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
 ];
 
 // Phantom models: listed by the API but return HTTP 'not found' on actual use (generateContent 404s).
-// Hidden entirely so users can't select a model that will fail. (Verified 2026-06-17, re-verified 2026-07-22.)
+// Hidden entirely so users can't select a model that will fail. (Verified 2026-06-17, re-verified 2026-08-04.)
 // NOTE: we keep their _knownGeminiModels defs around on purpose - they're still resolved via
 // Vertex AI and OpenRouter->Gemini (llmOrtGemLookup). Expunge the defs from _knownGeminiModels
 // only once the native API stops returning them entirely.
@@ -75,7 +75,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/pricing (July 22, 2026)
+// Pricing based on https://ai.google.dev/gemini-api/docs/pricing (August 4, 2026)
 
 const gemini36FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 1.50, // text/image/video, no per-modality split; cache storage $1.00/MTok-hour (not tracked here)
@@ -256,7 +256,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1485 }, // gemini-3.6-flash (LMArena 2026-07-22)
+    benchmark: { cbaElo: 1483 }, // gemini-3.6-flash (LMArena 2026-08-01)
   },
 
 
@@ -293,7 +293,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1459 }, // gemini-3.5-flash-lite (LMArena 2026-07-22)
+    benchmark: { cbaElo: 1457 }, // gemini-3.5-flash-lite (LMArena 2026-08-01)
   },
 
 
@@ -315,7 +315,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiGoogleSearch' },
       // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
     ],
-    benchmark: { cbaElo: 1486 }, // gemini-3.1-pro-preview (LMArena 2026-07-22)
+    benchmark: { cbaElo: 1485 }, // gemini-3.1-pro-preview (LMArena 2026-08-01)
   },
   // 3.1 Pro (Preview) - Custom Tools variant - Released February 19, 2026
   // Better at prioritizing custom tools for users building with a mix of bash and tools
@@ -333,7 +333,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1486 - 1 }, // -1 (deprio this variant) + gemini-3.1-pro-preview
+    benchmark: { cbaElo: 1485 - 1 }, // -1 (deprio this variant) + gemini-3.1-pro-preview
   },
 
   // 3.1 Flash Image (Stable / GA) - Released May 28, 2026 (graduated from preview)
@@ -353,7 +353,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     benchmark: undefined, // Non-benchmarkable because generates images
   },
 
-  // 3.1 Flash Image (Preview) - Released February 26, 2026; DEPRECATED: shutdown June 25, 2026 (announced May 28, 2026)
+  // 3.1 Flash Image (Preview) - Released February 26, 2026; DEPRECATED: shutdown June 25, 2026 (announced May 28, 2026; still serving its own version as of 2026-08-04)
   {
     hidden: true, // superseded by GA gemini-3.1-flash-image - kept so users who already selected it still resolve until shutdown
     id: 'models/gemini-3.1-flash-image-preview',
@@ -449,7 +449,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     benchmark: undefined, // Non-benchmarkable because generates images
   },
 
-  // 3.0 Pro Image (Preview) - Released November 20, 2025; DEPRECATED: shutdown June 25, 2026 (announced May 28, 2026)
+  // 3.0 Pro Image (Preview) - Released November 20, 2025; DEPRECATED: shutdown June 25, 2026 (announced May 28, 2026; still serving its own version as of 2026-08-04)
   {
     hidden: true, // superseded by GA gemini-3-pro-image - kept so users who already selected it still resolve until shutdown
     id: 'models/gemini-3-pro-image-preview',
@@ -522,7 +522,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1448 }, // gemini-2.5-pro
+    benchmark: { cbaElo: 1446 }, // gemini-2.5-pro
   },
 
   // REMOVED MODELS (no longer returned by API as of Jan 8, 2026):
@@ -636,7 +636,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
 
   // 2.5 Flash
   {
-    hidden: true, // outperformed by 3 Flash Preview (1474 vs 1411) - shutdown June 17, 2026
+    hidden: true, // outperformed by 3 Flash Preview (1473 vs 1410) - shutdown June 17, 2026
     id: 'models/gemini-2.5-flash',
     labelOverride: 'Gemini 2.5 Flash',
     pubDate: '20250617',
@@ -647,7 +647,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiThinkingBudget' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1411 }, // gemini-2.5-flash
+    benchmark: { cbaElo: 1410 }, // gemini-2.5-flash
   },
 
   // REMOVED MODELS (no longer returned by API as of Nov 20, 2025):
@@ -927,7 +927,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     parameterSpecs: [{ paramId: 'llmVndGemEffort', enumValues: ['minimal', 'high'] }],
     chatPrice: geminiExpFree, // Free tier only according to pricing page
-    benchmark: { cbaElo: 1439 }, // gemma-4-26b-a4b
+    benchmark: { cbaElo: 1438 }, // gemma-4-26b-a4b
   },
 
   // REMOVED MODELS (no longer returned by API as of June 2026):
