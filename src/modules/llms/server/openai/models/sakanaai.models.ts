@@ -12,7 +12,7 @@ import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappin
 export type LlmsSakanaAIModelId = typeof _sakanaKnownModels[number]['idPrefix'];
 
 
-// [Sakana.ai] Models List API schema - observed at https://api.sakana.ai/v1/models (2026-07-23).
+// [Sakana.ai] Models List API schema - observed at https://api.sakana.ai/v1/models (re-verified 2026-08-04).
 // The list returns only id/object/created/owned_by - NO capabilities or pricing - so all caps/pricing
 // come from the manual mappings below; `description` (returned until ~2026-06) is kept as a tolerated
 // field and unknown-model fallback. (`created` now varies per model but does not track launch dates -
@@ -60,6 +60,26 @@ const _fuguCyberPrice: ModelDescriptionSchema['chatPrice'] = {
   output: [{ upTo: 272000, price: 36 }, { upTo: null, price: 54 }],
   cache: { cType: 'oai-ac', read: [{ upTo: 272000, price: 0.6 }, { upTo: null, price: 1.2 }] },
 };
+
+// [Sakana.ai] Sakana Namazu flat PAYG pricing (USD per 1M tokens) - no context-size tiers, unlike Fugu.
+// Source: https://console.sakana.ai/pricing (2026-08-04), listed as 'sakana-namazu-v1.0'. Thinking tokens
+// bill at the output rate; the built-in tools bill on top ($7 / 1K web searches, $0.12 / hour of code execution).
+const _namazuPrice: ModelDescriptionSchema['chatPrice'] = {
+  input: 0.95,
+  output: 4,
+  cache: { cType: 'oai-ac', read: 0.15 },
+};
+
+// Namazu interfaces/params, all empirically verified 2026-08-04 on the Responses API (Chat Completions is also
+// served, but the 'sakanaai' dialect always dispatches to Responses): vision, function calling, the hosted
+// 'web_search' tool, and automatic prompt caching (usage.input_tokens_details.cached_tokens > 0).
+// Reasoning effort is NOT validated here (unknown values pass through) and only 'none' has an observable effect
+// (thinking off; every other level yields indistinguishable reasoning lengths), hence the binary none/high.
+const _namazuInterfaces = [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching];
+const _namazuParamSpecs = [
+  { paramId: 'llmVndOaiEffort' as const, enumValues: ['none', 'high'] },
+  { paramId: 'llmVndOaiWebSearchContext' as const, enumValues: ['high'] },
+];
 
 // Fugu Ultra versioning: Sakana switched to '-vX.Y' pinned IDs (API-registered 2026-07-23; sakana.ai/fugu:
 // "fugu-ultra-v1.0 (previously fugu-ultra-20260615)"). Cache-identity probes (2026-07-23, cross-model prompt-cache
@@ -130,6 +150,19 @@ const _sakanaKnownModels = llmsDefineManualMappings([
     parameterSpecs: _fuguParamSpecs,
     pubDate: '20260622',
   },
+  // Sakana Namazu v1.0 - not an orchestrator: a Japanese-specialized model (Kimi K2.6 base, adapted by Sakana),
+  // announced 2026-08-03 as the API version of the model already powering Sakana Chat. Context window is 256K
+  // (probed: max_output_tokens is capped at 262144 minus the prompt tokens, there is no separate output ceiling).
+  {
+    idPrefix: 'sakana-namazu-v1.0',
+    label: 'Sakana Namazu v1.0',
+    description: 'Japanese-specialized LLM built on Moonshot AI\'s Kimi K2.6 and adapted by Sakana on in-house Japanese and Japanese-business data, with reduced over-refusal and bias. Built-in web search and code execution. 256K context.',
+    contextWindow: 262144,
+    interfaces: _namazuInterfaces,
+    parameterSpecs: _namazuParamSpecs,
+    chatPrice: _namazuPrice,
+    pubDate: '20260803',
+  },
   // Fugu Ultra - floating alias (currently = v1.1, cache-identity verified 2026-07-23): symlinked to the
   // pin so the duplicate stays out of the picker but the alias relationship is visible in the models list.
   {
@@ -137,6 +170,13 @@ const _sakanaKnownModels = llmsDefineManualMappings([
     label: 'Sakana Fugu Ultra',
     symLink: 'fugu-ultra-v1.1',
     description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning. Tracks the latest Fugu Ultra version. 1M context.',
+  },
+  // Sakana Namazu - floating alias, currently = v1.0 (the only published version): symlinked like 'fugu-ultra'.
+  {
+    idPrefix: 'sakana-namazu',
+    label: 'Sakana Namazu',
+    symLink: 'sakana-namazu-v1.0',
+    description: 'Japanese-specialized LLM with built-in web search and code execution. Tracks the latest Sakana Namazu version. 256K context.',
   },
 ]);
 
