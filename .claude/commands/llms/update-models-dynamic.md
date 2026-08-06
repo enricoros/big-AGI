@@ -12,11 +12,13 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 
 **OpenRouter** - `src/modules/llms/server/openai/models/openrouter.models.ts`
 - Most complex parser. Vendor-specific parameter inheritance (Anthropic thinking variants, Gemini thinking/image, OpenAI reasoning effort, xAI/DeepSeek reasoning).
-- Hardcoded family ordering list (lines ~24-37) - check if new leading vendors are missing.
-- Hardcoded old/deprecated model hiding list (lines ~39-49) - check if stale.
+- `orModelFamilyOrder` doubles as the visibility allow-list - check if new leading vendors are missing (they'd be hidden, not just mis-sorted).
+- `orOldModelIDs` hiding list - check if stale.
+- Ids: `~vendor/model-latest` are router aliases (`alias_target`) and `vendor/model-fast` are resold priority tiers - both must match their base family/vendor definition, not fall through to the generic branch.
+- `reasoning.mandatory` models reject effort 'none' - never offer it, in any vendor branch.
 - Cache pricing detection (Anthropic-style vs OpenAI-style) - verify format still valid.
 - Variant injection for Anthropic thinking/non-thinking - verify still correct.
-- Reference: https://openrouter.ai/docs/models
+- Reference: https://openrouter.ai/docs/models ; live list: `GET https://openrouter.ai/api/v1/models`
 
 ### Medium Risk
 
@@ -31,11 +33,14 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 - Hostname heuristic: `.chutes.ai`.
 
 **FireworksAI** - `src/modules/llms/server/openai/models/fireworksai.models.ts`
-- Relies on provider capability flags: `supports_chat`, `supports_image_input`, `supports_tools`.
+- Relies on provider capability flags: `supports_chat`, `supports_image_input`, `supports_tools`; `kind` also gates (embedding/reranker models are listed with `supports_chat: true`).
+- Two id shapes: `accounts/fireworks/models/*` and `accounts/fireworks/routers/*` (the Fast/Turbo serving tiers); slugs use 'p' as decimal point.
+- `/inference/v1/models` has no name/description/price: labels+descriptions from `GET /v1/accounts/fireworks/models/{id}` (control plane, same key), prices from https://docs.fireworks.ai/serverless/pricing (NOT fireworks.ai/pricing, which is training-only).
 - Hostname heuristic: `fireworks.ai/`.
 
 **TogetherAI** - `src/modules/llms/server/openai/models/together.models.ts`
-- Type allow-list (`type: 'chat'`), vision detection by string match.
+- Type allow-list (`type: 'chat'`; 'language' = base LMs, correctly excluded), vision detection by id pattern - the API exposes no modality field, so cross-check families against OpenRouter/Fireworks.
+- `created` is endpoint churn (0 for the newest arrivals) - pubDate comes only from `_togetherEditorialPubDates`.
 - Custom wire schema with pricing conversion.
 
 **TLUS** - `src/modules/llms/server/openai/models/tlusapi.models.ts`

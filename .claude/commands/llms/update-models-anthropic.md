@@ -22,10 +22,12 @@ contain inline links to feature-specific pages (thinking modes, effort,
 context windows, what's-new pages, etc.). When a new capability is
 referenced, follow those links - append `.md` to get markdown. Examples of
 pages you might discover this way:
-- `about-claude/models/whats-new-claude-*` - per-generation changes
-- `build-with-claude/extended-thinking` - thinking budget configuration
-- `build-with-claude/effort` - effort parameter levels
-- `build-with-claude/adaptive-thinking` - adaptive thinking mode
+- `about-claude/models/whats-new-*` - per-generation changes (e.g. `whats-new-opus-5`)
+- `build-with-claude/extended-thinking` - manual thinking budget configuration
+- `build-with-claude/effort` - effort levels + per-model availability
+- `build-with-claude/thinking`, `build-with-claude/thinking-steering-and-cost` - adaptive thinking
+- `build-with-claude/thinking-troubleshooting#supported-models` - per-model thinking/effort matrix
+- `agents-and-tools/tool-use/tool-reference` - per-tool model support and tool versions
 
 **Fallback web pages** (crawl if `.md` paths break or structure changes):
 - https://platform.claude.com/docs/en/about-claude/models/overview

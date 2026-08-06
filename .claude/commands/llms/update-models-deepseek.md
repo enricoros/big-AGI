@@ -6,12 +6,13 @@ Update `src/modules/llms/server/openai/models/deepseek.models.ts` with latest mo
 
 Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
-**Primary Sources:**
-- Pricing: https://api-docs.deepseek.com/quick_start/pricing
-- Model List: https://api-docs.deepseek.com/api/list-models
-- Release Notes: https://api-docs.deepseek.com/updates (check for version updates like V3.2-Exp)
+**Primary Sources:** (trailing slash required - without it Docusaurus 302s)
+- Pricing + model details (context, max output, per-model feature matrix): https://api-docs.deepseek.com/quick_start/pricing/
+- Model List: https://api-docs.deepseek.com/api/list-models/
+- Release Notes: https://api-docs.deepseek.com/updates/ (check for version updates like V4-Flash-0731)
+- Thinking Mode: https://api-docs.deepseek.com/guides/thinking_mode/ - authoritative for the `reasoning_effort` enum and the per-model requested->actual effort mapping that drives `parameterSpecs`
 
-**Note:** DeepSeek frequently releases new versions with significant pricing changes. Always check release notes first.
+**Note:** DeepSeek frequently swaps weights in place behind an unchanged, undated model id, and releases new versions with significant pricing changes. Always check release notes first.
 
 **Fallbacks if blocked:** Search "deepseek api latest pricing", "deepseek latest models", "deepseek models list" or search GitHub for latest model prices and context windows
 
