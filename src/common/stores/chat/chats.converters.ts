@@ -181,6 +181,8 @@ export namespace V3StoreDataToHead {
     if (created) cc.created = created;
     if (updated) cc.updated = updated;
     cc.tokenCount = ('tokenCount' in ic) ? ic.tokenCount || 0 : cc.tokenCount || 0;
+    // round-trip the conversation-pinned model, when set (V4+ exports; broken pins degrade at resolution time)
+    if ('userLlmId' in ic && typeof ic.userLlmId === 'string' && ic.userLlmId) cc.userLlmId = ic.userLlmId;
 
     return cc;
   }
@@ -352,6 +354,7 @@ export namespace DataAtRestV1 {
     id: string;
     messages: (DMessage | V3StoreDataToHead.ImportMessageV3)[];
     systemPurposeId: string;
+    userLlmId?: string; // optional conversation-pinned model - broken pins degrade at resolution time
     userTitle?: string;
     autoTitle?: string;
     created: number;
