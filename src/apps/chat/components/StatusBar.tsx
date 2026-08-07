@@ -174,16 +174,17 @@ export function StatusBar(props: { toggleMinimized?: () => void, isMinimized?: b
   // const [ctrlPressed, setCtrlPressed] = React.useState(false);
   // const [shiftPressed, setShiftPressed] = React.useState(false);
 
-  // external state
+  // external state - THE resolver the keydown handler executes: shown <=> fires, by
+  // construction (a winning undescribed entry blanks its combo, never exposes a shadowed one);
+  // focus moves re-resolve via the store's focusTick
   const labsShowShortcutBar = useUXLabsStore(state => state.labsShowShortcutBar);
   const shortcuts = useGlobalShortcutsStore(useShallow(state => {
-    // get visible shortcuts
-    let visibleShortcuts = !labsShowShortcutBar ? [] : state.getAllShortcuts().filter(shortcut => !!shortcut.description);
+    const visibleShortcuts = !labsShowShortcutBar ? [] : state.resolveShortcuts().filter(shortcut => !!shortcut.description);
 
     // filter by highest level if levels are present
-    const maxLevel = Math.max(...visibleShortcuts.map(s => s.level ?? 0));
-    if (maxLevel > 0)
-      visibleShortcuts = visibleShortcuts.filter(s => s.level === maxLevel);
+    // const maxLevel = Math.max(...visibleShortcuts.map(s => s.level ?? 0));
+    // if (maxLevel > 0)
+    //   visibleShortcuts = visibleShortcuts.filter(s => s.level === maxLevel);
 
     visibleShortcuts.sort((a, b) => {
       // 1. First by level

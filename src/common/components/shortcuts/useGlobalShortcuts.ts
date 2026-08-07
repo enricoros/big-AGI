@@ -29,11 +29,13 @@ export interface ShortcutDefinition {
 }
 
 export interface ShortcutObject extends ShortcutDefinition {
-  disabled?: boolean;
-  skipIfInput?: boolean; // skip if a text input, textarea, contenteditable (or child thereof) is focused
+  disabled?: boolean; // shown greyed; still wins its combo, consuming the key without acting
+  skipIfInput?: boolean; // UNUSED - skip if a text input, textarea, contenteditable (or child thereof) is focused
+  /** Eligible only while focus is contained in this element (checked at press time, like skipIfInput). Unmounted ref = never eligible. */
+  focusWithin?: React.RefObject<HTMLElement>;
   action: (() => void) | '_specialPrintShortcuts';
   endDecoratorIcon?: typeof SvgIcon;
-  level?: number; // if set, it will exclusively show icons at that level of priority and hide the others
+  level?: number; // handler precedence (desc; ties: focus-scoped first); the bar shows each combo's winning entry
 }
 
 

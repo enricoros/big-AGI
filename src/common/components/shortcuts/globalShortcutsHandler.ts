@@ -23,10 +23,8 @@ function _handleGlobalShortcutKeyDown(event: KeyboardEvent) {
     !event.ctrlKey && !event.shiftKey && !event.altKey && lcEventKey !== 'enter')
     return;
 
-
-  const shortcuts = useGlobalShortcutsStore.getState().getAllShortcuts();
-
-  for (const shortcut of shortcuts) {
+  // the resolver already applied eligibility and per-combo precedence - first match IS the winner
+  for (const shortcut of useGlobalShortcutsStore.getState().resolveShortcuts()) {
 
     // Check if the key matches (case-insensitive)
     if (lcEventKey !== shortcut.key.toLowerCase())
@@ -37,22 +35,30 @@ function _handleGlobalShortcutKeyDown(event: KeyboardEvent) {
       (shortcut.shift && !event.shiftKey) || (!shortcut.shift && event.shiftKey))
       continue;
 
-    // Skip if a text input element is focused and the shortcut opts into this guard
-    if (shortcut.skipIfInput && _isTextInputFocused())
-      continue;
-
-    // Execute the action (and prevent the default browser action)
+    // Winner: consume the key; a disabled winner acts like a disabled control - eaten, no action
     event.preventDefault();
     event.stopPropagation();
 
     if (shortcut.action === '_specialPrintShortcuts')
       console.log('Global Shortcuts:', useGlobalShortcutsStore.getState().shortcutGroups);
-    else
+    else if (!shortcut.disabled)
       shortcut.action();
 
-    // Stop searching for more shortcuts
     break;
   }
+}
+
+// focus moves change read-time eligibility (focusWithin/skipIfInput): tick the store so
+// displays re-resolve; microtask-coalesced (a click fires focusout+focusin - one recheck)
+let _focusTickQueued = false;
+
+function _handleFocusChanged() {
+  if (_focusTickQueued) return;
+  _focusTickQueued = true;
+  queueMicrotask(() => {
+    _focusTickQueued = false;
+    useGlobalShortcutsStore.getState().focusTick();
+  });
 }
 
 let isHandlerInstalled = false;
@@ -60,6 +66,8 @@ let isHandlerInstalled = false;
 function _installGlobalShortcutHandler() {
   if (!isHandlerInstalled) {
     window.addEventListener('keydown', _handleGlobalShortcutKeyDown);
+    document.addEventListener('focusin', _handleFocusChanged);
+    document.addEventListener('focusout', _handleFocusChanged); // blur-to-body fires no focusin
     isHandlerInstalled = true;
   }
 }
@@ -67,25 +75,8 @@ function _installGlobalShortcutHandler() {
 function _uninstallGlobalShortcutHandler() {
   if (isHandlerInstalled) {
     window.removeEventListener('keydown', _handleGlobalShortcutKeyDown);
+    document.removeEventListener('focusin', _handleFocusChanged);
+    document.removeEventListener('focusout', _handleFocusChanged);
     isHandlerInstalled = false;
   }
-}
-
-/** Returns true if the active element (or an ancestor with focus) is a text input, textarea, or contenteditable. */
-function _isTextInputFocused(): boolean {
-  const el = document.activeElement;
-  if (!el || el === document.body)
-    return false;
-  if (el instanceof HTMLInputElement && (el.type === 'text' || el.type === 'search' || el.type === 'url' || el.type === 'email' || el.type === 'password' || el.type === 'number' || el.type === 'tel'))
-    return true;
-  if (el instanceof HTMLTextAreaElement)
-    return true;
-  // check the element and its ancestors for contenteditable
-  let node: Element | null = el;
-  while (node) {
-    if (node instanceof HTMLElement && node.isContentEditable)
-      return true;
-    node = node.parentElement;
-  }
-  return false;
 }
