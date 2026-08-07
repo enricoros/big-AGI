@@ -10,7 +10,7 @@ import TextFieldsIcon from '@mui/icons-material/TextFields';
 import TextureIcon from '@mui/icons-material/Texture';
 
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
-import { DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart } from '~/common/stores/chat/chat.fragments';
+import { attachmentFragmentDocTitle, DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
 import { PhImageSquare } from '~/common/components/icons/phosphor/PhImageSquare';
 import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
@@ -157,7 +157,7 @@ export function DocAttachmentFragmentButton(props: {
 
   const Icon = isSelected ? EditRoundedIcon : buttonIconForFragment(fragment.part);
 
-  const fullTitle = fragment.part.l1Title || fragment.title || 'Document';
+  const fullTitle = attachmentFragmentDocTitle(fragment);
   const buttonText = ellipsizeMiddle(fullTitle, 28 /* totally arbitrary length */);
   const showFilenameTooltip = fullTitle !== buttonText;
 

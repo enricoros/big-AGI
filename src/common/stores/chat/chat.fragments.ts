@@ -1,6 +1,6 @@
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { agiId } from '~/common/util/idUtils';
-import { ellipsizeMiddle } from '~/common/util/textUtils';
+import { ellipsizeMiddle, humanReadableHyphenated } from '~/common/util/textUtils';
 
 
 /// Fragments - forward compatible ///
@@ -500,6 +500,45 @@ export function specialContentPartToDocAttachmentFragment(title: string, caption
 
 function _createAttachmentFragment(title: string, caption: string, part: DMessageAttachmentFragment['part'], liveFileId: LiveFileId | undefined): DMessageAttachmentFragment {
   return { ft: 'attachment', fId: agiId('chat-dfragment' /* -attachment */), title, caption, created: Date.now(), part, liveFileId };
+}
+
+
+/// Attachment Fragments - Naming
+//
+// Attachments carry two names with distinct jobs:
+// - HUMAN name: what buttons/panes display - resolve it with `attachmentFragmentDocTitle()` (doc parts: l1Title,
+//   then the fragment title, then source filename, then ref)
+// - LLM name: `part.ref` only - the AIX adapters serialize doc parts as a ```ref ... ``` fenced block,
+//   and neither l1Title nor title/caption are sent upstream
+// Writers keep the two aligned: creation derives fragment.title == part.l1Title (and a hyphenated ref)
+// from the source, and renames go through `attachmentFragmentDocRename()` which updates title, l1Title and ref
+// together. `caption` is provenance only ('Pasted', 'From Google Drive', ...), never a name.
+// Data at rest predating these rules already has title == l1Title, so reads need no migration.
+
+/**
+ * Canonical user-facing name of an attachment fragment - single source of truth for display.
+ */
+export function attachmentFragmentDocTitle(fragment: DMessageAttachmentFragment, fallback: string = 'Document'): string {
+  const docPart = isDocPart(fragment.part) ? fragment.part : undefined;
+  return docPart?.l1Title || fragment.title || docPart?.meta?.srcFileName || docPart?.ref || fallback;
+}
+
+/**
+ * Renames an attachment fragment - pure, preserves fId and all other fields.
+ * Doc parts get the full treatment: display title, embedded l1Title, and the LLM-facing ref
+ * (hyphenated form, which the model sees as the fence info string of the doc).
+ * Note: rename is metadata-only and does not bump the doc version (version tracks content edits).
+ */
+export function attachmentFragmentDocRename(fragment: DMessageAttachmentFragment, newName: string): DMessageAttachmentFragment {
+  const title = newName.replace(/\s+/g, ' ').trim(); // names are single-line
+  if (!title) return fragment;
+  if (!isDocPart(fragment.part))
+    return { ...fragment, title };
+  return {
+    ...fragment,
+    title,
+    part: { ...fragment.part, l1Title: title, ref: humanReadableHyphenated(title) },
+  };
 }
 
 

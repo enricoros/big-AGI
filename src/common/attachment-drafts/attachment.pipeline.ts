@@ -579,6 +579,12 @@ export async function attachmentPerformConversion(
     // prepare the doc data
     let { title, caption, refString, docMeta } = _prepareDocData(source, input, converter.name);
 
+    // user-renamed draft: the label overrides the derived title and LLM-facing ref - caption keeps provenance
+    if (attachment.labelUserSet && attachment.label) {
+      title = attachment.label;
+      refString = humanReadableHyphenated(attachment.label);
+    }
+
     switch (converter.id) {
 
       // text

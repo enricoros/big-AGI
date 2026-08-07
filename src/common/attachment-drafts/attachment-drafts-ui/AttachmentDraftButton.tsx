@@ -203,7 +203,7 @@ function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, 
 }
 
 function attachmentLabelText(attachmentDraft: AttachmentDraft): string {
-  const converter = attachmentDraft.converters.find(c => c.isActive) ?? null;
+  const converter = (!attachmentDraft.labelUserSet && attachmentDraft.converters.find(c => c.isActive)) || null; // user-set names skip the placeholder remaps below
   if (converter && attachmentDraft.label === 'Text') {
     if (converter.id === 'text-markdown')
       return 'Markdown';

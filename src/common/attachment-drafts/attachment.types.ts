@@ -10,8 +10,9 @@ import type { DMessageId } from '~/common/stores/chat/chat.message';
 export type AttachmentDraft = {
   readonly id: AttachmentDraftId;
   readonly source: AttachmentDraftSource,
-  label: string;  // what's written in the button, such as a web page `title`
-  ref: string;    // will be used in ```ref\n...``` for instance the web page `url`
+  label: string;  // THE name, and what's written in the button - derived from the source (web page `title`, filename, ...) until the user renames it
+  labelUserSet?: boolean; // set by Rename: `label` is user-owned - conversions derive doc titles and LLM-facing refs from it instead of the source
+  ref: string;    // the source reference (web page `url`, file path, ...) - provenance, not affected by renames
 
   inputLoading: boolean;
   inputError: string | null;
