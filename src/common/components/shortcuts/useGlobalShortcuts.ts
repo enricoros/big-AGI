@@ -34,6 +34,7 @@ export interface ShortcutObject extends ShortcutDefinition {
   /** Eligible only while focus is contained in this element (checked at press time, like skipIfInput). Unmounted ref = never eligible. */
   focusWithin?: React.RefObject<HTMLElement>;
   action: (() => void) | '_specialPrintShortcuts';
+  startDecoratorIcon?: typeof SvgIcon;
   endDecoratorIcon?: typeof SvgIcon;
   level?: number; // handler precedence (desc; ties: focus-scoped first); the bar shows each combo's winning entry
 }

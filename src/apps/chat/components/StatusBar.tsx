@@ -159,7 +159,9 @@ function ShortcutItem(props: { shortcut: ShortcutObject }) {
         {/*{!!props.shortcut.altForNonMac && <span>{_platformAwareModifier('Alt')}</span>}*/}
         <span>{props.shortcut.key === 'Escape' ? 'Esc' : props.shortcut.key === 'Enter' ? '↵' : props.shortcut.key.toUpperCase()}</span>
       </Box>
-      &nbsp;<Typography level='body-xs'>{props.shortcut.description}</Typography>
+      &nbsp;
+      {!!props.shortcut.startDecoratorIcon && <props.shortcut.startDecoratorIcon sx={_styles.itemIcon} />}
+      <Typography level='body-xs'>{props.shortcut.description}</Typography>
       {!!props.shortcut.endDecoratorIcon && <props.shortcut.endDecoratorIcon sx={_styles.itemIcon} />}
     </Box>
   );
