@@ -2,13 +2,23 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, MenuList, styled } from '@mui/joy';
-import { ClickAwayListener, Popper, PopperPlacementType } from '@mui/base';
+import { ClickAwayListener, Popper, PopperPlacementType, Portal } from '@mui/base';
+
+import { animationOpacityFadeIn } from '~/common/util/animUtils';
 
 
 // adds the 'sx' prop to the Popper, and defaults zIndex to 1000
 const Popup = styled(Popper)({
   zIndex: 1000,
 });
+
+// screen-dimming scrim, behind the popup (opt-in via `darkenBackdrop`, e.g. mobile pickers)
+const _backdropSx: SxProps = {
+  position: 'fixed',
+  inset: 0,
+  backgroundColor: 'background.backdrop',
+  animation: `${animationOpacityFadeIn} 0.15s ease-out`,
+};
 
 // data-attribute marking a CloseablePopup's DOM root, so sibling/parent popups don't treat a tap inside it as a click-away (see handleClickAway)
 const closeablePopupDataAttr = 'data-closeable-popup';
@@ -46,6 +56,7 @@ export function CloseablePopup(props: {
   dense?: boolean,
   bigIcons?: boolean,
   boxShadow?: string, // boxShadow style, defaults to 'md'
+  darkenBackdrop?: boolean, // dims the rest of the screen while open (a tap on the scrim is a click-away)
 
   // behavior changes
   disableMenuTypeahead?: boolean, // disable alphanumeric typeahead navigation in MenuList
@@ -147,7 +158,13 @@ export function CloseablePopup(props: {
 
   }), [props.boxShadow, props.maxHeightGapPx, props.maxWidth, props.minWidth, props.size, props.dense, props.bigIcons, props.noBottomPadding, props.noTopPadding, props.sx]);
 
-  return (
+  return <>
+
+    {/* portaled to body, so host stacking contexts can't trap it under the page */}
+    {props.darkenBackdrop && !!props.anchorEl && (
+      <Portal><Box zIndex={(props.zIndex ?? 1000) - 1} sx={_backdropSx} /></Portal>
+    )}
+
     <Popup
       role={undefined}
       open={!!props.anchorEl}
@@ -159,7 +176,7 @@ export function CloseablePopup(props: {
     >
       <ClickAwayListener onClickAway={handleClickAway}>
         {props.menu ? (
-          <MenuList ref={props.noAutoFocus ? undefined : autoFocusOnMount} size={props.size} onKeyDown={handleKeyDown} sx={styleMemoSx} {...{ [closeablePopupDataAttr]: '' }}>
+          <MenuList variant={props.darkenBackdrop ? 'plain' : undefined} ref={props.noAutoFocus ? undefined : autoFocusOnMount} size={props.size} onKeyDown={handleKeyDown} sx={styleMemoSx} {...{ [closeablePopupDataAttr]: '' }}>
             {props.children}
           </MenuList>
         ) : (
@@ -169,5 +186,6 @@ export function CloseablePopup(props: {
         )}
       </ClickAwayListener>
     </Popup>
-  );
+
+  </>;
 }
