@@ -20,6 +20,22 @@ const _backdropSx: SxProps = {
   animation: `${animationOpacityFadeIn} 0.15s ease-out`,
 };
 
+/* Anchor spotlight, unused by choice (plain scrim = standard sheet behavior): punches a hole in
+ * the scrim over the anchor, keeping it lit AND tappable (clip-path excludes the hole from
+ * hit-testing) even when the anchor is trapped in a low-z stacking context that no z-index raise
+ * can escape (e.g. the mobile composer). Single-subpath polygon: outer rect, then an
+ * opposite-winding inner rect bridged from the left edge (nonzero fill rule).
+ * Usage: `clipPath: _backdropClipPath(props.anchorEl)` on the scrim Box.
+ * Caveat: measured once at open - the hole goes stale if the anchor moves (resize/scroll).
+ */
+// function _backdropClipPath(anchorEl: HTMLElement): string {
+//   const PAD = 3;
+//   const r = anchorEl.getBoundingClientRect();
+//   const t = Math.round(r.top - PAD), b = Math.round(r.bottom + PAD);
+//   const l = Math.round(r.left - PAD), e = Math.round(r.right + PAD);
+//   return `polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 ${t}px, ${l}px ${t}px, ${l}px ${b}px, ${e}px ${b}px, ${e}px ${t}px, ${l}px ${t}px, 0 ${t}px)`;
+// }
+
 // data-attribute marking a CloseablePopup's DOM root, so sibling/parent popups don't treat a tap inside it as a click-away (see handleClickAway)
 const closeablePopupDataAttr = 'data-closeable-popup';
 
