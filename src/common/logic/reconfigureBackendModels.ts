@@ -34,8 +34,6 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
 
   // begin configuration
   _isConfiguring = true;
-  // FIXME: future: move this to the end of the function, but also with strong retry count and error catching, so one's app wouldn't loop upon each boot
-  setLastReconfigHash(backendReconfigHash);
   const initiallyEmpty = !llmsStoreState().llms?.length;
 
   // reconfigure these
@@ -64,6 +62,7 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
 
   // track in order the services that were configured
   const configuredServiceIds: DModelsServiceId[] = [];
+  let configurationSuccesses = 0;
 
   // sequentially re-configure
   await servicesToReconfigure.reduce(async (promiseChain, service) => {
@@ -74,6 +73,7 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
 
         // auto-configure this service
         await llmsUpdateModelsForServiceOrThrow(service.id, true);
+        configurationSuccesses++;
       })
       .catch(error => {
         // catches errors and logs them, but does not stop the chain
@@ -84,6 +84,13 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
         return new Promise(resolve => setTimeout(resolve, 50));
       });
   }, Promise.resolve());
+
+  // Persist the reconfig hash only if configuration made progress: at least one service succeeded,
+  // or there was nothing to configure. On total failure (e.g. transient network error on first load)
+  // the hash is left unset so the next boot retries, instead of permanently skipping auto-configuration
+  // for this browser. Within this session the _isConfigurationDone guard still prevents re-runs.
+  if (!servicesToReconfigure.length || configurationSuccesses > 0)
+    setLastReconfigHash(backendReconfigHash);
 
   // Re-rank the LLMs based on the order of configured services
   llmsStoreActions().rerankLLMsByServices(configuredServiceIds);

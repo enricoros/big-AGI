@@ -23,7 +23,7 @@ function sdbmHash(str: string): string {
 function generateLlmEnvConfigHash(env: Record<string, unknown>): string {
   const envAPIKeys = Object.keys(env)     // get all env keys
     .filter(key => !!env[key])            // minus the empty
-    .filter(key => key.includes('_API_')) // minus the non-API keys
+    .filter(key => key.includes('_API_') || key.startsWith('BEDROCK_')) // LLM service keys: '_API_' misses the BEDROCK_* vars (ACCESS_KEY_ID/SECRET_ACCESS_KEY/BEARER_TOKEN), which would never re-trigger client autoconf
     .map(key => `${key}=${env[key]}`)     // create key-value pairs
     .sort();                              // ignore order
   const hashInputs = [
