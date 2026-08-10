@@ -12,8 +12,9 @@ const Popup = styled(Popper)({
   zIndex: 1000,
 });
 
-// screen-dimming scrim, behind the popup (opt-in via `darkenBackdrop`, e.g. mobile pickers)
-const _backdropSx: SxProps = {
+// screen-dimming scrim, behind the popup (opt-in via `darkenBackdrop`, e.g. mobile pickers);
+// exported for popup-family components that render their own scrim (RichMenu) - one look, one definition
+export const popupBackdropSx: SxProps = {
   position: 'fixed',
   inset: 0,
   backgroundColor: 'background.backdrop',
@@ -178,7 +179,7 @@ export function CloseablePopup(props: {
 
     {/* portaled to body, so host stacking contexts can't trap it under the page */}
     {props.darkenBackdrop && !!props.anchorEl && (
-      <Portal><Box zIndex={(props.zIndex ?? 1000) - 1} sx={_backdropSx} /></Portal>
+      <Portal><Box zIndex={(props.zIndex ?? 1000) - 1} sx={popupBackdropSx} /></Portal>
     )}
 
     <Popup

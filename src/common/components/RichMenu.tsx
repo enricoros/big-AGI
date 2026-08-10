@@ -3,7 +3,9 @@ import { keyframes } from '@emotion/react';
 
 import type { ColorPaletteProp, SxProps, VariantProp } from '@mui/joy/styles/types';
 import { Box, Button, IconButton, ListItemDecorator, Menu, MenuButton, MenuItem } from '@mui/joy';
+import { Portal } from '@mui/base';
 
+import { popupBackdropSx } from '~/common/components/CloseablePopup';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 
 
@@ -162,6 +164,7 @@ const _richPopperOptions = {
 export function RichMenu(props: {
   compact?: boolean,
   stagger?: boolean, // staggered item entrance - for click-opened menus with many items
+  darkenBackdrop?: boolean, // dims the rest of the screen while open (e.g. mobile pickers); a tap on the scrim is an outside click, closing the Dropdown
   color?: ColorPaletteProp,
   placement?: 'top-start' | 'top' | 'top-end' | 'bottom-start' | 'bottom' | 'bottom-end',
   zIndex?: number,
@@ -171,9 +174,15 @@ export function RichMenu(props: {
 
   const zIndex = props.zIndex ?? themeZIndexOverMobileDrawer; // above dialogs that may host the trigger
 
+  // scrim rides the Menu's children, which only mount while the menu is open - no open-state wiring needed
+  const backdrop = !props.darkenBackdrop ? null : (
+    <Portal><Box zIndex={zIndex - 1} sx={popupBackdropSx} /></Portal>
+  );
+
   if (props.compact)
     return (
       <Menu placement={props.placement} sx={{ ...richMenuCompactSx, ...(props.stagger && _richMenuStaggerSx), zIndex, ...props.sx }}>
+        {backdrop}
         {props.children}
       </Menu>
     );
@@ -185,6 +194,7 @@ export function RichMenu(props: {
       popperOptions={_richPopperOptions}
       sx={{ ...richMenuSx(props.color), ...(props.stagger && _richMenuStaggerSx), zIndex, ...props.sx }}
     >
+      {backdrop}
       {props.children}
     </Menu>
   );

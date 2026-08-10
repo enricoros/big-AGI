@@ -218,7 +218,7 @@ function AttachmentSources(props: {
             Attach
           </MenuButton>
         )}
-        <RichMenu compact /* menu-compact or menu-message: above dialogs (default zIndex) */>
+        <RichMenu compact darkenBackdrop={!isMessage /* mobile '+': scrim signals a modal choice, like the voice engine picker */} /* menu-compact or menu-message: above dialogs (default zIndex) */>
 
           {/* Files */}
           <RichMenuItem name={props.onlyImages ? 'Images' : 'Files'} description='PDF, DOCX, images, code' color={props.color} Icon={AttachFileRoundedIcon} onClick={handleAttachFilePicker} />
