@@ -45,6 +45,7 @@ import { groqModelFilter, groqModelSortFn, groqModelToModelDescription, groqVali
 import { llmapiHeuristic, llmapiModelsToModelDescriptions } from './openai/models/llmapi.models';
 import { llmsIsNativeOpenAIHost } from '../shared/llm.isomorphic';
 import { minimaxHardcodedModelDescriptions, minimaxHeuristic } from './openai/models/minimax.models';
+import { nousResearchHeuristic, nousResearchModelsToModelDescriptions } from './openai/models/nousresearch.models';
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
 import { nvidiaNIMHeuristic, nvidiaNIMModelsToModelDescriptions } from './openai/models/nvidianim.models';
 import { lmStudioFetchModels, lmStudioModelsToModelDescriptions } from './openai/models/lmstudio.models';
@@ -516,6 +517,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // [MiniMax] hardcoded models (no /v1/models API yet)
               if (minimaxHeuristic(oaiUrl))
                 return minimaxHardcodedModelDescriptions();
+
+              // [Nous Research] Nous Portal gateway - OpenRouter-style catalog, reuses the OpenRouter mapper
+              if (nousResearchHeuristic(oaiUrl))
+                return nousResearchModelsToModelDescriptions(openAIWireModelsResponse);
 
               // [Novita] special case for model enumeration
               if (novitaHeuristic(oaiUrl))

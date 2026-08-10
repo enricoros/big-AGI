@@ -106,6 +106,14 @@
     "oaiHost": "https://api.minimax.io",
     "heliKey": ""
   },
+  "nous": {
+    "_comment": "Nous Portal (OpenRouter-style catalog) @ inference-api.nousresearch.com (no first-class dialect; uses openai dialect + host)",
+    "dialect": "openai",
+    "oaiKey": "YOUR_NOUS_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "https://inference-api.nousresearch.com",
+    "heliKey": ""
+  },
   "zai": {
     "_comment": "Z.ai / GLM (Zhipu) - curated catalog",
     "dialect": "zai",
