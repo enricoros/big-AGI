@@ -68,6 +68,7 @@ const _richMenuStaggerSx = {
 
 /** The compact (mobile) menu surface: default squared Joy menu, just consistent padding. */
 export const richMenuCompactSx = {
+  minWidth: 260,
   '--List-padding': '0.5rem',
 } as const satisfies SxProps;
 
