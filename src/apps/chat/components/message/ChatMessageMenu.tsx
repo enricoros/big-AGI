@@ -151,6 +151,7 @@ export function ChatMessageMenu(props: {
     <CloseablePopup
       menu anchorEl={props.anchor} onClose={props.onClose}
       dense
+      darkenBackdrop={props.isMobile /* mobile: mute the busy chat behind the app's densest menu */}
       minWidth={260}
       // zIndex={1501}
       placement={fromAssistant ? 'auto-start' : 'auto-end'}
