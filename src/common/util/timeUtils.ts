@@ -28,9 +28,13 @@ export function prettyTimestampForFilenames(useSeconds: boolean = true) {
   return `${year}-${month}-${day}-${hour}${minute}${useSeconds ? second : ''}`; // YYYY-MM-DD_HHMM[SS] format
 }
 
+// Rolling windows vs Explorer-style calendar ladder; both starve downward, empty groups don't render
+const UNANCHORED_TIME = true;
+
 /**
- * Creates a time bucket classifier with precomputed calendar boundaries.
- * Buckets: Today, Yesterday, This Week, This Month, Last Month, Older
+ * Creates a time bucket classifier with precomputed boundaries.
+ * Unanchored: Today, Yesterday, Past Week/Month/3 Months, Older.
+ * Anchored: Today, Yesterday, This/Last Week, Earlier This Month, Last Month, Earlier This Year, per-year.
  * Call once, then use returned function for each item - avoids redundant Date computations.
  */
 export function createTimeBucketClassifierEn() {
@@ -38,18 +42,39 @@ export function createTimeBucketClassifierEn() {
   const todayMs = new Date(y, m, now.getDate()).getTime();
   const DAY_MS = 86400000;
   const yesterdayMs = todayMs - DAY_MS;
+
+  if (UNANCHORED_TIME) {
+    const pastWeekMs = todayMs - 7 * DAY_MS;
+    const pastMonthMs = todayMs - 30 * DAY_MS;
+    const past3MonthsMs = todayMs - 90 * DAY_MS;
+
+    return (itemTimestamp: number): string => {
+      const t = new Date(itemTimestamp).setHours(0, 0, 0, 0);
+      if (t >= todayMs) return 'Today';
+      if (t >= yesterdayMs) return 'Yesterday';
+      if (t >= pastWeekMs) return 'Past Week';
+      if (t >= pastMonthMs) return 'Past Month';
+      if (t >= past3MonthsMs) return 'Past 3 Months';
+      return 'Older';
+    };
+  }
+
   // Week starts Monday (ISO 8601) - locale-aware: new Intl.Locale(navigator.language).getWeekInfo?.().firstDay
   const weekStartMs = todayMs - ((now.getDay() + 6) % 7) * DAY_MS;
+  const lastWeekStartMs = weekStartMs - 7 * DAY_MS;
   const monthStartMs = new Date(y, m, 1).getTime();
   const lastMonthStartMs = new Date(y, m - 1, 1).getTime();
+  const yearStartMs = new Date(y, 0, 1).getTime();
 
   return (itemTimestamp: number): string => {
     const t = new Date(itemTimestamp).setHours(0, 0, 0, 0);
     if (t >= todayMs) return 'Today';
     if (t >= yesterdayMs) return 'Yesterday';
     if (t >= weekStartMs) return 'This Week';
-    if (t >= monthStartMs) return 'This Month';
+    if (t >= lastWeekStartMs) return 'Last Week';
+    if (t >= monthStartMs) return 'Earlier This Month';
     if (t >= lastMonthStartMs) return 'Last Month';
-    return 'Older';
+    if (t >= yearStartMs) return 'Earlier This Year';
+    return String(new Date(t).getFullYear());
   };
 }
