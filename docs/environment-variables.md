@@ -34,6 +34,7 @@ BEDROCK_ACCESS_KEY_ID=
 BEDROCK_SECRET_ACCESS_KEY=
 BEDROCK_SESSION_TOKEN=
 BEDROCK_REGION=
+BEDROCK_USE_CONTAINER_CREDENTIALS=
 DEEPSEEK_API_KEY=
 GEMINI_API_KEY=
 GROQ_API_KEY=
@@ -109,6 +110,7 @@ requiring the user to enter an API key
 | `BEDROCK_SECRET_ACCESS_KEY` | AWS IAM Secret Access Key for Bedrock                                                                          | Optional, but if set `BEDROCK_ACCESS_KEY_ID` must also be set      |
 | `BEDROCK_SESSION_TOKEN`     | AWS Session Token for temporary/STS credentials                                                                | Optional                                                          |
 | `BEDROCK_REGION`            | AWS region for Bedrock (e.g., `us-east-1`, `us-west-2`, `eu-west-1`)                                          | Optional, defaults to `us-east-1`                                 |
+| `BEDROCK_USE_CONTAINER_CREDENTIALS` | Set to `true` to use ambient IAM credentials from the ECS/Fargate container credentials endpoint (task role) when no explicit Bedrock credentials are configured. Lowest priority in the credentials chain | Optional                                                          |
 | `DEEPSEEK_API_KEY`          | The API key for Deepseek AI                                                                                    | Optional                                                          |
 | `GEMINI_API_KEY`            | The API key for Google AI's Gemini                                                                             | Optional                                                          |
 | `GROQ_API_KEY`              | The API key for Groq Cloud                                                                                     | Optional                                                          |

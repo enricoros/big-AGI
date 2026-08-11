@@ -11,8 +11,9 @@
  *   UNSUPPORTED: Short-term keys (`bedrock-api-key-...`) only support runtime (not model listing).
  * - **SigV4**: Traditional IAM credentials signing via aws4fetch
  *
- * Priority: client bearer > client IAM > server bearer > server IAM.
- * SigV4 uses explicit AWS credentials only (no credential chain) for Edge Runtime compatibility.
+ * Priority: client bearer > client IAM > server bearer > server IAM > container credentials (opt-in).
+ * SigV4 uses explicit AWS credentials only (no SDK credential chain) for Edge Runtime compatibility;
+ * the optional container-credentials provider is likewise pure-fetch (see bedrock.containerCredentials.ts).
  */
 
 import * as z from 'zod/v4';
@@ -21,6 +22,8 @@ import { TRPCError } from '@trpc/server';
 import { AwsClient } from 'aws4fetch';
 
 import { env } from '~/server/env.server';
+
+import { bedrockContainerCredentialsOrNull } from './bedrock.containerCredentials';
 
 
 // configuration
@@ -46,8 +49,13 @@ export const bedrockAccessSchema = z.object({
 type BedrockAuthBearer = { type: 'bearer'; bearerToken: string; region: string };
 type BedrockAuthSigV4 = { type: 'sigv4'; accessKeyId: string; secretAccessKey: string; sessionToken: string | undefined; region: string };
 
-/** Resolve Bedrock authentication. */
-function _bedrockResolveAuth(access: BedrockAccessSchema): BedrockAuthBearer | BedrockAuthSigV4 {
+/** True when the client provided its own credentials (bearer or IAM pair). */
+function _hasClientCredentials(access: BedrockAccessSchema): boolean {
+  return !!access.bedrockBearerToken || (!!access.bedrockAccessKeyId && !!access.bedrockSecretAccessKey);
+}
+
+/** Resolve Bedrock authentication. Async because ambient container credentials may need a fetch. */
+async function _bedrockResolveAuthAsync(access: BedrockAccessSchema): Promise<BedrockAuthBearer | BedrockAuthSigV4> {
 
   // 1. Client bearer token (highest priority)
   let region = access.bedrockRegion || DEFAULT_BEDROCK_REGION; // client-provided region
@@ -67,15 +75,28 @@ function _bedrockResolveAuth(access: BedrockAccessSchema): BedrockAuthBearer | B
   if (env.BEDROCK_ACCESS_KEY_ID && env.BEDROCK_SECRET_ACCESS_KEY)
     return { type: 'sigv4', accessKeyId: env.BEDROCK_ACCESS_KEY_ID, secretAccessKey: env.BEDROCK_SECRET_ACCESS_KEY, sessionToken: env.BEDROCK_SESSION_TOKEN || undefined, region };
 
+  // 5. [opt-in] Ambient container credentials (ECS/Fargate task role) - short-lived, cached with refresh
+  if (env.BEDROCK_USE_CONTAINER_CREDENTIALS) {
+    const ambient = await bedrockContainerCredentialsOrNull();
+    if (ambient)
+      return { type: 'sigv4', accessKeyId: ambient.accessKeyId, secretAccessKey: ambient.secretAccessKey, sessionToken: ambient.sessionToken, region };
+  }
+
   throw new TRPCError({
     code: 'BAD_REQUEST',
     message: 'Missing AWS credentials. Add your Bedrock API Key or IAM Access Key on the UI (Models Setup) or server side (your deployment).',
   });
 }
 
-/** Resolve the Bedrock region from access config. */
+/**
+ * Resolve the Bedrock region from access config - deliberately sync and credential-free:
+ * client-provided credentials use the client region, server-side credentials (bearer, IAM
+ * env vars, or ambient container credentials) use the server region.
+ */
 export function bedrockResolveRegion(access: BedrockAccessSchema): string {
-  return _bedrockResolveAuth(access).region;
+  return _hasClientCredentials(access)
+    ? access.bedrockRegion || DEFAULT_BEDROCK_REGION
+    : env.BEDROCK_REGION || DEFAULT_BEDROCK_REGION;
 }
 
 
@@ -111,7 +132,7 @@ export async function bedrockAccessAsync(
   body?: object,
 ): Promise<{ headers: HeadersInit; url: string }> {
 
-  const auth = _bedrockResolveAuth(access);
+  const auth = await _bedrockResolveAuthAsync(access);
 
   // -- Bearer token: simple Authorization header --
   if (auth.type === 'bearer')
