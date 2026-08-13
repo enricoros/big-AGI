@@ -95,6 +95,7 @@ export function aixToXAIResponses(
   }
 
   // Reasoning
+  // - grok-4.6:                  low/medium/high/xhigh (always-on reasoning, 'none' rejected; vendor default high)
   // - grok-4.5:                  low/medium/high/xhigh (always-on reasoning, 'none' rejected)
   // - grok-4.3:                  none/low(default)/medium/high
   // - grok-4.20-multi-agent:     low/medium/high/xhigh (4 vs 16 agents)

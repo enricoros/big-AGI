@@ -27,6 +27,7 @@ const DEV_DEBUG_XAI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO I
 // Verified: 2026-07-08 via live /v1/language-models + live probes: +grok-4.5 (released today); API now reports >200K long-context price tiers for ALL models (carried below as tiered pricing)
 // Verified: 2026-08-04 via live /v1/language-models + docs.x.ai + effort probes: same 6 chat models, contexts unchanged; fixed grok-4.5 cached-input price (0.30/0.60, was 0.50/1.00)
 // Verified: 2026-08-06 via live /v1/language-models + /v1/models + docs.x.ai + effort/tool probes: same 6 chat models, prices/contexts unchanged; grok-4.5 'xhigh' still accepted (docs table only lists low/medium/high)
+// Verified: 2026-08-13 via live ablation (effort/tools/modality/catalog probes) + docs.x.ai + x.ai/news/grok-4-6: +grok-4.6 (announced 2026-08-12, catalog created 08-06); effort domain same as 4.5 (low/medium/high/xhigh, 'none' 400s, 'minimal' silently normalizes to low on both); cache read $0.50/$1.00 vs 4.5's $0.30/$0.60 (verified via usage.cost_in_usd_ticks reconstruction); no aliases minted, grok-latest still 4.3, grok-build-latest still 4.5; nothing retired
 
 // Pricing for Grok 4.3 / 4.20 flagship family (unified $1.25/$2.50 since May 2026; >200K tier per live API 2026-07-08)
 const PRICE_FLAGSHIP = {
@@ -68,12 +69,34 @@ type _XaiModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 
 const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
 
+  // Grok 4.6 (flagship, August 2026) - post-training refresh extending 4.5 (same base, context, $2/$6 price); always-on reasoning, effort low/medium/high/xhigh (default high)
+  // No aliases yet (grok-latest still resolves to 4.3, grok-build-latest to 4.5 - 2026-08-13 probe); spends 3-20x the reasoning tokens of 4.5 at matched effort, so real per-turn cost runs higher
+  {
+    idPrefix: 'grok-4.6',
+    label: 'Grok 4.6',
+    pubDate: '20260812',
+    description: 'xAI\'s frontier model for coding, agentic tasks, and knowledge work, extending Grok 4.5 with longer supplemental training and agentic RL (co-developed with Cursor). 500K token context window, text and image inputs, always-on reasoning with effort control (low/medium/high/xhigh, default high). Knowledge cutoff: February 2026.',
+    contextWindow: 500000,
+    maxCompletionTokens: undefined,
+    interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] }, // no 'none': always-on reasoning, API 400s like grok-4.5 (2026-08-13 probe)
+      ...XAI_PAR_Reasoning, // web_search + x_search + code_execution + fn + strict json_schema all live-verified 2026-08-13
+    ],
+    chatPrice: {
+      input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
+      output: [{ upTo: 200000, price: 6.00 }, { upTo: null, price: 12.00 }],
+      cache: { cType: 'oai-ac', read: [{ upTo: 200000, price: 0.50 }, { upTo: null, price: 1.00 }] }, // higher than grok-4.5's 0.30/0.60 - tick-verified 2026-08-13
+    },
+    // benchmark: no CBA row yet (launch-day AA Intelligence Index 61); add cbaElo when CBA publishes
+  },
+
   // Grok 4.5 (flagship, July 2026) - premium tier over 4.3; reasoning always-on: effort low/medium/high/xhigh, 'none' rejected by API (2026-07-08 probe)
   {
     idPrefix: 'grok-4.5',
     label: 'Grok 4.5',
     pubDate: '20260708',
-    description: 'xAI\'s smartest and fastest model with frontier performance on coding, knowledge work, and STEM - recommended by xAI for both chat and code. 500K token context window, text and image inputs, always-on reasoning with effort control (low/medium/high/xhigh). Knowledge cutoff: February 2026. Aliases: grok-4.5-latest, grok-build-latest.',
+    description: 'xAI\'s July 2026 flagship with frontier performance on coding, knowledge work, and STEM - superseded by Grok 4.6 as xAI\'s recommended model. 500K token context window, text and image inputs, always-on reasoning with effort control (low/medium/high/xhigh). Knowledge cutoff: February 2026. Aliases: grok-4.5-latest, grok-build-latest.',
     contextWindow: 500000,
     maxCompletionTokens: undefined,
     interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
@@ -260,6 +283,7 @@ export async function xaiFetchModelDescriptions(access: OpenAIAccessSchema): Pro
 
 // manual sort order - your desired order
 const _xaiIdStartsWithOrder = [
+  'grok-4.6',
   'grok-4.5',
   'grok-4.3',
   'grok-4.20-0309-reasoning',

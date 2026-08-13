@@ -9,6 +9,7 @@ import { AIX_OAI_DEFAULT_IMAGE_GEN_MODEL } from '../adapters/openai.responsesCre
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 import { openAIUpstreamErrorLogLevel } from './openai.error-severity';
+import { stripXAIDefectiveCitations, XAIDefectiveCitationsFilter } from './xai.transform-citationsLeak';
 
 import { OpenAIWire_API_Responses, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
 
@@ -327,6 +328,9 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
 
   const R = new ResponseParserStateMachine();
 
+  // [xAI] grok-4.6 leaks internal citation directives into web_search answer text - strip them (see xai.transform-citationsLeak.ts)
+  const xaiCitationsFilter = vendor === 'xai' ? new XAIDefectiveCitationsFilter() : undefined;
+
   return function(pt: IParticleTransmitter, eventData: string) {
 
     // throws on malformed event data
@@ -623,13 +627,28 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
       case 'response.output_text.delta':
         R.contentPartVisit(eventType, event.output_index, event.content_index);
         // .delta: -> append the text content
-        pt.appendText(R.contentPartInjectSpacer() ? OPENAI_RESPONSES_SAME_PART_SPACER + event.delta : event.delta);
-        if (event.delta) R.hasEmittedText = true;
+        if (!xaiCitationsFilter) {
+          pt.appendText(R.contentPartInjectSpacer() ? OPENAI_RESPONSES_SAME_PART_SPACER + event.delta : event.delta);
+          if (event.delta) R.hasEmittedText = true;
+        } else {
+          // [xAI] strip leaked citation directives, holding back text only while a marker could still be forming
+          const filteredDelta = xaiCitationsFilter.streamingDelta(event.delta);
+          if (filteredDelta) {
+            pt.appendText(R.contentPartInjectSpacer() ? OPENAI_RESPONSES_SAME_PART_SPACER + filteredDelta : filteredDelta);
+            R.hasEmittedText = true;
+          }
+        }
         break;
 
       case 'response.output_text.done':
         R.contentPartVisit(eventType, event.output_index, event.content_index);
         // .text: ignore finalized content, we already transmitted all partials
+        // [xAI] release any non-marker text held back by the citations-leak filter
+        const heldTail = xaiCitationsFilter?.flush();
+        if (heldTail) {
+          pt.appendText(R.contentPartInjectSpacer() ? OPENAI_RESPONSES_SAME_PART_SPACER + heldTail : heldTail);
+          R.hasEmittedText = true;
+        }
         break;
 
       case 'response.output_text.annotation.added': // NEW, CORRECT
@@ -1049,7 +1068,8 @@ export function createOpenAIResponseParserNS(vendor: 'openai' | 'xai'): ChatGene
             const contentType = content.type;
             switch (contentType) {
               case 'output_text':
-                pt.appendText(content.text || '');
+                // [xAI] strip leaked citation directives (see xai.transform-citationsLeak.ts)
+                pt.appendText(vendor === 'xai' ? stripXAIDefectiveCitations(content.text || '') : (content.text || ''));
 
                 // -> URL Citations: Parse annotations if present
                 if (content.annotations && Array.isArray(content.annotations))
