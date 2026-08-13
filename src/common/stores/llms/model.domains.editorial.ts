@@ -80,7 +80,8 @@ export const EditorialDefaults = {
     { vendor: 'openrouter', modelId: 'openai/gpt-5.6-sol' },
     { vendor: 'openai',     modelId: 'gpt-5.5' },
     { vendor: 'openrouter', modelId: 'openai/gpt-5.5' },
-    { vendor: 'googleai',   modelId: 'models/gemini-3.6-flash' }, // 2026-07-21 GA - newest Flash flagship, above 3.5 Flash (Elo 1485 vs 1476, cheaper output)
+    { vendor: 'googleai',   modelId: 'models/gemini-3.7-flash' }, // 2026-08-13 GA - newest Flash flagship (Elo 1490 prelim vs 1485, same intro price as 3.6, big agentic/coding gains)
+    { vendor: 'googleai',   modelId: 'models/gemini-3.6-flash' }, // 2026-07-21 GA - above 3.5 Flash (Elo 1485 vs 1476, cheaper output)
     { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-6' },
     { vendor: 'googleai',   modelId: 'models/gemini-3.1-pro-preview' },
@@ -99,6 +100,8 @@ export const EditorialDefaults = {
   ],
 
   codeApply: [
+    { vendor: 'googleai',   modelId: 'models/gemini-3.7-flash' }, // 2026-08-13 GA - "most intelligent workhorse for coding and agents" (DeepSWE 65.3% vs 3.6's 49.0%)
+    { vendor: 'openrouter', modelId: 'google/gemini-3.7-flash' },
     { vendor: 'googleai',   modelId: 'models/gemini-3.6-flash' }, // 2026-07-21 GA - "improved code/agentic planning" + token efficiency over 3.5 Flash
     { vendor: 'openrouter', modelId: 'google/gemini-3.6-flash' },
     { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash' },
@@ -154,6 +157,8 @@ export const EditorialDefaults = {
   ],
 
   imageCaption: [
+    { vendor: 'googleai',   modelId: 'models/gemini-3.7-flash' }, // 2026-08-13 GA - vision (text/image/video/audio/PDF in), same intro price as 3.6
+    { vendor: 'openrouter', modelId: 'google/gemini-3.7-flash' },
     { vendor: 'googleai',   modelId: 'models/gemini-3.6-flash' }, // 2026-07-21 GA - vision, cheaper output than 3.5 Flash
     { vendor: 'openrouter', modelId: 'google/gemini-3.6-flash' },
     { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash' },
