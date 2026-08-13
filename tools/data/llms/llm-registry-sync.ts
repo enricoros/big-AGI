@@ -817,6 +817,7 @@ function createSingleConfig(
     case 'lmstudio':
     case 'localai':
     case 'mistral':
+    case 'modular':
     case 'moonshot':
     case 'nvidianim':
     case 'openai':

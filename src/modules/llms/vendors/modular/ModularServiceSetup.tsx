@@ -19,7 +19,7 @@ import { ModelVendorModular } from './modular.vendor';
 const MODULAR_REG_LINK = 'https://console.modular.com/api_tokens';
 
 const _modularModes: ReadonlyArray<FormRadioOption<'cloud' | 'selfhosted'>> = [
-  { value: 'cloud', label: 'Modular Cloud', description: 'Managed shared endpoints (prepaid credits at console.modular.com)' },
+  { value: 'cloud', label: 'Modular Cloud', description: 'Prepaid credits at console.modular.com' },
   { value: 'selfhosted', label: 'MAX self-hosted', description: 'Your own MAX server, OpenAI-compatible' },
 ] as const;
 

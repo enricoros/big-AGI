@@ -167,5 +167,13 @@
     "bedrockSecretAccessKey": "",
     "bedrockSessionToken": null,
     "bedrockRegion": "us-east-1"
+  },
+  "modular": {
+    "_comment": "Modular Cloud (api.modular.com) - shared endpoints, curated catalog + day-zero fallback",
+    "dialect": "modular",
+    "oaiKey": "YOUR_MODULAR_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": ""
   }
 }
