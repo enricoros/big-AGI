@@ -22,6 +22,7 @@ export type SitePageSlug =
   | 'minimax'
   | 'mistral'
   | 'models'
+  | 'modular'
   | 'moonshot'
   | 'nvidia'
   | 'ollama'

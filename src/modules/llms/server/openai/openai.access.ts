@@ -4,8 +4,9 @@
  * This module only imports zod for schema definition and provides access logic
  * that works identically on server and client environments.
  *
- * Supports 18 OpenAI-compatible dialects: alibaba, azure, cerebras, cohere, deepseek, groq, lmstudio,
- * localai, mistral, moonshot, nvidianim, openai, openrouter, perplexity, sakanaai, togetherai, xai, zai
+ * Supports 19 OpenAI-compatible dialects: alibaba, azure, cerebras, cohere, deepseek, groq, lmstudio,
+ * localai, mistral, modular, moonshot, nvidianim, openai, openrouter, perplexity, sakanaai, togetherai,
+ * xai, zai
  */
 
 import * as z from 'zod/v4';
@@ -28,6 +29,7 @@ const DEFAULT_GROQ_HOST = 'https://api.groq.com/openai';
 const DEFAULT_LMSTUDIO_HOST = 'http://localhost:1234';
 const DEFAULT_LOCALAI_HOST = 'http://127.0.0.1:8080';
 const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
+const DEFAULT_MODULAR_HOST = 'https://api.modular.com'; // Modular Cloud - host is user-overridable to point at a self-hosted MAX server
 const DEFAULT_MOONSHOT_HOST = 'https://api.moonshot.ai';
 const DEFAULT_MOONSHOT_CODING_HOST = 'https://api.kimi.com/coding'; // Kimi Code subscription ('sk-kimi-' keys)
 const DEFAULT_NVIDIANIM_HOST = 'https://integrate.api.nvidia.com'; // NVIDIA API Catalog (build.nvidia.com) - host is user-overridable to point at a local NIM/vLLM
@@ -93,7 +95,7 @@ export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 export const openAIAccessSchema = z.object({
   dialect: z.enum([
     'alibaba', 'azure', 'cerebras', 'cohere', 'deepseek', 'groq', 'lmstudio',
-    'localai', 'mistral', 'moonshot', 'nvidianim', 'openai',
+    'localai', 'mistral', 'modular', 'moonshot', 'nvidianim', 'openai',
     'openrouter', 'perplexity', 'sakanaai', 'togetherai', 'xai', 'zai',
   ]),
   clientSideFetch: z.boolean().optional(), // optional: backward compatibility from newer server version - can remove once all clients are updated
@@ -243,6 +245,28 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Authorization': `Bearer ${mistralKey}`,
         },
         url: mistralHost + apiPath,
+      };
+
+    case 'modular':
+      // [Modular, 2026-08-13] Modular Cloud (api.modular.com), OpenAI-compatible shared endpoints.
+      // Host is user-overridable to target a self-hosted MAX server (same wire protocol, any model).
+      let modularKey = access.oaiKey || env.MODULAR_API_KEY || '';
+      const modularHost = llmsFixupHost(access.oaiHost || DEFAULT_MODULAR_HOST, apiPath);
+
+      // Use function to select a random key if multiple keys are provided
+      modularKey = llmsRandomKeyFromMultiKey(modularKey);
+
+      // NOTE: no key check - the cloud host requires an 'sk-mod-' key, but self-hosted MAX servers run keyless
+      if (!modularHost)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Modular API Host. Add it on the UI (Models Setup) or server side (your deployment).' });
+
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...(modularKey && { 'Authorization': `Bearer ${modularKey}` }),
+        },
+        url: modularHost + apiPath,
       };
 
     case 'moonshot':

@@ -20,6 +20,7 @@ export type SiteDocSlug =
   | 'connect-lmstudio'
   | 'connect-localai'
   | 'connect-mistral'
+  | 'connect-modular'
   | 'connect-moonshot-ai'
   | 'connect-nvidia-nim'
   | 'connect-ollama'

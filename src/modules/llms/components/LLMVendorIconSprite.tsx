@@ -24,6 +24,7 @@ const VI: Record<ModelVendorId, string> = {
   lmstudio: 'vi-lmstudio',
   localai: 'vi-localai',
   mistral: 'vi-mistral',
+  modular: 'vi-modular',
   moonshot: 'vi-moonshot',
   nvidianim: 'vi-nvidianim',
   ollama: 'vi-ollama',
@@ -133,6 +134,12 @@ export const VendorIconSpriteMemo = React.memo(function VendorIconSprite() {
         <symbol id={VI.mistral} viewBox='0 0 24 24'>
           <g strokeWidth={0} stroke='none' fill='currentColor' strokeLinecap='butt' strokeLinejoin='miter'>
           <path d='m 2,2 v 4 4 V 14 v 4 4 h 4 v -4 -4 h 4 v 4 h 4 v -4 h 4 v 4 4 h 4 v -4 -4 -4 -4 V 2 h -4 v 4 h -4 v 4 h -4 v -4 H 6 V 2 Z' />
+          </g>
+        </symbol>
+
+        <symbol id={VI.modular} viewBox='0 0 24 24'>
+          <g fill='currentColor' stroke='none'>
+          <path d='M20.885 5.35H23V21.5H20.744V5.486C20.744 5.411 20.68 5.35 20.603 5.35H19.615L13.692 21.5H10.308L4.385 5.35H3.256V21.5H1V2.5H5.654L11.718 19.057H12.282L18.346 2.5H20.744V5.214C20.744 5.289 20.807 5.35 20.885 5.35Z' />
           </g>
         </symbol>
 

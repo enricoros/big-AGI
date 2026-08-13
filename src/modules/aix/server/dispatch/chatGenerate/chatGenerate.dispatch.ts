@@ -248,6 +248,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     case 'lmstudio':
     case 'localai':
     case 'mistral':
+    case 'modular':
     case 'moonshot':
     case 'nvidianim':
     case 'openai':
@@ -369,6 +370,7 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
     case 'lmstudio':
     case 'localai':
     case 'mistral':
+    case 'modular':
     case 'moonshot':
     case 'nvidianim':
     case 'ollama':

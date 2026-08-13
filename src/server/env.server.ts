@@ -79,6 +79,9 @@ export const env = createEnv({
     // LLM: Mistral
     MISTRAL_API_KEY: z.string().optional(),
 
+    // LLM: Modular
+    MODULAR_API_KEY: z.string().optional(),
+
     // LLM: Moonshot AI
     MOONSHOT_API_KEY: z.string().optional(),
 

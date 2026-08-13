@@ -51,6 +51,7 @@ import { nvidiaNIMHeuristic, nvidiaNIMModelsToModelDescriptions } from './openai
 import { lmStudioFetchModels, lmStudioModelsToModelDescriptions } from './openai/models/lmstudio.models';
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
 import { mistralModels } from './openai/models/mistral.models';
+import { modularModelsToModelDescriptions } from './openai/models/modular.models';
 import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './openai/models/moonshot.models';
 import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './openai/models/openrouter.models';
 import { openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openAISortModels, openaiValidateModelDefs_DEV } from './openai/models/openai.models';
@@ -387,6 +388,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'groq':
     case 'localai':
     case 'mistral':
+    case 'modular':
     case 'moonshot':
     case 'nvidianim':
     case 'openai':
@@ -488,6 +490,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
 
             case 'mistral':
               return mistralModels(maybeModels);
+
+            case 'modular':
+              // [Modular] API lists ids only; caps/pricing from manual mappings, unknown ids kept (self-hosted MAX serves anything)
+              return modularModelsToModelDescriptions(maybeModels);
 
             case 'moonshot':
               return maybeModels

@@ -264,6 +264,13 @@ describe('listModels enumeration', () => {
     );
   });
 
+  test('openai-compat/modular: live listing', { skip: skipIfMissing('MODULAR_API_KEY') }, async () => {
+    await expectOk(
+      { dialect: 'modular', ...openAIShape({ oaiKey: E.MODULAR_API_KEY || '' }) } as AixAPI_Access,
+      1, 'modular/live',
+    );
+  });
+
   test('openai-compat/moonshot: live listing', { skip: skipIfMissing('MOONSHOT_API_KEY') }, async () => {
     await expectOk(
       { dialect: 'moonshot', ...openAIShape({ oaiKey: E.MOONSHOT_API_KEY || '' }) } as AixAPI_Access,
