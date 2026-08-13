@@ -300,12 +300,12 @@ export namespace GeminiWire_ContentParts {
     return { functionResponse: { ...(id !== undefined ? { id } : {}), name, ...(response !== undefined ? { response } : {}) } };
   }
 
-  export function ExecutableCodePart(language: 'PYTHON', code: string): z.infer<typeof ExecutableCodePart_schema> {
-    return { executableCode: { language, code } };
+  export function ExecutableCodePart(language: 'PYTHON', code: string, id?: string): z.infer<typeof ExecutableCodePart_schema> {
+    return { executableCode: { ...(id !== undefined ? { id } : {}), language, code } };
   }
 
-  export function CodeExecutionResultPart(outcome: 'OUTCOME_OK' | 'OUTCOME_FAILED' | 'OUTCOME_DEADLINE_EXCEEDED', output?: string): z.infer<typeof CodeExecutionResultPart_schema> {
-    return { codeExecutionResult: { outcome, output } };
+  export function CodeExecutionResultPart(outcome: 'OUTCOME_OK' | 'OUTCOME_FAILED' | 'OUTCOME_DEADLINE_EXCEEDED', output?: string, id?: string): z.infer<typeof CodeExecutionResultPart_schema> {
+    return { codeExecutionResult: { ...(id !== undefined ? { id } : {}), outcome, output } };
   }
 
 }

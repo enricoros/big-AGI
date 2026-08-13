@@ -467,7 +467,7 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[], apiRequiresS
             case 'code_execution':
               if (invocation.language?.toLowerCase() !== 'python')
                 console.warn('Gemini only supports Python code execution, but got:', invocation.language);
-              parts.push(GeminiWire_ContentParts.ExecutableCodePart('PYTHON', invocation.code));
+              parts.push(GeminiWire_ContentParts.ExecutableCodePart('PYTHON', invocation.code, part.id));
               break;
             default:
               const _exhaustiveCheck: never = invocation;
@@ -501,7 +501,7 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[], apiRequiresS
               parts.push(GeminiWire_ContentParts.FunctionResponsePart({ id: part.id, name: part.response.name, response: functionResponseResponse }));
               break;
             case 'code_execution':
-              parts.push(GeminiWire_ContentParts.CodeExecutionResultPart(!part.error ? 'OUTCOME_OK' : 'OUTCOME_FAILED', toolErrorPrefix + part.response.result));
+              parts.push(GeminiWire_ContentParts.CodeExecutionResultPart(!part.error ? 'OUTCOME_OK' : 'OUTCOME_FAILED', toolErrorPrefix + part.response.result, part.id));
               break;
             default:
               const _exhaustiveCheck: never = part.response;
