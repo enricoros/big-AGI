@@ -211,6 +211,7 @@ Located in `/src/common/stores/` with stores like:
 
 #### Writing Style
 - **Never use emdashes (—).** Use normal dashes (-) instead, in all generated text, code comments, and documentation.
+- Register: sharp, terse, precise - in all prose (docs, UI copy, comments, commits, replies). No inflation, no sales tone, no clever headings (plain nouns). Cut sentences that carry no information.
 
 
 ## Common Development Tasks
