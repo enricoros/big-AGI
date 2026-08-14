@@ -21,6 +21,7 @@ Architecture and system documentation is available in the `/kb/` knowledge base,
 #### LLM - Language Model Metadata
 - **[LLM-editorial-control.md](modules/LLM-editorial-pubdate.md)** - Where we have editorial control over per-model metadata vs dynamic discovery; `pubDate` field semantics, propagation chain, resolution rules, per-vendor matrix
 - **[LLM-editorial-auto-picks.md](modules/LLM-editorial-auto-picks.md)** - Per-domain Auto model resolution: 3-layer fallback (pin, editorial pick, ELO/cost heuristic), editorial table shape, tolerant matching, compile-time type-safety chain
+- **[LLM-defs-refresh.md](modules/LLM-defs-refresh.md)** - Per-vendor model-defs versioning + selective client refresh: semantic-hashed manifest buckets (generated committed map, bundled with the client - no server surface), per-service `defsV` stamps, `epoch` force-roll lever; replaces routine "roll AIX" for model updates
 
 #### LLM - Vendor APIs
 - **[LLM-gemini-interactions.md](modules/LLM-gemini-interactions.md)** - Gemini Interactions API (Deep Research): endpoints, status taxonomy, two retrieval paths (SSE replay vs JSON GET), known failure modes (10-min cuts, zombies), UI surface

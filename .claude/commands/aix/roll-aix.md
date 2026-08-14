@@ -7,6 +7,11 @@ disable-model-invocation: true
 
 Increment `Monotonics.Aix` in `src/common/app.release.ts` and commit it.
 
+**NOTE**: rolling AIX refreshes every vendor on every client. Model-definition updates no longer
+need it (per-vendor versions auto-roll, see `kb/modules/LLM-defs-refresh.md`); to force-roll a
+single vendor bump its `epoch` in `src/modules/llms/server/llms.defs.manifest.ts` instead.
+Reserve AIX rolls for protocol-level changes.
+
 **Pre-flight checks (MUST pass or abort):**
 1. Run `git branch --show-current` - MUST be on `main` branch
 2. Run `git status src/common/app.release.ts` - file MUST be unmodified (no changes on this specific file)

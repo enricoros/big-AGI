@@ -30,6 +30,11 @@ jobs:
       - name: Type check (app, tools, tests)
         run: npm run tscheck
 
+      # LLM defs map: enable to fail PRs on a stale committed map (kept off: quick GitHub-side edits
+      # can't run the generator, and Vercel/Docker builds regenerate it anyway via prebuild)
+      # - name: LLM defs map check
+      #   run: node tools/develop/gen-llms-defs/generate-llms-defs.mjs --check
+
       - name: Lint
         run: npm run lint
 
