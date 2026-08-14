@@ -384,8 +384,14 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${orKey}`,
+          // App attribution (openrouter.ai/docs/app-attribution): drives our app page, rankings and
+          // marketplace category. Set here rather than centrally because these must ride the CSF
+          // (browser) path too - OpenRouter allowlists all four names for CORS, so they preflight fine.
+          // 'X-Title' is the legacy name of 'X-OpenRouter-Title'; both are sent for compatibility.
           'HTTP-Referer': BaseProduct.ProductURL,
           'X-Title': BaseProduct.ProductName,
+          'X-OpenRouter-Title': BaseProduct.ProductName,
+          'X-OpenRouter-Categories': 'general-chat,personal-agent', // max 2/request, from their fixed vocabulary
         },
         url: orHost + apiPath,
       };
