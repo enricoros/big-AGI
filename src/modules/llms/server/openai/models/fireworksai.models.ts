@@ -1,4 +1,4 @@
-import { DModelInterfaceV1, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { DModelInterfaceV1, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import { serverCapitalizeFirstLetter } from '~/server/wire';
 
@@ -18,6 +18,15 @@ export function fireworksAIHeuristic(hostname: string) {
 
 const IF_CHAT_FN = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 const IF_CHAT_FN_VISION = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision];
+const IF_CHAT_FN_REASON = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning];
+
+// [DeepSeek on Fireworks, 2026-08-14] Fireworks serves the V4 family with thinking on by default (reasoning_content
+// sibling field) and honors 'reasoning_effort' verbatim through the 'openai' dialect passthrough - live-probed on all
+// four V4 ids: 'none' fully disables (no reasoning_content, ctok 2), low/high/max scale the trace. The endpoint also
+// accepts medium/xhigh/adaptive and integer budgets; we expose DeepSeek-direct's documented tiers for UI parity.
+const _PS_DeepSeekEffort: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
+] as const;
 
 // Editorial curation of the serverless-deployable chat models on the 'fireworks' account.
 // The OpenAI-compat /inference/v1/models endpoint returns NO display name, description, or price, so
@@ -28,12 +37,24 @@ const IF_CHAT_FN_VISION = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision];
 // Un-curated / future models still render via _prettyModelId + the fromManualMapping '[?]' fallback.
 const _fireworksKnownModels = llmsDefineManualMappings([
   {
+    idPrefix: 'accounts/fireworks/models/deepseek-v4-pro-0813',
+    label: 'DeepSeek V4 Pro 0813',
+    pubDate: '20260813',
+    description: 'Official release of DeepSeek V4 Pro, superseding the preview, with greatly enhanced agentic capabilities, most pronounced in production environments. Ships with a DSpark speculative decoding module attached.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_REASON,
+    parameterSpecs: _PS_DeepSeekEffort,
+    // NOTE: prices from the model page - the serverless pricing table still omits this model as of 2026-08-14
+    chatPrice: { input: 1.32, output: 3.96, cache: { cType: 'oai-ac', read: 0.044 } },
+  },
+  {
     idPrefix: 'accounts/fireworks/models/deepseek-v4-flash-0731',
     label: 'DeepSeek V4 Flash 0731',
     pubDate: '20260731',
     description: 'Official release of DeepSeek V4 Flash, superseding the preview, with substantially enhanced agentic capabilities. Ships with a speculative decoding module attached.',
     contextWindow: 1_048_576, // 1M
-    interfaces: IF_CHAT_FN,
+    interfaces: IF_CHAT_FN_REASON,
+    parameterSpecs: _PS_DeepSeekEffort,
     chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
   },
   {
@@ -136,7 +157,8 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     pubDate: '20260424',
     description: 'DeepSeek flagship open MoE (1.6T params) for frontier reasoning, coding, and long-context work up to 1M tokens. Hybrid attention keeps long contexts efficient.',
     contextWindow: 1_048_576, // 1M
-    interfaces: IF_CHAT_FN,
+    interfaces: IF_CHAT_FN_REASON,
+    parameterSpecs: _PS_DeepSeekEffort,
     benchmark: { cbaElo: 1457 }, // lmarena: deepseek-v4-pro
     chatPrice: { input: 1.74, output: 3.48, cache: { cType: 'oai-ac', read: 0.145 } },
   },
@@ -146,7 +168,8 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     pubDate: '20260424',
     description: 'Streamlined DeepSeek open MoE tuned for low-latency, high-throughput inference at 1M-token context, retaining most of Pro reasoning and coding quality.',
     contextWindow: 1_048_576, // 1M
-    interfaces: IF_CHAT_FN,
+    interfaces: IF_CHAT_FN_REASON,
+    parameterSpecs: _PS_DeepSeekEffort,
     benchmark: { cbaElo: 1436 }, // lmarena: deepseek-v4-flash
     chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
   },

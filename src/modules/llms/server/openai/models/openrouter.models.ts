@@ -341,8 +341,8 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
         // Binary thinking only: we pin enumValues so the shared llmVndMiscEffort registry (which also includes 'max'
         // for native DeepSeek V4) does not surface 'max' in the UI for OR-routed third-party models - unverified they
         // honor it (OR itself accepts reasoning.effort='max' since GPT-5.6, see openai.chatCompletions.ts).
-        // [DeepSeek, 2026-07-31] Exception: OR's supported_efforts is right here, separating the 0731 flash
-        // (max/high/low) from the April flash and V4-Pro (xhigh/high -> binary). deepseek/ only - for xAI it is wrong.
+        // [DeepSeek, 2026-08-14] Exception: OR's supported_efforts is right here, separating the dated flash 0731
+        // and pro 0813 (max/high/low) from the April ids (xhigh/high -> binary). deepseek/ only - for xAI it is wrong.
         const orEfforts = modelIdUnaliased.startsWith('deepseek/') ? model.reasoning?.supported_efforts : undefined;
         const derived = _MISC_EFFORTS.filter(e => orEfforts?.includes(e));
         parameterSpecs.push({

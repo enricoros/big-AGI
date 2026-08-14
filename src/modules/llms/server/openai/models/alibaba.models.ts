@@ -7,11 +7,13 @@ import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappin
 // --- Alibaba Model ID inference (auto-derived from _knownAlibabaChatModels) ---
 export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefix'];
 
-// Sources (verified 2026-08-06 against the live /v1/models list + docs):
+// Sources (verified 2026-08-14 against the live /v1/models list + docs):
 // - Models:  https://www.alibabacloud.com/help/en/model-studio/models
 // - Pricing: https://www.alibabacloud.com/help/en/model-studio/model-pricing (International/Singapore, USD per 1M tokens)
 // - Per-model pages carry the authoritative caps + cache-hit price, e.g. https://www.alibabacloud.com/help/en/model-studio/qwen3-8-max
 // - Cache:   https://www.alibabacloud.com/help/en/model-studio/context-cache (implicit hit = 20% of input; explicit create 125% / hit 10%; deepseek-v4-pro excepted)
+// 2026-08-14 pass (DeepSeek only): deepseek-v4-pro-0813 curated + made visible by exception (see below); deepseek-v4-flash-0731
+//   curated but hidden; DeepSeek-V4 output cap 64K -> 128K house cap (both model pages state 393216). Qwen rows re-checked, unchanged.
 // 2026-08-06 pass: qwen3.7-flash repriced to its real 3-tier rates - the 0.25/1.50 was qwen3.6-flash's, the model is still absent from the
 //   Intl pricing page (tiers on its model page + Alibaba's own OpenRouter endpoint agree); qwen3.7-max output cap 64K -> 128K; DeepSeek-V4
 //   context 1,048,576 -> 1,000,000 (what Alibaba serves); arena ELOs refreshed; qwen3.8-max caps/price re-confirmed on its model page;
@@ -21,7 +23,8 @@ export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefi
 // - The live API returns only id/created/owned_by (no pricing/caps/context), so EVERYTHING here is editorial.
 // - Alibaba uses tiered pricing keyed on the request's INPUT token count (both input and output prices step up).
 // - Policy: curate the current best-per-tier lineup only; all uncatalogued models, dated snapshots
-//   (-YYYY-MM-DD / -2507), and -preview/-latest aliases are hidden (see alibabaModelToModelDescription).
+//   (-YYYY-MM-DD / -2507), and -preview/-latest aliases are hidden, UNLESS curated verbatim below - an exact
+//   entry is an explicit editorial pick and carries its own `hidden` (see alibabaModelToModelDescription).
 // - Thinking control: thinking-capable models expose a 'Thinking' toggle (Off/On; unset = vendor default, usually on)
 //   via _PS_Thinking, mapped to Qwen's `enable_thinking` in the 'alibaba' dialect (openai.chatCompletions.ts).
 //   Verified live on qwen3.x + DashScope-hosted DeepSeek-V4 / GLM-5.2. Kimi K2.7 Code is always-on (reasoning flag, no toggle).
@@ -184,17 +187,38 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   },
 
   // --- Third-party models resold by Alibaba Model Studio (Alibaba's own pricing; labeled to disambiguate from our native vendors) ---
+  // DeepSeek on DashScope: dated snapshots are listed ALONGSIDE the undated ids (each with its own free-tier quota), unlike
+  // api.deepseek.com, which only exposes undated ids and swaps checkpoints in place behind them. Alibaba does not print the
+  // "Currently equivalent to <snapshot>" note it uses for Qwen on the DeepSeek rows, so which checkpoint the undated ids
+  // serve is undocumented - hence the 0813 snapshot is curated visible, as the only pinnable GA route here.
+  // Prices: no snapshot rows exist on the price table; snapshots bill at their mainline Singapore rate.
   {
     idPrefix: 'deepseek-v4-pro',
     label: 'DeepSeek V4 Pro (Alibaba)',
+    hidden: true, // superseded by the 0813 GA entry below; this undated id is also free-tier-quota-bound here (403 AllocationQuota.FreeTierOnly on live probe, 2026-08-14) while 0813 bills normally
     parameterSpecs: _PS_Thinking,
     pubDate: '20260623',
-    description: 'DeepSeek V4 Pro served via Alibaba Model Studio (Alibaba pricing, ~5x DeepSeek-direct). 1M context, thinking.',
+    description: 'DeepSeek V4 Pro served via Alibaba Model Studio (Alibaba pricing, well above DeepSeek-direct). 1M context, thinking.',
     contextWindow: 1_000_000, // 1M (Alibaba serves a decimal 1M window, not DeepSeek-direct's 1,048,576)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    maxCompletionTokens: 65536,
+    maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
     chatPrice: { input: 2.40, output: 4.80, cache: { cType: 'oai-ac', read: 0.20 } },
     benchmark: { cbaElo: 1457 }, // lmarena: deepseek-v4-pro
+  },
+  {
+    // GA release of V4 Pro (2026-08-13), superseding the April preview: same 1.6T/49B MoE, re-post-trained for agentic work
+    // with a DSpark speculative-decoding module attached. Large agentic deltas vs the preview (DeepSWE 62.7 vs 12.8,
+    // Terminal Bench 2.1 87.9 vs 72.1); raw-knowledge gains are small (HLE without tools 42.7 vs 37.7).
+    idPrefix: 'deepseek-v4-pro-0813',
+    label: 'DeepSeek V4 Pro 0813 (Alibaba)',
+    parameterSpecs: _PS_Thinking,
+    pubDate: '20260813',
+    description: 'DeepSeek V4 Pro GA (0813) served via Alibaba Model Studio. Much stronger agentic and tool use than the April preview. 1M context, thinking.',
+    contextWindow: 1_000_000, // 1M (live-probed: 'Range of input length should be [1, 1000000]')
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning], // text-only (no vision); thinking on by default
+    maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
+    chatPrice: { input: 2.40, output: 4.80, cache: { cType: 'oai-ac', read: 0.20 } },
+    benchmark: { cbaElo: 1457 }, // lmarena: deepseek-v4-pro (scored on the preview checkpoint; no 0813 human-vote entry yet)
   },
   {
     idPrefix: 'deepseek-v4-flash',
@@ -204,9 +228,23 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     description: 'DeepSeek V4 Flash served via Alibaba Model Studio. 1M context, thinking.',
     contextWindow: 1_000_000, // 1M (Alibaba serves a decimal 1M window)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    maxCompletionTokens: 65536,
+    maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
     chatPrice: { input: 0.20, output: 0.40, cache: { cType: 'oai-ac', read: 0.04 } },
     benchmark: { cbaElo: 1436 }, // lmarena: deepseek-v4-flash
+  },
+  {
+    // pinnable 0731 revision (re-post-train, same arch/size/price); curated only so it lists with a clean label
+    idPrefix: 'deepseek-v4-flash-0731',
+    label: 'DeepSeek V4 Flash 0731 (Alibaba)',
+    parameterSpecs: _PS_Thinking,
+    pubDate: '20260731',
+    description: 'DeepSeek V4 Flash 0731 revision served via Alibaba Model Studio. 1M context, thinking.',
+    contextWindow: 1_000_000, // 1M
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
+    maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
+    chatPrice: { input: 0.20, output: 0.40, cache: { cType: 'oai-ac', read: 0.04 } },
+    benchmark: { cbaElo: 1436 }, // lmarena: deepseek-v4-flash
+    hidden: true, // dated snapshot; deepseek-v4-flash is the mainline entry for this tier
   },
   {
     idPrefix: 'glm-5.2',
@@ -302,8 +340,10 @@ export function alibabaModelToModelDescription(alibabaModelId: string, created?:
     hidden: true, // editorial policy: hide uncatalogued models by default (title-cased label only if ever shown)
   });
 
-  // Re-hide dated snapshots / preview aliases (super-matches against a curated base get un-hidden by fromManualMapping)
-  if (!md.hidden && (_ALIBABA_DATED_SNAPSHOT.test(alibabaModelId) || _ALIBABA_PREVIEW_ALIAS.test(alibabaModelId)))
+  // Re-hide dated snapshots / preview aliases (super-matches against a curated base get un-hidden by fromManualMapping).
+  // Exception: an id curated verbatim (e.g. deepseek-v4-pro-0813) is an explicit editorial pick and keeps its own `hidden`.
+  const curatedVerbatim = _knownAlibabaChatModels.some(m => m.idPrefix === alibabaModelId);
+  if (!md.hidden && !curatedVerbatim && (_ALIBABA_DATED_SNAPSHOT.test(alibabaModelId) || _ALIBABA_PREVIEW_ALIAS.test(alibabaModelId)))
     md.hidden = true;
 
   return md;

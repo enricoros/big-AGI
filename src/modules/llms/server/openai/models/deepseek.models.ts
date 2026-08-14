@@ -10,16 +10,30 @@ export type LlmsDeepseekModelId = typeof _knownDeepseekChatModels[number]['idPre
 
 const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 
+// [DeepSeek, 2026-08-13] V4-Pro 0813: GA release, swapped IN PLACE - https://api-docs.deepseek.com/updates/
+// - Same 'deepseek-v4-pro' id ("simply set the model name to deepseek-v4-pro"); the pricing page MODEL VERSION row now
+//   reads DeepSeek-V4-Pro-0813. Dated ids 400 ("The supported API model names are deepseek-v4-pro or deepseek-v4-flash"),
+//   so it is unpinnable here; only aggregators (OpenRouter, DashScope, Fireworks) carry a dated id.
+// - Preview architecture unchanged (1.6T/49B) plus a DSpark speculative-decoding module, re-post-trained for agentic
+//   work; open weights MIT on HF (deepseek-ai/DeepSeek-V4-Pro-0813). Gains are agentic (DeepSWE 12.8 -> 62.7, Terminal
+//   Bench 2.1 72.1 -> 87.9), raw knowledge barely moved (HLE no-tools 37.7 -> 42.7).
+// - Pro's effort mapping now matches flash: 'low' is a real cheaper tier, skipping the ~79-token hidden agentic preamble
+//   (8 vs 87 prompt tokens on the same request). /responses serves pro too now (was 400 'available starting early August 2026').
+// - PRICE RISE scheduled for 2026-08-16 16:00 UTC: the flat card is replaced by peak/off-peak, peak 01:00-04:00 and
+//   06:00-10:00 UTC, off-peak exactly half. pro cache-hit/miss/output peak 0.044/1.32/3.96, off-peak 0.022/0.66/1.98;
+//   flash peak 0.014/0.44/1.32, off-peak 0.007/0.22/0.66. chatPrice below is still today's flat card, which is BELOW
+//   even the new off-peak rate; we have no time dimension, so a tier must be picked at cutover.
+// - Baseline for spotting the NEXT in-place swap, as no other tell exists: system_fingerprint is stable per model,
+//   a307abda487cd1b463329ccb945ce396 (pro) / a26a7955944dc5c60445bff77fac9c8e (flash). Self-report is worthless
+//   (pro claims to be V3, or Claude, or Qwen, depending on the host).
+
 // [DeepSeek, 2026-07-31] V4-Flash 0731: re-post-trained, swapped IN PLACE - https://api-docs.deepseek.com/updates/
 // - Same 'deepseek-v4-flash' id, same arch/size/pricing, public beta. Reported agentic gains are vs V4-Pro-Preview on
-//   an unreleased harness: direction, not ranking. V4-Pro untouched: official release still pending, effort mapping
-//   as documented (rechecked 2026-08-06).
+//   an unreleased harness: direction, not ranking.
 // - Unpinnable: swept id spellings, separators, /beta + /v1 bases, dated base paths, request fields and version headers
-//   - all rejected or ignored. April weights survive only off-DeepSeek via the open weights; 0731 has no HF repo.
-// - Responses API (/responses) is flash-only: pro 400s with 'available starting early August 2026'. The Anthropic-format
-//   base https://api.deepseek.com/anthropic serves both models.
-// - Undated: 2x peak-hour pricing (Beijing 09-12, 14-18) is announced but NOT live - the rate card is still flat as of
-//   2026-08-06, and now warns of a significant overall rise. chatPrice below is that flat rate; we have no time dimension.
+//   - all rejected or ignored. April weights survive only off-DeepSeek via the open weights; 0731 has its own HF repo
+//   too (deepseek-ai/DeepSeek-V4-Flash-0731, created on release day).
+// - The Anthropic-format base https://api.deepseek.com/anthropic serves both models.
 // - Docs need a TRAILING SLASH, else Docusaurus serves a shell.
 
 // [DeepSeek, 2026-04-24] V4 release - https://api-docs.deepseek.com/news/news260424
@@ -39,25 +53,28 @@ const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 const _knownDeepseekChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'deepseek-v4-pro',
-    label: 'DeepSeek V4 Pro',
+    label: 'DeepSeek V4 Pro (0813)', // house-added tag: the API id is undated, so this is the only place the build shows
+    // note: keeping the former pubdate even tho DeepSeek has rolled the model
+    // - 0813 GA release, swapped in place behind the same model id
+    // - 0424 preview launch and the time the benchmark scores were assessed
     pubDate: '20260424',
-    description: 'Premium reasoning model with 1M context. Supports extended thinking modes, JSON output, and function calling.',
+    description: 'Premium reasoning model with 1M context, released GA by DeepSeek on 2026-08-13 with much stronger agentic and tool-use behavior. Supports extended thinking modes, JSON output, and function calling.',
     contextWindow: 1_048_576, // 1M
     interfaces: [...IF_4, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
-      // 'low' is wire-valid here too, but docs map it onto 'high' (still identical on 2026-08-06); revisit at pro's official release
-      { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] },
+      // 'low' keeps reasoning on yet skips the hidden agentic preamble (8 vs 87 prompt tokens), so it is cheaper per request
+      { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
     ],
     maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
     chatPrice: { input: 0.435, output: 0.87, cache: { cType: 'oai-ac', read: 0.003625 } },
-    benchmark: { cbaElo: 1457 }, // lmarena: deepseek-v4-pro
+    benchmark: { cbaElo: 1457 }, // lmarena: deepseek-v4-pro (preview-era score; 0813 only has AutoEval votes so far)
   },
   {
     idPrefix: 'deepseek-v4-flash',
     label: 'DeepSeek V4 Flash (0731)', // house-added tag: the API id is undated, so this is the only place the build shows
     // note: keeping the former pubdate even tho DeepSeek has rolled the model
     // - 0731 re-post-trained revision, swapped in place behind the same model id
-    // - 0424 initial launch and the time the benchamrk scores were assessed
+    // - 0424 initial launch and the time the benchmark scores were assessed
     pubDate: '20260424',
     description: 'Fast general-purpose model with 1M context, re-post-trained by DeepSeek on 2026-07-31 for agentic and coding tasks. Supports extended thinking modes, JSON output, and function calling.',
     contextWindow: 1_048_576, // 1M
