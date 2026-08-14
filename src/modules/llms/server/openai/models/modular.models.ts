@@ -26,8 +26,9 @@ const _wireModularModelItemSchema = z.object({
 
 
 // [Modular Cloud] Editorial table for the shared endpoints (array order = display order), measured
-// live 2026-08-13. Output caps are unverified where noted: the server silently clamps oversized
-// max_tokens instead of erroring, so an over-large value is never observable as a failure.
+// live 2026-08-13 (GLM 5.2 added 2026-08-14). Output caps are unverified where noted: the server
+// silently clamps oversized max_tokens instead of erroring, so an over-large value is never
+// observable as a failure.
 const _modularKnownModels = llmsDefineManualMappings([
   {
     idPrefix: 'minimax/minimax-m3',
@@ -67,6 +68,17 @@ const _modularKnownModels = llmsDefineManualMappings([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching],
     chatPrice: { input: 0.60, output: 3.00, cache: { cType: 'oai-ac', read: 0.12 } },
   },
+  {
+    idPrefix: 'z-ai/glm-5.2',
+    label: 'GLM 5.2',
+    description: 'Zhipu GLM-5.2 open-weights coding/agentic MoE (754B, ~40B active), 1M context, default-on reasoning, text-only. Served as NVIDIA NVFP4 (4-bit) quantization with speculative decoding.',
+    contextWindow: 1048576,
+    maxCompletionTokens: 131072, // unverified
+    // no Vision (image_url REJECTED 400: text-only deployment) and no Json (json_object is clean
+    // but json_schema strict emits template-token garbage inside valid JSON - probed 2026-08-14)
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.26 } },
+  },
 ]);
 
 
@@ -99,6 +111,11 @@ export function modularModelsToModelDescriptions(wireModels: unknown): ModelDesc
       if (error) console.warn('[DEV] modular: skipping invalid model entry', z.prettifyError(error));
       continue;
     }
+
+    // skip image-generation ids: they surface in /v1/models but serve (if at all) only via
+    // /v1/images/generations, so a chat-shaped row would be wrong (FLUX.2-klein-4B, 2026-08-14)
+    if (model.id.startsWith('black-forest-labs/'))
+      continue;
 
     // known models get full caps/pricing; unknown ids (day-zero cloud additions, or any model on a
     // self-hosted MAX host) stay visible with a conservative chat-only shape and no context window
