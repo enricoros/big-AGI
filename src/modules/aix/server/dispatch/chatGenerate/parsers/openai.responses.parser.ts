@@ -1445,16 +1445,18 @@ function _forwardDoneCodeInterpreterCallItem(pt: IParticleTransmitter, codeInter
  * The actual search results are typically reflected in the model's text response.
  */
 function _forwardDoneCustomToolCallItem(pt: IParticleTransmitter, customToolCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'custom_tool_call' }>, opId: string): void {
-  const { name, input } = customToolCall;
+  const { name, input, status } = customToolCall;
 
-  const doneOpts = { opId, state: 'done' } as const;
+  // [xAI] 2026-08-14: x_* tool calls can come back with status 'failed'
+  const isError = status === 'failed';
+  const doneOpts = { opId, state: isError ? 'error' : 'done' } as const;
 
-  // Show a placeholder for the custom tool call (these arrive in output_item.done, so they're completed)
+  // Show a placeholder for the custom tool call (these arrive in output_item.done, so they're terminal)
   // xAI x_search tools include: x_user_search, x_keyword_search, x_semantic_search, x_thread_fetch, ...
   if (name.startsWith('x_'))
-    pt.sendOperationState('search-web', `X search: ${name}${input ? ` (${input.slice(0, 50)}${input.length > 50 ? '...' : ''})` : ''}`, doneOpts);
+    pt.sendOperationState('search-web', isError ? `X search error: ${name}` : `X search: ${name}${input ? ` (${input.slice(0, 50)}${input.length > 50 ? '...' : ''})` : ''}`, doneOpts);
   else
-    pt.sendOperationState('code-exec' /* WEAK cast, this is not a fit */, `Custom tool: ${name}`, doneOpts);
+    pt.sendOperationState('code-exec' /* WEAK cast, this is not a fit */, isError ? `Custom tool error: ${name}` : `Custom tool: ${name}`, doneOpts);
 }
 
 
