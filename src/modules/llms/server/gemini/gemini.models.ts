@@ -261,6 +261,29 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     benchmark: { cbaElo: 1490 }, // gemini-3.7-flash-high (LMArena 2026-08-13, preliminary, CI +/-8)
   },
 
+  // 3.7 Flash Video Understanding (EAP) - surfaced August 14, 2026 - "[Confidential]" Early Access Program
+  // checkpoint of 3.7 Flash (same version string '3.7-flash-08-2026') tuned for video understanding.
+  // EAP-gated: the list API returns it only for enrolled keys (a DEV 'stale' log on other keys is expected).
+  // Verified live 2026-08-14: API surface identical to base 3.7 Flash - thinkingLevel ['low','medium','high']
+  // ('minimal' 400s), fn/search/code-exec/media-res/JSON-schema/streaming all work, thinking on by default;
+  // video input verified (YouTube fileData + videoMetadata.fps; tokenization identical to base: 19s clip
+  // = 1,584 tok default, 6,120 at fps=5); billed (serviceTier 'standard'), no published price - assumed 3.7 Flash rates
+  {
+    id: 'models/gemini-3.7-flash-video-understanding-eap',
+    labelOverride: 'Gemini 3.7 Flash Video Understanding',
+    pubDate: '20260814',
+    isPreview: true,
+    chatPrice: gemini37FlashPricing,
+    interfaces: IF_30,
+    parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high'] }, // no 'minimal' (live 400, same as base 3.7)
+      { paramId: 'llmVndGeminiMediaResolution' },
+      { paramId: 'llmVndGeminiCodeExecution' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
+    benchmark: { cbaElo: 1490 - 1 }, // -1 (deprio the specialized variant) + gemini-3.7-flash-high
+  },
+
 
   /// Generation 3.6
 
