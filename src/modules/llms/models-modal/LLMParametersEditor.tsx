@@ -53,17 +53,22 @@ const _oaiEffortOptions = [
 
 const _miscEffortOptions = [
   { value: 'max', label: 'Max', description: 'Hardest thinking' } as const,
-  { value: 'high', label: 'On', description: 'Multi-step reasoning' } as const,
+  { value: 'high', label: 'High', description: 'Multi-step reasoning' } as const,
   { value: 'low', label: 'Low', description: 'Light thinking' } as const,
   { value: 'none', label: 'Off', description: 'Disable thinking mode' } as const,
   { value: _UNSPECIFIED, label: 'Default', description: 'Model Default' } as const,
 ] as const;
 
-export function llmParametersFilterEffortOptions<T extends { value: string }>(options: readonly T[], spec: DModelParameterSpecAny | undefined, registryKey: keyof typeof DModelParameterRegistry): T[] | null {
+export function llmParametersFilterEffortOptions<T extends { value: string, label: string }>(options: readonly T[], spec: DModelParameterSpecAny | undefined, registryKey: keyof typeof DModelParameterRegistry): T[] | null {
   if (!spec) return null;
   const registry = DModelParameterRegistry[registryKey];
   const allowedSet = new Set((spec.enumValues as readonly string[] | undefined) ?? ('values' in registry ? registry.values : []));
-  return options.filter(o => o.value === _UNSPECIFIED || allowedSet.has(o.value));
+  const filtered = options.filter(o => o.value === _UNSPECIFIED || allowedSet.has(o.value));
+  // 'Thinking' label nuance: on a graded model (low/max present) 'high' is a rung on the scale -> 'High';
+  // on a pure toggle ({none,high}, e.g. Qwen/GLM/Nemotron) it just means enabled -> 'On'
+  if (registryKey === 'llmVndMiscEffort' && !allowedSet.has('low') && !allowedSet.has('max'))
+    return filtered.map(o => o.value === 'high' ? { ...o, label: 'On' } as T : o);
+  return filtered;
 }
 
 
