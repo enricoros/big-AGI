@@ -34,6 +34,13 @@ const _PS_Thinking: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
 ] as const;
 
+// [DeepSeek, 2026-08-14] DashScope-hosted DeepSeek V4 additionally honors 'reasoning_effort' (live-probed: same 3 template
+// tiers as DeepSeek-direct - low < high(=medium/xhigh) < max via the hidden-preamble fingerprint; flash-0731 collapses max
+// onto high). The 'alibaba' dialect sends enable_thinking for the toggle and reasoning_effort only for low/max.
+const _PS_DeepSeekEffort: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
+] as const;
+
 const _knownAlibabaChatModels = llmsDefineManualMappings([
 
   // --- Qwen flagship / current generation ---
@@ -196,7 +203,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     idPrefix: 'deepseek-v4-pro',
     label: 'DeepSeek V4 Pro (Alibaba)',
     hidden: true, // superseded by the 0813 GA entry below; this undated id is also free-tier-quota-bound here (403 AllocationQuota.FreeTierOnly on live probe, 2026-08-14) while 0813 bills normally
-    parameterSpecs: _PS_Thinking,
+    parameterSpecs: _PS_DeepSeekEffort,
     pubDate: '20260623',
     description: 'DeepSeek V4 Pro served via Alibaba Model Studio (Alibaba pricing, well above DeepSeek-direct). 1M context, thinking.',
     contextWindow: 1_000_000, // 1M (Alibaba serves a decimal 1M window, not DeepSeek-direct's 1,048,576)
@@ -211,7 +218,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     // Terminal Bench 2.1 87.9 vs 72.1); raw-knowledge gains are small (HLE without tools 42.7 vs 37.7).
     idPrefix: 'deepseek-v4-pro-0813',
     label: 'DeepSeek V4 Pro 0813 (Alibaba)',
-    parameterSpecs: _PS_Thinking,
+    parameterSpecs: _PS_DeepSeekEffort,
     pubDate: '20260813',
     description: 'DeepSeek V4 Pro GA (0813) served via Alibaba Model Studio. Much stronger agentic and tool use than the April preview. 1M context, thinking.',
     contextWindow: 1_000_000, // 1M (live-probed: 'Range of input length should be [1, 1000000]')
@@ -223,7 +230,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'deepseek-v4-flash',
     label: 'DeepSeek V4 Flash (Alibaba)',
-    parameterSpecs: _PS_Thinking,
+    parameterSpecs: _PS_DeepSeekEffort,
     pubDate: '20260622',
     description: 'DeepSeek V4 Flash served via Alibaba Model Studio. 1M context, thinking.',
     contextWindow: 1_000_000, // 1M (Alibaba serves a decimal 1M window)
@@ -236,7 +243,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     // pinnable 0731 revision (re-post-train, same arch/size/price); curated only so it lists with a clean label
     idPrefix: 'deepseek-v4-flash-0731',
     label: 'DeepSeek V4 Flash 0731 (Alibaba)',
-    parameterSpecs: _PS_Thinking,
+    parameterSpecs: _PS_DeepSeekEffort,
     pubDate: '20260731',
     description: 'DeepSeek V4 Flash 0731 revision served via Alibaba Model Studio. 1M context, thinking.',
     contextWindow: 1_000_000, // 1M

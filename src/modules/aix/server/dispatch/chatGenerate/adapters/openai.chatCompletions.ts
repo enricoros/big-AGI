@@ -198,8 +198,15 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   // [Alibaba, 2026-06-26] Qwen thinking control via 'enable_thinking' (binary). Verified on compatible-mode for qwen3.x + DashScope-hosted DeepSeek-V4/GLM-5.2.
   // Models exposing this use a `llmVndMiscEffort` spec with enumValues ['none','high'] -> Off/On (unset = Default = vendor default, usually on).
-  if (reasoningEffort && openAIDialect === 'alibaba')
+  // [Alibaba, 2026-08-14] DashScope-hosted DeepSeek also validates + honors 'reasoning_effort' (accepts low|medium|high|xhigh|max,
+  // rejects minimal): live-probed the same 3 template tiers as DeepSeek-direct ({low} < {medium,high,xhigh} < {max}, via the hidden
+  // preamble prompt-token fingerprint; flash-0731 collapses max onto high). We add it only for the beyond-binary values, so
+  // binary-spec models (Qwen etc., enumValues ['none','high']) can never emit it; 'high' == thinking-on default, toggle suffices.
+  if (reasoningEffort && openAIDialect === 'alibaba') {
     payload.enable_thinking = reasoningEffort !== 'none';
+    if (reasoningEffort === 'low' || reasoningEffort === 'max')
+      payload.reasoning_effort = reasoningEffort;
+  }
 
   // [NVIDIA NIM, 2026-07-25] Two per-model reasoning mechanisms (NVIDIA rejects unknown top-level params, so we must be exact):
   // - gpt-oss: native `reasoning_effort`, strictly validated to low|medium|high (llmVndOaiEffort spec narrows the UI to these)
