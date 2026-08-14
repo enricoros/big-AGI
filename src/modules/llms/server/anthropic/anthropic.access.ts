@@ -42,7 +42,10 @@ const ANTHROPIC_HEADERS_VERSION = {
   // Latest version hasn't changed (as of Feb 2025)
   'anthropic-version': '2023-06-01',
 
-  // Used for instance by Claude Code - shall we set it?
+  // Undocumented app-identity slot, used by Claude Code ('x-app: cli'). Accepted (probe-verified
+  // 2026-08-14, no observable effect on limits or routing); Anthropic reflects any requested header
+  // in CORS preflight, so it is safe on the CSF path too.
+  // 2026-08-14 NOTE: not necessary for now, so we don't se it
   // 'x-app': 'big-agi',
 } as const;
 
