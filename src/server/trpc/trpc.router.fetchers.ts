@@ -9,11 +9,10 @@ const SERVER_DEBUG_FETCH_HEADERS = false; // log response headers (rate limits, 
 
 
 //
-// NOTE: This file is used in the server-side code, and not in the client-side code.
+// Fetches data from external APIs, throwing TRPC errors on failure: connection, HTTP and parsing.
 //
-// It is used to fetch data from external APIs, and throw TRPC errors on failure.
-//
-// It handles connection errors, HTTP errors, and parsing errors.
+// NOT server-only despite the name: three CSF entry points (AIX chat, model listing, Speex TTS)
+// pull this into the browser bundle.
 //
 
 // JSON fetcher

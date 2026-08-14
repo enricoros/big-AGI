@@ -22,6 +22,8 @@ import { AwsClient } from 'aws4fetch';
 
 import { env } from '~/server/env.server';
 
+import { LLM_APP_IDENTITY_HEADERS } from '../../shared/llm.appIdentity';
+
 
 // configuration
 const DEFAULT_BEDROCK_REGION = 'us-east-1'; // default region for Bedrock, used if not provided by client or env
@@ -135,11 +137,14 @@ export async function bedrockAccessAsync(
   });
 
   // sign the request - uses SubtleCrypto
+  // NOTE: every header we send must be in THIS object - anything added later is outside
+  // SignedHeaders and ignored. aws4fetch leaves 'user-agent' unsigned by design.
   const signedRequest = await awsClient.sign(url, {
     method,
     headers: {
       'Accept': 'application/json',
       ...(method === 'POST' ? { 'Content-Type': 'application/json' } : {}),
+      ...LLM_APP_IDENTITY_HEADERS,
     },
     ...(body ? { body: JSON.stringify(body) } : {}),
   } satisfies RequestInit);
