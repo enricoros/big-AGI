@@ -6,7 +6,7 @@ import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmsDefineManualMappings, llmsLabelUncurated } from '../../models.mappings';
 
 // --- Modular Model ID inference (auto-derived from _modularKnownModels) ---
 export type LlmsModularModelId = typeof _modularKnownModels[number]['idPrefix'];
@@ -118,11 +118,13 @@ export function modularModelsToModelDescriptions(wireModels: unknown): ModelDesc
       continue;
 
     // known models get full caps/pricing; unknown ids (day-zero cloud additions, or any model on a
-    // self-hosted MAX host) stay visible with a conservative chat-only shape and no context window
+    // self-hosted MAX host) stay visible with a conservative chat-only shape and no context window;
+    // the '[?]' label prefix + null contextWindow mark them uncurated, which holds them off the
+    // llm-registry-sync publication push (same convention as nvidianim 0-day arrivals)
     descriptions.push(fromManualMapping(_modularKnownModels, model.id, model.created ?? undefined, undefined, {
       idPrefix: model.id,
-      label: _prettyModelId(model.id),
-      description: 'Model served via Modular.',
+      label: llmsLabelUncurated(_prettyModelId(model.id)),
+      description: `New Modular arrival '${model.id}', not yet curated - capabilities and context window unverified.`,
       contextWindow: null,
       interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
       hidden: false,

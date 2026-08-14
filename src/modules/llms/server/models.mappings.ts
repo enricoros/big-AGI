@@ -6,6 +6,27 @@ import { LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/ll
 import type { ModelDescriptionSchema } from './llm.server.types';
 
 
+// -- Uncurated-model label marker --
+
+/**
+ * '[?] ' label prefix: marks a model no editorial table covers yet (0-day arrivals, unknown
+ * variants). Writers: fromManualMapping 'super' resolution (below), nvidianim/modular 0-day
+ * fallbacks. Readers: llm-registry-sync holds prefix-marked models with null contextWindow off
+ * the publication push; listModels.test curated-context assertion; the website strips the
+ * brackets and sinks the pub date (own regex, website repo - keep in sync on change).
+ * Legacy variants not yet unified: bedrock ' [?]' label suffix, openai fallback bare '?'.
+ */
+const LLM_LABEL_UNCURATED = '[?]';
+
+export function llmsLabelUncurated(label: string): string {
+  return `${LLM_LABEL_UNCURATED} ${label}`;
+}
+
+export function llmsIsLabelUncurated(label: string): boolean {
+  return label.startsWith(LLM_LABEL_UNCURATED);
+}
+
+
 // -- Auto-inject implied model interfaces from parameterSpecs --
 
 const _paramIdToInterface: { paramIds: DModelParameterId[], iface: DModelInterfaceV1 }[] = [
@@ -231,7 +252,7 @@ export function fromManualMapping(mappings: ReadonlyArray<KnownModel | KnownLink
   if (variant)
     label += ` [${variant}]`;
   if (resolution === 'super') {
-    label = `[?] ${label}`;
+    label = llmsLabelUncurated(label);
     delete m.hidden;
   } else if (!disableSymlinkLooks && symlinkTarget) {
     // add a symlink icon to the label

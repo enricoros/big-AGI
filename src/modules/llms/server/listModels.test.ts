@@ -60,6 +60,7 @@ import type { AixAPI_Access } from '../../aix/server/api/aix.wiretypes';
 import type { ModelDescriptionSchema } from './llm.server.types';
 
 import { listModelsRunDispatch } from './listModels.dispatch';
+import { llmsIsLabelUncurated } from './models.mappings';
 
 // DEV-gated validators and flags (llmDevValidateParameterSpecs_DEV,
 // Release.IsNodeDevBuild, DEV_DEBUG_OPENROUTER_MODELS, ...) capture NODE_ENV at
@@ -289,7 +290,7 @@ describe('listModels enumeration', () => {
     );
     ok(models.some(m => m.id.startsWith('nvidia/nemotron-3-')), 'nvidianim: Nemotron 3 family present');
     // curated entries always carry a measured context; 0-day '[?]' arrivals legitimately have null
-    ok(models.filter(m => !m.label.startsWith('[?]')).every(m => m.contextWindow !== null), 'nvidianim: all curated models carry a context window');
+    ok(models.filter(m => !llmsIsLabelUncurated(m.label)).every(m => m.contextWindow !== null), 'nvidianim: all curated models carry a context window');
   });
 
   test('openai-compat/openai via nvidia host: curated list via heuristic', { skip: skipIfMissing('NVIDIANIM_API_KEY') }, async () => {

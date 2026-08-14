@@ -2,7 +2,7 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { llmDevCheckModels_DEV } from '../../models.mappings';
+import { llmDevCheckModels_DEV, llmsLabelUncurated } from '../../models.mappings';
 
 // --- NVIDIA NIM Model ID inference (auto-derived from _knownNvidiaNIMModels) ---
 export type LlmsNvidiaNIMModelId = typeof _knownNvidiaNIMModels[number]['id'];
@@ -527,7 +527,7 @@ export function nvidiaNIMModelsToModelDescriptions(maybeModels: { id?: unknown, 
       // NOTE: the registry-sync push filter identifies these by `[?]` label + null contextWindow.
       return {
         id,
-        label: `[?] ${id.includes('/') ? id.slice(id.indexOf('/') + 1) : id}`,
+        label: llmsLabelUncurated(id.includes('/') ? id.slice(id.indexOf('/') + 1) : id),
         description: `New NVIDIA catalog arrival '${id}', not yet curated - capabilities and context window unverified.`,
         contextWindow: null,
         interfaces: [LLM_IF_OAI_Chat],
