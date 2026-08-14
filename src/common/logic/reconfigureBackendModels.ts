@@ -1,5 +1,6 @@
-import { findAllModelVendors } from '~/modules/llms/vendors/vendors.registry';
+import { findAllModelVendors, findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
+import { llmsDefsVersionFor } from '~/modules/llms/llm.client.defs';
 import { llmsUpdateModelsForServiceOrThrow } from '~/modules/llms/llm.client';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
@@ -12,65 +13,51 @@ let _isConfigurationDone = false;
 
 
 /**
- * Reload models because of:
- * - updated backend capabilities (e.g. new service added)
- * - AIX/LLMs updated, in which case we'd have to re-scan services
+ * Selectively reload models because of:
+ * - updated backend capabilities (e.g. new service added): idempotent service creation
+ * - model definitions updated for a service's vendor (per-vendor defs versions, AIX rolls
+ *   folded in - see kb/modules/LLM-defs-refresh.md): only the affected services re-list
  */
-export async function reconfigureBackendModels(lastLlmReconfigHash: string, setLastReconfigHash: (hash: string) => void, remoteServices: boolean, existingServices: boolean) {
+export async function reconfigureBackendModels(remoteServices: boolean, existingServices: boolean) {
 
   // Note: double-calling is only expected to happen in react strict mode
   if (_isConfiguring || _isConfigurationDone)
     return;
 
-  // skip if there haven't been any changes in the backend configuration
-  // Note: the hash captures both AIX/LLMs changes and new backend-configured services
-  const backendCaps = getBackendCapabilities();
-  const backendReconfigHash = backendCaps.hashLlmReconfig;
-  if (!backendReconfigHash || lastLlmReconfigHash === backendReconfigHash) {
-    _isConfiguring = false;
-    _isConfigurationDone = true;
-    return;
-  }
-
   // begin configuration
   _isConfiguring = true;
-  // FIXME: future: move this to the end of the function, but also with strong retry count and error catching, so one's app wouldn't loop upon each boot
-  setLastReconfigHash(backendReconfigHash);
+  const backendCaps = getBackendCapabilities();
   const initiallyEmpty = !llmsStoreState().llms?.length;
 
-  // reconfigure these
-  const servicesToReconfigure: DModelsService[] = [];
-
-  // add the backend services
+  // add the backend services (idempotent)
+  const createdServiceIds = new Set<DModelsServiceId>();
   if (remoteServices)
     findAllModelVendors()
       .filter(vendor => vendor.hasServerConfigKey && backendCaps[vendor.hasServerConfigKey])
       .forEach(remoteVendor => {
 
-        // find the first service for this vendor
+        // create the first service for this vendor, if missing
         const { sources: services } = llmsStoreState();
-        const remoteService = services.find(s => s.vId === remoteVendor.id)
-          || llmsStoreActions().createModelsService(remoteVendor);
-        servicesToReconfigure.push(remoteService);
+        if (!services.find(s => s.vId === remoteVendor.id))
+          createdServiceIds.add(llmsStoreActions().createModelsService(remoteVendor).id);
 
       });
 
-  // add any other local services
-  if (existingServices)
-    llmsStoreState().sources
-      .filter(s => !servicesToReconfigure.includes(s))
-      .forEach(s => servicesToReconfigure.push(s));
-
-
-  // track in order the services that were configured
-  const configuredServiceIds: DModelsServiceId[] = [];
+  // reconfigure these: newly created, or stamped with a different defs version
+  // (unknown vendors, e.g. data from a newer app, are left alone)
+  const servicesToReconfigure = llmsStoreState().sources
+    .filter((service: DModelsService) => !!findModelVendor(service.vId))
+    .map(service => ({ service, defsV: llmsDefsVersionFor(service.vId, service.setup) }))
+    .filter(({ service, defsV }) => createdServiceIds.has(service.id) || (existingServices && service.defsV !== defsV));
 
   // sequentially re-configure
-  await servicesToReconfigure.reduce(async (promiseChain, service) => {
+  if (servicesToReconfigure.length)
+    console.log(`[llms-refresh] updating ${servicesToReconfigure.length}/${llmsStoreState().sources.length} services: ${servicesToReconfigure.map(({ service }) => service.id).join(', ')}`);
+  await servicesToReconfigure.reduce(async (promiseChain, { service, defsV }) => {
     return promiseChain
       .then(async () => {
-        // keep track of the configured service IDs
-        configuredServiceIds.push(service.id);
+        // stamp before the attempt: a failing service is not retried on every boot, but at its next version (loop protection, as before)
+        llmsStoreActions().stampServiceDefs(service.id, defsV);
 
         // auto-configure this service
         await llmsUpdateModelsForServiceOrThrow(service.id, true);
@@ -85,8 +72,15 @@ export async function reconfigureBackendModels(lastLlmReconfigHash: string, setL
       });
   }, Promise.resolve());
 
-  // Re-rank the LLMs based on the order of configured services
-  llmsStoreActions().rerankLLMsByServices(configuredServiceIds);
+  // nothing to reconfigure: leave the models and assignments as they are
+  if (!servicesToReconfigure.length) {
+    _isConfiguring = false;
+    _isConfigurationDone = true;
+    return false;
+  }
+
+  // Re-rank the LLMs to the services order (partial refreshes prepend, this restores stability)
+  llmsStoreActions().rerankLLMsByServices(llmsStoreState().sources.map(s => s.id));
 
   // Auto-assignment conditions
   if (initiallyEmpty) {

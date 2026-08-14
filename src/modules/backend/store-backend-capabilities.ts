@@ -31,7 +31,7 @@ export interface BackendCapabilities {
   hasBrowsing: boolean;
   hasGoogleCustomSearch: boolean;
   hasVoiceElevenLabs: boolean;
-  // hashes
+  // hashes - TODO(2026-11): remove, unread since LLM-Defs (per-vendor defsV), kept for pre-LLM-Defs clients
   hashLlmReconfig: string;
   // build data
   build?: {

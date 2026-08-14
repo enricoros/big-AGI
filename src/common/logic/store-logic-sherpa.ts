@@ -20,7 +20,6 @@ interface SherpaStore {
 
   usageCount: number;
 
-  lastLlmReconfigHash: string;
   lastSeenNewsVersion: number;
 
   chatComposerPrefill: string | null; // if not null, the composer will load this text at startup
@@ -34,7 +33,6 @@ export const useLogicSherpaStore = create<SherpaStore>()(
 
       usageCount: 0,
 
-      lastLlmReconfigHash: '',
       lastSeenNewsVersion: 0,
 
       chatComposerPrefill: null,
@@ -76,11 +74,7 @@ export function markNewsAsSeen() {
 // Reconfigure Backend Models
 
 export async function sherpaReconfigureBackendModels() {
-  return reconfigureBackendModels(
-    useLogicSherpaStore.getState().lastLlmReconfigHash,
-    (hash: string) => useLogicSherpaStore.setState({ lastLlmReconfigHash: hash }),
-    true, true,
-  );
+  return reconfigureBackendModels(true, true);
 }
 
 
