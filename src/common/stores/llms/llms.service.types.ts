@@ -16,6 +16,10 @@ export interface DModelsService<TServiceSettings extends Record<string, any> = {
 
   // service-specific
   setup: Partial<TServiceSettings>;
+
+  // model-defs version this service was last auto-refreshed at (see llm.client.defs.ts);
+  // absent on new/imported/legacy services, which makes them auto-refresh candidates
+  defsV?: string;
 }
 
 export type DModelsServiceId = string;
