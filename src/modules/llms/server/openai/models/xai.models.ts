@@ -226,9 +226,10 @@ export async function xaiFetchModelDescriptions(access: OpenAIAccessSchema): Pro
     // Fallback for unknown models
     const unknownModelFallback: KnownModel = {
       idPrefix: xm.id,
+      // no '[?]' marker (evaluated 2026-08-14): API-characterized (language-models endpoint + modalities) - see llmsLabelUncurated
       label: _xaiFormatNewModelLabel(xm.id),
-      description: `xAI model ${xm.id}`,
-      contextWindow: 256000, // random picked on 2026-01-22
+      description: `New xAI arrival '${xm.id}', not yet curated - context window unverified.`,
+      contextWindow: null, // API omits context; null, never a guess
       interfaces: [
         ...XAI_IF,
         ...(xm.input_modalities?.includes('image') ? [LLM_IF_OAI_Vision] : []),

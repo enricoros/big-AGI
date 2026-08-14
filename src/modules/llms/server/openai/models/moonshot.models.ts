@@ -3,7 +3,7 @@ import * as z from 'zod/v4';
 import { LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { llmsDefineModels, fromManualMapping, KnownModel } from '../../models.mappings';
+import { llmsDefineModels, fromManualMapping, KnownModel, llmsLabelUncurated } from '../../models.mappings';
 
 // --- Moonshot Model ID inference (auto-derived from _knownMoonshotModels) ---
 export type LlmsMoonshotModelId = typeof _knownMoonshotModels[number]['idPrefix'];
@@ -335,9 +335,10 @@ export function moonshotModelToModelDescription(_model: unknown): ModelDescripti
   const description = fromManualMapping(_knownMoonshotModels, model.id, model.created, undefined, {
     // NOTE: default: let us know if any of these show up
     idPrefix: model.id,
-    label: model.id.replaceAll(/[_-]/g, ' '),
-    description: 'Unknown Moonshot Model',
-    contextWindow: model.context_length || 128000,
+    label: llmsLabelUncurated(model.id.replaceAll(/[_-]/g, ' ')),
+    description: 'New Moonshot arrival, not yet curated - capabilities unverified.',
+    contextWindow: model.context_length || null, // API value when present; null (not a guess) otherwise
+    // optimistic capability leeway for 0-day arrivals; rein in when cataloged
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching],
     hidden: model.id.startsWith('moonshot-'), // hide older
   });

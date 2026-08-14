@@ -75,8 +75,9 @@ export function novitaModelsToModelDescriptions(wireModels: unknown): ModelDescr
       if (description.length > 200)
         description = description.slice(0, 200) + '...';
 
-      // Context window
-      const contextWindow = model.context_size || 8192;
+      // Context window: API value or null, never a guess
+      // no '[?]' marker (evaluated 2026-08-14): API-characterized (model_type/endpoints filters) - see llmsLabelUncurated
+      const contextWindow = model.context_size || null;
 
       // Max completion tokens
       const maxCompletionTokens = model.max_output_tokens || undefined;

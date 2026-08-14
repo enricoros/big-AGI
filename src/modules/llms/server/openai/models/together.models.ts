@@ -119,6 +119,7 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
       // heuristics for names
       const label = model.display_name || model.id.replaceAll('/', ' · ').replaceAll(/[_-]/g, ' ');
       const description = `${model.organization || 'Together AI'} ${model.type} model. ${model.link || ''}`;
+      // no '[?]' marker (evaluated 2026-08-14): API-characterized (`type` filter above) - see llmsLabelUncurated
       const contextWindow = model.context_length || null;
       // pricing: input/output 0/0 means 'not serverless-priced' (dedicated/LoRA-only endpoints,
       // 92/160 chat models on 2026-07-12), NOT free - Together's actual free tier uses explicit

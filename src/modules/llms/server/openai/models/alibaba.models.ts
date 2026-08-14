@@ -2,7 +2,7 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmsDefineManualMappings, llmsLabelUncurated } from '../../models.mappings';
 
 // --- Alibaba Model ID inference (auto-derived from _knownAlibabaChatModels) ---
 export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefix'];
@@ -339,10 +339,9 @@ export function alibabaModelFilter(modelId: string): boolean {
 export function alibabaModelToModelDescription(alibabaModelId: string, created?: number): ModelDescriptionSchema {
   const md = fromManualMapping(_knownAlibabaChatModels, alibabaModelId, created, undefined, {
     idPrefix: alibabaModelId,
-    label: _alibabaFormatNewLabel(alibabaModelId),
+    label: llmsLabelUncurated(_alibabaFormatNewLabel(alibabaModelId)),
     description: 'Alibaba model (not yet curated).',
-    contextWindow: 131072,
-    maxCompletionTokens: 8192,
+    contextWindow: null, // the list API returns ids only - no context to trust
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     hidden: true, // editorial policy: hide uncatalogued models by default (title-cased label only if ever shown)
   });

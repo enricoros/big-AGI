@@ -173,11 +173,11 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
 
   // -- Context windows --
-  const contextWindow = model.context_length || 4096;
+  const contextWindow = model.context_length || null; // API value; null (not a guess) when absent
   let maxCompletionTokens = model.top_provider.max_completion_tokens || undefined;
 
   // sometimes maxCompletionTokens is equal to the context window somehow - if we detect it's > 50%, we set it to undefined
-  if (FIXUP_MAX_OUTPUT && maxCompletionTokens && (maxCompletionTokens > contextWindow * 0.5)) {
+  if (FIXUP_MAX_OUTPUT && maxCompletionTokens && contextWindow !== null && (maxCompletionTokens > contextWindow * 0.5)) {
     // console.log(`[FIXUP] openRouterModelToModelDescription: ignoring maxCompletionTokens=${maxCompletionTokens} for model ${model.id} with contextWindow=${contextWindow}`);
     maxCompletionTokens = undefined;
   }

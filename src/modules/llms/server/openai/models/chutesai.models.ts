@@ -115,6 +115,10 @@ export function chutesAIModelsToModelDescriptions(wireModels: unknown): ModelDes
     if (_chutesDenyListContains.some(contains => model.id.includes(contains)))
       continue;
 
+    // skip non-text-output models (image/video generation): they would masquerade as chat here
+    if (model.output_modalities?.length && !model.output_modalities.includes('text'))
+      continue;
+
     try {
       // label / description
       const label = _prettyModelId(model.id);
@@ -122,8 +126,9 @@ export function chutesAIModelsToModelDescriptions(wireModels: unknown): ModelDes
       const quantStr = model.quantization ? ` (${model.quantization})` : '';
       const description = `${ownerStr || 'Model'}${quantStr} via ChutesAI.`;
 
-      // context window: prefer explicit `context_length`, fall back to legacy `max_model_len`, then 8K
-      const contextWindow = model.context_length || model.max_model_len || 8192;
+      // context window: prefer explicit `context_length`, legacy `max_model_len`, else null (never a guess)
+      // no '[?]' marker (evaluated 2026-08-14): API-characterized (output_modalities drop above) - see llmsLabelUncurated
+      const contextWindow = model.context_length || model.max_model_len || null;
       const maxCompletionTokens = model.max_output_length || undefined;
 
       // interfaces: derive from actual fields rather than assume

@@ -119,6 +119,9 @@ function _cerebrasApiModelToFallback(model: WireCerebrasModel): KnownModel {
   const chatPrice = isFree ? { input: 'free' as const, output: 'free' as const } : { input: inputPerM, output: outputPerM };
 
   const isPreview = !!model.preview;
+  // catalog context or null, never a guess
+  // no '[?]' marker (evaluated 2026-08-14): API-characterized (modality filter + catalog capabilities) - see llmsLabelUncurated
+  const contextWindow = limits.max_context_length || null;
   const label = (model.name || model.id.replaceAll(/[_-]/g, ' ')) + (isPreview ? ' (Preview)' : '');
 
   return {
@@ -126,7 +129,7 @@ function _cerebrasApiModelToFallback(model: WireCerebrasModel): KnownModel {
     isPreview,
     label,
     description: model.description || 'New Cerebras model.',
-    contextWindow: limits.max_context_length || 131072,
+    contextWindow,
     ...(limits.max_completion_tokens ? { maxCompletionTokens: limits.max_completion_tokens } : {}),
     interfaces,
     ...(parameterSpecs.length ? { parameterSpecs } : {}),

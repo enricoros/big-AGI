@@ -2,7 +2,7 @@ import { LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_R
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { llmsDefineManualMappings, fromManualMapping } from '../../models.mappings';
+import { llmsDefineManualMappings, fromManualMapping, llmsLabelUncurated } from '../../models.mappings';
 
 // --- Deepseek Model ID inference (auto-derived from _knownDeepseekChatModels) ---
 export type LlmsDeepseekModelId = typeof _knownDeepseekChatModels[number]['idPrefix'];
@@ -123,10 +123,9 @@ export function deepseekModelFilter(deepseekModelId: string) {
 export function deepseekModelToModelDescription(deepseekModelId: string): ModelDescriptionSchema {
   return fromManualMapping(_knownDeepseekChatModels, deepseekModelId, undefined, undefined, {
     idPrefix: deepseekModelId,
-    label: deepseekModelId.replaceAll(/[_-]/g, ' '),
-    description: 'New Deepseek Model',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
+    label: llmsLabelUncurated(deepseekModelId.replaceAll(/[_-]/g, ' ')),
+    description: 'New DeepSeek arrival, not yet curated - capabilities and context window unverified.',
+    contextWindow: null,
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
   });

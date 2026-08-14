@@ -9,12 +9,18 @@ import type { ModelDescriptionSchema } from './llm.server.types';
 // -- Uncurated-model label marker --
 
 /**
- * '[?] ' label prefix: marks a model no editorial table covers yet (0-day arrivals, unknown
- * variants). Writers: fromManualMapping 'super' resolution (below), nvidianim/modular 0-day
- * fallbacks. Readers: llm-registry-sync holds prefix-marked models with null contextWindow off
- * the publication push; listModels.test curated-context assertion; the website strips the
- * brackets and sinks the pub date (own regex, website repo - keep in sync on change).
- * Legacy variants not yet unified: bedrock ' [?]' label suffix, openai fallback bare '?'.
+ * '[?] ' label prefix - "the list API does not establish what this model IS".
+ * Not an "uncatalogued" badge: API-characterized 0-day arrivals stay unmarked.
+ *
+ * Mark:    type-blind catalogs (ids only), where a video/TTS/embedding id could masquerade as
+ *          chat - nvidianim, modular, sakanaai, moonshot, groq, deepseek, alibaba - plus the
+ *          'super' resolution below (unknown variant of a known family).
+ * Don't:   a type/modality filter proves chat - gemini, xai, together, novita, chutesai, cerebras.
+ *
+ * Readers: llm-registry-sync (marked + null contextWindow = held off the publication push),
+ *          listModels.test, the website (strips brackets, sinks pubDate; own regex, keep in sync).
+ *
+ * Legacy, not unified: bedrock ' [?]' suffix, openai bare '?'.
  */
 const LLM_LABEL_UNCURATED = '[?]';
 

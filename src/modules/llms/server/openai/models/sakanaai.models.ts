@@ -6,7 +6,7 @@ import { serverCapitalizeFirstLetter } from '~/server/wire';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
-import { fromManualMapping, llmsDefineManualMappings } from '../../models.mappings';
+import { fromManualMapping, llmsDefineManualMappings, llmsLabelUncurated } from '../../models.mappings';
 
 // --- SakanaAI Model ID inference (auto-derived from _sakanaKnownModels) ---
 export type LlmsSakanaAIModelId = typeof _sakanaKnownModels[number]['idPrefix'];
@@ -212,12 +212,15 @@ export function sakanaAIModelsToModelDescriptions(wireModels: unknown): ModelDes
       continue;
     }
 
-    // known fugu models get full caps/pricing; unknown models fall back to a generic Fugu-family description
+    // known fugu models get full caps/pricing; unknown ids are uncurated (the list API discloses no
+    // type/modality/context): '[?]' + null contextWindow keeps them visible in-app but holds them
+    // off the llm-registry-sync publication push
     descriptions.push(fromManualMapping(_sakanaKnownModels, model.id, model.created ?? undefined, undefined, {
       idPrefix: model.id,
-      label: _prettyModelId(model.id),
-      description: model.description || 'Model served via Sakana.ai.',
-      contextWindow: 1000000,
+      label: llmsLabelUncurated(_prettyModelId(model.id)),
+      description: model.description || `New Sakana.ai arrival '${model.id}', not yet curated - capabilities and context window unverified.`,
+      contextWindow: null,
+      // optimistic capability leeway for 0-day arrivals; rein in when cataloged
       interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
       hidden: false,
     }));

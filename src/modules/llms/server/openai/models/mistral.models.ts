@@ -221,7 +221,7 @@ export function mistralModels(wireModels: unknown): ModelDescriptionSchema[] {
       created: created || 0,
       updated: /*updated ||*/ created || 0,
       description: description,
-      contextWindow: max_context_length ?? 32768,
+      contextWindow: max_context_length ?? null, // schema requires the field today; null (not a guess) if it ever loosens
       interfaces: _mistralCapabilitiesToInterfaces(capabilities, id),
       // parameterSpecs: ...
       // maxCompletionTokens: ...

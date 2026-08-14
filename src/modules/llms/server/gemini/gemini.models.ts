@@ -1158,6 +1158,10 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     ? `🔗 ${knownModel?.labelOverride || displayName} -> ${knownModel.symLink}`
     : knownModel?.labelOverride || displayName;
 
+  // no '[?]' marker (evaluated 2026-08-14): API-characterized (supportedGenerationMethods + real ctx) - see llmsLabelUncurated
+  // if (!knownModel)
+  //   label = llmsLabelUncurated(label);
+
   // FIX: the Gemini 1114 model now returns 1121 as the version.. highlight the issue
   // if (geminiModel.name.endsWith('1114') && label.endsWith('1121'))
   //   label += ' (really: 1114)';

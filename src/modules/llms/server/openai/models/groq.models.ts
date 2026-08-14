@@ -2,7 +2,7 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { type KnownLink, type KnownModel, formatPubDate, fromManualMapping, llmDevCheckModels_DEV, llmsDefineModels } from '../../models.mappings';
+import { type KnownLink, type KnownModel, formatPubDate, fromManualMapping, llmDevCheckModels_DEV, llmsDefineModels, llmsLabelUncurated } from '../../models.mappings';
 
 // --- Groq Model ID inference (auto-derived from _knownGroqModels) ---
 export type LlmsGroqModelId = typeof _knownGroqModels[number]['idPrefix'];
@@ -182,9 +182,9 @@ export function groqModelToModelDescription(_model: unknown): ModelDescriptionSc
 
   const description = fromManualMapping(_knownGroqModels, model.id, model.created, undefined, {
     idPrefix: model.id,
-    label: model.id.replaceAll(/[_-]/g, ' '),
-    description: 'New Model',
-    contextWindow: model.context_window || 32768,
+    label: llmsLabelUncurated(model.id.replaceAll(/[_-]/g, ' ')),
+    description: 'New Groq arrival, not yet curated - capabilities unverified.',
+    contextWindow: model.context_window || null, // API value when present; null (not a guess) otherwise
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
   });
