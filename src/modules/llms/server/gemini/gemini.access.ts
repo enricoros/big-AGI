@@ -65,6 +65,10 @@ export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | nu
     return {
       headers: {
         'Content-Type': 'application/json',
+        // Google asks integrations for 'x-goog-api-client', and it does work here (allowlisted, and the
+        // JSON content-type already preflights) - but the server path already identifies us, and a
+        // user-set geminiHost may run a stricter allowlist. Kept minimal:
+        // 'x-goog-api-client': `big-agi/${packageJson['version'] || '1.0.0'}`,
       },
       url: `${geminiHost}${apiPath}${separator}key=${geminiKey}`,
     };

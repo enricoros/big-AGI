@@ -12,14 +12,14 @@ import { BaseProduct } from '~/common/app.release';
  * the browser path goes in that vendor's access builder instead.
  */
 export const LLM_APP_IDENTITY_HEADERS: Readonly<Record<string, string>> = typeof window !== 'undefined' ? {} : {
-  'User-Agent': `${BaseProduct.ProductName}/${packageJson.version} (+${BaseProduct.ProductURL})`,
+  'User-Agent': `${BaseProduct.ProductName}/${packageJson.version} (${BaseProduct.ProductURL})`, // 'name/version (url)' - the shape Stripe/Wikimedia/crates.io prescribe (no '+', that reads as a crawler)
   'HTTP-Referer': BaseProduct.ProductURL, // OpenRouter's attribution convention, inert elsewhere
   // 'X-Title': BaseProduct.ProductName, // not useful, really
 };
 
 /**
- * Adds identity, skipping vendor-set names case-insensitively: Bedrock's signer lowercases, and an
- * 'X-Title' + 'x-title' pair is sent as the combined 'Big-AGI, Big-AGI', breaking the signature.
+ * Adds identity, skipping vendor-set names case-insensitively: Bedrock's signer lowercases, and a
+ * 'HTTP-Referer' + 'http-referer' pair is sent as one combined value, breaking the signature.
  */
 export function llmAppIdentityHeaders(vendorHeaders: HeadersInit): HeadersInit {
   const headers = vendorHeaders as Record<string, string>;

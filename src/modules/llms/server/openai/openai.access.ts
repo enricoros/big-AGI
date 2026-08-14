@@ -414,6 +414,10 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': `Bearer ${perplexityKey}`,
+          // the pair Perplexity's own SDKs send (undocumented; both are on their CORS allowlist, so
+          // they also ride the CSF path). Consumption unverified - identity only.
+          'X-Source': BaseProduct.ProductName,
+          'X-Title': BaseProduct.ProductName,
         },
         url: perplexityHost + apiPath,
       };
