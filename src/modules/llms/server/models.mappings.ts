@@ -20,7 +20,8 @@ import type { ModelDescriptionSchema } from './llm.server.types';
  * Readers: llm-registry-sync (marked + null contextWindow = held off the publication push),
  *          listModels.test, the website (strips brackets, sinks pubDate; own regex, keep in sync).
  *
- * Legacy, not unified: bedrock ' [?]' suffix, openai bare '?'.
+ * Legacy, not unified: bedrock ' [?]' suffix; openai-compat hosts keep a lenient bare '?'
+ * (unknown is the norm there, marking would blank whole services from publication).
  */
 const LLM_LABEL_UNCURATED = '[?]';
 

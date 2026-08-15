@@ -1200,24 +1200,36 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 // -- 0-day or unknown models --
 
 export function llmsFallbackForOpenAIModel(modelId: string, isLikelyOpenAI: boolean): KnownModel {
-  return isLikelyOpenAI && _isLikelyResponsesAPIModel(modelId) ? _llmsOpenAIModelResponsesFallback : _llmsOpenAIModelFallback;
+  if (!isLikelyOpenAI)
+    return _llmsOpenAICompatModelFallback;
+  return _isLikelyResponsesAPIModel(modelId) ? _llmsOpenAIModelResponsesFallback : _llmsOpenAIModelFallback;
 }
 
+// native OpenAI (and Azure deployments): the ids-only list discloses no type or context, so
+// unknowns carry the uncurated marker (see llmsLabelUncurated) and a null (never guessed) context
 const _llmsOpenAIModelFallback: KnownModel = {
   idPrefix: '',
-  label: '?',
-  description: 'Unknown, please let us know the ID. Assuming a context window of 128k tokens, and a maximum output of 4k tokens.',
-  contextWindow: 128000,
-  maxCompletionTokens: 4096,
+  label: '[?]', // + ' [<id>]' via the variant append below
+  description: 'Unknown OpenAI model, not yet curated - please let us know the ID.',
+  contextWindow: null,
   interfaces: IFS_CHAT_MIN,
   // hidden: true,
 };
 
 const _llmsOpenAIModelResponsesFallback: KnownModel = {
   ..._llmsOpenAIModelFallback,
-  description: 'Unknown OpenAI model. Assuming Responses API support, 128k context, 16k output.',
-  maxCompletionTokens: 16384,
+  description: 'Unknown OpenAI model, not yet curated - assuming Responses API support.',
   interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN],
+};
+
+// OpenAI-compatible hosts: unknown is the norm there, so stay lenient and unmarked
+// ('[?]' would mark every model and hold whole services off the registry-sync push)
+const _llmsOpenAICompatModelFallback: KnownModel = {
+  ..._llmsOpenAIModelFallback,
+  label: '?', // + ' [<id>]'
+  description: 'Unknown, please let us know the ID. Assuming a context window of 128k tokens, and a maximum output of 8k tokens.',
+  contextWindow: 128000,
+  maxCompletionTokens: 8192,
 };
 
 function _isLikelyResponsesAPIModel(modelId: string): boolean {
