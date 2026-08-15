@@ -105,3 +105,22 @@ Three categories:
 - **Bedrock** finds Anthropic editorial via `llmBedrockFindAnthropicModel` and strips unsupported interfaces - `pubDate` inherits from Anthropic.
 - **Ollama** is deferred: 209 entries keyed by upstream model family (e.g. `qwen3.6`, `kimi-k2`, `glm-4.6`). Each entry's `pubDate` would need to be the upstream creator's release date (Meta, Alibaba, Moonshot, Z.AI, etc.). This is large-scale upstream research; better handled in a follow-up pass once cross-vendor `pubDate` data is consolidated and reusable.
 - **Dynamic-only** vendors get nothing automatic. To add `pubDate` for them we'd have to seed editorial entries (which is what `fromManualMapping`'s mapping mechanism was built for); this is a per-vendor decision and out of scope for the initial rollout.
+
+
+## Uncurated-model marker (`[?]`)
+
+Canonical symbols: `llmsLabelUncurated()` / `llmsIsLabelUncurated()` in `src/modules/llms/server/models.mappings.ts` (the doc comment there is the decision record).
+
+**Semantics**: the `[?] ` label prefix means "the list API does not establish what this model IS" - an ids-only catalog where a video/TTS/embedding id could masquerade as chat (the FLUX-on-Modular failure, 2026-08-14). It is NOT a "not yet editorialized" badge: API-characterized 0-day arrivals stay unmarked so they publish and badge as new.
+
+**Downstream effects** (why the marker must not be applied loosely):
+- `tools/data/llms/llm-registry-sync.ts` drops `[?]`-labeled models with `contextWindow === null` before both its local DB and the PostHog `llms_model_spec` push - they never reach big-agi.com.
+- The website strips bracketed segments from `[?]` labels and sinks the pubDate (no NEW badge, bottom of Released sort). Its detection is an independent regex in the website repo (`posthog.server.ts` / `llm.vendors.rankings.ts`) - keep in sync on change.
+
+**Marked** (type-blind list APIs): `fromManualMapping` 'super' resolution (unknown variant of a known family), plus the 0-day fallbacks in nvidianim, modular, sakanaai, moonshot, groq, deepseek, alibaba, and native OpenAI (Azure included via `isLikelyOpenAI: true`).
+
+**Unmarked** (a type/modality filter proves chat): gemini, xai, together, novita, chutesai, cerebras - each carries an in-file "no '[?]' marker (evaluated 2026-08-14)" comment. Companion rule everywhere: never invent a context window - API value or `null`.
+
+**Exempt** (unknown is the norm; marking would blank whole services): OpenAI-compatible custom hosts (lenient bare `?` fallback, 128K/8K assumption), fastapi, tlusapi, lmstudio, localai, ollama.
+
+**Legacy, not unified**: bedrock's ` [?]` label suffix (real context windows, so no publication effect; unifying would churn pushed specs).
