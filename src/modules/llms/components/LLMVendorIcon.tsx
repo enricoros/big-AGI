@@ -51,6 +51,7 @@ const vendorIcons: Record<ModelVendorId, React.FunctionComponent<SvgIconProps>> 
   openrouter: OpenRouterIcon,
   perplexity: PerplexityIcon,
   togetherai: TogetherIcon,
+  vertexai: GeminiIcon,
   xai: XAIIcon,
   zai: ZAIIcon,
 };
