@@ -11,13 +11,17 @@ interface DGeminiServiceSettings {
   geminiHost: string;
   csf?: boolean;
   minSafetyLevel: GeminiWire_Safety.HarmBlockThreshold;
-  /** Vertex AI / dynamic auth: bearer token (short-lived ADC or gateway token) */
-  geminiBearerToken?: string;
-  /** GCP project for Vertex path: /v1/projects/{id}/locations/... */
-  vertexProjectId?: string;
-  /** Vertex location (default us-central1) */
-  vertexLocation?: string;
 }
+
+// interface LLMOptionsGemini {
+//   llmRef: string;
+//   stopSequences: string[];  // up to 5 sequences that will stop generation (optional)
+//   candidateCount: number;   // 1...8 number of generated responses to return (optional)
+//   maxOutputTokens: number;  // if unset, this will default to outputTokenLimit (optional)
+//   temperature: number;      // 0...1 Controls the randomness of the output. (optional)
+//   topP: number;             // 0...1 The maximum cumulative probability of tokens to consider when sampling (optional)
+//   topK: number;             // 1...100 The maximum number of tokens to consider when sampling (optional)
+// }
 
 
 export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAccessSchema> = {
@@ -36,14 +40,10 @@ export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAcces
   initializeSetup: () => ({
     geminiKey: '',
     geminiHost: '',
-    geminiBearerToken: '',
-    vertexProjectId: '',
-    vertexLocation: '',
     minSafetyLevel: 'HARM_BLOCK_THRESHOLD_UNSPECIFIED',
   }),
   validateSetup: (setup) => {
-    // API key OR bearer token (Vertex / #1134) is sufficient
-    return (setup.geminiKey?.length > 0) || (setup.geminiBearerToken?.length > 0);
+    return setup.geminiKey?.length > 0;
   },
   getTransportAccess: (partialSetup): GeminiAccessSchema => ({
     dialect: 'gemini',
@@ -51,9 +51,6 @@ export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAcces
     geminiKey: partialSetup?.geminiKey || '',
     geminiHost: partialSetup?.geminiHost || '',
     minSafetyLevel: partialSetup?.minSafetyLevel || 'HARM_BLOCK_THRESHOLD_UNSPECIFIED',
-    geminiBearerToken: partialSetup?.geminiBearerToken || '',
-    vertexProjectId: partialSetup?.vertexProjectId || '',
-    vertexLocation: partialSetup?.vertexLocation || '',
   }),
 
   // List Models
@@ -62,5 +59,5 @@ export const ModelVendorGemini: IModelVendor<DGeminiServiceSettings, GeminiAcces
 };
 
 function _csfGeminiAvailable(s?: Partial<DGeminiServiceSettings>) {
-  return !!(s?.geminiKey || s?.geminiBearerToken);
+  return !!s?.geminiKey;
 }

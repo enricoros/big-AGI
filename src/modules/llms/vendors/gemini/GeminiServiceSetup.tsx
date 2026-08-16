@@ -41,14 +41,14 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
     useServiceSetup(props.serviceId, ModelVendorGemini);
 
   // derived state
-  const { clientSideFetch, geminiKey, geminiHost, minSafetyLevel, geminiBearerToken, vertexProjectId, vertexLocation } = serviceAccess;
+  const { clientSideFetch, geminiKey, geminiHost, minSafetyLevel} = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
 
   // advanced mode - initialize open if CSF is enabled, but let user toggle freely
   const advanced = useToggleableBoolean(!!clientSideFetch);
   const showAdvanced = advanced.on;
 
-  const shallFetchSucceed = !needsUserKey || ((!!geminiKey || !!geminiBearerToken) && serviceSetupValid);
+  const shallFetchSucceed = !needsUserKey || (!!geminiKey && serviceSetupValid);
   const showKeyError = !!geminiKey && !serviceSetupValid;
 
   // fetch models
@@ -66,7 +66,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
         : <AlreadySet />}
       </>}
       value={geminiKey} onChange={value => updateSettings({ geminiKey: value.trim() })}
-      required={needsUserKey && !geminiBearerToken} isError={showKeyError}
+      required={needsUserKey} isError={showKeyError}
       placeholder='...'
     />
 
@@ -77,6 +77,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
         variant='outlined'
         value={minSafetyLevel} onChange={(_event, value) => value && updateSettings({ minSafetyLevel: value })}
         startDecorator={<HealthAndSafetyIcon sx={{ display: { xs: 'none', sm: 'inherit' } }} />}
+        // indicator={<KeyboardArrowDownIcon />}
         slotProps={{
           root: { sx: { width: '100%' } },
           indicator: { sx: { opacity: 0.5 } },
@@ -98,42 +99,16 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
     {showAdvanced && <FormTextField
       autoCompleteId='gemini-host'
       title='API Endpoint'
-      placeholder={`https://generativelanguage.googleapis.com or https://aiplatform.googleapis.com`}
+      placeholder={`https://generativelanguage.googleapis.com`}
       value={geminiHost}
       onChange={text => updateSettings({ geminiHost: text })}
     />}
 
-    {showAdvanced && <FormInputKey
-      autoCompleteId='gemini-bearer'
-      label='Bearer Token (Vertex / ADC)'
-      rightLabel={<Link level='body-sm' href='https://github.com/enricoros/big-AGI/issues/1134' target='_blank'>#1134</Link>}
-      value={geminiBearerToken || ''}
-      onChange={value => updateSettings({ geminiBearerToken: value.trim() })}
-      required={false}
-      placeholder='ya29... short-lived token from ADC or gateway'
-    />}
-
-    {showAdvanced && <FormTextField
-      autoCompleteId='vertex-project'
-      title='Vertex Project ID'
-      placeholder='my-gcp-project'
-      value={vertexProjectId || ''}
-      onChange={text => updateSettings({ vertexProjectId: text.trim() })}
-    />}
-
-    {showAdvanced && <FormTextField
-      autoCompleteId='vertex-location'
-      title='Vertex Location'
-      placeholder='us-central1 or global'
-      value={vertexLocation || ''}
-      onChange={text => updateSettings({ vertexLocation: text.trim() })}
-    />}
-
     {showAdvanced && <SetupFormClientSideToggle
-      visible={!!(geminiKey || geminiBearerToken)}
+      visible={!!geminiKey}
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ csf: on })}
-      helpText="Fetch models and make requests directly to Google's API using your browser instead of through the server."
+      helpText="Fetch models and make requests directly to Google's Gemini API using your browser instead of through the server."
     />}
 
     <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced} />
