@@ -23,7 +23,7 @@ function sdbmHash(str: string): string {
 function generateLlmEnvConfigHash(env: Record<string, unknown>): string {
   const envAPIKeys = Object.keys(env)     // get all env keys
     .filter(key => !!env[key])            // minus the empty
-    .filter(key => key.includes('_API_')) // minus the non-API keys
+    .filter(key => key.includes('_API_') || key.includes('VERTEX_AI')) // minus the non-API keys
     .map(key => `${key}=${env[key]}`)     // create key-value pairs
     .sort();                              // ignore order
   const hashInputs = [
@@ -64,6 +64,7 @@ export const backendRouter = createTRPCRouter({
         hasLlmOpenRouter: !!env.OPENROUTER_API_KEY,
         hasLlmPerplexity: !!env.PERPLEXITY_API_KEY,
         hasLlmTogetherAI: !!env.TOGETHERAI_API_KEY,
+        hasLlmVertexAI: !!env.VERTEX_AI_BEARER_TOKEN && !!(env.VERTEX_AI_PROJECT_ID || env.GOOGLE_CLOUD_PROJECT),
         hasLlmXAI: !!env.XAI_API_KEY,
         // others
         hasDB: (!!env.MDB_URI) || (!!env.POSTGRES_PRISMA_URL && !!env.POSTGRES_URL_NON_POOLING),
