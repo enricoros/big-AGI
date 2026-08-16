@@ -3,6 +3,8 @@
  * Source of truth: individual vendor icon files in src/modules/llms/components/
  *
  * Regenerate: npm run gen:icon-sprites
+ *
+ * Note: `vertexai` reuses the googleai symbol until gen:icon-sprites is re-run (#1134).
  */
 import * as React from 'react';
 
@@ -11,13 +13,14 @@ import type { ModelVendorId } from '../vendors/vendors.registry';
 import { PhRobot } from '~/common/components/icons/phosphor/PhRobot';
 
 // Symbol IDs for each vendor - generated from the vendor registry
-const VI: Record<ModelVendorId, string> = {
+const VI: Partial<Record<ModelVendorId, string>> & Record<string, string> = {
   alibaba: 'vi-alibaba',
   anthropic: 'vi-anthropic',
   azure: 'vi-azure',
   bedrock: 'vi-bedrock',
   deepseek: 'vi-deepseek',
   googleai: 'vi-googleai',
+  vertexai: 'vi-googleai',
   groq: 'vi-groq',
   lmstudio: 'vi-lmstudio',
   localai: 'vi-localai',
@@ -59,7 +62,6 @@ export const VendorIconSpriteMemo = React.memo(function VendorIconSprite() {
 
         <symbol id={VI.azure} viewBox='0 0 24 24'>
           <g stroke='currentColor' strokeWidth={1.5} fill='currentColor' strokeLinecap='round' strokeLinejoin='round'>
-          {/*<path stroke='none' d='M0 0h24v24H0z' fill='none'></path>*/}
           <path stroke='none' d='M0 0h24v24H0z' fill='none' />
           <path d='M6 7.5l-4 9.5h4l6 -15z' />
           <path d='M22 20l-7 -15l-3 7l4 5l-8 3z' />
@@ -136,7 +138,6 @@ export const VendorIconSpriteMemo = React.memo(function VendorIconSprite() {
 
         <symbol id={VI.openai} viewBox='0 0 24 24'>
           <g stroke='currentColor' strokeWidth={1.5} fill='currentColor' strokeLinecap='round' strokeLinejoin='round'>
-          {/*<path stroke='none' d='M0 0h24v24H0z' fill='none'></path>*/}
           <path d='M11.217 19.384a3.501 3.501 0 0 0 6.783 -1.217v-5.167l-6 -3.35' fill='none' />
           <path d='M5.214 15.014a3.501 3.501 0 0 0 4.446 5.266l4.34 -2.534v-6.946' fill='none' />
           <path d='M6 7.63c-1.391 -.236 -2.787 .395 -3.534 1.689a3.474 3.474 0 0 0 1.271 4.745l4.263 2.514l6 -3.348' fill='none' />
@@ -196,52 +197,16 @@ export const VendorIconSpriteMemo = React.memo(function VendorIconSprite() {
 const _spriteContainerSx: React.CSSProperties = { position: 'absolute', width: 0, height: 0, overflow: 'hidden' };
 
 
-/**
- * Lightweight vendor icon using SVG sprite `<use href>`.
- * Near-zero per-instance cost - no Emotion/styled-components.
- *
- * Uses Joy's CSS custom properties (--Icon-fontSize, --Icon-margin, --Icon-color)
- * so parent components (ListItemDecorator, etc.) control sizing automatically.
- * Accepts optional `sx` with `fontSize` override for explicit sizing.
- */
-export function LLMVendorIconSprite({ vendorId /*, sx, className*/ }: {
+export function LLMVendorIconSprite({ vendorId }: {
   vendorId: ModelVendorId | undefined;
-  // sx?: { fontSize?: number | string; ml?: number | string; color?: string };
-  // className?: string;
 }) {
   const symbolId = vendorId ? VI[vendorId] : undefined;
   if (!symbolId)
     return <PhRobot />;
 
-  // Compute style only when sx overrides are present
-  // let style: React.CSSProperties = _lwBaseSx;
-  // if (sx) {
-  //   const s: React.CSSProperties = { ..._lwBaseSx };
-  //   if (sx.fontSize !== undefined) s.fontSize = typeof sx.fontSize === 'number' ? sx.fontSize : sx.fontSize;
-  //   if (sx.ml !== undefined) s.marginLeft = typeof sx.ml === 'number' ? sx.ml * 8 : sx.ml;
-  //   if (sx.color !== undefined) s.color = sx.color;
-  //   style = s;
-  // }
-
-  // was: <svg xmlns='http://www.w3.org/2000/svg' focusable={false} aria-hidden style={style} className={className}>
-  // was:   <use href={`#${symbolId}`} width='100%' height='100%' />
-  // was: </svg>
   return (
     <svg xmlns='http://www.w3.org/2000/svg' aria-hidden className='agi-vendor-icon-sprite'>
       <use href={`#${symbolId}`} />
     </svg>
   );
 }
-
-// Matches Joy's SvgIcon base styles - uses the same CSS custom properties
-// const _lwBaseSx: React.CSSProperties = {
-//   width: '1em',
-//   height: '1em',
-//   display: 'inline-block',
-//   fill: 'currentColor',
-//   flexShrink: 0,
-//   userSelect: 'none',
-//   margin: 'var(--Icon-margin)',
-//   fontSize: 'var(--Icon-fontSize, 1.5rem)',
-//   color: 'var(--Icon-color)',
-// } as const;
