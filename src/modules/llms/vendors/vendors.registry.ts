@@ -16,6 +16,7 @@ import { ModelVendorOpenAI } from './openai/openai.vendor';
 import { ModelVendorOpenRouter } from './openrouter/openrouter.vendor';
 import { ModelVendorPerplexity } from './perplexity/perplexity.vendor';
 import { ModelVendorTogetherAI } from './togetherai/togetherai.vendor';
+import { ModelVendorVertexAI } from './vertexai/vertexai.vendor';
 import { ModelVendorXAI } from './xai/xai.vendor';
 import { ModelVendorZAI } from './zai/zai.vendor';
 
@@ -39,6 +40,7 @@ export type ModelVendorId =
   | 'openrouter'
   | 'perplexity'
   | 'togetherai'
+  | 'vertexai'
   | 'xai'
   | 'zai'
   ;
@@ -61,6 +63,7 @@ const MODEL_VENDOR_REGISTRY = {
   openrouter: ModelVendorOpenRouter,
   perplexity: ModelVendorPerplexity,
   togetherai: ModelVendorTogetherAI,
+  vertexai: ModelVendorVertexAI,
   xai: ModelVendorXAI,
   zai: ModelVendorZAI,
 } as const satisfies Record<ModelVendorId, IModelVendor>;
