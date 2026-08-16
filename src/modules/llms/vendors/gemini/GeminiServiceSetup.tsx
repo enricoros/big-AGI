@@ -41,14 +41,14 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
     useServiceSetup(props.serviceId, ModelVendorGemini);
 
   // derived state
-  const { clientSideFetch, geminiKey, geminiHost, minSafetyLevel} = serviceAccess;
+  const { clientSideFetch, geminiKey, geminiHost, minSafetyLevel, geminiBearerToken, vertexProjectId, vertexLocation } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
 
   // advanced mode - initialize open if CSF is enabled, but let user toggle freely
   const advanced = useToggleableBoolean(!!clientSideFetch);
   const showAdvanced = advanced.on;
 
-  const shallFetchSucceed = !needsUserKey || (!!geminiKey && serviceSetupValid);
+  const shallFetchSucceed = !needsUserKey || ((!!geminiKey || !!geminiBearerToken) && serviceSetupValid);
   const showKeyError = !!geminiKey && !serviceSetupValid;
 
   // fetch models
@@ -66,7 +66,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
         : <AlreadySet />}
       </>}
       value={geminiKey} onChange={value => updateSettings({ geminiKey: value.trim() })}
-      required={needsUserKey} isError={showKeyError}
+      required={needsUserKey && !geminiBearerToken} isError={showKeyError}
       placeholder='...'
     />
 
@@ -77,7 +77,6 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
         variant='outlined'
         value={minSafetyLevel} onChange={(_event, value) => value && updateSettings({ minSafetyLevel: value })}
         startDecorator={<HealthAndSafetyIcon sx={{ display: { xs: 'none', sm: 'inherit' } }} />}
-        // indicator={<KeyboardArrowDownIcon />}
         slotProps={{
           root: { sx: { width: '100%' } },
           indicator: { sx: { opacity: 0.5 } },
@@ -94,23 +93,47 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       Gemini has advanced <Link href='https://ai.google.dev/docs/safety_setting_gemini' target='_blank' noLinkStyle>
       safety settings</Link> on: harassment, hate speech,
       sexually explicit, civic integrity, and dangerous content, in addition to non-adjustable built-in filters.
-      {/*By default, the model will block content with <em>medium and above</em> probability*/}
-      {/*of being unsafe.*/}
     </FormHelperText>}
 
     {showAdvanced && <FormTextField
       autoCompleteId='gemini-host'
       title='API Endpoint'
-      placeholder={`https://generativelanguage.googleapis.com`}
+      placeholder={`https://generativelanguage.googleapis.com or https://aiplatform.googleapis.com`}
       value={geminiHost}
       onChange={text => updateSettings({ geminiHost: text })}
     />}
 
+    {showAdvanced && <FormInputKey
+      autoCompleteId='gemini-bearer'
+      label='Bearer Token (Vertex / ADC)'
+      rightLabel={<Link level='body-sm' href='https://github.com/enricoros/big-AGI/issues/1134' target='_blank'>#1134</Link>}
+      value={geminiBearerToken || ''}
+      onChange={value => updateSettings({ geminiBearerToken: value.trim() })}
+      required={false}
+      placeholder='ya29... short-lived token from ADC or gateway'
+    />}
+
+    {showAdvanced && <FormTextField
+      autoCompleteId='vertex-project'
+      title='Vertex Project ID'
+      placeholder='my-gcp-project'
+      value={vertexProjectId || ''}
+      onChange={text => updateSettings({ vertexProjectId: text.trim() })}
+    />}
+
+    {showAdvanced && <FormTextField
+      autoCompleteId='vertex-location'
+      title='Vertex Location'
+      placeholder='us-central1 or global'
+      value={vertexLocation || ''}
+      onChange={text => updateSettings({ vertexLocation: text.trim() })}
+    />}
+
     {showAdvanced && <SetupFormClientSideToggle
-      visible={!!geminiKey}
+      visible={!!(geminiKey || geminiBearerToken)}
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ csf: on })}
-      helpText="Fetch models and make requests directly to Google's Gemini API using your browser instead of through the server."
+      helpText="Fetch models and make requests directly to Google's API using your browser instead of through the server."
     />}
 
     <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced} />
