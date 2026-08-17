@@ -7,8 +7,11 @@ import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.se
 import { formatPubDate, fromManualMapping } from '../../models.mappings';
 import { llmOrtAntLookup_ThinkingVariants } from '../../anthropic/anthropic.models';
 import { llmOrtGemLookup } from '../../gemini/gemini.models';
+import { llmOrtMoonshotLookup } from './moonshot.models';
 import { llmOrtOaiLookup } from './openai.models';
+import { llmOrtSakLookup } from './sakanaai.models';
 import { llmOrtXaiLookup } from './xai.models';
+import { llmOrtZaiLookup } from './zai.models';
 import { wireOpenrouterModelsListOutputSchema } from '../wiretypes/openrouter.wiretypes';
 
 
@@ -31,11 +34,6 @@ const orModelFamilyOrder = [
   // Other major providers
   'mistralai/', 'meta-llama/', 'amazon/', 'cohere/',
   // Specialized/AI companies
-  // [Sakana, 2026-08-17] KNOWN-WRONG pubDates: 'sakana/' has no llmOrt*Lookup, so both models take the OR
-  // 'created' fallback below, which is the OR onboarding date and not the release date (sakanaai.models.ts
-  // says so explicitly): fugu-ultra gets 20260624 vs the native 20260722, sakana-namazu 20260811 vs 20260803.
-  // Fix by exporting llmOrtSakLookup from sakanaai.models.ts (llmOrtXaiLookup shape) and merging it in a
-  // 'sakana/' case below - until then the NEW badge and 'Released' sort are off for these two.
   'perplexity/', 'inflection/', 'inclusionai/', 'arcee-ai/', 'thinkingmachines/', 'sakana/',
   // Chinese majors (surfaced on OpenRouter directly)
   'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'baidu/', 'stepfun/', 'meituan/',
@@ -374,20 +372,25 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       }
       break;
 
-    case modelIdUnaliased.startsWith('x-ai/') || modelIdUnaliased.startsWith('moonshotai/') || modelIdUnaliased.startsWith('z-ai/') || modelIdUnaliased.startsWith('deepseek/'):
-      // [Moonshot, 2026-08-17] Kimi K3: thinking cannot be turned off, but the native low/high/max ladder rides
-      // through. Re-probed today (both facts changed since 2026-07-17): reasoning.enabled=false no longer 400s,
-      // it is accepted and IGNORED (reasoning tokens unchanged), and OR now flipped reasoning.mandatory to false
-      // while advertising supported_efforts [max,high,low]. So: expose the ladder, never an 'Off' that lies.
-      if (modelIdUnaliased.startsWith('moonshotai/kimi-k3')) {
-        parameterSpecs.push({ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high', 'max'] });
-        break;
-      }
-      // [xAI, 2026-07-31] inherit native effort specs (medium/xhigh, which llmVndMiscEffort cannot express)
+    case modelIdUnaliased.startsWith('x-ai/') || modelIdUnaliased.startsWith('moonshotai/') || modelIdUnaliased.startsWith('z-ai/') || modelIdUnaliased.startsWith('deepseek/') || modelIdUnaliased.startsWith('sakana/'):
+      // inherit native truth (pubDate + real effort ladders): OR's own reasoning fields and `created` are unreliable here
       if (modelIdUnaliased.startsWith('x-ai/'))
         _mergeLookup(llmOrtXaiLookup(llmRef));
+      else if (modelIdUnaliased.startsWith('moonshotai/'))
+        _mergeLookup(llmOrtMoonshotLookup(llmRef));
+      else if (modelIdUnaliased.startsWith('z-ai/'))
+        _mergeLookup(llmOrtZaiLookup(llmRef));
+      else if (modelIdUnaliased.startsWith('sakana/'))
+        _mergeLookup(llmOrtSakLookup(llmRef));
 
-      // 0-day: xAI/Grok/Moonshot/Z.ai/DeepSeek models get default reasoning effort if not inherited.
+      // ':free' tiers are thinner than their paid twin (glm-5.2:free has no tool endpoints, probed 2026-08-17): OR's
+      // per-endpoint `supported_parameters` wins over the inherited Fn interface
+      if (model.supported_parameters && !model.supported_parameters.includes('tools')) {
+        const fnIndex = interfaces.indexOf(LLM_IF_OAI_Fn);
+        if (fnIndex !== -1) interfaces.splice(fnIndex, 1);
+      }
+
+      // 0-day: xAI/Grok/Moonshot/Z.ai/DeepSeek/Sakana models get default reasoning effort if not inherited.
       // Checks llmVndOaiEffort too (else an inherited spec gets a 2nd control stacked); skips mandatory models,
       // where a binary on/off is meaningless.
       if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndMiscEffort' || p.paramId === 'llmVndOaiEffort')

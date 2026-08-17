@@ -4,7 +4,9 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Re
 
 import { serverCapitalizeFirstLetter } from '~/server/wire';
 
-import type { ModelDescriptionSchema } from '../../llm.server.types';
+import type { DModelParameterId } from '~/common/stores/llms/llms.parameters';
+
+import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 
 import { fromManualMapping, llmsDefineManualMappings, llmsLabelUncurated } from '../../models.mappings';
 
@@ -188,6 +190,41 @@ const _sakanaKnownModels = llmsDefineManualMappings([
     description: 'Japanese-specialized LLM with built-in web search and code execution. Tracks the latest Sakana Namazu version. 256K context.',
   },
 ]);
+
+
+// --- OpenRouter inheritance ---
+
+const _ORT_SAK_IF_ALLOWLIST: ReadonlySet<string> = new Set([
+  // no LLM_IF_OAI_Responses: OpenRouter serves these over Chat Completions
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning,
+] as const);
+
+// only the effort spec travels (Sakana's hosted web_search is a Responses-API construct; OR has its own)
+const _ORT_SAK_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
+  'llmVndOaiEffort',
+] as const satisfies DModelParameterId[]);
+
+/**
+ * Lookup for OpenRouter: match an OR Sakana model ID to a known hardcoded model (OR's `created` is the onboarding
+ * date, so pubDate must come from here).
+ * @param orModelName - The model name after stripping 'sakana/' (e.g. 'fugu-ultra')
+ */
+export function llmOrtSakLookup(orModelName: string): OrtVendorLookupResult | undefined {
+
+  // OR lists the floating aliases only: follow the symLink to the pin, which carries caps/params/pubDate
+  let entry = _sakanaKnownModels.find(m => m.idPrefix === orModelName);
+  const symLink = entry && 'symLink' in entry ? entry.symLink : undefined;
+  if (symLink) entry = _sakanaKnownModels.find(m => m.idPrefix === symLink);
+  if (!entry?.interfaces) return undefined;
+
+  const interfaces = entry.interfaces.filter(i => _ORT_SAK_IF_ALLOWLIST.has(i));
+
+  const parameterSpecs = entry.parameterSpecs
+    ?.filter(spec => _ORT_SAK_PARAM_ALLOWLIST.has(spec.paramId))
+    .map(spec => ({ ...spec }));
+
+  return { pubDate: entry.pubDate, interfaces, parameterSpecs };
+}
 
 
 function _prettyModelId(id: string): string {

@@ -1,6 +1,8 @@
 import { LLM_IF_HOTFIX_NoWebP, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
-import type { ModelDescriptionSchema } from '../../llm.server.types';
+import type { DModelParameterId } from '~/common/stores/llms/llms.parameters';
+
+import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 
 import { KnownModel, llmsDefineModels, fromManualMapping } from '../../models.mappings';
 
@@ -421,6 +423,40 @@ export function zaiModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchem
   if (aIndex !== -1) return -1;
   if (bIndex !== -1) return 1;
   return a.id.localeCompare(b.id);
+}
+
+
+// --- OpenRouter inheritance ---
+
+const _ORT_ZAI_IF_ALLOWLIST: ReadonlySet<string> = new Set([
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning,
+] as const);
+
+// only the thinking spec travels (StripImages/NoWebP are native-endpoint quirks)
+const _ORT_ZAI_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
+  'llmVndMiscEffort',
+] as const satisfies DModelParameterId[]);
+
+/**
+ * Lookup for OpenRouter: match an OR Z.ai model ID to a known hardcoded GLM model.
+ * OR's `reasoning.supported_efforts` is wrong for GLM (reports [xhigh, high] where the ladder is none/high/max), so
+ * the native spec travels as-is; the OR parser subtracts 'none' on mandatory-reasoning models.
+ * @param orModelName - The model name after stripping 'z-ai/' and the ':free' suffix (e.g. 'glm-5.2')
+ */
+export function llmOrtZaiLookup(orModelName: string): OrtVendorLookupResult | undefined {
+
+  // no ref map: every z-ai/ slug on OR is an exact native idPrefix
+  const entry = _knownZAIModels.find(m => m.idPrefix === orModelName);
+  if (!entry?.interfaces) return undefined;
+
+  const interfaces = entry.interfaces.filter(i => _ORT_ZAI_IF_ALLOWLIST.has(i));
+
+  const parameterSpecs = entry.parameterSpecs
+    ?.filter(spec => _ORT_ZAI_PARAM_ALLOWLIST.has(spec.paramId))
+    .map(spec => ({ ...spec }));
+
+  // initialTemperature: Z.ai's per-model default beats the global 0.5 fallback
+  return { pubDate: entry.pubDate, interfaces, parameterSpecs, initialTemperature: entry.initialTemperature ?? undefined };
 }
 
 

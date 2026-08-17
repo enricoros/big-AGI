@@ -2,7 +2,9 @@ import * as z from 'zod/v4';
 
 import { LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
-import type { ModelDescriptionSchema } from '../../llm.server.types';
+import type { DModelParameterId } from '~/common/stores/llms/llms.parameters';
+
+import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 import { llmsDefineModels, fromManualMapping, KnownModel, llmsLabelUncurated } from '../../models.mappings';
 
 // --- Moonshot Model ID inference (auto-derived from _knownMoonshotModels) ---
@@ -349,6 +351,47 @@ export function moonshotModelToModelDescription(_model: unknown): ModelDescripti
 
   return description;
 }
+
+// --- OpenRouter inheritance ---
+
+const _ORT_MOONSHOT_IF_ALLOWLIST: ReadonlySet<string> = new Set([
+  LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning,
+] as const);
+
+// only the thinking spec travels (StripImages/NoTemperature are native-endpoint quirks, $web_search is Moonshot-direct only)
+const _ORT_MOONSHOT_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
+  'llmVndMiscEffort',
+] as const satisfies DModelParameterId[]);
+
+/**
+ * Lookup for OpenRouter: match an OR Moonshot model ID to a known hardcoded Kimi model.
+ * @param orModelName - The model name after stripping 'moonshotai/' (e.g. 'kimi-k3'; '~moonshotai/kimi-latest' arrives as its alias_target)
+ */
+export function llmOrtMoonshotLookup(orModelName: string): OrtVendorLookupResult | undefined {
+
+  // OR drops the '-preview' suffix on the K2 ids
+  const ortMoonshotRefMap: Record<string, string> = {
+    'kimi-k2-0905': 'kimi-k2-0905-preview',
+    'kimi-k2': 'kimi-k2-0711-preview',
+  };
+  const entry = _knownMoonshotModels.find(m => m.idPrefix === (ortMoonshotRefMap[orModelName] ?? orModelName));
+  if (!entry?.interfaces) return undefined;
+
+  const interfaces = entry.interfaces.filter(i => _ORT_MOONSHOT_IF_ALLOWLIST.has(i));
+
+  // K3 through OR: reasoning.enabled=false is accepted but ignored (probed 2026-08-17), so 'Off' would lie - drop it
+  const dropOffLevel = entry.idPrefix === 'kimi-k3';
+
+  const parameterSpecs = entry.parameterSpecs
+    ?.filter(spec => _ORT_MOONSHOT_PARAM_ALLOWLIST.has(spec.paramId))
+    .map(spec =>
+      (dropOffLevel && spec.enumValues?.includes('none')) ? { ...spec, enumValues: spec.enumValues.filter(v => v !== 'none') }
+        : { ...spec },
+    );
+
+  return { pubDate: entry.pubDate, interfaces, parameterSpecs };
+}
+
 
 export function moonshotModelSortFn(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
   // sort hidden at the end
