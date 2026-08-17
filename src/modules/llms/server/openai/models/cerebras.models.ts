@@ -29,7 +29,7 @@ const IF_CHAT_FN = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
  * Cerebras models - fast OpenAI-compatible inference (wafer-scale).
  * - models list: https://inference-docs.cerebras.ai/models/overview
  * - pricing: https://www.cerebras.ai/pricing (per-token rates from /public/v1/models)
- * - updated: 2026-08-06 (empirically verified caps/pricing/effort enums against the live API)
+ * - updated: 2026-08-17 (zai-glm-4.7 retired; 2026-08-06: empirically verified caps/pricing/effort enums against the live API)
  *
  * EDITORIAL OVERRIDES: the /public/v1/models catalog carries pricing/limits/capabilities, but its
  * metadata lags for preview models (it used to report gemma-4-31b with all caps false and an 8K
@@ -72,22 +72,8 @@ const _knownCerebrasModels = llmsDefineModels<_CerebrasModelDef>()([
     chatPrice: { input: 0.35, output: 0.75 },
   },
 
-  // Z.ai GLM 4.7 - agentic coding, strong tool use (~1,000 tok/s). Preview, scheduled for deprecation on 2026-08-17.
-  {
-    isPreview: true,
-    idPrefix: 'zai-glm-4.7',
-    label: 'Z.ai GLM 4.7 (Preview)',
-    pubDate: '20260107', // from catalog 'created' (kept editorial so the non-CSF/DB path has it too)
-    description: 'Z.ai GLM 4.7 (355B) on Cerebras (~1,000 tok/s). Strong agentic coding, advanced reasoning (on by default), superior tool use. 131K context, 40K max output.',
-    contextWindow: 131072,
-    maxCompletionTokens: 40960,
-    interfaces: [...IF_CHAT_FN, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [
-      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high'] }, // reasoning on by default
-    ],
-    chatPrice: { input: 2.25, output: 2.75 },
-    benchmark: { cbaElo: 1442 }, // lmarena: glm-4.7
-  },
+  // 'zai-glm-4.7' (Preview, $2.25/$2.75, 131K/40K, effort none|low|medium|high) retired 2026-08-17 as scheduled and gone from
+  // the public catalog - no replacement named, no serverless GLM 5.x on Cerebras (GLM-5.3 weights not public yet).
 ]);
 
 

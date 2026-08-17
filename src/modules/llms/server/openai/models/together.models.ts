@@ -31,6 +31,19 @@ const _togetherAIDenyList: string[] = [
   'test/test',
 ];
 
+// Retired from serverless but still listed WITH a non-zero price (so the 0/0 'not serverless-priced' rule below
+// does not catch them): a chat call returns 400 'Unable to access non-serverless model'. Exact ids, per
+// https://docs.together.ai/docs/deprecations + live probes 2026-08-16. NOTE: this is not GLM-specific - ~50 of
+// the 75 priced chat rows were dead that day (e.g. MiniMaxAI/MiniMax-M2.7, Qwen/Qwen3.5-397B-A17B) and
+// /v1/models has no field that separates them; only the docs serverless table / a live probe does.
+const _togetherAIRetiredIds = new Set<string>([
+  'zai-org/GLM-5.1', // deprecated 2026-07-10 (row now labeled 'GLM 5.1 FP4')
+  'zai-org/GLM-5', // deprecated 2026-06-22
+  'zai-org/GLM-4.7', // deprecated 2026-04-02
+  'zai-org/GLM-4.6', // 400 non-serverless (fine-tuning removal 2026-07-29)
+  'zai-org/GLM-4.5-Air-FP8', // deprecated 2026-04-02
+]);
+
 // Vision (image input) id patterns - Together publishes no modality field, so these are the explicit
 // '-vision'/'-vl' tags plus families that are natively multimodal across every served variant, each
 // cross-checked against the same model on OpenRouter/Fireworks (which do publish modalities).
@@ -62,7 +75,6 @@ const _togetherVisionMatches: readonly (string | RegExp)[] = [
 const _togetherEditorialPubDates: Record<string, string> = {
   'MiniMaxAI/MiniMax-M2.7': '20260318', // = minimax.models.ts 'MiniMax-M2.7'
   'google/gemma-4-31B-it': '20260402', // = gemini.models.ts 'models/gemma-4-31b-it'
-  'zai-org/GLM-5.1': '20260407', // = zai.models.ts 'glm-5.1'
   'moonshotai/Kimi-K2.6': '20260417', // = fireworksai.models.ts 'kimi-k2p6'
   'deepseek-ai/DeepSeek-V4-Pro': '20260424', // = deepseek.models.ts 'deepseek-v4-pro'
   'MiniMaxAI/MiniMax-M3': '20260601',
@@ -74,6 +86,7 @@ const _togetherEditorialPubDates: Record<string, string> = {
   'moonshotai/Kimi-K3': '20260716', // = moonshot.models.ts 'kimi-k3'
   'thinkingmachines/Inkling-Small': '20260730', // no publisher catalog: OpenRouter listing date
   'deepseek-ai/DeepSeek-V4-Flash-0731': '20260731',
+  'zai-org/GLM-5.3': '20260814', // = zai.models.ts 'glm-5.3' - id pre-announced on together.ai/models/glm-5-3 ('coming soon' 2026-08-16, weights not yet public)
 };
 
 /** 'YYYYMMDD' -> Unix epoch seconds (UTC midnight), 0 when absent - for list placement only */
@@ -109,6 +122,10 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
         return false;
 
       // NOTE: shall we filter out the non-running models?
+
+      // filter-out retired-but-still-priced ids
+      if (_togetherAIRetiredIds.has(model.id))
+        return false;
 
       // filter-out deny list (testing models mainly)
       return !_togetherAIDenyList.some(prefix => model.id.includes(prefix));
