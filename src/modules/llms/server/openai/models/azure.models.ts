@@ -15,6 +15,7 @@ export type LlmsAzureModelId = typeof _knownAzureChatModels[number]['idPrefix'];
 /**
  * Azure OpenAI does not support the web_search_preview tool as of 2025-11-18 and since 2025-09-12
  * as such we remove model parameters that enable search.
+ * Re-verified 2026-08-17: the Responses how-to still documents only function calling and code_interpreter.
  */
 const AZURE_FORCE_DISABLE_WEB_SEARCH_TOOL = true;
 /**
@@ -43,6 +44,22 @@ const _knownAzureChatModels = llmsDefineManualMappings([
   //   chatPrice: { input: 2, output: 6 },
   // },
   //
+
+  // [Azure, 2026-08-17] most GPT-5.x/4.1 ids match OpenAI's exactly (dots included), so they resolve
+  // through _knownOpenAIChatModels below. The naming divergence that matters is the ChatGPT Instant pointer,
+  // which Microsoft ships as 'gpt-chat-latest' while OpenAI serves it as 'chat-latest' (mapped right below).
+  // The chat previews 'gpt-5.3-chat' / 'gpt-5.2-chat' / 'gpt-5.1-chat' / 'gpt-5-chat' (Azure drops OpenAI's
+  // '-latest' suffix) get no defs on purpose: they are gone on both sides - shut down on OpenAI (see
+  // openAIModelsShutdownDenyList) and 'Retired' on Azure since 2026-05-13/2026-06-29, which per the lifecycle
+  // policy means 410 Gone and no new deployments, with 'gpt-chat-latest' as the declared replacement. The
+  // capabilities page still lists them (128,000 context / 16,384 max output) - it lags the retirement schedule.
+  // https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/model-retirement-schedule
+  // https://learn.microsoft.com/en-us/azure/ai-foundry/foundry-models/concepts/models-sold-directly-by-azure
+  {
+    idPrefix: 'gpt-chat-latest',
+    label: 'ChatGPT Instant',
+    symLink: 'chat-latest', // -> _knownOpenAIChatModels
+  },
 
   // [Azure] variants: Azure names these differently compared to OpenAI (no dots) - also: obsolete
   {

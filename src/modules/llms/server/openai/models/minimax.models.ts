@@ -18,7 +18,8 @@ export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
  * - Models: https://platform.minimax.io/docs/release-notes/models.md
  * - Pricing: https://platform.minimax.io/docs/guides/pricing-paygo.md
  * - Text generation: https://platform.minimax.io/docs/guides/text-generation.md
- * - Updated: 2026-08-06
+ * - OpenAI-compatible reference (model enum, max_completion_tokens caps, thinking/service_tier): https://platform.minimax.io/docs/api-reference/text-chat-openai.md
+ * - Updated: 2026-08-17
  */
 type _MiniMaxModelDef = ModelDescriptionSchema & { pubDate: string };
 
@@ -33,13 +34,15 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     contextWindow: 1000000,
     maxCompletionTokens: 131072, // vendor-recommended; live ceiling is 524288 (512K)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
+    // [MiniMax, 2026-08-17] only model with a reasoning switch: `thinking: {type: 'disabled'|'adaptive'}` (M2.x accept and ignore it,
+    // unknown values fall back to 'adaptive' with no 400). Not exposed: MiniMax rides the generic 'openai' dialect, which has no hook.
     // tiered PAYG pricing: boundary at 512K input tokens, >512K tier doubles. Priority tier (1.5x) not modeled.
     chatPrice: {
       input: [{ upTo: 512000, price: 0.30 }, { upTo: null, price: 0.60 }],
       output: [{ upTo: 512000, price: 1.20 }, { upTo: null, price: 2.40 }],
       cache: { cType: 'oai-ac', read: [{ upTo: 512000, price: 0.06 }, { upTo: null, price: 0.12 }] },
     },
-    benchmark: { cbaElo: 1445 }, // lmarena: minimax-m3
+    benchmark: { cbaElo: 1444 }, // lmarena: minimax-m3
   },
 
   // M2.7 series
@@ -139,7 +142,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     hidden: true, // yield to newer
   },
 
-  // M1 - 1M context
+  // M1 - 1M context. [MiniMax, 2026-08-17] dropped from the docs model table and the price list, still served (probed).
   {
     id: 'MiniMax-M1',
     label: 'MiniMax M1',
@@ -152,7 +155,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     hidden: true, // yield to newer
   },
 
-  // MiniMax-Text-01 - legacy
+  // MiniMax-Text-01 - legacy. [MiniMax, 2026-08-17] dropped from the docs model table and the price list, still served (probed).
   {
     id: 'MiniMax-Text-01', // (!) not 'MiniMax-01', which is not served
     label: 'MiniMax Text 01',

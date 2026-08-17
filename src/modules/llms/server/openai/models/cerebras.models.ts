@@ -1,4 +1,4 @@
-import { DModelInterfaceV1, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { DModelInterfaceV1, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 import { createDebugWireLogger } from '~/server/wire';
@@ -29,31 +29,33 @@ const IF_CHAT_FN = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
  * Cerebras models - fast OpenAI-compatible inference (wafer-scale).
  * - models list: https://inference-docs.cerebras.ai/models/overview
  * - pricing: https://www.cerebras.ai/pricing (per-token rates from /public/v1/models)
- * - updated: 2026-08-17 (zai-glm-4.7 retired; 2026-08-06: empirically verified caps/pricing/effort enums against the live API)
+ * - updated: 2026-08-17 (zai-glm-4.7 retired; gemma-4-31b out of Preview; prompt caching verified live)
  *
  * EDITORIAL OVERRIDES: the /public/v1/models catalog carries pricing/limits/capabilities, but its
- * metadata lags for preview models (it used to report gemma-4-31b with all caps false and an 8K
- * context - since corrected - and still flags it non-preview while the docs list it as Preview). So the
- * entries below WIN for known models; the catalog only fills in UNKNOWN/new models (forward-compat).
- * Llama/Qwen families remain Dedicated-Endpoints only and are not exposed on the public catalog.
+ * metadata lags for new models (it used to report gemma-4-31b with all caps false and an 8K context -
+ * since corrected). So the entries below WIN for known models; the catalog only fills in UNKNOWN/new
+ * models (forward-compat). Everything else Cerebras serves (Qwen, GLM, Kimi, MiniMax, Mistral,
+ * DeepSeek, Llama, StepFun) is Dedicated-Endpoints only and never appears on the public catalog.
  */
 type _CerebrasModelDef = (KnownModel & { pubDate?: string }) | KnownLink;
 
 const _knownCerebrasModels = llmsDefineModels<_CerebrasModelDef>()([
-  // Gemma 4 31B - Cerebras' first multimodal model (~1,850 tok/s). Preview (eval-only).
+  // Gemma 4 31B - Cerebras' first multimodal model (~1,850 tok/s). Out of Preview as of 2026-08-17:
+  // docs catalog, pricing table and public catalog (preview:false) all list it unqualified.
   {
-    isPreview: true,
     idPrefix: 'gemma-4-31b',
-    label: 'Gemma 4 31B (Preview)',
-    pubDate: '20260630',
+    label: 'Gemma 4 31B',
+    pubDate: '20260402', // = gemini.models.ts 'gemma-4-31b-it' (Google's release; Cerebras onboarded it 2026-06-29)
     description: 'Google Gemma 4 31B on Cerebras - first multimodal model on wafer-scale inference (~1,850 tok/s). Vision (base64 PNG/JPEG, max 10 images / 10MB), function calling, reasoning (off by default, enable via effort). 131K context (65K free tier), 40K max output.',
     contextWindow: 131072,
     maxCompletionTokens: 40960,
-    interfaces: [...IF_CHAT_FN, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    interfaces: [...IF_CHAT_FN, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
     parameterSpecs: [
-      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high'] }, // reasoning off by default
+      // reasoning off by default; docs state low/medium/high are currently EQUIVALENT (on/off only, tiers kept for cross-family compat)
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high'] },
     ],
-    chatPrice: { input: 0.99, output: 1.49 },
+    // cache: no discount - cached input bills at the standard input rate (rate must still be declared, or cached tokens would price at 0)
+    chatPrice: { input: 0.99, output: 1.49, cache: { cType: 'oai-ac', read: 0.99 } },
     benchmark: { cbaElo: 1451 }, // lmarena: gemma-4-31b
   },
 
@@ -65,11 +67,14 @@ const _knownCerebrasModels = llmsDefineModels<_CerebrasModelDef>()([
     description: 'OpenAI flagship open-weight MoE (120B total, 5.1B active) on Cerebras (~3,000 tok/s). Reasoning (default medium effort) and function calling. 131K context, 40K max output.',
     contextWindow: 131072,
     maxCompletionTokens: 40960,
-    interfaces: [...IF_CHAT_FN, LLM_IF_OAI_Reasoning],
+    interfaces: [...IF_CHAT_FN, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
     parameterSpecs: [
-      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // reasoning model, no 'none'
+      // 'none' passes schema validation but 400s in the chat template ("Supported values are 'low', 'medium', and 'high'")
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
     ],
-    chatPrice: { input: 0.35, output: 0.75 },
+    // cache: no discount - cached input bills at the standard input rate (rate must still be declared, or cached tokens would price at 0)
+    chatPrice: { input: 0.35, output: 0.75, cache: { cType: 'oai-ac', read: 0.35 } },
+    benchmark: { cbaElo: 1352 }, // lmarena: gpt-oss-120b
   },
 
   // 'zai-glm-4.7' (Preview, $2.25/$2.75, 131K/40K, effort none|low|medium|high) retired 2026-08-17 as scheduled and gone from

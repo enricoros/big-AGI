@@ -16,8 +16,9 @@ const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduc
 /**
  * Groq models.
  * - models list: https://console.groq.com/docs/models
- * - pricing: https://groq.com/pricing/
- * - updated: 2026-08-06
+ * - pricing: the per-model card PRICING block, e.g. https://console.groq.com/docs/model/openai/gpt-oss-120b (groq.com/pricing is JS-rendered, no table)
+ * - deprecations (shutdown dates + replacements): https://console.groq.com/docs/deprecations
+ * - updated: 2026-08-17
  */
 type _GroqModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 
@@ -28,7 +29,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
     isPreview: true,
     idPrefix: 'qwen/qwen3.6-27b',
     label: 'Qwen 3.6 · 27B (Preview)',
-    pubDate: '20260509', // from API 'created' (no editorial date available)
+    pubDate: '20260421', // upstream Qwen3.6-27B weights release (HF repo createdAt 2026-04-21; announced Apr 22), not the Groq listing date (20260509)
     description: 'Qwen3.6 27B by Alibaba Cloud. Multimodal (vision + text, max 3 images / 20MB), flagship-level agentic coding, thinking/non-thinking modes, tool use. 131K context, 16K max output. ~500 t/s on Groq.',
     contextWindow: 131072,
     maxCompletionTokens: 16384,
@@ -36,13 +37,13 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['none'] }, // Groq accepts only none|default here; unset = default = thinking on
     ],
-    chatPrice: { input: 0.60, output: 3.00 },
+    chatPrice: { input: 0.60, output: 3.00 }, // no cache: prompt caching is gpt-oss-only, despite the list API advertising an input_cache_read rate here
   },
   {
     isPreview: true,
     idPrefix: 'minimaxai/minimax-m2.7',
     label: 'MiniMax M2.7 (Preview)',
-    pubDate: '20260409',
+    pubDate: '20260318', // upstream MiniMax M2.7 API launch (as in minimax.models.ts); the HF weights followed on 20260409
     description: 'MiniMax M2.7 MoE (229B total, ~10B active). Interleaved thinking for agentic workflows, tool use, coding. 196K context, 131K max output. ~260 t/s on Groq. Enterprise-only: pricing on request.',
     contextWindow: 196608,
     maxCompletionTokens: 131072,
@@ -55,9 +56,12 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
   // - (Jan 21, 2026) qwen-qwq-32b, qwen-2.5-32b, qwen-2.5-coder-32b
   // - (Jan 21, 2026) deepseek-r1-distill-llama-70b, deepseek-r1-distill-qwen-32b
   // - (Feb 18, 2026) moonshotai/kimi-k2-instruct (deprecated redirect, removed from docs; still returned by API -> symlink above)
+  // - (Feb 18, 2026) meta-llama/llama-guard-4-12b (removed from docs; shut down Mar 05 -> gpt-oss-safeguard-20b)
   // - (Apr 02, 2026) meta-llama/llama-4-maverick-17b-128e-instruct (removed from docs and pricing)
   // - (Jun 26, 2026) moonshotai/kimi-k2-instruct-0905 + moonshotai/kimi-k2-instruct (both removed from docs AND API)
   // - (Jul 17, 2026) qwen/qwen3-32b, meta-llama/llama-4-scout-17b-16e-instruct (announced Jun 17, shut down Jul 17 -> gpt-oss-120b / qwen3.6-27b)
+  // - (Aug 16, 2026) llama-3.3-70b-versatile, llama-3.1-8b-instant (announced Jun 17, shut down Aug 16 -> gpt-oss-120b or qwen3.6-27b / gpt-oss-20b);
+  //   llama-3.3-70b-versatile still powers groq/compound-mini internally (docs/compound/systems/compound-mini); the shutdown applies to free/developer tiers only (enterprise committed-spend contracts unaffected)
 
 
   // Production Models - Compound Systems (pass-through pricing to underlying models)
@@ -95,6 +99,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // Groq rejects 'none' on gpt-oss
     ],
     chatPrice: { input: 0.15, output: 0.60, cache: { cType: 'oai-ac', read: 0.075 } },
+    benchmark: { cbaElo: 1352 }, // lmarena: gpt-oss-120b
   },
   {
     isPreview: true,
@@ -122,32 +127,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // Groq rejects 'none' on gpt-oss
     ],
     chatPrice: { input: 0.075, output: 0.30, cache: { cType: 'oai-ac', read: 0.0375 } },
-  },
-
-  // Production Models - Meta
-  // (Feb 18, 2026) meta-llama/llama-guard-4-12b removed from docs
-  // (Aug 16, 2026) both models below shut down (announced Jun 17, 2026) -> gpt-oss-120b / qwen3.6-27b, gpt-oss-20b
-  {
-    idPrefix: 'llama-3.3-70b-versatile',
-    label: 'Llama 3.3 · 70B Versatile',
-    pubDate: '20241206',
-    description: 'Meta Llama 3.3 (70B params) with GQA. Strong reasoning, coding, multilingual. 131K context, 32K max output. ~280 t/s on Groq. Retiring 2026-08-16 -> GPT-OSS 120B or Qwen3.6 27B.',
-    contextWindow: 131072,
-    maxCompletionTokens: 32768,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.59, output: 0.79 },
-    isLegacy: true,
-  },
-  {
-    idPrefix: 'llama-3.1-8b-instant',
-    label: 'Llama 3.1 · 8B Instant',
-    pubDate: '20240723',
-    description: 'Meta Llama 3.1 (8B params). Fast, cost-effective for high-volume tasks. 131K context and max output. ~560 t/s on Groq. Retiring 2026-08-16 -> GPT-OSS 20B.',
-    contextWindow: 131072,
-    maxCompletionTokens: 131072,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.05, output: 0.08 },
-    isLegacy: true,
+    benchmark: { cbaElo: 1318 }, // lmarena: gpt-oss-20b
   },
 
   // (Feb 18, 2026) allam-2-7b (SDAIA) removed from docs and pricing, still returned by API -> deny list

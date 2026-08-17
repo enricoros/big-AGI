@@ -39,6 +39,12 @@ const _hardcodedPerplexityVariants: ModelVariantMap = !PERPLEXITY_ENABLE_VARIANT
 
 type _PerplexityModelDef = ModelDescriptionSchema & { pubDate: string };
 
+// [Perplexity, 2026-08-17] Sonar Chat Completions is superseded by the Agent API (out of scope for this file): the 4 ids
+// below are served until 2026-09-27, per the banner on every model page - https://docs.perplexity.ai/docs/sonar/models/sonar
+// Migration map (https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/overview): sonar -> 'fast' preset,
+// sonar-pro -> 'low', sonar-reasoning-pro -> 'medium', sonar-deep-research -> 'high'.
+// Re-verified 2026-08-17 (live probes + https://docs.perplexity.ai/getting-started/pricing): ids, context windows and prices unchanged.
+
 const _knownPerplexityChatModels = llmsDefineModels<_PerplexityModelDef>()([
 
   // Research Models

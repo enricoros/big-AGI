@@ -1,4 +1,5 @@
 import { DModelInterfaceV1, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
+import type { DModelParameterValue } from '~/common/stores/llms/llms.parameters';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
@@ -10,7 +11,10 @@ import { wireLlmApiListOutputSchema, type WireLlmApiModel } from '../wiretypes/l
 
 
 // configuration
-// [LLMAPI, 2026-02-25] NOTE: all the following mappings are based from today's https://api.llmapi.ai/v1/models
+// [LLMAPI, 2026-08-17] NOTE: all the following mappings are based on today's https://api.llmapi.ai/v1/models.
+// 389 listed -> 354 live (deny + deprecated/deactivated) -> 142 chat (text output, chat-ish family); of those,
+// 142 carry a context window, 141 a released_at pubDate, and 46 a reasoning_levels effort ladder.
+// no '[?]' marker: the modality + family filter below characterizes the model type - see llmsLabelUncurated.
 
 
 export function llmapiHeuristic(hostname: string): boolean {
@@ -27,6 +31,23 @@ const _llmapiDenyIds: string[] = [
   'auto',     // llmapi internal routing meta-model
 ] as const;
 
+// Families that are not chat, even when they emit text. 'video'/'image'/'tts' are already excluded by the
+// output-modality test; 'stt'/'streaming-stt' are not - transcription outputs text but takes no chat turn.
+const _llmapiNonChatFamilies: string[] = [
+  'video',
+  'image',
+  'tts',
+  'stt',
+  'streaming-stt',
+] as const;
+
+// The full llmVndOaiEffort ladder: a model's 'reasoning_levels' is published only if every level is one of these.
+const _llmapiEffortLevels = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const satisfies readonly DModelParameterValue<'llmVndOaiEffort'>[];
+
+function _llmapiIsEffortLevel(level: string): level is (typeof _llmapiEffortLevels)[number] {
+  return _llmapiEffortLevels.some(known => known === level);
+}
+
 function _llmapiModelFilter(model: WireLlmApiModel): boolean {
   // deny listed meta-models
   if (_llmapiDenyIds.includes(model.id))
@@ -34,12 +55,10 @@ function _llmapiModelFilter(model: WireLlmApiModel): boolean {
 
   // skip deprecated or deactivated models
   if (model.deprecated_at || model.deactivated_at) return false;
-  // skip non-chat models: no text output at all
-  // if (!model.architecture.output_modalities.includes('text')) return false;
-  // skip safety/guard models
-  // if (model.id.includes('llama-guard')) return false;
-  // skip image-only models (very small context, image in name, no chat use)
-  // if (model.id.includes('cogview') || model.id.includes('qwen-image')) return false;
+  // skip non-chat models: no text output at all (video, image, audio, embeddings)
+  if (!model.architecture.output_modalities.includes('text')) return false;
+  // skip the text-emitting non-chat families (transcription)
+  if (model.family && _llmapiNonChatFamilies.includes(model.family)) return false;
 
   return true;
 }
@@ -67,23 +86,29 @@ export function llmapiModelsToModelDescriptions(wireModels: unknown): ModelDescr
         interfaces.push(LLM_IF_OAI_Fn);
       if (provider?.reasoning)
         interfaces.push(LLM_IF_OAI_Reasoning);
-      if (model.json_output || model.structured_outputs)
+      if (provider?.json_output || provider?.structured_outputs)
         interfaces.push(LLM_IF_OAI_Json);
       if (model.architecture.output_modalities.includes('image'))
         interfaces.push(LLM_IF_Outputs_Image);
       if (model.architecture.output_modalities.includes('audio'))
         interfaces.push(LLM_IF_Outputs_Audio);
 
-      // effort parameter: if the model supports 'effort' or 'reasoning_effort'
+      // effort parameter: 'reasoning_levels' is the vendor's own per-model ladder and supersedes the coarse
+      // supported_parameters 'effort' flag (6 models, every one of which also carries a ladder). All-or-nothing:
+      // an unrecognized level means we do not know the ladder, so publish no spec rather than a truncated one.
+      // Wire-wise these collapse to `reasoning_effort` on the openai dialect, same as the old llmVndAntEffort.
       const parameterSpecs: ModelDescriptionSchema['parameterSpecs'] = [];
-      if (model.supported_parameters.includes('effort')) // seems to only be applied on Anthropic for now
-        parameterSpecs.push({ paramId: 'llmVndAntEffort' });
+      const effortLevels = model.reasoning_levels?.filter(_llmapiIsEffortLevel) ?? [];
+      if (effortLevels.length && effortLevels.length === model.reasoning_levels?.length)
+        parameterSpecs.push({ paramId: 'llmVndOaiEffort', enumValues: effortLevels });
+      else if (model.supported_parameters?.includes('effort'))
+        parameterSpecs.push({ paramId: 'llmVndOaiEffort' });
 
-      // pricing: per-token dollar strings -> $/M tokens (the chatPrice unit)
+      // pricing: per-token dollar strings -> $/M tokens (the chatPrice unit); image/request are rare, absent = 0
       const promptPerToken = parseFloat(model.pricing.prompt);
       const completionPerToken = parseFloat(model.pricing.completion);
-      const perImage = parseFloat(model.pricing.image);
-      const perRequest = parseFloat(model.pricing.request);
+      const perImage = parseFloat(model.pricing.image ?? '0');
+      const perRequest = parseFloat(model.pricing.request ?? '0');
       const inputPriceM = promptPerToken * 1_000_000;
       const outputPriceM = completionPerToken * 1_000_000;
       const isFreePriced = inputPriceM === 0 && outputPriceM === 0 && perImage === 0 && perRequest === 0;
@@ -94,6 +119,11 @@ export function llmapiModelsToModelDescriptions(wireModels: unknown): ModelDescr
         ? { input: 'free' as const, output: 'free' as const }
         : { input: inputPriceM, output: outputPriceM };
 
+      // pubDate: 'released_at' is the upstream model release date, not the gateway listing date ('created'),
+      // so it is a real "new model" signal.
+      const releasedAt = model.released_at;
+      const pubDate = releasedAt && /^\d{4}-\d{2}-\d{2}$/.test(releasedAt) ? releasedAt.replaceAll('-', '') : undefined;
+
       return fromManualMapping(_llmapiKnownModels, model.id, model.created, undefined, {
         idPrefix: model.id,
         label,
@@ -102,6 +132,7 @@ export function llmapiModelsToModelDescriptions(wireModels: unknown): ModelDescr
         interfaces,
         ...(parameterSpecs.length ? { parameterSpecs } : {}),
         chatPrice,
+        pubDate,
         hidden: noStreaming,
       });
     })

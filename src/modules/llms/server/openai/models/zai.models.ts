@@ -43,8 +43,9 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
   // GLM-5.3 - 1M context flagship (post-train of the GLM-5.2 base; coding, cyber, agentic)
   // 1M context, 128K output (max_tokens ceiling live-verified 131072). Thinking compulsory, reasoning_effort low|high|max.
   // Released 2026-08-14 on the GLM Coding Plan (host https://api.z.ai/api/coding/paas); the standard API lists the id
-  // but pay-as-you-go keys get 403 code 1220 ('API coming soon', docs 2026-08-16). Listed anyway: the id is live and
-  // Coding Plan keys work today. Weights announced for ~2 weeks after launch (no third-party host yet).
+  // but pay-as-you-go keys get 403 code 1220 'You do not have permission to access glm-5.3' (re-probed 2026-08-17,
+  // both hosts; docs say the API 'will be available soon'). Listed anyway: the id is live and Coding Plan keys work
+  // today. Weights staged ~2 weeks after launch (no zai-org/GLM-5.3 on HF and no third-party host as of 2026-08-17).
   {
     idPrefix: 'glm-5.3',
     label: 'GLM-5.3 (1M)',
@@ -54,9 +55,9 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072, // 128K
     parameterSpecs: _PS_Reasoning_Compulsory,
-    // chatPrice: not on the rate card as of 2026-08-16 (https://docs.z.ai/guides/overview/pricing stops at GLM-5.2) - add when published
+    // chatPrice: not on the rate card as of 2026-08-17 (https://docs.z.ai/guides/overview/pricing stops at GLM-5.2) - add when published
     initialTemperature: 1.0,
-    // benchmark: registered on lmarena ('glm-5.3 (max)') but unranked as of 2026-08-16
+    // benchmark: registered on lmarena ('glm-5.3 (max)') but unranked as of 2026-08-17
   },
 
   // GLM-5.2 - 1M context flagship (Agentic Coding)
@@ -65,7 +66,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
   {
     idPrefix: 'glm-5.2',
     label: 'GLM-5.2 (1M)',
-    pubDate: '20260613',
+    pubDate: '20260616', // docs release notes 2026-06-16 + HF zai-org/GLM-5.2
     description: 'Z.ai 1M-context flagship (744B MoE, 40B activated). Agentic coding with reasoning_effort control (high/max). 1M context, 128K output.',
     contextWindow: 1048576, // 1M
     interfaces: _IF_Reasoning,
@@ -89,7 +90,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.26 } },
     initialTemperature: 1.0,
-    benchmark: { cbaElo: 1468 }, // lmarena: glm-5.1
+    benchmark: { cbaElo: 1467 }, // lmarena: glm-5.1
   },
   {
     idPrefix: 'glm-5',
@@ -155,7 +156,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 'free', output: 'free' },
     initialTemperature: 1.0,
-    benchmark: { cbaElo: 1368 }, // lmarena: glm-4.7-flash
+    benchmark: { cbaElo: 1367 }, // lmarena: glm-4.7-flash
   },
 
   // GLM-5V-Turbo (Vision + Reasoning)
@@ -228,7 +229,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.6, output: 2.2, cache: { cType: 'oai-ac', read: 0.11 } },
     initialTemperature: 1.0,
-    benchmark: { cbaElo: 1425 }, // lmarena: glm-4.6
+    benchmark: { cbaElo: 1424 }, // lmarena: glm-4.6
   },
 
   // GLM-OCR (Vision, no reasoning)

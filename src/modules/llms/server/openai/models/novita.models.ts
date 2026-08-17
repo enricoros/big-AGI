@@ -22,6 +22,14 @@ const _novitaDenyListContains: string[] = [
   // OCR models - not chat models
   'paddleocr',
   'deepseek-ocr',
+  // internal test/staging rows: status=1 and zero-priced, but absent from the novita.ai/pricing catalog
+  // and their /models/llm/<slug> page answers "The requested model could not be found" (2026-08-17).
+  // 'gt-4p' also reports context_size 0 and description 'chatgpt-4o'.
+  // 'm2-her' self-describes as a test row; every real MiniMax id is shaped 'minimax/minimax-*'.
+  'ai_infer_test',
+  'dev/glm46',
+  'gt-4p',
+  'm2-her',
 ] as const;
 
 
@@ -54,6 +62,14 @@ export function novitaModelsToModelDescriptions(wireModels: unknown): ModelDescr
   return parsed.data
     // Filter out non-chat models and denied models
     .filter((model) => {
+      // Retired models keep their listing row with status=4 (30 of 147 on 2026-08-17, back to 2024 Llama 3
+      // plus recent pulls like qwen3-next-80b-a3b-thinking and glm-4.5). Verified three ways that day: none
+      // of the 30 appear in the novita.ai/pricing catalog payload (98 of the 117 status=1 ids do), every one
+      // of their /models/llm/<slug> pages answers "The requested model could not be found", and OpenRouter no
+      // longer lists Novita as a provider for them. Only 4 is excluded - an unknown future status stays in.
+      if (model.status === 4)
+        return false;
+
       // Only include chat models
       if (model.model_type && model.model_type !== 'chat')
         return false;
@@ -106,6 +122,10 @@ export function novitaModelsToModelDescriptions(wireModels: unknown): ModelDescr
 
       // Pricing: API returns hundredths of a cent per million tokens, convert to USD per 1M tokens
       // (the internal pricing unit). e.g., 2700 -> $0.27/1M input for deepseek-v3-0324; 700 -> $0.07/1M.
+      // KNOWN GAP (2026-08-17): 5 ids set 'is_tiered_billing' and carry input-length tiers in
+      // 'tiered_billing_configs'; qwen3.5-plus and qwen3.6-plus report 0 in the flat fields below, so they
+      // publish as free. 51 ids also carry 'pricing.input_cache_read'. Neither field is in the wire schema
+      // (novita.wiretypes.ts), so neither is reachable from here.
       const chatPrice = (model.input_token_price_per_m !== undefined && model.output_token_price_per_m !== undefined)
         ? {
           input: model.input_token_price_per_m / 10000,
@@ -124,9 +144,12 @@ export function novitaModelsToModelDescriptions(wireModels: unknown): ModelDescr
         hidden: false,
       });
 
-      // pubDate fallback: Novita's 'created' is verified real per-model release/index dates (a genuine
-      // 2024-2026 spread, not a constant), so derive a day-precision pubDate to drive the "new" badge for
-      // models without an editorial pubDate. An editorial pubDate (from _novitaKnownModels) always wins.
+      // pubDate fallback: Novita's 'created' is its platform listing date - it equals the catalog's
+      // 'platform_release_at' on 89 of the 98 rows that publish both (2026-08-17), never the upstream
+      // 'model_released_at' - and it is a genuine 2024-2026 spread, not a constant, so it drives the "new"
+      // badge for models without an editorial pubDate. Day-0 additions land within days of the real release;
+      // a back-catalog add does not (nemotron-3-nano-30b-a3b: listed 2026-06-09, released 2025-12-14).
+      // An editorial pubDate (from _novitaKnownModels) always wins.
       if (md.pubDate === undefined && md.created)
         md.pubDate = formatPubDate(md.created);
 

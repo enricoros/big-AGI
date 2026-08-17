@@ -16,9 +16,11 @@ export function fireworksAIHeuristic(hostname: string) {
 }
 
 
-const IF_CHAT_FN = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
-const IF_CHAT_FN_VISION = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision];
+// Every model Fireworks curates for serverless today returns a `reasoning_content` sibling field on default settings
+// (re-probed 2026-08-17, one arm each) - hence no non-reasoning shape here. Short budgets hide it: the field only
+// materializes once the trace closes, so a truncated completion leaves the reasoning inline in `content`.
 const IF_CHAT_FN_REASON = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning];
+const IF_CHAT_FN_VISION_REASON = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning];
 
 // [DeepSeek on Fireworks, 2026-08-14] Fireworks serves the V4 family with thinking on by default (reasoning_content
 // sibling field) and honors 'reasoning_effort' verbatim through the 'openai' dialect passthrough - live-probed on all
@@ -37,13 +39,49 @@ const _PS_GlmEffort: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] },
 ] as const;
 
+// [FireworksAI, 2026-08-17] Ladders re-ablated on this host (same 'openai' dialect passthrough; temperature 0, n=3 per arm,
+// read off reasoning_content length + the prompt-token template fingerprint). Binary shape: 'none' cleanly disables thinking
+// (no reasoning_content, the completion collapses to the bare answer) and every other accepted value is one tier - kimi-k3 and
+// kimi-k2.7-code (+ their Fast routers), minimax-m3, qwen3.7-plus, and both Nemotrons. On qwen3.7-plus 'max' and 'xhigh' are
+// accepted but return the same trace as 'high', so the ladder stops at 'high'. Left without a spec on purpose: inkling ('none'
+// is accepted but not honored - same trace length as Default), minimax-m2.7 ('none' 400s, "requires reasoning to be enabled"),
+// kimi-k2.6 ('none' drops the reasoning_content split but the model keeps reasoning, now as prose inside content - strictly
+// worse than Default).
+const _PS_Thinking: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
+] as const;
+
+// [Qwen3.8 on Fireworks, 2026-08-17] Graded, and unlike Alibaba's own serving thinking CAN be turned off here: 'none' drops the
+// thinking template (69 vs 109 prompt tokens, no reasoning_content), low ~0.9K chars, medium ~1.5K, high = xhigh = max = default
+// ~7K. 'medium' is not expressible by llmVndMiscEffort and 'max' would duplicate Default, so this is Off / Low / High.
+const _PS_Qwen38Effort: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high'] },
+] as const;
+
+// [Muse Glimmer on Fireworks, 2026-08-17] Model-level validator ('minimal' 400s, listing none|low|medium|high|xhigh|max), but only
+// three tiers: low ~0.8K chars, medium ~1.6K, high = xhigh = max = default ~2.5K. 'none' is accepted and NOT honored (byte-identical
+// to high, n=4), so it is not offered - the user would pay for a full trace after asking for none.
+const _PS_MuseEffort: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['low', 'high'] },
+] as const;
+
+// [GPT-OSS on Fireworks, 2026-08-17] The native OpenAI ladder, strictly validated: low|medium|high ('none' and 'max' -> 400
+// "Invalid reasoning effort"). Tiers are real (reasoning_content ~0.4-0.7K chars at low vs ~3.4-3.9K at high).
+const _PS_OaiEffort: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
+] as const;
+
 // Editorial curation of the serverless-deployable chat models on the 'fireworks' account.
 // The OpenAI-compat /inference/v1/models endpoint returns NO display name, description, or price, so
 // without this every model falls back to the id-derived label (see _prettyModelId) and an "owned_by kind"
 // description. Labels/descriptions/creators are lifted from Fireworks' control-plane API
 // (GET /v1/accounts/fireworks/models/{id}: displayName, description, huggingFaceUrl); Standard-tier prices
-// from https://docs.fireworks.ai/serverless/pricing (input / cached-input / output per 1M tokens).
+// from https://docs.fireworks.ai/serverless/pricing (input / cached-input / output per 1M tokens); models the
+// docs table omits are priced off their model page (https://app.fireworks.ai/models/fireworks/{id}).
 // Un-curated / future models still render via _prettyModelId + the fromManualMapping '[?]' fallback.
+// 2026-08-17 pass: live list = 24 ids (22 after the embedding filter), all curated. Added qwen3.8-2.4t-a95b,
+// nemotron-lightning-3.5-30b-a3b, muse-glimmer-30b and qwen3.8-max; dropped the retired undated deepseek-v4-flash;
+// Inkling finally has a published price. Every other price re-verified against the docs table with no drift.
 const _fireworksKnownModels = llmsDefineManualMappings([
   {
     idPrefix: 'accounts/fireworks/models/deepseek-v4-pro-0813',
@@ -53,8 +91,41 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_REASON,
     parameterSpecs: _PS_DeepSeekEffort,
-    // NOTE: prices from the model page - the serverless pricing table still omits this model as of 2026-08-14
+    benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro (the board's -max-20260813 row is AutoEval-only and unranked - same call as alibaba.models.ts / deepseek.models.ts)
+    // NOTE: prices from the model page - the serverless pricing table still omits this model as of 2026-08-17
     chatPrice: { input: 1.32, output: 3.96, cache: { cType: 'oai-ac', read: 0.044 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/qwen3p8-2p4t-a95b',
+    label: 'Qwen3.8 2.4T-A95B',
+    pubDate: '20260812',
+    description: 'Open-weights release of the Qwen3.8 flagship: 2.4T sparse MoE with ~95B active parameters, built for multi-day coding runs and self-improving research. Text-only.',
+    contextWindow: 262_144, // 256K - the native window; Alibaba's own serving extends it to 1M, Fireworks does not
+    interfaces: IF_CHAT_FN_REASON,
+    parameterSpecs: _PS_Qwen38Effort,
+    chatPrice: { input: 2.00, output: 6.00, cache: { cType: 'oai-ac', read: 0.25 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/nemotron-lightning-3p5-30b-a3b',
+    label: 'NVIDIA Nemotron 3.5 Lightning 30B A3B',
+    pubDate: '20260811',
+    description: 'NVIDIA hybrid Mamba-Transformer MoE (30B params, 3B active) with a multi-token prediction head, for low-latency agentic serving at long context.',
+    contextWindow: 262_144, // 256K
+    interfaces: IF_CHAT_FN_REASON,
+    parameterSpecs: _PS_Thinking,
+    benchmark: { cbaElo: 1348 }, // lmarena: nvidia-nemotron-3.5-lightning-30b-a3b-nvfp4
+    chatPrice: { input: 0.05, output: 0.20, cache: { cType: 'oai-ac', read: 0.01 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/muse-glimmer-30b',
+    label: 'Muse Glimmer 30B (Vision)',
+    pubDate: '20260810',
+    description: 'Meta dense 30B distilled from Muse Spark for local agentic work: multi-step reasoning, schema-based tool calling, and image input across 100+ languages.',
+    contextWindow: 131_072, // 128K (max_model_len, live-probed)
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    parameterSpecs: _PS_MuseEffort,
+    benchmark: { cbaElo: 1426 }, // lmarena: muse-glimmer
+    chatPrice: { input: 0.35, output: 1.50, cache: { cType: 'oai-ac', read: 0.04 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/deepseek-v4-flash-0731',
@@ -64,25 +135,43 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_REASON,
     parameterSpecs: _PS_DeepSeekEffort,
+    benchmark: { cbaElo: 1435 }, // lmarena: deepseek-v4-flash (distinct from the -high-preview row, 1438)
     chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/kimi-k3',
     label: 'Kimi K3 (Vision)',
-    pubDate: '20260719',
+    pubDate: '20260716', // = moonshot.models.ts 'kimi-k3' (upstream release; the Fireworks listing was 20260719)
     description: 'Moonshot AI 2.8T-parameter flagship on Kimi Delta Attention, with native visual understanding and a 1M-token context for long-horizon coding and reasoning.',
     contextWindow: 1_048_576, // 1M
-    interfaces: IF_CHAT_FN_VISION,
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    parameterSpecs: _PS_Thinking,
+    benchmark: { cbaElo: 1489 }, // lmarena: kimi-k3-max
     chatPrice: { input: 3.00, output: 15.00, cache: { cType: 'oai-ac', read: 0.30 } },
   },
   {
     idPrefix: 'accounts/fireworks/routers/kimi-k3-fast',
     label: 'Kimi K3 Fast (Vision)',
-    pubDate: '20260719',
+    pubDate: '20260716', // = moonshot.models.ts 'kimi-k3'
     description: 'Fast serving path for Kimi K3: same model and quality, lower latency, higher per-token price.',
     contextWindow: 1_048_576, // 1M
-    interfaces: IF_CHAT_FN_VISION,
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    parameterSpecs: _PS_Thinking, // parity with the base id confirmed (same ladder fingerprint)
     chatPrice: { input: 4.50, output: 22.50, cache: { cType: 'oai-ac', read: 0.45 } },
+  },
+  {
+    // NOTE: Fireworks advertises image input for this id (supports_image_input=true) but the endpoint rejects it with
+    // "This model does not support image inputs" - hence no Vision. Its effort fingerprint matches the open-weights
+    // qwen3p8-2p4t-a95b id exactly, at the same price, and the control plane points both at the same HF repo.
+    idPrefix: 'accounts/fireworks/models/qwen3p8-max',
+    label: 'Qwen3.8 Max',
+    pubDate: '20260719',
+    description: 'Alibaba flagship Qwen3.8 tier, available outside Alibaba infrastructure through Fireworks AI.',
+    contextWindow: null, // not published by Fireworks
+    interfaces: IF_CHAT_FN_REASON,
+    parameterSpecs: _PS_Qwen38Effort,
+    benchmark: { cbaElo: 1491 }, // lmarena: qwen3.8-max
+    chatPrice: { input: 2.00, output: 6.00, cache: { cType: 'oai-ac', read: 0.25 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/inkling',
@@ -90,9 +179,9 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     pubDate: '20260714',
     description: 'Thinking Machines Lab first open-weights model: a 975B MoE (41B active) trained natively across text, image, and audio, with controllable thinking effort.',
     contextWindow: 1_048_576, // 1M
-    interfaces: IF_CHAT_FN_VISION,
+    interfaces: IF_CHAT_FN_VISION_REASON,
     benchmark: { cbaElo: 1442 }, // lmarena: inkling
-    // chatPrice: not on the serverless pricing table as of 2026-08-04
+    chatPrice: { input: 1.00, output: 4.05, cache: { cType: 'oai-ac', read: 0.17 } }, // model page only - still absent from the serverless pricing table
   },
   {
     idPrefix: 'accounts/fireworks/models/glm-5p2',
@@ -102,7 +191,8 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_REASON,
     parameterSpecs: _PS_GlmEffort,
-    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.14 } }, // re-verified 2026-08-16
+    benchmark: { cbaElo: 1471 }, // lmarena: glm-5.2-max
+    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.14 } }, // re-verified 2026-08-17
   },
   {
     idPrefix: 'accounts/fireworks/routers/glm-5p2-fast',
@@ -112,7 +202,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_REASON,
     parameterSpecs: _PS_GlmEffort, // parity with the base id confirmed (router echoes model glm-5p2)
-    chatPrice: { input: 2.10, output: 6.60, cache: { cType: 'oai-ac', read: 0.21 } }, // re-verified 2026-08-16 ('GLM 5.2 Fast US' router: same price, not in /inference/v1/models)
+    chatPrice: { input: 2.10, output: 6.60, cache: { cType: 'oai-ac', read: 0.21 } }, // re-verified 2026-08-17 ('GLM 5.2 Fast US' router: same price, not in /inference/v1/models)
   },
   {
     idPrefix: 'accounts/fireworks/models/kimi-k2p7-code',
@@ -120,7 +210,8 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     pubDate: '20260612',
     description: 'Coding-focused agentic model built on Kimi K2.6, with better end-to-end completion on long-horizon software engineering and ~30% fewer thinking tokens.',
     contextWindow: 262_144, // 256K
-    interfaces: IF_CHAT_FN_VISION,
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    parameterSpecs: _PS_Thinking,
     chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.19 } },
   },
   {
@@ -129,37 +220,41 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     pubDate: '20260612',
     description: 'Fast serving path for Kimi K2.7 Code: same model and quality, lower latency, higher per-token price.',
     contextWindow: 262_144, // 256K
-    interfaces: IF_CHAT_FN_VISION,
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    parameterSpecs: _PS_Thinking, // parity with the base id confirmed
     chatPrice: { input: 1.90, output: 8.00, cache: { cType: 'oai-ac', read: 0.38 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/minimax-m3',
     label: 'MiniMax M3',
-    pubDate: '20260611',
+    pubDate: '20260601', // = minimax.models.ts 'MiniMax-M3' (upstream release, not the Fireworks listing)
     description: 'MiniMax 428B MoE (23B active) with Sparse Attention for efficient long context, tuned for long-horizon agentic coding and cowork.',
     contextWindow: 512_000, // 500K
-    interfaces: IF_CHAT_FN, // native multimodal upstream, but Fireworks serves it text-only (supports_image_input=false)
-    benchmark: { cbaElo: 1445 }, // lmarena: minimax-m3
+    interfaces: IF_CHAT_FN_REASON, // native multimodal upstream, but Fireworks serves it text-only (supports_image_input=false)
+    parameterSpecs: _PS_Thinking, // 'adaptive' is also accepted here (Fireworks: "only supported by MiniMax M3"), but it is not an llmVndMiscEffort value
+    benchmark: { cbaElo: 1444 }, // lmarena: minimax-m3
     chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.06 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/qwen3p7-plus',
     label: 'Qwen3.7 Plus (Vision)',
-    pubDate: '20260609',
+    pubDate: '20260601', // = alibaba.models.ts 'qwen3.7-plus' (upstream release, not the Fireworks listing)
     description: 'Alibaba flagship closed model, available outside Alibaba infrastructure exclusively through Fireworks AI.',
     contextWindow: null, // not published by Fireworks
-    interfaces: IF_CHAT_FN_VISION,
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    parameterSpecs: _PS_Thinking, // 'max'/'xhigh' are accepted but indistinguishable from 'high' (live-probed 2026-08-17), so the ladder stops at 'high'
     benchmark: { cbaElo: 1458 }, // lmarena: qwen3.7-plus
     chatPrice: { input: 0.40, output: 1.60, cache: { cType: 'oai-ac', read: 0.08 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/nemotron-3-ultra-nvfp4',
     label: 'NVIDIA Nemotron 3 Ultra NVFP4',
-    pubDate: '20260602',
+    pubDate: '20260604', // = nvidianim.models.ts 'nvidia/nemotron-3-ultra-550b-a55b' (NVIDIA HF card: 'Release Date: 06/04/2026 via Hugging Face'; the Computex announce was 06-01, weights and NIM followed on 06-04)
     description: 'NVIDIA frontier-scale hybrid LatentMoE (550B params, 55B active) interleaving Mamba-2 and MoE layers, for multi-step agents and long-context reasoning.',
     contextWindow: 262_144, // 256K
-    interfaces: IF_CHAT_FN,
-    benchmark: { cbaElo: 1426 }, // lmarena: nvidia-nemotron-3-ultra-550b-a55b-nvfp4
+    interfaces: IF_CHAT_FN_REASON,
+    parameterSpecs: _PS_Thinking,
+    benchmark: { cbaElo: 1427 }, // lmarena: nvidia-nemotron-3-ultra-550b-a55b-nvfp4
     chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.12 } },
   },
   {
@@ -170,27 +265,19 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_REASON,
     parameterSpecs: _PS_DeepSeekEffort,
-    benchmark: { cbaElo: 1457 }, // lmarena: deepseek-v4-pro
+    benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro
     chatPrice: { input: 1.74, output: 3.48, cache: { cType: 'oai-ac', read: 0.145 } },
   },
-  {
-    idPrefix: 'accounts/fireworks/models/deepseek-v4-flash',
-    label: 'DeepSeek V4 Flash',
-    pubDate: '20260424',
-    description: 'Streamlined DeepSeek open MoE tuned for low-latency, high-throughput inference at 1M-token context, retaining most of Pro reasoning and coding quality.',
-    contextWindow: 1_048_576, // 1M
-    interfaces: IF_CHAT_FN_REASON,
-    parameterSpecs: _PS_DeepSeekEffort,
-    benchmark: { cbaElo: 1436 }, // lmarena: deepseek-v4-flash
-    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
-  },
+  // 'accounts/fireworks/models/deepseek-v4-flash': the undated April checkpoint retired from serverless (control-plane
+  // deprecationDate 2026-08-14 + supportsServerless=false, absent from /inference/v1/models, generation 404s, 2026-08-17)
+  // - superseded by the -0731 id above, which is what the pricing table now calls 'DeepSeek V4 Flash (0731)'
   {
     idPrefix: 'accounts/fireworks/models/kimi-k2p6',
     label: 'Kimi K2.6 (Vision)',
-    pubDate: '20260417',
+    pubDate: '20260420', // = moonshot.models.ts 'kimi-k2.6' (upstream release, not the Fireworks listing)
     description: 'Moonshot AI native-multimodal agentic model tuned for long-horizon coding, autonomous execution, and swarm task orchestration.',
     contextWindow: 262_144, // 256K
-    interfaces: IF_CHAT_FN_VISION,
+    interfaces: IF_CHAT_FN_VISION_REASON,
     benchmark: { cbaElo: 1461 }, // lmarena: kimi-k2.6
     chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.16 } },
   },
@@ -198,19 +285,19 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     // NOTE: the only serving tier named '-turbo' instead of '-fast'; the pricing table calls it 'Kimi K2.6 Fast'
     idPrefix: 'accounts/fireworks/routers/kimi-k2p6-turbo',
     label: 'Kimi K2.6 Fast (Vision)',
-    pubDate: '20260417',
+    pubDate: '20260420', // = moonshot.models.ts 'kimi-k2.6'
     description: 'Fast serving path for Kimi K2.6: same model and quality, lower latency, higher per-token price.',
     contextWindow: 262_144, // 256K
-    interfaces: IF_CHAT_FN_VISION,
+    interfaces: IF_CHAT_FN_VISION_REASON,
     chatPrice: { input: 2.00, output: 8.00, cache: { cType: 'oai-ac', read: 0.30 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/minimax-m2p7',
     label: 'MiniMax M2.7',
-    pubDate: '20260411',
+    pubDate: '20260318', // = minimax.models.ts 'MiniMax-M2.7' (upstream API launch; the open weights followed on 20260409)
     description: 'MiniMax MoE built for complex agent harnesses and elaborate productivity tasks, leveraging Agent Teams, Skills, and dynamic tool search.',
     contextWindow: 196_608, // 192K
-    interfaces: IF_CHAT_FN,
+    interfaces: IF_CHAT_FN_REASON,
     benchmark: { cbaElo: 1416 }, // lmarena: minimax-m2.7
     chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.06 } },
   },
@@ -218,19 +305,23 @@ const _fireworksKnownModels = llmsDefineManualMappings([
   {
     idPrefix: 'accounts/fireworks/models/gpt-oss-120b',
     label: 'GPT-OSS 120B',
-    pubDate: '20250804',
+    pubDate: '20250805', // = groq/cerebras/nvidianim/together 'gpt-oss-120b'
     description: 'OpenAI open-weight model for high-reasoning, agentic, general-purpose use that fits on a single H100.',
     contextWindow: 131_072, // 128K
-    interfaces: IF_CHAT_FN,
+    interfaces: IF_CHAT_FN_REASON,
+    parameterSpecs: _PS_OaiEffort,
+    benchmark: { cbaElo: 1352 }, // lmarena: gpt-oss-120b
     chatPrice: { input: 0.15, output: 0.60, cache: { cType: 'oai-ac', read: 0.015 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/gpt-oss-20b',
     label: 'GPT-OSS 20B',
-    pubDate: '20250804',
+    pubDate: '20250805', // = groq/nvidianim/together 'gpt-oss-20b'
     description: 'OpenAI smaller open-weight model for lower-latency, local, and specialized use cases.',
     contextWindow: 131_072, // 128K
-    interfaces: [LLM_IF_OAI_Chat], // no tools on Fireworks (supports_tools=false)
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning], // no tools on Fireworks (supports_tools=false)
+    parameterSpecs: _PS_OaiEffort,
+    benchmark: { cbaElo: 1318 }, // lmarena: gpt-oss-20b
     chatPrice: { input: 0.07, output: 0.30, cache: { cType: 'oai-ac', read: 0.035 } },
   },
 ]);

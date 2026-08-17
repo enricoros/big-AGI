@@ -107,7 +107,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
       { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // 2x tier on 4.8 (vs 4.7/4.6's 6x)
       ...ANT_TOOLS_DYNAMIC,
     ],
-    benchmark: { cbaElo: 1483 }, // claude-opus-4-8-thinking
+    benchmark: { cbaElo: 1481 }, // claude-opus-4-8-high
   },
 
   // Claude 4.7 models with thinking variants (adaptive-only, manual budgets removed)
@@ -123,7 +123,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
       // an error (unlike Opus 4.6's silent no-op removal). Toggle dropped; migrate fast-mode users to Opus 5/4.8.
       ...ANT_TOOLS_DYNAMIC,
     ],
-    benchmark: { cbaElo: 1502 }, // claude-opus-4-7-thinking
+    benchmark: { cbaElo: 1502 }, // claude-opus-4-7-high
   },
 
   // Claude 4.6 models with thinking variants
@@ -140,7 +140,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
       // Toggle dropped here so the UI doesn't advertise a dead control. If Anthropic restores it, re-add 'fast_6x'.
       ...ANT_TOOLS_DYNAMIC,
     ],
-    benchmark: { cbaElo: 1504 }, // claude-opus-4-6-thinking
+    benchmark: { cbaElo: 1505 }, // claude-opus-4-6-high
   },
 
   'claude-sonnet-4-6': {
@@ -195,7 +195,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
       { paramId: 'llmVndAntThinkingBudget' },
       ...ANT_TOOLS,
     ],
-    benchmark: { cbaElo: 1412 + 1 }, // 1 (thinking) + claude-haiku-4-5-20251001
+    benchmark: { cbaElo: 1413 + 1 }, // 1 (thinking) + claude-haiku-4-5-20251001
   },
 
   // Claude 4.1 models with thinking variants (retired August 5, 2026)
@@ -295,7 +295,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // safety classifiers (stop_reason 'refusal' + stop_details.category incl. 'reasoning_extraction', opt-in `fallbacks` beta),
     // 512-token min cacheable prompt, requires 30-day data retention (no ZDR). No fast mode at launch.
     chatPrice: { input: 10, output: 50, cache: { cType: 'ant-bp', read: 1.00, write: 12.50, duration: 300 } },
-    benchmark: { cbaElo: 1508 }, // claude-fable-5
+    benchmark: { cbaElo: 1506 }, // claude-fable-5
   },
   {
     id: 'claude-mythos-5', // Limited availability (Project Glasswing) - 2026-06-09
@@ -312,7 +312,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     ],
     // Mythos 5: same specs/pricing/constraints as Fable 5; invitation-only, /v1/models lists it only for approved orgs
     chatPrice: { input: 10, output: 50, cache: { cType: 'ant-bp', read: 1.00, write: 12.50, duration: 300 } },
-    benchmark: { cbaElo: 1508 + 1 }, // (no arena data yet) assuming: claude-fable-5 + 1
+    benchmark: { cbaElo: 1506 + 1 }, // (no arena data yet) assuming: claude-fable-5 + 1
   },
 
   // Claude Opus 5 - SINGLE always-thinking entry (like Fable 5), NOT a base + '(Adaptive)' split.
@@ -366,8 +366,8 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // base entry above disables it explicitly. Manual budget_tokens rejected (400); `thinking:{type:'disabled'}` allowed (200).
     // temperature/top_p/top_k rejected (400 'deprecated') EVEN with thinking disabled, no prefill, no fast mode (speed: 400).
     // New tokenizer: ~30% more tokens vs Sonnet 4.6 (per-token price unchanged). First Sonnet with cyber safeguards (refusals:
-    // stop_reason 'refusal', HTTP 200). Pricing: INTRODUCTORY $2/$10 (cache w$2.50/r$0.20) through 2026-08-31.
-    // TODO 2026-09-01: intro pricing ends - flip chatPrice to standard $3/$15 (cache read 0.30, write 3.75).
+    // stop_reason 'refusal', HTTP 200). Pricing: $2/$10 (cache w$2.50/r$0.20) - the launch "introductory" price became the
+    // STANDARD price on 2026-08-10; the scheduled 2026-09-01 increase to $3/$15 will not occur (pricing page + release notes).
     chatPrice: { input: 2, output: 10, cache: { cType: 'ant-bp', read: 0.20, write: 2.50, duration: 300 } },
     benchmark: { cbaElo: 1462 }, // claude-sonnet-5-high
   },
@@ -390,7 +390,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // adaptive-only thinking (budget_tokens rejected), temperature/top_p/top_k rejected, new tokenizer (~1x to 1.35x tokens), no prefill.
     // New vs 4.7: mid-conversation system messages, refusal stop_details, 1,024-token min cacheable prompt.
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
-    benchmark: { cbaElo: 1473 }, // claude-opus-4-8
+    benchmark: { cbaElo: 1474 }, // claude-opus-4-8
   },
 
   // Claude 4.7 models
@@ -412,7 +412,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // Breaking changes vs 4.6: extended thinking budgets removed (adaptive-only), temperature/top_p/top_k rejected,
     // thinking content omitted by default, new tokenizer (~1x to 1.35x tokens for same text), no prefill.
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
-    benchmark: { cbaElo: 1493 }, // claude-opus-4-7
+    benchmark: { cbaElo: 1494 }, // claude-opus-4-7
   },
 
   // Claude 4.6 models
@@ -433,7 +433,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     ],
     // Opus 4.6: flat $5/$25 pricing (1M context GA at standard pricing since 2026-03-13, no opt-in required)
     chatPrice: { input: 5, output: 25, cache: { cType: 'ant-bp', read: 0.50, write: 6.25, duration: 300 } },
-    benchmark: { cbaElo: 1498 }, // claude-opus-4-6
+    benchmark: { cbaElo: 1497 }, // claude-opus-4-6
   },
   {
     id: 'claude-sonnet-4-6', // Active
@@ -504,7 +504,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     interfaces: IF_4,
     parameterSpecs: ANT_TOOLS,
     chatPrice: { input: 1, output: 5, cache: { cType: 'ant-bp', read: 0.10, write: 1.25, duration: 300 } },
-    benchmark: { cbaElo: 1412 }, // claude-haiku-4-5-20251001
+    benchmark: { cbaElo: 1413 }, // claude-haiku-4-5-20251001
   },
 
   // Claude 4.1 models

@@ -261,28 +261,10 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     benchmark: { cbaElo: 1490 }, // gemini-3.7-flash-high (LMArena 2026-08-13, preliminary, CI +/-8)
   },
 
-  // 3.7 Flash Video Understanding (EAP) - surfaced August 14, 2026 - "[Confidential]" Early Access Program
-  // checkpoint of 3.7 Flash (same version string '3.7-flash-08-2026') tuned for video understanding.
-  // EAP-gated: the list API returns it only for enrolled keys (a DEV 'stale' log on other keys is expected).
-  // Verified live 2026-08-14: API surface identical to base 3.7 Flash - thinkingLevel ['low','medium','high']
-  // ('minimal' 400s), fn/search/code-exec/media-res/JSON-schema/streaming all work, thinking on by default;
-  // video input verified (YouTube fileData + videoMetadata.fps; tokenization identical to base: 19s clip
-  // = 1,584 tok default, 6,120 at fps=5); billed (serviceTier 'standard'), no published price - assumed 3.7 Flash rates
-  {
-    id: 'models/gemini-3.7-flash-video-understanding-eap',
-    labelOverride: 'Gemini 3.7 Flash Video Understanding',
-    pubDate: '20260814',
-    isPreview: true,
-    chatPrice: gemini37FlashPricing,
-    interfaces: IF_30,
-    parameterSpecs: [
-      { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high'] }, // no 'minimal' (live 400, same as base 3.7)
-      { paramId: 'llmVndGeminiMediaResolution' },
-      { paramId: 'llmVndGeminiCodeExecution' },
-      { paramId: 'llmVndGeminiGoogleSearch' },
-    ],
-    benchmark: { cbaElo: 1490 - 1 }, // -1 (deprio the specialized variant) + gemini-3.7-flash-high
-  },
+  // REMOVED: models/gemini-3.7-flash-video-understanding-eap - EAP checkpoint of 3.7 Flash tuned for video
+  // understanding, key-gated when surfaced 2026-08-14; unlisted and hard-404 (GET + generateContent) on the same
+  // key as of 2026-08-17. Deliberately NOT deny-listed: a re-listing shows up as a DEV 'unknown model (add)', and
+  // its API surface was identical to base 3.7 Flash, so the def can be re-created by copying the 3.7 Flash entry.
 
 
   /// Generation 3.6
@@ -303,7 +285,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1485 }, // gemini-3.6-flash (LMArena 2026-08-06)
+    benchmark: { cbaElo: 1484 }, // gemini-3.6-flash-high (LMArena 2026-08-17)
   },
 
 
@@ -340,7 +322,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1459 }, // gemini-3.5-flash-lite (LMArena 2026-08-06)
+    benchmark: { cbaElo: 1458 }, // gemini-3.5-flash-lite (LMArena 2026-08-17)
   },
 
 
@@ -362,7 +344,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiGoogleSearch' },
       // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
     ],
-    benchmark: { cbaElo: 1487 }, // gemini-3.1-pro-preview (LMArena 2026-08-06)
+    benchmark: { cbaElo: 1486 }, // gemini-3.1-pro-preview (LMArena 2026-08-17)
   },
   // 3.1 Pro (Preview) - Custom Tools variant - Released February 19, 2026
   // Better at prioritizing custom tools for users building with a mix of bash and tools
@@ -380,7 +362,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1487 - 1 }, // -1 (deprio this variant) + gemini-3.1-pro-preview
+    benchmark: { cbaElo: 1486 - 1 }, // -1 (deprio this variant) + gemini-3.1-pro-preview
   },
 
   // 3.1 Flash Image (Stable / GA) - Released May 28, 2026 (graduated from preview)
@@ -939,15 +921,15 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
 
   /// Media Generation Models - NOTE: THESE ARE FILTERED OUT (!) - but here anyway for reference
 
-  // LISTED BUT FILTERED (as of 2026-07-22, no generateContent chat path or name-filtered):
-  // - models/imagen-4.0-{generate,ultra-generate,fast-generate}-001 (predict only)
+  // LISTED BUT FILTERED (as of 2026-08-17, no generateContent chat path or name-filtered):
   // - models/veo-3.1-{generate,fast-generate,lite-generate}-preview (predictLongRunning only)
   // - models/lyria-3-{clip,pro}-preview (music generation - DOES expose generateContent, dropped by the 'Lyria' name filter)
-  // - models/gemini-embedding-2, models/gemini-embedding-2-preview (embedContent only)
+  // - models/gemini-embedding-{001,2,2-preview} (embedContent only)
 
   // REMOVED MODELS (no longer returned by API as of Nov 20, 2025):
   // - models/imagen-3.0-generate-002 (Imagen 3 image generation - replaced by Nano Banana models)
   // - models/veo-2.0-generate-001
+  // REMOVED: models/imagen-4.0-{generate,ultra-generate,fast-generate}-001 (shut down August 17, 2026 -> gemini-3.1-flash-image)
 
 ]);
 

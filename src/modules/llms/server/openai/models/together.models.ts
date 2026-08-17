@@ -32,16 +32,70 @@ const _togetherAIDenyList: string[] = [
 ];
 
 // Retired from serverless but still listed WITH a non-zero price (so the 0/0 'not serverless-priced' rule below
-// does not catch them): a chat call returns 400 'Unable to access non-serverless model'. Exact ids, per
-// https://docs.together.ai/docs/deprecations + live probes 2026-08-16. NOTE: this is not GLM-specific - ~50 of
-// the 75 priced chat rows were dead that day (e.g. MiniMaxAI/MiniMax-M2.7, Qwen/Qwen3.5-397B-A17B) and
-// /v1/models has no field that separates them; only the docs serverless table / a live probe does.
+// does not catch them): a chat call returns 400 'Unable to access non-serverless model'. /v1/models exposes no
+// field that separates the two - only a live probe or the docs serverless table does, so this is an exact-id list.
+// Full sweep 2026-08-17 (1-token probe over all 75 priced chat rows): 27 answer, 47 return that 400, and
+// zai-org/GLM-4.5-Air-FP8 answers a persistent 503. 33 of the 47 carry an explicit removal date on
+// https://docs.together.ai/docs/deprecations, and the 27 survivors match the chat rows on
+// https://docs.together.ai/docs/serverless-models except two: that page also carries Prism-ML/Ternary-Bonsai-27B
+// (serverless but 0/0-priced, so outside the 75) and omits arize-ai/qwen-2-1.5b-instruct (priced 0.1/0.1 and
+// answering) - re-run the sweep when either page moves.
+// Accepted cost: a user who owns a dedicated endpoint for one of these ids no longer sees it.
 const _togetherAIRetiredIds = new Set<string>([
+  // zai-org
   'zai-org/GLM-5.1', // deprecated 2026-07-10 (row now labeled 'GLM 5.1 FP4')
   'zai-org/GLM-5', // deprecated 2026-06-22
   'zai-org/GLM-4.7', // deprecated 2026-04-02
   'zai-org/GLM-4.6', // 400 non-serverless (fine-tuning removal 2026-07-29)
-  'zai-org/GLM-4.5-Air-FP8', // deprecated 2026-04-02
+  'zai-org/GLM-4.5-Air-FP8', // deprecated 2026-04-02 (503 'Service unavailable', not the usual 400)
+  // Qwen
+  'Qwen/QwQ-32B',
+  'Qwen/Qwen2-1.5B-Instruct',
+  'Qwen/Qwen2-72B-Instruct',
+  'Qwen/Qwen2-VL-72B-Instruct',
+  'Qwen/Qwen2.5-14B-Instruct',
+  'Qwen/Qwen2.5-72B-Instruct',
+  'Qwen/Qwen2.5-72B-Instruct-Turbo',
+  'Qwen/Qwen2.5-Coder-32B-Instruct',
+  'Qwen/Qwen2.5-VL-72B-Instruct',
+  'Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8',
+  'Qwen/Qwen3-Coder-Next-FP8',
+  'Qwen/Qwen3-Next-80B-A3B-Instruct',
+  'Qwen/Qwen3-Next-80B-A3B-Thinking',
+  'Qwen/Qwen3-VL-32B-Instruct',
+  'Qwen/Qwen3-VL-8B-Instruct',
+  'Qwen/Qwen3.5-397B-A17B',
+  // meta-llama
+  'meta-llama/Llama-3-8b-chat-hf',
+  'meta-llama/Llama-3.1-405B-Instruct',
+  'meta-llama/Llama-3.2-1B-Instruct',
+  'meta-llama/Llama-3.2-3B-Instruct',
+  'meta-llama/Llama-4-Scout-17B-16E-Instruct',
+  'meta-llama/Meta-Llama-3-70B-Instruct-Turbo',
+  'meta-llama/Meta-Llama-3-8B-Instruct',
+  'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',
+  'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo',
+  // deepseek-ai
+  'deepseek-ai/DeepSeek-R1-0528',
+  'deepseek-ai/DeepSeek-R1-Distill-Llama-70B',
+  'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
+  'deepseek-ai/DeepSeek-R1-Distill-Qwen-14B',
+  'deepseek-ai/DeepSeek-V3.1',
+  'deepseek-ai/deepseek-coder-33b-instruct',
+  // mistralai
+  'mistralai/Ministral-3-14B-Instruct-2512',
+  'mistralai/Mistral-7B-Instruct-v0.1',
+  'mistralai/Mistral-7B-Instruct-v0.3',
+  'mistralai/Mistral-Small-24B-Instruct-2501',
+  'mistralai/Mixtral-8x7B-Instruct-v0.1',
+  // others
+  'MiniMaxAI/MiniMax-M2.7',
+  'NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO',
+  'arcee-ai/trinity-mini',
+  'google/gemma-2-27b-it',
+  'moonshotai/Kimi-K2.5-fp4',
+  'nvidia/Llama-3.1-Nemotron-70B-Instruct-HF',
+  'nvidia/NVIDIA-Nemotron-Nano-9B-v2',
 ]);
 
 // Vision (image input) id patterns - Together publishes no modality field, so these are the explicit
@@ -49,13 +103,21 @@ const _togetherAIRetiredIds = new Set<string>([
 // cross-checked against the same model on OpenRouter/Fireworks (which do publish modalities).
 // Under-detect rather than over-detect: a false positive lets the composer attach images that the
 // endpoint then rejects. Matched against the lowercased model id.
+// Sweep 2026-08-17: every serverless model was probed at 3 image sizes. A real vision endpoint scales
+// prompt_tokens with pixel count; a text-only one either 400s ('is not a multimodal model' /
+// 'Multimodal processing failed') or silently drops the part for a flat placeholder cost (gpt-oss +0,
+// Qwen2.5-7B-Turbo +6 at every size) - flat cost is NOT vision.
 const _togetherVisionMatches: readonly (string | RegExp)[] = [
   'vision', '-vl', 'llava', 'pixtral', // explicitly tagged
   'llama-4', // Llama 4 Scout/Maverick
   'kimi-k2.6', 'kimi-k2.7', 'kimi-k3', // Moonshot: native visual understanding from K2.6 on
   'inkling', // Thinking Machines: text + image + audio
+  'minimax-m3', // MiniMax: M3 only (M2.x accept an image part and drop it)
+  'muse-glimmer', // Meta Muse Glimmer: built-in vision encoder
+  'bonsai-27b', // PrismML Bonsai: low-bit build of the multimodal Qwen3.6-27B
   'molmo', // AI2 vision-language
   'gemma-4', // verified live, see gemini.models.ts
+  'gemma-3n', // Gemma 3n E2B/E4B are multimodal
   /gemma-3-(4b|12b|27b)/, // Gemma 3 4B+ are multimodal (1B/270M are text-only)
   /qwen3\.[56]-/, 'qwen3.7-plus', // Qwen 3.5/3.6 (all variants) and 3.7-Plus take image (3.7-Max does not)
   /glm-\d[\d.]*v\b/, // Z.ai vision line (GLM-4.5V, GLM-5V)
@@ -73,20 +135,27 @@ const _togetherVisionMatches: readonly (string | RegExp)[] = [
 // The ONLY source of pubDate for this vendor (besides the manual mappings above); keep dates
 // consistent with the publisher's own catalog where we have one (e.g. deepseek.models.ts).
 const _togetherEditorialPubDates: Record<string, string> = {
-  'MiniMaxAI/MiniMax-M2.7': '20260318', // = minimax.models.ts 'MiniMax-M2.7'
+  'openai/gpt-oss-120b': '20250805', // = groq.models.ts / cerebras.models.ts 'gpt-oss-120b'
+  'openai/gpt-oss-20b': '20250805',
   'google/gemma-4-31B-it': '20260402', // = gemini.models.ts 'models/gemma-4-31b-it'
-  'moonshotai/Kimi-K2.6': '20260417', // = fireworksai.models.ts 'kimi-k2p6'
-  'deepseek-ai/DeepSeek-V4-Pro': '20260424', // = deepseek.models.ts 'deepseek-v4-pro'
+  'Qwen/Qwen3.6-Plus': '20260402', // = alibaba.models.ts 'qwen3.6-plus'
+  'moonshotai/Kimi-K2.6': '20260420', // = moonshot.models.ts 'kimi-k2.6' (fireworksai.models.ts still says 20260417)
+  'deepseek-ai/DeepSeek-V4-Pro': '20260424', // = deepseek.models.ts 'deepseek-v4-pro' (undated id = the 0424 launch weights)
   'MiniMaxAI/MiniMax-M3': '20260601',
   'Qwen/Qwen3.7-Plus': '20260601', // = alibaba.models.ts 'qwen3.7-plus'
-  'nvidia/nemotron-3-ultra-550b-a55b': '20260602', // = fireworksai.models.ts 'nemotron-3-ultra-nvfp4'
+  'nvidia/nemotron-3-ultra-550b-a55b': '20260604', // = nvidianim.models.ts (NVIDIA HF card: 'Release Date: 06/04/2026 via Hugging Face')
   'moonshotai/Kimi-K2.7-Code': '20260612',
-  'zai-org/GLM-5.2': '20260613',
+  'zai-org/GLM-5.2': '20260616', // = zai.models.ts 'glm-5.2'
+  'Qwen/Qwen3.7-Max': '20260622', // = alibaba.models.ts 'qwen3.7-max'
+  'Prism-ML/Ternary-Bonsai-27B': '20260714', // PrismML announcement (prismml.com/news/bonsai-27b)
   'thinkingmachines/Inkling': '20260714', // = fireworksai.models.ts 'inkling'
   'moonshotai/Kimi-K3': '20260716', // = moonshot.models.ts 'kimi-k3'
-  'thinkingmachines/Inkling-Small': '20260730', // no publisher catalog: OpenRouter listing date
+  'thinkingmachines/Inkling-Small': '20260730', // no publisher catalog: OpenRouter listing date (HF repo 2026-07-27)
   'deepseek-ai/DeepSeek-V4-Flash-0731': '20260731',
-  'zai-org/GLM-5.3': '20260814', // = zai.models.ts 'glm-5.3' - id pre-announced on together.ai/models/glm-5-3 ('coming soon' 2026-08-16, weights not yet public)
+  'meta-models/Muse-Glimmer-30B': '20260810', // Meta announcement (HF repo 2026-08-09)
+  'Qwen/Qwen3.8-2.4T-A95B': '20260812', // = alibaba.models.ts 'qwen3.8-2.4t-a95b'
+  'deepseek-ai/DeepSeek-V4-Pro-0813': '20260813', // 0813 GA weights, unlike the undated id above
+  'zai-org/GLM-5.3': '20260814', // = zai.models.ts 'glm-5.3' - id pre-announced on together.ai/models/glm-5-3, still 404 on generation 2026-08-17
 };
 
 /** 'YYYYMMDD' -> Unix epoch seconds (UTC midnight), 0 when absent - for list placement only */
@@ -140,7 +209,9 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
       const contextWindow = model.context_length || null;
       // pricing: input/output 0/0 means 'not serverless-priced' (dedicated/LoRA-only endpoints,
       // 92/160 chat models on 2026-07-12), NOT free - Together's actual free tier uses explicit
-      // '-Free' id suffixes (none listed today), which we keep honoring as truly free
+      // '-Free' id suffixes (none listed today), which we keep honoring as truly free.
+      // Exception (2026-08-17): Prism-ML/Ternary-Bonsai-27B is 0/0 yet serverless and priced 'Free' on
+      // docs/serverless-models, so it surfaces with no price rather than as free
       let chatPrice: ModelDescriptionSchema['chatPrice'] | undefined = undefined;
       if (typeof model.pricing?.input === 'number' && typeof model.pricing?.output === 'number') {
         const { input, output, cached_input } = model.pricing;

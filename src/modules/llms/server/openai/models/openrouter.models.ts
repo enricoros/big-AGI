@@ -31,7 +31,12 @@ const orModelFamilyOrder = [
   // Other major providers
   'mistralai/', 'meta-llama/', 'amazon/', 'cohere/',
   // Specialized/AI companies
-  'perplexity/', 'inflection/', 'inclusionai/', 'arcee-ai/', 'thinkingmachines/',
+  // [Sakana, 2026-08-17] KNOWN-WRONG pubDates: 'sakana/' has no llmOrt*Lookup, so both models take the OR
+  // 'created' fallback below, which is the OR onboarding date and not the release date (sakanaai.models.ts
+  // says so explicitly): fugu-ultra gets 20260624 vs the native 20260722, sakana-namazu 20260811 vs 20260803.
+  // Fix by exporting llmOrtSakLookup from sakanaai.models.ts (llmOrtXaiLookup shape) and merging it in a
+  // 'sakana/' case below - until then the NEW badge and 'Released' sort are off for these two.
+  'perplexity/', 'inflection/', 'inclusionai/', 'arcee-ai/', 'thinkingmachines/', 'sakana/',
   // Chinese majors (surfaced on OpenRouter directly)
   'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'baidu/', 'stepfun/', 'meituan/',
   // Research/open models
@@ -43,13 +48,19 @@ const _MISC_EFFORTS = ['low', 'high', 'max'] as const;
 
 const orOldModelIDs = [
   // Older OpenAI models (no longer on OR but kept for safety)
-  'openai/gpt-3.5-turbo-', 'openai/gpt-4-0314', 'openai/gpt-4-32k-0314',
+  'openai/gpt-3.5-turbo', 'openai/gpt-4-0314', 'openai/gpt-4-32k-0314',
   // Older Anthropic models
   'anthropic/claude-1', 'anthropic/claude-2', 'anthropic/claude-instant-',
   // Older Google models
   'google/palm-2-',
   // Older Meta models (Llama 2 and Llama 3.0; keeps 3.1/3.2/3.3/4 visible)
   'meta-llama/llama-3-', 'meta-llama/llama-2-',
+] as const;
+
+// exact ids, not prefixes: 'openai/gpt-4' is the 2023 8K model still listed at $30/$60, but as a prefix it
+// would also hide gpt-4o / gpt-4.1 / gpt-4-turbo
+const orOldExactModelIDs = [
+  'openai/gpt-4',
 ] as const;
 
 
@@ -91,13 +102,22 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
   // drop ':batch' variants: async batch tiers (50%-off resold vendor batch APIs) can't serve
   // synchronous chat; they'd list as half-price chat models and fail or queue on send.
-  // OR briefly published them on 2026-07-22 (17 openai/*:batch) then withdrew - expected to return.
-  // When OR relaunches batch for real, do NOT just remove this gate - re-verify the semantics first:
+  // They came back and stayed: 61 across 8 vendors as of 2026-08-17 (was 17 openai/* at the 2026-07-22 debut).
+  // Before ever removing this gate, re-verify the semantics:
   // - if batch stays async (jobs API / delayed delivery), keep the gate; proper support means a batch
   //   job surface (submit/poll/retrieve) outside the chat list, a product feature not a parser change
   // - if OR ships them as sync-callable discounted endpoints, replace the gate with a visible variant:
   //   '(batch)' label suffix + hidden-by-default + latency note, so users opt in knowingly
   if (model.id.endsWith(':batch'))
+    return null;
+
+  // [OpenRouter, 2026-08-17] listed but unusable - same rationale as ':batch': they'd list as chat models and fail on send
+  // - google/lyria-3-*: music generation billed per song ($0.08) / clip ($0.04), with pricing.prompt '0' so they'd
+  //   also carry the free tag; a chat completion returns 500 'Internal error encountered' (probed)
+  // - anthropic/claude-opus-4.7-fast: OR still lists the retired 6x tier at $30/$150, but Anthropic removed `speed`
+  //   from Opus 4.7 on 2026-07-24, so EVERY request 400s ("'claude-opus-4-7' does not support the `speed`
+  //   parameter", probed). Drop the gate if Anthropic restores fast mode there - 4.8-fast/opus-5-fast are fine.
+  if (model.id.startsWith('google/lyria-') || model.id === 'anthropic/claude-opus-4.7-fast')
     return null;
 
   // the 11 '~vendor/model-latest' aliases are full members of their vendor family: resolve them to the
@@ -117,19 +137,30 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   const pricing = model.pricing;
 
   // [OpenRouter, 2026-08-06] `pricing.overrides` are long-context surcharge tiers, ascending by
-  // `min_prompt_tokens` (e.g. google/gemini-2.5-pro: 1.25/10 up to 200K, then 2.50/15 above it). 57 of the
-  // 399 listed models are tiered today (Gemini Pro, GPT-5.x, Grok 4.x, Qwen, Claude Sonnet 4.x): without
-  // folding them in, long prompts would be costed at the cheapest tier.
-  // [OpenRouter, 2026-08-16] time-of-day overrides (utc_start/utc_end, no min_prompt_tokens) are not context tiers - skipped.
+  // `min_prompt_tokens` (e.g. google/gemini-2.5-pro: 1.25/10 up to 200K, then 2.50/15 above it). 59 of the
+  // 414 listed models are tiered today (Gemini Pro, GPT-5.x, Grok 4.x, Qwen, Claude Sonnet 4.x, Sakana Fugu):
+  // without folding them in, long prompts would be costed at the cheapest tier.
+  // [OpenRouter, 2026-08-16] time-of-day overrides (utc_start/utc_end, no min_prompt_tokens) are a peak/off-peak
+  // schedule, not context tiers - separated here and folded as the peak below.
   const contextTiers = pricing.overrides?.filter((tier): tier is typeof tier & { min_prompt_tokens: number } => typeof tier.min_prompt_tokens === 'number');
   const priceTiers = contextTiers?.length ? contextTiers : undefined;
+  const clockTiers = pricing.overrides?.filter(tier => tier.min_prompt_tokens === undefined && (tier.utc_start !== undefined || tier.utc_end !== undefined));
 
   /** per-token price string -> our per-1M price, tiered when the model has long-context overrides */
   function _orPricePerM(field: 'prompt' | 'completion' | 'input_cache_read' | 'input_cache_write'): NonNullable<ModelDescriptionSchema['chatPrice']>['input'] {
     const basePrice = pricing[field];
     if (basePrice === undefined) return undefined;
-    const baseValue = parseFloat(basePrice) * 1000 * 1000;
+    let baseValue = parseFloat(basePrice) * 1000 * 1000;
     if (isNaN(baseValue)) return undefined;
+    // [OpenRouter, 2026-08-17] `pricing.*` tracks the CURRENT clock window, so an unfolded quote flips through the
+    // day (verified on deepseek/deepseek-v4-pro-0813: base == the off-peak half at fetch time). Take the peak, so
+    // the listed price is stable and never understates - same upper-bound convention as the native DeepSeek defs.
+    if (clockTiers?.length)
+      for (const tier of clockTiers) {
+        const tierPrice = tier[field];
+        const peakValue = tierPrice === undefined ? NaN : parseFloat(tierPrice) * 1000 * 1000;
+        if (!isNaN(peakValue) && peakValue > baseValue) baseValue = peakValue;
+      }
     if (!priceTiers) return baseValue;
     // 'upTo' is the tier's inclusive upper bound, i.e. where the next tier's `min_prompt_tokens` starts
     let value = baseValue;
@@ -234,7 +265,12 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   ] as const;
 
   // -- Vendor parameter & interface inheritance --
-  const llmRef = modelIdUnaliased.replace(/^[^/]+\//, '');
+  // strip the vendor prefix, then the ':free' variant suffix (the Anthropic lookup already strips it internally,
+  // the others did not - so 'gemma-4-31b-it:free' missed its def). ':free' only, NOT a blanket /:.*$/: vendor ref
+  // maps key their deny entries by the full suffixed id (openai.models.ts: 'gpt-4o:extended': null), and stripping
+  // every suffix would hand the lookup the base id and silently un-deny the variant.
+  // OR lists 18 non-':batch' colon ids today: 17x ':free' + 1x ':thinking' (2026-08-17).
+  const llmRef = modelIdUnaliased.replace(/^[^/]+\//, '').replace(/:free$/, '');
   let initialTemperature: number | undefined;
   let pubDate: string | undefined;
 
@@ -281,6 +317,19 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
         if (!parameterSpecs.some(p => p.paramId === 'llmVndAntEffort'))
           parameterSpecs.push({ paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }); // tunneled via OpenRouter's `verbosity` field
       }
+
+      // [Anthropic, 2026-08-17] The Claude 5 generation thinks by default THROUGH OpenRouter (probed: sonnet-5
+      // with no `reasoning` field spends reasoning tokens, 4.8 and older spend none), and Fable 5 rejects
+      // reasoning.enabled=false outright ('Reasoning is mandatory for this endpoint'). Since sending no field no
+      // longer means "off", the non-thinking twin openRouterInjectVariants derives from the thinking-budget spec
+      // would be a mislabel (no brain icon, but it reasons and bills for it): drop the spec so those models ship
+      // as ONE always-thinking entry, matching their native defs. Revisit if the adapter learns to send an
+      // explicit reasoning.enabled=false for the base variant - that would give Sonnet 5 a real non-thinking twin.
+      if (model.reasoning?.mandatory || model.reasoning?.default_enabled) {
+        const budgetIndex = parameterSpecs.findIndex(p => p.paramId === 'llmVndAntThinkingBudget');
+        if (budgetIndex !== -1)
+          parameterSpecs.splice(budgetIndex, 1);
+      }
       break;
 
     case modelIdUnaliased.startsWith('google/'):
@@ -326,10 +375,14 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       break;
 
     case modelIdUnaliased.startsWith('x-ai/') || modelIdUnaliased.startsWith('moonshotai/') || modelIdUnaliased.startsWith('z-ai/') || modelIdUnaliased.startsWith('deepseek/'):
-      // [Moonshot, 2026-07-17] Kimi K3: thinking is always-on at 'max' (its only valid effort) - no thinking toggle;
-      // probe-verified via OR: reasoning.enabled=false 400s ('Reasoning is mandatory ... cannot be disabled')
-      if (modelIdUnaliased.startsWith('moonshotai/kimi-k3'))
+      // [Moonshot, 2026-08-17] Kimi K3: thinking cannot be turned off, but the native low/high/max ladder rides
+      // through. Re-probed today (both facts changed since 2026-07-17): reasoning.enabled=false no longer 400s,
+      // it is accepted and IGNORED (reasoning tokens unchanged), and OR now flipped reasoning.mandatory to false
+      // while advertising supported_efforts [max,high,low]. So: expose the ladder, never an 'Off' that lies.
+      if (modelIdUnaliased.startsWith('moonshotai/kimi-k3')) {
+        parameterSpecs.push({ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high', 'max'] });
         break;
+      }
       // [xAI, 2026-07-31] inherit native effort specs (medium/xhigh, which llmVndMiscEffort cannot express)
       if (modelIdUnaliased.startsWith('x-ai/'))
         _mergeLookup(llmOrtXaiLookup(llmRef));
@@ -345,6 +398,10 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
         // honor it (OR itself accepts reasoning.effort='max' since GPT-5.6, see openai.chatCompletions.ts).
         // [DeepSeek, 2026-08-14] Exception: OR's supported_efforts is right here, separating the dated flash 0731
         // and pro 0813 (max/high/low) from the April ids (xhigh/high -> binary). deepseek/ only - for xAI it is wrong.
+        // [2026-08-17] Re-evaluated widening it to every family, and rejected: OR omits xhigh for grok-4.5 (native
+        // has it), Z.ai reports [xhigh,high] where the real ladder is none/high/max (folding LOSES 'max'), and
+        // Qwen/Meta/ByteDance report xhigh+medium, which llmVndMiscEffort cannot express - they'd collapse to a
+        // single degenerate tier. Native truth keeps arriving via llmOrt*Lookup, not via raw OR values.
         const orEfforts = modelIdUnaliased.startsWith('deepseek/') ? model.reasoning?.supported_efforts : undefined;
         const derived = _MISC_EFFORTS.filter(e => orEfforts?.includes(e));
         parameterSpecs.push({
@@ -390,6 +447,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
   // hidden: hide by default older models or models not in known families; match with startsWith for both orOldModelIDs and orModelFamilyOrder
   const hidden = orOldModelIDs.some(prefix => modelIdUnaliased.startsWith(prefix))
+    || orOldExactModelIDs.some(oldId => modelIdUnaliased === oldId)
     || !orModelFamilyOrder.some(prefix => modelIdUnaliased.startsWith(prefix));
 
 

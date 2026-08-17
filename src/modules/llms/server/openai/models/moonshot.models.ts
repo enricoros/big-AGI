@@ -37,7 +37,7 @@ const _PS_ReasoningEffort: ModelDescriptionSchema['parameterSpecs'] = [
  * - models list: https://platform.kimi.ai/docs/models (was platform.moonshot.ai - now 301 redirect)
  * - pricing: https://platform.kimi.ai/docs/pricing/chat is just an index; per-model pages are chat-k3, chat-k27-code, chat-k26, chat-k25, chat-v1
  * - API docs: https://platform.kimi.ai/docs/api/chat + https://platform.kimi.ai/docs/api/models-overview (per-model parameter matrix)
- * - updated: 2026-08-06
+ * - updated: 2026-08-17
  * - NOTE: K2 series (non-2.5/2.6) discontinued on 2026-05-25, removed from API; kept hidden for fallback.
  * - NOTE: kimi-k2.5 and the moonshot-v1 series are closed to new accounts, with full platform sunset on 2026-08-31.
  * - NOTE: 'sk-kimi-' subscription keys list a separate 3-model catalog from api.kimi.com/coding (see the Kimi Code section below);
@@ -59,12 +59,12 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     interfaces: IF_K2_7_CODE,
     // API think_efforts: valid ['low', 'high', 'max'], default 'max'; 'none' undocumented but probe-verified to disable thinking
     parameterSpecs: _PS_ReasoningEffort,
-    benchmark: { cbaElo: 1485 }, // same weights as kimi-k3
+    benchmark: { cbaElo: 1489 }, // same weights as kimi-k3
   },
   {
     idPrefix: 'kimi-for-coding',
     label: 'Kimi K2.7 Coding', // API display_name: 'K2.7 Coding'
-    pubDate: '20260601',
+    pubDate: '20260612',
     description: 'K2.7 Code on the Kimi Code subscription. Always-on thinking, native multimodal. 256K context.',
     contextWindow: 262144,
     maxCompletionTokens: 32768,
@@ -75,7 +75,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
   {
     idPrefix: 'kimi-for-coding-highspeed',
     label: 'Kimi K2.7 Coding Highspeed', // API display_name: 'K2.7 Coding Highspeed'
-    pubDate: '20260601',
+    pubDate: '20260612',
     description: 'High-speed K2.7 Code variant on the Kimi Code subscription (Allegretto+ plans). Always-on thinking, native multimodal. 256K context.',
     contextWindow: 262144,
     maxCompletionTokens: 32768,
@@ -97,14 +97,14 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     // 'supports_thinking_type: only' and the OpenAPI K3 schema dropping `thinking`, so keep the Off level
     parameterSpecs: _PS_ReasoningEffort,
     chatPrice: { input: 3.00, output: 15.00, cache: { cType: 'oai-ac', read: 0.30 } },
-    benchmark: { cbaElo: 1485 }, // kimi-k3-max
+    benchmark: { cbaElo: 1489 }, // kimi-k3-max
   },
 
   // Kimi K2.7-code Series - Code-focused flagship (native multimodal, always-on thinking)
   {
     idPrefix: 'kimi-k2.7-code',
     label: 'Kimi K2.7 Code',
-    pubDate: '20260601',
+    pubDate: '20260612',
     description: 'Code-focused multimodal model (text, image, video inputs) with always-on thinking. ~180 tok/s output (up to 260 in short contexts for highspeed). 256K context.',
     contextWindow: 262144,
     maxCompletionTokens: 32768,
@@ -116,7 +116,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
   {
     idPrefix: 'kimi-k2.7-code-highspeed',
     label: 'Kimi K2.7 Code Highspeed',
-    pubDate: '20260601',
+    pubDate: '20260612',
     description: 'High-speed code variant with ~180 tok/s output (up to 260 in short contexts). Native multimodal with always-on thinking. 256K context.',
     contextWindow: 262144,
     maxCompletionTokens: 32768,
@@ -150,7 +150,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     interfaces: IF_K2_5,
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 0.60, output: 3.00, cache: { cType: 'oai-ac', read: 0.10 } },
-    benchmark: { cbaElo: 1451 }, // kimi-k2.5-thinking
+    benchmark: { cbaElo: 1450 }, // kimi-k2.5-thinking
   },
 
   // Kimi K2 Series - discontinued on 2026-05-25, removed from API
