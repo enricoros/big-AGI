@@ -627,6 +627,13 @@ export namespace OpenAIWire_API_Chat_Completions {
       }),
     })).optional(),
 
+    /**
+     * [2026-08-16] Plain reasoning text, sent INSTEAD of reasoning_content by some hosts (non-streaming): Modular Cloud
+     * z-ai/glm-5.2 + moonshotai/kimi-k2.7-code (reasoning_content: null there), Groq + Cerebras gpt-oss-120b, TogetherAI
+     * DeepSeek-V4-Flash. OpenRouter/Nous send it too, duplicated in reasoning_details - the parser reads it as a fallback only.
+     */
+    reasoning: z.string().nullable().optional(),
+
   });
 
   const Choice_NS_schema = z.object({
@@ -744,6 +751,8 @@ export namespace OpenAIWire_API_Chat_Completions {
     reasoning_content: z.string().nullable().optional(), // [Deepseek, 2025-01-20]
     // [OpenRouter, 2025-01-20] Reasoning traces
     reasoning_details: z.array(OpenAIWire_ContentParts.OpenRouter_ReasoningDetail_schema).nullish(),
+    // [2026-08-16, Modular] plain reasoning text, sent instead of reasoning_content by some hosts (Modular glm-5.2/kimi-k2.7-code, Groq + Cerebras gpt-oss-120b, Together DeepSeek-V4-Flash; OpenRouter duplicates it in reasoning_details)
+    reasoning: z.string().nullable().optional(),
     // delta-tool-calls content
     tool_calls: z.array(ChunkDeltaToolCalls_schema).optional()
       .nullable(), // [TogetherAI] added .nullable(), see https://github.com/togethercomputer/together-python/issues/160

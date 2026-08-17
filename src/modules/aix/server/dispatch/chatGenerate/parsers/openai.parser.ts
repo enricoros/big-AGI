@@ -258,6 +258,16 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
         }
 
       }
+      // delta: plain 'reasoning' string [2026-08-16] - hosts that emit delta.reasoning and no reasoning_content: Modular Cloud
+      // z-ai/glm-5.2 + moonshotai/kimi-k2.7-code (minimax-m3 on the same host uses reasoning_content - per-model, not per-host),
+      // Groq + Cerebras gpt-oss-120b, TogetherAI DeepSeek-V4-Flash - all previously declared-but-dropped reasoning.
+      // Last in the chain: OpenRouter/Nous send the same text in both 'reasoning' and 'reasoning_details', handled above.
+      else if (typeof delta.reasoning === 'string' && delta.reasoning) {
+
+        pt.appendReasoningText(delta.reasoning);
+        deltaHasReasoning = true;
+
+      }
 
       // delta: Text
       if (typeof delta.content === 'string' &&
@@ -512,25 +522,36 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
         throw new Error(`unexpected message content type: ${typeof message.content}`);
 
       // [DeepSeek, 2026-04-24] Non-streaming reasoning_content -> 'ma' reasoning part (mirror of streaming path above)
-      if (typeof message.reasoning_content === 'string' && message.reasoning_content)
+      let messageHasReasoning = false;
+      if (typeof message.reasoning_content === 'string' && message.reasoning_content) {
         pt.appendReasoningText(message.reasoning_content);
+        messageHasReasoning = true;
+      }
 
       // [OpenRouter, 2025-01-20] Handle structured reasoning_details
       if (Array.isArray(message.reasoning_details)) {
         for (const reasoningDetail of message.reasoning_details) {
           if (reasoningDetail.type === 'reasoning.text') {
-            if (typeof reasoningDetail.text === 'string')
+            if (typeof reasoningDetail.text === 'string') {
               pt.appendReasoningText(reasoningDetail.text);
+              messageHasReasoning = true;
+            }
             // else: empty reasoning chunk, e.g. "{ type: 'reasoning.text' }", skip
           } else if (reasoningDetail.type === 'reasoning.summary' && typeof reasoningDetail.summary === 'string') {
             // pt.appendReasoningText(`[Summary] ${reasoningDetail.summary}`);
             pt.appendReasoningText(reasoningDetail.summary);
+            messageHasReasoning = true;
           } else if (reasoningDetail.type === 'reasoning.encrypted') {
             // reasoning happened but not returned, skip
           } else
             console.log('AIX: OpenAI-dispatch-NS: unexpected reasoning detail type:', reasoningDetail);
         }
       }
+
+      // [2026-08-16] plain 'reasoning' string (Modular glm-5.2/kimi-k2.7-code return it with reasoning_content: null; also Groq/Cerebras
+      // gpt-oss-120b, Together DeepSeek-V4-Flash), fallback only - mirror of the streaming path above
+      if (!messageHasReasoning && typeof message.reasoning === 'string' && message.reasoning)
+        pt.appendReasoningText(message.reasoning);
 
       // message: Tool Calls
       for (const toolCall of (message.tool_calls || [])) {
