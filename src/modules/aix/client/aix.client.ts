@@ -307,11 +307,22 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
 
   try {
 
-    // Aix ChatGenerate Request
+    // Aix ChatGenerate Request - Injects MCP tools
+    let tools = clientOptions.tools ? [...clientOptions.tools] : [];
+    try {
+      const { apiAsync } = await import('~/common/util/trpc.client');
+      const mcpResult = await apiAsync.mcp.listTools.query();
+      if (mcpResult?.tools?.length) {
+        tools = [...tools, ...(mcpResult.tools as any[])];
+      }
+    } catch {
+      // MCP server offline or optional
+    }
+
     const aixChatContentGenerateRequest: AixAPIChatGenerate_Request = {
       systemMessage: await aixCGR_SystemMessage_FromDMessageOrThrow(chatSystemInstruction),
       chatSequence: await aixCGR_ChatSequence_FromDMessagesOrThrow(chatHistoryWithoutSystemMessages),
-      ...(clientOptions.tools?.length ? { tools: clientOptions.tools } : undefined),
+      tools: tools.length ? tools : undefined,
       ...(clientOptions.toolsPolicy ? { toolsPolicy: clientOptions.toolsPolicy } : undefined),
     };
 

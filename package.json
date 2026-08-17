@@ -36,6 +36,7 @@
     "@emotion/server": "^11.11.0",
     "@emotion/styled": "^11.14.1",
     "@googleworkspace/drive-picker-react": "^0.2.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@mui/icons-material": "^5.18",
     "@mui/joy": "5.0.0-beta.52",
     "@next/bundle-analyzer": "~15.1.12",

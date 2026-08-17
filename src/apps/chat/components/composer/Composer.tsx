@@ -851,8 +851,15 @@ export function Composer(props: {
                     }}
                     sx={{
                       height: '100%',
+                      borderRadius: '16px',
+                      transition: 'border-color 150ms var(--ease-out), background-color 150ms ease, box-shadow 150ms ease',
                       backgroundColor: showTint ? undefined : 'background.level1',
-                      '&:focus-within': { backgroundColor: 'background.popup', '.within-composer-focus': { backgroundColor: 'background.popup' } },
+                      '&:focus-within': {
+                        backgroundColor: 'background.popup',
+                        borderColor: 'var(--joy-palette-primary-500, #0B6BCB)',
+                        boxShadow: '0 0 0 3px rgba(11, 107, 203, 0.15)',
+                        '.within-composer-focus': { backgroundColor: 'background.popup' },
+                      },
                       lineHeight: lineHeightTextareaMd,
                     }} />
 
@@ -979,6 +986,8 @@ export function Composer(props: {
                   color={sendButtonColor}
                   sx={{
                     flexGrow: 1,
+                    borderRadius: '12px',
+                    overflow: 'hidden',
                     backgroundColor: (isMobile && sendButtonVariant === 'outlined') ? 'background.popup' : undefined,
                     boxShadow: (isMobile && sendButtonVariant !== 'outlined') ? 'none' : `0 8px 24px -4px rgb(var(--joy-palette-${sendButtonColor}-mainChannel) / 20%)`,
                   }}
