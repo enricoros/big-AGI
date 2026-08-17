@@ -171,28 +171,19 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     && openAIDialect !== 'nvidianim' // NVIDIA rejects unknown params and gpt-oss strictly validates reasoning_effort - dedicated block below
     && openAIDialect !== 'perplexity' // Perplexity has its own block below with stricter validation
   ) {
-    // for: 'azure' | 'groq' | 'lmstudio' | 'localai' | 'mistral' | 'openai' | 'togetherai' | 'xai'
+    // for: 'azure' | 'cerebras' | 'cohere' | 'groq' | 'lmstudio' | 'localai' | 'mistral' | 'modular' | 'openai' | 'sakanaai' | 'togetherai' | 'xai'
     payload.reasoning_effort = reasoningEffort;
   }
 
   // [Moonshot] Kimi reasoning effort -> thinking mode; Kimi Code 'k3' also honors reasoning_effort low/high/max (probe-verified 2026-07-18: primary K2.5/K2.6 tolerate the extra field, 'kimi-for-coding' ignores it)
-  // [Z.ai] GLM thinking mode: binary enabled/disabled (supports GLM-4.5 series and higher) - https://docs.z.ai/guides/capabilities/thinking-mode
-  // [DeepSeek, 2026-04-23] V4 thinking control https://api-docs.deepseek.com/guides/thinking_mode
+  // [Z.ai] GLM thinking mode: 'none' -> disabled, else enabled - https://docs.z.ai/guides/capabilities/thinking-mode. reasoning_effort rides
+  //   along: honored on GLM-5.2 (none|high|max) and GLM-5.3 (low|high|max, thinking compulsory - 'disabled' 400s), accepted-and-ignored on
+  //   older GLM (live-probed 2026-08-17). Per-model levels are the catalog enumValues, not re-validated here.
+  // [DeepSeek, 2026-04-23] V4 thinking control https://api-docs.deepseek.com/guides/thinking_mode; 'low' keeps reasoning on but skips
+  //   the hidden agentic preamble - the cheap tier
   if (reasoningEffort && (openAIDialect === 'deepseek' || openAIDialect === 'moonshot' || openAIDialect === 'zai')) {
-    // [Z.ai, 2026-06-13] reasoning_effort is GLM-5.2 only; other GLM models are binary thinking enabled/disabled - https://docs.z.ai/api-reference/llm/chat-completion
-    const supportsEffortLevels = openAIDialect === 'deepseek' || openAIDialect === 'moonshot' || (openAIDialect === 'zai' && model.id.startsWith('glm-5.2'));
-    // [DeepSeek, 2026-07-31] the V4 reasoning_effort enum is none|minimal|low|medium|high|xhigh|max; we expose the
-    // documented low/high/max (+ none -> thinking disabled). 'low' keeps reasoning on while skipping the hidden agentic
-    // preamble, so it is the cheap thinking tier.
-    const allowedEffort = (openAIDialect === 'moonshot' || openAIDialect === 'deepseek') ? ['none', 'low', 'high', 'max'] : supportsEffortLevels ? ['none', 'high', 'max'] : ['none', 'high'];
-    if (!allowedEffort.includes(reasoningEffort)) // domain validation
-      throw new Error(`${openAIDialect} only supports reasoning effort ${allowedEffort.join(', ')}, got '${reasoningEffort}'`);
-
     payload.thinking = { type: reasoningEffort !== 'none' ? 'enabled' : 'disabled' };
-
-    // [DeepSeek, 2026-04-23] DeepSeek also supports effort control for reasoning-enabled requests - set it here as it was carved from the reasoningEffort setter before
-    // [Z.ai, 2026-06-13] GLM-5.2 reasoning_effort takes effect only when thinking is enabled (i.e. effort !== 'none')
-    if (supportsEffortLevels && reasoningEffort !== 'none')
+    if (reasoningEffort !== 'none') // effort takes effect only when thinking is enabled
       payload.reasoning_effort = reasoningEffort;
   }
 

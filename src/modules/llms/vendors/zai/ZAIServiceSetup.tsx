@@ -63,7 +63,7 @@ export function ZAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     {showAdvanced && <FormTextField
       autoCompleteId='zai-host'
       title='API Host'
-      tooltip={`An alternative Z.ai API endpoint to use instead of the default 'api.z.ai'.\n\nExample:\n - https://api.z.ai/api/paas`}
+      tooltip={`An alternative Z.ai API endpoint to use instead of the default 'api.z.ai'.\n\nExamples:\n - https://api.z.ai/api/paas (default)\n - https://api.z.ai/api/coding/paas (GLM Coding Plan subscriptions)`}
       placeholder='e.g., https://api.z.ai/api/paas'
       value={zaiHost}
       onChange={text => updateSettings({ zaiHost: text })}

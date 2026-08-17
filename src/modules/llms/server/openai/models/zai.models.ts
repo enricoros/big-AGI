@@ -9,7 +9,7 @@ export type LlmsZAIModelId = typeof _knownZAIModels[number]['idPrefix'];
 
 
 // Interfaces for Z.ai models
-// - Thinking mode: supported by GLM-4.5 series and higher (GLM-4.5, 4.6, 4.7, 5, 5.1, 5.2)
+// - Thinking mode: supported by GLM-4.5 series and higher (GLM-4.5, 4.6, 4.7, 5, 5.1, 5.2, 5.3)
 // - Text-only models strip images (Z.ai API rejects image parts on non-vision models)
 // - Ref: https://docs.z.ai/guides/capabilities/thinking-mode
 const _IF_Chat = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_HOTFIX_StripImages];
@@ -20,9 +20,14 @@ const _IF_Vision_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision,
 // - Z.ai thinking maps from effort: 'none' -> disabled, anything else -> enabled
 // - Most models support binary enabled/disabled, so we expose 'none' and 'high'
 // - GLM-5.2 additionally supports reasoning_effort (max/xhigh/high/medium/low/minimal/none) - we expose 'none', 'high', 'max'
-//   The zai adapter (openai.chatCompletions.ts) gates reasoning_effort to glm-5.2 and sends it alongside thinking:enabled
+//   The zai adapter (openai.chatCompletions.ts) gates reasoning_effort to glm-5.2/5.3 and sends it alongside thinking:enabled
+// - GLM-5.3: thinking is compulsory (thinking.type 'disabled' -> 400 code 1210) and reasoning_effort is exactly low|high|max
+//   (default max) - no 'none'. Live-verified 2026-08-16 (validation runs before authorization) + https://z.ai/blog/glm-5.3
 const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
+] as const;
+const _PS_Reasoning_Compulsory: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['low', 'high', 'max'] },
 ] as const;
 
 
@@ -35,8 +40,28 @@ type _ZaiModelDef = KnownModel & { pubDate: string };
 
 const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
 
+  // GLM-5.3 - 1M context flagship (post-train of the GLM-5.2 base; coding, cyber, agentic)
+  // 1M context, 128K output (max_tokens ceiling live-verified 131072). Thinking compulsory, reasoning_effort low|high|max.
+  // Released 2026-08-14 on the GLM Coding Plan (host https://api.z.ai/api/coding/paas); the standard API lists the id
+  // but pay-as-you-go keys get 403 code 1220 ('API coming soon', docs 2026-08-16). Listed anyway: the id is live and
+  // Coding Plan keys work today. Weights announced for ~2 weeks after launch (no third-party host yet).
+  {
+    idPrefix: 'glm-5.3',
+    label: 'GLM-5.3 (1M)',
+    pubDate: '20260814',
+    description: 'Z.ai 1M-context flagship, post-trained on the GLM-5.2 base for coding, cybersecurity and agentic work. Thinking always on, with low/high/max effort. 1M context, 128K output.',
+    contextWindow: 1048576, // 1M
+    interfaces: _IF_Reasoning,
+    maxCompletionTokens: 131072, // 128K
+    parameterSpecs: _PS_Reasoning_Compulsory,
+    // chatPrice: not on the rate card as of 2026-08-16 (https://docs.z.ai/guides/overview/pricing stops at GLM-5.2) - add when published
+    initialTemperature: 1.0,
+    // benchmark: registered on lmarena ('glm-5.3 (max)') but unranked as of 2026-08-16
+  },
+
   // GLM-5.2 - 1M context flagship (Agentic Coding)
-  // 1M context, 128K output. Thinking default enabled. reasoning_effort supported (GLM-5.2 only).
+  // 1M context, 128K output. Thinking default enabled. reasoning_effort supported (live-ablated 2026-08-16, n=9/arm:
+  // none/minimal = off, low/medium/high = one reduced tier, xhigh/max/default = the deep tier ~1.6x - matches the docs).
   {
     idPrefix: 'glm-5.2',
     label: 'GLM-5.2 (1M)',
@@ -340,8 +365,8 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
 /// Curated model IDs - authoritative list of Z.ai models
 /// This is the primary source; the list API is unreliable.
 const _zaiCuratedModelIds: string[] = [
-  // Text: GLM-5.2
-  'glm-5.2',
+  // Text: GLM-5.3 / GLM-5.2
+  'glm-5.3', 'glm-5.2',
   // Text: GLM-5.1 / GLM-5 series
   'glm-5.1', 'glm-5', 'glm-5-turbo',
   // Text: GLM-4.7 series
