@@ -98,7 +98,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     model: model.id,
     messages: chatMessages,
     tools: chatGenerate.tools && _toOpenAITools(chatGenerate.tools, strictToolInvocations),
-    tool_choice: chatGenerate.toolsPolicy && _toOpenAIToolChoice(openAIDialect, chatGenerate.toolsPolicy),
+    tool_choice: chatGenerate.toolsPolicy && _toOpenAIToolChoice(openAIDialect, chatGenerate.toolsPolicy, model),
     parallel_tool_calls: undefined,
     max_tokens: model.maxTokens !== undefined ? model.maxTokens : undefined,
     ...(model.temperature !== null ? { temperature: model.temperature !== undefined ? model.temperature : undefined } : {}),
@@ -907,7 +907,7 @@ function _toOpenAITools(itds: AixTools_ToolDefinition[], strictToolInvocations: 
   });
 }
 
-function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsPolicy): NonNullable<TRequest['tool_choice']> {
+function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsPolicy, model: AixAPI_Model): NonNullable<TRequest['tool_choice']> {
   // [Mistral] - supports 'auto', 'none', 'any'
   if (openAIDialect === 'mistral' && itp.type !== 'auto') {
     // Note: we tried adding the 'any' model, but don't feel comfortable with altering our good parsers
@@ -921,10 +921,15 @@ function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsP
     case 'auto':
       return 'auto';
     case 'any':
+      // [Moonshot, 2026-08-17] 'required' 400s while thinking is on (k2.5/k2.6/k2.7-code, probed); K3, moonshot-v1
+      // and thinking-off requests accept it. Degrade to 'auto' rather than hard-fail.
+      if (openAIDialect === 'moonshot' && model.reasoningEffort !== 'none'
+        && !(model.id === 'k3' || model.id.startsWith('kimi-k3') || model.id.startsWith('moonshot-v1')))
+        return 'auto';
       return 'required';
     // DISABLED 2026-07-17 - forced named tool, see ToolsPolicy_schema. [Moonshot] probe-verified: named tool_choice
     // 400s ("tool_choice 'specified' is incompatible with thinking enabled") on all thinking-mode Kimi requests -
-    // always, on the K2.7-code/K3 always-thinking models; 'required' ('any') works.
+    // always, on the K2.7-code/K3 always-thinking models (re-probed 2026-08-17).
     // case 'function_call':
     //   return { type: 'function' as const, function: { name: itp.function_call.name } };
   }

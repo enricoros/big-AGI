@@ -34,8 +34,12 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     contextWindow: 1000000,
     maxCompletionTokens: 131072, // vendor-recommended; live ceiling is 524288 (512K)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
-    // [MiniMax, 2026-08-17] only model with a reasoning switch: `thinking: {type: 'disabled'|'adaptive'}` (M2.x accept and ignore it,
-    // unknown values fall back to 'adaptive' with no 400). Not exposed: MiniMax rides the generic 'openai' dialect, which has no hook.
+    // [MiniMax, 2026-08-17] only model with a reasoning switch (M2.x ignore it): `reasoning_effort` none|high, probed
+    // (none -> 0 reasoning tokens). Undocumented but what the generic 'openai' dialect sends; the documented field is
+    // `thinking: {type: 'disabled'|'adaptive'}` (same effect) - fall back to it if Off stops working.
+    parameterSpecs: [
+      { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
+    ],
     // tiered PAYG pricing: boundary at 512K input tokens, >512K tier doubles. Priority tier (1.5x) not modeled.
     chatPrice: {
       input: [{ upTo: 512000, price: 0.30 }, { upTo: null, price: 0.60 }],
@@ -69,7 +73,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     benchmark: { cbaElo: 1416 }, // same weights as minimax-m2.7
   },
 
-  // M2.5 series
+  // M2.5 series - vendor Legacy since 2026-08 (hidden, still served)
   {
     id: 'MiniMax-M2.5',
     label: 'MiniMax M2.5',
@@ -80,6 +84,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.03 } },
     benchmark: { cbaElo: 1390 }, // lmarena: minimax-m2.5
+    hidden: true, // vendor Legacy
   },
   {
     id: 'MiniMax-M2.5-highspeed',
@@ -91,6 +96,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.03 } },
     benchmark: { cbaElo: 1390 }, // same weights as minimax-m2.5
+    hidden: true, // vendor Legacy
   },
 
   // M2-her - dialogue-first, roleplay and character-driven chat (Jan 2026)
