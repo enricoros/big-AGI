@@ -12,6 +12,9 @@ export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefi
 // - Pricing: https://www.alibabacloud.com/help/en/model-studio/model-pricing (International/Singapore, USD per 1M tokens)
 // - Per-model pages carry the authoritative caps + cache-hit price, e.g. https://www.alibabacloud.com/help/en/model-studio/qwen3-8-max
 // - Cache:   https://www.alibabacloud.com/help/en/model-studio/context-cache (implicit hit = 20% of input; explicit create 125% / hit 10%; deepseek-v4-pro excepted)
+// 2026-08-16 pass (GLM only): glm-5.3 (Z.ai release 2026-08-14) NOT on the intl list yet - re-probe before adding; the three GLM
+//   ids re-verified live (no retirements, no price drift); glm-5.1 context 204800 -> 202745 (model page + probe); glm-5.2 gains
+//   the reasoning_effort ladder (_PS_GlmEffort, ablated).
 // 2026-08-14 triage: deny list added (retired 2025-era lines dropped from the list entirely) + short-form curation for every
 //   other live chat id: qwen3.8-2.4t-a95b (open-weights flagship) and qwen3-coder-next visible; the qwen3.5/3.6 generations,
 //   qwen3-max/-vl-flash/-coder-flash, and glm-5.1 hidden. Zero uncurated ('[?]') ids remain against the live list.
@@ -41,6 +44,15 @@ const _PS_Thinking: ModelDescriptionSchema['parameterSpecs'] = [
 // onto high). The 'alibaba' dialect sends enable_thinking for the toggle and reasoning_effort only for low/max.
 const _PS_DeepSeekEffort: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
+] as const;
+
+// [GLM, 2026-08-16] DashScope-hosted GLM-5.2 also honors 'reasoning_effort' (live-ablated, n=15/arm, no prompt-token fingerprint
+// here - tiers from reasoning_tokens): none/minimal = off | low = medium = high (~550-660 tokens, the reduced tier) | xhigh = max
+// = default (~1.0-1.1K, ~1.85x) - Z.ai's documented native mapping. Through the 'alibaba' dialect (reasoning_effort sent only for
+// low/max) this yields exactly one value per behavior: Off / Low (reduced) / Max (= Default). 'high' would emit only
+// enable_thinking:true, i.e. a duplicate of Default, so it is left out.
+const _PS_GlmEffort: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'max'] },
 ] as const;
 
 const _knownAlibabaChatModels = llmsDefineManualMappings([
@@ -390,34 +402,34 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   {
     idPrefix: 'glm-5.2',
     label: 'GLM-5.2 (Alibaba)',
-    parameterSpecs: _PS_Thinking,
+    parameterSpecs: _PS_GlmEffort,
     pubDate: '20260626',
     description: 'Zhipu GLM-5.2 served via Alibaba Model Studio. 1M context, thinking.',
     contextWindow: 1048576, // 1M
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K
-    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.35 } }, // repriced 2026-07-24 (was 1.10/3.851); implicit hit = 25% of input for GLM (model page, identical in all 4 listed regions), not the usual 20%
+    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.35 } }, // repriced 2026-07-24 (was 1.10/3.851); implicit hit = 25% of input for GLM-5.2 (model page, identical in all 4 listed regions) and -fast (Beijing-only page); GLM-5.1 is the usual 20%
     benchmark: { cbaElo: 1471 }, // lmarena: glm-5.2-max
   },
   {
     idPrefix: 'glm-5.2-fast',
     label: 'GLM-5.2 Fast (Alibaba)',
-    parameterSpecs: _PS_Thinking,
+    parameterSpecs: _PS_Thinking, // effort tiers unverified on the fast tier (free-quota-only on our key), binary toggle kept
     pubDate: '20260710',
     description: 'Zhipu GLM-5.2 fast-serving tier via Alibaba Model Studio (preview). Same model, lower latency, ~2x price.',
-    contextWindow: 1048576, // 1M (assumed = glm-5.2)
+    contextWindow: 1048576, // 1M (model page https://www.alibabacloud.com/help/en/model-studio/glm-5-2-fast, verified 2026-08-16)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K (live-probed 2026-07-24)
-    chatPrice: { input: 2.80, output: 8.80, cache: { cType: 'oai-ac', read: 0.70 } }, // cache = the 25% GLM implicit-hit rate (no model page of its own)
-    hidden: true, // preview-only for now (live id: glm-5.2-fast-preview); un-hide when GA
+    chatPrice: { input: 2.80, output: 8.80, cache: { cType: 'oai-ac', read: 0.70 } }, // Intl/Singapore price-table rows; cache = 25% of input (the model page's Beijing row shows 0.55 on 2.2)
+    hidden: true, // preview-only for now (live id: glm-5.2-fast-preview, still preview 2026-08-16); un-hide when GA
   },
   {
     idPrefix: 'glm-5.1', label: 'GLM-5.1 (Alibaba)', pubDate: '20260407', hidden: true,
     description: 'Zhipu GLM-5.1 served via Alibaba Model Studio, superseded by GLM-5.2. 200K context, thinking.',
     parameterSpecs: _PS_Thinking,
-    contextWindow: 204800, maxCompletionTokens: 131072, // 200K in / 128K out
+    contextWindow: 202745, maxCompletionTokens: 131072, // 202,745 in (model page + live 'Range of input length' probe 2026-08-16; 169,984 with thinking on) / 128K out
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 1.40, output: 4.40 },
+    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.28 } }, // cache = 20% implicit-hit rate per the model page (0.165 on 0.825, all regions)
   },
   {
     idPrefix: 'kimi-k2.7-code',

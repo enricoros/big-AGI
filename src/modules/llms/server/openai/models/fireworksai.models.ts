@@ -28,6 +28,15 @@ const _PS_DeepSeekEffort: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
 ] as const;
 
+// [GLM on Fireworks, 2026-08-16] GLM 5.2 (+ the fast router) thinks by default (reasoning_content) and honors 'reasoning_effort'
+// through the same passthrough - live-ablated (n=20 on low/high, 6-12 elsewhere): 'none' hard-off (reasoning_content null, thinking template marker
+// dropped), low = medium = high (~1.1-1.4K chars), xhigh = max = default (~2.5K chars, ~2.1x). That is Z.ai's documented
+// native GLM-5.2 mapping (low/medium -> high, xhigh -> max, default max), so unlike DeepSeek we do not expose 'low'.
+// 'minimal' 400s on this endpoint. GLM-5.3 (Z.ai, 2026-08-14) is not on Fireworks: weights not public yet.
+const _PS_GlmEffort: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] },
+] as const;
+
 // Editorial curation of the serverless-deployable chat models on the 'fireworks' account.
 // The OpenAI-compat /inference/v1/models endpoint returns NO display name, description, or price, so
 // without this every model falls back to the id-derived label (see _prettyModelId) and an "owned_by kind"
@@ -91,8 +100,9 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     pubDate: '20260616',
     description: 'Z.ai flagship with 1M-token context and multi-effort coding for long-horizon agentic tasks. New IndexShare architecture and improved MTP layer cut per-token compute.',
     contextWindow: 1_048_576, // 1M
-    interfaces: IF_CHAT_FN,
-    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.14 } },
+    interfaces: IF_CHAT_FN_REASON,
+    parameterSpecs: _PS_GlmEffort,
+    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.14 } }, // re-verified 2026-08-16
   },
   {
     idPrefix: 'accounts/fireworks/routers/glm-5p2-fast',
@@ -100,8 +110,9 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     pubDate: '20260616',
     description: 'Fast serving path for GLM 5.2: same model and quality, lower latency, higher per-token price.',
     contextWindow: 1_048_576, // 1M
-    interfaces: IF_CHAT_FN,
-    chatPrice: { input: 2.10, output: 6.60, cache: { cType: 'oai-ac', read: 0.21 } },
+    interfaces: IF_CHAT_FN_REASON,
+    parameterSpecs: _PS_GlmEffort, // parity with the base id confirmed (router echoes model glm-5p2)
+    chatPrice: { input: 2.10, output: 6.60, cache: { cType: 'oai-ac', read: 0.21 } }, // re-verified 2026-08-16 ('GLM 5.2 Fast US' router: same price, not in /inference/v1/models)
   },
   {
     idPrefix: 'accounts/fireworks/models/kimi-k2p7-code',
@@ -203,16 +214,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     benchmark: { cbaElo: 1416 }, // lmarena: minimax-m2.7
     chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.06 } },
   },
-  {
-    idPrefix: 'accounts/fireworks/models/glm-5p1',
-    label: 'GLM 5.1',
-    pubDate: '20260327',
-    description: 'Z.ai 754B-parameter MoE built for agentic engineering, with strong coding and sustained performance across long multi-round tasks.',
-    contextWindow: 202_752, // ~198K
-    interfaces: IF_CHAT_FN,
-    benchmark: { cbaElo: 1468 }, // lmarena: glm-5.1
-    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.26 } },
-  },
+  // 'accounts/fireworks/models/glm-5p1': retired from serverless (absent from /inference/v1/models, control plane supportsServerless=false, 2026-08-15); pricing page still lists it
   {
     idPrefix: 'accounts/fireworks/models/gpt-oss-120b',
     label: 'GPT-OSS 120B',

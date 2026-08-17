@@ -25,10 +25,18 @@ const _wireModularModelItemSchema = z.object({
 });
 
 
+// GLM effort ladder on Modular: 'none' hard-off, 'high' the reduced tier, 'max' the deep tier (= vendor default).
+// 'low' deliberately excluded - measured indistinguishable from 'high' (see the GLM 5.2 entry).
+const _PS_GlmEffort: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] },
+] as const;
+
+
 // [Modular Cloud] Editorial table for the shared endpoints (array order = display order), measured
-// live 2026-08-13 (GLM 5.2 added 2026-08-14). Output caps are unverified where noted: the server
-// silently clamps oversized max_tokens instead of erroring, so an over-large value is never
-// observable as a failure.
+// live 2026-08-13 (GLM 5.2 added 2026-08-14, re-measured 2026-08-16). Output caps are unverified where
+// noted: the server silently clamps oversized max_tokens instead of erroring, so an over-large value is
+// never observable as a failure. Context windows ARE observable (oversized prompt -> 400 with the limit).
+// GLM-5.3 (Z.ai, 2026-08-14) is not on Modular: weights are not public yet.
 const _modularKnownModels = llmsDefineManualMappings([
   {
     idPrefix: 'minimax/minimax-m3',
@@ -71,12 +79,16 @@ const _modularKnownModels = llmsDefineManualMappings([
   {
     idPrefix: 'z-ai/glm-5.2',
     label: 'GLM 5.2',
-    description: 'Zhipu GLM-5.2 open-weights coding/agentic MoE (754B, ~40B active), 1M context, default-on reasoning, text-only. Served as NVIDIA NVFP4 (4-bit) quantization with speculative decoding.',
-    contextWindow: 1048576,
+    description: 'Zhipu GLM-5.2 open-weights coding/agentic MoE (754B, ~40B active), reasoning on by default (effort control), text-only. Served as NVIDIA NVFP4 (4-bit) quantization with speculative decoding, 160K context on the shared endpoint (native: 1M).',
+    contextWindow: 163840, // enforced by the shared endpoint (400 'exceeds the configured maximum context length of 163840 tokens', probed 2026-08-16); the marketing page's 1M is the weights, not the deployment
     maxCompletionTokens: 131072, // unverified
     // no Vision (image_url REJECTED 400: text-only deployment) and no Json (json_object is clean
     // but json_schema strict emits template-token garbage inside valid JSON - probed 2026-08-14)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    // reasoning_effort passthrough (generic dialect branch), ablated 2026-08-16 (n=17 on low/high/max/default, 9 elsewhere):
+    // 'none' = off (0 reasoning tokens, template marker dropped), low = medium = high (~520-750 tokens), xhigh = max = default
+    // (~1.1K, ~1.6x) - Z.ai's documented native mapping. Streams reasoning as delta.reasoning (not reasoning_content) - parser reads both.
+    parameterSpecs: _PS_GlmEffort,
     chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.26 } },
   },
 ]);
