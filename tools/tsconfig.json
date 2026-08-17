@@ -7,10 +7,16 @@
     /* Note: inherits the browser lib ("dom") from the root config on purpose: tools import
        isomorphic src/ code (CSF design) that legitimately uses fetch/DOM types (HeadersInit,
        pwaUtils, ...). A DOM-free tools project was tried 2026-07 and fails on 22 shared files. */
-    "types": ["node"]
+    "types": ["node"],
+    /* the .mjs members are parsed, not type-checked: opt a script in with a leading "// @ts-check"
+       once it is JSDoc-typed to strict (generate-llms-defs.mjs is) */
+    "checkJs": false
   },
   "include": [
     "**/*.ts", "**/*.tsx",
+    // .mjs scripts (build hooks, ad-hoc probes) are members so the IDE and tscheck own them - otherwise
+    // the TS service walks up, loads the whole root program, and falls back to an inferred project
+    "**/*.mjs",
     "../src/**/*.test.ts",
     // ambient augmentations (authjs.d.ts widens next-auth's Session): nothing imports them, so
     // without this the shared src/ files they describe fail here but pass at the root
