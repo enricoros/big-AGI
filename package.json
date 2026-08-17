@@ -97,9 +97,9 @@
     "eslint": "^9",
     "eslint-config-next": "~15.1.12",
     "eslint-plugin-compat": "^7.0.2",
-    "prettier": "^3.9.5",
+    "prettier": "^3.9.6",
     "prisma": "~5.22.0",
-    "tsx": "^4.23.1",
+    "tsx": "^4.23.12",
     "typescript": "^6.0.3"
   },
   "engines": {
