@@ -95,6 +95,13 @@ export default defineConfig([{
         polyfills: ["requestIdleCallback", "Intl.Segmenter", "ClipboardItem"],
     },
 }, {
+    // Node-side code (tools/ scripts, the src tests that run under tsx): the browserslist floor
+    // does not apply - same split as the tools tsconfig project
+    files: ["tools/**", "**/*.test.ts"],
+    rules: {
+        "compat/compat": "off",
+    },
+}, {
     // Enrico 2026-07-30: TYPED rules - needs a full type program, so this is the ~15s of `npm run lint`
     // unbound-method: detaching a prototype method (destructure, stored reference, callback) silently
     // rebinds `this` - the destructure-heavy house style is only safe with this guard.
