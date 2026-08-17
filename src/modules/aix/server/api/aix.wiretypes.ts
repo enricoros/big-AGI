@@ -527,7 +527,8 @@ export namespace AixWire_API {
     vndAntWebSearchMaxUses: z.number().int().min(1).max(50).optional(),
 
     // Bedrock
-    vndBedrockAPI: z.enum(['converse', 'invoke-anthropic', 'mantle']).optional(),
+    vndBedrockAPI: z.enum(['converse', 'invoke-anthropic', 'mantle', 'mantle-responses']).optional(),
+    vndBedrockWebSearch: z.enum(['auto']).optional(), // [mantle-responses only] AWS-native web search via the server-configured AgentCore Gateway
 
     // Gemini
     vndGeminiAPI: z.enum(['interactions-agent']).optional(), // opt-in per-model API dialect; unset = generateContent

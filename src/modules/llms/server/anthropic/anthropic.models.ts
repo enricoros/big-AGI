@@ -889,6 +889,7 @@ function _llmBedrockToAnthropicModelId(bedrockBaseId: string): string | undefine
 const _BEDROCK_ANT_IF_ALLOWLIST: ReadonlySet<string> = new Set([
   LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning,
   LLM_IF_ANT_PromptCaching,
+  LLM_IF_HOTFIX_NoTemperature, // keep: Bedrock rejects temperature for the same models as the direct API ('"temperature" is deprecated for this model.')
 ] as const);
 
 // NOTE: llmVndAntInfSpeed not available on Bedrock, llmVndAntWebFetch/llmVndAntSkills not available

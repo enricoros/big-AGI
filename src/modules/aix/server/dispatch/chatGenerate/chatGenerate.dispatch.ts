@@ -4,6 +4,7 @@ import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLMantle, bedrockURLR
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
 
+import { env } from '~/server/env.server';
 import { fetchResponseOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 
 import type { AixAPI_Access, AixAPI_Model, AixAPI_ResumeHandle, AixAPIChatGenerate_Request, AixWire_Particles } from '../../api/aix.wiretypes';
@@ -159,6 +160,33 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
             },
             demuxerFormat: streaming ? 'fast-sse' : null,
             chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
+          };
+
+        // [Bedrock Mantle Responses] OpenAI Responses-compatible API - required by OpenAI frontier models (GPT-5.4+), which reject Chat Completions
+        // NOTE: these models live on the '/openai/v1/responses' path, distinct from the '/v1/responses' path used by other models (per AWS model cards)
+        case 'mantle-responses':
+          const mantleResponsesUrl = bedrockURLMantle(bedrockResolveRegion(access), '/openai/v1/responses');
+          const mantleResponsesBody = aixToOpenAIResponses('openai', model, chatGenerate, streaming, false /* no reattach support for the bedrock dialect, don't store upstream */);
+
+          // [opt-in] AWS-native web search: server-side MCP tool executed by Bedrock via the deployment's
+          // AgentCore Gateway (env-configured). Bedrock requires require_approval: 'never'.
+          if (model.vndBedrockWebSearch && env.BEDROCK_AGENTCORE_GATEWAY_ARN)
+            mantleResponsesBody.tools = [...(mantleResponsesBody.tools || []), {
+              type: 'mcp',
+              server_label: 'aws_web_search',
+              connector_id: env.BEDROCK_AGENTCORE_GATEWAY_ARN,
+              server_description: 'Web search over an AWS-managed index, for current information with cited sources',
+              require_approval: 'never',
+            }];
+
+          return {
+            request: {
+              ...await bedrockAccessAsync(access, 'POST', mantleResponsesUrl, mantleResponsesBody),
+              method: 'POST',
+              body: mantleResponsesBody,
+            },
+            demuxerFormat: streaming ? 'fast-sse' : null,
+            chatGenerateParse: streaming ? createOpenAIResponsesEventParser('openai') : createOpenAIResponseParserNS('openai'),
           };
 
         default:
