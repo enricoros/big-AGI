@@ -33,8 +33,13 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
     input_cache_write: z.string().optional(),
     // [OpenRouter, 2026-08-06] long-context surcharge tiers, ascending by `min_prompt_tokens`; a tier
     // omitting a price field keeps the price of the tier below it
+    // [OpenRouter, 2026-08-16] a second override shape appeared: time-of-day windows (`utc_start`/`utc_end`, no
+    // `min_prompt_tokens`) on deepseek/deepseek-v4-pro(-0813) (off-peak discount) - it made the strict schema fail
+    // and drop the model; tolerated here and ignored by the price folding (list price applies)
     overrides: z.array(z.object({
-      min_prompt_tokens: z.number(),
+      min_prompt_tokens: z.number().optional(),
+      utc_start: z.number().optional(),
+      utc_end: z.number().optional(),
       prompt: z.string().optional(),
       completion: z.string().optional(),
       input_cache_read: z.string().optional(),

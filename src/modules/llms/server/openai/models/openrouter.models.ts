@@ -120,7 +120,9 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   // `min_prompt_tokens` (e.g. google/gemini-2.5-pro: 1.25/10 up to 200K, then 2.50/15 above it). 57 of the
   // 399 listed models are tiered today (Gemini Pro, GPT-5.x, Grok 4.x, Qwen, Claude Sonnet 4.x): without
   // folding them in, long prompts would be costed at the cheapest tier.
-  const priceTiers = pricing.overrides?.length ? pricing.overrides : undefined;
+  // [OpenRouter, 2026-08-16] time-of-day overrides (utc_start/utc_end, no min_prompt_tokens) are not context tiers - skipped.
+  const contextTiers = pricing.overrides?.filter((tier): tier is typeof tier & { min_prompt_tokens: number } => typeof tier.min_prompt_tokens === 'number');
+  const priceTiers = contextTiers?.length ? contextTiers : undefined;
 
   /** per-token price string -> our per-1M price, tiered when the model has long-context overrides */
   function _orPricePerM(field: 'prompt' | 'completion' | 'input_cache_read' | 'input_cache_write'): NonNullable<ModelDescriptionSchema['chatPrice']>['input'] {
