@@ -7,6 +7,10 @@ import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms
 import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 
 
+// configuration
+const REFRESH_CONCURRENCY = 4; // services listed in parallel at boot
+
+
 // Note: this function is designed to be called once per session
 let _isConfiguring = false;
 let _isConfigurationDone = false;
@@ -50,27 +54,25 @@ export async function reconfigureBackendModels(remoteServices: boolean, existing
     .map(service => ({ service, defsV: llmsDefsVersionFor(service.vId, service.setup) }))
     .filter(({ service, defsV }) => createdServiceIds.has(service.id) || (existingServices && service.defsV !== defsV));
 
-  // sequentially re-configure
+  // re-configure, a few services at a time
   if (servicesToReconfigure.length)
     console.log(`[llms-refresh] updating ${servicesToReconfigure.length}/${llmsStoreState().sources.length} services: ${servicesToReconfigure.map(({ service }) => service.id).join(', ')}`);
-  await servicesToReconfigure.reduce(async (promiseChain, { service, defsV }) => {
-    return promiseChain
-      .then(async () => {
-        // stamp before the attempt: a failing service is not retried on every boot, but at its next version (loop protection, as before)
-        llmsStoreActions().stampServiceDefs(service.id, defsV);
+  const queue = [...servicesToReconfigure];
+  await Promise.all(Array.from({ length: Math.min(REFRESH_CONCURRENCY, queue.length) }, async () => {
+    for (let next = queue.shift(); next; next = queue.shift()) {
+      const { service, defsV } = next;
 
-        // auto-configure this service
+      // stamp before the attempt: a failing service is not retried on every boot, but at its next version (loop protection, as before)
+      llmsStoreActions().stampServiceDefs(service.id, defsV);
+
+      // auto-configure this service - errors are logged and do not stop the others
+      try {
         await llmsUpdateModelsForServiceOrThrow(service.id, true);
-      })
-      .catch(error => {
-        // catches errors and logs them, but does not stop the chain
+      } catch (error) {
         console.warn('Auto-configuration failed for service:', service.label, error);
-      })
-      .then(() => {
-        // short delay between vendors
-        return new Promise(resolve => setTimeout(resolve, 50));
-      });
-  }, Promise.resolve());
+      }
+    }
+  }));
 
   // nothing to reconfigure: leave the models and assignments as they are
   if (!servicesToReconfigure.length) {
