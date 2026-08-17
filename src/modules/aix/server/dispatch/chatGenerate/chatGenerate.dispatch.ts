@@ -161,6 +161,21 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
             chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
           };
 
+        // [Bedrock Mantle Responses] OpenAI Responses-compatible API - required by OpenAI frontier models (GPT-5.4+), which reject Chat Completions
+        // NOTE: these models live on the '/openai/v1/responses' path, distinct from the '/v1/responses' path used by other models (per AWS model cards)
+        case 'mantle-responses':
+          const mantleResponsesUrl = bedrockURLMantle(bedrockResolveRegion(access), '/openai/v1/responses');
+          const mantleResponsesBody = aixToOpenAIResponses('openai', model, chatGenerate, streaming, false /* no reattach support for the bedrock dialect, don't store upstream */);
+          return {
+            request: {
+              ...await bedrockAccessAsync(access, 'POST', mantleResponsesUrl, mantleResponsesBody),
+              method: 'POST',
+              body: mantleResponsesBody,
+            },
+            demuxerFormat: streaming ? 'fast-sse' : null,
+            chatGenerateParse: streaming ? createOpenAIResponsesEventParser('openai') : createOpenAIResponseParserNS('openai'),
+          };
+
         default:
           const _exhaustiveCheck: never = model.vndBedrockAPI;
         // fallthrough, then throw
