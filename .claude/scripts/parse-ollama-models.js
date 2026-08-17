@@ -6,19 +6,25 @@
  *   1. Fetch HTML: curl -s "https://ollama.com/library?sort=newest" -o /tmp/ollama-newest.html
  *   2. Parse: node .claude/scripts/parse-ollama-models.js
  *
- * Outputs: pipe-delimited format: modelName|pulls|capabilities|sizes
- * Example: deepseek-r1|66200000|tools,thinking|1.5b,7b,8b,14b,32b,70b,671b
+ * Outputs: pipe-delimited format: modelName|pulls|capabilities|sizes|cloud
+ * Example: deepseek-r1|66200000|tools,thinking|1.5b,7b,8b,14b,32b,70b,671b|
+ * Example: kimi-k3|39000|vision,tools,thinking||cloud
  *
  * Filtering rules:
- *   - Top 30 newest models are always included (regardless of pull count)
- *   - After top 30, only models with 50K+ pulls are included
- *   - Models with 'cloud' capability are always excluded
- *   - Models with 'embedding' capability are always excluded
+ *   - Everything on the library index is emitted (it IS the model list of record)
+ *   - Models with 'embedding' capability are excluded (not carried in ollama.models.ts)
+ *   - Cloud-only models are NOT excluded: they are emitted with the 5th field set to 'cloud'
+ *     (they have no size chips - that is expected, not a parse failure)
  *
  * Pull counts are rounded to significant figures for stable diffs:
  *   - >=10M: round to 100K (e.g., 109,123,456 -> 109,100,000)
  *   - >=1M:  round to 10K  (e.g., 5,432,100 -> 5,430,000)
  *   - <1M:   round to 1K   (e.g., 88,700 -> 89,000)
+ *
+ * Markup note: the page has no machine-readable attributes - the fields are read off the
+ * rendered chips (indigo = capability, blue = size, cyan = cloud) and the "Pulls" label.
+ * If a run reports 0 pulls / no capabilities for every model, the markup changed again:
+ * re-derive the four regexes below from a fresh fetch.
  */
 
 const fs = require('fs');
@@ -26,8 +32,6 @@ const os = require('os');
 const path = require('path');
 
 const htmlPath = process.argv[2] || path.join(os.tmpdir(), 'ollama-newest.html');
-const TOP_N_ALWAYS_INCLUDE = 30;
-const MIN_PULLS_THRESHOLD = 50000;
 
 if (!fs.existsSync(htmlPath)) {
   console.error(`Error: HTML file not found at ${htmlPath}`);
@@ -41,6 +45,7 @@ const html = fs.readFileSync(htmlPath, 'utf8');
 // Split into model sections - each starts with <a href="/library/
 const modelSections = html.split(/<a href="\/library\//);
 const allParsedModels = [];
+let skippedEmbeddings = 0;
 
 for (let i = 1; i < modelSections.length; i++) {
   const section = modelSections[i].substring(0, 5000); // Large enough window to capture all data
@@ -50,8 +55,8 @@ for (let i = 1; i < modelSections.length; i++) {
   if (!nameMatch) continue;
   const name = nameMatch[1];
 
-  // Extract pulls using x-test-pull-count
-  const pullsMatch = section.match(/x-test-pull-count>([^<]+)</);
+  // Extract pulls from the "<count></span><span ...>&nbsp;Pulls" pair
+  const pullsMatch = section.match(/>([\d.,]+[KM]?)<\/span>\s*<span[^>]*>&nbsp;Pulls/);
   let pulls = 0;
   if (pullsMatch) {
     const pullStr = pullsMatch[1].replace(/,/g, '');
@@ -64,34 +69,35 @@ for (let i = 1; i < modelSections.length; i++) {
     }
   }
 
-  // Extract capabilities (tools, vision, embedding, thinking, cloud)
+  // Extract capabilities from the indigo chips (tools, vision, thinking, embedding, audio)
   const capabilities = [];
-  const capabilityRegex = /x-test-capability[^>]*>([^<]+)</g;
+  const capabilityRegex = /text-indigo-600[^"]*">([^<]+)</g;
   let capMatch;
   while ((capMatch = capabilityRegex.exec(section)) !== null) {
     capabilities.push(capMatch[1].trim());
   }
 
-  // Extract sizes (1.5b, 7b, etc.)
+  // Extract the cloud marker from the cyan chip (cloud-only models have no sizes)
+  const isCloud = /text-cyan-500[^"]*">\s*cloud\s*</.test(section);
+
+  // Extract sizes from the blue chips (1.5b, 7b, etc.)
   const sizes = [];
-  const sizeRegex = /x-test-size[^>]*>([^<]+)</g;
+  const sizeRegex = /text-blue-600[^"]*">([^<]+)</g;
   let sizeMatch;
   while ((sizeMatch = sizeRegex.exec(section)) !== null) {
     sizes.push(sizeMatch[1].trim());
   }
 
-  // Skip models with 'cloud' or 'embedding' capability
-  if (capabilities.includes('cloud') || capabilities.includes('embedding')) {
+  // Skip models with 'embedding' capability
+  if (capabilities.includes('embedding')) {
+    skippedEmbeddings++;
     continue;
   }
 
-  allParsedModels.push({ name, pulls: roundPulls(pulls), capabilities, sizes });
+  allParsedModels.push({ name, pulls: roundPulls(pulls), capabilities, sizes, isCloud });
 }
 
-// Apply filtering: top 30 always included, rest need 50K+ pulls
-const models = allParsedModels.filter((model, index) => {
-  return index < TOP_N_ALWAYS_INCLUDE || model.pulls >= MIN_PULLS_THRESHOLD;
-});
+const models = allParsedModels;
 
 /**
  * Round pulls to significant figures for stable output.
@@ -107,9 +113,13 @@ function roundPulls(pulls) {
 models.forEach(m => {
   const caps = m.capabilities.join(',');
   const tags = m.sizes.join(',');
-  console.log(`${m.name}|${m.pulls}|${caps}|${tags}`);
+  console.log(`${m.name}|${m.pulls}|${caps}|${tags}|${m.isCloud ? 'cloud' : ''}`);
 });
 
-const topNCount = Math.min(TOP_N_ALWAYS_INCLUDE, allParsedModels.length);
-const thresholdCount = models.length - topNCount;
-console.error(`\nTotal models: ${models.length} (top ${topNCount} newest + ${thresholdCount} with ${MIN_PULLS_THRESHOLD / 1000}K+ pulls)`);
+const cloudCount = models.filter(m => m.isCloud).length;
+const noPullsCount = models.filter(m => !m.pulls).length;
+console.error(`\nTotal models: ${models.length} (${cloudCount} cloud-only, ${skippedEmbeddings} embedding models skipped)`);
+if (noPullsCount === models.length)
+  console.error('WARNING: 0 pulls on every model - the page markup changed, fix the regexes in this script');
+else if (noPullsCount)
+  console.error(`WARNING: ${noPullsCount} model(s) parsed with 0 pulls`);
