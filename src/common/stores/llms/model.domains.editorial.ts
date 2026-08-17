@@ -95,10 +95,9 @@ export const EditorialDefaults = {
     // { vendor: 'zai',        modelId: 'glm-5.3' },
     { vendor: 'zai',        modelId: 'glm-5.2' },
     { vendor: 'deepseek',   modelId: 'deepseek-v4-pro' },
-    // NVIDIA NIM: free trial catalog, tail picks (native vendors above always win when configured)
+    // NVIDIA NIM: free trial catalog, tail picks (native vendors above always win when configured; z-ai/glm-5.2 dropped: NVIDIA EOL 2026-08-24)
     { vendor: 'nvidianim',  modelId: 'nvidia/nemotron-3-ultra-550b-a55b' }, // NVIDIA flagship, 1M ctx, reliably served
-    { vendor: 'nvidianim',  modelId: 'z-ai/glm-5.2' }, // top Elo on the NIM roster
-    { vendor: 'nvidianim',  modelId: 'deepseek-ai/deepseek-v4-pro' }, // strong but often saturated on the free endpoint
+    { vendor: 'nvidianim',  modelId: 'deepseek-ai/deepseek-v4-flash-0731' }, // replaces deepseek-v4-pro (410 Gone on NVIDIA since 2026-08-17)
   ],
 
   codeApply: [
@@ -127,14 +126,13 @@ export const EditorialDefaults = {
     { vendor: 'zai',        modelId: 'glm-5' },
     { vendor: 'moonshot',   modelId: 'kimi-k2.6' },
     { vendor: 'deepseek',   modelId: 'deepseek-v4-flash' },
-    // NVIDIA NIM: free trial catalog, tail picks
-    { vendor: 'nvidianim',  modelId: 'z-ai/glm-5.2' }, // mirrors the native zai codeApply pick
+    // NVIDIA NIM: free trial catalog, tail picks (z-ai/glm-5.2 dropped: NVIDIA EOL 2026-08-24)
     { vendor: 'nvidianim',  modelId: 'nvidia/nemotron-3-super-120b-a12b' }, // agentic/tool-use tuned, 12B active
-    { vendor: 'nvidianim',  modelId: 'deepseek-ai/deepseek-v4-flash' },
+    { vendor: 'nvidianim',  modelId: 'deepseek-ai/deepseek-v4-flash-0731' }, // dated checkpoint: the undated id is 410 Gone on NVIDIA
   ],
 
   fastUtil: [
-    { vendor: 'openai',     modelId: 'gpt-5.6-luna' }, // 2026-07-09 GA - measured ~160 tok/s (faster than 5.4-mini), 1M ctx, $1/$6
+    { vendor: 'openai',     modelId: 'gpt-5.6-luna' }, // 2026-07-09 GA - measured ~160 tok/s (faster than 5.4-mini), 1M ctx, $0.20/$1.20
     { vendor: 'openrouter', modelId: 'openai/gpt-5.6-luna' },
     { vendor: 'openai',     modelId: 'gpt-5.4-mini' },
     { vendor: 'openrouter', modelId: 'openai/gpt-5.4-mini' },
@@ -153,10 +151,9 @@ export const EditorialDefaults = {
     { vendor: 'xai',        modelId: 'grok-4.3' },
     { vendor: 'zai',        modelId: 'glm-5.2' },
     { vendor: 'deepseek',   modelId: 'deepseek-v4-flash' },
-    // NVIDIA NIM: free trial catalog, tail picks
-    { vendor: 'nvidianim',  modelId: 'nvidia/nemotron-3-nano-30b-a3b' }, // 3B active, 1M ctx
+    // NVIDIA NIM: free trial catalog, tail picks (nemotron-3-nano-30b-a3b and nemotron-nano-9b-v2 dropped: NVIDIA EOL 2026-08-25)
+    { vendor: 'nvidianim',  modelId: 'nvidia/nemotron-3.5-lightning-30b-a3b' }, // fastest Nemotron MoE, 3B active, 1M ctx
     { vendor: 'nvidianim',  modelId: 'openai/gpt-oss-20b' },
-    { vendor: 'nvidianim',  modelId: 'nvidia/nvidia-nemotron-nano-9b-v2' },
   ],
 
   imageCaption: [
@@ -175,10 +172,9 @@ export const EditorialDefaults = {
     { vendor: 'openrouter', modelId: 'openai/gpt-5.6-luna' },
     { vendor: 'openai',     modelId: 'gpt-5.4-mini' },
     { vendor: 'openrouter', modelId: 'openai/gpt-5.4-mini' },
-    // NVIDIA NIM: free trial catalog, tail picks
-    { vendor: 'nvidianim',  modelId: 'nvidia/nemotron-nano-12b-v2-vl' }, // small VL, verified image input
-    { vendor: 'nvidianim',  modelId: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning' },
-    { vendor: 'nvidianim',  modelId: 'mistralai/mistral-medium-3.5-128b' },
+    // NVIDIA NIM: free trial catalog, tail picks (nemotron-nano-12b-v2-vl dropped: NVIDIA EOL 2026-08-25)
+    { vendor: 'nvidianim',  modelId: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning' }, // omni-modal Nano: image, video and audio in
+    { vendor: 'nvidianim',  modelId: 'meta/muse-glimmer-30b' }, // replaces mistral-medium-3.5-128b (410 Gone on NVIDIA since 2026-08-17)
   ],
 
 } as const satisfies _EditorialDefaultsTable;

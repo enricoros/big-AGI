@@ -89,13 +89,14 @@ export function llmsAutoImplyInterfaces(model: ModelDescriptionSchema): ModelDes
  * @param vendor - Vendor name for logging
  * @param apiIds - Model IDs from the API
  * @param knownIds - Model IDs defined locally
- * @param options - Optional: { checkUnknown: boolean, apiFilter: (id) => boolean }
+ * @param options - Optional: { checkUnknown: boolean, apiFilter: (id) => boolean, ignoreStale: string[] }
  */
-export function llmDevCheckModels_DEV(vendor: string, apiIds: string[], knownIds: string[], options?: { checkUnknown?: boolean; apiFilter?: (id: string) => boolean }): void {
-  const { checkUnknown = true, apiFilter } = options || {};
+export function llmDevCheckModels_DEV(vendor: string, apiIds: string[], knownIds: string[], options?: { checkUnknown?: boolean; apiFilter?: (id: string) => boolean; ignoreStale?: string[] }): void {
+  const { checkUnknown = true, apiFilter, ignoreStale } = options || {};
 
-  // Stale: known but not in API
-  const stale = knownIds.filter(k => !apiIds.includes(k));
+  // Stale: known but not in API - minus the deliberately dormant defs (docs-official aliases that generate
+  // fine but never list, delisted-but-pinned ids), which are stale by construction and would fire forever
+  const stale = knownIds.filter(k => !apiIds.includes(k) && !ignoreStale?.includes(k));
   if (stale.length)
     console.log(`[DEV] ${vendor}: stale model defs (remove): [ ${stale.join(', ')} ]`);
 

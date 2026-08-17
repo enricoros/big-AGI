@@ -10,6 +10,22 @@
  * Bedrock model IDs directly.
  */
 
+// [Bedrock, 2026-08-17] Live-verified in us-east-1 with a long-term Bearer key (all three listings 200):
+// 65 on-demand foundation models, 69 SYSTEM_DEFINED inference profiles, 55 Mantle ids.
+// - Anthropic coverage is complete: every served 'anthropic.*' id resolves through llmBedrockFindAnthropicModel
+//   (fable-5, opus-5/4-8/4-7/4-6, sonnet-5/4-6, opus-4-5, sonnet-4-5, haiku-4-5, opus-4-1, sonnet-4, haiku-3).
+//   The one exception is claude-3-sonnet-20240229 (0-day path, hidden). Mythos 5 is not offered on Bedrock.
+// - Mantle also lists 6 undated 'anthropic.*' aliases, but they answer NEITHER OpenAI route ("does not support
+//   the '/v1/chat/completions' API", same for '/v1/responses') - Anthropic on Bedrock is invoke-only.
+// - Mantle accepts OpenAI tools on every id probed except writer.palmyra-vision-7b (see SKIP_MANTLE_TOOLS_IDS):
+//   zai.glm-4.7, openai.gpt-oss-120b, qwen.qwen3-coder-next and mistral.mistral-large-3-675b-instruct all
+//   returned finish_reason 'tool_calls'.
+// - Listed but not callable: google.gemma-4-{31b,26b-a4b,e2b} and xai.grok-4.3 400 on both Mantle routes
+//   ("isn't supported on this route"); openai.gpt-5.4/5.5 (+ dated ids) and the gpt-5.6-{sol,terra,luna}
+//   profiles are account-gated (401 access_denied, "contact AWS Sales"). Left uncurated ('[?]') rather than
+//   described: AWS publishes no sizes for them, and what we cannot call we cannot probe.
+// - Model list: https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
+
 import * as z from 'zod/v4';
 
 import type { ModelDescriptionSchema } from '../llm.server.types';
@@ -23,21 +39,24 @@ import { DModelParameterSpecAny } from '~/common/stores/llms/llms.parameters';
 
 const SKIP_FM_ID_CONTAINS = ['rerank'];
 const SKIP_IP_ID_STARTSWITH = ['stability.'];
+const SKIP_MANTLE_TOOLS_IDS = ['writer.palmyra-vision-7b']; // 400s: '"auto" tool choice requires --enable-auto-tool-choice and --tool-call-parser to be set' (probed 2026-08-17)
 
-// Known Mantle-only models (no matching foundation model) - override heuristics with accurate metadata
+// Known Mantle-only models (no matching foundation model) - override heuristics with accurate metadata.
+// All 11 answered /v1/chat/completions on 2026-08-17; 'qwen.qwen3-coder-next' dropped - AWS promoted it to a
+// foundation model, so it is now described from FM metadata. Corrected sizes are the creators' published specs,
+// except the gpt-oss output cap, which is Bedrock's own (converse.maxTokensMaximum on openai.gpt-oss-*-1:0).
 const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: number; vision?: true; reasoning?: true }> = {
   'deepseek.v3.1': { label: 'DeepSeek V3.1', ctx: 131072, out: 16384 },
-  'moonshotai.kimi-k2-thinking': { label: 'Kimi K2 Thinking', ctx: 131072, out: 16384 },
-  'openai.gpt-oss-20b': { label: 'GPT-OSS 20B', ctx: 131072, out: 16384 },
-  'openai.gpt-oss-120b': { label: 'GPT-OSS 120B', ctx: 131072, out: 16384 },
+  'moonshotai.kimi-k2-thinking': { label: 'Kimi K2 Thinking', ctx: 262144, out: 65536, reasoning: true },
+  'openai.gpt-oss-20b': { label: 'GPT-OSS 20B', ctx: 131072, out: 128000 },
+  'openai.gpt-oss-120b': { label: 'GPT-OSS 120B', ctx: 131072, out: 128000 },
   'qwen.qwen3-32b': { label: 'Qwen3 32B', ctx: 131072, out: 16384 },
   'qwen.qwen3-235b-a22b-2507': { label: 'Qwen3 235B A22B', ctx: 131072, out: 16384 },
   'qwen.qwen3-coder-30b-a3b-instruct': { label: 'Qwen3 Coder 30B', ctx: 131072, out: 16384 },
   'qwen.qwen3-coder-480b-a35b-instruct': { label: 'Qwen3 Coder 480B', ctx: 131072, out: 16384 },
-  'qwen.qwen3-coder-next': { label: 'Qwen3 Coder Next', ctx: 131072, out: 16384 },
   'qwen.qwen3-next-80b-a3b-instruct': { label: 'Qwen3 Next 80B', ctx: 131072, out: 16384 },
   'qwen.qwen3-vl-235b-a22b-instruct': { label: 'Qwen3 VL 235B', ctx: 131072, out: 16384, vision: true },
-  'zai.glm-4.6': { label: 'GLM 4.6', ctx: 131072, out: 16384 },
+  'zai.glm-4.6': { label: 'GLM 4.6', ctx: 204800, out: 131072 },
 } as const;
 
 
@@ -80,7 +99,7 @@ export namespace BedrockWire_API_Models_List {
   const _FoundationModel_schema = z.object({
     modelId: z.string(),
     modelName: z.string(),
-    providerName: z.enum(['Amazon', 'Anthropic', 'Cohere', 'DeepSeek', 'Google', 'Luma AI', 'Meta', 'MiniMax', 'Mistral AI', 'Moonshot AI', 'NVIDIA', 'OpenAI', 'Qwen', 'Stability AI', 'Z.AI']).or(z.string()),
+    providerName: z.enum(['AI21 Labs', 'Amazon', 'Anthropic', 'Cohere', 'DeepSeek', 'Google', 'Luma AI', 'Meta', 'MiniMax', 'Mistral AI', 'Moonshot AI', 'NVIDIA', 'OpenAI', 'Qwen', 'Stability AI', 'TwelveLabs', 'Writer', 'Z.AI']).or(z.string()),
     inputModalities: z.array(z.enum(['TEXT', 'IMAGE', 'EMBEDDING', 'VIDEO', 'SPEECH']).or(z.string())),
     outputModalities: z.array(z.enum(['TEXT', 'IMAGE', 'EMBEDDING', 'VIDEO', 'SPEECH']).or(z.string())),
     responseStreamingSupported: z.boolean().nullable().optional(),
@@ -92,6 +111,14 @@ export namespace BedrockWire_API_Models_List {
     }).optional(),
     // Converse API metadata (present on newer models, null on legacy)
     converse: z.object({
+      // two meanings, one field - the serving stack decides which (probed 2026-08-17, us-east-1):
+      //  - Amazon first-party: ceiling of the `maxTokens` inference param, i.e. max OUTPUT tokens. nova-pro
+      //    reports 10000; maxTokens=10001 is rejected ("exceeds the model limit of 10000") while a 62,223-token
+      //    prompt is accepted (context is 300K).
+      //  - third-party (vLLM-served) fleet: the CONTEXT window, input+output counted against it. Requesting
+      //    maxTokens == this value 400s with "This model's maximum context length is <same number> tokens"
+      //    (voxtral-mini 32768, gemma-3 131072, glm-4.7 202752, palmyra-vision 4096, qwen3-coder-next 262144).
+      //    Not always exact either: minimax-m2 publishes 409600 but the backend caps output at 196608.
       maxTokensMaximum: z.number().nullable().optional(),
       reasoningSupported: z.object({
         embedded: z.boolean(),
@@ -192,15 +219,22 @@ export function bedrockModelsToDescriptions(
   }>();
 
   // Foundation Models
+  const excludedFMIds = new Set<string>(); // non-chat FMs, so we can drop their inference profiles too
   for (const fm of foundationModels.modelSummaries) {
     const baseId = fm.modelId; // e.g. 'google.gemma-3-4b-it', 'moonshotai.kimi-k2.5'
     const hasMantle = mantleModelIds.has(baseId);
 
     // exclusion by pattern
-    if (SKIP_FM_ID_CONTAINS.some(s => baseId.includes(s))) continue;
+    if (SKIP_FM_ID_CONTAINS.some(s => baseId.includes(s))) {
+      excludedFMIds.add(baseId);
+      continue;
+    }
 
     // excludes non text->text, such as embedding, image gen, video gen, speech-only
-    if (!fm.inputModalities?.includes('TEXT') || !fm.outputModalities?.includes('TEXT')) continue;
+    if (!fm.inputModalities?.includes('TEXT') || !fm.outputModalities?.includes('TEXT')) {
+      excludedFMIds.add(baseId);
+      continue;
+    }
 
     modelMap.set(baseId, {
       id: baseId,
@@ -230,6 +264,10 @@ export function bedrockModelsToDescriptions(
     // denylist 'start..'
     const baseId = _stripRegionPrefix(ip.inferenceProfileId);
     if (SKIP_IP_ID_STARTSWITH.some(s => baseId.startsWith(s))) continue;
+
+    // profiles carry no modalities of their own: inherit the FM's exclusion (e.g. cohere.embed-v4:0, twelvelabs.marengo-embed-*)
+    if (excludedFMIds.has(baseId)) continue;
+
     const hasMantle = mantleModelIds.has(baseId);
 
     // check if there's a matching foundation model (not anthropic, we map them differently)
@@ -306,17 +344,25 @@ export function bedrockModelsToDescriptions(
       const interfaces = [LLM_IF_OAI_Chat];
       if (modelMeta.reasoning) interfaces.push(LLM_IF_OAI_Reasoning);
       if (modelMeta.inputImage) interfaces.push(LLM_IF_OAI_Vision);
-      if (isConverseCapable && !isMantle) interfaces.push(LLM_IF_OAI_Fn); // Converse models support toolConfig
+      if (isMantle ? !SKIP_MANTLE_TOOLS_IDS.includes(_stripRegionPrefix(modelId)) : isConverseCapable) interfaces.push(LLM_IF_OAI_Fn); // Converse: toolConfig; Mantle: OpenAI tools (both live-probed 2026-08-17)
       if (modelMeta.outputAudio) interfaces.push(LLM_IF_Outputs_Audio);
       if (modelMeta.outputImage) interfaces.push(LLM_IF_Outputs_Image);
-      let label = modelMeta.isProfile ? _labelFromProfile(modelMeta.label, modelId) : modelMeta.label;
+      const label = modelMeta.isProfile ? _labelFromProfile(modelMeta.label, modelId) : modelMeta.label;
+      const labelRepeatsProvider = label.toLowerCase().startsWith(modelMeta.provider.toLowerCase()); // case-insensitive: 'Openai' vs 'OpenAI GPT-5.6 Sol'
       const apiLabel = isMantle ? 'OpenAI-Compatible' : isConverseCapable ? 'Converse' : 'Unsupported';
       // no `pubDate`: AWS only offers host-onboarding dates for these third-party models (see pubDate note atop the wire types)
       descriptions.push({
         id: modelId,
-        label: `${isMantle || isConverseCapable ? symbolMantle : '🚧 '}${label.startsWith(modelMeta.provider) ? '' : (modelMeta.provider + ' ')}${label}`,
+        label: `${isMantle || isConverseCapable ? symbolMantle : '🚧 '}${labelRepeatsProvider ? '' : (modelMeta.provider + ' ')}${label}`,
         description: `${modelMeta.provider} model via ${apiLabel} API${modelMeta.isProfile ? ' (Bedrock Inference Profile)' : ' (Bedrock Foundation Model)'}`,
-        contextWindow: modelMeta.converseMaxTokens ?? null,
+        // [2026-08-17 probes] converse.maxTokensMaximum means different things per serving stack: on the
+        // vLLM-served third-party fleet the backend calls it "this model's maximum context length" and counts
+        // input+output against it (voxtral-mini 32768, gemma-3 131072, glm-4.7 202752, palmyra-vision 4096 all
+        // 400 when maxTokens == that value); on Amazon first-party it IS the output cap (nova-pro reports 10000
+        // yet accepts a 62,223-token prompt; AWS docs: 300K context / 10K max output).
+        ...(modelMeta.provider === 'Amazon'
+          ? { contextWindow: null, ...(modelMeta.converseMaxTokens ? { maxCompletionTokens: modelMeta.converseMaxTokens } : {}) }
+          : { contextWindow: modelMeta.converseMaxTokens ?? null }),
         interfaces,
         parameterSpecs: [isMantle ? bedrockAPIMantle : bedrockAPIConverse],
         hidden: !(isMantle || isConverseCapable), // show if mantle or converse-capable
@@ -327,9 +373,12 @@ export function bedrockModelsToDescriptions(
 
   // -> Add remaining Mantle-only models (not matched to any FM/IP)
   for (const mantleId of remainingMantleModelIds) {
+    // Anthropic aliases are listed by Mantle but rejected by both OpenAI routes (invoke-only) - and already described above
+    if (_seemsAnthropicBedrockModel(mantleId)) continue;
     const known = KNOWN_MANTLE_ONLY[mantleId];
     const provider = _extractMantleProvider(mantleId);
     const interfaces = [LLM_IF_OAI_Chat];
+    if (!SKIP_MANTLE_TOOLS_IDS.includes(_stripRegionPrefix(mantleId))) interfaces.push(LLM_IF_OAI_Fn); // same no-tools rule as the fused loop above (probed 2026-08-17)
     if (known?.vision) interfaces.push(LLM_IF_OAI_Vision);
     if (known?.reasoning) interfaces.push(LLM_IF_OAI_Reasoning);
     descriptions.push({
@@ -340,7 +389,7 @@ export function bedrockModelsToDescriptions(
       maxCompletionTokens: known?.out ?? 16384,
       interfaces,
       parameterSpecs: [bedrockAPIMantle],
-      hidden: true, // we know it can run, but we don't have models details
+      hidden: true, // listed by Mantle, but unverified: some ids 400 with "isn't supported on this route", others are account-gated
     });
   }
 
