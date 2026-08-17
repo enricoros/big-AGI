@@ -696,7 +696,10 @@ export namespace AnthropicWire_API_Models_List {
 
 export function llmsAntValidateModelDefs_DEV(availableModels: AnthropicWire_API_Models_List.ModelObject[]): void {
   if (DEV_DEBUG_ANTHROPIC_MODELS) {
-    llmDevCheckModels_DEV('Anthropic', availableModels.map(m => m.id), hardcodedAnthropicModels.map(m => m.id));
+    llmDevCheckModels_DEV('Anthropic', availableModels.map(m => m.id), hardcodedAnthropicModels.map(m => m.id), {
+      // deliberate keeps: invite-only Mythos 5 + retired ids still served by Bedrock/OpenRouter (file header rule)
+      ignoreStale: ['claude-mythos-5', 'claude-opus-4-1-20250805', 'claude-opus-4-20250514', 'claude-sonnet-4-20250514', 'claude-3-7-sonnet-20250219', 'claude-3-5-haiku-20241022', 'claude-3-haiku-20240307'],
+    });
     _llmsAntCheckApiCapabilities_DEV(availableModels);
     _llmsAntCheckInfSpeedTiers_DEV();
   }

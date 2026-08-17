@@ -51,8 +51,9 @@ const _knownCerebrasModels = llmsDefineModels<_CerebrasModelDef>()([
     maxCompletionTokens: 40960,
     interfaces: [...IF_CHAT_FN, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
     parameterSpecs: [
-      // reasoning off by default; docs state low/medium/high are currently EQUIVALENT (on/off only, tiers kept for cross-family compat)
-      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high'] },
+      // reasoning off by default; docs state low/medium/high are "currently equivalent" - collapsed to Off/High (2026-08-17),
+      // restore the ladder if Cerebras ever differentiates them
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'high'] },
     ],
     // cache: no discount - cached input bills at the standard input rate (rate must still be declared, or cached tokens would price at 0)
     chatPrice: { input: 0.99, output: 1.49, cache: { cType: 'oai-ac', read: 0.99 } },

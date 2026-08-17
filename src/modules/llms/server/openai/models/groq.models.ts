@@ -184,7 +184,10 @@ export function groqModelToModelDescription(_model: unknown): ModelDescriptionSc
 
 export function groqValidateModelDefs_DEV(apiModelIds: string[]): void {
   if (DEV_DEBUG_GROQ_MODELS) {
-    llmDevCheckModels_DEV('Groq', apiModelIds, _knownGroqModels.map(m => m.idPrefix), { checkUnknown: false });
+    llmDevCheckModels_DEV('Groq', apiModelIds, _knownGroqModels.map(m => m.idPrefix), {
+      checkUnknown: false,
+      ignoreStale: ['minimaxai/minimax-m2.7'], // enterprise-only, never lists for standard keys
+    });
   }
 }
 
