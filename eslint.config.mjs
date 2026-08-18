@@ -92,7 +92,7 @@ export default defineConfig([{
     ...pluginCompat.configs["flat/recommended"],
     settings: {
         // feature-detected in-code (fallback/guard present), so they don't break older browsers
-        polyfills: ["requestIdleCallback", "Intl.Segmenter", "ClipboardItem"],
+        polyfills: ["requestIdleCallback", "Intl.Segmenter", "ClipboardItem", "navigator.wakeLock"],
     },
 }, {
     // Node-side code (tools/ scripts, the src tests that run under tsx): the browserslist floor

@@ -18,6 +18,7 @@ import { llmChatPricing_adjusted } from '~/common/stores/llms/llms.pricing';
 import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
 import { stripUndefined } from '~/common/util/objectUtils';
 import { videoPlayObjectUrl } from '~/common/util/video/videoPlayManaged';
+import { wakeLockHold } from '~/common/util/screenWakeLock';
 import { webGeolocationCached } from '~/common/util/webGeolocationUtils';
 
 
@@ -825,6 +826,18 @@ export interface AixChatGenerateContent_LL_Result extends AixChatGenerateContent
  */
 export type AixChatGenerateTerminal_LL = 'completed' | 'aborted' | 'failed';
 
+
+async function _aixChatGenerateContent_LL(...args: Parameters<typeof _aixChatGenerateContent_LL_unlocked>): Promise<AixChatGenerateContent_LL_Result> {
+  // [mobile] hold the screen wake lock for the whole generation - a locked screen kills the stream; ref-counted across parallel generations (Beam)
+  const wakeLockRelease = wakeLockHold(`aix:${args[3].name}` /* aixContext */);
+  try {
+    return await _aixChatGenerateContent_LL_unlocked(...args);
+  } finally {
+    wakeLockRelease();
+  }
+}
+
+
 /**
  * LL (Level 1) - Client-side ChatGenerateContent, with optional streaming.
  *
@@ -861,7 +874,7 @@ export type AixChatGenerateTerminal_LL = 'completed' | 'aborted' | 'failed';
  * @throws Error if there are rare LL errors, or if [CSF] client-side fails to load
  *
  */
-async function _aixChatGenerateContent_LL(
+async function _aixChatGenerateContent_LL_unlocked(
   // aix inputs
   aixAccess: AixAPI_Access,
   aixModel: AixAPI_Model,
