@@ -25,8 +25,9 @@ type PageTransformSchema = z.infer<typeof pageTransformSchema>;
 
 const fetchPageInputSchema = z.object({
   access: z.object({
-    dialect: z.enum(['browse-wss']),
+    dialect: z.enum(['browse-wss', 'browse-jina']),
     wssEndpoint: z.string().trim().optional(),
+    jinaApiKey: z.string().trim().optional(),
   }),
   requests: z.array(z.object({
     url: z.url(),
@@ -73,6 +74,36 @@ export const browseRouter = createTRPCRouter({
   fetchPagesStreaming: publicProcedure
     .input(fetchPageInputSchema)
     .mutation(async function* ({ input: { access, requests } }) {
+
+      // Jina Reader dialect: plain HTTP fetch via r.jina.ai, no browser required
+      if (access.dialect === 'browse-jina') {
+        const jinaApiKey = (access.jinaApiKey || env.JINA_API_KEY || '').trim();
+        // NOTE: r.jina.ai also works keyless at a low rate limit, so an empty key is allowed
+
+        yield { type: 'ack-start' as const };
+
+        const results = await Promise.allSettled(requests.map(request =>
+          workerJina(request.url, request.transforms, jinaApiKey),
+        ));
+
+        const pages: FetchPageWorkerOutputSchema[] = results.map((result, index) =>
+          result.status === 'fulfilled' ? result.value : {
+            url: requests[index].url,
+            title: '',
+            content: undefined,
+            file: undefined,
+            error: result.reason instanceof Error ? result.reason.message : String(result.reason || 'Unknown fetch error'),
+            stopReason: 'error' as const,
+            screenshot: undefined,
+          });
+
+        yield {
+          type: 'result' as const,
+          pages,
+          workerHost: 'r.jina.ai',
+        };
+        return;
+      }
 
       // get endpoint
       const endpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
@@ -338,6 +369,90 @@ function _shortError(error: any): string {
   const name = error?.name || 'Error';
   const message = (error?.message || '').split('\n')[0].trim();
   return message ? `${name}: ${message}` : name;
+}
+
+
+// configuration
+const JINA_WORKER_TIMEOUT = 45 * 1000; // 45 seconds - Jina Reader can be slow on heavy pages
+
+/**
+ * Fetches a page via the Jina Reader API (https://r.jina.ai/<url>).
+ * Returns clean LLM-ready markdown - no browser required. No screenshots, no file downloads.
+ */
+async function workerJina(
+  targetUrl: string,
+  transforms: PageTransformSchema[],
+  apiKey: string,
+): Promise<FetchPageWorkerOutputSchema> {
+
+  const result: FetchPageWorkerOutputSchema = {
+    url: targetUrl,
+    title: '',
+    content: undefined,
+    file: undefined,
+    error: undefined,
+    stopReason: 'error',
+    screenshot: undefined,
+  };
+
+  // Jina Reader does not produce HTML - if that's all the caller wants, bail early
+  const wantsMarkdown = transforms.includes('markdown');
+  const wantsText = transforms.includes('text');
+  if (!wantsMarkdown && !wantsText) {
+    result.error = '[Jina] Reader provides markdown/text only (no raw HTML, no screenshots)';
+    return result;
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`https://r.jina.ai/${targetUrl}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Return-Format': 'markdown',
+        ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}),
+      },
+      signal: AbortSignal.timeout(JINA_WORKER_TIMEOUT),
+    });
+  } catch (error: any) {
+    const isTimeout = error?.name === 'TimeoutError' || error?.name === 'AbortError';
+    result.stopReason = isTimeout ? 'timeout' : 'error';
+    result.error = '[Jina] ' + (isTimeout ? 'Request timed out' : (error?.message || 'Connection error'));
+    return result;
+  }
+
+  // parse the JSON envelope: { code, status, data: { title, url, content, ... } }
+  let envelope: any;
+  try {
+    envelope = await response.json();
+  } catch {
+    result.error = `[Jina] Invalid response (HTTP ${response.status})`;
+    return result;
+  }
+
+  if (!response.ok || !envelope?.data) {
+    const message = envelope?.readableMessage || envelope?.message || `HTTP ${response.status}`;
+    result.error = `[Jina] ${message}`;
+    if (response.status === 401 || envelope?.code === 401)
+      result.error = '[Jina] Authentication failed - check your Jina API key';
+    if (response.status === 429 || envelope?.code === 429)
+      result.error = '[Jina] Rate limited - add a Jina API key or try again later';
+    return result;
+  }
+
+  const markdown = typeof envelope.data.content === 'string' ? envelope.data.content : '';
+  if (!markdown.trim()) {
+    result.error = '[Jina] Empty content';
+    return result;
+  }
+
+  result.title = typeof envelope.data.title === 'string' ? envelope.data.title : '';
+  result.content = {};
+  if (wantsMarkdown)
+    result.content.markdown = markdown;
+  if (wantsText)
+    result.content.text = markdown; // markdown doubles as readable text
+  result.stopReason = 'end';
+  return result;
 }
 
 

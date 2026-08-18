@@ -23,11 +23,59 @@ export const googleSearchRouter = createTRPCRouter({
     .input(z.object({
       query: z.string(),
       items: z.number(),
+      provider: z.enum(['google', 'jina']).optional(), // defaults to google for backwards compatibility
       key: z.string().optional(), // could be server-set
       cx: z.string().optional(), // could be server-set
+      jinaKey: z.string().optional(), // could be server-set (JINA_API_KEY)
       restrictToDomain: z.string().nullable(),
     }))
     .query(async ({ input }): Promise<{ pages: Search.API.BriefResult[] }> => {
+
+      // Jina Search (s.jina.ai) - used when requested, or when Google credentials
+      // are missing but a Jina key is available
+      const googleKey = (input.key || env.GOOGLE_CLOUD_API_KEY || '').trim();
+      const googleCx = (input.cx || env.GOOGLE_CSE_ID || '').trim();
+      const jinaKey = (input.jinaKey || env.JINA_API_KEY || '').trim();
+      const useJina = input.provider === 'jina' || ((!googleKey || !googleCx) && !!jinaKey);
+
+      if (useJina) {
+        if (!jinaKey)
+          throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Missing Jina API Key (s.jina.ai requires one)' });
+
+        // domain restriction via the standard site: operator
+        const jinaQuery = input.restrictToDomain
+          ? `${input.query.trim()} site:${input.restrictToDomain.trim()}`
+          : input.query.trim();
+
+        const data: {
+          code?: number, status?: number,
+          data?: { title?: string, url?: string, description?: string, content?: string }[],
+          message?: string, readableMessage?: string,
+        } = await fetchJsonOrTRPCThrow({
+          url: `https://s.jina.ai/${encodeURIComponent(jinaQuery)}`,
+          name: 'Jina Search',
+          headers: {
+            'Accept': 'application/json',
+            'Accept-Encoding': 'gzip',
+            'Authorization': `Bearer ${jinaKey}`,
+            'User-Agent': 'Big-AGI (gzip)',
+          },
+        });
+
+        if (!data.data)
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: `Jina Search API error: ${data.readableMessage || data.message || 'unknown error'}`,
+          });
+
+        return {
+          pages: data.data.slice(0, input.items).map((result): Search.API.BriefResult => ({
+            title: result.title || '',
+            link: result.url || '',
+            snippet: result.description || '',
+          })),
+        };
+      }
 
       const customSearchParams: Search.Wire.RequestParams = {
         q: input.query.trim(),
