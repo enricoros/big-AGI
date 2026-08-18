@@ -65,8 +65,11 @@ export const LLMS_DEFS_MANIFEST = {
       'openai/wiretypes/openrouter.wiretypes.ts',
       'anthropic/anthropic.models.ts',
       'gemini/gemini.models.ts',
+      'openai/models/moonshot.models.ts',
       'openai/models/openai.models.ts',
+      'openai/models/sakanaai.models.ts',
       'openai/models/xai.models.ts',
+      'openai/models/zai.models.ts',
     ],
   },
   perplexity: { files: ['openai/models/perplexity.models.ts'] },
@@ -100,8 +103,8 @@ export const LLMS_DEFS_EXTRA_BUCKETS = {
   // openai.models.ts is claimed too: proxies to OpenAI (LiteLLM, gateways) sit behind a
   // custom host but are parsed by the first-party parser, so its edits must reach them.
   // openrouter.models.ts is claimed for the Nous Research mapper reuse; its other
-  // first-party lookup imports (anthropic/gemini/xai) are deliberately untracked here
-  // (owner decision: lookalike hosts do not roll on those - bump `epoch` for a roll).
+  // first-party lookup imports (anthropic/gemini/moonshot/sakanaai/xai/zai) are deliberately
+  // untracked here (owner decision: lookalike hosts do not roll on those - bump `epoch` for a roll).
   _openaiCompat: {
     files: [
       'openai/models/arceeai.models.ts',
@@ -124,7 +127,10 @@ export const LLMS_DEFS_EXTRA_BUCKETS = {
     ignoreImports: [
       'anthropic/anthropic.models.ts',
       'gemini/gemini.models.ts',
+      'openai/models/moonshot.models.ts',
+      'openai/models/sakanaai.models.ts',
       'openai/models/xai.models.ts',
+      'openai/models/zai.models.ts',
     ],
   },
 
