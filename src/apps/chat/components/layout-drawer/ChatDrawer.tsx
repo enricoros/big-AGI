@@ -36,6 +36,7 @@ import { ChatDrawerStorageWarning } from './ChatDrawerStorageWarning';
 import { ChatFolderList } from './folders/ChatFolderList';
 import { ChatNavGrouping, ChatSearchDepth, ChatSearchSorting, isDrawerSearching, useChatDrawerRenderItems } from './useChatDrawerRenderItems';
 import { ClearFolderText } from '../layout-bar/useFolderDropdown';
+import { AGE_FILTER_OPTIONS } from './ageFilter';
 import { useChatDrawerFilters } from '../../store-app-chat';
 
 
@@ -95,12 +96,13 @@ function ChatDrawer(props: {
     filterHasImageAssets, toggleFilterHasImageAssets,
     filterHasStars, toggleFilterHasStars,
     filterIsArchived, toggleFilterIsArchived,
+    filterOlderThanDays, setFilterOlderThanDays,
     showPersonaIcons, toggleShowPersonaIcons,
     showRelativeSize, toggleShowRelativeSize,
   } = useChatDrawerFilters();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatDrawerRenderItems(
-    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasBeamOpen, filterHasStars, filterHasImageAssets, filterHasDocFragments, filterIsArchived, navGrouping, searchSorting, showRelativeSize, searchDepth,
+    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasBeamOpen, filterHasStars, filterHasImageAssets, filterHasDocFragments, filterIsArchived, filterOlderThanDays, navGrouping, searchSorting, showRelativeSize, searchDepth,
   );
   const [uiComplexityMode, contentScaling] = useUIPreferencesStore(useShallow((state) => [state.complexityMode, state.contentScaling]));
   const zenMode = uiComplexityMode === 'minimal';
@@ -248,6 +250,25 @@ function ChatDrawer(props: {
             Beam Open <ChatBeamIcon />
           </MenuItem>
 
+          {/* Age filter (compact chip row for mobile) */}
+          <ListDivider />
+          <ListItem sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
+            <Typography level='body-sm' sx={{ mr: 0.5 }}>Age</Typography>
+            {AGE_FILTER_OPTIONS.map(({ days, label, shortLabel }) => (
+              <Button
+                key={label}
+                aria-label={label}
+                size='sm'
+                variant={filterOlderThanDays === days ? 'solid' : 'soft'}
+                color={filterOlderThanDays === days ? 'primary' : 'neutral'}
+                onClick={() => setFilterOlderThanDays(days)}
+                sx={{ minHeight: 0, px: 1, fontSize: 'xs', borderRadius: 'sm' }}
+              >
+                {shortLabel}
+              </Button>
+            ))}
+          </ListItem>
+
           <ListDivider />
           <ListItem>
             <Typography level='body-sm'>Show</Typography>
@@ -295,8 +316,8 @@ function ChatDrawer(props: {
       )}
     </Dropdown>
   ), [
-    filterHasBeamOpen, filterHasDocFragments, filterHasImageAssets, filterHasStars, isSearching, navGrouping, searchSorting, searchDepth, filterIsArchived, showPersonaIcons, showRelativeSize,
-    toggleFilterHasBeamOpen, toggleFilterHasDocFragments, toggleFilterHasImageAssets, toggleFilterHasStars, toggleFilterIsArchived, toggleShowPersonaIcons, toggleShowRelativeSize,
+    filterHasBeamOpen, filterHasDocFragments, filterHasImageAssets, filterHasStars, isSearching, navGrouping, searchSorting, searchDepth, filterIsArchived, showPersonaIcons, showRelativeSize, filterOlderThanDays,
+    toggleFilterHasBeamOpen, toggleFilterHasDocFragments, toggleFilterHasImageAssets, toggleFilterHasStars, toggleFilterIsArchived, toggleShowPersonaIcons, toggleShowRelativeSize, setFilterOlderThanDays,
   ]);
 
   const displayNavItems = React.useMemo(() => {
@@ -315,7 +336,7 @@ function ChatDrawer(props: {
   // when filters/search transition from active to inactive, the active chat may end up
   // submerged below the fold of a much longer list - scroll it back into view
   const chatsListRef = React.useRef<HTMLDivElement>(null);
-  const isFiltering = isSearching || filterHasBeamOpen || filterHasDocFragments || filterHasImageAssets || filterHasStars || filterIsArchived;
+  const isFiltering = isSearching || filterHasBeamOpen || filterHasDocFragments || filterHasImageAssets || filterHasStars || filterIsArchived || filterOlderThanDays !== null;
   React.useLayoutEffect(() => {
     if (isFiltering) return;
     const activeEl = chatsListRef.current?.querySelector('[aria-current="true"]') as HTMLElement | null;
@@ -441,7 +462,7 @@ function ChatDrawer(props: {
                 {filterHasStars && <StarOutlineRoundedIcon sx={{ color: 'primary.softColor', fontSize: 'xl', mb: -0.5, mr: 1 }} />}
                 {item.message}
               </Typography>
-              {(filterHasBeamOpen || filterHasStars || filterHasImageAssets || filterHasDocFragments || filterIsArchived) && (
+              {(filterHasBeamOpen || filterHasStars || filterHasImageAssets || filterHasDocFragments || filterIsArchived || filterOlderThanDays !== null) && (
                 <Tooltip title='Clear Filters'>
                   <IconButton size='sm' color='primary' onClick={clearFilters}>
                     <ClearIcon />

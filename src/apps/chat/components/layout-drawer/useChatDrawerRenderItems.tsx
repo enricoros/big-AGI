@@ -5,6 +5,7 @@ import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 import type { DFolder } from '~/common/stores/folders/store-chat-folders';
 import { DMessage, DMessageUserFlag, MESSAGE_FLAG_STARRED, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { filterOlderThanMatches } from './ageFilter';
 import { createTimeBucketClassifierEn } from '~/common/util/timeUtils';
 import { isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
@@ -91,6 +92,7 @@ export function useChatDrawerRenderItems(
   filterHasImageAssets: boolean,
   filterHasDocFragments: boolean,
   filterIsArchived: boolean,
+  filterOlderThanDays: number | null,
   grouping: ChatNavGrouping,
   searchSorting: ChatSearchSorting,
   showRelativeSize: boolean,
@@ -123,11 +125,15 @@ export function useChatDrawerRenderItems(
       const conversationsInFolder = !activeFolder ? conversations
         : conversations.filter(_c => activeFolder.conversationIds.includes(_c.id));
 
+      // filter 1.5: last-activity older than the selected cutoff
+      const conversationsInAge = filterOlderThanDays === null ? conversationsInFolder
+        : conversationsInFolder.filter(_c => filterOlderThanMatches(_c.updated || _c.created || 0, filterOlderThanDays));
+
       // filter 2: preparation: lowercase the query
       const { isSearching, lcTextQuery } = isDrawerSearching(filterByQuery);
 
       // transform (the conversations into ChatNavigationItemData) + filter2 (if searching)
-      const chatNavItems = conversationsInFolder
+      const chatNavItems = conversationsInAge
         .map((_c): ChatNavigationItemData | null => {
 
           // optimized reduction to find stars/images/docs/and lowercased text for search

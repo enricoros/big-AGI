@@ -65,6 +65,9 @@ interface AppChatStore {
   filterIsArchived: boolean;
   toggleFilterIsArchived: () => void;
 
+  filterOlderThanDays: number | null;
+  setFilterOlderThanDays: (days: number | null) => void;
+
   micTimeoutMs: number;
   setMicTimeoutMs: (micTimeoutMs: number) => void;
 
@@ -130,7 +133,7 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     // Chat UI
 
-    clearFilters: () => _set({ filterIsArchived: false, filterHasBeamOpen: false, filterHasDocFragments: false, filterHasImageAssets: false, filterHasStars: false }),
+    clearFilters: () => _set({ filterIsArchived: false, filterHasBeamOpen: false, filterHasDocFragments: false, filterHasImageAssets: false, filterHasStars: false, filterOlderThanDays: null }),
 
     filterHasBeamOpen: false,
     toggleFilterHasBeamOpen: () => _set(({ filterHasBeamOpen }) => ({ filterHasBeamOpen: !filterHasBeamOpen })),
@@ -146,6 +149,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     filterIsArchived: false,
     toggleFilterIsArchived: () => _set(({ filterIsArchived }) => ({ filterIsArchived: !filterIsArchived })),
+
+    filterOlderThanDays: null,
+    setFilterOlderThanDays: (filterOlderThanDays: number | null) => _set({ filterOlderThanDays }),
 
     micTimeoutMs: 5000,
     setMicTimeoutMs: (micTimeoutMs: number) => _set({ micTimeoutMs }),
@@ -268,9 +274,11 @@ export function useChatDrawerFilters() {
     filterHasImageAssets: state.filterHasImageAssets,
     filterHasStars: state.filterHasStars,
     filterIsArchived: state.filterIsArchived,
+    filterOlderThanDays: state.filterOlderThanDays,
     showPersonaIcons: state.showPersonaIcons2,
     showRelativeSize: state.showRelativeSize,
     clearFilters: state.clearFilters,
+    setFilterOlderThanDays: state.setFilterOlderThanDays,
     toggleFilterHasBeamOpen: state.toggleFilterHasBeamOpen,
     toggleFilterHasDocFragments: state.toggleFilterHasDocFragments,
     toggleFilterHasImageAssets: state.toggleFilterHasImageAssets,
