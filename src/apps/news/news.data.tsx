@@ -73,6 +73,21 @@ export const DevNewsItem: NewsItem = {
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   {
+    versionCode: '2.1.0',
+    versionName: 'Weights Dust',
+    versionDate: new Date('2026-08-21T12:00:00Z'),
+    items: [
+      { text: <>New vendors: <B>Cerebras</B>, <B>NVIDIA NIM</B>, <B>Sakana AI</B>, <B>Cohere</B>, <B>Modular</B>, <B>Nous Research</B></> },
+      { text: <><B>Opus 5</B>, <B>Sonnet 5</B>, <B>Fable 5</B>, <B>GPT-5.6</B> family, <B>Gemini 3.7</B>, <B>Grok 4.6</B>, <B>Kimi K3</B>, <B>GLM-5.3</B>, <B>Qwen 3.7</B></> },
+      { text: <><B>Transcription</B>: multi-vendor speech-to-text with Deepgram and OpenAI, diarization, topics, sentiment</> },
+      { text: <>Sandboxes and containers: Anthropic standalone toggle, OpenAI container files, Gemini Omni and Antigravity</> },
+      { text: <>Reasoning control: GPT-5.6 modes and max effort, OpenRouter on/off, prompt caching</> },
+      { text: <>Draw: OpenRouter image generation; Settings redesign; model assignments and Auto picks</> },
+      { text: <>Multi-tab on Web Locks, cache-clear warning, chunk-load recovery, wider browser support</> },
+      { text: <>Developers: AIX Protocol Lab, protocol eviscerators, per-vendor model-defs refresh</>, dev: true },
+    ],
+  },
+  {
     versionCode: '2.0.5',
     versionName: 'Roberto',
     versionDate: new Date('2026-05-13T12:00:00Z'),
