@@ -296,25 +296,72 @@ export function ModelsWizard(props: {
   const isLocal = activeCategory === 'local';
 
   return (
-    <Sheet variant='soft' sx={_styles.container}>
+    <Sheet variant='soft' sx={{
+      ..._styles.container,
+      borderRadius: '16px',
+      backgroundColor: 'background.surface',
+      border: '1px solid var(--joy-palette-divider)',
+    }}>
 
+      {/* Header with Apple-style Segmented Control */}
       <Box sx={props.isMobile ? _styles.text1Mobile : _styles.text1}>
-        <Typography component='div' level='title-sm'>
-          Enter {isLocal ? 'the addresses of ' : 'your API keys for '}
-          <Chip variant={!isLocal ? 'solid' : 'outlined'} sx={{ mx: 0.25 }} onClick={() => setActiveCategory('popular')}>
-            Popular
-          </Chip>
-          <Chip variant={isLocal ? 'solid' : 'outlined'} sx={{ mx: 0.25 }} onClick={() => setActiveCategory('local')}>
-            Local
-          </Chip>
-          {' '}<Box component='a' onClick={props.onSwitchToWhy} sx={{ color: 'text.tertiary', cursor: 'pointer' }}>AI services </Box> below.
-        </Typography>
-        {/*<Box sx={{ fontSize: 'sm', color: 'text.primary' }}>*/}
-        {/*  Enter API keys to connect your AI services.{' '}*/}
-        {/*  {!props.isMobile && <>Switch to <Box component='a' onClick={props.onSwitchToAdvanced} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>Advanced</Box> for more options.</>}*/}
-        {/*</Box>*/}
+        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+          <Typography component='span' level='title-sm' sx={{ letterSpacing: '-0.01em' }}>
+            Enter {isLocal ? 'addresses for ' : 'API keys for '}
+          </Typography>
+          
+          {/* Apple Segmented Control */}
+          <Box sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            p: '3px',
+            borderRadius: '10px',
+            backgroundColor: 'background.level2',
+            gap: '2px',
+          }}>
+            <Chip
+              size='sm'
+              variant={!isLocal ? 'solid' : 'plain'}
+              color={!isLocal ? 'primary' : 'neutral'}
+              onClick={() => setActiveCategory('popular')}
+              sx={{
+                cursor: 'pointer',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: 'xs',
+                px: 1.5,
+                transition: 'all 150ms var(--ease-out)',
+                boxShadow: !isLocal ? '0 2px 6px rgba(0,0,0,0.12)' : 'none',
+              }}
+            >
+              Popular
+            </Chip>
+            <Chip
+              size='sm'
+              variant={isLocal ? 'solid' : 'plain'}
+              color={isLocal ? 'primary' : 'neutral'}
+              onClick={() => setActiveCategory('local')}
+              sx={{
+                cursor: 'pointer',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: 'xs',
+                px: 1.5,
+                transition: 'all 150ms var(--ease-out)',
+                boxShadow: isLocal ? '0 2px 6px rgba(0,0,0,0.12)' : 'none',
+              }}
+            >
+              Local
+            </Chip>
+          </Box>
+
+          <Typography component='span' level='title-sm' sx={{ color: 'text.secondary' }}>
+            AI services below
+          </Typography>
+        </Box>
       </Box>
 
+      {/* Providers Setup */}
       {WizardProviders.map((provider, index) => (
         <WizardProviderSetup
           key={provider.vendor.id}
@@ -325,17 +372,46 @@ export function ModelsWizard(props: {
         />
       ))}
 
+      {/* MCP Desktop Automation Status Chip */}
+      <Box sx={{
+        mt: 1,
+        mx: { xs: 0, sm: 7.25 },
+        p: 1.25,
+        borderRadius: '12px',
+        backgroundColor: 'rgba(11, 107, 203, 0.06)',
+        border: '1px solid rgba(11, 107, 203, 0.16)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 1,
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            backgroundColor: '#12B76A',
+            boxShadow: '0 0 0 3px rgba(18, 183, 106, 0.2)',
+          }} />
+          <Typography level='body-xs' sx={{ fontWeight: 600, color: 'text.primary' }}>
+            ⚡ FastMCP AHK Desktop Automation Bridge
+          </Typography>
+        </Box>
+        <Chip size='sm' variant='soft' color='success' sx={{ fontSize: '10px', fontWeight: 600 }}>
+          Port 8000 Active
+        </Chip>
+      </Box>
+
+      {/* Footer Nav */}
       <Box sx={props.isMobile ? _styles.text2Mobile : _styles.text2}>
-        {/*{!props.isMobile && <>Switch to <Box component='a' onClick={props.onSwitchToAdvanced} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>Advanced</Box> to choose between {getModelVendorsCount()} services.</>}{' '}*/}
         {!props.isMobile && <>
           Switch to{' '}
-          <Box component='a' onClick={props.onSwitchToAdvanced} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>advanced configuration</Box>
-          {/*<Chip variant={isLocal ? 'solid' : 'outlined'} sx={{ ml: 0.25 }} onClick={props.onSwitchToAdvanced}>*/}
-          {/*  more services*/}
-          {/*</Chip>*/}
+          <Box component='a' onClick={props.onSwitchToAdvanced} sx={{ color: 'primary.500', fontWeight: 500, textDecoration: 'none', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}>
+            advanced configuration
+          </Box>
           {' '}for more services,
         </>}{' '}
-        or <Box component='a' onClick={props.onSkip} sx={{ textDecoration: 'underline', cursor: 'pointer' }}>skip</Box> for now and do it later.
+        or <Box component='a' onClick={props.onSkip} sx={{ color: 'text.secondary', textDecoration: 'underline', cursor: 'pointer' }}>skip for now</Box> and configure later.
       </Box>
 
     </Sheet>
