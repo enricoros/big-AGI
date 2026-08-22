@@ -116,6 +116,9 @@ export const env = createEnv({
     GOOGLE_CLOUD_API_KEY: z.string().optional(),
     GOOGLE_CSE_ID: z.string().optional(),
 
+    // Brave Search API - preferred over Google CSE when both are set (Google is sunsetting whole-web Programmable Search Engines)
+    BRAVE_SEARCH_API_KEY: z.string().optional(),
+
 
     // Text-To-Speech: ElevenLabs - speech.ts
     ELEVENLABS_API_KEY: z.string().optional(),
