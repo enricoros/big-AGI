@@ -51,6 +51,7 @@ export interface ChatActions {
   replaceMessageFragment: (cId: DConversationId, mId: DMessageId, fId: DMessageFragmentId, newFragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) => void;
   updateMetadata: (cId: DConversationId, mId: DMessageId, metadataDelta: Partial<DMessageMetadata>, touchUpdated?: boolean) => void;
   setSystemPurposeId: (cId: DConversationId, personaId: SystemPurposeId) => void;
+  setUserLlmId: (cId: DConversationId, userLlmId: DLLMId | null) => void;
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
   setUserTitle: (cId: DConversationId, userTitle: string) => void;
   setUserSymbol: (cId: DConversationId, userSymbol: string | null) => void;
@@ -414,6 +415,11 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           {
             systemPurposeId: personaId,
           }),
+      setUserLlmId: (conversationId: DConversationId, userLlmId: DLLMId | null) =>
+        _get()._editConversation(conversationId,
+          {
+            userLlmId: userLlmId || undefined, // null/'' = unpin, follow the domain default
+          }),
 
       setAutoTitle: (conversationId: DConversationId, autoTitle: string) =>
         _get()._editConversation(conversationId,
@@ -596,6 +602,25 @@ export function getConversation(conversationId: DConversationId | null): DConver
 
 export function getConversationSystemPurposeId(conversationId: DConversationId | null): SystemPurposeId | null {
   return getConversation(conversationId)?.systemPurposeId || null;
+}
+
+/**
+ * Resolve the chat model for a conversation: the pinned model (userLlmId) when set AND still
+ * existing, otherwise the 'primaryChat' domain default. Broken pins (model removed, or chat
+ * imported from an install with different services) silently degrade to the default - same
+ * semantics as broken domain assignments in llmsResolveDomainModel.
+ */
+export function getConversationChatLLMId(conversationId: DConversationId | null): DLLMId | null {
+  const userLlmId = getConversation(conversationId)?.userLlmId;
+  if (userLlmId) {
+    try {
+      findLLMOrThrow(userLlmId);
+      return userLlmId;
+    } catch {
+      // broken pin: fall through to the domain default
+    }
+  }
+  return getChatLLMId();
 }
 
 
