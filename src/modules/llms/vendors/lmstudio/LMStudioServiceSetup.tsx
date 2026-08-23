@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as z from 'zod/v4';
 
-import { Typography } from '@mui/joy';
+import { Alert, Typography } from '@mui/joy';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
@@ -14,7 +14,6 @@ import { Link } from '~/common/components/Link';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { VideoPlayerYouTube } from '~/common/components/VideoPlayerYouTube';
-import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
@@ -30,10 +29,6 @@ export function LMStudioServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // derived state
   const { clientSideFetch, oaiHost } = serviceAccess;
-
-  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
-  const advanced = useToggleableBoolean(!!clientSideFetch);
-  const showAdvanced = advanced.on;
 
   // validate if url is a well formed proper url with zod
   const urlSchema = z.url().startsWith('http');
@@ -70,15 +65,26 @@ export function LMStudioServiceSetup(props: { serviceId: DModelsServiceId }) {
       value={oaiHost} onChange={value => updateSettings({ oaiHost: value })}
     />
 
-    {showAdvanced && <SetupFormClientSideToggle
-      visible={!!oaiHost}
+    {/* [2026-08-23] not behind 'Advanced': a LAN/localhost LM Studio is only reachable from the browser, so this is the primary control (same as LocalAI/Ollama) */}
+    <SetupFormClientSideToggle
+      visible={true}
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ csf: on })}
-      helpText='Connect directly to LM Studio from your browser. Requires CORS to be enabled in LM Studio.'
+      helpText='Fetch models and make requests directly from your LM Studio instance using the browser. Recommended for local setups - requires CORS enabled in LM Studio (Developer > Server Settings).'
       localHostDetected={isLocalUrl(oaiHost)}
-    />}
+    />
 
-    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced} />
+    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} />
+
+    {/* [2026-08-23] the browser reports a failed direct fetch as an opaque 'Failed to fetch' - it may not say
+        CORS, and by far the most common cause is exactly that, so lead with the fix and keep the raw error below */}
+    {isError && !!clientSideFetch && (
+      <Alert variant='soft' color='primary'>
+        <Typography level='body-sm' color='primary' variant='soft'>
+          Make sure CORS is enabled on the LM Studio server. Open the <b>Developer</b> tab, press <b>Server Settings</b>, and turn on <b>Enable CORS</b>.
+        </Typography>
+      </Alert>
+    )}
 
     {isError && <InlineError error={error} />}
 
