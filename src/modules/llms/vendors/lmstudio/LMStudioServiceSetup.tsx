@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as z from 'zod/v4';
 
-import { Alert, Typography } from '@mui/joy';
+import { Typography } from '@mui/joy';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
@@ -12,6 +12,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { isLocalUrl } from '~/common/util/urlUtils';
 import { Link } from '~/common/components/Link';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
+import { SetupFormCorsHint } from '~/common/components/forms/SetupFormCorsHint';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { VideoPlayerYouTube } from '~/common/components/VideoPlayerYouTube';
 
@@ -76,15 +77,9 @@ export function LMStudioServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} />
 
-    {/* [2026-08-23] the browser reports a failed direct fetch as an opaque 'Failed to fetch' - it may not say
-        CORS, and by far the most common cause is exactly that, so lead with the fix and keep the raw error below */}
-    {isError && !!clientSideFetch && (
-      <Alert variant='soft' color='primary'>
-        <Typography level='body-sm' color='primary' variant='soft'>
-          Make sure CORS is enabled on the LM Studio server. Open the <b>Developer</b> tab, press <b>Server Settings</b>, and turn on <b>Enable CORS</b>.
-        </Typography>
-      </Alert>
-    )}
+    <SetupFormCorsHint visible={isError && !!clientSideFetch}>
+      Make sure CORS is enabled on the LM Studio server. Open the <b>Developer</b> tab, press <b>Server Settings</b>, and turn on <b>Enable CORS</b>.
+    </SetupFormCorsHint>
 
     {isError && <InlineError error={error} />}
 

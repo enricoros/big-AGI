@@ -15,6 +15,7 @@ import { isLocalUrl } from '~/common/util/urlUtils';
 import { Link } from '~/common/components/Link';
 import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
+import { SetupFormCorsHint } from '~/common/components/forms/SetupFormCorsHint';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
 import { ApproximateCosts } from '../ApproximateCosts';
@@ -103,7 +104,7 @@ export function LocalAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       visible={true}
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ csf: on })}
-      helpText='Fetch models and make requests directly from your LocalAI instance using the browser. Recommended for local setups.'
+      helpText='Fetch models and make requests directly from your LocalAI instance using the browser. Recommended for local setups - requires CORS enabled on the LocalAI server.'
       localHostDetected={isLocalUrl(localAIHost)}
     />
 
@@ -115,6 +116,10 @@ export function LocalAIServiceSetup(props: { serviceId: DModelsServiceId }) {
         </Button>
       }
     />
+
+    <SetupFormCorsHint visible={isError && !!clientSideFetch}>
+      Make sure CORS is enabled on the LocalAI server. Start it with <b>CORS=true</b>, and <b>CORS_ALLOW_ORIGINS</b> set to allow this site.
+    </SetupFormCorsHint>
 
     {isError && <InlineError error={error} />}
 

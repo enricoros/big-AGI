@@ -9,6 +9,7 @@ import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { OllamaIcon } from '~/common/components/icons/vendors/OllamaIcon';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
+import { SetupFormCorsHint } from '~/common/components/forms/SetupFormCorsHint';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { asValidURL, isLocalUrl } from '~/common/util/urlUtils';
 
@@ -63,7 +64,7 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
       visible={true}
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ csf: on })}
-      helpText='Fetch models and make requests directly from your local Ollama instance using the browser. Recommended for local setups.'
+      helpText='Fetch models and make requests directly from your local Ollama instance using the browser. Recommended for local setups - requires OLLAMA_ORIGINS set on the Ollama server.'
       localHostDetected={isLocalUrl(ollamaHost)}
     />
 
@@ -75,6 +76,10 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
         </Button>
       }
     />
+
+    <SetupFormCorsHint visible={isError && !!clientSideFetch}>
+      Make sure CORS is enabled on the Ollama server. It has no toggle: set the <b>OLLAMA_ORIGINS</b> environment variable to allow this site, then restart Ollama.
+    </SetupFormCorsHint>
 
     {isError && <InlineError error={error} />}
 
