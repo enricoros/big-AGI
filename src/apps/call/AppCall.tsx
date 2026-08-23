@@ -60,13 +60,13 @@ export function AppCall() {
       }}>
 
       <Container
-        maxWidth={hasIntent ? 'sm' : 'md'}
+        maxWidth={hasIntent ? 'lg' : 'md'}
         sx={{
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           justifyContent: hasIntent ? 'space-evenly' : undefined,
           gap: hasIntent ? 1 : undefined,
-          // shall force the contacts or telephone to stay within the container
-          overflowY: hasIntent ? 'hidden' : undefined,
+          // allow the resizable desktop transcript to extend beyond the viewport
+          overflowY: hasIntent ? { xs: 'hidden', md: 'auto' } : undefined,
         }}>
 
         {!hasIntent ? (

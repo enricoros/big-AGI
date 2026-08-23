@@ -316,47 +316,67 @@ export function Telephone(props: {
       />
     </OptimaPanelIn>
 
-    <Typography
-      level='h1'
-      sx={{
-        fontSize: { xs: '2.5rem', md: '3rem' },
-        textAlign: 'center',
-        mx: 2,
-      }}
-    >
-      {isConnected ? personaName : 'Hello'}
-    </Typography>
+    <Box sx={{
+      width: '100%',
+      flexGrow: 1,
+      minHeight: 0,
+      display: { xs: 'contents', md: 'grid' },
+      gridTemplateColumns: (isConnected || isEnded) ? 'minmax(11.5rem, 0.4fr) minmax(0, 1fr)' : '1fr',
+      alignItems: 'center',
+      gap: 3,
+    }}>
 
-    <CallAvatar
-      symbol={persona?.symbol || '?'}
-      imageUrl={persona?.imageUri}
-      isRinging={isRinging}
-      onClick={() => setAvatarClickCount(avatarClickCount + 1)}
-    />
+      {/* Keep the caller details beside the transcript on larger screens. */}
+      <Box sx={{ display: { xs: 'contents', md: 'flex' }, flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+        <Typography
+          level='h1'
+          sx={{
+            fontSize: { xs: '2.5rem', md: '3rem' },
+            textAlign: 'center',
+            mx: 2,
+          }}
+        >
+          {isConnected ? personaName : 'Hello'}
+        </Typography>
 
-    <CallStatus
-      callerName={isConnected ? undefined : personaName}
-      statusText={isRinging ? '' /*'is calling you'*/ : isDeclined ? 'call declined' : isEnded ? 'call ended' : callElapsedTime}
-      regardingText={chatTitle}
-      micError={!isMicEnabled} micErrorMessage={micErrorMessage} speakError={!isTTSEnabled}
-    />
+        <CallAvatar
+          symbol={persona?.symbol || '?'}
+          imageUrl={persona?.imageUri}
+          isRinging={isRinging}
+          onClick={() => setAvatarClickCount(avatarClickCount + 1)}
+        />
 
-    {/* Live Transcript, w/ streaming messages, audio indication, etc. */}
-    {(isConnected || isEnded) && (
-      <Card variant='outlined' sx={{
-        flexGrow: 1,
-        maxHeight: '28%',
-        minHeight: '20%',
-        width: '100%',
+        <CallStatus
+          callerName={isConnected ? undefined : personaName}
+          statusText={isRinging ? '' /*'is calling you'*/ : isDeclined ? 'call declined' : isEnded ? 'call ended' : callElapsedTime}
+          regardingText={chatTitle}
+          micError={!isMicEnabled} micErrorMessage={micErrorMessage} speakError={!isTTSEnabled}
+        />
+      </Box>
 
-        // style
-        // backgroundColor: 'background.surface',
-        borderRadius: 'lg',
-        // boxShadow: 'sm',
+      {/* Live Transcript, w/ streaming messages, audio indication, etc. */}
+      {(isConnected || isEnded) && (
+        <Card variant='outlined' sx={{
+          flexGrow: { xs: 1, md: 0 },
+          height: { md: 'min(56dvh, 34rem)' },
+          minHeight: { xs: '20%', md: '22rem' },
+          maxHeight: { xs: '28%', md: '70dvh' },
+          width: '100%',
+          alignSelf: { md: 'stretch' },
+          resize: 'none',
+          overflow: 'auto',
+          '@media (pointer: fine)': {
+            resize: { xs: 'none', md: 'vertical' },
+          },
 
-        // children
-        padding: 0, // move this to the ScrollToBottom component
-      }}>
+          // style
+          // backgroundColor: 'background.surface',
+          borderRadius: 'lg',
+          // boxShadow: 'sm',
+
+          // children
+          padding: 0, // move this to the ScrollToBottom component
+        }}>
 
         <ScrollToBottom stickToBottomInitial>
 
@@ -399,8 +419,10 @@ export function Telephone(props: {
           <ScrollToBottomButton />
 
         </ScrollToBottom>
-      </Card>
-    )}
+        </Card>
+      )}
+
+    </Box>
 
     {/* Call Buttons */}
     <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-evenly', gap: 4 }}>
