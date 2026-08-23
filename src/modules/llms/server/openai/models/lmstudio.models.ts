@@ -125,10 +125,14 @@ export function lmStudioModelsToModelDescriptions(wireModels: LMStudioWire_API_M
         LLM_IF_HOTFIX_NoWebP, // because they are not supported
       ];
 
-      // If loaded, use the actual context length from the instance config
+      // Best case wins. The model list is persisted and only refreshed on demand, so a transient load config
+      // must never shrink a long-lived record: the user can reload at a larger context at any moment, and we
+      // would keep under-reporting until they hit Models again. (Measured on 0.4.21: the engine pins
+      // context_length to max and ignores -c, so in practice these two coincide anyway.)
       const loadedContextLength = model.loaded_instances?.length
         ? model.loaded_instances[0]?.config?.context_length ?? null
         : null;
+      const effectiveContextWindow = (contextWindow && loadedContextLength) ? Math.max(contextWindow, loadedContextLength) : contextWindow || loadedContextLength;
 
       return {
         id: modelId,
@@ -137,10 +141,10 @@ export function lmStudioModelsToModelDescriptions(wireModels: LMStudioWire_API_M
         // created
         // updated
         description,
-        contextWindow: (contextWindow && loadedContextLength) ? Math.max(contextWindow, loadedContextLength) : contextWindow || loadedContextLength,
+        contextWindow: effectiveContextWindow,
         interfaces,
         // parameterSpects
-        maxCompletionTokens: contextWindow ? Math.round(contextWindow / 2) : undefined,
+        maxCompletionTokens: effectiveContextWindow ? Math.round(effectiveContextWindow / 2) : undefined,
         // benchmark
         chatPrice: { input: 'free', output: 'free' },
         // hidden
