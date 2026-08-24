@@ -15,7 +15,8 @@ export function sendGAEvent(..._args: Object[]) {
     return console.warn('[DEV] GA has not been initialized yet');
 
   if (window[currDataLayerName])
-    window[currDataLayerName]?.push(..._args);
+    // eslint-disable-next-line prefer-rest-params -- gtag.js expects genuine Arguments objects in the dataLayer, not arrays: spreading pushes inert entries and the event is silently dropped
+    window[currDataLayerName]?.push(arguments);
   else
     console.warn('[DEV] GA dataLayer does not exist');
 }
