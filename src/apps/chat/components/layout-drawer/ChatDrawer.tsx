@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Box, Button, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Chip, Dropdown, IconButton, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
 import AddIcon from '@mui/icons-material/Add';
 import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
@@ -36,12 +36,20 @@ import { ChatDrawerStorageWarning } from './ChatDrawerStorageWarning';
 import { ChatFolderList } from './folders/ChatFolderList';
 import { ChatNavGrouping, ChatSearchDepth, ChatSearchSorting, isDrawerSearching, useChatDrawerRenderItems } from './useChatDrawerRenderItems';
 import { ClearFolderText } from '../layout-bar/useFolderDropdown';
-import { AGE_FILTER_OPTIONS } from './ageFilter';
 import { useChatDrawerFilters } from '../../store-app-chat';
 
 
 // this is here to make shallow comparisons work on the next hook
 const noFolders: DFolder[] = [];
+
+// 'Older than' age filter presets (days of last activity; null = off)
+const AGE_FILTER_OPTIONS: { days: number | null, label: string, shortLabel: string }[] = [
+  { days: null, label: 'Any age', shortLabel: 'Any' },
+  { days: 7, label: 'Older than 1 week', shortLabel: '>1w' },
+  { days: 14, label: 'Older than 2 weeks', shortLabel: '>2w' },
+  { days: 30, label: 'Older than 1 month', shortLabel: '>1m' },
+  { days: 90, label: 'Older than 3 months', shortLabel: '>3m' },
+];
 
 /*
  * Lists folders and returns the active folder
@@ -253,19 +261,17 @@ function ChatDrawer(props: {
           {/* Age filter (compact chip row for mobile) */}
           <ListDivider />
           <ListItem sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
-            <Typography level='body-sm' sx={{ mr: 0.5 }}>Age</Typography>
+            <ListItemDecorator><Typography level='body-sm'>Age</Typography></ListItemDecorator>
             {AGE_FILTER_OPTIONS.map(({ days, label, shortLabel }) => (
-              <Button
+              <Chip
                 key={label}
                 aria-label={label}
-                size='sm'
+                // size='sm'
                 variant={filterOlderThanDays === days ? 'solid' : 'soft'}
-                color={filterOlderThanDays === days ? 'primary' : 'neutral'}
                 onClick={() => setFilterOlderThanDays(days)}
-                sx={{ minHeight: 0, px: 1, fontSize: 'xs', borderRadius: 'sm' }}
               >
                 {shortLabel}
-              </Button>
+              </Chip>
             ))}
           </ListItem>
 

@@ -5,7 +5,6 @@ import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 import type { DFolder } from '~/common/stores/folders/store-chat-folders';
 import { DMessage, DMessageUserFlag, MESSAGE_FLAG_STARRED, messageFragmentsReduceText, messageHasUserFlag, messageUserFlagToEmoji } from '~/common/stores/chat/chat.message';
 import { conversationTitle, DConversationId } from '~/common/stores/chat/chat.conversation';
-import { filterOlderThanMatches } from './ageFilter';
 import { createTimeBucketClassifierEn } from '~/common/util/timeUtils';
 import { isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
@@ -126,8 +125,9 @@ export function useChatDrawerRenderItems(
         : conversations.filter(_c => activeFolder.conversationIds.includes(_c.id));
 
       // filter 1.5: last-activity older than the selected cutoff
-      const conversationsInAge = filterOlderThanDays === null ? conversationsInFolder
-        : conversationsInFolder.filter(_c => filterOlderThanMatches(_c.updated || _c.created || 0, filterOlderThanDays));
+      const ageCutoffMs = filterOlderThanDays === null ? null : Date.now() - filterOlderThanDays * 24 * 60 * 60 * 1000;
+      const conversationsInAge = ageCutoffMs === null ? conversationsInFolder
+        : conversationsInFolder.filter(_c => (_c.updated || _c.created || 0) < ageCutoffMs);
 
       // filter 2: preparation: lowercase the query
       const { isSearching, lcTextQuery } = isDrawerSearching(filterByQuery);
@@ -300,12 +300,13 @@ export function useChatDrawerRenderItems(
                 : filterHasImageAssets ? 'No image results'
                   : filterHasStars ? 'No starred results'
                     : filterIsArchived ? 'No archived conversations'
-                      : isSearching ? 'Text not found'
-                        : 'No conversations in folder',
+                      : filterOlderThanDays !== null ? 'No older conversations'
+                        : isSearching ? 'Text not found'
+                          : 'No conversations in folder',
         });
       } else {
         // filtering reminder (will be rendered with a clear button too)
-        if (filterHasBeamOpen || filterHasStars || filterHasImageAssets || filterHasDocFragments || filterIsArchived) {
+        if (filterHasBeamOpen || filterHasStars || filterHasImageAssets || filterHasDocFragments || filterIsArchived || filterOlderThanDays !== null) {
           renderNavItems.unshift({
             type: 'nav-item-info-message',
             message: `${filterIsArchived ? 'Showing' : 'Filtering by'} ${[
@@ -314,6 +315,7 @@ export function useChatDrawerRenderItems(
               filterHasImageAssets && 'images',
               filterHasDocFragments && 'attachments',
               filterIsArchived && 'archived',
+              filterOlderThanDays !== null && 'age',
             ].filter(Boolean).join(', ')}`,
           });
         }
