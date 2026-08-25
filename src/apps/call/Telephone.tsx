@@ -318,16 +318,14 @@ export function Telephone(props: {
 
     <Box sx={{
       width: '100%',
-      flexGrow: 1,
-      minHeight: 0,
-      display: { xs: 'contents', md: 'grid' },
-      gridTemplateColumns: (isConnected || isEnded) ? 'minmax(11.5rem, 0.4fr) minmax(0, 1fr)' : '1fr',
+      display: { xs: 'contents', md: (isConnected || isEnded) ? 'grid' : 'contents' },
+      gridTemplateColumns: 'minmax(11.5rem, 0.4fr) minmax(0, 1fr)',
       alignItems: 'center',
       gap: 3,
     }}>
 
-      {/* Keep the caller details beside the transcript on larger screens. */}
-      <Box sx={{ display: { xs: 'contents', md: 'flex' }, flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+      {/* Caller details - beside the transcript on desktop */}
+      <Box sx={{ display: { xs: 'contents', md: (isConnected || isEnded) ? 'flex' : 'contents' }, flexDirection: 'column', alignItems: 'center', gap: 1 }}>
         <Typography
           level='h1'
           sx={{
@@ -362,12 +360,8 @@ export function Telephone(props: {
           minHeight: { xs: '20%', md: '22rem' },
           maxHeight: { xs: '28%', md: '70dvh' },
           width: '100%',
-          alignSelf: { md: 'stretch' },
-          resize: 'none',
-          overflow: 'auto',
-          '@media (pointer: fine)': {
-            resize: { xs: 'none', md: 'vertical' },
-          },
+          resize: { md: 'vertical' },
+          overflow: 'auto', // also required by 'resize'
 
           // style
           // backgroundColor: 'background.surface',
@@ -378,47 +372,47 @@ export function Telephone(props: {
           padding: 0, // move this to the ScrollToBottom component
         }}>
 
-        <ScrollToBottom stickToBottomInitial>
+          <ScrollToBottom stickToBottomInitial>
 
-          <Box onCopy={clipboardInterceptCtrlCForCleanup} sx={{ minHeight: '100%', p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box onCopy={clipboardInterceptCtrlCForCleanup} sx={{ minHeight: '100%', p: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
 
-            {/* Call Messages [] */}
-            {callMessages.map((message) =>
-              <CallMessage
-                key={message.id}
-                text={messageFragmentsReduceText(message.fragments)}
-                variant={message.role === 'assistant' ? 'solid' : 'soft'}
-                color={message.role === 'assistant' ? 'neutral' : 'primary'}
-                role={message.role}
-              />,
-            )}
+              {/* Call Messages [] */}
+              {callMessages.map((message) =>
+                <CallMessage
+                  key={message.id}
+                  text={messageFragmentsReduceText(message.fragments)}
+                  variant={message.role === 'assistant' ? 'solid' : 'soft'}
+                  color={message.role === 'assistant' ? 'neutral' : 'primary'}
+                  role={message.role}
+                />,
+              )}
 
-            {/* Persona streaming text... */}
-            {!!personaTextInterim && (
-              <CallMessage
-                text={personaTextInterim}
-                variant='outlined'
-                color='neutral'
-                role='assistant'
-              />
-            )}
+              {/* Persona streaming text... */}
+              {!!personaTextInterim && (
+                <CallMessage
+                  text={personaTextInterim}
+                  variant='outlined'
+                  color='neutral'
+                  role='assistant'
+                />
+              )}
 
-            {/* Listening... */}
-            {recognitionState.isActive && (
-              <CallMessage
-                text={<>{speechInterim?.transcript.trim() || null}{speechInterim?.interimTranscript.trim() ? <i> {speechInterim.interimTranscript}</i> : null}</>}
-                variant={(recognitionState.hasSpeech || !!speechInterim?.transcript) ? 'soft' : 'outlined'}
-                color='primary'
-                role='user'
-              />
-            )}
+              {/* Listening... */}
+              {recognitionState.isActive && (
+                <CallMessage
+                  text={<>{speechInterim?.transcript.trim() || null}{speechInterim?.interimTranscript.trim() ? <i> {speechInterim.interimTranscript}</i> : null}</>}
+                  variant={(recognitionState.hasSpeech || !!speechInterim?.transcript) ? 'soft' : 'outlined'}
+                  color='primary'
+                  role='user'
+                />
+              )}
 
-          </Box>
+            </Box>
 
-          {/* Visibility and actions are handled via Context */}
-          <ScrollToBottomButton />
+            {/* Visibility and actions are handled via Context */}
+            <ScrollToBottomButton />
 
-        </ScrollToBottom>
+          </ScrollToBottom>
         </Card>
       )}
 
