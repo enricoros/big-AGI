@@ -16,7 +16,6 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
@@ -99,7 +98,7 @@ function ChatDrawer(props: {
   // external state
   const {
     clearFilters,
-    filterHasBeamOpen, toggleFilterHasBeamOpen,
+    filterHasBeamOpen,
     filterHasDocFragments, toggleFilterHasDocFragments,
     filterHasImageAssets, toggleFilterHasImageAssets,
     filterHasStars, toggleFilterHasStars,
@@ -253,11 +252,6 @@ function ChatDrawer(props: {
             <ListItemDecorator>{filterHasDocFragments && <CheckRoundedIcon />}</ListItemDecorator>
             Has Attachments <AttachFileRoundedIcon />
           </MenuItem>
-          <MenuItem onClick={toggleFilterHasBeamOpen}>
-            <ListItemDecorator>{filterHasBeamOpen && <CheckRoundedIcon />}</ListItemDecorator>
-            Beam Open <ChatBeamIcon />
-          </MenuItem>
-
           {/* Age filter (compact chip row for mobile) */}
           <ListDivider />
           <ListItem sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
@@ -322,8 +316,8 @@ function ChatDrawer(props: {
       )}
     </Dropdown>
   ), [
-    filterHasBeamOpen, filterHasDocFragments, filterHasImageAssets, filterHasStars, isSearching, navGrouping, searchSorting, searchDepth, filterIsArchived, showPersonaIcons, showRelativeSize, filterOlderThanDays,
-    toggleFilterHasBeamOpen, toggleFilterHasDocFragments, toggleFilterHasImageAssets, toggleFilterHasStars, toggleFilterIsArchived, toggleShowPersonaIcons, toggleShowRelativeSize, setFilterOlderThanDays,
+    filterHasDocFragments, filterHasImageAssets, filterHasStars, isSearching, navGrouping, searchSorting, searchDepth, filterIsArchived, showPersonaIcons, showRelativeSize, filterOlderThanDays,
+    toggleFilterHasDocFragments, toggleFilterHasImageAssets, toggleFilterHasStars, toggleFilterIsArchived, toggleShowPersonaIcons, toggleShowRelativeSize, setFilterOlderThanDays,
   ]);
 
   const displayNavItems = React.useMemo(() => {
