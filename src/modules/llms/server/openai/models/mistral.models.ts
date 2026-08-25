@@ -31,9 +31,15 @@ type _MistralModelDef = {
 };
 
 // [Mistral, 2026-08-17] reasoning_effort: Medium 3.5 (2604) and Small 4 (2603) accept exactly none|high (probed), every
-// other model rejects the field. Alias rows carry their own defs, so each repeats the spec.
+// other Mistral-built model rejects the field. Alias rows carry their own defs, so each repeats the spec.
 const _PS_MistralEffort: _MistralModelDef['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
+];
+
+// [Mistral, 2026-08-24] the third-party GLM 5.2 takes the full API-wide effort enum instead (probed: none|low|high|max
+// all 200, 'none' returns a plain answer with no thinking block, the others return one).
+const _PS_MistralGlmEffort: _MistralModelDef['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
 ];
 
 const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
@@ -52,6 +58,7 @@ const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
   'mistral-medium-3': { pubDate: '20260428', chatPrice: { input: 1.5, output: 7.5, cache: { cType: 'oai-ac', read: 0.15 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2604
   'mistral-vibe-cli-latest': { pubDate: '20260428', chatPrice: { input: 1.5, output: 7.5, cache: { cType: 'oai-ac', read: 0.15 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2604 (Vibe CLI alias)
   'mistral-vibe-cli-with-tools': { pubDate: '20260428', chatPrice: { input: 1.5, output: 7.5, cache: { cType: 'oai-ac', read: 0.15 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2604 (Vibe CLI alias)
+  'magistral-medium-latest': { pubDate: '20260428', chatPrice: { input: 1.5, output: 7.5, cache: { cType: 'oai-ac', read: 0.15 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2604 (the Magistral Medium line was folded into Medium 3.5)
 
   'devstral-2512': { label: 'Devstral 2 (2512)', pubDate: '20251209', chatPrice: { input: 0.4, output: 2 }, hidden: true }, // Devstral 2 - 123B coding agents (deprecated, retires 2026-08-31 → Mistral Medium 3.5)
   'devstral-latest': { label: 'Devstral 2 (latest)', pubDate: '20251209', chatPrice: { input: 0.4, output: 2 }, hidden: true }, // symlink
@@ -86,8 +93,8 @@ const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
   'labs-leanstral-1-5': { pubDate: '20260630', chatPrice: { input: 0, output: 0 }, hidden: true }, // symlink
 
   // Third-party hosted - Mistral serves the model unmodified (docs id is 'zai-glm-5-2', listed 2026-08-06)
-  'zai-glm-5-2': { label: 'Z.ai GLM 5.2', pubDate: '20260616', chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.14 } }, benchmark: { cbaElo: 1471 - 2 } }, // 1M ctx, 128k max output (lmarena: glm-5.2-max - 2, yield to native vendor)
-  'glm-5-2': { pubDate: '20260616', chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.14 } }, hidden: true }, // -> zai-glm-5-2
+  'zai-glm-5-2': { label: 'Z.ai GLM 5.2', pubDate: '20260616', chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.14 } }, parameterSpecs: _PS_MistralGlmEffort, benchmark: { cbaElo: 1471 - 2 } }, // 1M ctx, 128k max output (lmarena: glm-5.2-max - 2, yield to native vendor)
+  'glm-5-2': { pubDate: '20260616', chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.14 } }, parameterSpecs: _PS_MistralGlmEffort, hidden: true }, // -> zai-glm-5-2
 
   // Legacy (kept for reference, no longer in API)
   'open-mistral-7b': { pubDate: '20230927', chatPrice: { input: 0.25, output: 0.25 }, hidden: true },

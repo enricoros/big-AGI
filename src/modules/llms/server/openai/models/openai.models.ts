@@ -185,7 +185,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiCodeInterpreter' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { input: 5, cache: { cType: 'oai-ac', read: 0.5 }, output: 30 }, // cache read = 90% discount
+    chatPrice: { input: 4, cache: { cType: 'oai-ac', read: 0.4 }, output: 20 }, // cache read = 90% discount; 2026-08-21: -20% input, -33% output (promo through at least 2026-11-21)
     benchmark: { cbaElo: 1481 }, // gpt-5.6-sol-xhigh
   },
 
@@ -241,7 +241,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 
   /// ChatGPT Instant - version-less rolling pointer to the Instant model currently served in ChatGPT.
   // No snapshots: OpenAI re-points it in place without notice (last moved 2026-08-06). Replaces the per-generation
-  // 'gpt-5.x-chat-latest' ids, which are all shut down. Priced at GPT-5.6 Sol rates.
+  // 'gpt-5.x-chat-latest' ids, which are all shut down. Priced at $5 in / $30 out per 1M.
   {
     idPrefix: 'chat-latest',
     label: 'ChatGPT Instant',
@@ -1043,25 +1043,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   },
   // chatgpt-4o-latest: removed, shut down February 17, 2026
 
-  // GPT-4o Search Preview - the dated -2025-03-11 snapshot is shut down (2026-07-23, deny-listed below,
-  // 404s when addressed directly), but the bare alias still serves real completions (probed 2026-08-06;
-  // it echoes model: gpt-4o-search-preview-2025-03-11). The deprecations doc only names the dated snapshot,
-  // so the alias is a standalone def here; it may vanish without notice.
-  {
-    hidden: true, // zombie alias to a retired snapshot
-    idPrefix: 'gpt-4o-search-preview',
-    label: 'GPT-4o Search Preview [Deprecated]',
-    pubDate: '20250311',
-    isLegacy: true,
-    description: '[Use: GPT-5.6 Terra] GPT-4o model optimized for web search capabilities. Alias still serving after its snapshot\'s 2026-07-23 shutdown.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_NoTemperature], // NOTE: 2025-03-15: confirmed on 'playground' that this model does not support images
-    parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
-    chatPrice: { input: 2.5, output: 10 },
-    // benchmarks don't apply to search models
-    isPreview: true,
-  },
+  // GPT-4o Search Preview: removed, the zombie alias finally died too (404 deprecated on OpenAI, 'No endpoints found' on OpenRouter - probed 2026-08-24)
 
   // GPT-4o Audio Preview: removed, no longer returned by API (superseded by GPT Audio family)
 
@@ -1084,22 +1066,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   },
   // GPT-4o Mini Audio Preview: removed, no longer returned by API (superseded by GPT Audio Mini family)
 
-  // GPT-4o Mini Search Preview - same zombie-alias situation as gpt-4o-search-preview above (probed 2026-08-06)
-  {
-    hidden: true, // zombie alias to a retired snapshot
-    idPrefix: 'gpt-4o-mini-search-preview',
-    label: 'GPT-4o Mini Search Preview [Deprecated]',
-    pubDate: '20250311',
-    isLegacy: true,
-    description: '[Use: GPT-5.6 Terra] GPT-4o Mini model optimized for web search capabilities. Alias still serving after its snapshot\'s 2026-07-23 shutdown.',
-    contextWindow: 128000,
-    maxCompletionTokens: 16384,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_HOTFIX_NoTemperature], // NOTE: this support function calling, but only its own, not a Custom Function
-    parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiWebSearchGeolocation' }],
-    chatPrice: { input: 0.15, output: 0.6 },
-    // benchmarks don't apply to search models
-    isPreview: true,
-  },
+  // GPT-4o Mini Search Preview: removed, same as gpt-4o-search-preview above (dead on OpenAI and OpenRouter - probed 2026-08-24)
 
   // GPT-4 Turbo
   {
@@ -1306,8 +1273,8 @@ const openAIModelsShutdownDenyList: string[] = [
   'gpt-5.1-chat-latest', // dead on OpenRouter too
   'gpt-5.1-codex', // catches -max and -mini too; defs kept above (OpenRouter serves all three via Azure)
   'gpt-5.2-codex', // def kept above (OpenRouter serves it via Azure)
-  'gpt-4o-search-preview-2025-03-11', // the bare alias still serves (def kept above) - deny only the snapshot
-  'gpt-4o-mini-search-preview-2025-03-11', // same: deny only the snapshot
+  'gpt-4o-search-preview', // catches the -2025-03-11 snapshot too: the bare alias died as well (probed 2026-08-24), defs removed
+  'gpt-4o-mini-search-preview', // same: alias + snapshot
   'gpt-audio-mini-2025-10-06', // the -2025-12-15 snapshot and the alias stay
   'o3-deep-research', // dead everywhere (OpenRouter: no endpoints; Bedrock: absent)
   'o4-mini-deep-research', // dead everywhere

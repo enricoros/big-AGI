@@ -136,7 +136,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_REASON,
     parameterSpecs: _PS_DeepSeekEffort,
     benchmark: { cbaElo: 1435 }, // lmarena: deepseek-v4-flash (distinct from the -high-preview row, 1438)
-    chatPrice: { input: 0.14, output: 0.28, cache: { cType: 'oai-ac', read: 0.028 } },
+    chatPrice: { input: 0.22, output: 0.66, cache: { cType: 'oai-ac', read: 0.007 } }, // repriced 2026-08-24 (docs table; was 0.14 / 0.028 / 0.28)
   },
   {
     idPrefix: 'accounts/fireworks/models/kimi-k3',

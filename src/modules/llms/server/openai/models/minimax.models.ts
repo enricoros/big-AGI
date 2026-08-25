@@ -19,7 +19,7 @@ export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
  * - Pricing: https://platform.minimax.io/docs/guides/pricing-paygo.md
  * - Text generation: https://platform.minimax.io/docs/guides/text-generation.md
  * - OpenAI-compatible reference (model enum, max_completion_tokens caps, thinking/service_tier): https://platform.minimax.io/docs/api-reference/text-chat-openai.md
- * - Updated: 2026-08-17
+ * - Updated: 2026-08-24
  */
 type _MiniMaxModelDef = ModelDescriptionSchema & { pubDate: string };
 
@@ -34,12 +34,9 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     contextWindow: 1000000,
     maxCompletionTokens: 131072, // vendor-recommended; live ceiling is 524288 (512K)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
-    // [MiniMax, 2026-08-17] only model with a reasoning switch (M2.x ignore it): `reasoning_effort` none|high, probed
-    // (none -> 0 reasoning tokens). Undocumented but what the generic 'openai' dialect sends; the documented field is
-    // `thinking: {type: 'disabled'|'adaptive'}` (same effect) - fall back to it if Off stops working.
-    parameterSpecs: [
-      { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
-    ],
+    // [MiniMax, 2026-08-24] no reasoning switch anymore: `reasoning_effort` is accepted-and-ignored (probed: 'none' still
+    // emits a thinking block, an invalid value doesn't 400), so the none|high spec was inert and is gone. The documented
+    // lever is `thinking: {type: 'disabled'|'adaptive'}` (probed, 0 reasoning tokens), which the 'openai' dialect won't send.
     // tiered PAYG pricing: boundary at 512K input tokens, >512K tier doubles. Priority tier (1.5x) not modeled.
     chatPrice: {
       input: [{ upTo: 512000, price: 0.30 }, { upTo: null, price: 0.60 }],

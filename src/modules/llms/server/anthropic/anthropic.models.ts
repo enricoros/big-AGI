@@ -190,7 +190,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     label: 'Claude Haiku 4.5 (Thinking)',
     description: 'Claude Haiku 4.5 with extended thinking mode - first Haiku model with reasoning capabilities',
     maxCompletionTokens: 64000,
-    interfaces: IF_4_R,
+    interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntThinkingBudget' },
       ...ANT_TOOLS,
@@ -501,7 +501,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     description: 'Fastest model with exceptional speed and performance',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
-    interfaces: IF_4,
+    interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: ANT_TOOLS,
     chatPrice: { input: 1, output: 5, cache: { cType: 'ant-bp', read: 0.10, write: 1.25, duration: 300 } },
     benchmark: { cbaElo: 1413 }, // claude-haiku-4-5-20251001

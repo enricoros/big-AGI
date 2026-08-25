@@ -38,6 +38,13 @@ export type LlmsNvidiaNIMModelId = typeof _knownNvidiaNIMModels[number]['id'];
 // - llama-guard-4-12b, mistral-nemotron and the small Llamas timed out for our key this run; kept as-is, since
 //   a timeout on the free tier is not a retirement signal (only the NGC date and the listing are).
 
+// [NVIDIA NIM, 2026-08-24] Metadata refresh + targeted probes (no full re-probe, so measured windows stand):
+// - glm-5.2 reached its EOL date: gone from /v1/models and probes 'retired' - entry deleted (no editorial pin held it).
+// - Added kimi-k3, a 0-day arrival: probed alive at a measured 1M window, with tool calls, image input and a working
+//   thinking toggle. Its predecessor kimi-k2.6 is still listed but stays denied (dead entitlement).
+// - inkling picked up an NGC DEPRECATION of 2026-08-24 (it had none on 08-17); still listed, so marked, not deleted.
+// - The 13 entries dated EOL 2026-08-25 still carry that date and still list - left alone, they delist themselves.
+
 // Shared param specs
 // - gpt-oss: native `reasoning_effort`, strictly validated to low|medium|high (verified: 'none'/'max' -> 400)
 // - thinking models: binary toggle via `chat_template_kwargs` (see openai.chatCompletions.ts 'nvidianim' block);
@@ -180,17 +187,15 @@ const _knownNvidiaNIMModels = [
     pubDate: '20260731', // the 0731 checkpoint; deepseek.models.ts carries 20260424 for the undated 'deepseek-v4-flash' id
   },
   {
-    // EOL 2026-08-24 (NGC DEPRECATION)
-    id: 'z-ai/glm-5.2',
-    label: 'GLM 5.2',
-    description: 'Zhipu GLM 5.2 reasoning model. NVIDIA serves a reduced 202K context (native: 1M). Retires on NVIDIA 2026-08-24.',
-    contextWindow: 202749, // measured 2026-08-17 - NVIDIA truncates from the native 1M
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    parameterSpecs: _PS_Thinking,
-    benchmark: { cbaElo: 1471 - 2 }, // lmarena: glm-5.2 (max) - 2 (yield to native vendor)
+    id: 'moonshotai/kimi-k3',
+    label: 'Kimi K3',
+    description: 'Moonshot flagship MoE, natively multimodal (image inputs), with the full 1M context and reasoning.',
+    contextWindow: 1048576, // measured 2026-08-24
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
+    parameterSpecs: _PS_Thinking, // verified 2026-08-24: chat_template_kwargs thinking:false zeroes reasoning_content
+    benchmark: { cbaElo: 1489 - 2 }, // lmarena: kimi-k3-max - 2 (yield to native vendor)
     chatPrice: _freePrice,
-    initialTemperature: 1.0, // = zai.models.ts GLM-5.x family
-    pubDate: '20260616', // = zai.models.ts 'glm-5.2'
+    pubDate: '20260716', // = moonshot.models.ts 'kimi-k3'
   },
   {
     id: 'meta/muse-glimmer-30b',
@@ -236,9 +241,10 @@ const _knownNvidiaNIMModels = [
     pubDate: '20260402', // = gemini.models.ts 'gemma-4-31b-it' (actual release; NVIDIA onboarding was later)
   },
   {
+    // EOL 2026-08-24 (NGC DEPRECATION)
     id: 'thinkingmachines/inkling',
     label: 'Inkling',
-    description: 'Thinking Machines reasoning model (preview). Can be unstable under load on the free endpoint.',
+    description: 'Thinking Machines reasoning model (preview). Can be unstable under load on the free endpoint. Retires on NVIDIA 2026-08-24.',
     contextWindow: 131072, // conservative: probes returned 500s before revealing the real limit (upstream claims 1M)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
     parameterSpecs: _PS_Thinking,

@@ -7,11 +7,16 @@ import { fromManualMapping, llmsDefineManualMappings, llmsLabelUncurated } from 
 // --- Alibaba Model ID inference (auto-derived from _knownAlibabaChatModels) ---
 export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefix'];
 
-// Sources (verified 2026-08-17 against the live /v1/models list + docs):
+// Sources (verified 2026-08-24 against the live /v1/models list + docs):
 // - Models:  https://www.alibabacloud.com/help/en/model-studio/models
 // - Pricing: https://www.alibabacloud.com/help/en/model-studio/model-pricing (International/Singapore, USD per 1M tokens)
 // - Per-model pages carry the authoritative caps + cache-hit price, e.g. https://www.alibabacloud.com/help/en/model-studio/qwen3-8-max
 // - Cache:   https://www.alibabacloud.com/help/en/model-studio/context-cache (implicit hit = 20% of input; explicit create 125% / hit 10%; deepseek-v4-pro excepted)
+// 2026-08-24 pass: two ids DashScope started serving after the 08-17 pass are curated - qwen3.8-27b (open weights Apache-2.0
+//   2026-08-14, model page 08-19 + live probes) and kimi-k3 (Moonshot flagship, model page 08-24; effort ladder live-ablated
+//   -> _PS_KimiEffort). No retirements and zero price drift on the Intl tables (which still predate the whole qwen3.8 line).
+//   'ZHIPU/GLM-5.3' now appears on the list but 403s with 'The product is not activated', has no model page (404) and no price
+//   row - left uncurated (hidden) pending activation.
 // 2026-08-17 pass (Qwen): live list identical to the 08-14 triage (no new ids, no retirements, zero uncurated) and no price drift
 //   on the Intl table; qwen3.8-* gain the real reasoning_effort ladder (_PS_Qwen38Effort, ablated) and qwen3.8-2.4t-a95b is
 //   thinking-compulsory, so it drops the Off value; that model page is now published and confirms the caps/price we had taken
@@ -75,6 +80,13 @@ const _PS_Qwen38EffortAlwaysOn: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['low', 'max'] },
 ] as const;
 
+// [Kimi, 2026-08-24] DashScope-hosted Kimi K3 honors 'reasoning_effort' as well (live-ablated, n=2/arm; the hidden-preamble
+// prompt-token fingerprint groups the values as: off {none, minimal} | reduced {low, medium, high} | top {xhigh, max, unset}).
+// Through the 'alibaba' dialect (reasoning_effort sent only for low/max) that is Off / Low / Max (= Default).
+const _PS_KimiEffort: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'max'] },
+] as const;
+
 const _knownAlibabaChatModels = llmsDefineManualMappings([
 
   // --- Qwen flagship / current generation ---
@@ -105,6 +117,20 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K
     chatPrice: { input: 2.00, output: 6.00, cache: { cType: 'oai-ac', read: 0.25 } },
+  },
+  {
+    // Open-weights dense VL model of the Qwen3.8 line (Apache-2.0, 2026-08-14); DashScope only started serving it after the
+    // 08-17 pass. Model page (published 2026-08-19) + live probes agree: 991,808 max input (983,616 thinking) / 1M context /
+    // 128K out / 256K max CoT, $0.5/$3 Singapore with the 20% implicit-cache rule. Still absent from the Intl price table.
+    idPrefix: 'qwen3.8-27b',
+    label: 'Qwen3.8 27B',
+    parameterSpecs: _PS_Qwen38Effort, // full ladder + enable_thinking:false all accepted (live-ablated 2026-08-24, same buckets as qwen3.8-max)
+    pubDate: '20260814',
+    description: 'Open-weights 27B dense vision-language model of the Qwen3.8 line. 1M context, thinking, image/video input.',
+    contextWindow: 1000000, // 1M
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    maxCompletionTokens: 131072, // 128K (max_tokens range live-probed)
+    chatPrice: { input: 0.50, output: 3.00, cache: { cType: 'oai-ac', read: 0.10 } },
   },
   {
     idPrefix: 'qwen3.7-max',
@@ -451,6 +477,19 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 202745, maxCompletionTokens: 131072, // 202,745 in (model page + live 'Range of input length' probe 2026-08-16; 169,984 with thinking on) / 128K out
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.28 } }, // cache = 20% implicit-hit rate per the model page (0.165 on 0.825, all regions)
+  },
+  {
+    // Live on DashScope since the 08-17 pass; model page published 2026-08-24. Singapore $3/$15 with implicit cache 0.30
+    // (10% of input here, not the usual Kimi 20%); no price-table row yet. Unlike K2.7 Code, thinking can be turned off.
+    idPrefix: 'kimi-k3',
+    label: 'Kimi K3 (Alibaba)',
+    parameterSpecs: _PS_KimiEffort,
+    pubDate: '20260716', // = moonshot.models.ts 'kimi-k3' (Moonshot release, not the DashScope listing)
+    description: 'Moonshot Kimi K3 flagship served via Alibaba Model Studio. Multimodal, thinking on by default, 1M context.',
+    contextWindow: 1048576, // 1M (live-probed: 'Range of input length should be [1, 1048576]')
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    maxCompletionTokens: 131072, // house cap; live ceiling is 1,048,576 (= context window)
+    chatPrice: { input: 3.00, output: 15.00, cache: { cType: 'oai-ac', read: 0.30 } },
   },
   {
     idPrefix: 'kimi-k2.7-code',
