@@ -293,7 +293,7 @@ export const DModelParameterRegistry = {
     label: 'Bedrock API',
     type: 'enum',
     description: 'Bedrock invocation API for this model',
-    values: ['converse', 'invoke-anthropic', 'mantle'],
+    values: ['converse', 'invoke-anthropic', 'mantle', 'mantle-responses'],
     // undefined is not accepted when this parameter is used
   }),
 

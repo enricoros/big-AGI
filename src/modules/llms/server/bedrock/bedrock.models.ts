@@ -31,7 +31,7 @@ import * as z from 'zod/v4';
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
 import { llmsAntInjectVariants, llmBedrockFindAnthropicModel, llmBedrockStripAnthropicMDS } from '../anthropic/anthropic.models';
-import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
 import { DModelParameterSpecAny } from '~/common/stores/llms/llms.parameters';
 
 
@@ -45,9 +45,16 @@ const SKIP_MANTLE_TOOLS_IDS = ['writer.palmyra-vision-7b']; // 400s: '"auto" too
 // All 11 answered /v1/chat/completions on 2026-08-17; 'qwen.qwen3-coder-next' dropped - AWS promoted it to a
 // foundation model, so it is now described from FM metadata. Corrected sizes are the creators' published specs,
 // except the gpt-oss output cap, which is Bedrock's own (converse.maxTokensMaximum on openai.gpt-oss-*-1:0).
-const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: number; vision?: true; reasoning?: true }> = {
+// `api: 'responses'`: model only implements the OpenAI Responses API (on the '/openai/v1/responses' path) and rejects
+// Chat Completions with a 400 - see https://docs.aws.amazon.com/bedrock/latest/userguide/models-api-compatibility.html
+const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: number; vision?: true; reasoning?: true; api?: 'responses' }> = {
   'deepseek.v3.1': { label: 'DeepSeek V3.1', ctx: 131072, out: 16384 },
   'moonshotai.kimi-k2-thinking': { label: 'Kimi K2 Thinking', ctx: 262144, out: 65536, reasoning: true },
+  'openai.gpt-5.4': { label: 'GPT-5.4', ctx: 272000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-5.5': { label: 'GPT-5.5', ctx: 272000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-5.6-luna': { label: 'GPT-5.6 Luna', ctx: 272000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-5.6-sol': { label: 'GPT-5.6 Sol', ctx: 272000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-5.6-terra': { label: 'GPT-5.6 Terra', ctx: 272000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-oss-20b': { label: 'GPT-OSS 20B', ctx: 131072, out: 128000 },
   'openai.gpt-oss-120b': { label: 'GPT-OSS 120B', ctx: 131072, out: 128000 },
   'qwen.qwen3-32b': { label: 'Qwen3 32B', ctx: 131072, out: 16384 },
@@ -304,6 +311,7 @@ export function bedrockModelsToDescriptions(
   const bedrockAPIAnthropic = { paramId: 'llmVndBedrockAPI', initialValue: 'invoke-anthropic' } as const satisfies DModelParameterSpecAny;
   const bedrockAPIConverse = { paramId: 'llmVndBedrockAPI', initialValue: 'converse' } as const satisfies DModelParameterSpecAny;
   const bedrockAPIMantle = { paramId: 'llmVndBedrockAPI', initialValue: 'mantle' } as const satisfies DModelParameterSpecAny;
+  const bedrockAPIMantleResponses = { paramId: 'llmVndBedrockAPI', initialValue: 'mantle-responses' } as const satisfies DModelParameterSpecAny;
   for (const [modelId, modelMeta] of modelMap) {
     if (_seemsAnthropicBedrockModel(modelId)) {
 
@@ -375,21 +383,23 @@ export function bedrockModelsToDescriptions(
   for (const mantleId of remainingMantleModelIds) {
     // Anthropic aliases are listed by Mantle but rejected by both OpenAI routes (invoke-only) - and already described above
     if (_seemsAnthropicBedrockModel(mantleId)) continue;
-    const known = KNOWN_MANTLE_ONLY[mantleId];
+    const known = _findKnownMantleModel(mantleId);
+    const isResponsesOnly = known?.api === 'responses';
     const provider = _extractMantleProvider(mantleId);
     const interfaces = [LLM_IF_OAI_Chat];
     if (!SKIP_MANTLE_TOOLS_IDS.includes(_stripRegionPrefix(mantleId))) interfaces.push(LLM_IF_OAI_Fn); // same no-tools rule as the fused loop above (probed 2026-08-17)
     if (known?.vision) interfaces.push(LLM_IF_OAI_Vision);
     if (known?.reasoning) interfaces.push(LLM_IF_OAI_Reasoning);
+    if (isResponsesOnly) interfaces.push(LLM_IF_HOTFIX_NoTemperature); // GPT-5.x frontier reasoning models reject temperature ('Unsupported parameter') - same as on the OpenAI vendor
     descriptions.push({
       id: mantleId,
       label: `${symbolMantle}${known?.label ?? labelForMantle(mantleId, provider)}${known ? '' : ' [?]'}`,
-      description: `${provider} model via OpenAI-Compatible API on AWS Bedrock Mantle`,
+      description: `${provider} model via OpenAI-Compatible ${isResponsesOnly ? 'Responses ' : ''}API on AWS Bedrock Mantle`,
       contextWindow: known?.ctx ?? 131072,
       maxCompletionTokens: known?.out ?? 16384,
       interfaces,
-      parameterSpecs: [bedrockAPIMantle],
-      hidden: true, // listed by Mantle, but unverified: some ids 400 with "isn't supported on this route", others are account-gated
+      parameterSpecs: [isResponsesOnly ? bedrockAPIMantleResponses : bedrockAPIMantle],
+      hidden: !isResponsesOnly, // show models with a curated API assignment; hide the rest (listed by Mantle, but unverified: some ids 400 with "isn't supported on this route", others are account-gated)
     });
   }
 
@@ -398,6 +408,11 @@ export function bedrockModelsToDescriptions(
 
 
 // --- Helpers ---
+
+/** Find a KNOWN_MANTLE_ONLY entry: exact ID first, then with a trailing '-YYYY-MM-DD' snapshot suffix stripped (e.g. 'openai.gpt-5.4-2026-03-05' -> 'openai.gpt-5.4') */
+function _findKnownMantleModel(mantleId: string): typeof KNOWN_MANTLE_ONLY[string] | undefined {
+  return KNOWN_MANTLE_ONLY[mantleId] ?? KNOWN_MANTLE_ONLY[mantleId.replace(/-\d{4}-\d{2}-\d{2}$/, '')];
+}
 
 // Extract provider name from Mantle model ID (e.g., 'mistral.model-name' -> 'Mistral')
 function _extractMantleProvider(modelId: string): string {
