@@ -124,7 +124,9 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       );
 
       // celebrate the user's first ever successfully generated diagram
-      if (diagramCode && celebrationConsumeMilestone('first-diagram-generated'))
+      // (guard against the 'Loading...' placeholder: only count it if the
+      // streaming callback above ever actually replaced it with real text)
+      if (diagramCode && diagramCode !== 'Loading...' && celebrationConsumeMilestone('first-diagram-generated'))
         setCelebrationKey(Date.now());
     } catch (error: any) {
       setDiagramCode(null);

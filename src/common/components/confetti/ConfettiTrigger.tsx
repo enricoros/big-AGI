@@ -39,18 +39,20 @@ function ConfettiBurst(props: { fireKey: number | string }) {
 
   // state
   const [done, setDone] = React.useState(false);
-  const confettiRef = React.useRef<TCanvasConfettiInstance | null>(null);
+  // NOTE: this is state (not a ref) on purpose - `<ReactCanvasConfettiLazy>` is behind
+  // React.lazy/Suspense, so it mounts in a later commit than this component. A ref set
+  // from its onInit wouldn't re-trigger the "fire" effect below, which would then have
+  // already run once (while the instance was still unset) and never run again.
+  const [confetti, setConfetti] = React.useState<TCanvasConfettiInstance | null>(null);
 
   // reset when a new burst is requested
   React.useEffect(() => {
     setDone(false);
   }, [props.fireKey]);
 
-  // fire once mounted (or when the key changes) - then self-unmount
+  // fire once the confetti instance is available (or when the key changes) - then self-unmount
   React.useEffect(() => {
-    if (done) return;
-    const confetti = confettiRef.current;
-    if (!confetti) return;
+    if (done || !confetti) return;
 
     void confetti({
       particleCount: 100,
@@ -62,7 +64,7 @@ function ConfettiBurst(props: { fireKey: number | string }) {
         getCssVar('--joy-palette-neutral-500') || '#5A6B7B',
       ],
     })?.then(() => setDone(true));
-  }, [done, props.fireKey]);
+  }, [confetti, done, props.fireKey]);
 
   // fully gone once the animation has run - no lingering canvas element
   if (done)
@@ -70,9 +72,7 @@ function ConfettiBurst(props: { fireKey: number | string }) {
 
   return (
     <ReactCanvasConfettiLazy
-      onInit={({ confetti }) => {
-        confettiRef.current = confetti;
-      }}
+      onInit={({ confetti }) => setConfetti(() => confetti)}
     />
   );
 }
