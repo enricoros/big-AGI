@@ -21,9 +21,10 @@
 //   zai.glm-4.7, openai.gpt-oss-120b, qwen.qwen3-coder-next and mistral.mistral-large-3-675b-instruct all
 //   returned finish_reason 'tool_calls'.
 // - Listed but not callable: google.gemma-4-{31b,26b-a4b,e2b} and xai.grok-4.3 400 on both Mantle routes
-//   ("isn't supported on this route"); openai.gpt-5.4/5.5 (+ dated ids) and the gpt-5.6-{sol,terra,luna}
-//   profiles are account-gated (401 access_denied, "contact AWS Sales"). Left uncurated ('[?]') rather than
-//   described: AWS publishes no sizes for them, and what we cannot call we cannot probe.
+//   ("isn't supported on this route"). openai.gpt-5.4/5.5 (+ dated ids) and the gpt-5.6-{sol,terra,luna}
+//   profiles are account-gated (401 access_denied, "contact AWS Sales"; re-checked 2026-08-25) - curated
+//   anyway via #1167 (author live-verified on an access-enabled account): the 401 is self-explanatory for
+//   accounts without the enablement.
 // - Model list: https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
 
 import * as z from 'zod/v4';
@@ -47,6 +48,8 @@ const SKIP_MANTLE_TOOLS_IDS = ['writer.palmyra-vision-7b']; // 400s: '"auto" too
 // except the gpt-oss output cap, which is Bedrock's own (converse.maxTokensMaximum on openai.gpt-oss-*-1:0).
 // `api: 'responses'`: model only implements the OpenAI Responses API (on the '/openai/v1/responses' path) and rejects
 // Chat Completions with a 400 - see https://docs.aws.amazon.com/bedrock/latest/userguide/models-api-compatibility.html
+// GPT-5.x sizes follow the AWS model cards (272K ctx); the OpenAI vendor lists this family at 1M - Bedrock's real
+// cap is not probeable while account-gated, so the cards stand.
 const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: number; vision?: true; reasoning?: true; api?: 'responses' }> = {
   'deepseek.v3.1': { label: 'DeepSeek V3.1', ctx: 131072, out: 16384 },
   'moonshotai.kimi-k2-thinking': { label: 'Kimi K2 Thinking', ctx: 262144, out: 65536, reasoning: true },
