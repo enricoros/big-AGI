@@ -51,6 +51,7 @@
     "@vercel/speed-insights": "^2.0.0",
     "aws4fetch": "^1.0.20",
     "browser-fs-access": "^0.38.0",
+    "canvas-confetti": "^1.9.3",
     "cheerio": "^1.1.2",
     "csv-stringify": "^6.8.3",
     "dexie": "~4.0.11",
@@ -69,6 +70,7 @@
     "puppeteer-core": "^24",
     "react": "^18",
     "react-dom": "^18",
+    "react-canvas-confetti": "^2.0.7",
     "react-hook-form": "^7.85.0",
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^3.0.6",
@@ -87,6 +89,7 @@
   },
   "devDependencies": {
     "@posthog/nextjs-config": "~1.6",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^22",
     "@types/nprogress": "^0.2.3",
     "@types/prismjs": "^1.26.6",

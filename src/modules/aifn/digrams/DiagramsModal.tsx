@@ -10,11 +10,13 @@ import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { ChipToggleButton } from '~/common/components/ChipToggleButton';
+import { ConfettiTrigger } from '~/common/components/confetti/ConfettiTrigger';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { PhTreeStructure } from '~/common/components/icons/phosphor/PhTreeStructure';
 import { InlineError } from '~/common/components/InlineError';
 import { adjustContentScaling } from '~/common/app.theme';
+import { celebrationConsumeMilestone } from '~/common/stores/store-celebrations';
 import { createDMessageTextContent, messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
 import { useFormRadio } from '~/common/components/forms/useFormRadio';
@@ -63,6 +65,7 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
   const [customInstruction, setCustomInstruction] = React.useState<string>('');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [abortController, setAbortController] = React.useState<AbortController | null>(null);
+  const [celebrationKey, setCelebrationKey] = React.useState<number | null>(null);
 
   // external state
   const isMobile = useIsMobile();
@@ -119,6 +122,10 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
           !!text && setDiagramCode(diagramCode = text.trim());
         },
       );
+
+      // celebrate the user's first ever successfully generated diagram
+      if (diagramCode && celebrationConsumeMilestone('first-diagram-generated'))
+        setCelebrationKey(Date.now());
     } catch (error: any) {
       setDiagramCode(null);
       setErrorMessage(error?.name !== 'AbortError' ? error?.message : 'Interrupted.');
@@ -180,6 +187,8 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
 
 
   return (
+    <>
+    <ConfettiTrigger fireKey={celebrationKey} />
     <GoodModal
       // titleStartDecorator={<AutoFixHighIcon sx={{ fontSize: 'md', mr: 1 }} />}
       title={<Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
@@ -300,5 +309,6 @@ export function DiagramsModal(props: { config: DiagramConfig, onClose: () => voi
       </Box>
 
     </GoodModal>
+    </>
   );
 }
