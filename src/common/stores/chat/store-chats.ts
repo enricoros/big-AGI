@@ -108,7 +108,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         // caution, we sanitize and re-run this here, to upgrade the message to the current version
         V4ToHeadConverters.inMemHeadCleanDConversations([conversation]);
 
-        conversation.tokenCount = updateMessagesTokenCounts(conversation.messages, true, 'importConversation');
+        conversation.tokenCount = updateMessagesTokenCounts(conversation.id, conversation.messages, true, 'importConversation');
 
         _set({
           conversations: [conversation, ...conversations.filter(_c => _c.id !== conversation.id)],
@@ -220,7 +220,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
             ...(!!newMessages.length ? {} : {
               autoTitle: undefined,
             }),
-            tokenCount: updateMessagesTokenCounts(newMessages, false, 'historyReplace'),
+            tokenCount: updateMessagesTokenCounts(conversationId, newMessages, false, 'historyReplace'),
             updated: Date.now(),
             _abortController: null,
           };
@@ -241,7 +241,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 
           return {
             messages: truncatedMessages,
-            tokenCount: updateMessagesTokenCounts(truncatedMessages, false, 'historyTruncateToIncluded'),
+            tokenCount: updateMessagesTokenCounts(conversationId, truncatedMessages, false, 'historyTruncateToIncluded'),
             updated: Date.now(),
             _abortController: null,
           };
@@ -295,7 +295,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           workspaceActions().importAssignmentsFromMessages(workspaceForConversationIdentity(conversationId), [message]);
 
           if (!message.pendingIncomplete)
-            updateMessagesTokenCounts([message], true, 'appendMessage');
+            updateMessagesTokenCounts(conversationId, [message], true, 'appendMessage');
 
           const messages = [...conversation.messages, message];
 
@@ -338,7 +338,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
               delete updatedMessage.pendingIncomplete;
 
             if (!updatedMessage.pendingIncomplete)
-              updateMessageTokenCount(updatedMessage, getChatLLMId(), true, 'editMessage(incomplete=false)');
+              updateMessageTokenCount(updatedMessage, getConversationChatLLMId(conversationId), true, 'editMessage(incomplete=false)');
 
             return updatedMessage;
           });
@@ -546,14 +546,14 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 );
 
 
-// Convenience function to update a set of messages, using the current chatLLM
-function updateMessagesTokenCounts(messages: DMessage[], forceUpdate: boolean, debugFrom: string): number {
+// Convenience function to update a set of messages, using the conversation-bound chatLLM (pin, or the 'primaryChat' domain default)
+function updateMessagesTokenCounts(conversationId: DConversationId | null, messages: DMessage[], forceUpdate: boolean, debugFrom: string): number {
 
   // no messages: 0, not the base overhead (0 = not yet calculated; keeps empty chats free of a phantom count)
   if (!messages.length)
     return 0;
 
-  const chatLLMId = getChatLLMId();
+  const chatLLMId = getConversationChatLLMId(conversationId);
   return 3 + messages.reduce((sum, message) => {
     return 4 + updateMessageTokenCount(message, chatLLMId, forceUpdate, debugFrom) + sum;
   }, 0);

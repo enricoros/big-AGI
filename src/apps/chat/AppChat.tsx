@@ -28,8 +28,7 @@ import { addSnackbar, removeSnackbar } from '~/common/components/snackbar/useSna
 import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
-import { getChatLLMId } from '~/common/stores/llms/store-llms';
-import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
+import { getConversation, getConversationChatLLMId, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences, useOptimaChromeless } from '~/common/layout/optima/useOptima';
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
@@ -538,10 +537,10 @@ export function AppChat() {
   // Shortcuts
 
   const handleOpenChatLlmOptions = React.useCallback(() => {
-    const chatLLMId = getChatLLMId();
+    const chatLLMId = getConversationChatLLMId(focusedPaneConversationId);
     if (!chatLLMId) return;
     optimaActions().openModelOptions(chatLLMId);
-  }, []);
+  }, [focusedPaneConversationId]);
 
   const handleMoveFocus = React.useCallback((direction: number, wholeList?: boolean) => {
     // find the parent list
