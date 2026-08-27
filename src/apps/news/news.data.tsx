@@ -73,9 +73,9 @@ export const DevNewsItem: NewsItem = {
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   {
-    versionCode: '2.1.0',
+    versionCode: '2.1.1',
     versionName: 'Weights Dust',
-    versionDate: new Date('2026-08-22T00:00:00Z'),
+    versionDate: new Date('2026-08-27T00:00:00Z'),
     items: [
       { text: <>New vendors: <B>Cerebras</B>, <B>NVIDIA NIM</B>, <B>Sakana AI</B>, <B>Cohere</B>, <B>Modular</B>, <B>Nous</B></> },
       { text: <><B>Fable/Opus/Sonnet 5</B>, <B>GPT-5.6</B>, <B>Gemini 3.7</B>, <B>Grok 4.6</B>, <B>Kimi K3</B>, <B>GLM-5.3</B>, <B>Qwen</B></> },
