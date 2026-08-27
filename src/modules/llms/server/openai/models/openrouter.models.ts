@@ -222,7 +222,11 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   if (model.architecture?.input_modalities?.includes('image'))
     interfaces.push(LLM_IF_OAI_Vision);
   // input: video - the chatCompletions adapter lowers media_url parts to OR's 'video_url' extension
-  if (model.architecture?.input_modalities?.includes('video'))
+  // Gemini-only: the catalog flags ~70 models with `video`, but a live probe (2026-08-27, YouTube
+  // watch URL, one latest model per family) showed only Gemini ingests it - the others error
+  // upstream (direct-file-only decoders, 'not supported', no endpoints) or silently drop the video
+  // (MiniMax: empty answer, 26 prompt tokens). Re-probe before widening.
+  if (model.architecture?.input_modalities?.includes('video') && model.id.includes('gemini'))
     interfaces.push(LLM_IF_Inputs_Video);
 
   // output: image
