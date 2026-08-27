@@ -70,6 +70,10 @@ ${historyLines.join('\n')}
       return true;
     }
 
+    // no title: clear the '✏️...' placeholder set above, or it stays as the conversation name forever
+    if (forceReplace)
+      setAutoTitle(conversationId, '');
+
   } catch (error: any) {
     // not critical at all
     console.log('Failed to auto-title conversation', conversationId, { error });
