@@ -787,17 +787,8 @@ function _forwardOpenRouterDataError(parsedData: any, pt: IParticleTransmitter) 
     return false;
   }
 
-  // prepare the text message
-  let errorMessage = safeErrorString(error) || 'unknown.';
-
-  // [OpenRouter] we may have a more specific error message inside the 'metadata' field
-  if ('metadata' in error && typeof error.metadata === 'object') {
-    const { metadata } = error;
-    if ('provider_name' in metadata && 'raw' in metadata)
-      errorMessage += ` -- cause: ${safeErrorString(metadata.provider_name)} error: ${safeErrorString(metadata.raw)}`;
-    else
-      errorMessage += ` -- cause: ${safeErrorString(metadata)}`;
-  }
+  // prepare the text message - safeErrorString unwraps the [OpenRouter] 'metadata' upstream cause
+  const errorMessage = safeErrorString(error) || 'unknown.';
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
   // FIXME: potential point for throwing OperationRetrySignal
