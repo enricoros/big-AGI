@@ -16,6 +16,7 @@ const TRACKING_PARAMS = [
   'gclid', 'gclsrc', 'gbraid', 'wbraid', 'dclid',    // Google Ads / DoubleClick click ids
   'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
   'fbclid', 'msclkid',                               // Meta / Microsoft click ids
+  'agi_from',                                        // our non-utm arrival marker (V1 EOL links) - consumed by from-v1.ts on mount
 ] as const;
 
 const MIN_SETTLE_MS = 2_000; // let analytics libraries finish their initial captures

@@ -4,9 +4,10 @@ import { isBrowser } from '~/common/util/pwaUtils';
 /**
  * Big-AGI V1 → V2 migration arrivals
  *
- * V1 (EOL, hosted instance offline on 2026-08-31) points its users here with
- * `utm_campaign=eol-v1` on every upgrade CTA. We remember the arrival, and offer
- * a guided import of their V1 backup file (which `importAgiStored_Auto` parses natively).
+ * V1 (EOL, hosted instance offline on 2026-08-15) points its users here with
+ * `agi_from=eol-v1` on every upgrade CTA (legacy links carry `utm_campaign=eol-v1`;
+ * the non-utm marker keeps GA4 acquisition source intact). We remember the arrival,
+ * and offer a guided import of their V1 backup file (which `importAgiStored_Auto` parses natively).
  */
 
 const FROM_V1_LS_KEY = 'app-from-v1-arrival';
@@ -20,7 +21,7 @@ export function fromV1DetectArrival(): void {
   if (!isBrowser) return;
   try {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('utm_campaign') !== 'eol-v1') return;
+    if (params.get('agi_from') !== 'eol-v1' && params.get('utm_campaign') !== 'eol-v1') return;
     if (!localStorage.getItem(FROM_V1_LS_KEY)) {
       localStorage.setItem(FROM_V1_LS_KEY, String(Date.now()));
     }
