@@ -164,8 +164,16 @@ async function workerPuppeteer(
       throw new Error('Browse service rate limited (429). Too many requests, please try again later.');
     if (errorMessage.includes('502') || errorMessage.includes('503') || errorMessage.includes('504'))
       throw new Error('Browse service temporarily unavailable. Please try again later.');
-    if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ENOTFOUND'))
-      throw new Error('Browse service unreachable. The browser endpoint is not accessible.');
+    if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ENOTFOUND')) {
+      // show only the host - the endpoint query string may carry credentials
+      let endpointHost = '';
+      try {
+        endpointHost = ` (${new URL(browserWSEndpoint).host})`;
+      } catch {
+        // unparsable endpoint: omit
+      }
+      throw new Error(`Browse service unreachable${endpointHost}. The browser endpoint is not accessible.`);
+    }
     // Re-throw with a cleaner message for other connection errors
     throw new Error(`Browse service connection failed: ${errorMessage || 'Unknown error'}`);
   }
