@@ -221,6 +221,9 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   // input: vision
   if (model.architecture?.input_modalities?.includes('image'))
     interfaces.push(LLM_IF_OAI_Vision);
+  // input: video - detectable here via input_modalities.includes('video'), but NOT flagged yet:
+  // the chatCompletions adapter text-degrades media_url parts (no 'video_url' lowering), so the
+  // flag would promise a capability the OpenRouter dialect doesn't deliver. Flip when it does.
 
   // output: image
   if (model.architecture?.output_modalities?.includes('image'))

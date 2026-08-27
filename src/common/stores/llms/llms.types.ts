@@ -250,6 +250,7 @@ export type DModelInterfaceV1 =
   | 'oai-prompt-caching'
   | 'oai-realtime'
   | 'oai-responses'
+  | 'inputs-video'             // TEMP: ui flag - supports video inputs (URL-referenced or inline), e.g. Gemini video understanding
   | 'outputs-audio'            // TEMP: ui flag - supports audio output (e.g., text-to-speech)
   | 'outputs-image'            // TEMP: ui flag - supports image output (image generation)
   | 'outputs-no-text'          // disable text outputs (used in conjunction with alt-outputs) - assumed off
@@ -272,6 +273,7 @@ export const LLM_IF_ANT_ToolsSearch: DModelInterfaceV1 = 'ant-tools-search';
 // export const LLM_IF_OAI_JsonSchema: ... future?
 export const LLM_IF_OAI_Vision: DModelInterfaceV1 = 'oai-chat-vision';
 export const LLM_IF_OAI_Reasoning: DModelInterfaceV1 = 'oai-chat-reasoning';
+export const LLM_IF_Inputs_Video: DModelInterfaceV1 = 'inputs-video';
 export const LLM_IF_Outputs_Audio: DModelInterfaceV1 = 'outputs-audio';
 export const LLM_IF_Outputs_Image: DModelInterfaceV1 = 'outputs-image';
 export const LLM_IF_Outputs_NoText: DModelInterfaceV1 = 'outputs-no-text';
@@ -299,6 +301,7 @@ export const LLMS_ALL_INTERFACES = [
   LLM_IF_ANT_ToolsSearch,     // Anthropic tool: Tools Search
   // Generalized capabilities
   LLM_IF_OAI_Reasoning,       // COSMETIC ONLY - may show a 'brain' icon in supported screens
+  LLM_IF_Inputs_Video,        // Models that accept video inputs (URL-referenced fileData or inline) - e.g. Gemini 2.5+/3.x
   LLM_IF_Outputs_Audio,       // COSMETIC ONLY FOR NOW - Models that generate audio output (TTS models)
   LLM_IF_Outputs_Image,       // COSMETIC ONLY FOR NOW - Models that can generate images (Gemini, DALL-E, etc.)
   LLM_IF_Outputs_NoText,      // Disable Text Outputs - e.g. Gemini pure TTS
