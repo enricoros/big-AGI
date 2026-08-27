@@ -14,6 +14,7 @@ import { useChatAttachmentsStore } from '~/common/chat-overlay/store-perchat_van
 
 import type { AttachmentDraftSource, AttachmentDraftSourceOriginDTO, AttachmentDraftSourceOriginFile, AttachmentDraftSourceOriginUrl } from './attachment.types';
 import type { AttachmentDraftsStoreApi } from './store-attachment-drafts_slice';
+import { AttachmentInputEnhancersOptions, attachmentEnhancersInterceptText } from './attachment.enhancers';
 
 
 // enable to debug operations
@@ -39,8 +40,9 @@ export type AttachmentDraftsApi = ReturnType<typeof useAttachmentDrafts>;
  * @param hintAddImages Attach an additional image representation of the attachment; only if Release.Features.ENABLE_TEXT_AND_IMAGES.
  * @param onFilterAGIFile If defined, run this async function on '.agi.json' files to decide whether to load them (if returns true) or attach them (if returns false).
  * @param filterOnlyImages If true, only image attachments are allowed.
+ * @param enhancersOptions If defined, input enhancers intercept single-line pasted/dropped text BEFORE the URL/text branches, adding a pending part instead of attaching.
  */
-export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLsOnPaste: boolean, hintAddImages: boolean, onFilterAGIFile?: (file: File) => Promise<boolean>, filterOnlyImages?: boolean) {
+export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreApi | null, enableLoadURLsOnPaste: boolean, hintAddImages: boolean, onFilterAGIFile?: (file: File) => Promise<boolean>, filterOnlyImages?: boolean, enhancersOptions?: AttachmentInputEnhancersOptions) {
 
   // state
   const { _createAttachmentDraft, attachmentDrafts, attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeFragmentsByType } = useChatAttachmentsStore(attachmentsStoreApi, useShallow(state => ({
@@ -100,7 +102,7 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
   /**
    * Append data transfer to the attachments.
    */
-  const attachAppendDataTransfer = React.useCallback(async (dt: DataTransfer, method: AttachmentDraftSourceOriginDTO, attachText: boolean): Promise<'as_files' | 'as_url' | 'as_text' | false> => {
+  const attachAppendDataTransfer = React.useCallback(async (dt: DataTransfer, method: AttachmentDraftSourceOriginDTO, attachText: boolean): Promise<'as_files' | 'delegate_pending' | 'as_url' | 'as_text' | false> => {
 
     // https://github.com/enricoros/big-AGI/issues/286
     const textHtml = dt.getData('text/html') || '';
@@ -203,8 +205,19 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
       return 'as_files';
     }
 
-    // attach as URL
+    // input enhancers: consume recognized single-line text (e.g. a video URL) as a PENDING PART,
+    // bypassing the attachment pipeline entirely - runs before the URL branch and does not
+    // depend on the browse capability
     const textPlain = dt.getData('text/plain') || '';
+    if (textPlain && !filterOnlyImages) {
+      const pendingPart = attachmentEnhancersInterceptText(enhancersOptions, textPlain);
+      if (pendingPart) {
+        enhancersOptions!.onEnhancerAddPendingPart(pendingPart);
+        return 'delegate_pending';
+      }
+    }
+
+    // attach as URL
     if (textPlain && enableLoadURLsOnPaste) {
       const textPlainUrl = asValidURL(textPlain);
       if (textPlainUrl) {
@@ -234,7 +247,7 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
     // did not attach anything from this data transfer
     return false;
-  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, filterOnlyImages, hintAddImages]);
+  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, enhancersOptions, filterOnlyImages, hintAddImages]);
 
   /**
    * Append clipboard items to the attachments.
@@ -300,6 +313,15 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
           .catch(() => '')
         : '';
 
+      // input enhancers: consume recognized single-line text as a pending part (see attachAppendDataTransfer)
+      if (textPlain) {
+        const pendingPart = attachmentEnhancersInterceptText(enhancersOptions, textPlain);
+        if (pendingPart) {
+          enhancersOptions!.onEnhancerAddPendingPart(pendingPart);
+          continue;
+        }
+      }
+
       // attach as URL
       if (textPlain && enableLoadURLsOnPaste) {
         const textPlainUrl = asValidURL(textPlain);
@@ -326,7 +348,7 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
 
       console.warn('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
     }
-  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, filterOnlyImages, hintAddImages]);
+  }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, enhancersOptions, filterOnlyImages, hintAddImages]);
 
   /**
    * Append a cloud file (Google Drive, OneDrive, etc.) to the attachments.

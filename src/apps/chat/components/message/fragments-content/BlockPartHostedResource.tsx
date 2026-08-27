@@ -14,6 +14,7 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import type { AnthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.access';
 import type { GeminiAccessSchema } from '~/modules/llms/server/gemini/gemini.access';
 import type { OpenAIAccessSchema } from '~/modules/llms/server/openai/openai.access';
+import { extractYoutubeVideoIDFromURL } from '~/modules/youtube/youtube.utils';
 import { geminiFileDelete, geminiFileDownloadBlob, geminiFileErrorIsGone, geminiFileGetMetadata } from '~/modules/llms/vendors/gemini/geminiFiles.client';
 
 import type { ContentScaling } from '~/common/app.theme';
@@ -638,6 +639,43 @@ function GeminiFileChip(props: {
 }
 
 
+/** URL-referenced video (user-added, e.g. YouTube): provider-fetched, so no credentials or download - a link-out card. */
+function UrlVideoChip(props: {
+  url: string,
+  onFragmentDelete?: () => void,
+}) {
+  const youTubeVideoId = extractYoutubeVideoIDFromURL(props.url);
+  return (
+    <Sheet variant='outlined' sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1, py: 0.5, borderRadius: 'sm', maxWidth: '100%' }}>
+
+      {youTubeVideoId ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={`https://i.ytimg.com/vi/${youTubeVideoId}/default.jpg`} alt='Video' style={{ width: 60, height: 45, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />
+      ) : (
+        <PlayArrowRoundedIcon sx={{ fontSize: 'xl2', color: 'primary.solidBg' }} />
+      )}
+
+      <GoodTooltip title='Video shared with the AI - open in a new tab'>
+        <Typography
+          level='body-sm' component='a' href={props.url} target='_blank' rel='noopener noreferrer'
+          className='agi-ellipsize'
+          sx={{ minWidth: 0, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+        >
+          {props.url.replace(/^https?:\/\/(www\.)?/, '')}
+        </Typography>
+      </GoodTooltip>
+
+      {!!props.onFragmentDelete && (
+        <IconButton size='sm' onClick={props.onFragmentDelete}>
+          <DeleteOutlineIcon />
+        </IconButton>
+      )}
+
+    </Sheet>
+  );
+}
+
+
 function NoAccessChip(props: { fileId: string }) {
   return (
     <Sheet variant='outlined' sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, px: 1.5, py: 0.5, borderRadius: 'sm' }}>
@@ -674,6 +712,15 @@ export function BlockPartHostedResource(props: {
   const antAccess = useLlmServiceAccess(resource.via === 'anthropic' ? props.messageGeneratorLlmId : undefined, 'anthropic');
   const oaiAccess = useLlmServiceAccess(resource.via === 'openai-container' ? props.messageGeneratorLlmId : undefined, 'openai');
   const gemAccess = useLlmServiceAccess(resource.via === 'gemini-file' ? props.messageGeneratorLlmId : undefined, 'googleai');
+
+  // URL-referenced media: public URL, no credentials involved
+  if (resource.via === 'url')
+    return (
+      <UrlVideoChip
+        url={resource.url}
+        onFragmentDelete={onFragmentDelete ? handleFragmentDelete : undefined}
+      />
+    );
 
   if (resource.via === 'anthropic' && antAccess)
     return (

@@ -15,6 +15,7 @@ import { useChatAutoSuggestAttachmentPrompts, useChatMicTimeoutMsValue } from '.
 import { useAgiAttachmentPrompts } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
+import type { DComposerPendingPart } from '~/common/chat-overlay/store-perchat-composer_slice';
 import { DLLM, getLLMContextTokens, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { llmChatPricing_adjusted } from '~/common/stores/llms/llms.pricing';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
@@ -31,7 +32,7 @@ import { animationEnterBelow } from '~/common/util/animUtils';
 import { browserSpeechRecognitionCapability, PLACEHOLDER_INTERIM_TRANSCRIPT, SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { copyToClipboard, supportsClipboardRead } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
+import { createHostedResourceContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { glueForMessageTokens, marshallWrapDocFragments } from '~/common/stores/chat/chat.tokens';
 import { isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { getModelParameterValueWithFallback } from '~/common/stores/llms/llms.parameters';
@@ -54,6 +55,7 @@ import { providerStarredMessages, StarredMessageItem } from './actile/providerSt
 import { useActileManager } from './actile/useActileManager';
 
 import type { AttachmentDraftId, AttachmentDraftsAction } from '~/common/attachment-drafts/attachment.types';
+import { AttachmentInputEnhancersOptions, attachmentEnhancersPlaceholderHints } from '~/common/attachment-drafts/attachment.enhancers';
 import { AttachmentSourcesMemo } from '~/common/attachment-drafts/attachment-sources/AttachmentSources';
 import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
 import { useAttachmentDraftsEnrichment } from '~/common/attachment-drafts/llm-enrichment/useAttachmentDraftsEnrichment';
@@ -69,6 +71,7 @@ import { ButtonMicContinuationMemo } from './buttons/ButtonMicContinuation';
 import { ButtonMicMemo } from './buttons/ButtonMic';
 import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
+import { COMPOSER_INPUT_ENHANCERS } from './composer.input-enhancers';
 import { ComposerAttachmentDraftsList } from './llmattachments/ComposerAttachmentDraftsList';
 import { ComposerTextAreaActions } from './textarea/ComposerTextAreaActions';
 import { ComposerTextAreaDrawActions } from './textarea/ComposerTextAreaDrawActions';
@@ -163,6 +166,9 @@ export function Composer(props: {
   const allowInReferenceTo = chatExecuteMode === 'generate-content';
   const inReferenceTo = useChatComposerOverlayStore(conversationOverlayStore, store => allowInReferenceTo ? store.inReferenceTo : null);
 
+  // composer-overlay: parts added by input enhancers (e.g. pasted video URLs, outside the attachment pipeline)
+  const pendingParts = useChatComposerOverlayStore(conversationOverlayStore, store => store.pendingParts.length ? store.pendingParts : null);
+
   // LLM-derived
   const noLLM = !props.chatLLM;
   const chatLLMSupportsImages = !!props.chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision);
@@ -189,11 +195,22 @@ export function Composer(props: {
 
   // attachments-overlay: comes from the attachments slice of the conversation overlay
   const showChatAttachments = chatExecuteModeCanAttach(chatExecuteMode, props.capabilityHasT2IEdit);
+
+  // input enhancers: intercept recognized pasted text into pending parts - off in image-only modes
+  const addPendingPart = React.useCallback((part: DComposerPendingPart) => {
+    conversationOverlayStore?.getState().addPendingPart(part);
+  }, [conversationOverlayStore]);
+  const enhancersOff = !props.chatLLM || showChatAttachments === 'only-images';
+  const enhancersOptions = React.useMemo((): AttachmentInputEnhancersOptions | undefined => {
+    if (enhancersOff || !props.chatLLM) return undefined;
+    return { enhancers: COMPOSER_INPUT_ENHANCERS, enhancerLLM: props.chatLLM, onEnhancerAddPendingPart: addPendingPart };
+  }, [enhancersOff, props.chatLLM, addPendingPart]);
+
   const {
     /* items */ attachmentDrafts,
     /* append */ attachAppendClipboardItems, attachAppendCloudFile, attachAppendDataTransfer, attachAppendEgoFragments, attachAppendFile, attachAppendUrl,
     /* take */ attachmentsRemoveAll, attachmentsTakeAllFragments, attachmentsTakeFragmentsByType,
-  } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer, chatLLMSupportsImages, handleFilterAGIFile, showChatAttachments === 'only-images');
+  } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer, chatLLMSupportsImages, handleFilterAGIFile, showChatAttachments === 'only-images', enhancersOptions);
 
   // attachments derived state
   const { enrichment: attEnrichment, summary: attEnrichSummary } = useAttachmentDraftsEnrichment(attachmentDrafts, props.chatLLM, chatLLMSupportsImages);
@@ -239,7 +256,7 @@ export function Composer(props: {
   }, [setComposeText, setStartupText, startupText]);
 
   // Effect: notify the parent of presence/absence of content
-  const isContentful = composeText.length > 0 || !!attachmentDrafts.length;
+  const isContentful = composeText.length > 0 || !!attachmentDrafts.length || !!pendingParts?.length;
   const { onComposerHasContent } = props;
   React.useEffect(() => {
     onComposerHasContent?.(isContentful);
@@ -254,6 +271,10 @@ export function Composer(props: {
 
   const handleInReferenceToClear = React.useCallback(() => {
     conversationOverlayStore?.getState().clearInReferenceTo();
+  }, [conversationOverlayStore]);
+
+  const handleRemovePendingPart = React.useCallback((part: DComposerPendingPart) => {
+    conversationOverlayStore?.getState().removePendingPart(part);
   }, [conversationOverlayStore]);
 
   React.useEffect(() => {
@@ -286,7 +307,8 @@ export function Composer(props: {
     setComposeText('');
     attachmentsRemoveAll();
     handleInReferenceToClear();
-  }, [attachmentsRemoveAll, handleInReferenceToClear, setComposeText]);
+    conversationOverlayStore?.getState().clearPendingParts();
+  }, [attachmentsRemoveAll, conversationOverlayStore, handleInReferenceToClear, setComposeText]);
 
   const _handleSendActionUnguarded = React.useCallback(async (_chatExecuteMode: ChatExecuteMode, composerText: string): Promise<boolean> => {
     if (!isValidConversation(targetConversationId)) return false;
@@ -309,6 +331,8 @@ export function Composer(props: {
 
     const canAttach = chatExecuteModeCanAttach(_chatExecuteMode, props.capabilityHasT2IEdit);
     if (canAttach) {
+      // enhancer-pending parts (e.g. video URLs) become content fragments after the text
+      fragments.push(...(pendingParts || []).map(part => createHostedResourceContentFragment(part.resource)));
       const attachmentFragments = await attachmentsTakeAllFragments('global', 'app-chat');
       fragments.push(...attachmentFragments);
     }
@@ -326,7 +350,7 @@ export function Composer(props: {
     if (enqueued)
       _handleClearText();
     return enqueued;
-  }, [targetConversationId, confirmProceedIfAttachmentsNotSupported, composerTextSuffix, props.capabilityHasT2IEdit, inReferenceTo, onAction, _handleClearText, attachmentsTakeAllFragments]);
+  }, [targetConversationId, confirmProceedIfAttachmentsNotSupported, composerTextSuffix, props.capabilityHasT2IEdit, inReferenceTo, onAction, _handleClearText, attachmentsTakeAllFragments, pendingParts]);
 
   const handleSendAction = React.useCallback(async (chatExecuteMode: ChatExecuteMode, composerText: string): Promise<boolean> => {
     setSendStarted(true);
@@ -586,7 +610,7 @@ export function Composer(props: {
 
   // Attachments Up
 
-  const handleAttachCtrlV = useAttachHandler_PasteIntercept(attachAppendDataTransfer);
+  const handleAttachCtrlV = useAttachHandler_PasteIntercept(attachAppendDataTransfer, enhancersOptions);
   const handleAttachFiles = useAttachHandler_Files(attachAppendFile);
   const handleOpenCamera = useAttachHandler_CameraOpen(attachAppendFile);
   const handleAttachScreenCapture = useAttachHandler_ScreenCapture(attachAppendFile);
@@ -690,6 +714,9 @@ export function Composer(props: {
     return actions[Math.floor(Math.random() * actions.length)];
   }, [props.capabilityHasT2I]);
 
+  // input-enhancer hints of the current model (e.g. 'paste a video link')
+  const enhancerHints = !enhancersOptions ? [] : attachmentEnhancersPlaceholderHints(COMPOSER_INPUT_ENHANCERS, props.chatLLM);
+
   let textPlaceholder: string =
     isDraw ? 'Describe what you would like to see...'
       : isReAct ? 'Ask a multi-step reasoning question...'
@@ -700,6 +727,7 @@ export function Composer(props: {
             + (isDesktop ? ` · drop ${props.isDeveloperMode ? 'source' : 'files'}` : '')
             + ` · ${placeholderAction}`
             + (recognitionState.isAvailable ? ' · ramble' : '')
+            + enhancerHints.map(hint => ` · ${hint}`).join('')
             + '...';
 
   if (isDesktop && timeToShowTips && !isDraw) {
@@ -833,8 +861,11 @@ export function Composer(props: {
                       : <ComposerTextAreaActions
                         agiAttachmentPrompts={agiAttachmentPrompts}
                         inReferenceTo={inReferenceTo}
+                        pendingParts={pendingParts}
+                        pendingPartsEnhancers={COMPOSER_INPUT_ENHANCERS}
                         onAppendAndSend={handleAppendTextAndSend}
                         onRemoveReferenceTo={handleRemoveInReferenceTo}
+                        onRemovePendingPart={handleRemovePendingPart}
                       />
                     }
                     slotProps={{

@@ -7,6 +7,7 @@ import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { useCameraCaptureDialog } from '~/common/components/camera/useCameraCaptureDialog';
 
 import type { AttachmentDraftsApi } from '../useAttachmentDrafts';
+import { AttachmentInputEnhancersOptions, attachmentEnhancersInterceptText } from '../attachment.enhancers';
 import { useWebAttachmentModal } from './useWebAttachmentModal';
 
 
@@ -69,9 +70,16 @@ export function useAttachHandler_Files(attachAppendFile: AttachmentDraftsApi['at
 
 /**
  * Returns a paste handler that intercepts Ctrl+V, routing pasted files through the attachment pipeline.
+ * @param enhancersOptions When set, input enhancers may consume the pasted text as a pending part; the
+ *        check is PURE and re-run synchronously here, because preventDefault() after an await is too
+ *        late to stop the native text insertion.
  */
-export function useAttachHandler_PasteIntercept(attachAppendDataTransfer: AttachmentDraftsApi['attachAppendDataTransfer']) {
+export function useAttachHandler_PasteIntercept(attachAppendDataTransfer: AttachmentDraftsApi['attachAppendDataTransfer'], enhancersOptions?: AttachmentInputEnhancersOptions) {
   return React.useCallback<_HandlePasteIntercept>(async (event) => {
+
+    // enhancers: decide synchronously (pure, cheap) so the native paste of the consumed text is stopped in time
+    if (enhancersOptions && attachmentEnhancersInterceptText(enhancersOptions, event.clipboardData.getData('text/plain') || ''))
+      event.preventDefault();
 
     // false = don't attach text (only files), to prevent duplicate text in input
     if (await attachAppendDataTransfer(event.clipboardData, 'paste', false) === 'as_files') {
@@ -79,7 +87,7 @@ export function useAttachHandler_PasteIntercept(attachAppendDataTransfer: Attach
       event.preventDefault();
     }
 
-  }, [attachAppendDataTransfer]);
+  }, [attachAppendDataTransfer, enhancersOptions]);
 }
 
 /**

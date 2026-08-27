@@ -5,6 +5,8 @@ import { Box, Button, ColorPaletteProp } from '@mui/joy';
 
 import type { AgiAttachmentPromptsData } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 
+import type { AttachmentInputEnhancer } from '~/common/attachment-drafts/attachment.enhancers';
+import type { DComposerPendingPart } from '~/common/chat-overlay/store-perchat-composer_slice';
 import type { DMetaReferenceItem } from '~/common/stores/chat/chat.message';
 
 import { InReferenceToBubble } from '../../message/in-reference-to/InReferenceToBubble';
@@ -65,13 +67,16 @@ const promptButtonSx: SxProps = {
 export function ComposerTextAreaActions(props: {
   agiAttachmentPrompts: AgiAttachmentPromptsData,
   inReferenceTo?: DMetaReferenceItem[] | null
+  pendingParts?: DComposerPendingPart[] | null,
+  pendingPartsEnhancers?: readonly AttachmentInputEnhancer[],
   onAppendAndSend: (appendText: string) => Promise<void>,
   onRemoveReferenceTo: (item: DMetaReferenceItem) => void,
+  onRemovePendingPart?: (part: DComposerPendingPart) => void,
 }) {
 
   // skip the component if there's nothing to show
-  const { agiAttachmentPrompts } = props;
-  if (!props.inReferenceTo?.length && !agiAttachmentPrompts.prompts?.length /*&& !props.agiAttachmentPrompts.isVisible*/)
+  const { agiAttachmentPrompts, onRemovePendingPart } = props;
+  if (!props.inReferenceTo?.length && !props.pendingParts?.length && !agiAttachmentPrompts.prompts?.length /*&& !props.agiAttachmentPrompts.isVisible*/)
     return null;
 
   return (
@@ -86,6 +91,14 @@ export function ComposerTextAreaActions(props: {
           className='within-composer-focus'
         />
       ))}
+
+      {/* Enhancer-pending part chips (e.g. video URLs) - dispatched to the owning enhancer's renderer */}
+      {props.pendingParts?.map((part, index) => {
+        const enhancer = props.pendingPartsEnhancers?.find(e => e.ownsPart(part));
+        if (!enhancer) return null;
+        const PendingChip = enhancer.PendingChip;
+        return <PendingChip key={index} part={part} onRemove={() => onRemovePendingPart?.(part)} />;
+      })}
 
       {/* Auto-Prompts from attachments */}
       {agiAttachmentPrompts.prompts.map((candidate, index) =>
