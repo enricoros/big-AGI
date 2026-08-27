@@ -163,10 +163,10 @@ async function dynamicImportPdfJs() {
     return { getDocument: null };
   } else {
     // Dynamically import the 'pdfjs-dist' library [nextjs]
-    const { getDocument, GlobalWorkerOptions } = await import('pdfjs-dist');
+    const { getDocument, GlobalWorkerOptions, version } = await import('pdfjs-dist');
 
-    // Set the worker script path
-    GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.mjs';
+    // Set the worker script path - versioned, or a cached worker survives library bumps and skews against the API
+    GlobalWorkerOptions.workerSrc = `/workers/pdf.worker.min.mjs?v=${version}`;
 
     return { getDocument };
   }
