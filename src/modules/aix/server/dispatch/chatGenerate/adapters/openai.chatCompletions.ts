@@ -673,13 +673,15 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
               break;
 
             case 'media_url':
-              // URL-referenced video: no native lowering here yet (OpenRouter's 'video_url' content part
-              // is a candidate) - honest text degradation for now
-              const mediaRefContentPart = OpenAIWire_ContentParts.TextContentPart(approxMediaUrlPart_To_String(part));
+              // URL-referenced video: OpenRouter has a native 'video_url' extension (provider-dependent:
+              // YouTube only reaches AI-Studio-served Gemini) - all other dialects: honest text degradation
+              const mediaRefContentPart = openAIDialect === 'openrouter'
+                ? OpenAIWire_ContentParts.OpenRouter_VideoUrlContentPart(part.url)
+                : OpenAIWire_ContentParts.TextContentPart(approxMediaUrlPart_To_String(part));
               if (allowAppend && currentMessage?.role === 'user' && Array.isArray(currentMessage.content))
                 currentMessage.content.push(mediaRefContentPart);
               else
-                chatMessages.push({ role: 'user', content: hotFixPreferArrayUserContent ? [mediaRefContentPart] : mediaRefContentPart.text });
+                chatMessages.push({ role: 'user', content: mediaRefContentPart.type === 'text' && !hotFixPreferArrayUserContent ? mediaRefContentPart.text : [mediaRefContentPart] });
               allowAppend = true;
               break;
 

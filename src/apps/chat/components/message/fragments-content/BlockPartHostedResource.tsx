@@ -658,7 +658,6 @@ function UrlVideoChip(props: {
       <GoodTooltip title='Video shared with the AI - open in a new tab'>
         <Typography
           level='body-sm' component='a' href={props.url} target='_blank' rel='noopener noreferrer'
-          className='agi-ellipsize'
           sx={{ minWidth: 0, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
         >
           {props.url.replace(/^https?:\/\/(www\.)?/, '')}

@@ -50,10 +50,20 @@ export namespace OpenAIWire_ContentParts {
     }),
   });
 
+  const OpenRouter_VideoUrlContentPart_schema = z.object({
+    // [OpenRouter] input content: video by URL - OR extension, not standard OpenAI. Provider-dependent:
+    // YouTube URLs pass through only to AI-Studio-served Gemini; other providers need direct/base64 URLs
+    type: z.literal('video_url'),
+    video_url: z.object({
+      url: z.string(),
+    }),
+  });
+
   export const ContentPart_schema = z.discriminatedUnion('type', [
     TextContentPart_schema,
     ImageContentPart_schema,
     OpenAI_AudioContentPart_schema,
+    OpenRouter_VideoUrlContentPart_schema,
   ]);
 
   export function TextContentPart(text: string): z.infer<typeof TextContentPart_schema> {
@@ -66,6 +76,10 @@ export namespace OpenAIWire_ContentParts {
 
   export function OpenAI_AudioContentPart(data: string, format: 'wav' | 'mp3'): z.infer<typeof OpenAI_AudioContentPart_schema> {
     return { type: 'input_audio', input_audio: { data, format } };
+  }
+
+  export function OpenRouter_VideoUrlContentPart(url: string): z.infer<typeof OpenRouter_VideoUrlContentPart_schema> {
+    return { type: 'video_url', video_url: { url } };
   }
 
   /// Content parts - Output

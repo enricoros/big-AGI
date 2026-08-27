@@ -1,6 +1,6 @@
 import * as z from 'zod/v4';
 
-import { LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_Inputs_Video, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
@@ -221,9 +221,9 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   // input: vision
   if (model.architecture?.input_modalities?.includes('image'))
     interfaces.push(LLM_IF_OAI_Vision);
-  // input: video - detectable here via input_modalities.includes('video'), but NOT flagged yet:
-  // the chatCompletions adapter text-degrades media_url parts (no 'video_url' lowering), so the
-  // flag would promise a capability the OpenRouter dialect doesn't deliver. Flip when it does.
+  // input: video - the chatCompletions adapter lowers media_url parts to OR's 'video_url' extension
+  if (model.architecture?.input_modalities?.includes('video'))
+    interfaces.push(LLM_IF_Inputs_Video);
 
   // output: image
   if (model.architecture?.output_modalities?.includes('image'))
