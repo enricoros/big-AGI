@@ -226,9 +226,10 @@ const rehypePluginsStable: UnifiedPluggable[] = [
 let warnedAboutLength = false;
 let warnedAboutPreprocessor = false;
 
-const INLINE_LATEX_REGEX = /(\s*)\\\(([^\n]*?)\\\)/g;
+// NOTE: no leading (\s*) capture here - it backtracks quadratically on long whitespace runs (#752)
+const INLINE_LATEX_REGEX = /\\\(([^\n]*?)\\\)/g;
 // noinspection RegExpRedundantEscape
-const BLOCK_LATEX_REGEX = /(\s*)\\\[((?:.|\n)*?)\\\]/g;
+const BLOCK_LATEX_REGEX = /\\\[((?:.|\n)*?)\\\]/g;
 
 /*
  * Convert OpenAI-style markdown with LaTeX to 'remark-math' compatible format.
@@ -250,12 +251,12 @@ function preprocessMarkdown(markdownText: string) {
       // Replace LaTeX delimiters with $$...$$
       // Replace inline LaTeX delimiters \( and \) with $$
       // [2025-04-20] NOTE: it was reported that we had infinite recursion on the (.*?) version of inline math; as such, we now stay on the same line
-      .replace(INLINE_LATEX_REGEX, (_match, leadingSpace, mathContent) =>
-        `${leadingSpace}$$${mathContent}$$`,
+      .replace(INLINE_LATEX_REGEX, (_match, mathContent) =>
+        `$$${mathContent}$$`,
       )
       // Replace block LaTeX delimiters \[ and \] with $$
-      .replace(BLOCK_LATEX_REGEX, (_match, leadingSpace, mathContent) =>
-        `${leadingSpace}$$${mathContent}$$`,
+      .replace(BLOCK_LATEX_REGEX, (_match, mathContent) =>
+        `$$${mathContent}$$`,
       )
       // Replace <mark>...</mark> with ==...==, but not in multiple lines, or if preceded by a backtick (disabled, was (?<!`))
       .replace(/<mark>([\s\S]*?)<\/mark>/g, (_match, p1) => wrapWithMarkdownSyntax(p1, '=='))
