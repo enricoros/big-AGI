@@ -22,9 +22,9 @@ const _IF_Vision_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision,
 // - Z.ai thinking maps from effort: 'none' -> disabled, anything else -> enabled
 // - Most models support binary enabled/disabled, so we expose 'none' and 'high'
 // - GLM-5.2 additionally supports reasoning_effort (max/xhigh/high/medium/low/minimal/none) - we expose 'none', 'high', 'max'
-//   The zai adapter (openai.chatCompletions.ts) gates reasoning_effort to glm-5.2/5.3 and sends it alongside thinking:enabled
-// - GLM-5.3: thinking is compulsory (thinking.type 'disabled' -> 400 code 1210) and reasoning_effort is exactly low|high|max
-//   (default max) - no 'none'. Live-verified 2026-08-16 (validation runs before authorization) + https://z.ai/blog/glm-5.3
+//   The zai adapter (openai.chatCompletions.ts) maps effort dialect-wide: 'none' -> thinking:disabled, else thinking:enabled + reasoning_effort passthrough
+// - GLM-5.3 and GLM-5.3-Flash: thinking is compulsory (thinking.type 'disabled' -> 400 code 1210) and reasoning_effort is
+//   exactly low|high|max (default max) - no 'none'. Live-verified 2026-08-16, re-verified on both 2026-08-27 + https://z.ai/blog/glm-5.3
 const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
 ] as const;
@@ -35,7 +35,7 @@ const _PS_Reasoning_Compulsory: ModelDescriptionSchema['parameterSpecs'] = [
 
 // [Z.ai] Known Models - Manual Mappings
 // Also used for prefix-matching 0-day API-discovered models
-// Flash = free tier (1 concurrent request, throttled); FlashX = paid with higher concurrency & priority routing
+// Flash = free tier (1 concurrent request, throttled); FlashX = paid with higher concurrency & priority routing; exception: GLM-5.3-Flash is paid
 // Ref: https://docs.z.ai/api-reference/llm/chat-completion (model enum), https://docs.z.ai/guides/overview/pricing
 // pubDate is REQUIRED on every entry (same pattern as _AnthropicModelDef in anthropic.models.ts).
 type _ZaiModelDef = KnownModel & { pubDate: string };
@@ -44,10 +44,8 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
 
   // GLM-5.3 - 1M context flagship (post-train of the GLM-5.2 base; coding, cyber, agentic)
   // 1M context, 128K output (max_tokens ceiling live-verified 131072). Thinking compulsory, reasoning_effort low|high|max.
-  // Released 2026-08-14 on the GLM Coding Plan (host https://api.z.ai/api/coding/paas); the standard API lists the id
-  // but pay-as-you-go keys get 403 code 1220 'You do not have permission to access glm-5.3' (re-probed 2026-08-17,
-  // both hosts; docs say the API 'will be available soon'). Listed anyway: the id is live and Coding Plan keys work
-  // today. Weights staged ~2 weeks after launch (no zai-org/GLM-5.3 on HF and no third-party host as of 2026-08-17).
+  // Released 2026-08-14 on the GLM Coding Plan; standard API GA since (pay-as-you-go key live-verified 2026-08-27, rate card published).
+  // Weights not public as of 2026-08-27 (no zai-org/GLM-5.3 on HF; GLM-5.3-Flash weights are out, see below).
   {
     idPrefix: 'glm-5.3',
     label: 'GLM-5.3 (1M)',
@@ -57,9 +55,27 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072, // 128K
     parameterSpecs: _PS_Reasoning_Compulsory,
-    // chatPrice: not on the rate card as of 2026-08-17 (https://docs.z.ai/guides/overview/pricing stops at GLM-5.2) - add when published
+    chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.26 } },
     initialTemperature: 1.0,
-    // benchmark: registered on lmarena ('glm-5.3 (max)') but unranked as of 2026-08-17
+    benchmark: { cbaElo: 1487 }, // lmarena: glm-5.3-max
+  },
+
+  // GLM-5.3-Flash - 1M context multimodal Flash (paid, unlike prior free Flash tiers)
+  // New base: 320B MoE (18B activated), hybrid sparse+linear attention, 30T-token multimodal corpus. Accepts image
+  // input (live-verified 2026-08-27; glm-5.3 rejects image parts). Thinking compulsory, reasoning_effort low|high|max,
+  // max_tokens ceiling 131072 - same ladder as glm-5.3. Weights: MIT, HF zai-org/GLM-5.3-Flash (2026-08-25).
+  {
+    idPrefix: 'glm-5.3-flash',
+    label: 'GLM-5.3 Flash (1M)',
+    pubDate: '20260825',
+    description: 'Multimodal Flash on a new 320B MoE base (18B activated, hybrid sparse+linear attention). Image inputs, thinking always on with low/high/max effort. 1M context, 128K output.',
+    contextWindow: 1048576, // 1M
+    interfaces: _IF_Vision_Reasoning,
+    maxCompletionTokens: 131072, // 128K
+    parameterSpecs: _PS_Reasoning_Compulsory,
+    chatPrice: { input: 0.15, output: 0.5, cache: { cType: 'oai-ac', read: 0.03 } }, // list price; 50% promo (0.075/0.25, cache 0.015) through 2026-09-09
+    initialTemperature: 1.0, // HF generation_config
+    // benchmark: not on lmarena as of 2026-08-27
   },
 
   // GLM-5.2 - 1M context flagship (Agentic Coding)
@@ -76,7 +92,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] }],
     chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.26 } },
     initialTemperature: 1.0,
-    benchmark: { cbaElo: 1471 }, // lmarena: glm-5.2-max
+    benchmark: { cbaElo: 1470 }, // lmarena: glm-5.2-max
   },
 
   // GLM-5.1 / GLM-5 Series - Flagship (Agentic Engineering)
@@ -92,7 +108,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     parameterSpecs: _PS_Reasoning,
     chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.26 } },
     initialTemperature: 1.0,
-    benchmark: { cbaElo: 1467 }, // lmarena: glm-5.1
+    benchmark: { cbaElo: 1468 }, // lmarena: glm-5.1
   },
   {
     idPrefix: 'glm-5',
@@ -368,8 +384,8 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
 /// Curated model IDs - authoritative list of Z.ai models
 /// This is the primary source; the list API is unreliable.
 const _zaiCuratedModelIds: string[] = [
-  // Text: GLM-5.3 / GLM-5.2
-  'glm-5.3', 'glm-5.2',
+  // GLM-5.3 (+ multimodal Flash) / GLM-5.2
+  'glm-5.3', 'glm-5.3-flash', 'glm-5.2',
   // Text: GLM-5.1 / GLM-5 series
   'glm-5.1', 'glm-5', 'glm-5-turbo',
   // Text: GLM-4.7 series

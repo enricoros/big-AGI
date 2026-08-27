@@ -91,8 +91,7 @@ export const EditorialDefaults = {
     { vendor: 'xai',        modelId: 'grok-4.3' },
     { vendor: 'moonshot',   modelId: 'kimi-k3' },
     { vendor: 'moonshot',   modelId: 'kimi-k2.6' },
-    // HELD 2026-08-16: glm-5.3 (released 2026-08-14) is Coding-Plan-only on Z.ai - pay-as-you-go keys 403 code 1220 (docs: 'API coming soon'). Uncomment when the standard API opens.
-    // { vendor: 'zai',        modelId: 'glm-5.3' },
+    { vendor: 'zai',        modelId: 'glm-5.3' }, // 2026-08-27: standard API GA (was Coding-Plan-only at launch)
     { vendor: 'zai',        modelId: 'glm-5.2' },
     { vendor: 'deepseek',   modelId: 'deepseek-v4-pro' },
     // NVIDIA NIM: free trial catalog, tail picks (native vendors above always win when configured; z-ai/glm-5.2 dropped: NVIDIA EOL 2026-08-24)
@@ -121,7 +120,7 @@ export const EditorialDefaults = {
     { vendor: 'xai',        modelId: 'grok-4.6' }, // xAI frontier for coding/agentic; new Grok Build default (2026-08-12)
     { vendor: 'xai',        modelId: 'grok-4.5' },
     { vendor: 'xai',        modelId: 'grok-build-0.1' },
-    // { vendor: 'zai',        modelId: 'glm-5.3' }, // HELD 2026-08-16: Coding-Plan-only (pay-as-you-go keys 403); +50% over 5.2 on Z.ai's code bench - top Z.ai pick once the standard API opens. Uncomment to restore.
+    { vendor: 'zai',        modelId: 'glm-5.3' }, // 2026-08-27: standard API GA; +50% over 5.2 on Z.ai's code bench
     { vendor: 'zai',        modelId: 'glm-5.2' },
     { vendor: 'zai',        modelId: 'glm-5' },
     { vendor: 'moonshot',   modelId: 'kimi-k2.6' },
@@ -149,6 +148,7 @@ export const EditorialDefaults = {
     { vendor: 'moonshot',   modelId: 'kimi-k2.5' },
     { vendor: 'xai',        modelId: 'grok-4.20-0309-non-reasoning' },
     { vendor: 'xai',        modelId: 'grok-4.3' },
+    { vendor: 'zai',        modelId: 'glm-5.3-flash' }, // 2026-08-27: 18B active, $0.15/$0.5 - the actual Z.ai fast tier (5.2 was a pre-flash placeholder)
     { vendor: 'zai',        modelId: 'glm-5.2' },
     { vendor: 'deepseek',   modelId: 'deepseek-v4-flash' },
     // NVIDIA NIM: free trial catalog, tail picks (nemotron-3-nano-30b-a3b and nemotron-nano-9b-v2 dropped: NVIDIA EOL 2026-08-25)
