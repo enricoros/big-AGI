@@ -1,6 +1,6 @@
 import { escapeXml } from '~/server/wire';
 
-import type { AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixMessages_UserMessage, AixParts_DocPart, AixParts_MetaInReferenceToPart } from '../../../api/aix.wiretypes';
+import type { AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixMessages_UserMessage, AixParts_DocPart, AixParts_MediaUrlPart, AixParts_MetaInReferenceToPart } from '../../../api/aix.wiretypes';
 
 
 // types of AixMessages_SystemMessage contents that trigger a 'cut point' from system to user message
@@ -79,6 +79,15 @@ export function approxDocPart_To_String({ ref, data }: AixParts_DocPart /*, wrap
   //  - ...more ideas...
   //
   return '```' + (ref || '') + '\n' + data.text + '\n```\n';
+}
+
+/**
+ * Text degradation for URL-referenced media on dialects without native video input.
+ * Honest by design: tells the model a video was attached and that it cannot watch it,
+ * so multi-model runs (Beam) don't fail and don't hallucinate having seen it.
+ */
+export function approxMediaUrlPart_To_String({ url, mediaKind }: AixParts_MediaUrlPart): string {
+  return `[Attached ${mediaKind}: ${url} - this model cannot watch it; only the URL is visible]`;
 }
 
 export function approxInReferenceTo_To_XMLString(irt: AixParts_MetaInReferenceToPart): string | null {

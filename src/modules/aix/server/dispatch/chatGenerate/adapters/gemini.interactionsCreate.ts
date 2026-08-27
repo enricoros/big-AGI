@@ -3,7 +3,7 @@ import type * as z from 'zod/v4';
 import type { AixAPI_Model, AixAPIChatGenerate_Request } from '../../../api/aix.wiretypes';
 import { GeminiInteractionsWire_API_Interactions } from '../../wiretypes/gemini.interactions.wiretypes';
 
-import { approxDocPart_To_String, approxInReferenceTo_To_XMLString, aixSpillSystemToUser } from './adapters.common';
+import { approxDocPart_To_String, approxInReferenceTo_To_XMLString, approxMediaUrlPart_To_String, aixSpillSystemToUser } from './adapters.common';
 
 
 // configuration
@@ -183,6 +183,9 @@ function _buildUserContent(parts: Extract<AixAPIChatGenerate_Request['chatSequen
         break;
       case 'doc':
         textChunks.push(approxDocPart_To_String(part));
+        break;
+      case 'media_url':
+        textChunks.push(approxMediaUrlPart_To_String(part)); // Deep Research can at least browse the URL
         break;
       case 'meta_in_reference_to':
         const irt = approxInReferenceTo_To_XMLString(part);

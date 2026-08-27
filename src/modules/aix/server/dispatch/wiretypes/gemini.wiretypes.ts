@@ -158,8 +158,15 @@ export namespace GeminiWire_ContentParts {
   const FileDataPart_schema = z.object({
     fileData: z.object({
       mimeType: z.union([z.string(), ianaStandardMimeType_schema]).optional(),
-      fileUri: z.string(),
+      fileUri: z.string(), // YouTube URL, direct https media URL, or Files-API URI
     }),
+    // video-only sibling of fileData: clipping + frame sampling (live-verified 2026-08-14 on 3.7 Flash:
+    // start/end offsets bill only the slice; fps up-samples, default 1)
+    videoMetadata: z.object({
+      startOffset: z.string().optional(), // duration string, e.g. '5s'
+      endOffset: z.string().optional(),
+      fps: z.number().optional(),
+    }).optional(),
   });
 
   export const ExecutableCodePart_schema = z.object({
@@ -290,6 +297,10 @@ export namespace GeminiWire_ContentParts {
 
   export function InlineDataPart(mimeType: string, data: string): z.infer<typeof InlineDataPart_schema> {
     return { inlineData: { mimeType, data } };
+  }
+
+  export function FileDataPart(fileUri: string, mimeType?: string, videoMetadata?: { startOffset?: string, endOffset?: string, fps?: number }): z.infer<typeof FileDataPart_schema> {
+    return { fileData: { ...(mimeType !== undefined ? { mimeType } : {}), fileUri }, ...(videoMetadata !== undefined ? { videoMetadata } : {}) };
   }
 
   export function FunctionCallPart({ id, name, args }: { id?: string, name: string, args?: Record<string, any> }): z.infer<typeof FunctionCallPart_schema> {

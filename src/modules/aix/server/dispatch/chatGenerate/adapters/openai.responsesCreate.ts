@@ -6,7 +6,7 @@ import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixM
 import { OpenAIWire_API_Responses, OpenAIWire_Responses_Items, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
 
 import { aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixTexts_to_OpenAIInstructionText } from './openai.chatCompletions';
-import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String } from './adapters.common';
+import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxMediaUrlPart_To_String } from './adapters.common';
 
 
 // configuration
@@ -480,6 +480,14 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
                 type: 'input_image',
                 detail: 'high', // TODO: check if user images shall always be 'high' detail
                 image_url: base64DataUrl,
+              });
+              break;
+
+            case 'media_url':
+              // URL-referenced video: no native lowering - honest text degradation
+              userMessage().content.push({
+                type: 'input_text',
+                text: approxMediaUrlPart_To_String(userPart),
               });
               break;
 

@@ -21,6 +21,7 @@ import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.access';
 export type AixParts_DocPart = z.infer<typeof AixWire_Parts.DocPart_schema>;
 export type AixParts_InlineAudioPart = z.infer<typeof AixWire_Parts.InlineAudioPart_schema>;
 export type AixParts_InlineImagePart = z.infer<typeof AixWire_Parts.InlineImagePart_schema>;
+export type AixParts_MediaUrlPart = z.infer<typeof AixWire_Parts.MediaUrlPart_schema>;
 export type AixParts_ModelAuxPart = z.infer<typeof AixWire_Parts.ModelAuxPart_schema>;
 export type AixParts_MetaCacheControl = z.infer<typeof AixWire_Parts.MetaCacheControl_schema>;
 export type AixParts_MetaInReferenceToPart = z.infer<typeof AixWire_Parts.MetaInReferenceToPart_schema>;
@@ -203,6 +204,22 @@ export namespace AixWire_Parts {
     // meta: ignored...
   });
 
+  /**
+   * URL-referenced media (user-only part): a public URL the provider fetches server-side - never
+   * downloaded or inlined by us (e.g. YouTube or direct .mp4 for Gemini video understanding).
+   * Dialects without native support lower this to text via `approxMediaUrlPart_To_String`.
+   */
+  export const MediaUrlPart_schema = z.object({
+    pt: z.literal('media_url'),
+    mediaKind: z.literal('video'), // future: 'audio'
+    url: z.string(),
+    mimeType: z.string().optional(), // for direct media URLs; absent for YouTube
+    // FUTURE (no producer yet - enable with the trim/sampling UI; the Gemini lowering maps these to videoMetadata):
+    // clipStartSec: z.number().optional(), // -> videoMetadata.startOffset '<n>s' (verified: bills only the slice)
+    // clipEndSec: z.number().optional(),   // -> videoMetadata.endOffset '<n>s'
+    // fps: z.number().optional(),          // -> videoMetadata.fps (default: 1)
+  });
+
   // Tool Call
 
   const _FunctionCallInvocation_schema = z.object({
@@ -312,6 +329,7 @@ export namespace AixWire_Content {
       // AixWire_Parts.InlineAudioPart_schema,
       AixWire_Parts.InlineImagePart_schema,
       AixWire_Parts.DocPart_schema,
+      AixWire_Parts.MediaUrlPart_schema, // Aug 14, 2026: URL-referenced video input (user-only)
       AixWire_Parts.MetaCacheControl_schema,
       AixWire_Parts.MetaInReferenceToPart_schema,
     ])),

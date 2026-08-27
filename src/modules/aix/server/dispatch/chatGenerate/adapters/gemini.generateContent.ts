@@ -425,6 +425,13 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[], apiRequiresS
             partRequiresSignature = true;
           break;
 
+        case 'media_url':
+          // URL-referenced video (YouTube or direct https): native fileData - Google fetches it server-side.
+          // FUTURE: when the wire part regains clipStartSec/clipEndSec/fps, lower them to the third
+          // FileDataPart arg (videoMetadata: startOffset '<n>s' / endOffset / fps - probe-verified, clips bill only the slice)
+          parts.push(GeminiWire_ContentParts.FileDataPart(part.url, part.mimeType));
+          break;
+
         case 'doc':
           parts.push(_toApproximateGeminiDocPart(part));
           break;

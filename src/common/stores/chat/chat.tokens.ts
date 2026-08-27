@@ -89,9 +89,12 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
         return estimateImageTokens(forcedSize || cPart.width, forcedSize || cPart.height, debugFrom, llm);
       case 'text':
         return estimateTextTokens(cPart.text, llm, debugFrom);
+      case 'hosted_resource':
+        if (cPart.resource.via === 'url')
+          return 0; // URL-referenced media: tokenized provider-side (duration unknown here) - not estimable
+        break; // warn
       case 'tool_invocation':
       case 'tool_response':
-      case 'hosted_resource':
         break; // warn
       default:
         const _exhaustiveCheck: never = cPt;

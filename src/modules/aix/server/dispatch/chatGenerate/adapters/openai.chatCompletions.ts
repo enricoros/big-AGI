@@ -5,7 +5,7 @@ import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.access'
 import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixParts_DocPart, AixParts_InlineAudioPart, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Chat_Completions, OpenAIWire_ContentParts, OpenAIWire_Messages } from '../../wiretypes/openai.wiretypes';
 
-import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String } from './adapters.common';
+import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxMediaUrlPart_To_String } from './adapters.common';
 
 
 //
@@ -669,6 +669,17 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
                 currentMessage.content.push(imageContentPart);
               else
                 chatMessages.push({ role: 'user', content: [imageContentPart] });
+              allowAppend = true;
+              break;
+
+            case 'media_url':
+              // URL-referenced video: no native lowering here yet (OpenRouter's 'video_url' content part
+              // is a candidate) - honest text degradation for now
+              const mediaRefContentPart = OpenAIWire_ContentParts.TextContentPart(approxMediaUrlPart_To_String(part));
+              if (allowAppend && currentMessage?.role === 'user' && Array.isArray(currentMessage.content))
+                currentMessage.content.push(mediaRefContentPart);
+              else
+                chatMessages.push({ role: 'user', content: hotFixPreferArrayUserContent ? [mediaRefContentPart] : mediaRefContentPart.text });
               allowAppend = true;
               break;
 

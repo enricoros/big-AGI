@@ -360,11 +360,20 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             uMsg.parts.push(uFragment.part);
             break;
 
+          case 'hosted_resource':
+            // URL-referenced media (user-added video): lower to a media_url wire part - pure JSON, no dereference
+            // NOTE: 'url' comes from the user, is the first one we make come from them - however the others are usually only in assistant messages, we haven't tried roundtripping them
+            if (uFragment.part.resource.via === 'url') {
+              const { url, mediaKind, mimeType } = uFragment.part.resource;
+              uMsg.parts.push({ pt: 'media_url', mediaKind, url, ...(mimeType ? { mimeType } : {}) });
+            } else
+              console.warn('aixCGR_FromDMessages: unexpected Non-User hosted resource via', uFragment.part.resource.via);
+            break;
+
           // skipped (non-user)
           case 'error':
           case 'tool_invocation':
           case 'tool_response':
-          case 'hosted_resource':
             console.warn('aixCGR_FromDMessages: unexpected Non-User fragment part type', (uFragment.part as any).pt);
             break;
 

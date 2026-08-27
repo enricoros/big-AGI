@@ -4,7 +4,7 @@ import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage,
 
 import { BedrockConverseWire_API } from '../../wiretypes/bedrock-converse.wiretypes';
 
-import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './adapters.common';
+import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString, approxMediaUrlPart_To_String } from './adapters.common';
 
 
 type TRequest = BedrockConverseWire_API.Request;
@@ -124,6 +124,11 @@ function* _generateConverseContentBlocks({ parts, role }: AixMessages_ChatMessag
 
           case 'doc':
             yield { role: 'user', content: { text: approxDocPart_To_String(part) } };
+            break;
+
+          case 'media_url':
+            // URL-referenced video: Converse cannot watch it - honest text degradation
+            yield { role: 'user', content: { text: approxMediaUrlPart_To_String(part) } };
             break;
 
           case 'meta_in_reference_to':

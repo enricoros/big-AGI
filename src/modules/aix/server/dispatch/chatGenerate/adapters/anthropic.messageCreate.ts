@@ -5,7 +5,7 @@ import type { AnthropicHostedFeatures } from '~/modules/llms/server/anthropic/an
 import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks } from '../../wiretypes/anthropic.wiretypes';
 
-import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './adapters.common';
+import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString, approxMediaUrlPart_To_String } from './adapters.common';
 
 
 // configuration
@@ -493,6 +493,11 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
 
           case 'doc':
             yield { role: 'user', content: AnthropicWire_Blocks.TextBlock(approxDocPart_To_String(part), 'user.doc') };
+            break;
+
+          case 'media_url':
+            // URL-referenced video: Anthropic cannot watch it - honest text degradation
+            yield { role: 'user', content: AnthropicWire_Blocks.TextBlock(approxMediaUrlPart_To_String(part), 'user.media_url') };
             break;
 
           case 'meta_in_reference_to':

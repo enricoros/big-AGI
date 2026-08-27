@@ -4,7 +4,7 @@ import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage,
 import { XAIWire_API_Responses, XAIWire_Responses_Tools } from '../../wiretypes/xai.wiretypes';
 
 import { aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixTexts_to_OpenAIInstructionText } from './openai.chatCompletions';
-import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String } from './adapters.common';
+import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxMediaUrlPart_To_String } from './adapters.common';
 
 
 // configuration
@@ -265,6 +265,14 @@ function _toXAIResponsesInput(
                 type: 'input_image',
                 detail: 'high',
                 image_url: base64DataUrl,
+              });
+              break;
+
+            case 'media_url':
+              // URL-referenced video: no native lowering - honest text degradation
+              getUserMessage().content.push({
+                type: 'input_text',
+                text: approxMediaUrlPart_To_String(part),
               });
               break;
 

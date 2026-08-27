@@ -248,13 +248,37 @@ type DMessageToolEnvironment = 'upstream' | 'server' | 'client';
 type DMessageToolCodeExecutor = 'gemini_auto_inline' | 'code_interpreter';
 
 
-/** Hosted resource - a provider-hosted resource (e.g. Anthropic container file from Skills/code execution). */
+/**
+ * Hosted resource - any externally-resolvable resource referenced by handle: provider-hosted files
+ * (Anthropic Skills/code-exec, Gemini Files, OpenAI containers) and public URLs (user-added video).
+ *
+ * Invariants (keep these, they prevent data debt):
+ * - AUTHORSHIP IS POSITIONAL: who contributed the resource = the containing message's role, like every
+ *   other part. Never add an author/origin field - a fragment moved across roles re-means correctly.
+ * - `via` names the RESOLVING NAMESPACE (who can turn the handle into bytes), nothing else. Lifecycle is
+ *   structural where it matters (anthropic: containerId present = ephemeral container file, absent = Files API).
+ * - WIRE LAW: user-authored resources never drop silently (native lowering or honest text degradation);
+ *   assistant-authored ones may no-op on replay (their tool results already carry the knowledge).
+ * - Lowering dispatches on role x via; new capabilities (e.g. user Files-API uploads) are new lowering
+ *   cases, never new part shapes.
+ */
 export type DMessageHostedResourcePart = {
   pt: 'hosted_resource';
   resource:
     | { via: 'anthropic', fileId: string, containerId?: string }
     | { via: 'gemini-file', fileName: string, mimeType: string, isVideo?: boolean /* NOTE: more metadata incl expiration time can be fetched by fileName */ } // [Gemini] Files-API artifact (e.g. Omni video via delivery:uri) - re-fetchable for ~48h via the key-proxied Gemini download route
-    | { via: 'openai-container', fileId: string, containerId: string, filename?: string }; // OpenAI code-interpreter container file
+    | { via: 'openai-container', fileId: string, containerId: string, filename?: string } // OpenAI code-interpreter container file
+    | {
+      // URL-referenced media on a public host (e.g. YouTube, direct .mp4) - the provider fetches it server-side; we never download it
+      via: 'url',
+      url: string,                                // canonical identity: normalized YouTube watch URL or direct https media URL
+      mediaKind: 'video',                         // future: 'audio'
+      mimeType?: string,                          // set for direct media URLs (e.g. 'video/mp4'); absent for YouTube
+      // FUTURE (no producer yet - enable with the trim/sampling UI; kept FLAT so plain {...spread} recreates the resource):
+      // clipStartSec?: number,                   // trim start -> Gemini videoMetadata.startOffset (verified: bills only the slice)
+      // clipEndSec?: number,                     // trim end -> Gemini videoMetadata.endOffset
+      // fps?: number,                            // sampling override -> Gemini videoMetadata.fps (default: 1)
+    };
 };
 
 
