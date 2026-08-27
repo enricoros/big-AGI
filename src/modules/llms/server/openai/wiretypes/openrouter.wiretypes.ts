@@ -12,7 +12,7 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
   name: z.string(),
   created: z.number().optional(),
   description: z.string(),
-  // [OpenRouter, 2026-08-06] set on the 11 '~vendor/model-latest' router aliases: the model they point to
+  // [OpenRouter, 2026-08-06] set on the 12 '~vendor/model-latest' router aliases: the model they point to
   alias_target: z.object({
     name: z.string(),
     slug: z.string(),
@@ -35,11 +35,14 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
     // omitting a price field keeps the price of the tier below it
     // [OpenRouter, 2026-08-16] a second override shape appeared: time-of-day windows (`utc_start`/`utc_end`, no
     // `min_prompt_tokens`) on deepseek/deepseek-v4-pro(-0813) (off-peak discount) - it made the strict schema fail
-    // and drop the model; tolerated here and ignored by the price folding (list price applies)
+    // and drop the model; tolerated here and folded as the peak by the parser (listed price never understates)
+    // [OpenRouter, 2026-08-27] `utc_days` (day-of-week list) joined the clock shape (deepseek-v4-flash-vision-exp:
+    // weekend flat + weekday hour windows); a day-only tier carries no utc_start/utc_end
     overrides: z.array(z.object({
       min_prompt_tokens: z.number().optional(),
       utc_start: z.number().optional(),
       utc_end: z.number().optional(),
+      utc_days: z.array(z.string()).optional(),
       prompt: z.string().optional(),
       completion: z.string().optional(),
       input_cache_read: z.string().optional(),

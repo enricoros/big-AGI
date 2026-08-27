@@ -34,9 +34,9 @@ const orModelFamilyOrder = [
   // Other major providers
   'mistralai/', 'meta-llama/', 'amazon/', 'cohere/',
   // Specialized/AI companies
-  'perplexity/', 'inflection/', 'inclusionai/', 'arcee-ai/', 'thinkingmachines/', 'sakana/',
+  'perplexity/', 'inflection/', 'inclusionai/', 'arcee-ai/', 'thinkingmachines/', 'sakana/', 'upstage/', 'nex-agi/',
   // Chinese majors (surfaced on OpenRouter directly)
-  'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'baidu/', 'stepfun/', 'meituan/',
+  'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'baidu/', 'stepfun/', 'meituan/', 'kwaipilot/',
   // Research/open models
   'nvidia/', 'microsoft/', 'nousresearch/', 'ibm-granite/', 'poolside/', 'xiaomi/',
 ] as const;
@@ -100,7 +100,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
   // drop ':batch' variants: async batch tiers (50%-off resold vendor batch APIs) can't serve
   // synchronous chat; they'd list as half-price chat models and fail or queue on send.
-  // They came back and stayed: 61 across 8 vendors as of 2026-08-17 (was 17 openai/* at the 2026-07-22 debut).
+  // They came back and stayed: 60 across 7 vendors as of 2026-08-27 (was 17 openai/* at the 2026-07-22 debut).
   // Before ever removing this gate, re-verify the semantics:
   // - if batch stays async (jobs API / delayed delivery), keep the gate; proper support means a batch
   //   job surface (submit/poll/retrieve) outside the chat list, a product feature not a parser change
@@ -118,10 +118,10 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   if (model.id.startsWith('google/lyria-') || model.id === 'anthropic/claude-opus-4.7-fast')
     return null;
 
-  // the 11 '~vendor/model-latest' aliases are full members of their vendor family: resolve them to the
+  // the 12 '~vendor/model-latest' aliases are full members of their vendor family: resolve them to the
   // model they point at (`alias_target`) everywhere (vendor inheritance, visibility), or they'd fall
   // through to the generic branch - dropping the '~' alone leaves refs like 'claude-opus-latest', which
-  // no vendor index can look up (verified: all 11 missed their native interfaces/params before this)
+  // no vendor index can look up (verified: all missed their native interfaces/params before this)
   const modelIdUnaliased = model.alias_target?.slug || _orUnalias(model.id);
 
 
@@ -135,14 +135,14 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   const pricing = model.pricing;
 
   // [OpenRouter, 2026-08-06] `pricing.overrides` are long-context surcharge tiers, ascending by
-  // `min_prompt_tokens` (e.g. google/gemini-2.5-pro: 1.25/10 up to 200K, then 2.50/15 above it). 59 of the
-  // 414 listed models are tiered today (Gemini Pro, GPT-5.x, Grok 4.x, Qwen, Claude Sonnet 4.x, Sakana Fugu):
+  // `min_prompt_tokens` (e.g. google/gemini-2.5-pro: 1.25/10 up to 200K, then 2.50/15 above it). 58 of the
+  // 418 listed models are tiered today (Gemini Pro, GPT-5.x, Grok 4.x, Qwen, Claude Sonnet 4.x, Sakana Fugu):
   // without folding them in, long prompts would be costed at the cheapest tier.
-  // [OpenRouter, 2026-08-16] time-of-day overrides (utc_start/utc_end, no min_prompt_tokens) are a peak/off-peak
-  // schedule, not context tiers - separated here and folded as the peak below.
+  // [OpenRouter, 2026-08-16] time-of-day overrides (utc_start/utc_end and, since 2026-08-27, day-of-week utc_days,
+  // no min_prompt_tokens) are a peak/off-peak schedule, not context tiers - separated here and folded as the peak below.
   const contextTiers = pricing.overrides?.filter((tier): tier is typeof tier & { min_prompt_tokens: number } => typeof tier.min_prompt_tokens === 'number');
   const priceTiers = contextTiers?.length ? contextTiers : undefined;
-  const clockTiers = pricing.overrides?.filter(tier => tier.min_prompt_tokens === undefined && (tier.utc_start !== undefined || tier.utc_end !== undefined));
+  const clockTiers = pricing.overrides?.filter(tier => tier.min_prompt_tokens === undefined && (tier.utc_start !== undefined || tier.utc_end !== undefined || tier.utc_days !== undefined));
 
   /** per-token price string -> our per-1M price, tiered when the model has long-context overrides */
   function _orPricePerM(field: 'prompt' | 'completion' | 'input_cache_read' | 'input_cache_write'): NonNullable<ModelDescriptionSchema['chatPrice']>['input'] {
@@ -270,7 +270,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   // the others did not - so 'gemma-4-31b-it:free' missed its def). ':free' only, NOT a blanket /:.*$/: vendor ref
   // maps key their deny entries by the full suffixed id (openai.models.ts: 'gpt-4o:extended': null), and stripping
   // every suffix would hand the lookup the base id and silently un-deny the variant.
-  // OR lists 18 non-':batch' colon ids today: 17x ':free' + 1x ':thinking' (2026-08-17).
+  // OR lists 18 non-':batch' colon ids today, all ':free' (2026-08-27; the one ':thinking' id is gone).
   const llmRef = modelIdUnaliased.replace(/^[^/]+\//, '').replace(/:free$/, '');
   let initialTemperature: number | undefined;
   let pubDate: string | undefined;
