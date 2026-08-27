@@ -24,7 +24,15 @@ To enable Google Analytics 4, you need to set the `NEXT_PUBLIC_GA4_MEASUREMENT_I
 before starting the local build or the docker build (i.e. at build time), at which point the
 server/container will be able to report analytics to your Google Analytics 4 property.
 
-As of Feb 27, 2024, this feature is in development.
+Note that this value is **baked into the client bundle at build time**, not read at container start:
+passing `-e NEXT_PUBLIC_GA4_MEASUREMENT_ID=...` to `docker run` has no effect. To point an image at
+your own property - or at none - rebuild from source with the variable set (or unset).
+
+**Official prebuilt images report anonymous usage telemetry** (page views and feature-usage events,
+no prompts and no conversation content) to a Google Analytics property we use to understand which
+features matter and to catch breakage across self-hosted deployments. Images published from
+2026-08-21 onward report to a property dedicated to self-hosted deployments, kept separate from
+big-agi.com's own analytics. Build from source if you prefer to send nothing.
 
 ### PostHog Analytics
 
@@ -75,6 +83,6 @@ In summary: to turn it on: activate the `Analytics` service in the Vercel projec
 | Your **Source** builds of big-AGI                                                                                       | None                      | **Google Analytics**: set environment variable at build time · **PostHog**: set environment variable at build time · **Vercel**: enable Vercel Analytics from the dashboard | 
 | Your **Docker** builds of big-AGI                                                                                       | None                      | (**Vercel**: n/a) · **Google Analytics**: set environment variable at `docker build` time · **PostHog**: set environment variable at `docker build` time.                   |
 | [get.big-agi.com](https://get.big-agi.com) (**Big-AGI 1.x Legacy**)                                                     | Vercel + Google + PostHog | The main website ([privacy policy](https://big-agi.com/privacy)) hosted for free for anyone.                                                                                |
-| [prebuilt Docker packages](https://github.com/enricoros/big-AGI/pkgs/container/big-agi) (**Big-AGI 1.x**, 'latest' tag) | Google Analytics          | **Vercel**: n/a · **Google Analytics**: set to the big-agi.com Google Analytics for analytics and improvements · **PostHog**: n/a                                           |
+| [prebuilt Docker packages](https://github.com/enricoros/big-AGI/pkgs/container/big-agi) ('latest', 'stable', 'development' tags) | Google Analytics          | **Vercel**: n/a · **Google Analytics**: set to a property dedicated to self-hosted deployments (separate from big-agi.com), for analytics and improvements; baked at build time, rebuild from source to change or remove · **PostHog**: n/a                                           |
 
-Note: this information is updated as of March 3, 2025 and can change at any time.
+Note: this information is updated as of August 26, 2026 and can change at any time.
