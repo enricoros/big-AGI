@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { FileWithHandle } from 'browser-fs-access';
 
 import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
+import { isYouTubeDomainURL } from '~/modules/youtube/youtube.utils';
 import { asValidURL } from '~/common/util/urlUtils';
 import { getClipboardItems } from '~/common/util/clipboardUtils';
 
@@ -87,6 +88,14 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
     const validUrl = asValidURL(url);
     if (!validUrl)
       return false;
+
+    // [YouTube] never load as a web page: transcript scraping and the browse loader are both dead
+    // ends there - video-capable models take these as native video parts via the composer enhancer
+    if (isYouTubeDomainURL(validUrl)) {
+      if (origin === 'input-link')
+        addSnackbar({ key: 'attach-yt-decline', message: 'YouTube links cannot be attached as web pages. Paste the link in the message to share the video instead.', type: 'precondition-fail' });
+      return false;
+    }
 
     // only-images: ignore URLs as they are not direct images in this flow
     if (filterOnlyImages) {
@@ -217,13 +226,11 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
       }
     }
 
-    // attach as URL
+    // attach as URL (synchronous decline, e.g. YouTube URLs, falls through as text)
     if (textPlain && enableLoadURLsOnPaste) {
       const textPlainUrl = asValidURL(textPlain);
-      if (textPlainUrl) {
-        void attachAppendUrl(method, textPlainUrl, textPlain);
+      if (textPlainUrl && attachAppendUrl(method, textPlainUrl, textPlain) !== false)
         return 'as_url';
-      }
     }
 
     // attach as Text/Html (further conversion, e.g. to markdown is done later)
@@ -322,13 +329,11 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
         }
       }
 
-      // attach as URL
+      // attach as URL (synchronous decline, e.g. YouTube URLs, falls through as text)
       if (textPlain && enableLoadURLsOnPaste) {
         const textPlainUrl = asValidURL(textPlain);
-        if (textPlainUrl) {
-          void attachAppendUrl('clipboard-read', textPlainUrl, textPlain);
+        if (textPlainUrl && attachAppendUrl('clipboard-read', textPlainUrl, textPlain) !== false)
           continue;
-        }
       }
 
       // attach as Text

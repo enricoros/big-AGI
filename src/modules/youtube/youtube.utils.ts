@@ -1,3 +1,28 @@
+// YouTube hostnames: main domain, subdomains (m., music., ...), short links, country TLDs
+const _youtubeDomainPatterns = [
+  /^(?:www\.)?youtube\.com$/,                    // Main domain
+  /^(?:.*\.)?youtube\.com$/,                     // Any subdomain
+  /^youtu\.be$/,                                 // Short links
+  /^youtube\.[a-z]{2,3}(?:\.[a-z]{2})?$/,        // Country-specific domains
+] as const;
+
+
+/** True for any URL on a YouTube domain - video, channel, playlist, homepage, every form. */
+export function isYouTubeDomainURL(testUrl: string): boolean {
+  try {
+    testUrl = testUrl.trim();
+    if (!testUrl) return false;
+    // noinspection HttpUrlsUsage
+    if (!testUrl.startsWith('http://') && !testUrl.startsWith('https://'))
+      testUrl = 'https://' + testUrl;
+    const { hostname } = new URL(testUrl);
+    return _youtubeDomainPatterns.some(pattern => pattern.test(hostname));
+  } catch (e) {
+    return false;
+  }
+}
+
+
 export function extractYoutubeVideoIDFromURL(testYTUrl: string): string | null {
 
   /* NOTE: We had this approach before, but changing to using the URL class for parsing.
@@ -19,13 +44,7 @@ export function extractYoutubeVideoIDFromURL(testYTUrl: string): string | null {
     const url = new URL(testYTUrl);
 
     // require a YouTube hostname
-    const youtubeDomainPatterns = [
-      /^(?:www\.)?youtube\.com$/,                    // Main domain
-      /^(?:.*\.)?youtube\.com$/,                     // Any subdomain
-      /^youtu\.be$/,                                 // Short links
-      /^youtube\.[a-z]{2,3}(?:\.[a-z]{2})?$/,        // Country-specific domains
-    ] as const;
-    const isYoutubeHostname = youtubeDomainPatterns.some(pattern => pattern.test(url.hostname));
+    const isYoutubeHostname = _youtubeDomainPatterns.some(pattern => pattern.test(url.hostname));
     if (!isYoutubeHostname)
       return null;
 
