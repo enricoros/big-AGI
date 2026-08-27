@@ -264,6 +264,7 @@ type DMessageToolCodeExecutor = 'gemini_auto_inline' | 'code_interpreter';
  */
 export type DMessageHostedResourcePart = {
   pt: 'hosted_resource';
+  muted?: boolean;  // user state, not identity: keep in chat but lower as honest text (hostedResourceMutedText) instead of media - only settable on 'url' resources for now (the only user-authored via)
   resource:
     | { via: 'anthropic', fileId: string, containerId?: string }
     | { via: 'gemini-file', fileName: string, mimeType: string, isVideo?: boolean /* NOTE: more metadata incl expiration time can be fetched by fileName */ } // [Gemini] Files-API artifact (e.g. Omni video via delivery:uri) - re-fetchable for ~48h via the key-proxied Gemini download route
@@ -492,8 +493,13 @@ export function create_CodeExecutionResponse_ContentFragment(id: string, error: 
   return _createContentFragment(_create_CodeExecutionResponse_Part(id, error, result, executor, environment));
 }
 
-export function createHostedResourceContentFragment(resource: DMessageHostedResourcePart['resource']): DMessageContentFragment {
-  return _createContentFragment({ pt: 'hosted_resource', resource });
+export function createHostedResourceContentFragment(resource: DMessageHostedResourcePart['resource'], muted?: boolean): DMessageContentFragment {
+  return _createContentFragment({ pt: 'hosted_resource', ...(muted && { muted: true }), resource });
+}
+
+/** Wire form of a muted URL-referenced media part: the referent survives at ~a dozen tokens, the media isn't re-tokenized. */
+export function hostedResourceMutedText(resource: Extract<DMessageHostedResourcePart['resource'], { via: 'url' }>): string {
+  return `[${resource.mediaKind} omitted: ${resource.url}]`;
 }
 
 function _createContentFragment(part: DMessageContentFragment['part']): DMessageContentFragment {
@@ -780,7 +786,7 @@ function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttach
         : _create_CodeExecutionResponse_Part(part.id, part.error, part.response.result, part.response.executor, part.environment) as TPart;
 
     case 'hosted_resource':
-      return { pt: 'hosted_resource', resource: { ...part.resource } } as TPart;
+      return { pt: 'hosted_resource', ...(part.muted && { muted: true }), resource: { ...part.resource } } as TPart;
 
     case '_pt_sentinel':
       return _create_Sentinel_Part() as TPart;
