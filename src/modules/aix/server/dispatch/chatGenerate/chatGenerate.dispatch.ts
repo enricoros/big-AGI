@@ -80,7 +80,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
       const hostedFeatures = aixAnthropicHostedFeatures(model, chatGenerate);
 
       // Build the request body from model + chat parameters
-      const anthropicBody = aixToAnthropicMessageCreate(model, chatGenerate, streaming, hostedFeatures);
+      const anthropicBody = aixToAnthropicMessageCreate('anthropic', model, chatGenerate, streaming, hostedFeatures);
 
       // [Anthropic, 2026-02-01] Service-level inference geo routing (e.g. "us")
       if (access.anthropicInferenceGeo)
@@ -126,7 +126,10 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
 
           // body
           const bedrockHostedFeatures = aixAnthropicHostedFeatures(model, chatGenerate);
-          const bedrockAnthropicBody: Record<string, any> = aixToAnthropicMessageCreate(model, chatGenerate, streaming, bedrockHostedFeatures);
+          // NOTE: the 'bedrock' target already removed the fields Bedrock's schema rejects (effort, speed).
+          // What's left below is envelope translation only: the Anthropic schema requires these, Bedrock
+          // carries the same information in the URL/body instead - so they cannot be dropped adapter-side.
+          const bedrockAnthropicBody: Record<string, any> = aixToAnthropicMessageCreate('bedrock', model, chatGenerate, streaming, bedrockHostedFeatures);
           delete bedrockAnthropicBody.model; // model in path
           delete bedrockAnthropicBody.stream; // streaming behavior in path
           // headers['anthropic-version'] -> body

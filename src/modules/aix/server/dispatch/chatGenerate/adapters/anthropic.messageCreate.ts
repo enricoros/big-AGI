@@ -25,6 +25,15 @@ type TRequest = AnthropicWire_API_Message_Create.Request;
 
 
 /**
+ * Which endpoint the Messages payload is built for.
+ * Not merely an envelope difference: the AWS Bedrock `bedrock-2023-05-31` passthrough validates the
+ * body against its own schema and 400s on api.anthropic.com-only fields, so the adapter has to know
+ * where the request is going. Keep every target-conditional field in the one block at the bottom.
+ */
+export type AixAnthropicTarget = 'anthropic' | 'bedrock';
+
+
+/**
  * Determines which Anthropic hosted features will be active for a request.
  * Single source of truth for both the request builder (tools, container) and the dispatch (beta headers).
  */
@@ -71,7 +80,7 @@ export function aixAnthropicHostedFeatures(model: AixAPI_Model, chatGenerate: Ai
   };
 }
 
-export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, hostedFeatures: ReturnType<typeof aixAnthropicHostedFeatures>): TRequest {
+export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: AixAPI_Model, _chatGenerate: AixAPIChatGenerate_Request, streaming: boolean, hostedFeatures: ReturnType<typeof aixAnthropicHostedFeatures>): TRequest {
 
   // Pre-process CGR - approximate spill of System to User message
   const chatGenerate = aixSpillSystemToUser(_chatGenerate);
@@ -382,6 +391,39 @@ export function aixToAnthropicMessageCreate(model: AixAPI_Model, _chatGenerate: 
       payload.container = containerId;
   }
 
+
+  // --- Target: remove api.anthropic.com-only fields ---
+  // Bedrock's `bedrock-2023-05-31` passthrough validates the body and rejects anything it does not
+  // know ("<field>: Extra inputs are not permitted", HTTP 400). Keep all such strips here, in one
+  // place - `model`/`stream` are NOT in this list, they are envelope translation (see the dispatch).
+  if (target === 'bedrock') {
+
+    /**
+     * Reasoning effort on Bedrock is a 4.5-GENERATION limitation, NOT Bedrock-wide (live-probed
+     * 2026-08-05): opus-4-5-20251101 / sonnet-4-5-20250929 / haiku-4-5-20251001 all 400 with
+     * 'output_config.effort: Extra inputs are not permitted' (also observed in prod 2026-08-03 on
+     * us.anthropic.claude-opus-4-5, invoke + streaming), while opus-4-6 and sonnet-4-6 ACCEPT effort
+     * (200) - so the strip is model-scoped to not penalize 4.6+. 4.7/4.8/5-family were not probeable
+     * (403 on the test account) and are assumed accepting, being newer than 4.6; if one 400s, extend
+     * the regex. There is no 4.5 fallback to map effort onto - `thinking.budget_tokens` is a different
+     * knob and is already sent when the user sets one - so on 4.5 effort is silently dropped and the
+     * model answers at its default depth. The Effort control is also filtered per-model out of Bedrock
+     * model definitions (`_BEDROCK_EFFORT_REJECTING_MODELS` in llms .../anthropic.models.ts - keep the
+     * two regexes in sync), but this strip is what actually fixes it: it covers values already
+     * persisted in a user's per-model parameters, the 'Max reasoning' exec override, and the
+     * forced-tool-use hotfix above (which sets effort itself).
+     * `output_config.format` (strict JSON) is deliberately kept: the 400 names the NESTED `effort` key,
+     * so Bedrock does know `output_config` - whether it also takes `format` is untested, don't guess.
+     */
+    if (payload.output_config?.effort && /claude-(opus|sonnet|haiku)-4-5-\d{8}/.test(model.id)) {
+      delete payload.output_config.effort;
+      if (!Object.keys(payload.output_config).length)
+        delete payload.output_config;
+    }
+
+    // Fast inference mode is not offered on partner clouds: 400 'speed: Extra inputs are not permitted'
+    delete payload.speed;
+  }
 
   // Preemptive error detection with server-side payload validation before sending it upstream
   const validated = AnthropicWire_API_Message_Create.Request_schema.safeParse(payload);

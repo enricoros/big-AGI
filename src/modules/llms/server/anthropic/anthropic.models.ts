@@ -895,13 +895,21 @@ const _BEDROCK_ANT_IF_ALLOWLIST: ReadonlySet<string> = new Set([
   LLM_IF_HOTFIX_NoTemperature, // keep: Bedrock rejects temperature for the same models as the direct API ('"temperature" is deprecated for this model.')
 ] as const);
 
+// [2026-08-05, live-probed] Bedrock's output_config.effort reject is a 4.5-GENERATION limit, not Bedrock-wide:
+// opus-4-5-20251101 / sonnet-4-5-20250929 / haiku-4-5-20251001 all 400 'output_config.effort: Extra inputs
+// are not permitted', while opus-4-6 and sonnet-4-6 accept effort (200). 4.7/4.8/5-family not probeable on
+// this account (403), assumed accepting (newer than 4.6). Keep in sync with the runtime strip in
+// aix .../adapters/anthropic.messageCreate.ts, which is the load-bearing half (persisted per-model params
+// and the forced-tool hotfix bypass parameter specs entirely).
+const _BEDROCK_EFFORT_REJECTING_MODELS = /claude-(opus|sonnet|haiku)-4-5-\d{8}/;
+
 // NOTE: llmVndAntInfSpeed not available on Bedrock, llmVndAntWebFetch/llmVndAntSkills not available
 const _BEDROCK_ANT_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
   // bedrock params to not strip
   'llmVndBedrockAPI',
   // supported
   'llmVndAnt1MContext',
-  'llmVndAntEffort',
+  'llmVndAntEffort', // 4.6+ only: filtered per-model in llmBedrockStripAnthropicMDS via _BEDROCK_EFFORT_REJECTING_MODELS
   'llmVndAntThinkingBudget',
   // Not supported by Bedrock
   // 'llmVndAntInfSpeed', // Bad Request - speed: Extra inputs are not permitted
@@ -920,7 +928,10 @@ export function llmBedrockStripAnthropicMDS(model: ModelDescriptionSchema): Mode
     ...model,
     interfaces: model.interfaces.filter(i => _BEDROCK_ANT_IF_ALLOWLIST.has(i)),
     ...(model.parameterSpecs ? {
-      parameterSpecs: model.parameterSpecs.filter(spec => _BEDROCK_ANT_PARAM_ALLOWLIST.has(spec.paramId)),
+      parameterSpecs: model.parameterSpecs.filter(spec =>
+        _BEDROCK_ANT_PARAM_ALLOWLIST.has(spec.paramId)
+        && (spec.paramId !== 'llmVndAntEffort' || !_BEDROCK_EFFORT_REJECTING_MODELS.test(model.id)),
+      ),
     } : {}),
   };
 }
