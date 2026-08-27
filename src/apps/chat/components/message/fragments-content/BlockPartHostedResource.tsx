@@ -705,6 +705,7 @@ export function BlockPartHostedResource(props: {
   fragmentId: DMessageFragmentId,
   messageGeneratorLlmId?: string | null,
   contentScaling: ContentScaling,
+  isEditingMessage?: boolean,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 }) {
@@ -737,7 +738,8 @@ export function BlockPartHostedResource(props: {
         url={resource.url}
         muted={!!muted}
         onToggleMuted={onFragmentReplace ? handleToggleMuted : undefined}
-        onFragmentDelete={onFragmentDelete ? handleFragmentDelete : undefined}
+        // mute is the quick control; delete only while editing the message
+        onFragmentDelete={(onFragmentDelete && props.isEditingMessage) ? handleFragmentDelete : undefined}
       />
     );
 

@@ -379,6 +379,7 @@ export function ContentFragments(props: {
               fragmentId={fId}
               messageGeneratorLlmId={props.messageGeneratorLlmId}
               contentScaling={props.contentScaling}
+              isEditingMessage={isEditingText}
               onFragmentDelete={props.onFragmentDelete}
               onFragmentReplace={props.onFragmentReplace}
             />
