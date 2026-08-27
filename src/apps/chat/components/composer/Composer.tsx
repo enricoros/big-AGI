@@ -72,6 +72,7 @@ import { ButtonMicMemo } from './buttons/ButtonMic';
 import { ButtonMultiChatMemo } from './buttons/ButtonMultiChat';
 import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import { COMPOSER_INPUT_ENHANCERS } from './composer.input-enhancers';
+import { useComposerEnhancerHint } from './useComposerEnhancerHint';
 import { ComposerAttachmentDraftsList } from './llmattachments/ComposerAttachmentDraftsList';
 import { ComposerTextAreaActions } from './textarea/ComposerTextAreaActions';
 import { ComposerTextAreaDrawActions } from './textarea/ComposerTextAreaDrawActions';
@@ -200,11 +201,12 @@ export function Composer(props: {
   const addPendingPart = React.useCallback((part: DComposerPendingPart) => {
     conversationOverlayStore?.getState().addPendingPart(part);
   }, [conversationOverlayStore]);
+  const { enhancerHintItem, onEnhancerDisabledMatch, clearEnhancerHint } = useComposerEnhancerHint(conversationOverlayStore, setComposeText, props.targetConversationId);
   const enhancersOff = !props.chatLLM || showChatAttachments === 'only-images';
   const enhancersOptions = React.useMemo((): AttachmentInputEnhancersOptions | undefined => {
     if (enhancersOff || !props.chatLLM) return undefined;
-    return { enhancers: COMPOSER_INPUT_ENHANCERS, enhancerLLM: props.chatLLM, onEnhancerAddPendingPart: addPendingPart };
-  }, [enhancersOff, props.chatLLM, addPendingPart]);
+    return { enhancers: COMPOSER_INPUT_ENHANCERS, enhancerLLM: props.chatLLM, onEnhancerAddPendingPart: addPendingPart, onEnhancerDisabledMatch };
+  }, [enhancersOff, props.chatLLM, addPendingPart, onEnhancerDisabledMatch]);
 
   const {
     /* items */ attachmentDrafts,
@@ -305,10 +307,11 @@ export function Composer(props: {
 
   const _handleClearText = React.useCallback(() => {
     setComposeText('');
+    clearEnhancerHint();
     attachmentsRemoveAll();
     handleInReferenceToClear();
     conversationOverlayStore?.getState().clearPendingParts();
-  }, [attachmentsRemoveAll, conversationOverlayStore, handleInReferenceToClear, setComposeText]);
+  }, [attachmentsRemoveAll, clearEnhancerHint, conversationOverlayStore, handleInReferenceToClear, setComposeText]);
 
   const _handleSendActionUnguarded = React.useCallback(async (_chatExecuteMode: ChatExecuteMode, composerText: string): Promise<boolean> => {
     if (!isValidConversation(targetConversationId)) return false;
@@ -863,6 +866,7 @@ export function Composer(props: {
                         inReferenceTo={inReferenceTo}
                         pendingParts={pendingParts}
                         pendingPartsEnhancers={COMPOSER_INPUT_ENHANCERS}
+                        enhancerDisabledHint={enhancerHintItem}
                         onAppendAndSend={handleAppendTextAndSend}
                         onRemoveReferenceTo={handleRemoveInReferenceTo}
                         onRemovePendingPart={handleRemovePendingPart}

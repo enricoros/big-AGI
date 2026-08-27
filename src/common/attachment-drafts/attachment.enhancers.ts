@@ -38,6 +38,21 @@ export interface AttachmentInputEnhancer {
   /** Chip renderer for pending parts this enhancer owns. Stable reference (module-scope component). */
   PendingChip: React.ComponentType<{ part: DComposerPendingPart, onRemove: () => void }>;
 
+  /**
+   * Optional capability-hint renderer, shown when `interceptText` WOULD have matched but
+   * `isEnabled` was false (e.g. video URL pasted on a non-video model). Stable reference
+   * (module-scope component).
+   */
+  DisabledMatchHint?: React.ComponentType<AttachmentEnhancerHintItem>;
+
+}
+
+
+/** A live capability hint: the part a disabled enhancer would have produced, plus the surface's resolutions. */
+export interface AttachmentEnhancerHintItem {
+  part: DComposerPendingPart;
+  onConvert: () => void; // adopt the part as pending and undo the fallback intake (the hint switches the model first)
+  onDismiss: () => void;
 }
 
 
@@ -46,6 +61,8 @@ export interface AttachmentInputEnhancersOptions {
   enhancers: readonly AttachmentInputEnhancer[];
   enhancerLLM: DLLM | null;
   onEnhancerAddPendingPart: (part: DComposerPendingPart) => void;
+  /** Optional: a disabled enhancer WOULD have matched (capability hint). The text still falls through to the normal pipeline. May fire more than once per paste - keep idempotent. */
+  onEnhancerDisabledMatch?: (part: DComposerPendingPart, sourceText: string) => void;
 }
 
 
@@ -54,11 +71,17 @@ export function attachmentEnhancersInterceptText(options: AttachmentInputEnhance
   if (!options?.enhancers.length || !options.enhancerLLM) return null;
   const singleLine = text.trim();
   if (!singleLine || singleLine.includes('\n')) return null;
-  for (const enhancer of options.enhancers)
-    if (enhancer.interceptText && enhancer.isEnabled(options.enhancerLLM)) {
+  let disabledMatch: DComposerPendingPart | null = null;
+  for (const enhancer of options.enhancers) {
+    if (!enhancer.interceptText) continue;
+    if (enhancer.isEnabled(options.enhancerLLM)) {
       const part = enhancer.interceptText(singleLine, options.enhancerLLM);
       if (part) return part;
-    }
+    } else if (options.onEnhancerDisabledMatch && !disabledMatch)
+      disabledMatch = enhancer.interceptText(singleLine, options.enhancerLLM);
+  }
+  // notify only when no enabled enhancer consumed the text
+  if (disabledMatch) options.onEnhancerDisabledMatch!(disabledMatch, singleLine);
   return null;
 }
 

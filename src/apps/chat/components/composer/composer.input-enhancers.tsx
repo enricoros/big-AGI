@@ -1,16 +1,20 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, IconButton, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, IconButton, Tooltip, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import YouTubeIcon from '@mui/icons-material/YouTube';
 
 import { extractYoutubeVideoIDFromURL } from '~/modules/youtube/youtube.utils';
 
-import type { AttachmentInputEnhancer } from '~/common/attachment-drafts/attachment.enhancers';
+import type { AttachmentEnhancerHintItem, AttachmentInputEnhancer } from '~/common/attachment-drafts/attachment.enhancers';
+import { EditorialVideoInput, llmsEditorialVideoInputPick } from '~/common/stores/llms/model.domains.editorial';
 import { LLM_IF_Inputs_Video } from '~/common/stores/llms/llms.types';
 import { asValidURL } from '~/common/util/urlUtils';
+import { optimaOpenModels } from '~/common/layout/optima/useOptima';
+import { setPrimaryChatModelId } from '~/common/stores/llms/hooks/useModelDomain';
+import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 
 /**
@@ -121,6 +125,47 @@ function VideoUrlPendingChip(props: { part: Parameters<AttachmentInputEnhancer['
 }
 
 
+/** Capability hint: a video URL was pasted on a non-video model - offer the editorial pick, or Models setup. */
+function VideoUrlDisabledHint(props: AttachmentEnhancerHintItem) {
+
+  // reactive: upgrades in-place from the setup pointer when the user adds a capable model (e.g. via the Models button)
+  const candidate = useModelsStore(state => llmsEditorialVideoInputPick(state.llms));
+
+  const youTubeVideoId = extractYoutubeVideoIDFromURL(props.part.resource.url);
+
+  const handleSwitchAndConvert = () => {
+    if (!candidate) return;
+    setPrimaryChatModelId(candidate.id);
+    props.onConvert();
+  };
+
+  return (
+    <Box sx={_chipSx}>
+
+      {youTubeVideoId ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={`https://i.ytimg.com/vi/${youTubeVideoId}/default.jpg`} alt='Video' style={_thumbSx as React.CSSProperties} />
+      ) : (
+        <PlayArrowRoundedIcon sx={{ fontSize: 'xl2', color: 'primary.solidBg', flexShrink: 0 }} />
+      )}
+
+      <Typography level='body-sm' className='agi-ellipsize' sx={{ flex: 1, minWidth: 0 }}>
+        {candidate ? EditorialVideoInput.hintSwitch : EditorialVideoInput.hintSetup}
+      </Typography>
+
+      <Button size='sm' color='neutral' onClick={candidate ? handleSwitchAndConvert : optimaOpenModels} sx={{ flexShrink: 0 }}>
+        {candidate ? EditorialVideoInput.actionSwitch(candidate.label) : EditorialVideoInput.actionSetup}
+      </Button>
+
+      <IconButton size='sm' onClick={props.onDismiss} sx={{ flexShrink: 0, background: 'none' }}>
+        <CloseRoundedIcon />
+      </IconButton>
+
+    </Box>
+  );
+}
+
+
 // module-scope singleton: referentially stable
 const videoUrlInputEnhancer: AttachmentInputEnhancer = {
 
@@ -138,6 +183,8 @@ const videoUrlInputEnhancer: AttachmentInputEnhancer = {
   ownsPart: (part) => part.resource.mediaKind === 'video',
 
   PendingChip: VideoUrlPendingChip,
+
+  DisabledMatchHint: VideoUrlDisabledHint,
 
 };
 

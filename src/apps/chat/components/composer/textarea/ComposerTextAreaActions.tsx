@@ -5,7 +5,7 @@ import { Box, Button, ColorPaletteProp } from '@mui/joy';
 
 import type { AgiAttachmentPromptsData } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 
-import type { AttachmentInputEnhancer } from '~/common/attachment-drafts/attachment.enhancers';
+import type { AttachmentEnhancerHintItem, AttachmentInputEnhancer } from '~/common/attachment-drafts/attachment.enhancers';
 import type { DComposerPendingPart } from '~/common/chat-overlay/store-perchat-composer_slice';
 import type { DMetaReferenceItem } from '~/common/stores/chat/chat.message';
 
@@ -69,14 +69,15 @@ export function ComposerTextAreaActions(props: {
   inReferenceTo?: DMetaReferenceItem[] | null
   pendingParts?: DComposerPendingPart[] | null,
   pendingPartsEnhancers?: readonly AttachmentInputEnhancer[],
+  enhancerDisabledHint?: AttachmentEnhancerHintItem | null,
   onAppendAndSend: (appendText: string) => Promise<void>,
   onRemoveReferenceTo: (item: DMetaReferenceItem) => void,
   onRemovePendingPart?: (part: DComposerPendingPart) => void,
 }) {
 
   // skip the component if there's nothing to show
-  const { agiAttachmentPrompts, onRemovePendingPart } = props;
-  if (!props.inReferenceTo?.length && !props.pendingParts?.length && !agiAttachmentPrompts.prompts?.length /*&& !props.agiAttachmentPrompts.isVisible*/)
+  const { agiAttachmentPrompts, enhancerDisabledHint, onRemovePendingPart } = props;
+  if (!props.inReferenceTo?.length && !props.pendingParts?.length && !enhancerDisabledHint && !agiAttachmentPrompts.prompts?.length /*&& !props.agiAttachmentPrompts.isVisible*/)
     return null;
 
   return (
@@ -98,6 +99,13 @@ export function ComposerTextAreaActions(props: {
         if (!enhancer) return null;
         const PendingChip = enhancer.PendingChip;
         return <PendingChip key={index} part={part} onRemove={() => onRemovePendingPart?.(part)} />;
+      })}
+
+      {/* Capability hint from a disabled enhancer (e.g. video URL pasted on a non-video model) */}
+      {!!enhancerDisabledHint && props.pendingPartsEnhancers?.map(enhancer => {
+        const DisabledMatchHint = enhancer.DisabledMatchHint;
+        if (!DisabledMatchHint || !enhancer.ownsPart(enhancerDisabledHint.part)) return null;
+        return <DisabledMatchHint key={enhancer.id} {...enhancerDisabledHint} />;
       })}
 
       {/* Auto-Prompts from attachments */}

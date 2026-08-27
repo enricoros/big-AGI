@@ -10,6 +10,7 @@ import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DLLM, DLLMId } from './llms.types';
 import type { DModelDomainId } from './model.domains.types';
+import { getLLMPubDate, isLLMHidden, LLM_IF_Inputs_Video } from './llms.types';
 
 
 /**
@@ -204,6 +205,42 @@ export function llmsEditorialPickForDomain(
   }
   return undefined;
 }
+
+// --- Capability picks (editorial suggestions outside the domain system) ---
+
+/** Video-input hint copy - surfaced by the composer when a video URL is pasted on a non-capable model. */
+export const EditorialVideoInput = {
+  hintSwitch: `This model can't watch videos`,
+  actionSwitch: (modelLabel: string) => `Use ${modelLabel}`,
+  hintSetup: `Add a Gemini model to have the AI watch videos`,
+  actionSetup: 'Models',
+} as const;
+
+/**
+ * Pick the model to suggest for video-URL input: Gemini models only - most recent (pubDate desc),
+ * visible before hidden, native Google AI service breaking ties.
+ * Gemini-only because URL video (YouTube fetch) is a Gemini capability: other models may carry
+ * LLM_IF_Inputs_Video (e.g. Qwen video models on OpenRouter) but don't take URL-referenced video.
+ * NOTE: there's an argument for preferring CHEAP capable models instead - video is
+ * input-token heavy - revisit if the suggestion proves expensive in practice.
+ */
+export function llmsEditorialVideoInputPick(llms: ReadonlyArray<DLLM>): DLLM | undefined {
+  const capable = llms.filter(llm => llm.interfaces.includes(LLM_IF_Inputs_Video) && _isGeminiFamily(llm));
+  if (capable.length < 2) return capable[0];
+  return [...capable].sort((a, b) =>
+    ((isLLMHidden(a) ? 1 : 0) - (isLLMHidden(b) ? 1 : 0))
+    || ((getLLMPubDate(b)?.getTime() ?? 0) - (getLLMPubDate(a)?.getTime() ?? 0))
+    || ((a.vId === 'googleai' ? 0 : 1) - (b.vId === 'googleai' ? 0 : 1)),
+  )[0];
+}
+
+/** Gemini on any service: the native Google AI vendor, or a gemini-named ref elsewhere (e.g. OpenRouter `google/gemini-*`). */
+function _isGeminiFamily(llm: DLLM): boolean {
+  if (llm.vId === 'googleai') return true;
+  const llmRef = llm.initialParameters?.llmRef;
+  return typeof llmRef === 'string' && llmRef.toLowerCase().includes('gemini');
+}
+
 
 /** Tolerant id match: exact `llmRef`, dated-suffix prefix on `llmRef`, or service-prefixed DLLM id (e.g. `anthropic-1-claude-opus-4-7`). */
 function _editorialMatch(llm: DLLM, editorialId: string): boolean {
