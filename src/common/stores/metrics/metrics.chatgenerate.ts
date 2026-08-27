@@ -156,6 +156,16 @@ export function metricsComputeChatGenerateCostsMd(metrics?: Readonly<DMetricsCha
   if (!metrics)
     return undefined;
 
+  // estimate from the price table, then carry the provider-reported (billed) cost alongside - it survives
+  // even when the estimate can't be computed ('no-pricing', 'partial-price', ...)
+  const costs = _computeCostsFromPricing(metrics, pricing, logLlmRefId);
+  if (metrics.$cReported !== undefined)
+    costs.$cReported = metrics.$cReported;
+  return costs;
+}
+
+function _computeCostsFromPricing(metrics: Readonly<DMetricsChatGenerate_Md>, pricing: DPricingChatGenerate | undefined, logLlmRefId?: string): MetricsChatGenerateCost_Md {
+
   // metrics: token presence
   const inNewTokens = metrics.TIn || 0;
   const inCacheReadTokens = metrics.TCacheRead || 0;

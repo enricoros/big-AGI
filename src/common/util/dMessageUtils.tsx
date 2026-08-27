@@ -263,9 +263,18 @@ export function useMessageAvatarLabel(
     const metrics = generator.metrics ? prettyMessageMetrics(generator.metrics, complexity) : null;
     const stopReason = generator.tokenStopReason ? prettyTokenStopReason(generator.tokenStopReason, complexity) : null;
 
+    // aix label: in Extra mode, the routed infra provider (e.g. OpenRouter routing) shows inline - it explains
+    // per-message cost/speed variance without opening the tooltip
+    const infraLabel = complexity === 'extra' ? generator.providerInfraLabel : undefined;
+    const showStopReason = !!stopReason && complexity !== 'minimal';
+
     // aix tooltip: more details
     return {
-      label: (stopReason && complexity !== 'minimal') ? <>{prettyName} <small>({stopReason})</small></> : prettyName,
+      label: (infraLabel || showStopReason) ? <>
+        {prettyName}
+        {infraLabel && <> <small>· via {infraLabel}</small></>}
+        {showStopReason && <> <small>({stopReason})</small></>}
+      </> : prettyName,
       tooltip: complexity === 'minimal' ? null : (
         <Box sx={tooltipSx}>
           {VendorIcon ? <Box sx={tooltipIconContainerSx}><VendorIcon />{generator.name}</Box> : <div>{generator.name}</div>}
@@ -293,6 +302,10 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
 
   const costCode = metrics.$code ? _prettyCostCode(metrics.$code) : null;
 
+  // the provider-reported (billed) cost is the headline when present; the price-table estimate demotes to a footnote
+  const $cHeadline = metrics.$cReported ?? metrics.$c;
+  const $cEstimated = (metrics.$cReported !== undefined && metrics.$c !== undefined) ? metrics.$c : undefined;
+
   return <Box sx={tooltipMetricsGridSx}>
 
     {/* Tokens */}
@@ -317,9 +330,9 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
     </div>}
 
     {/* Costs */}
-    {metrics?.$c !== undefined && <div>Costs:</div>}
-    {metrics?.$c !== undefined && <div>
-      <b>{formatModelsCost(metrics.$c / 100)}</b>
+    {$cHeadline !== undefined && <div>Costs:</div>}
+    {$cHeadline !== undefined && <div>
+      <b>{formatModelsCost($cHeadline / 100)}</b>
       {metrics.$cdCache !== undefined && <>
         {' '}<small>(
         {metrics.$cdCache > 0
@@ -328,13 +341,13 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
         })</small>
       </>}
     </div>}
-    {/* Add the 'reported' costs underneath, if defined */}
-    {metrics?.$cReported !== undefined && <div>{metrics?.$c !== undefined ? '' : 'Costs:'}</div>}
-    {metrics?.$cReported !== undefined && <div>
-      <small>reported: <b>{formatModelsCost(metrics.$cReported / 100)}</b></small>
+    {/* Add the local price-table estimate underneath, when the headline is the billed cost */}
+    {$cEstimated !== undefined && <div></div>}
+    {$cEstimated !== undefined && <div>
+      <small>estimated: {formatModelsCost($cEstimated / 100)}</small>
     </div>}
     {/* Add the cost 'code' underneath, if any */}
-    {costCode && <div>{(metrics?.$c !== undefined || metrics?.$cReported !== undefined) ? '' : 'Costs:'}</div>}
+    {costCode && <div>{$cHeadline !== undefined ? '' : 'Costs:'}</div>}
     {costCode && <div><em>{costCode}</em></div>}
 
     {/* Time */}

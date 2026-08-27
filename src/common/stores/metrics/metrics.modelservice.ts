@@ -93,9 +93,10 @@ const CENTS_TO_DOLLARS = 0.01;
 function updateServiceMetrics(currentMetrics: ServiceMetricsAggregate, costs: MetricsChatGenerateCost_Md, inputTokens: number, outputTokens: number, timestamp: number): ServiceMetricsAggregate {
   const newMetrics = { ...currentMetrics };
 
-  // Update cost accumulators
-  if (costs.$c !== undefined)
-    newMetrics.totalCosts += costs.$c * CENTS_TO_DOLLARS;
+  // Update cost accumulators - the provider-reported (billed) cost wins over the price-table estimate
+  const $cEffective = costs.$cReported ?? costs.$c;
+  if ($cEffective !== undefined)
+    newMetrics.totalCosts += $cEffective * CENTS_TO_DOLLARS;
   if (costs.$cdCache !== undefined)
     newMetrics.totalSavings += costs.$cdCache * CENTS_TO_DOLLARS;
 
