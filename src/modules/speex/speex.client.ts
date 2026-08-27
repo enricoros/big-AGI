@@ -8,6 +8,8 @@
  */
 
 import { AudioAutoPlayer } from '~/common/util/audio/AudioAutoPlayer';
+import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
+import { ellipsizeEnd } from '~/common/util/textUtils';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import type { DSpeexEngineAny, SpeexSpeakTextOptions, SpeexSpeakTextResult, SpeexSynthesizeOptions, SpeexSynthesizeResult, SpeexVoiceSelector } from './speex.types';
@@ -128,6 +130,33 @@ export async function speakText(
     // forward audio base64 if returned (rpcReturnAudio disables chunking, so at most 1 entry)
     ...(audioBase64Chunks.length ? { audioBase64: audioBase64Chunks[0] } : undefined),
   };
+}
+
+
+/**
+ * Surfaces a speech failure to the user, carrying the vendor's own reason.
+ *
+ * Speech is a side channel with no visual result, so a failed synthesis (drained key, wrong-vendor key,
+ * unreachable host) is indistinguishable from a dead button unless we say something. Callers that have a
+ * better reaction available (e.g. opening voice preferences for an unconfigured engine) handle that case
+ * themselves and pass the rest here.
+ *
+ * Silent by design: successes, aborts/preemptions (normal), deliberate playback-disabled, and results
+ * without a reason to show (e.g. the user pressed stop mid-playback).
+ *
+ * @returns true if a message was shown
+ */
+export function speakTextSurfaceFailure(result: SpeexSpeakTextResult, snackbarKey: string): boolean {
+  if (result.success || result.aborted || !result.errorText || result.errorType === 'tts-playback-disabled')
+    return false;
+
+  addSnackbar({
+    key: snackbarKey,
+    message: 'Speech failed: ' + ellipsizeEnd(result.errorText, 200),
+    type: 'issue',
+    overrides: { autoHideDuration: 8000 }, // visible, but not sticky: repeated failures must not pile up modal-like
+  });
+  return true;
 }
 
 

@@ -8,7 +8,7 @@ import type { SystemPurposeExample } from '../../../data';
 
 import type { AixReattachMode } from '~/modules/aix/client/aix.client';
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
-import { speakText } from '~/modules/speex/speex.client';
+import { speakText, speakTextSurfaceFailure } from '~/modules/speex/speex.client';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { DLLMContextTokens } from '~/common/stores/llms/llms.types';
@@ -302,9 +302,12 @@ export function ChatMessageList(props: {
     const result = await speakText(text, undefined, { label: 'Chat speak' });
     setIsSpeaking(false);
 
-    // open voice preferences
+    // open voice preferences - the actionable reaction to a missing/incomplete engine configuration
     if (!result.success && (result.errorType === 'tts-no-engine' || result.errorType === 'tts-unconfigured'))
       optimaOpenPreferences('voice');
+    else
+      // ...otherwise say why nothing was spoken (a 401/quota used to make this button do nothing at all)
+      speakTextSurfaceFailure(result, 'speak-failed');
   }, []);
 
 
