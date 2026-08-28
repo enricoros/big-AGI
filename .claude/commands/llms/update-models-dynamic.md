@@ -1,5 +1,5 @@
 ---
-description: Update/validate dynamic vendor model parsers (OpenRouter, TogetherAI, Azure, Novita, ChutesAI, FireworksAI, TLUS, LM Studio, LocalAI, FastAPI)
+description: Update/validate dynamic vendor model parsers (OpenRouter, TogetherAI, Azure, Baseten, Novita, ChutesAI, FireworksAI, TLUS, LM Studio, LocalAI, FastAPI)
 ---
 
 Validate that the dynamic (API-fetched) vendor model parsers are up to date and not silently broken.
@@ -28,6 +28,12 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 - Features array mapping (`function-calling`, `reasoning`, `structured-outputs`) and input modalities parsing.
 - Pricing unit conversion (hundredths of cent per million → dollars per 1K).
 - Hostname heuristic: `novita.ai`.
+
+**Baseten** - `src/modules/llms/server/openai/models/baseten.models.ts`
+- Model APIs: small curated slate (15 ids, 2026-08-28), rich listing (names, per-token pricing, cache read, features, modalities) - listing is authoritative for all of that.
+- `_basetenCurated` map carries what the listing lacks: `reasoning_effort` ladders (docs + live-ablated, per-model llmVndOaiEffort/llmVndMiscEffort) and pubDates - check for stale/missing ids when the slate changes.
+- Effort ladder source: https://docs.baseten.co/inference/model-apis/reasoning - but verify live, the docs both under- and over-claim (GLM-5.3 'none' accepted-and-ignored; gpt-oss only honors low|medium|high).
+- Hostname heuristic: `inference.baseten.co` (deliberately excludes model-*.api.baseten.co dedicated deployments).
 
 **ChutesAI** - `src/modules/llms/server/openai/models/chutesai.models.ts`
 - Custom `max_model_len` field for context window.

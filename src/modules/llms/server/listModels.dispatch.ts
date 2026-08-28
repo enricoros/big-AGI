@@ -35,6 +35,7 @@ import { OPENAI_API_PATHS, openAIAccess } from './openai/openai.access';
 import { alibabaModelFilter, alibabaModelSort, alibabaModelToModelDescription } from './openai/models/alibaba.models';
 import { arceeAIHeuristic, arceeAIModelsToModelDescriptions } from './openai/models/arceeai.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './openai/models/azure.models';
+import { basetenHeuristic, basetenModelsToModelDescriptions } from './openai/models/baseten.models';
 import { cerebrasFetchModelDescriptions } from './openai/models/cerebras.models';
 import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './openai/models/chutesai.models';
 import { cohereModelFilter, cohereModelSort, cohereModelToModelDescription } from './openai/models/cohere.models';
@@ -511,6 +512,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // [Arcee AI] special case for model enumeration
               if (arceeAIHeuristic(oaiUrl))
                 return arceeAIModelsToModelDescriptions(openAIWireModelsResponse);
+
+              // [Baseten] Model APIs - curated slate with rich listing metadata
+              if (basetenHeuristic(oaiUrl))
+                return basetenModelsToModelDescriptions(maybeModels);
 
               // [ChutesAI] special case for model enumeration
               if (chutesAIHeuristic(oaiUrl))

@@ -108,6 +108,7 @@ export const LLMS_DEFS_EXTRA_BUCKETS = {
   _openaiCompat: {
     files: [
       'openai/models/arceeai.models.ts',
+      'openai/models/baseten.models.ts',
       'openai/models/chutesai.models.ts',
       'openai/models/fastapi.models.ts',
       'openai/models/fireworksai.models.ts',
@@ -119,6 +120,7 @@ export const LLMS_DEFS_EXTRA_BUCKETS = {
       'openai/models/openai.models.ts',
       'openai/models/openrouter.models.ts',
       'openai/models/tlusapi.models.ts',
+      'openai/wiretypes/baseten.wiretypes.ts',
       'openai/wiretypes/fireworksai.wiretypes.ts',
       'openai/wiretypes/llmapi.wiretypes.ts',
       'openai/wiretypes/novita.wiretypes.ts',

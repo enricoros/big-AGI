@@ -7,6 +7,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { Link } from '~/common/components/Link';
 
 import { ArceeAIIcon } from '~/common/components/icons/vendors/ArceeAIIcon';
+import { BasetenIcon } from '~/common/components/icons/vendors/BasetenIcon';
 import { ChutesAIIcon } from '~/common/components/icons/vendors/ChutesAIIcon';
 import { FireworksAIIcon } from '~/common/components/icons/vendors/FireworksAIIcon';
 import { CloudflareIcon } from '~/common/components/icons/vendors/CloudflareIcon';
@@ -39,6 +40,7 @@ interface VerifiedProvider {
 const OPENAI_COMPATIBLE_PROVIDERS: VerifiedProvider[] = [
   // Example Providers
   { id: 'arcee', label: 'Arcee AI', host: 'https://api.arcee.ai/api', hostMatch: 'arcee.ai', category: 'Example Providers', description: 'Open-weight MoE models', docsUrl: 'https://docs.arcee.ai/', icon: ArceeAIIcon },
+  { id: 'baseten', label: 'Baseten', host: 'https://inference.baseten.co', hostMatch: 'inference.baseten.co', category: 'Example Providers', description: 'Curated open models, production inference', docsUrl: 'https://docs.baseten.co/inference/model-apis/overview', icon: BasetenIcon },
   { id: 'chutes', label: 'Chutes AI', host: 'https://llm.chutes.ai', hostMatch: '.chutes.ai', category: 'Example Providers', description: 'Serverless open model inference', docsUrl: 'https://chutes.ai/docs', icon: ChutesAIIcon },
   { id: 'empiriolabs', label: 'EmpirioLabs AI', host: 'https://api.empiriolabs.ai', hostMatch: 'empiriolabs.ai', category: 'Example Providers', description: 'Multi-model API platform', docsUrl: 'https://docs.empiriolabs.ai' },
   { id: 'fireworks', label: 'Fireworks AI', host: 'https://api.fireworks.ai/inference', hostMatch: 'fireworks.ai', category: 'Example Providers', description: 'Fast open model inference', docsUrl: 'https://docs.fireworks.ai/getting-started/quickstart', icon: FireworksAIIcon },
