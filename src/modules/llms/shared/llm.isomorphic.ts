@@ -36,3 +36,11 @@ export function llmsHostnameMatches(hostUrl: string | undefined, expectedHostnam
 export function llmsIsNativeOpenAIHost(oaiHost: string | undefined): boolean {
   return !oaiHost || llmsHostnameMatches(oaiHost, 'api.openai.com');
 }
+
+/**
+ * True when the configured host points at the real Gemini API (empty = use default = native).
+ * False for Gemini-compatible proxies configured via `geminiHost`.
+ */
+export function llmsIsNativeGeminiHost(geminiHost: string | undefined): boolean {
+  return !geminiHost || llmsHostnameMatches(geminiHost, 'generativelanguage.googleapis.com');
+}
