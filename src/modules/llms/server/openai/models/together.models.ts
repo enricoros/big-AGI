@@ -31,16 +31,15 @@ const _togetherAIDenyList: string[] = [
   'test/test',
 ];
 
-// Retired from serverless but still listed WITH a non-zero price (so the 0/0 'not serverless-priced' rule below
-// does not catch them): a chat call returns 400 'Unable to access non-serverless model'. /v1/models exposes no
-// field that separates the two - only a live probe or the docs serverless table does, so this is an exact-id list.
-// Full sweep 2026-08-27 (1-token probe over all 73 priced chat rows): 20 answer, 3 (Qwen3.6-Plus/3.7-Plus/3.7-Max)
-// 400 'only supports streaming' (alive - the probe is non-streaming), 49 return the non-serverless 400, and
-// zai-org/GLM-4.5-Air-FP8 answers a persistent 503. The 23 survivors match the chat rows on
-// https://docs.together.ai/docs/serverless-models except two: that page also carries Prism-ML/Ternary-Bonsai-27B
-// (serverless but 0/0-priced, so outside the 73) and omits arize-ai/qwen-2-1.5b-instruct (priced 0.1/0.1 and
-// answering) - re-run the sweep when either page moves.
-// Accepted cost: a user who owns a dedicated endpoint for one of these ids no longer sees it.
+// Retired from serverless but still priced non-zero, so the 0/0 rule below misses them: chat calls return
+// 400 'Unable to access non-serverless model'. /v1/models has no field for this - only a live probe or the
+// docs serverless table separates the two, hence this exact-id list.
+// Sweep 2026-08-28 (1-token probe, 72 priced chat rows): 19 alive (3 Qwen3.x-Plus/Max streaming-only), 51
+// non-serverless 400, GLM-4.5-Air-FP8 503, Kimi-K2.7-Code 500 then 400. Matches the chat rows on
+// https://docs.together.ai/docs/serverless-models except Prism-ML/Ternary-Bonsai-27B (0/0-priced) and
+// arize-ai/qwen-2-1.5b-instruct (priced, answering, undocumented).
+// Membership rotates fast in both directions ('created' gets re-stamped) - probe, never trust this list's age.
+// Accepted cost: a user with a dedicated endpoint for one of these ids no longer sees it.
 const _togetherAIRetiredIds = new Set<string>([
   // zai-org
   'zai-org/GLM-5.1', // deprecated 2026-07-10 (row now labeled 'GLM 5.1 FP4')
@@ -82,6 +81,7 @@ const _togetherAIRetiredIds = new Set<string>([
   'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
   'deepseek-ai/DeepSeek-R1-Distill-Qwen-14B',
   'deepseek-ai/DeepSeek-V3.1',
+  'deepseek-ai/DeepSeek-V4-Pro', // off serverless 2026-08-28; docs keep only the -0813 id
   'deepseek-ai/deepseek-coder-33b-instruct',
   // mistralai
   'mistralai/Ministral-3-14B-Instruct-2512',
@@ -96,7 +96,9 @@ const _togetherAIRetiredIds = new Set<string>([
   'google/gemma-2-27b-it',
   'moonshotai/Kimi-K2.5-fp4',
   'moonshotai/Kimi-K2.6', // retired between the 2026-08-17 and -27 sweeps
+  'moonshotai/Kimi-K2.7-Code', // 500 on the 08-28 sweep, standard 400 on re-probe
   'nvidia/Llama-3.1-Nemotron-70B-Instruct-HF',
+  'nvidia/nemotron-3-ultra-550b-a55b', // off serverless 2026-08-28
   'nvidia/NVIDIA-Nemotron-Nano-9B-v2',
 ]);
 
@@ -138,12 +140,12 @@ const _togetherVisionMatches: readonly (string | RegExp)[] = [
 // Editorial release dates for Together-hosted third-party models, keyed by Together model id.
 // The ONLY source of pubDate for this vendor (besides the manual mappings above); keep dates
 // consistent with the publisher's own catalog where we have one (e.g. deepseek.models.ts).
+// Keys for currently-retired ids stay - the serverless set rotates back, and a deleted date must be re-researched.
 const _togetherEditorialPubDates: Record<string, string> = {
   'openai/gpt-oss-120b': '20250805', // = groq.models.ts / cerebras.models.ts 'gpt-oss-120b'
   'openai/gpt-oss-20b': '20250805',
   'Qwen/Qwen3.5-9B': '20260302', // HF public 2026-03-02, follow-up to the 20260225 Qwen3.5 open-weights drop (no alibaba.models.ts id)
   'google/gemma-4-31B-it': '20260402', // = gemini.models.ts 'models/gemma-4-31b-it'
-  'pearl-ai/gemma-4-31b-it': '20260402', // = google/gemma-4-31B-it above (same weights, third-party serve)
   'Qwen/Qwen3.6-Plus': '20260402', // = alibaba.models.ts 'qwen3.6-plus'
   'moonshotai/Kimi-K2.6': '20260420', // = moonshot.models.ts 'kimi-k2.6' (fireworksai.models.ts still says 20260417)
   'deepseek-ai/DeepSeek-V4-Pro': '20260424', // = deepseek.models.ts 'deepseek-v4-pro' (undated id = the 0424 launch weights)
@@ -197,7 +199,7 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
       if (!_togetherAllowTypes.includes(model.type))
         return false;
 
-      // NOTE: shall we filter out the non-running models?
+      // NOTE: do not filter on `running` - it is false on all 276 rows (2026-08-28), serverless ones included.
 
       // filter-out retired-but-still-priced ids
       if (_togetherAIRetiredIds.has(model.id))
