@@ -10,7 +10,9 @@
  * Audio:    inline base64 up to GEMINI_INLINE_MAX_BYTES (quick dictations: one request, no
  *           server-side file); above it, the shared `geminiFileUpload` (raw bytes, mechanics
  *           documented there) then `{type:'audio', uri}`. `audio/webm;codecs=opus` is accepted
- *           verbatim. The uploaded file is deleted after the run (48h retention otherwise).
+ *           verbatim; `video/*` labels are coerced to `audio/*` (imports carry the browser's
+ *           container mime, and video processing FAILs audio-only bytes). The uploaded file is
+ *           deleted after the run (48h retention otherwise).
  * Privacy:  `store: false` - the interaction record is not retained (GET 404s after).
  * Response: transcript is in `steps[].content[].text` of `model_output` steps; `output_text` is
  *           ALWAYS empty. Silence completes with zero content items. No detected-language, no
@@ -71,7 +73,12 @@ export const asrxTranscribeGemini: TranscribeBackendFn<ASRxAccess_Gemini> = asyn
   const language = languageCode ?? profile.language;
   const languageCodes = language ? language.split(/[,\s]+/).filter(Boolean) : [];
   const vocabulary = profile.keywords?.map(k => k.trim()).filter(Boolean).slice(0, 1000) ?? [];
-  const mime = mimeType || 'audio/webm'; // recorder default when the caller has no mime
+  // transcription consumes the AUDIO track: coerce 'video/*' container labels (the browser's
+  // default for imported .webm/.mp4 files) to their audio type - a video-labeled upload routes
+  // into Gemini's video processing and FAILs on audio-only bytes (reproduced 2026-08-28)
+  const mime = !mimeType ? 'audio/webm' // recorder default when the caller has no mime
+    : mimeType.startsWith('video/') ? `audio/${mimeType.slice('video/'.length).split(';')[0].trim()}`
+      : mimeType;
 
   if (ASRX_DEBUG) console.log('[ASRx][Gemini] transcribe', { model, mode, languageCodes, bytes: audio.byteLength, mime });
 
