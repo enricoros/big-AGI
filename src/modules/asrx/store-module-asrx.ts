@@ -190,12 +190,13 @@ export const useASRxStore = create<ASRxStore>()(persist(
 
   }), {
     name: 'app-module-asrx',
-    version: 2,
+    version: 3,
 
     // 2: auto-link now requires a client-side key (CSF-only) - force one re-sync so
     //    stale keyless auto-linked engines get re-evaluated and soft-deleted
+    // 3: +gemini vendor - force one re-sync so existing Gemini LLM services auto-link
     migrate: (state: unknown, fromVersion) => {
-      if (fromVersion < 2 && state)
+      if (fromVersion < 3 && state)
         return { ...state, hasInitializedLlms: false };
       return state;
     },

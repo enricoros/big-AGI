@@ -3,6 +3,7 @@
 The Interactions API powers Gemini's managed-agent runs. Currently wired:
 - **Deep Research** (`deep-research-*-preview-*`) — research/synthesis agent. Requires `background=true`; rejects top-level `system_instruction` (we prepend to input). Configurable via `agent_config` (`thinking_summaries`, `visualization`).
 - **Antigravity Agent** (`antigravity-preview-05-2026`, released 2026-05-19) — general-purpose Gemini-3.5-Flash-powered agent inside a Google-hosted Linux sandbox with code_execution / google_search / url_context / filesystem tools. REJECTS `background=true` (we omit it); accepts native `system_instruction`; `environment` is auto-reused across turns via the history walk (bare UUID, NOT `env_<id>` - see "Session reuse" below). [Docs](https://ai.google.dev/gemini-api/docs/antigravity-agent).
+- **Transcription** (`gemini-3.5-transcribe`, 2026-08) — batch speech-to-text for ASRx, wired in `src/modules/asrx/protocols/batch/transcribe-gemini.ts` (client-side CSF adapter, NOT the AIX dispatch: plain sync POST, no stream/background, `store:false`). The Interactions API is the model's only working surface (`generateContent` returns an empty part) and the transcript lives only in `steps[]` (`output_text` stays empty). Wire shapes, CORS verification, and limits are documented in the adapter header.
 
 Per-agent flags live in `gemini.interactionsCreate.ts` (`isDeepResearch` / `isAntigravity` gates).
 

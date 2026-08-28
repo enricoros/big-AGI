@@ -16,9 +16,10 @@ import { FormTextField } from '~/common/components/forms/FormTextField';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
-import type { DASRxEngine, DASRxEngineAny, DASRxVendorType, DCredentialsApiKey, DProfileDeepgram, DProfileOpenAI } from '../asrx.types';
+import type { DASRxEngine, DASRxEngineAny, DASRxVendorType, DCredentialsApiKey, DProfileDeepgram, DProfileGemini, DProfileOpenAI } from '../asrx.types';
 import { ASRX_DEFAULTS } from '../asrx.config';
 import { ASRxVendorDeepgram } from '../vendors/deepgram.vendor';
+import { ASRxVendorGemini } from '../vendors/gemini.vendor';
 import { ASRxVendorOpenAI } from '../vendors/openai.vendor';
 import { asrxAreCredentialsValid } from '../store-module-asrx';
 
@@ -70,6 +71,8 @@ export function ASRxConfigureEngineFull(props: {
         <Box sx={_styles.sectionBody}>
           {engine.vendorType === 'deepgram' ? (
             <DeepgramParameters engine={engine} onUpdate={onUpdate} />
+          ) : engine.vendorType === 'gemini' ? (
+            <GeminiParameters engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
           ) : engine.vendorType === 'openai' ? (
             <OpenAIParameters engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
           ) : (
@@ -171,7 +174,10 @@ function ManualCredentials({ engine, credentials, onUpdate, advancedOn }: {
   }, [credentials, onUpdate]);
 
   // const keyDescription = vendorType === 'deepgram' ? 'Deepgram' : 'OpenAI';
-  const hostDefault = vendorType === 'deepgram' ? 'https://api.deepgram.com' : 'https://api.openai.com';
+  const hostDefault =
+    vendorType === 'deepgram' ? 'https://api.deepgram.com'
+      : vendorType === 'gemini' ? 'https://generativelanguage.googleapis.com'
+        : 'https://api.openai.com';
 
   return <>
 
@@ -202,6 +208,73 @@ function ManualCredentials({ engine, credentials, onUpdate, advancedOn }: {
 }
 
 
+// --- Shared panel chrome ---
+
+/** Bottom row shared by every vendor panel: 'Advanced...' toggle left, 'Reset to defaults' right when off-default. */
+function PanelFooter({ advanced, showReset, onReset }: {
+  advanced: { on: boolean; toggle: () => void };
+  showReset: boolean;
+  onReset: () => void;
+}) {
+  return (
+    <Box sx={_styles.bottomRow}>
+      <Typography
+        level='body-xs'
+        onClick={advanced.toggle}
+        sx={{ ..._styles.advancedToggle, mr: 'auto' }}
+      >
+        {advanced.on ? 'Hide Advanced' : 'Advanced...'}
+      </Typography>
+      {showReset && (
+        <Link
+          component='button'
+          color='neutral'
+          level='body-xs'
+          onClick={onReset}
+        >
+          Reset to defaults ...
+        </Link>
+      )}
+    </Box>
+  );
+}
+
+/**
+ * 'Personal Dictionary' row + editor modal, shared by every vendor panel.
+ * Terms are data, not a parameter: each panel's reset handler preserves them.
+ */
+function PersonalDictionaryRow({ show, terms, description, onSave }: {
+  show: boolean;
+  terms: string[];
+  description?: string; // default 'Fix names & jargon'
+  onSave: (terms: string[]) => void;
+}) {
+
+  const [open, setOpen] = React.useState(false);
+
+  if (!show) return null;
+
+  return <>
+    <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='Personal Dictionary' description={description ?? 'Fix names & jargon'} />
+      <Button variant='outlined' color='neutral' onClick={() => setOpen(true)}>
+        {terms.length ? `${terms.length} term${terms.length === 1 ? '' : 's'}` : 'Add terms...'}
+      </Button>
+    </FormControl>
+    {open && (
+      <DictionaryModal
+        terms={terms}
+        onSave={saved => {
+          onSave(saved);
+          setOpen(false);
+        }}
+        onClose={() => setOpen(false)}
+      />
+    )}
+  </>;
+}
+
+
 // --- Deepgram parameters ---
 
 function DeepgramParameters({ engine, onUpdate }: {
@@ -211,9 +284,6 @@ function DeepgramParameters({ engine, onUpdate }: {
 
   const { profile } = engine;
 
-  // state
-  const [dictionaryOpen, setDictionaryOpen] = React.useState(false);
-
   // advanced starts closed; features off their default stay visible individually below
   const advanced = useToggleableBoolean();
 
@@ -222,7 +292,7 @@ function DeepgramParameters({ engine, onUpdate }: {
     onUpdate({ profile: { ...profile, ...patch } });
   }, [onUpdate, profile]);
 
-  // any parameter off its default (the dictionary is data, not a parameter - reset never touches it)
+  // any parameter off its default
   const hasUserParameters =
     (profile.asrModel !== undefined && profile.asrModel !== ASRX_DEFAULTS.DEEPGRAM_MODEL)
     || (profile.language !== undefined && profile.language !== ASRX_DEFAULTS.DEEPGRAM_LANGUAGE)
@@ -299,53 +369,19 @@ function DeepgramParameters({ engine, onUpdate }: {
       />
     )}
 
-    {/* User Dictionary - the term list lives in a small editor modal */}
-    {(advanced.on || termsCount > 0) && (
-      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
-        <FormLabelStart title='Personal Dictionary' description='Fix names & jargon' />
-        <Button variant='outlined' color='neutral' onClick={() => setDictionaryOpen(true)}>
-          {termsCount ? `${termsCount} term${termsCount === 1 ? '' : 's'}` : 'Add terms...'}
-        </Button>
-      </FormControl>
-    )}
+    <PersonalDictionaryRow
+      show={advanced.on || termsCount > 0}
+      terms={profile.keyterms ?? []}
+      onSave={terms => handleProfileUpdate({ keyterms: terms.length ? terms : undefined })}
+    />
 
-    {/* Advanced toggle on the left; reset link on the right, only when off-default */}
-    <Box sx={_styles.bottomRow}>
-      <Typography
-        level='body-xs'
-        onClick={advanced.toggle}
-        sx={{ ..._styles.advancedToggle, mr: 'auto' }}
-      >
-        {advanced.on ? 'Hide Advanced' : 'Advanced...'}
-      </Typography>
-      {hasUserParameters && (
-        <Link
-          component='button'
-          color='neutral'
-          level='body-xs'
-          onClick={handleResetParameters}
-        >
-          Reset to defaults ...
-        </Link>
-      )}
-    </Box>
-
-    {dictionaryOpen && (
-      <DictionaryModal
-        terms={profile.keyterms ?? []}
-        onSave={terms => {
-          handleProfileUpdate({ keyterms: terms.length ? terms : undefined });
-          setDictionaryOpen(false);
-        }}
-        onClose={() => setDictionaryOpen(false)}
-      />
-    )}
+    <PanelFooter advanced={advanced} showReset={hasUserParameters} onReset={handleResetParameters} />
 
   </>;
 }
 
 
-/** Minimal one-term-per-line editor for the user dictionary (Deepgram keyterms, OpenAI keywords). */
+/** Minimal one-term-per-line editor for the user dictionary (Deepgram keyterms; OpenAI/Gemini keywords). */
 function DictionaryModal(props: {
   terms: string[];
   onSave: (terms: string[]) => void;
@@ -399,6 +435,69 @@ function DictionaryModal(props: {
 }
 
 
+// --- Gemini parameters ---
+
+function GeminiParameters({ engine, onUpdate, isMobile }: {
+  engine: DASRxEngine<'gemini'>;
+  onUpdate: (updates: Partial<DASRxEngineAny>) => void;
+  isMobile: boolean;
+}) {
+
+  const { profile } = engine;
+
+  // advanced starts closed; features off their default stay visible individually below
+  const advanced = useToggleableBoolean();
+
+  const handleProfileUpdate = React.useCallback((patch: Partial<DProfileGemini>) => {
+    onUpdate({ profile: { ...profile, ...patch } });
+  }, [onUpdate, profile]);
+
+  // any parameter off its default (no model picker: gemini-3.5-transcribe is the only batch model)
+  const hasUserParameters = profile.mode === 'verbatim' || !!profile.language;
+
+  const handleResetParameters = React.useCallback(() => {
+    onUpdate({ profile: { ...ASRxVendorGemini.getDefaultProfile(), ...(profile.keywords?.length && { keywords: profile.keywords }) } });
+  }, [onUpdate, profile.keywords]);
+
+  const keywordsCount = profile.keywords?.length ?? 0;
+
+  return <>
+
+    {/* Mode - the model's one big switch: vendor formatting vs literal transcript */}
+    <FormChipControl<Exclude<DProfileGemini['mode'], undefined>>
+      title='Mode'
+      alignEnd
+      options={[
+        { value: 'smart', label: 'Smart', description: 'Formatted', tooltip: 'Punctuation and paragraphs, lightly cleaned up' },
+        { value: 'verbatim', label: 'Verbatim', description: 'Literal', tooltip: 'Word-for-word transcript' },
+      ]}
+      value={profile.mode ?? 'smart'}
+      onChange={value => handleProfileUpdate({ mode: value })}
+    />
+
+    {/* Language(s) */}
+    <FormTextField
+      autoCompleteId='asrx-gemini-language'
+      title='Language'
+      description={isMobile ? undefined : `'en-US' or 'en,it' - blank = auto`}
+      placeholder='(auto-detect)'
+      value={profile.language ?? ''}
+      onChange={text => handleProfileUpdate({ language: text || undefined })}
+      inputSx={{ maxWidth: 210 }}
+    />
+
+    <PersonalDictionaryRow
+      show={advanced.on || keywordsCount > 0}
+      terms={profile.keywords ?? []}
+      onSave={terms => handleProfileUpdate({ keywords: terms.length ? terms : undefined })}
+    />
+
+    <PanelFooter advanced={advanced} showReset={hasUserParameters} onReset={handleResetParameters} />
+
+  </>;
+}
+
+
 // --- OpenAI parameters ---
 
 // hourly audio rates on hover, from the OpenAI pricing page (2026-07) - the API bills per minute of audio
@@ -422,9 +521,6 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
   // keywords reach the wire only for gpt-transcribe (keywords[]) and whisper-1 (prompt fold) - see the batch adapter
   const keywordsApply = !profile.diarize && (isWhisper || asrModel === 'gpt-transcribe');
 
-  // state
-  const [dictionaryOpen, setDictionaryOpen] = React.useState(false);
-
   // advanced starts closed; features off their default stay visible individually below
   const advanced = useToggleableBoolean();
 
@@ -432,7 +528,7 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
     onUpdate({ profile: { ...profile, ...patch } });
   }, [onUpdate, profile]);
 
-  // any parameter off its default (the prompt and dictionary are data, not parameters - reset never touches them)
+  // any parameter off its default (the prompt is data too - reset preserves it)
   const hasUserParameters =
     (profile.asrModel !== undefined && profile.asrModel !== ASRX_DEFAULTS.OPENAI_MODEL)
     || !!profile.language || profile.temperature !== undefined || !!profile.diarize;
@@ -500,47 +596,14 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
       />
     )}
 
-    {/* User Dictionary - the term list lives in a small editor modal */}
-    {(advanced.on || keywordsCount > 0) && (
-      <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
-        <FormLabelStart title='Personal Dictionary' description={keywordsApply ? 'Fix names & jargon' : 'Unused by this model'} />
-        <Button variant='outlined' color='neutral' onClick={() => setDictionaryOpen(true)}>
-          {keywordsCount ? `${keywordsCount} term${keywordsCount === 1 ? '' : 's'}` : 'Add terms...'}
-        </Button>
-      </FormControl>
-    )}
+    <PersonalDictionaryRow
+      show={advanced.on || keywordsCount > 0}
+      terms={profile.keywords ?? []}
+      description={keywordsApply ? undefined : 'Unused by this model'}
+      onSave={terms => handleProfileUpdate({ keywords: terms.length ? terms : undefined })}
+    />
 
-    {/* Advanced toggle on the left; reset link on the right, only when off-default */}
-    <Box sx={_styles.bottomRow}>
-      <Typography
-        level='body-xs'
-        onClick={advanced.toggle}
-        sx={{ ..._styles.advancedToggle, mr: 'auto' }}
-      >
-        {advanced.on ? 'Hide Advanced' : 'Advanced...'}
-      </Typography>
-      {hasUserParameters && (
-        <Link
-          component='button'
-          color='neutral'
-          level='body-xs'
-          onClick={handleResetParameters}
-        >
-          Reset to defaults ...
-        </Link>
-      )}
-    </Box>
-
-    {dictionaryOpen && (
-      <DictionaryModal
-        terms={profile.keywords ?? []}
-        onSave={terms => {
-          handleProfileUpdate({ keywords: terms.length ? terms : undefined });
-          setDictionaryOpen(false);
-        }}
-        onClose={() => setDictionaryOpen(false)}
-      />
-    )}
+    <PanelFooter advanced={advanced} showReset={hasUserParameters} onReset={handleResetParameters} />
 
   </>;
 }

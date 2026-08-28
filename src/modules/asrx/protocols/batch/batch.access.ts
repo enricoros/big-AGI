@@ -12,12 +12,18 @@
  */
 
 
-export type ASRxAccess = ASRxAccess_Deepgram | ASRxAccess_OpenAI;
+export type ASRxAccess = ASRxAccess_Deepgram | ASRxAccess_Gemini | ASRxAccess_OpenAI;
 
 export interface ASRxAccess_Deepgram {
   dialect: 'deepgram';
   apiKey: string;
   apiHost?: string;   // defaults to api.deepgram.com
+}
+
+export interface ASRxAccess_Gemini {
+  dialect: 'gemini';
+  apiKey?: string;    // required (geminiAccess throws when empty); comma-separated multi-key supported, one pinned per run
+  apiHost?: string;   // defaults to generativelanguage.googleapis.com (inside geminiAccess)
 }
 
 export interface ASRxAccess_OpenAI {

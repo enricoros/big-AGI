@@ -6,7 +6,7 @@ import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 
 // ASRx Vendor Types (supported ASR / transcription providers)
 
-export type DASRxVendorType = 'deepgram' | 'openai';
+export type DASRxVendorType = 'deepgram' | 'gemini' | 'openai';
 
 
 // ASRx Engines - instances of ASRx Vendor Types - persisted in store-module-asrx
@@ -32,6 +32,7 @@ export type DASRxEngineId = string; // agiUuidV4('asrx.engine.instance')
 // helper for mapping credentials and profile types to the engine type
 interface _TypeMap extends Record<DASRxVendorType, { profile: unknown; credentials: unknown }> {
   'deepgram': { profile: DProfileDeepgram; credentials: DCredentialsApiKey };
+  'gemini': { profile: DProfileGemini; credentials: DCredentialsLLMSService | DCredentialsApiKey };
   'openai': { profile: DProfileOpenAI; credentials: DCredentialsLLMSService | DCredentialsApiKey };
 }
 
@@ -53,6 +54,14 @@ export interface DProfileDeepgram {
   keyterms?: string[];     // user dictionary: names/jargon boosting - wire param is model-split (keyterm vs keywords, see adapter)
   topics?: boolean;        // topic detection (Deepgram audio intelligence)
   sentiment?: boolean;     // sentiment analysis (Deepgram audio intelligence)
+}
+
+export interface DProfileGemini {
+  dialect: 'gemini';
+  asrModel?: 'gemini-3.5-transcribe' | (string & {});
+  mode?: 'smart' | 'verbatim'; // smart: vendor-formatted punctuation + paragraphs (attested formatting); verbatim: literal
+  language?: string;       // BCP-47, comma-separated list allowed -> language_codes[] (undefined = auto-detect, 85+ languages; detection is not reported back)
+  keywords?: string[];     // user dictionary -> custom_vocabulary wire param (vendor cap 1000 terms; API-incompatible with diarization/timestamps, which v1 doesn't expose)
 }
 
 export interface DProfileOpenAI {

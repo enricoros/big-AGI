@@ -5,6 +5,7 @@ import type { ASRxProtocol, IASRxVendor, IASRxVendorAny } from './IASRxVendor';
 
 // vendor imports
 import { ASRxVendorDeepgram } from './vendors/deepgram.vendor';
+import { ASRxVendorGemini } from './vendors/gemini.vendor';
 import { ASRxVendorOpenAI } from './vendors/openai.vendor';
 
 
@@ -12,6 +13,7 @@ import { ASRxVendorOpenAI } from './vendors/openai.vendor';
 
 const _ASRX_VENDOR_REGISTRY: { [key in DASRxVendorType]: IASRxVendor<key> } = {
   deepgram: ASRxVendorDeepgram,
+  gemini: ASRxVendorGemini,
   openai: ASRxVendorOpenAI,
 };
 

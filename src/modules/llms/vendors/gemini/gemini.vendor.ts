@@ -6,7 +6,7 @@ import type { GeminiAccessSchema } from '../../server/gemini/gemini.access';
 import type { IModelVendor } from '../IModelVendor';
 
 
-interface DGeminiServiceSettings {
+export interface DGeminiServiceSettings {
   geminiKey: string;
   geminiHost: string;
   csf?: boolean;
