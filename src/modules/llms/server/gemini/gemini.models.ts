@@ -18,7 +18,11 @@ const GEMINI_DEFAULT_TEMPERATURE = 1.0; // NOTE: Google deprecated the temperatu
 const geminiChatInterfaces: GeminiWire_API_Models_List.Model['supportedGenerationMethods'] = ['generateContent'];
 
 // unsupported interfaces
-const filterUnallowedNames = ['Legacy', 'Lyria']; // 'Lyria' also drops lyria-3-{clip,pro}-preview (2026-07: music generation via generateContent, audio output unsupported)
+const filterUnallowedNames = [
+  'Legacy',
+  'Lyria', // also drops lyria-3-{clip,pro}-preview (2026-07: music generation via generateContent, audio output unsupported)
+  'Transcribe', // gemini-3.5-transcribe(-live): STT for ASRx via the Interactions transcription surface (see asrx transcribe-gemini.ts) - its generateContent accepts and bills the audio but returns an EMPTY part (verified 2026-08-28), so it must not surface as a chat model
+];
 // const filterUnallowedInterfaces: GeminiWire_API_Models_List.Model['supportedGenerationMethods'] = [
 //   'generateAnswer',     // e.g. removes "models/aqa"
 //   'embedContent',       // e.g. removes "models/embedding-001"
@@ -101,12 +105,14 @@ const gemini35FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   cache: { cType: 'oai-ac', read: 0.03 },
 };
 
-// Gemini Omni Flash Preview (video generation), paid-tier only. Official (2026-06/07):
+// Gemini Omni Flash (video generation), paid-tier only. Official (2026-06/07):
 //  - input  $1.50/MTok (text / image / video / audio)
 //  - output $9.00/MTok text (incl. thinking) OR $17.50/MTok video (5,792 tok/s of 720p, ~$0.10/s)
 // Our pricing model has a single output rate, not per-modality. A video-gen model's output is ~98%
 // video tokens (verified 2026-07-01: 57,920 of 58,948 output tokens were video), so we price output at
 // the VIDEO rate - the dominant modality. This slightly over-charges the tiny text/thinking slice.
+// Omni 1.1 (2026-08-27) adds resolution tiers (360p $0.03/s draft, 1080p $0.15/s, 4K $0.30/s); 720p
+// stays $0.10/s, so this single-rate approximation is unchanged at the default resolution.
 const geminiOmniPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 1.50,
   output: 17.50,
@@ -578,6 +584,22 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
 
   // Managed Agents - require the Interactions API (agent path, not generateContent)
 
+  // Gemini Omni 1.1 Flash - Released August 27, 2026. Video generation, the Omni family upgrade:
+  // scenes extend in 10s increments to a cumulative 40s (was 3-10s), <=3s of style-reference footage
+  // as input, per-resolution rates (360p draft .. 4K). Same Interactions MODEL-path dispatch as the
+  // 1.0 preview below (the adapter's `isModelOmni` gate matches 'omni' in the id).
+  {
+    id: 'models/gemini-omni-1.1-flash',
+    labelOverride: 'Gemini Omni 1.1 Flash (video)',
+    pubDate: '20260827',
+    chatPrice: geminiOmniPricing, // output at the 720p default video rate - see the const note for the 1.1 resolution tiers
+    interfaces: [
+      LLM_IF_HOTFIX_Sys0ToUsr0,
+      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_GEM_Interactions,
+    ],
+    benchmark: undefined, // video generation, not benchmarkable on standard tests
+  },
+
   // Gemini Omni Flash Preview - Released June 30, 2026. EXPERIMENTAL video generation.
   // Text/image -> a short 720p video (3-10s, with baked-in audio). Rides the Interactions API but on the
   // MODEL path (not an agent): the adapter's `isOmni` gate sends `model` + omits store/background, and the
@@ -585,6 +607,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
   // unsupported (verified 2026-07-01: "Audio input modality is not enabled"). Vision (image) input is used
   // for image-to-video. Output is billed by tokens (~58k for a short clip). See kb/modules/LLM-gemini-interactions.md.
   {
+    hidden: true, // superseded by gemini-omni-1.1-flash (2026-08-27) - kept resolvable for users who already selected it
     id: 'models/gemini-omni-flash-preview',
     labelOverride: 'Gemini Omni Flash Preview (video)',
     pubDate: '20260630',
@@ -999,7 +1022,8 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-3.5',
   'models/gemini-3.1-pro-preview',
   'models/gemini-3.1-pro-preview-customtools',
-  'models/gemini-omni-flash-preview', // display: after the 3.1 Pro models, before Nano Banana 2 (this list, not the _knownGeminiModels order, drives display sort - geminiSortModels)
+  'models/gemini-omni-1.1-flash',
+  'models/gemini-omni-flash-preview',
   'models/gemini-3.1-flash-image',
   'models/gemini-3.1-flash-image-preview',
   'models/gemini-3.1-flash-lite-image',
