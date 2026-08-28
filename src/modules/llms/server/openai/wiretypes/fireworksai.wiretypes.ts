@@ -13,12 +13,13 @@ export const wireFireworksAIListOutputSchema = z.array(z.object({
     z.string(),
   ]),
   created: z.number(),
-  kind: z.union([
-    z.literal('HF_BASE_MODEL'),
-    z.literal('HF_PEFT_ADDON'),
-    z.literal('FLUMINA_BASE_MODEL'),
-    z.string(),
-  ]).optional(),
+  kind: z.enum([
+    'HF_BASE_MODEL',
+    'HF_PEFT_ADDON',
+    'FLUMINA_BASE_MODEL',
+    'EMBEDDING_MODEL', // listed with supports_chat=true - the models parser filters on this value
+    'CUSTOM_MODEL', // closed weights served by Fireworks (e.g. qwen3p7-plus)
+  ]).or(z.string()).optional(),
   // these seem to be there all the time, but just in case make them optional
   supports_chat: z.boolean().optional(),
   supports_image_input: z.boolean().optional(),

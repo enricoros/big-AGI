@@ -22,24 +22,7 @@ export function fireworksAIHeuristic(hostname: string) {
 const IF_CHAT_FN_REASON = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning];
 const IF_CHAT_FN_VISION_REASON = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning];
 
-// [DeepSeek on Fireworks, 2026-08-14] Fireworks serves the V4 family with thinking on by default (reasoning_content
-// sibling field) and honors 'reasoning_effort' verbatim through the 'openai' dialect passthrough - live-probed on all
-// four V4 ids: 'none' fully disables (no reasoning_content, ctok 2), low/high/max scale the trace. The endpoint also
-// accepts medium/xhigh/adaptive and integer budgets; we expose DeepSeek-direct's documented tiers for UI parity.
-const _PS_DeepSeekEffort: ModelDescriptionSchema['parameterSpecs'] = [
-  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
-] as const;
-
-// [GLM on Fireworks, 2026-08-16] GLM 5.2 (+ the fast router) thinks by default (reasoning_content) and honors 'reasoning_effort'
-// through the same passthrough - live-ablated (n=20 on low/high, 6-12 elsewhere): 'none' hard-off (reasoning_content null, thinking template marker
-// dropped), low = medium = high (~1.1-1.4K chars), xhigh = max = default (~2.5K chars, ~2.1x). That is Z.ai's documented
-// native GLM-5.2 mapping (low/medium -> high, xhigh -> max, default max), so unlike DeepSeek we do not expose 'low'.
-// 'minimal' 400s on this endpoint. GLM-5.3 (Z.ai, 2026-08-14) is not on Fireworks: weights not public yet.
-const _PS_GlmEffort: ModelDescriptionSchema['parameterSpecs'] = [
-  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] },
-] as const;
-
-// [FireworksAI, 2026-08-17] Ladders re-ablated on this host (same 'openai' dialect passthrough; temperature 0, n=3 per arm,
+// [FireworksAI, 2026-08-17] Ladders re-ablated on this host (the 'openai' dialect passthrough; temperature 0, n=3 per arm,
 // read off reasoning_content length + the prompt-token template fingerprint). Binary shape: 'none' cleanly disables thinking
 // (no reasoning_content, the completion collapses to the bare answer) and every other accepted value is one tier - kimi-k3 and
 // kimi-k2.7-code (+ their Fast routers), minimax-m3, qwen3.7-plus, and both Nemotrons. On qwen3.7-plus 'max' and 'xhigh' are
@@ -51,26 +34,6 @@ const _PS_Thinking: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
 ] as const;
 
-// [Qwen3.8 on Fireworks, 2026-08-17] Graded, and unlike Alibaba's own serving thinking CAN be turned off here: 'none' drops the
-// thinking template (69 vs 109 prompt tokens, no reasoning_content), low ~0.9K chars, medium ~1.5K, high = xhigh = max = default
-// ~7K. 'medium' is not expressible by llmVndMiscEffort and 'max' would duplicate Default, so this is Off / Low / High.
-const _PS_Qwen38Effort: ModelDescriptionSchema['parameterSpecs'] = [
-  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high'] },
-] as const;
-
-// [Muse Glimmer on Fireworks, 2026-08-17] Model-level validator ('minimal' 400s, listing none|low|medium|high|xhigh|max), but only
-// three tiers: low ~0.8K chars, medium ~1.6K, high = xhigh = max = default ~2.5K. 'none' is accepted and NOT honored (byte-identical
-// to high, n=4), so it is not offered - the user would pay for a full trace after asking for none.
-const _PS_MuseEffort: ModelDescriptionSchema['parameterSpecs'] = [
-  { paramId: 'llmVndMiscEffort', enumValues: ['low', 'high'] },
-] as const;
-
-// [GPT-OSS on Fireworks, 2026-08-17] The native OpenAI ladder, strictly validated: low|medium|high ('none' and 'max' -> 400
-// "Invalid reasoning effort"). Tiers are real (reasoning_content ~0.4-0.7K chars at low vs ~3.4-3.9K at high).
-const _PS_OaiEffort: ModelDescriptionSchema['parameterSpecs'] = [
-  { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
-] as const;
-
 // Editorial curation of the serverless-deployable chat models on the 'fireworks' account.
 // The OpenAI-compat /inference/v1/models endpoint returns NO display name, description, or price, so
 // without this every model falls back to the id-derived label (see _prettyModelId) and an "owned_by kind"
@@ -79,10 +42,33 @@ const _PS_OaiEffort: ModelDescriptionSchema['parameterSpecs'] = [
 // from https://docs.fireworks.ai/serverless/pricing (input / cached-input / output per 1M tokens); models the
 // docs table omits are priced off their model page (https://app.fireworks.ai/models/fireworks/{id}).
 // Un-curated / future models still render via _prettyModelId + the fromManualMapping '[?]' fallback.
-// 2026-08-17 pass: live list = 24 ids (22 after the embedding filter), all curated. Added qwen3.8-2.4t-a95b,
-// nemotron-lightning-3.5-30b-a3b, muse-glimmer-30b and qwen3.8-max; dropped the retired undated deepseek-v4-flash;
-// Inkling finally has a published price. Every other price re-verified against the docs table with no drift.
+// 2026-08-28 pass: live list = 26 ids (24 after the embedding filter), all curated. Added glm-5.3 + glm-5.3-flash;
+// both qwen3.8 ids now take image input. No retirements, no price drift (deepseek-v4-pro-0813 joined the docs table
+// at the numbers we already had). Serverless ids 404 intermittently on cold paths - capacity, not a delisting.
 const _fireworksKnownModels = llmsDefineManualMappings([
+  {
+    // Unpriced on purpose: absent from the docs pricing table and from the control-plane catalog. Vision live-verified.
+    idPrefix: 'accounts/fireworks/models/glm-5p3-flash',
+    label: 'GLM 5.3 Flash (Vision)',
+    pubDate: '20260825', // = zai.models.ts 'glm-5.3-flash'
+    description: 'First natively-multimodal model of the GLM-5 line: a 320B MoE (18B active) on a new base with hybrid sparse and linear attention, image input, and a 1M-token context.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    // thinking compulsory ('none' 400s); n=6/arm: low ~0.18K chars, high ~0.25K, medium = xhigh = max = Default ~1.7K
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high'] }],
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/glm-5p3',
+    label: 'GLM 5.3',
+    pubDate: '20260814', // = zai.models.ts 'glm-5.3' (upstream release; the Fireworks listing is 20260828)
+    description: 'Z.ai flagship, post-trained on the GLM-5.2 base for frontier coding, cybersecurity and long-horizon agentic work, with a 1M-token context.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_REASON, // text-only, like Z.ai's own serving
+    // thinking compulsory ('none' -> 400 "thinking-only model"); n=4/arm: low ~0.17K chars, medium = high ~0.25K, xhigh = Default ~5.5K, max ~8.3K
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high', 'max'] }],
+    benchmark: { cbaElo: 1487 }, // lmarena: glm-5.3-max
+    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.26 } },
+  },
   {
     idPrefix: 'accounts/fireworks/models/deepseek-v4-pro-0813',
     label: 'DeepSeek V4 Pro 0813',
@@ -90,19 +76,22 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     description: 'Official release of DeepSeek V4 Pro, superseding the preview, with greatly enhanced agentic capabilities, most pronounced in production environments. Ships with a DSpark speculative decoding module attached.',
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_REASON,
-    parameterSpecs: _PS_DeepSeekEffort,
+    // [2026-08-14, all V4 ids] 'none' hard-off, low/high/max scale the trace; medium/xhigh/budgets also accepted - DeepSeek-direct tiers kept for UI parity
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
     benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro (the board's -max-20260813 row is AutoEval-only and unranked - same call as alibaba.models.ts / deepseek.models.ts)
-    // NOTE: prices from the model page - the serverless pricing table still omits this model as of 2026-08-17
-    chatPrice: { input: 1.32, output: 3.96, cache: { cType: 'oai-ac', read: 0.044 } },
+    chatPrice: { input: 1.32, output: 3.96, cache: { cType: 'oai-ac', read: 0.044 } }, // the docs pricing table now carries this id, at the model-page numbers (2026-08-28)
   },
   {
+    // NOTE: listed with supports_image_input=false, yet reads images (live-verified 2026-08-28) - it shares the
+    // qwen3p8-max deployment, so Vision is declared explicitly here. Alibaba's own serving of these weights is text-only.
     idPrefix: 'accounts/fireworks/models/qwen3p8-2p4t-a95b',
-    label: 'Qwen3.8 2.4T-A95B',
+    label: 'Qwen3.8 2.4T-A95B (Vision)',
     pubDate: '20260812',
-    description: 'Open-weights release of the Qwen3.8 flagship: 2.4T sparse MoE with ~95B active parameters, built for multi-day coding runs and self-improving research. Text-only.',
+    description: 'Open-weights release of the Qwen3.8 flagship: 2.4T sparse MoE with ~95B active parameters, built for multi-day coding runs and self-improving research.',
     contextWindow: 262_144, // 256K - the native window; Alibaba's own serving extends it to 1M, Fireworks does not
-    interfaces: IF_CHAT_FN_REASON,
-    parameterSpecs: _PS_Qwen38Effort,
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    // [2026-08-17] unlike Alibaba's own serving, 'none' works (drops the thinking template); low ~0.9K chars, medium ~1.5K, high = xhigh = max = Default ~7K -> Off/Low/High
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high'] }],
     chatPrice: { input: 2.00, output: 6.00, cache: { cType: 'oai-ac', read: 0.25 } },
   },
   {
@@ -123,7 +112,8 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     description: 'Meta dense 30B distilled from Muse Spark for local agentic work: multi-step reasoning, schema-based tool calling, and image input across 100+ languages.',
     contextWindow: 131_072, // 128K (max_model_len, live-probed)
     interfaces: IF_CHAT_FN_VISION_REASON,
-    parameterSpecs: _PS_MuseEffort,
+    // 'minimal' 400s; low ~0.8K chars, medium ~1.6K, high = xhigh = max = Default ~2.5K. 'none' is accepted but NOT honored, so not offered
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high'] }],
     benchmark: { cbaElo: 1426 }, // lmarena: muse-glimmer
     chatPrice: { input: 0.35, output: 1.50, cache: { cType: 'oai-ac', read: 0.04 } },
   },
@@ -134,7 +124,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     description: 'Official release of DeepSeek V4 Flash, superseding the preview, with substantially enhanced agentic capabilities. Ships with a speculative decoding module attached.',
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_REASON,
-    parameterSpecs: _PS_DeepSeekEffort,
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
     benchmark: { cbaElo: 1435 }, // lmarena: deepseek-v4-flash (distinct from the -high-preview row, 1438)
     chatPrice: { input: 0.22, output: 0.66, cache: { cType: 'oai-ac', read: 0.007 } }, // repriced 2026-08-24 (docs table; was 0.14 / 0.028 / 0.28)
   },
@@ -160,16 +150,15 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     chatPrice: { input: 4.50, output: 22.50, cache: { cType: 'oai-ac', read: 0.45 } },
   },
   {
-    // NOTE: Fireworks advertises image input for this id (supports_image_input=true) but the endpoint rejects it with
-    // "This model does not support image inputs" - hence no Vision. Its effort fingerprint matches the open-weights
-    // qwen3p8-2p4t-a95b id exactly, at the same price, and the control plane points both at the same HF repo.
+    // Image input works as of 2026-08-28 (live-verified), reversing the 2026-08-17 probe where the endpoint answered
+    // "This model does not support image inputs". Same deployment as qwen3p8-2p4t-a95b (same HF repo, price, ladder).
     idPrefix: 'accounts/fireworks/models/qwen3p8-max',
-    label: 'Qwen3.8 Max',
+    label: 'Qwen3.8 Max (Vision)',
     pubDate: '20260719',
     description: 'Alibaba flagship Qwen3.8 tier, available outside Alibaba infrastructure through Fireworks AI.',
     contextWindow: null, // not published by Fireworks
-    interfaces: IF_CHAT_FN_REASON,
-    parameterSpecs: _PS_Qwen38Effort,
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high'] }],
     benchmark: { cbaElo: 1491 }, // lmarena: qwen3.8-max
     chatPrice: { input: 2.00, output: 6.00, cache: { cType: 'oai-ac', read: 0.25 } },
   },
@@ -190,7 +179,8 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     description: 'Z.ai flagship with 1M-token context and multi-effort coding for long-horizon agentic tasks. New IndexShare architecture and improved MTP layer cut per-token compute.',
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_REASON,
-    parameterSpecs: _PS_GlmEffort,
+    // [2026-08-16] ablated: 'none' hard-off, low = medium = high (~1.2K chars), xhigh = max = default (~2.5K) - Z.ai's native 5.2 mapping; 'minimal' 400s
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] }],
     benchmark: { cbaElo: 1471 }, // lmarena: glm-5.2-max
     chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.14 } }, // re-verified 2026-08-17
   },
@@ -201,7 +191,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     description: 'Fast serving path for GLM 5.2: same model and quality, lower latency, higher per-token price.',
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_REASON,
-    parameterSpecs: _PS_GlmEffort, // parity with the base id confirmed (router echoes model glm-5p2)
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] }], // parity with glm-5p2 confirmed (router echoes it)
     chatPrice: { input: 2.10, output: 6.60, cache: { cType: 'oai-ac', read: 0.21 } }, // re-verified 2026-08-17 ('GLM 5.2 Fast US' router: same price, not in /inference/v1/models)
   },
   {
@@ -264,7 +254,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     description: 'DeepSeek flagship open MoE (1.6T params) for frontier reasoning, coding, and long-context work up to 1M tokens. Hybrid attention keeps long contexts efficient.',
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_REASON,
-    parameterSpecs: _PS_DeepSeekEffort,
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
     benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro
     chatPrice: { input: 1.74, output: 3.48, cache: { cType: 'oai-ac', read: 0.145 } },
   },
@@ -309,7 +299,8 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     description: 'OpenAI open-weight model for high-reasoning, agentic, general-purpose use that fits on a single H100.',
     contextWindow: 131_072, // 128K
     interfaces: IF_CHAT_FN_REASON,
-    parameterSpecs: _PS_OaiEffort,
+    // [2026-08-17] native OpenAI ladder, strictly validated ('none'/'max' -> 400); tiers real (~0.5K chars low vs ~3.7K high)
+    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }],
     benchmark: { cbaElo: 1352 }, // lmarena: gpt-oss-120b
     chatPrice: { input: 0.15, output: 0.60, cache: { cType: 'oai-ac', read: 0.015 } },
   },
@@ -320,7 +311,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     description: 'OpenAI smaller open-weight model for lower-latency, local, and specialized use cases.',
     contextWindow: 131_072, // 128K
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning], // no tools on Fireworks (supports_tools=false)
-    parameterSpecs: _PS_OaiEffort,
+    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }],
     benchmark: { cbaElo: 1318 }, // lmarena: gpt-oss-20b
     chatPrice: { input: 0.07, output: 0.30, cache: { cType: 'oai-ac', read: 0.035 } },
   },

@@ -8,7 +8,7 @@ import type { ModelVendorId } from '../../vendors/vendors.registry';
 export type LlmsDefsVersions = Readonly<Record<ModelVendorId | '_shared' | '_openaiCompat', string>>;
 
 export const LLMS_DEFS_VERSIONS = {
-  _openaiCompat: '98c71a384e59',
+  _openaiCompat: '411f07ae4321',
   _shared: 'ef23fd563824',
   alibaba: 'a0a254753628',
   anthropic: 'edb7f933c9ee',
