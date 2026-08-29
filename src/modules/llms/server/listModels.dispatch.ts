@@ -515,7 +515,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
 
               // [Baseten] Model APIs - curated slate with rich listing metadata
               if (basetenHeuristic(oaiUrl))
-                return basetenModelsToModelDescriptions(maybeModels);
+                return basetenModelsToModelDescriptions(openAIWireModelsResponse);
 
               // [ChutesAI] special case for model enumeration
               if (chutesAIHeuristic(oaiUrl))
