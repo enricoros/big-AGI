@@ -5,6 +5,11 @@
 !public/
 !src/
 
+# build identity: just the sha-bearing git metadata (KBs), never the object store - see next.config.ts
+!.git/HEAD
+!.git/refs/
+!.git/packed-refs
+
 !*.mjs
 !tools/develop/gen-llms-defs/
 !middleware_BASIC_AUTH.ts
