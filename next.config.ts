@@ -63,6 +63,7 @@ let nextConfig: NextConfig = {
   // NOTE: we may not be needing this anymore, as we use '@cloudflare/puppeteer'
   serverExternalPackages: ['puppeteer-core'],
 
+  // WEBPACK ONLY: turbopack skips this hook (client mocks, wasm) - never run --turbopack
   webpack: (config: any, { isServer, webpack /*, dev, nextRuntime*/ }: WebpackConfigContext) => {
     // @mui/joy: anything material gets redirected to Joy
     config.resolve.alias['@mui/material'] = '@mui/joy';

@@ -4,7 +4,7 @@
  */
 // [client-side] throw immediately if imported
 if (typeof window !== 'undefined')
-  throw new Error('[DEV] env.server: server module should never be imported on the client.');
+  throw new Error('[DEV] env.server: server module should never be imported on the client. (--turbopack skips the webpack() client mocks - use `npm run dev`.)');
 
 // noinspection ES6PreferShortImport - because this is included by `next.config.ts` and build would not find this file with ~/...
 import { createEnv } from '../modules/3rdparty/t3-env';
