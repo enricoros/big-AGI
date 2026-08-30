@@ -35,8 +35,9 @@ const _styles = {
   // wrapper: lets the breadcrumb collapse/ellipsize gracefully inside the centered top bar.
   // Joy Breadcrumbs renders as `nav > ol > li`; keep it on one line and let the crumbs shrink rather than wrap.
   root: {
-    minHeight: 'var(--Bar)',
-    mr: 1.5,
+    // same height as the rename editor (md Textarea, 2.25rem), so entering/leaving edit doesn't jump;
+    // the bar center (OptimaBar) owns the rest of the rhythm: rowGap/py vertically, columnGap horizontally
+    minHeight: '2.25rem',
     minWidth: 0, // allow flex children to shrink so the title can ellipsize
     overflow: 'hidden',
     display: 'flex',

@@ -26,9 +26,11 @@ import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 const centerItemsContainerSx: SxProps = {
   flexGrow: 1,
   minHeight: 'var(--Bar)',
-  display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center',
+  display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', alignContent: 'space-around',
   my: 'auto',
+  py: { xs: 1, md: 0 },
   columnGap: { xs: 0, md: 1 },
+  rowGap: 0.5,  // mobile: content-sized rows when wrapping
   // ensure we can keep the plugged center bars in check
   overflow: 'hidden',
   // [electron] make the blank part of the bar draggable (and not the contents)
