@@ -51,6 +51,7 @@ export interface ChatActions {
   replaceMessageFragment: (cId: DConversationId, mId: DMessageId, fId: DMessageFragmentId, newFragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) => void;
   updateMetadata: (cId: DConversationId, mId: DMessageId, metadataDelta: Partial<DMessageMetadata>, touchUpdated?: boolean) => void;
   setSystemPurposeId: (cId: DConversationId, personaId: SystemPurposeId) => void;
+  setUserLlmId: (cId: DConversationId, userLlmId: DLLMId | null) => void;
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
   setUserTitle: (cId: DConversationId, userTitle: string) => void;
   setUserSymbol: (cId: DConversationId, userSymbol: string | null) => void;
@@ -107,7 +108,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         // caution, we sanitize and re-run this here, to upgrade the message to the current version
         V4ToHeadConverters.inMemHeadCleanDConversations([conversation]);
 
-        conversation.tokenCount = updateMessagesTokenCounts(conversation.messages, true, 'importConversation');
+        conversation.tokenCount = updateMessagesTokenCounts(conversation.id, conversation.messages, true, 'importConversation');
 
         _set({
           conversations: [conversation, ...conversations.filter(_c => _c.id !== conversation.id)],
@@ -219,7 +220,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
             ...(!!newMessages.length ? {} : {
               autoTitle: undefined,
             }),
-            tokenCount: updateMessagesTokenCounts(newMessages, false, 'historyReplace'),
+            tokenCount: updateMessagesTokenCounts(conversationId, newMessages, false, 'historyReplace'),
             updated: Date.now(),
             _abortController: null,
           };
@@ -240,7 +241,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 
           return {
             messages: truncatedMessages,
-            tokenCount: updateMessagesTokenCounts(truncatedMessages, false, 'historyTruncateToIncluded'),
+            tokenCount: updateMessagesTokenCounts(conversationId, truncatedMessages, false, 'historyTruncateToIncluded'),
             updated: Date.now(),
             _abortController: null,
           };
@@ -294,7 +295,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           workspaceActions().importAssignmentsFromMessages(workspaceForConversationIdentity(conversationId), [message]);
 
           if (!message.pendingIncomplete)
-            updateMessagesTokenCounts([message], true, 'appendMessage');
+            updateMessagesTokenCounts(conversationId, [message], true, 'appendMessage');
 
           const messages = [...conversation.messages, message];
 
@@ -337,7 +338,7 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
               delete updatedMessage.pendingIncomplete;
 
             if (!updatedMessage.pendingIncomplete)
-              updateMessageTokenCount(updatedMessage, getChatLLMId(), true, 'editMessage(incomplete=false)');
+              updateMessageTokenCount(updatedMessage, getConversationChatLLMId(conversationId), true, 'editMessage(incomplete=false)');
 
             return updatedMessage;
           });
@@ -413,6 +414,11 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
         _get()._editConversation(conversationId,
           {
             systemPurposeId: personaId,
+          }),
+      setUserLlmId: (conversationId: DConversationId, userLlmId: DLLMId | null) =>
+        _get()._editConversation(conversationId,
+          {
+            userLlmId: userLlmId || undefined, // null/'' = unpin, follow the domain default
           }),
 
       setAutoTitle: (conversationId: DConversationId, autoTitle: string) =>
@@ -540,14 +546,14 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 );
 
 
-// Convenience function to update a set of messages, using the current chatLLM
-function updateMessagesTokenCounts(messages: DMessage[], forceUpdate: boolean, debugFrom: string): number {
+// Convenience function to update a set of messages, using the conversation-bound chatLLM (pin, or the 'primaryChat' domain default)
+function updateMessagesTokenCounts(conversationId: DConversationId | null, messages: DMessage[], forceUpdate: boolean, debugFrom: string): number {
 
   // no messages: 0, not the base overhead (0 = not yet calculated; keeps empty chats free of a phantom count)
   if (!messages.length)
     return 0;
 
-  const chatLLMId = getChatLLMId();
+  const chatLLMId = getConversationChatLLMId(conversationId);
   return 3 + messages.reduce((sum, message) => {
     return 4 + updateMessageTokenCount(message, chatLLMId, forceUpdate, debugFrom) + sum;
   }, 0);
@@ -596,6 +602,25 @@ export function getConversation(conversationId: DConversationId | null): DConver
 
 export function getConversationSystemPurposeId(conversationId: DConversationId | null): SystemPurposeId | null {
   return getConversation(conversationId)?.systemPurposeId || null;
+}
+
+/**
+ * Resolve the chat model for a conversation: the pinned model (userLlmId) when set AND still
+ * existing, otherwise the 'primaryChat' domain default. Broken pins (model removed, or chat
+ * imported from an install with different services) silently degrade to the default - same
+ * semantics as broken domain assignments in llmsResolveDomainModel.
+ */
+export function getConversationChatLLMId(conversationId: DConversationId | null): DLLMId | null {
+  const userLlmId = getConversation(conversationId)?.userLlmId;
+  if (userLlmId) {
+    try {
+      findLLMOrThrow(userLlmId);
+      return userLlmId;
+    } catch {
+      // broken pin: fall through to the domain default
+    }
+  }
+  return getChatLLMId();
 }
 
 
