@@ -8,7 +8,7 @@ import type { SpeexWire_VoiceOption } from './protocols/rpc/rpc.wiretypes';
 
 // Speex Vendor Types (supported TTS providers)
 
-export type DSpeexVendorType = 'elevenlabs' | 'inworld' | 'localai' | 'openai' | 'webspeech';
+export type DSpeexVendorType = 'elevenlabs' | 'gandr' | 'inworld' | 'localai' | 'openai' | 'webspeech';
 
 
 // Speex Engines - instances of TTS Vendors Types - persisted in store-module-speex
@@ -34,6 +34,7 @@ export type SpeexEngineId = string; // agiUuidV4('speex.engine.instance')
 // helper for mapping credentials and voice types to the engine type
 interface _TypeMap extends Record<DSpeexVendorType, { voice: unknown; credentials: unknown }> {
   'elevenlabs': { voice: DVoiceElevenLabs; credentials: DCredentialsApiKey };
+  'gandr': { voice: DVoiceGandr; credentials: DCredentialsApiKey };
   'inworld': { voice: DVoiceInworld; credentials: DCredentialsApiKey };
   'localai': { voice: DVoiceLocalAI; credentials: DCredentialsLLMSService | DCredentialsApiKey };
   'openai': { voice: DVoiceOpenAI; credentials: DCredentialsLLMSService | DCredentialsApiKey };
@@ -55,6 +56,12 @@ export interface DVoiceElevenLabs {
   // ttsSimilarityBoost?: number;
   // ttsStyle?: number;
   // ttsS?: boolean;
+}
+
+export interface DVoiceGandr {
+  dialect: 'gandr';
+  ttsModel?: 'tts-1';
+  ttsVoiceId?: 'gandr-mia' | 'gandr-ava' | 'gandr-jenny' | 'gandr-dane' | 'gandr-leo' | 'gandr-lewis' | string;
 }
 
 export interface DVoiceInworld {

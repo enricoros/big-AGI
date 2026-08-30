@@ -19,6 +19,11 @@ export const SPEEX_DEFAULTS = {
   // - XrExE9yKIg1WjnnlVkGX: Matilda - Informative
   // - SAz9YHcvj6GT2YYXdXww: River - Conversational
 
+  // Gandr TTS - 6 preset voices, 23 languages
+  GANDR_MODEL: 'tts-1',
+  GANDR_VOICE: 'gandr-mia',
+  GANDR_MAX_LEN: 2000, // max chars per TTS request
+
   // LocalAI - kokoro is a high-quality neural TTS
   LOCALAI_MODEL: 'kokoro',
 

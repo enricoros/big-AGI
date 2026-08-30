@@ -15,6 +15,7 @@ export type SpeexSpeechParticle =
 
 export type SpeexWire_Access = z.infer<typeof SpeexWire.Access_schema>;
 export type SpeexWire_Access_ElevenLabs = z.infer<typeof SpeexWire.AccessElevenLabs_schema>;
+export type SpeexWire_Access_Gandr = z.infer<typeof SpeexWire.AccessGandr_schema>;
 export type SpeexWire_Access_Inworld = z.infer<typeof SpeexWire.AccessInworld_schema>;
 export type SpeexWire_Access_OpenAI = z.infer<typeof SpeexWire.AccessOpenAI_schema>;
 
@@ -40,6 +41,12 @@ export namespace SpeexWire {
     apiHost: z.string().optional(),
   });
 
+  export const AccessGandr_schema = z.object({
+    dialect: z.literal('gandr'),
+    apiKey: z.string(),
+    apiHost: z.string().optional(), // defaults to tts.gandr.ai
+  });
+
   export const AccessInworld_schema = z.object({
     dialect: z.literal('inworld'),
     apiKey: z.string(),             // base64-encoded API key from Inworld Portal
@@ -54,7 +61,7 @@ export namespace SpeexWire {
   });
 
   export const Access_schema = z.discriminatedUnion('dialect',
-    [AccessElevenLabs_schema, AccessInworld_schema, AccessOpenAI_schema],
+    [AccessElevenLabs_schema, AccessGandr_schema, AccessInworld_schema, AccessOpenAI_schema],
   );
 
 
@@ -63,6 +70,12 @@ export namespace SpeexWire {
   export const VoiceElevenLabs_schema = z.object({
     dialect: z.literal('elevenlabs'),
     ttsModel: z.string().optional(),
+    ttsVoiceId: z.string().optional(),
+  });
+
+  export const VoiceGandr_schema = z.object({
+    dialect: z.literal('gandr'),
+    ttsModel: z.enum(['tts-1']).optional(),
     ttsVoiceId: z.string().optional(),
   });
 
@@ -90,7 +103,7 @@ export namespace SpeexWire {
   });
 
   export const Voice_schema = z.discriminatedUnion('dialect',
-    [VoiceElevenLabs_schema, VoiceInworld_schema, VoiceLocalAI_schema, VoiceOpenAI_schema],
+    [VoiceElevenLabs_schema, VoiceGandr_schema, VoiceInworld_schema, VoiceLocalAI_schema, VoiceOpenAI_schema],
   );
 
 

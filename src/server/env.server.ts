@@ -122,6 +122,9 @@ export const env = createEnv({
     ELEVENLABS_API_HOST: z.url().optional(),
     ELEVENLABS_VOICE_ID: z.string().optional(),
 
+    // Text-To-Speech: Gandr
+    GANDR_API_KEY: z.string().optional(),
+
 
     // Backend: HTTP Basic Authentication
     HTTP_BASIC_AUTH_USERNAME: z.string().optional(),

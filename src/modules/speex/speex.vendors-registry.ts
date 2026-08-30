@@ -5,6 +5,7 @@ import type { ISpeexVendor, ISpeexVendorAny } from './ISpeexVendor';
 
 // vendor imports
 import { SpeexVendorElevenLabs } from './vendors/elevenlabs.vendor';
+import { SpeexVendorGandr } from './vendors/gandr.vendor';
 import { SpeexVendorInworld } from './vendors/inworld.vendor';
 import { SpeexVendorLocalAI } from './vendors/localai.vendor';
 import { SpeexVendorOpenAI } from './vendors/openai.vendor';
@@ -15,6 +16,7 @@ import { SpeexVendorWebSpeech } from './vendors/webspeech.vendor';
 
 const _SPEEX_VENDOR_REGISTRY: { [key in DSpeexVendorType]: ISpeexVendor<key> } = {
   elevenlabs: SpeexVendorElevenLabs,
+  gandr: SpeexVendorGandr,
   inworld: SpeexVendorInworld,
   localai: SpeexVendorLocalAI,
   openai: SpeexVendorOpenAI,
