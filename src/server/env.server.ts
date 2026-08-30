@@ -116,6 +116,9 @@ export const env = createEnv({
     GOOGLE_CLOUD_API_KEY: z.string().optional(),
     GOOGLE_CSE_ID: z.string().optional(),
 
+    // Jina AI Reader/Search (r.jina.ai / s.jina.ai)
+    JINA_API_KEY: z.string().optional(),
+
 
     // Text-To-Speech: ElevenLabs - speech.ts
     ELEVENLABS_API_KEY: z.string().optional(),
