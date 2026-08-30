@@ -60,6 +60,8 @@ GOOGLE_CSE_ID=
 ELEVENLABS_API_KEY=
 ELEVENLABS_API_HOST=
 ELEVENLABS_VOICE_ID=
+# Text-To-Speech: Gandr
+GANDR_API_KEY=
 
 # Backend HTTP Basic Authentication (see `deploy-authentication.md` for turning on authentication)
 HTTP_BASIC_AUTH_USERNAME=
@@ -134,6 +136,7 @@ Enable the app to Talk, Draw, and Google things up.
 | `ELEVENLABS_API_KEY`       | ElevenLabs API Key - used for calls, etc.                                                                               |
 | `ELEVENLABS_API_HOST`      | Custom host for ElevenLabs                                                                                              |
 | `ELEVENLABS_VOICE_ID`      | Default voice ID for ElevenLabs                                                                                         |
+| `GANDR_API_KEY`            | Gandr API Key - used for calls, etc.                                                                    |
 |                            | *Note: OpenAI TTS and LocalAI TTS reuse credentials from your configured LLM services (no separate env vars needed)*   |
 | **Google Custom Search**   | [Google Programmable Search Engine](https://programmablesearchengine.google.com/about/)  produces links to pages        |
 | `GOOGLE_CLOUD_API_KEY`     | Google Cloud API Key, used with the '/react' command - [Link to GCP](https://console.cloud.google.com/apis/credentials) |
