@@ -39,9 +39,9 @@ const _PS_ReasoningEffort: ModelDescriptionSchema['parameterSpecs'] = [
  * - models list: https://platform.kimi.ai/docs/models (was platform.moonshot.ai - now 301 redirect)
  * - pricing: https://platform.kimi.ai/docs/pricing/chat is just an index; per-model pages are chat-k3, chat-k27-code, chat-k26, chat-k25, chat-v1
  * - API docs: https://platform.kimi.ai/docs/api/chat + https://platform.kimi.ai/docs/api/models-overview (per-model parameter matrix)
- * - updated: 2026-08-17
+ * - updated: 2026-08-31
  * - NOTE: K2 series (non-2.5/2.6) discontinued on 2026-05-25, removed from API; kept hidden for fallback.
- * - NOTE: kimi-k2.5 and the moonshot-v1 series are closed to new accounts, with full platform sunset on 2026-08-31.
+ * - NOTE: kimi-k2.5 and the moonshot-v1 series retired on 2026-08-31 (removed from API, calls 404); kept hidden for fallback.
  * - NOTE: 'sk-kimi-' subscription keys list a separate 3-model catalog from api.kimi.com/coding (see the Kimi Code section below);
  *   the two catalogs never mix, as each endpoint only lists its own models.
  */
@@ -141,12 +141,13 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     benchmark: { cbaElo: 1461 } // kimi-k2.6
   },
 
-  // Kimi K2.5 Series - still API-listed and priced, but closed to new accounts and sunset on 2026-08-31
+  // Kimi K2.5 Series - retired on 2026-08-31, removed from API (calls 404); kept hidden for fallback
   {
+    hidden: true,
     idPrefix: 'kimi-k2.5',
     label: 'Kimi K2.5',
     pubDate: '20260127',
-    description: 'Supports vision (images/videos), thinking mode, and Agent tasks. 256K context. Sunset on 2026-08-31.',
+    description: 'Retired on 2026-08-31. Supported vision (images/videos), thinking mode, and Agent tasks. 256K context.',
     contextWindow: 262144,
     maxCompletionTokens: 32768,
     interfaces: IF_K2_5,
@@ -229,12 +230,12 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     isPreview: true,
   },
 
-  // Legacy Moonshot V1 Models (deprecated, closed to new accounts, sunset on 2026-08-31)
+  // Legacy Moonshot V1 Models - retired on 2026-08-31, removed from API (calls 404); kept hidden for fallback
   {
     idPrefix: 'moonshot-v1-128k',
     label: 'V1 128K',
     pubDate: '20240206',
-    description: 'Legacy V1 model with 128K context. Sunset on 2026-08-31 - use Kimi K3 instead.',
+    description: 'Legacy V1 model with 128K context. Retired on 2026-08-31 - use Kimi K3 instead.',
     contextWindow: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 2.00, output: 5.00 },
@@ -244,7 +245,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     idPrefix: 'moonshot-v1-32k',
     label: 'V1 32K',
     pubDate: '20240206',
-    description: 'Legacy V1 model with 32K context. Sunset on 2026-08-31 - use Kimi K3 instead.',
+    description: 'Legacy V1 model with 32K context. Retired on 2026-08-31 - use Kimi K3 instead.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 1.00, output: 3.00 },
@@ -254,7 +255,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     idPrefix: 'moonshot-v1-8k',
     label: 'V1 8K',
     pubDate: '20240206',
-    description: 'Legacy V1 model with 8K context. Sunset on 2026-08-31 - use Kimi K3 instead.',
+    description: 'Legacy V1 model with 8K context. Retired on 2026-08-31 - use Kimi K3 instead.',
     contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: 0.20, output: 2.00 },
@@ -267,7 +268,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     idPrefix: 'moonshot-v1-128k-vision-preview',
     label: 'V1 128K Vision (Preview)',
     pubDate: '20250115',
-    description: 'Legacy vision model with 128K context. Sunset on 2026-08-31 - use Kimi K3 instead.',
+    description: 'Legacy vision model with 128K context. Retired on 2026-08-31 - use Kimi K3 instead.',
     contextWindow: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     chatPrice: { input: 2.00, output: 5.00 },
@@ -277,7 +278,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     idPrefix: 'moonshot-v1-32k-vision-preview',
     label: 'V1 32K Vision (Preview)',
     pubDate: '20250115',
-    description: 'Legacy vision model with 32K context. Sunset on 2026-08-31 - use Kimi K3 instead.',
+    description: 'Legacy vision model with 32K context. Retired on 2026-08-31 - use Kimi K3 instead.',
     contextWindow: 32768,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     chatPrice: { input: 1.00, output: 3.00 },
@@ -288,7 +289,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     idPrefix: 'moonshot-v1-8k-vision-preview',
     label: 'V1 8K Vision (Preview)',
     pubDate: '20250115',
-    description: 'Legacy vision model with 8K context. Sunset on 2026-08-31 - use Kimi K3 instead.',
+    description: 'Legacy vision model with 8K context. Retired on 2026-08-31 - use Kimi K3 instead.',
     contextWindow: 8192,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     chatPrice: { input: 0.20, output: 2.00 },

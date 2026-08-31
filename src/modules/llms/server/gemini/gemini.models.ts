@@ -46,6 +46,7 @@ const filterNotFoundModelNames: GeminiWire_API_Models_List.Model['name'][] = [
   'models/gemini-2.0-flash',
   'models/gemini-2.0-flash-001', // 404 as of 2026-07-22 (June 1, 2026 shutdown finally enforced)
   'models/gemini-3-pro-preview', // 404 as of 2026-07-22 (was silently routed to gemini-3.1-pro-preview since 2026-03-09)
+  'models/gemini-robotics-er-1.6-preview', // 404 as of 2026-08-31 (shutdown date enforced same-day; stale list replicas still flicker it)
 ];
 
 
@@ -76,7 +77,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/gemini-api/docs/pricing (August 13, 2026)
+// Pricing based on https://ai.google.dev/gemini-api/docs/pricing (August 31, 2026)
 
 // NOTE(2027-01-01): 3.7/3.6 Flash introductory pricing expires December 31, 2026 - flip both consts
 // to the list prices in their comments (pricing page + latest-model page state the promo covers both)
@@ -197,10 +198,7 @@ const gemini31FlashTTSPricing: ModelDescriptionSchema['chatPrice'] = {
   // output: 20.00, // AUDIO - not ready for audio output yet (as of Apr 22, 2026)
 };
 
-const geminiRoboticsER16Pricing: ModelDescriptionSchema['chatPrice'] = {
-  input: 1.00, // text/image/video; audio is $2.00 but we don't differentiate yet
-  output: 5.00,
-};
+// REMOVED: geminiRoboticsER16Pricing (ER 1.6 shut down August 31, 2026)
 
 const geminiRoboticsER2Pricing: ModelDescriptionSchema['chatPrice'] = {
   input: 2.00, // flat rate for text/image/video/audio (no audio split, unlike ER 1.6); 2x over ER 1.6
@@ -600,7 +598,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     benchmark: undefined, // video generation, not benchmarkable on standard tests
   },
 
-  // Gemini Omni Flash Preview - Released June 30, 2026. EXPERIMENTAL video generation.
+  // Gemini Omni Flash Preview - Released June 30, 2026; DEPRECATED: shutdown September 30, 2026 (announced with the Omni 1.1 GA). EXPERIMENTAL video generation.
   // Text/image -> a short 720p video (3-10s, with baked-in audio). Rides the Interactions API but on the
   // MODEL path (not an agent): the adapter's `isOmni` gate sends `model` + omits store/background, and the
   // parser emits the inline mp4 as an EPHEMERAL video (played in-memory, NOT saved). Audio/video INPUT are
@@ -612,6 +610,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     labelOverride: 'Gemini Omni Flash Preview (video)',
     pubDate: '20260630',
     isPreview: true,
+    deprecated: '2026-09-30',
     chatPrice: geminiOmniPricing, // paid-tier only: input $1.50, output priced at the video rate $17.50/MTok (~$0.10/s of 720p)
     interfaces: [
       LLM_IF_HOTFIX_Sys0ToUsr0, //
@@ -755,20 +754,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     benchmark: undefined, // Robotics model, not benchmarkable on standard tests
   },
 
-  // Gemini Robotics-ER 1.6 Preview - Released April 14, 2026 - DEPRECATED: shutdown August 31, 2026 (still live as of July 31, 2026)
-  // Enhanced embodied reasoning with instrument reading and improved spatial reasoning; superseded by Robotics-ER 2
-  {
-    id: 'models/gemini-robotics-er-1.6-preview',
-    labelOverride: 'Gemini Robotics-ER 1.6 Preview',
-    pubDate: '20260414',
-    isPreview: true,
-    deprecated: '2026-08-31',
-    chatPrice: geminiRoboticsER16Pricing,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [{ paramId: 'llmVndGeminiThinkingBudget' }],
-    benchmark: undefined, // Robotics model, not benchmarkable on standard tests
-  },
-
+  // REMOVED: models/gemini-robotics-er-1.6-preview (shutdown August 31, 2026, enforced same-day: unlisted + hard-404 on generateContent; superseded by Robotics-ER 2)
   // REMOVED: models/gemini-robotics-er-1.5-preview (shutdown April 30, 2026; gone from the list API entirely as of 2026-08-13)
 
   // 2.5 Flash Image

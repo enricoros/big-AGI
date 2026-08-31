@@ -45,9 +45,12 @@ const _PS_Thinking: ModelDescriptionSchema['parameterSpecs'] = [
 // 2026-08-28 pass: live list = 26 ids (24 after the embedding filter), all curated. Added glm-5.3 + glm-5.3-flash;
 // both qwen3.8 ids now take image input. No retirements, no price drift (deepseek-v4-pro-0813 joined the docs table
 // at the numbers we already had). Serverless ids 404 intermittently on cold paths - capacity, not a delisting.
+// 2026-08-31 pass: live list = 23 ids (21 after the embedding filter). Three retirements (unlisted + generation 404,
+// not cold-path flicker): gpt-oss-20b (control-plane deprecationDate 2026-08-27, supportsServerless=false) and the
+// kimi-k2p7-code-fast / kimi-k2p6-turbo routers - all three also dropped from the docs pricing table. glm-5p3-flash
+// joined the pricing table. No price drift on the survivors.
 const _fireworksKnownModels = llmsDefineManualMappings([
   {
-    // Unpriced on purpose: absent from the docs pricing table and from the control-plane catalog. Vision live-verified.
     idPrefix: 'accounts/fireworks/models/glm-5p3-flash',
     label: 'GLM 5.3 Flash (Vision)',
     pubDate: '20260825', // = zai.models.ts 'glm-5.3-flash'
@@ -56,6 +59,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_VISION_REASON,
     // thinking compulsory ('none' 400s); n=6/arm: low ~0.18K chars, high ~0.25K, medium = xhigh = max = Default ~1.7K
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high'] }],
+    chatPrice: { input: 0.15, output: 0.50, cache: { cType: 'oai-ac', read: 0.03 } }, // joined the docs pricing table by 2026-08-31 (was unpriced at launch)
   },
   {
     idPrefix: 'accounts/fireworks/models/glm-5p3',
@@ -204,16 +208,8 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Thinking,
     chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.19 } },
   },
-  {
-    idPrefix: 'accounts/fireworks/routers/kimi-k2p7-code-fast',
-    label: 'Kimi K2.7 Code Fast (Vision)',
-    pubDate: '20260612',
-    description: 'Fast serving path for Kimi K2.7 Code: same model and quality, lower latency, higher per-token price.',
-    contextWindow: 262_144, // 256K
-    interfaces: IF_CHAT_FN_VISION_REASON,
-    parameterSpecs: _PS_Thinking, // parity with the base id confirmed
-    chatPrice: { input: 1.90, output: 8.00, cache: { cType: 'oai-ac', read: 0.38 } },
-  },
+  // 'accounts/fireworks/routers/kimi-k2p7-code-fast': retired from serverless (absent from /inference/v1/models,
+  // generation 404s, dropped from the docs pricing table, 2026-08-31) - the base kimi-k2p7-code id stays
   {
     idPrefix: 'accounts/fireworks/models/minimax-m3',
     label: 'MiniMax M3',
@@ -271,16 +267,8 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     benchmark: { cbaElo: 1461 }, // lmarena: kimi-k2.6
     chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.16 } },
   },
-  {
-    // NOTE: the only serving tier named '-turbo' instead of '-fast'; the pricing table calls it 'Kimi K2.6 Fast'
-    idPrefix: 'accounts/fireworks/routers/kimi-k2p6-turbo',
-    label: 'Kimi K2.6 Fast (Vision)',
-    pubDate: '20260420', // = moonshot.models.ts 'kimi-k2.6'
-    description: 'Fast serving path for Kimi K2.6: same model and quality, lower latency, higher per-token price.',
-    contextWindow: 262_144, // 256K
-    interfaces: IF_CHAT_FN_VISION_REASON,
-    chatPrice: { input: 2.00, output: 8.00, cache: { cType: 'oai-ac', read: 0.30 } },
-  },
+  // 'accounts/fireworks/routers/kimi-k2p6-turbo' (pricing-table name 'Kimi K2.6 Fast'): retired from serverless
+  // (absent from /inference/v1/models, generation 404s, dropped from the docs pricing table, 2026-08-31)
   {
     idPrefix: 'accounts/fireworks/models/minimax-m2p7',
     label: 'MiniMax M2.7',
@@ -304,17 +292,8 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     benchmark: { cbaElo: 1352 }, // lmarena: gpt-oss-120b
     chatPrice: { input: 0.15, output: 0.60, cache: { cType: 'oai-ac', read: 0.015 } },
   },
-  {
-    idPrefix: 'accounts/fireworks/models/gpt-oss-20b',
-    label: 'GPT-OSS 20B',
-    pubDate: '20250805', // = groq/nvidianim/together 'gpt-oss-20b'
-    description: 'OpenAI smaller open-weight model for lower-latency, local, and specialized use cases.',
-    contextWindow: 131_072, // 128K
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning], // no tools on Fireworks (supports_tools=false)
-    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }],
-    benchmark: { cbaElo: 1318 }, // lmarena: gpt-oss-20b
-    chatPrice: { input: 0.07, output: 0.30, cache: { cType: 'oai-ac', read: 0.035 } },
-  },
+  // 'accounts/fireworks/models/gpt-oss-20b': retired from serverless (control-plane deprecationDate 2026-08-27 +
+  // supportsServerless=false, absent from /inference/v1/models, generation 404s, 2026-08-31) - gpt-oss-120b stays
 ]);
 
 const _fireworksDenyListContains: string[] = [
