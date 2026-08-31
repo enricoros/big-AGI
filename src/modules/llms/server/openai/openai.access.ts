@@ -4,7 +4,7 @@
  * This module only imports zod for schema definition and provides access logic
  * that works identically on server and client environments.
  *
- * Supports 19 OpenAI-compatible dialects: alibaba, azure, cerebras, cohere, deepseek, groq, lmstudio,
+ * Supports 20 OpenAI-compatible dialects: alibaba, azure, cerebras, cohere, deepseek, groq, llmman, lmstudio,
  * localai, mistral, modular, moonshot, nvidianim, openai, openrouter, perplexity, sakanaai, togetherai,
  * xai, zai
  */
@@ -26,6 +26,7 @@ const DEFAULT_CEREBRAS_HOST = 'https://api.cerebras.ai';
 const DEFAULT_COHERE_HOST = 'https://api.cohere.ai/compatibility';
 const DEFAULT_DEEPSEEK_HOST = 'https://api.deepseek.com';
 const DEFAULT_GROQ_HOST = 'https://api.groq.com/openai';
+const DEFAULT_LLMMAN_HOST = 'http://localhost:17434';
 const DEFAULT_LMSTUDIO_HOST = 'http://localhost:1234';
 const DEFAULT_LOCALAI_HOST = 'http://127.0.0.1:8080';
 const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
@@ -45,7 +46,7 @@ const DEFAULT_ZAI_HOST = 'https://api.z.ai/api/paas';
 // -- Centralized OpenAI-compatible API Paths --
 // These are the standard paths used across all OpenAI-compatible dialects.
 // Some dialects (perplexity, cloudflare, azure) have custom path handling.
-// Dialects with user-configurable hosts (lmstudio, localai, openai, ollama) support
+// Dialects with user-configurable hosts (llmman, lmstudio, localai, openai, ollama) support
 // custom base paths - when the host URL contains a path, /v1 is stripped.
 
 export const OPENAI_API_PATHS = {
@@ -94,7 +95,7 @@ export type OpenAIDialects = OpenAIAccessSchema['dialect'];
 export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 export const openAIAccessSchema = z.object({
   dialect: z.enum([
-    'alibaba', 'azure', 'cerebras', 'cohere', 'deepseek', 'groq', 'lmstudio',
+    'alibaba', 'azure', 'cerebras', 'cohere', 'deepseek', 'groq', 'llmman', 'lmstudio',
     'localai', 'mistral', 'modular', 'moonshot', 'nvidianim', 'openai',
     'openrouter', 'perplexity', 'sakanaai', 'togetherai', 'xai', 'zai',
   ]),
@@ -206,6 +207,18 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Authorization': `Bearer ${groqKey}`,
         },
         url: groqHost + apiPath,
+      };
+
+    case 'llmman':
+      // llmman serves an OpenAI-compatible API; no key is required.
+      const llmmanKey = access.oaiKey || '';
+      let llmmanHost = llmsFixupHost(access.oaiHost || DEFAULT_LLMMAN_HOST, apiPath);
+      return {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(llmmanKey && { Authorization: `Bearer ${llmmanKey}` }),
+        },
+        url: llmmanHost + apiPath,
       };
 
     case 'lmstudio':

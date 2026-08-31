@@ -50,6 +50,7 @@ import { nousResearchHeuristic, nousResearchModelsToModelDescriptions } from './
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
 import { nvidiaNIMHeuristic, nvidiaNIMModelsToModelDescriptions } from './openai/models/nvidianim.models';
 import { lmStudioFetchModels, lmStudioModelsToModelDescriptions } from './openai/models/lmstudio.models';
+import { llmmanModelSortFn, llmmanModelToModelDescription } from './openai/models/llmman.models';
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
 import { mistralModels } from './openai/models/mistral.models';
 import { modularModelsToModelDescriptions } from './openai/models/modular.models';
@@ -387,6 +388,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'cohere':
     case 'deepseek':
     case 'groq':
+    case 'llmman':
     case 'localai':
     case 'mistral':
     case 'modular':
@@ -483,6 +485,11 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .filter(groqModelFilter)
                 .map(groqModelToModelDescription)
                 .sort(groqModelSortFn);
+
+            case 'llmman':
+              return maybeModels
+                .map(({ id }) => llmmanModelToModelDescription(id))
+                .sort(llmmanModelSortFn);
 
             case 'localai':
               return maybeModels

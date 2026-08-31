@@ -49,6 +49,7 @@ export const LLMS_DEFS_MANIFEST = {
   deepseek: { files: ['openai/models/deepseek.models.ts'] },
   googleai: { files: ['gemini/gemini.models.ts'] },
   groq: { files: ['openai/models/groq.models.ts', 'openai/wiretypes/groq.wiretypes.ts'] },
+  llmman: { files: ['openai/models/llmman.models.ts'] },
   lmstudio: { files: ['openai/models/lmstudio.models.ts'] },
   localai: { files: ['openai/models/localai.models.ts'] },
   mistral: { files: ['openai/models/mistral.models.ts'] },

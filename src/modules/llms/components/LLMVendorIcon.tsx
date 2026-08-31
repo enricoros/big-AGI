@@ -49,6 +49,7 @@ const vendorIcons: Record<ModelVendorId, React.FunctionComponent<SvgIconProps>> 
   deepseek: DeepseekIcon,
   googleai: GeminiIcon,
   groq: GroqIcon,
+  llmman: LMStudioIcon, // TODO: dedicated icon
   lmstudio: LMStudioIcon,
   localai: LocalAIIcon,
   mistral: MistralIcon,

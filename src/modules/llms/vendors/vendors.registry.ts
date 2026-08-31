@@ -9,6 +9,7 @@ import { ModelVendorCohere } from './cohere/cohere.vendor';
 import { ModelVendorDeepseek } from './deepseek/deepseekai.vendor';
 import { ModelVendorGemini } from './gemini/gemini.vendor';
 import { ModelVendorGroq } from './groq/groq.vendor';
+import { ModelVendorLlmman } from './llmman/llmman.vendor';
 import { ModelVendorLMStudio } from './lmstudio/lmstudio.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
 import { ModelVendorMistral } from './mistral/mistral.vendor';
@@ -37,6 +38,7 @@ export type ModelVendorId =
   | 'deepseek'
   | 'googleai'
   | 'groq'
+  | 'llmman'
   | 'lmstudio'
   | 'localai'
   | 'mistral'
@@ -64,6 +66,7 @@ const MODEL_VENDOR_REGISTRY = {
   deepseek: ModelVendorDeepseek,
   googleai: ModelVendorGemini,
   groq: ModelVendorGroq,
+  llmman: ModelVendorLlmman,
   lmstudio: ModelVendorLMStudio,
   localai: ModelVendorLocalAI,
   mistral: ModelVendorMistral,

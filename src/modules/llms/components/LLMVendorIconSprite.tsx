@@ -21,6 +21,7 @@ const VI: Record<ModelVendorId, string> = {
   deepseek: 'vi-deepseek',
   googleai: 'vi-googleai',
   groq: 'vi-groq',
+  llmman: 'vi-lmstudio', // TODO: dedicated sprite
   lmstudio: 'vi-lmstudio',
   localai: 'vi-localai',
   mistral: 'vi-mistral',

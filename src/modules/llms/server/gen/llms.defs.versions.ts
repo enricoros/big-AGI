@@ -19,6 +19,7 @@ export const LLMS_DEFS_VERSIONS = {
   deepseek: '4879f9ce4449',
   googleai: '93fff1905b8d',
   groq: '164ebcb47b72',
+  llmman: '9955dea7114b',
   lmstudio: '85eb57eb8e42',
   localai: '2a8b423c867f',
   mistral: '694524773ba1',

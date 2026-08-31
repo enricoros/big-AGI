@@ -16,6 +16,7 @@ import { CohereServiceSetup } from '../vendors/cohere/CohereServiceSetup';
 import { DeepseekAIServiceSetup } from '../vendors/deepseek/DeepseekAIServiceSetup';
 import { GeminiServiceSetup } from '../vendors/gemini/GeminiServiceSetup';
 import { GroqServiceSetup } from '../vendors/groq/GroqServiceSetup';
+import { LlmmanServiceSetup } from '../vendors/llmman/LlmmanServiceSetup';
 import { LMStudioServiceSetup } from '../vendors/lmstudio/LMStudioServiceSetup';
 import { LocalAIServiceSetup } from '../vendors/localai/LocalAIServiceSetup';
 import { MistralServiceSetup } from '../vendors/mistral/MistralServiceSetup';
@@ -47,6 +48,7 @@ const vendorSetupComponents: Record<ModelVendorId, React.ComponentType<{ service
   deepseek: DeepseekAIServiceSetup,
   googleai: GeminiServiceSetup,
   groq: GroqServiceSetup,
+  llmman: LlmmanServiceSetup,
   lmstudio: LMStudioServiceSetup,
   localai: LocalAIServiceSetup,
   mistral: MistralServiceSetup,
@@ -78,6 +80,8 @@ export const VENDOR_DOCS: Record<ModelVendorId, SiteDocSlug> = {
   deepseek: 'connect-deepseek',
   googleai: 'connect-gemini',
   groq: 'connect-groq',
+  // No dedicated page yet; point at the general guide until one exists in the website repo.
+  llmman: 'connect-models',
   lmstudio: 'connect-lmstudio',
   localai: 'connect-localai',
   mistral: 'connect-mistral',

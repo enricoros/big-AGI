@@ -263,6 +263,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     case 'cohere':
     case 'deepseek':
     case 'groq':
+    case 'llmman':
     case 'lmstudio':
     case 'localai':
     case 'mistral':
@@ -385,6 +386,7 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
     case 'cohere':
     case 'deepseek':
     case 'groq':
+    case 'llmman':
     case 'lmstudio':
     case 'localai':
     case 'mistral':
