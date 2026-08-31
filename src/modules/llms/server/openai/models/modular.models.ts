@@ -39,7 +39,10 @@ const _PS_GlmEffort: ModelDescriptionSchema['parameterSpecs'] = [
 // pubDate is the upstream creator's release date, not the day Modular listed the model (host rule).
 // Re-verified 2026-08-17: same 5 chat ids (+ the FLUX image id we skip), every context re-probed exact
 // with the 400 oracle, every model still echoes an nvidia/*-NVFP4 id, prices unchanged on
-// modular.com/pricing. GLM-5.3 (Z.ai, 2026-08-14) is still not on Modular: weights are not public yet.
+// modular.com/pricing.
+// 2026-08-31 pass: google/gemma-4-26b-a4b-it delisted (404 on use, gone from the rate card) - entry removed.
+// zai-org/glm-5.3 landed (added below). MiniMaxAI/MiniMax-M3-MXFP8 is newly listed but 503s on use
+// (not serving yet) - left to the uncurated fallback until it stabilizes.
 const _modularKnownModels = llmsDefineManualMappings([
   {
     idPrefix: 'minimax/minimax-m3',
@@ -65,17 +68,7 @@ const _modularKnownModels = llmsDefineManualMappings([
     benchmark: { cbaElo: 1451 }, // lmarena: gemma-4-31b
     chatPrice: { input: 0.25, output: 0.65 },
   },
-  {
-    idPrefix: 'google/gemma-4-26b-a4b-it',
-    label: 'Gemma 4 26B A4B',
-    pubDate: '20260402',
-    description: 'Google Gemma 4 26B MoE (4B active), text+image input. Served as NVIDIA NVFP4 (4-bit) quantization.',
-    contextWindow: 262144,
-    maxCompletionTokens: 32768, // unverified
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Json],
-    benchmark: { cbaElo: 1438 }, // lmarena: gemma-4-26b-a4b
-    chatPrice: { input: 0.15, output: 0.60 },
-  },
+  // REMOVED: google/gemma-4-26b-a4b-it (delisted + 404 on use + off the rate card, 2026-08-31)
   {
     idPrefix: 'moonshotai/kimi-k2.7-code',
     label: 'Kimi K2.7 Code',
@@ -87,6 +80,20 @@ const _modularKnownModels = llmsDefineManualMappings([
     // no benchmark: no arena row for kimi-k2.7-code as of 2026-08-17
     // chatPrice: not on the rate card as of 2026-08-17 (modular.com/pricing lists Kimi K2.5 0.60/3.00/0.12 and
     // K2.6 0.85/3.50/0.16, no K2.7 row) - add when published
+  },
+  {
+    idPrefix: 'zai-org/glm-5.3',
+    label: 'GLM 5.3',
+    pubDate: '20260814', // = zai.models.ts 'glm-5.3'
+    description: 'Zhipu GLM-5.3, post-trained on the GLM-5.2 base for frontier coding and long-horizon agentic work, reasoning on by default (effort control), text-only. 192K context on the shared endpoint (native: 1M).',
+    contextWindow: 192000, // enforced by the shared endpoint (400 'exceeds the configured maximum context length of 192000 tokens', probed 2026-08-31)
+    maxCompletionTokens: 131072, // unverified
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    // reasoning_effort passthrough probed 2026-08-31 (n=1/arm, fixed prompt): 'none' = off (0 reasoning tokens),
+    // 'high' ~30, 'max' ~215 - the same none/high/max shape as GLM 5.2 below (default = on)
+    parameterSpecs: _PS_GlmEffort,
+    benchmark: { cbaElo: 1487 }, // lmarena: glm-5.3-max
+    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.26 } }, // modular.com/pricing 2026-08-31, same card as GLM 5.2
   },
   {
     idPrefix: 'z-ai/glm-5.2',

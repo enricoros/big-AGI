@@ -12,6 +12,8 @@ import { wireBasetenListOutputSchema, type WireBasetenModel } from '../wiretypes
 // What it under-reports is the `reasoning_effort` control ('reasoning_effort' appears in supported_features
 // on 1 of 11 models that honor it), so the effort ladders below are curated from
 // https://docs.baseten.co/inference/model-apis/reasoning and live-probed (this file's dated comments).
+// [2026-08-31] same 15 ids, no curation drift. GLM-5.2/-Fast now list image input and it is REAL here
+// (prompt tokens scale with pixels + color check) - unlike Together/Fireworks, which serve GLM-5.2 text-only.
 
 
 export function basetenHeuristic(hostname: string): boolean {
@@ -53,7 +55,7 @@ const _basetenCurated: Record<string, _BasetenCurated> = {
   'nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B': { pubDate: '20260604' }, // reasoning-capable; no effort control on this host
   'openai/gpt-oss-120b': { pubDate: '20250805', parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }] },
   'thinkingmachines/inkling': { pubDate: '20260714', parameterSpecs: _PS_OaiEffortFull },
-  'thinkingmachines/inkling-small': { parameterSpecs: _PS_OaiEffortFull }, // pubDate: no editorial source yet
+  'thinkingmachines/inkling-small': { pubDate: '20260730', parameterSpecs: _PS_OaiEffortFull }, // = together.models.ts 'thinkingmachines/Inkling-Small' (no publisher catalog: OpenRouter listing date, HF repo 2026-07-27)
   'zai-org/GLM-4.7': { pubDate: '20251222' },           // non-reasoning
   'zai-org/GLM-5.2': { pubDate: '20260616', parameterSpecs: _PS_GlmEffort52 },
   'zai-org/GLM-5.2-Fast': { pubDate: '20260616', parameterSpecs: _PS_GlmEffort52 },

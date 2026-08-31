@@ -38,6 +38,9 @@ const _togetherAIDenyList: string[] = [
 // non-serverless 400, GLM-4.5-Air-FP8 503, Kimi-K2.7-Code 500 then 400. Matches the chat rows on
 // https://docs.together.ai/docs/serverless-models except Prism-ML/Ternary-Bonsai-27B (0/0-priced) and
 // arize-ai/qwen-2-1.5b-instruct (priced, answering, undocumented).
+// Sweep 2026-08-31 (74 priced rows): all 53 entries below still dead (Kimi-K2.6 now errors 'all configured
+// deployments are stopped' instead of the non-serverless 400 - still dead); 21 alive, +Qwen3.8-Flash (new,
+// streaming-only like the other Qwen Plus/Max tiers) and +GLM-5.3 (relisted and serving, see pubDates below).
 // Membership rotates fast in both directions ('created' gets re-stamped) - probe, never trust this list's age.
 // Accepted cost: a user with a dedicated endpoint for one of these ids no longer sees it.
 const _togetherAIRetiredIds = new Set<string>([
@@ -125,6 +128,7 @@ const _togetherVisionMatches: readonly (string | RegExp)[] = [
   'gemma-3n', // Gemma 3n E2B/E4B are multimodal
   /gemma-3-(4b|12b|27b)/, // Gemma 3 4B+ are multimodal (1B/270M are text-only)
   /qwen3\.[56]-/, 'qwen3.7-plus', // Qwen 3.5/3.6 (all variants) and 3.7-Plus take image (3.7-Max does not)
+  'qwen3.8-flash', // scaling (123 -> 843 prompt tokens) + color check 2026-08-31; NOT all of qwen3.8: Together's Qwen3.8-2.4T-A95B is a text-only NVFP4 quant ('is not a multimodal model'), unlike Fireworks' serving of the same weights
   /glm-\d[\d.]*v\b/, // Z.ai vision line (GLM-4.5V, GLM-5V)
   'glm-5.3-flash', // multimodal Flash base, scaling+color check 2026-08-27 (the glm-5.3 text flagship rejects images), see zai.models.ts
   '-omni', // omni-modal (Nemotron 3 Nano Omni)
@@ -163,8 +167,9 @@ const _togetherEditorialPubDates: Record<string, string> = {
   'meta-models/Muse-Glimmer-30B': '20260810', // Meta announcement (HF repo 2026-08-09)
   'Qwen/Qwen3.8-2.4T-A95B': '20260812', // = alibaba.models.ts 'qwen3.8-2.4t-a95b'
   'deepseek-ai/DeepSeek-V4-Pro-0813': '20260813', // 0813 GA weights, unlike the undated id above
-  'zai-org/GLM-5.3': '20260814', // = zai.models.ts 'glm-5.3' - pre-announced id, delisted from /v1/models by 2026-08-27 (weights still private); kept for relisting
+  'zai-org/GLM-5.3': '20260814', // = zai.models.ts 'glm-5.3' - pre-announced then delisted by 2026-08-27; relisted and serving as of 2026-08-31
   'zai-org/GLM-5.3-Flash': '20260825', // = zai.models.ts 'glm-5.3-flash' (HF weights 2026-08-25)
+  'Qwen/Qwen3.8-Flash': '20260826', // no alibaba.models.ts id yet: OpenRouter listing date - true up if DashScope lands one
 };
 
 /** 'YYYYMMDD' -> Unix epoch seconds (UTC midnight), 0 when absent - for list placement only */

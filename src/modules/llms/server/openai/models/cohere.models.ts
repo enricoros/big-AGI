@@ -264,8 +264,8 @@ const _knownCohereModels = llmsDefineModels<_CohereModelDef>()([
 
 
 /// Denylist prefixes: non-chat endpoints returned by the compat /v1/models list
-/// (embeddings, rerankers, transcription) - never surface these as chat models.
-const _cohereNonChatPrefixes: string[] = ['embed-', 'rerank-', 'cohere-transcribe'];
+/// (embeddings, rerankers, transcription, document parsing) - never surface these as chat models.
+const _cohereNonChatPrefixes: string[] = ['embed-', 'rerank-', 'cohere-transcribe', 'parse-'];
 
 /** Keep only chat-capable models from the compat /v1/models list (drops embed/rerank/transcribe). */
 export function cohereModelFilter(cohereModelId: string): boolean {

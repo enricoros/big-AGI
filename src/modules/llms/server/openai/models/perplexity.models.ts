@@ -44,6 +44,7 @@ type _PerplexityModelDef = ModelDescriptionSchema & { pubDate: string };
 // Migration map (https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/overview): sonar -> 'fast' preset,
 // sonar-pro -> 'low', sonar-reasoning-pro -> 'medium', sonar-deep-research -> 'high'.
 // Re-verified 2026-08-17 (live probes + https://docs.perplexity.ai/getting-started/pricing): ids, context windows and prices unchanged.
+// Re-verified 2026-08-31 (schema enum + PRICING.sonar + live probe): same 4 ids, prices and the 2026-09-27 sunset unchanged; all Aug-2026 changelog entries are Agent API/Router only.
 
 const _knownPerplexityChatModels = llmsDefineModels<_PerplexityModelDef>()([
 

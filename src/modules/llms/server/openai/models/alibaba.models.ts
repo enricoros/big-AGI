@@ -7,11 +7,15 @@ import { fromManualMapping, llmsDefineManualMappings, llmsLabelUncurated } from 
 // --- Alibaba Model ID inference (auto-derived from _knownAlibabaChatModels) ---
 export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefix'];
 
-// Sources (verified 2026-08-24 against the live /v1/models list + docs):
+// Sources (verified 2026-08-31 against the live /v1/models list + docs):
 // - Models:  https://www.alibabacloud.com/help/en/model-studio/models
 // - Pricing: https://www.alibabacloud.com/help/en/model-studio/model-pricing (International/Singapore, USD per 1M tokens)
 // - Per-model pages carry the authoritative caps + cache-hit price, e.g. https://www.alibabacloud.com/help/en/model-studio/qwen3-8-max
 // - Cache:   https://www.alibabacloud.com/help/en/model-studio/context-cache (implicit hit = 20% of input; explicit create 125% / hit 10%; deepseek-v4-pro excepted)
+// 2026-08-31 pass: qwen3.8-flash curated (new Flash tier, listed 2026-08-26 - model page + OR's Alibaba endpoint + live
+//   probes all agree; flat pricing, no tiers). No retirements, no price drift on the curated rows. 'ZHIPU/GLM-5.3' still
+//   403s 'product not activated' (re-probed), and a namespaced 'kimi/kimi-k3' appeared with the same gate - both left
+//   uncurated (hidden) pending activation.
 // 2026-08-24 pass: two ids DashScope started serving after the 08-17 pass are curated - qwen3.8-27b (open weights Apache-2.0
 //   2026-08-14, model page 08-19 + live probes) and kimi-k3 (Moonshot flagship, model page 08-24; effort ladder live-ablated
 //   -> _PS_KimiEffort). No retirements and zero price drift on the Intl tables (which still predate the whole qwen3.8 line).
@@ -131,6 +135,20 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K (max_tokens range live-probed)
     chatPrice: { input: 0.50, output: 3.00, cache: { cType: 'oai-ac', read: 0.10 } },
+  },
+  {
+    // Latest Flash tier (listed 2026-08-26). Flat pricing - no input-length tiers, unlike qwen3.7-flash. Caps from the
+    // model page + live probes 2026-08-31: input cap 991,808 (983,616 thinking), 128K out, 256K max CoT; vision path
+    // enabled; enable_thinking:false works; reasoning_effort validated per-model (bogus values 400 with the full enum).
+    idPrefix: 'qwen3.8-flash',
+    label: 'Qwen3.8 Flash',
+    parameterSpecs: _PS_Qwen38Effort,
+    pubDate: '20260826',
+    description: 'Latest fast multimodal model of the Qwen3.8 line: 1M context, thinking (on by default), vision/video, 128K output.',
+    contextWindow: 1000000, // 1M (model page; live input cap 991,808)
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    maxCompletionTokens: 131072, // 128K (model page + max_tokens range probe)
+    chatPrice: { input: 0.15, output: 0.47, cache: { cType: 'oai-ac', read: 0.016 } }, // Singapore model-page rates (flat); OR's Alibaba endpoint agrees
   },
   {
     idPrefix: 'qwen3.7-max',

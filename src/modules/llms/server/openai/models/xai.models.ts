@@ -29,6 +29,7 @@ const DEV_DEBUG_XAI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO I
 // Verified: 2026-08-06 via live /v1/language-models + /v1/models + docs.x.ai + effort/tool probes: same 6 chat models, prices/contexts unchanged; grok-4.5 'xhigh' still accepted (docs table only lists low/medium/high)
 // Verified: 2026-08-13 via live ablation (effort/tools/modality/catalog probes) + docs.x.ai + x.ai/news/grok-4-6: +grok-4.6 (announced 2026-08-12, catalog created 08-06); effort domain same as 4.5 (low/medium/high/xhigh, 'none' 400s, 'minimal' silently normalizes to low on both); cache read $0.50/$1.00 vs 4.5's $0.30/$0.60 (verified via usage.cost_in_usd_ticks reconstruction); no aliases minted, grok-latest still 4.3, grok-build-latest still 4.5; nothing retired
 // Verified: 2026-08-17 via live /v1/language-models + /v1/models + docs.x.ai/developers/models + release-notes + effort probes: same 7 chat models, prices/contexts unchanged, nothing retired; grok-latest now routes to grok-4.6 (was 4.3), grok-build-latest still 4.5; grok-4.6-latest and grok-5 both 404; effort domains re-confirmed (4.6/4.5 reject 'none', 4.3 accepts it); CBA ELO refresh
+// Verified: 2026-08-31 via live /v1/language-models + /v1/models + docs.x.ai/developers/models: same 7 chat models, prices/contexts/aliases unchanged, nothing retired, no new models announced
 
 // Pricing for Grok 4.3 / 4.20 flagship family (unified $1.25/$2.50 since May 2026; >200K tier per live API 2026-07-08)
 const PRICE_FLAGSHIP = {

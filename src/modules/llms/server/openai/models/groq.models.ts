@@ -18,13 +18,27 @@ const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduc
  * - models list: https://console.groq.com/docs/models
  * - pricing: the per-model card PRICING block, e.g. https://console.groq.com/docs/model/openai/gpt-oss-120b (groq.com/pricing is JS-rendered, no table)
  * - deprecations (shutdown dates + replacements): https://console.groq.com/docs/deprecations
- * - updated: 2026-08-17
+ * - updated: 2026-08-31
  */
 type _GroqModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 
 const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
 
   // Preview Models
+  {
+    isPreview: true,
+    idPrefix: 'qwen/qwen3.8-27b',
+    label: 'Qwen 3.8 · 27B (Preview)',
+    pubDate: '20260805', // upstream Qwen3.8-27B weights release (HF repo createdAt 2026-08-05), not the Groq listing date (20260817)
+    description: 'Qwen3.8 27B by Alibaba Cloud. Multimodal (vision + text, max 3 images / 20MB), frontier-level agentic coding for its size, thinking/instruct modes, tool use. 131K context, 16K max output. ~450 t/s on Groq.',
+    contextWindow: 131042, // odd but real: the list API and the model card agree
+    maxCompletionTokens: 16384,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high'] }, // full ladder per docs/reasoning + live-accepted (unlike 3.6's none-only)
+    ],
+    chatPrice: { input: 0.80, output: 4.00 }, // no cache: prompt caching stays gpt-oss-only (docs/prompt-caching)
+  },
   {
     isPreview: true,
     idPrefix: 'qwen/qwen3.6-27b',

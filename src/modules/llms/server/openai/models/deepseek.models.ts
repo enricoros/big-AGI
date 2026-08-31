@@ -10,6 +10,10 @@ export type LlmsDeepseekModelId = typeof _knownDeepseekChatModels[number]['idPre
 
 const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 
+// [DeepSeek, 2026-08-31] Verification pass, all unchanged: /models now lists vision-exp too (three ids); release
+// notes end at 08-21; pricing card + MODEL VERSION rows (0731/0813) unchanged; all three system_fingerprints match
+// the baselines below (no in-place swaps); legacy aliases still answer.
+
 // [DeepSeek, 2026-08-21] V4-Flash-Vision-Exp: first vision model - https://api-docs.deepseek.com/updates/
 // - Probed 2026-08-24: image input works, with and without thinking; otherwise flash-identical (effort enum + 'low'
 //   preamble skip, 384K ceiling, tool_choice-under-thinking 400, /responses + Anthropic base). Fingerprint
