@@ -45,6 +45,23 @@ export type LlmsNvidiaNIMModelId = typeof _knownNvidiaNIMModels[number]['id'];
 // - inkling picked up an NGC DEPRECATION of 2026-08-24 (it had none on 08-17); still listed, so marked, not deleted.
 // - The 13 entries dated EOL 2026-08-25 still carry that date and still list - left alone, they delist themselves.
 
+// [NVIDIA NIM, 2026-08-31] Full harvest refresh (probes re-run):
+// - The EOL 2026-08-24/25 batch is gone as designed (delisted + 410 'retired'): 12 dated entries deleted -
+//   inkling, the Llama 3.x tail, Nemotron Super v1/v1.5, Nano 9B v2 / 12B VL, Nemotron Mini, Nano VL 8B.
+//   stepfun-ai/step-3.7-flash also delisted, with no NGC date ever published - deleted too.
+// - nemotron-3-nano-30b-a3b did NOT retire: NGC moved its date 08-25 -> 08-31 and it still answers at 12M
+//   invocations/month - kept, marker updated; it self-delists on the new date.
+// - minimax-m3 picked up an NGC DEPRECATION of 2026-09-08 - marked, not deleted.
+// - kimi-k3 is DEGRADED (still listed, invoke 400s '"DEGRADED function cannot be invoked"', function-level
+//   so not a per-key artifact) - hidden until it recovers, not denied.
+// - Added deepseek-v4-pro-0813, a 0-day arrival: alive (cold-start slow), measured 1M window, tool calls,
+//   and a live-verified thinking toggle (thinking:false -> 0 reasoning chars).
+// - The 'Delisted 2026-08-17' tail (deepseek-v4-pro/-flash, mistral-medium-3.5-128b) is deleted: the
+//   editorial pins moved off those ids, so nothing holds them anymore.
+// - TOOL BREAKAGE: build.nvidia.com 'models.md?page=2' answers an empty 202 (both runs, any UA) - the index
+//   is one page now, so index-driven card coverage dropped; per-model cards still resolve (79/99 this run).
+//   sources.ts needs a fallback if the index stays truncated.
+
 // Shared param specs
 // - gpt-oss: native `reasoning_effort`, strictly validated to low|medium|high (verified: 'none'/'max' -> 400)
 // - thinking models: binary toggle via `chat_template_kwargs` (see openai.chatCompletions.ts 'nvidianim' block);
@@ -96,10 +113,10 @@ const _knownNvidiaNIMModels = [
     pubDate: '20260811', // harvest: catalog createdDate
   },
   {
-    // EOL 2026-08-25 (NGC DEPRECATION)
+    // EOL 2026-08-31 (NGC DEPRECATION - moved from 08-25; still alive and heavily used on the new date)
     id: 'nvidia/nemotron-3-nano-30b-a3b',
     label: 'Nemotron 3 Nano 30B',
-    description: 'Efficient open MoE (30B, 3B active) for high-volume tasks, 1M context, reasoning and tool use. Retires on NVIDIA 2026-08-25.',
+    description: 'Efficient open MoE (30B, 3B active) for high-volume tasks, 1M context, reasoning and tool use. Retires on NVIDIA 2026-08-31.',
     contextWindow: 1000000, // measured 2026-08-17 (build.nvidia.com understates this as 256K)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     parameterSpecs: _PS_Thinking,
@@ -116,39 +133,8 @@ const _knownNvidiaNIMModels = [
     chatPrice: _freePrice,
     pubDate: '20260428',
   },
-  {
-    // EOL 2026-08-25 (NGC DEPRECATION)
-    id: 'nvidia/llama-3.3-nemotron-super-49b-v1.5',
-    label: 'Llama 3.3 Nemotron Super 49B v1.5',
-    description: 'Llama 3.3 70B distilled and post-trained by NVIDIA for reasoning and agentic tasks. Retires on NVIDIA 2026-08-25.',
-    contextWindow: 131072, // measured 2026-08-17
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    parameterSpecs: _PS_Thinking,
-    chatPrice: _freePrice,
-    pubDate: '20250725',
-  },
-  {
-    // EOL 2026-08-25 (NGC DEPRECATION)
-    id: 'nvidia/nvidia-nemotron-nano-9b-v2',
-    label: 'Nemotron Nano 9B v2',
-    description: 'Small hybrid Mamba-Transformer for fast, cheap reasoning and tool use. Retires on NVIDIA 2026-08-25.',
-    contextWindow: 128000, // measured 2026-08-17
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    parameterSpecs: _PS_Thinking,
-    chatPrice: _freePrice,
-    pubDate: '20250818',
-  },
-  {
-    // EOL 2026-08-25 (NGC DEPRECATION)
-    id: 'nvidia/nemotron-nano-12b-v2-vl',
-    label: 'Nemotron Nano 12B v2 VL',
-    description: 'Vision-language Nemotron Nano for image and video understanding (verified image input). Retires on NVIDIA 2026-08-25.',
-    contextWindow: 131072, // measured 2026-08-17
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
-    parameterSpecs: _PS_Thinking,
-    chatPrice: _freePrice,
-    pubDate: '20251028',
-  },
+  // DELETED 2026-08-31 (EOL 2026-08-25 enforced: delisted + 410): nvidia/llama-3.3-nemotron-super-49b-v1.5,
+  // nvidia/nvidia-nemotron-nano-9b-v2, nvidia/nemotron-nano-12b-v2-vl
 
   // --- OpenAI open-weights ---
   {
@@ -187,15 +173,27 @@ const _knownNvidiaNIMModels = [
     pubDate: '20260731', // the 0731 checkpoint; deepseek.models.ts carries 20260424 for the undated 'deepseek-v4-flash' id
   },
   {
+    id: 'deepseek-ai/deepseek-v4-pro-0813',
+    label: 'DeepSeek V4 Pro 0813',
+    description: 'DeepSeek flagship reasoning MoE (official 0813 release) with the full 1M context. Can be slow to cold-start on the free endpoint.',
+    contextWindow: 1048576, // measured 2026-08-31
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
+    parameterSpecs: _PS_Thinking, // verified 2026-08-31: chat_template_kwargs thinking:false zeroes reasoning_content
+    benchmark: { cbaElo: 1458 - 2 }, // lmarena: deepseek-v4-pro - 2 (yield to native vendor)
+    chatPrice: _freePrice,
+    pubDate: '20260813', // = fireworksai.models.ts 'deepseek-v4-pro-0813' (upstream release; NVIDIA onboarded 2026-08-26)
+  },
+  {
     id: 'moonshotai/kimi-k3',
     label: 'Kimi K3',
-    description: 'Moonshot flagship MoE, natively multimodal (image inputs), with the full 1M context and reasoning.',
+    description: 'Moonshot flagship MoE, natively multimodal (image inputs), with the full 1M context and reasoning. Currently degraded on NVIDIA.',
     contextWindow: 1048576, // measured 2026-08-24
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
     parameterSpecs: _PS_Thinking, // verified 2026-08-24: chat_template_kwargs thinking:false zeroes reasoning_content
     benchmark: { cbaElo: 1489 - 2 }, // lmarena: kimi-k3-max - 2 (yield to native vendor)
     chatPrice: _freePrice,
     pubDate: '20260716', // = moonshot.models.ts 'kimi-k3'
+    hidden: true, // 2026-08-31: NVIDIA marks the function DEGRADED (every invoke 400s); still listed - unhide when it recovers
   },
   {
     id: 'meta/muse-glimmer-30b',
@@ -210,25 +208,17 @@ const _knownNvidiaNIMModels = [
     pubDate: '20260810', // harvest: catalog createdDate
   },
   {
+    // EOL 2026-09-08 (NGC DEPRECATION, first dated 2026-08-31)
     id: 'minimaxai/minimax-m3',
     label: 'MiniMax M3',
-    description: 'MiniMax M3 reasoning model with image inputs. NVIDIA serves a reduced 256K context (native: 1M).',
+    description: 'MiniMax M3 reasoning model with image inputs. NVIDIA serves a reduced 256K context (native: 1M). Retires on NVIDIA 2026-09-08.',
     contextWindow: 262144, // measured 2026-08-17 (was 524288 on 2026-07-25) - NVIDIA halved its truncation of the native 1M
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
     parameterSpecs: _PS_Thinking,
     chatPrice: _freePrice,
     pubDate: '20260601', // = minimax.models.ts 'MiniMax-M3'
   },
-  {
-    id: 'stepfun-ai/step-3.7-flash',
-    label: 'Step 3.7 Flash',
-    description: 'StepFun fast multimodal reasoning model, 256K context.',
-    contextWindow: 262144, // measured 2026-07-25
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
-    parameterSpecs: _PS_Thinking,
-    chatPrice: _freePrice,
-    pubDate: '20260529',
-  },
+  // DELETED 2026-08-31: stepfun-ai/step-3.7-flash - delisted + 410 with no NGC date ever published
   {
     id: 'google/gemma-4-31b-it',
     label: 'Gemma 4 31B',
@@ -240,76 +230,14 @@ const _knownNvidiaNIMModels = [
     chatPrice: _freePrice,
     pubDate: '20260402', // = gemini.models.ts 'gemma-4-31b-it' (actual release; NVIDIA onboarding was later)
   },
-  {
-    // EOL 2026-08-24 (NGC DEPRECATION)
-    id: 'thinkingmachines/inkling',
-    label: 'Inkling',
-    description: 'Thinking Machines reasoning model (preview). Can be unstable under load on the free endpoint. Retires on NVIDIA 2026-08-24.',
-    contextWindow: 131072, // conservative: probes returned 500s before revealing the real limit (upstream claims 1M)
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
-    parameterSpecs: _PS_Thinking,
-    chatPrice: _freePrice,
-    pubDate: '20260714', // = fireworksai.models.ts 'inkling' (upstream release, not the NVIDIA catalog date)
-  },
+  // DELETED 2026-08-31 (EOL 2026-08-24 enforced: delisted + 410): thinkingmachines/inkling
 
   // --- Meta Llama ---
-  {
-    // EOL 2026-08-25 (NGC DEPRECATION), and already draining: no answer to a 4-token completion at 45s nor on
-    // the 120s retry, re-probed independently at 60s - hidden so it stops being offered while it still resolves
-    id: 'meta/llama-3.3-70b-instruct',
-    label: 'Llama 3.3 70B',
-    description: 'Meta Llama 3.3 70B instruction-tuned, with tool calling. Retires on NVIDIA 2026-08-25 and is already unresponsive.',
-    contextWindow: 131072, // measured 2026-07-25
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: _freePrice,
-    pubDate: '20241206', // = groq.models.ts 'llama-3.3-70b'
-    hidden: true,
-  },
-  {
-    // EOL 2026-08-25 (NGC DEPRECATION)
-    id: 'meta/llama-3.1-8b-instruct',
-    label: 'Llama 3.1 8B',
-    description: 'Small fast Llama for utility tasks, with tool calling. Retires on NVIDIA 2026-08-25.',
-    contextWindow: 131072, // measured 2026-08-17
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: _freePrice,
-    pubDate: '20240723', // = groq.models.ts 'llama-3.1-8b'
-  },
+  // DELETED 2026-08-31 (EOL 2026-08-25 enforced: delisted + 410): meta/llama-3.3-70b-instruct,
+  // meta/llama-3.1-8b-instruct, meta/llama-3.1-70b-instruct, meta/llama-3.2-1b-instruct, meta/llama-3.2-3b-instruct
+  // (the two llama-3.2 vision ids below carry no NGC date and still probe alive)
 
   // --- Hidden: alive but niche, superseded, unreliable, or non-chat ---
-  {
-    // EOL 2026-08-25 (NGC DEPRECATION)
-    id: 'meta/llama-3.1-70b-instruct',
-    label: 'Llama 3.1 70B',
-    description: 'Meta Llama 3.1 70B instruction-tuned (superseded by Llama 3.3 70B).',
-    contextWindow: 131072, // measured 2026-08-17
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: _freePrice,
-    pubDate: '20240723',
-    hidden: true,
-  },
-  {
-    // EOL 2026-08-25 (NGC DEPRECATION)
-    id: 'meta/llama-3.2-1b-instruct',
-    label: 'Llama 3.2 1B',
-    description: 'Tiny Llama for edge-class tasks.',
-    contextWindow: 131072, // measured 2026-07-25
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: _freePrice,
-    pubDate: '20240925',
-    hidden: true,
-  },
-  {
-    // EOL 2026-08-25 (NGC DEPRECATION)
-    id: 'meta/llama-3.2-3b-instruct',
-    label: 'Llama 3.2 3B',
-    description: 'Small Llama for lightweight tasks.',
-    contextWindow: 131072, // measured 2026-07-25
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: _freePrice,
-    pubDate: '20240925',
-    hidden: true,
-  },
   {
     id: 'meta/llama-3.2-11b-vision-instruct',
     label: 'Llama 3.2 11B Vision',
@@ -330,29 +258,8 @@ const _knownNvidiaNIMModels = [
     pubDate: '20240925',
     hidden: true,
   },
-  {
-    // EOL 2026-08-25 (NGC DEPRECATION)
-    id: 'nvidia/llama-3.3-nemotron-super-49b-v1',
-    label: 'Llama 3.3 Nemotron Super 49B v1',
-    description: 'Superseded by v1.5.',
-    contextWindow: 131072, // measured 2026-08-17
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    parameterSpecs: _PS_Thinking,
-    chatPrice: _freePrice,
-    pubDate: '20250318',
-    hidden: true,
-  },
-  {
-    // EOL 2026-08-25 (NGC DEPRECATION)
-    id: 'nvidia/llama-3.1-nemotron-nano-vl-8b-v1',
-    label: 'Nemotron Nano VL 8B',
-    description: 'Small vision-language model, 16K context.',
-    contextWindow: 16384, // measured 2026-08-17
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    chatPrice: _freePrice,
-    pubDate: '20250528',
-    hidden: true,
-  },
+  // DELETED 2026-08-31 (EOL 2026-08-25 enforced: delisted + 410): nvidia/llama-3.3-nemotron-super-49b-v1,
+  // nvidia/llama-3.1-nemotron-nano-vl-8b-v1
   {
     id: 'mistralai/mistral-nemotron',
     label: 'Mistral Nemotron',
@@ -386,17 +293,7 @@ const _knownNvidiaNIMModels = [
     pubDate: '20260610',
     hidden: true, // 82% observed failure rate on our traffic (long hangs) - keep discoverable but not default
   },
-  {
-    // EOL 2026-08-25 (NGC DEPRECATION)
-    id: 'nvidia/nemotron-mini-4b-instruct',
-    label: 'Nemotron Mini 4B',
-    description: 'Tiny legacy Nemotron, 4K context.',
-    contextWindow: 4096, // measured 2026-08-17
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: _freePrice,
-    pubDate: '20240910',
-    hidden: true,
-  },
+  // DELETED 2026-08-31 (EOL 2026-08-25 enforced: delisted + 410): nvidia/nemotron-mini-4b-instruct
   {
     id: 'nvidia/riva-translate-4b-instruct-v1.1',
     label: 'Riva Translate 4B v1.1',
@@ -479,57 +376,24 @@ const _knownNvidiaNIMModels = [
     hidden: true,
   },
 
-  // --- Delisted 2026-08-17: dropped from /v1/models and 410 Gone, so never emitted. These defs survive ONLY
-  //     because model.domains.editorial.ts pins the ids by literal type - drop the picks and these together.
-  //     Kept out of the DEV drift check via _delistedNvidiaNIMIds below (they are stale by construction).
-  {
-    id: 'deepseek-ai/deepseek-v4-pro',
-    label: 'DeepSeek V4 Pro',
-    description: 'DeepSeek flagship reasoning MoE. No longer served by NVIDIA.',
-    contextWindow: 262144,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    parameterSpecs: _PS_Thinking,
-    chatPrice: _freePrice,
-    pubDate: '20260424', // = deepseek.models.ts 'deepseek-v4-pro'
-    hidden: true,
-  },
-  {
-    id: 'deepseek-ai/deepseek-v4-flash',
-    label: 'DeepSeek V4 Flash',
-    description: 'Fast DeepSeek V4 MoE. Superseded here by the dated deepseek-v4-flash-0731 id.',
-    contextWindow: 1000000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    parameterSpecs: _PS_Thinking,
-    chatPrice: _freePrice,
-    pubDate: '20260424', // = deepseek.models.ts 'deepseek-v4-flash'
-    hidden: true,
-  },
-  {
-    id: 'mistralai/mistral-medium-3.5-128b',
-    label: 'Mistral Medium 3.5',
-    description: 'Mistral frontier-class multimodal model. No longer served by NVIDIA.',
-    contextWindow: 262144,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
-    parameterSpecs: _PS_Thinking,
-    chatPrice: _freePrice,
-    pubDate: '20260428', // = mistral.models.ts 'mistral-medium-2604'
-    hidden: true,
-  },
+  // DELETED 2026-08-31: the 'Delisted 2026-08-17' tail (deepseek-ai/deepseek-v4-pro, deepseek-ai/deepseek-v4-flash,
+  // mistralai/mistral-medium-3.5-128b) - the editorial pins moved off these ids, so the type no longer holds them
 
 ] as const satisfies readonly _NvidiaNIMModelDef[];
 
-// Ids of the 'Delisted' tail group: defs that outlive their listing to keep the editorial pins type-valid.
-// They are permanently absent from /v1/models, so they are subtracted from the DEV drift check below -
+// Ids of a 'Delisted' tail group: defs that outlive their listing to keep the editorial pins type-valid.
+// Such ids are permanently absent from /v1/models, so they are subtracted from the DEV drift check below -
 // otherwise they would fire the 'stale model defs (remove)' warning on every dev listing, and a real
-// stale entry would be lost in the noise. Empty this when the pins move off these ids and the defs go.
-const _delistedNvidiaNIMIds = new Set<string>(['deepseek-ai/deepseek-v4-pro', 'deepseek-ai/deepseek-v4-flash', 'mistralai/mistral-medium-3.5-128b']);
+// stale entry would be lost in the noise. Empty (2026-08-31): no def currently outlives its listing.
+const _delistedNvidiaNIMIds = new Set<string>([]);
 
 
 /**
- * DENY LIST - ids verified dead or non-chat by the harvest tool (2026-08-17 run), and still listed.
+ * DENY LIST - ids verified dead or non-chat by the harvest tool (2026-08-31 run), and still listed.
  * These are dropped from the listing entirely. Anything NOT curated and NOT here is a genuinely-new
  * catalog arrival and gets a '[?]' 0-day entry. Regenerated by the harvest refresh: an id that left
- * /v1/models leaves this list too (nothing to filter), which is why the 2026-07-27 EOL group is gone.
+ * /v1/models leaves this list too (nothing to filter) - 2026-08-31 drops: baai/bge-m3, the nv-embed
+ * quartet, nvidia/nemoretriever-parse, nvidia/llama-3.1-nemotron-nano-8b-v1.
  */
 const _retiredNvidiaNIMIds = [
   // dead-entitlement: 404 "Function not found for account" - deployment removed
@@ -547,17 +411,13 @@ const _retiredNvidiaNIMIds = [
   'writer/palmyra-creative-122b', 'writer/palmyra-fin-70b-32k', 'writer/palmyra-med-70b', 'writer/palmyra-med-70b-32k',
   'zyphra/zamba2-7b-instruct',
   // no-chat-route: embeddings / rerankers / CLIP - not servable on /chat/completions
-  'baai/bge-m3', 'bigcode/starcoder2-15b', 'snowflake/arctic-embed-l',
+  'bigcode/starcoder2-15b', 'snowflake/arctic-embed-l',
   'nvidia/embed-qa-4', 'nvidia/llama-3.2-nemoretriever-1b-vlm-embed-v1', 'nvidia/llama-3.2-nv-embedqa-1b-v1',
-  'nvidia/llama-nemotron-embed-1b-v2', 'nvidia/llama-nemotron-embed-vl-1b-v2', 'nvidia/nemotron-3-embed-1b',
-  'nvidia/nv-embed-v1', 'nvidia/nv-embedcode-7b-v1', 'nvidia/nv-embedqa-e5-v5', 'nvidia/nv-embedqa-mistral-7b-v2', 'nvidia/nvclip',
+  'nvidia/llama-nemotron-embed-vl-1b-v2', 'nvidia/nemotron-3-embed-1b',
+  'nvidia/nv-embedqa-mistral-7b-v2', 'nvidia/nvclip',
   // probe-error: document parsers (no text input) or persistent 5xx
-  'nvidia/ai-synthetic-video-detector', 'nvidia/nemoretriever-parse',
+  'nvidia/ai-synthetic-video-detector',
   'nvidia/nemotron-nano-3-30b-a3b', 'nvidia/nemotron-parse',
-  // slow-or-dead: timed out at 45s and 120s across runs
-  // NOT here: 'poolside/laguna-xs-2.1' (429 this run) and the small Llamas, which answered on an earlier run
-  // and time out now - curated (hidden) rather than denied, since a free-tier timeout is not a retirement
-  'nvidia/llama-3.1-nemotron-nano-8b-v1',
 ] as const;
 
 
