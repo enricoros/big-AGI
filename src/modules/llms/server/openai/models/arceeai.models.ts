@@ -17,19 +17,27 @@ export function arceeAIHeuristic(hostname: string) {
 
 // Arcee AI /v1/models response schema
 
+// [Arcee, 2026-08-31] the API moved to an OpenRouter-style shape: modalities under `architecture`,
+// capability flags in `supported_parameters`, effort ladder under `reasoning`. Replaces the 2026-08-17
+// top-level input_modalities/supported_features/supported_reasoning_efforts/max_output_length/quantization
+// (all gone from the wire). Pricing sub-shape unchanged (per-token strings).
 const _wireArceeAIModelSchema = z.object({
   id: z.string(),
   hugging_face_id: z.string().nullish(),
   name: z.string().nullish(),
   created: z.number().nullish(),
   description: z.string().nullish(),
-  input_modalities: z.array(z.string()).nullish(),
-  output_modalities: z.array(z.string()).nullish(),
   context_length: z.number().nullish(),
-  max_output_length: z.number().nullish(),
-  quantization: z.string().nullish(),
-  supported_features: z.array(z.string()).nullish(),
-  supported_reasoning_efforts: z.array(z.string()).nullish(), // [Arcee, 2026-08-17] added upstream, see _arceeEffortValues
+  architecture: z.object({
+    input_modalities: z.array(z.string()).nullish(),
+    output_modalities: z.array(z.string()).nullish(),
+  }).nullish(),
+  supported_parameters: z.array(z.string()).nullish(),
+  reasoning: z.object({
+    default_enabled: z.boolean().nullish(),
+    supported_efforts: z.array(z.string()).nullish(),
+    default_effort: z.string().nullish(),
+  }).nullish(),
   pricing: z.object({
     prompt: z.string().nullish(),
     completion: z.string().nullish(),
@@ -52,9 +60,9 @@ const _arceeKnownModels = llmsDefineManualMappings([
 
 
 /**
- * [Arcee, 2026-08-17] The per-model effort ladder is declared by the API itself, so we never hardcode one:
- * APIModelResponse.supported_reasoning_efforts (api.arcee.ai/openapi.json) enumerates exactly these values.
- * Absent/empty -> no effort control.
+ * The per-model effort ladder is declared by the API itself, so we never hardcode one:
+ * `reasoning.supported_efforts` (2026-08-31 schema) draws from exactly these values.
+ * Absent/empty -> no effort control. The wire order is unordered - render in this canonical order.
  */
 const _arceeEffortValues = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const;
 
@@ -86,27 +94,27 @@ export function arceeAIModelsToModelDescriptions(wireModelsResponse: unknown): M
 
       const dateSuffix = model.created ? ` (${new Date(model.created * 1000).toISOString().slice(0, 10)})` : '';
       const label = _prettyModelName(model) + dateSuffix;
-      const descParts = [model.description || 'Arcee AI model'];
-      if (model.quantization)
-        descParts.push(`(${model.quantization})`);
+      const descParts = [(model.description || 'Arcee AI model').replace(/^"+|"+$/g, '')]; // some descriptions arrive quote-wrapped
       if (model.hugging_face_id)
         descParts.push(`- ${model.hugging_face_id}`);
       const description = descParts.join(' ') + '.';
       const contextWindow = model.context_length || null;
-      const maxCompletionTokens = model.max_output_length || undefined;
+      // maxCompletionTokens: no longer published (2026-08-31 schema)
 
-      // detect interfaces from supported_features
-      const features = new Set(model.supported_features || []);
-      const interfaces: DModelInterfaceV1[] = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
-      if (model.input_modalities?.includes('image'))
+      // detect interfaces from supported_parameters + architecture
+      const params = new Set(model.supported_parameters || []);
+      const interfaces: DModelInterfaceV1[] = [LLM_IF_OAI_Chat];
+      if (params.has('tools'))
+        interfaces.push(LLM_IF_OAI_Fn);
+      if (model.architecture?.input_modalities?.includes('image'))
         interfaces.push(LLM_IF_OAI_Vision);
-      if (features.has('json_mode'))
+      if (params.has('response_format') || params.has('structured_outputs'))
         interfaces.push(LLM_IF_OAI_Json);
-      if (features.has('reasoning'))
+      if (params.has('reasoning'))
         interfaces.push(LLM_IF_OAI_Reasoning);
 
-      // effort ladder: only what this model declares, narrowed to the values we can render
-      const efforts = (model.supported_reasoning_efforts || []).filter((e): e is typeof _arceeEffortValues[number] => (_arceeEffortValues as readonly string[]).includes(e));
+      // effort ladder: only what this model declares, in canonical order
+      const efforts = _arceeEffortValues.filter(e => model.reasoning?.supported_efforts?.includes(e));
 
       // pricing: Arcee returns per-token as strings, convert to per-million-tokens
       const inputPrice = _arceePerTokenToPerMToken(model.pricing?.prompt ?? undefined);
@@ -123,7 +131,6 @@ export function arceeAIModelsToModelDescriptions(wireModelsResponse: unknown): M
         label,
         description,
         contextWindow,
-        maxCompletionTokens,
         interfaces,
         ...(efforts.length ? { parameterSpecs: [{ paramId: 'llmVndOaiEffort' as const, enumValues: efforts }] } : {}),
         chatPrice,
