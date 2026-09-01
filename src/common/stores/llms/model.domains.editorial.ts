@@ -58,11 +58,13 @@ type _EditorialDefaultsTable = {
 export const EditorialDefaults = {
 
   primaryChat: [
-    // TEMP 2026-06-16: Fable 5 held - not recommended to new users via Auto picks. Uncomment to restore.
-    // { vendor: 'anthropic',  modelId: 'claude-fable-5' },
-    // { vendor: 'bedrock',    modelId: 'us.anthropic.claude-fable-5' },
-    // { vendor: 'bedrock',    modelId: 'global.anthropic.claude-fable-5' },
-    // { vendor: 'openrouter', modelId: 'anthropic/claude-fable-5' },
+    // Fable tier (hold lifted 2026-09-01; the 06-16 hold was the export-control suspension): 5.1 on the API, Bedrock stays
+    // on 5 (5.1 account-gated there), OpenRouter both. Single always-adaptive entries, so no '-thinking' suffix.
+    { vendor: 'anthropic',  modelId: 'claude-fable-5-1' },
+    { vendor: 'bedrock',    modelId: 'us.anthropic.claude-fable-5' },
+    { vendor: 'bedrock',    modelId: 'global.anthropic.claude-fable-5' },
+    { vendor: 'openrouter', modelId: 'anthropic/claude-fable-5-1' },
+    { vendor: 'openrouter', modelId: 'anthropic/claude-fable-5' },
     // LAUNCHED 2026-07-24: claude-opus-5 replaces Opus 4.8 as the top Anthropic pick ($5/$25, 1M ctx, thinking
     // on by default). Single always-adaptive entry (no variant), so no '-thinking' Bedrock suffix.
     { vendor: 'anthropic',  modelId: 'claude-opus-5' },
