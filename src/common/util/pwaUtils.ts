@@ -10,6 +10,7 @@ const _safeUA = isBrowser ? window.navigator?.userAgent.toLowerCase() || '' : ''
 // Frontend Environment Classification
 export const Is = {
   Desktop: !/mobile|android|iphone|ipad|ipod/.test(_safeUA),
+  Electron: isBrowser && !!((window as any).electron || (window as any).process?.type === 'renderer' || _safeUA.includes('electron')),
   Browser: {
     Brave: isBrowser && !!(navigator as any).brave,
     Chrome: _safeUA.includes('chrome') || _safeUA.includes('crios'),
