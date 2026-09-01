@@ -60,11 +60,11 @@ export const EditorialDefaults = {
 
 ### Matching logic
 
-`_editorialMatch(llm, editorialId)` uses tolerant matching to handle dated suffixes and service-prefixed DLLM ids:
+`_editorialMatch(llm, editorialId)` uses tolerant matching to handle dated suffixes and OpenRouter's dotted ids:
 
 1. Exact match on `llm.initialParameters.llmRef`
 2. Prefix match on `llmRef` (handles vendor-appended date suffixes like `-20250514`)
-3. Exact match or suffix match on `llm.id` (handles service-prefixed ids like `anthropic-1-claude-opus-4-7`)
+3. Dot/dash-equivalent match on `llmRef` (OpenRouter lists `anthropic/claude-fable-5.1`; the typed pick is `anthropic/claude-fable-5-1`)
 
 
 ## Type-safety chain

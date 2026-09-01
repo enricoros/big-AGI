@@ -622,8 +622,8 @@ function _prettyGeminiModelName(cutModel: string): string {
 function _prettyAnthropicModelName(modelId: string): string | null {
   if (!modelId.includes('claude-')) return null;
 
-  // extract version as N.M (e.g. `-4-7` -> 4.7, `-4-` -> 4); (?!\d) guards against date digits
-  const m = modelId.match(/-(\d)(?:-(\d)(?!\d))?/);
+  // extract version as N.M (e.g. `-4-7` -> 4.7, `-4-` -> 4); `[-.]` also reads OpenRouter's dotted ids (`-5.1`); (?!\d) guards against date digits
+  const m = modelId.match(/-(\d)(?:[-.](\d)(?!\d))?/);
   const version = m ? (m[2] ? `${m[1]}.${m[2]}` : m[1]) : '?';
 
   if (modelId.includes('-fable')) return `Claude Fable ${version}`;

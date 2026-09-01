@@ -242,10 +242,10 @@ function _isGeminiFamily(llm: DLLM): boolean {
 }
 
 
-/** Tolerant id match: exact `llmRef`, dated-suffix prefix on `llmRef`, or service-prefixed DLLM id (e.g. `anthropic-1-claude-opus-4-7`). */
+/** Tolerant id match: exact `llmRef`, dated-suffix prefix on `llmRef`, or dot/dash-equivalent (OpenRouter's 'claude-opus-4.8' vs our 'claude-opus-4-8'). */
 function _editorialMatch(llm: DLLM, editorialId: string): boolean {
   const llmRef = llm.initialParameters?.llmRef;
-  return typeof llmRef === 'string' && (llmRef === editorialId || llmRef.startsWith(editorialId));
+  return typeof llmRef === 'string' && (llmRef === editorialId || llmRef.startsWith(editorialId) || llmRef.replace(/\./g, '-') === editorialId.replace(/\./g, '-'));
   // this would match the mdoel in alternative services I guess - but also notice we use the llmRef correctly, not the DLLMId
   // return llm.id === editorialId || llm.id.endsWith(`-${editorialId}`);
 }
