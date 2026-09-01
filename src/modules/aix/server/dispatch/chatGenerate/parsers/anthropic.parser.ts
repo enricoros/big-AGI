@@ -145,6 +145,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant message_start: container=${responseMessage.container.id}`);
         }
 
+        // -> [2026-09-01] Preserved thinking: replayed thinking blocks the API dropped (edited history, or a model switch)
+        if (responseMessage.input_transformations?.length)
+          _logInputTransformations(responseMessage.model, responseMessage.input_transformations);
+
         if (responseMessage.usage) {
           chatInTokens = responseMessage.usage.input_tokens;
           const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
@@ -556,6 +560,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       stop_reason,
       stop_details,
       usage,
+      input_transformations,
     } = AnthropicWire_API_Message_Create.Response_schema.parse(JSON.parse(fullData));
 
     // -> Model
@@ -565,6 +570,10 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     // -> Container metadata (for Skills) - propagate to client via svs for cross-turn reuse
     if (container)
       _emitContainerState(pt, container);
+
+    // -> [2026-09-01] Preserved thinking: dropped replayed thinking blocks
+    if (input_transformations?.length)
+      _logInputTransformations(model, input_transformations);
 
     // -> Content Blocks - Non-Streaming
     for (let i = 0; i < content.length; i++) {
@@ -739,6 +748,11 @@ function _emitContainerState(pt: IParticleTransmitter, container: { id: string; 
     vendor: 'anthropic',
     state: { container: { id: container.id, expiresAt: container.expires_at } },
   });
+}
+
+/** [2026-09-01] Preserved thinking: log the replayed thinking blocks the API dropped (beta thinking-binding-controls). */
+function _logInputTransformations(model: string, transformations: NonNullable<AnthropicWire_API_Message_Create.Response['input_transformations']>): void {
+  console.log(`[Anthropic] ${model}: dropped ${transformations.length} replayed thinking block(s): ${transformations.map(t => `${t.path} (${t.reason})`).join(', ')}`);
 }
 
 /** Compose a human-readable error string from Anthropic's stop_details. Returns undefined when nothing useful to surface. */

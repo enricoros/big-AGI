@@ -106,6 +106,7 @@ export type AnthropicHostedFeatures = {
   enableSkills?: boolean;
   enableStrictOutputs?: boolean; // [Anthropic, 2025-11-13] Structured Outputs (JSON outputs & strict tool use)
   enableToolAdvanced20251120?: boolean; // [Anthropic, 2025-11-24] Tool Search Tool + Programmatic Tool Calling (umbrella header)
+  enableThinkingBindingControls?: boolean; // [Anthropic, 2026-09-01] preserved thinking: thinking.block_binding + input_transformations
   modelIdForPerModelFeatures?: string;
 };
 
@@ -197,6 +198,10 @@ export function anthropicBetaFeatures(options?: AnthropicHostedFeatures): string
   // Note: advanced-tool-use-2025-11-20 is NOT in the SDK AnthropicBeta type union (possibly private/undocumented).
   if (options?.enableToolAdvanced20251120)
     bf.add('advanced-tool-use-2025-11-20');
+
+  // [Anthropic, 2026-09-01] Preserved-thinking controls: `thinking.block_binding.prefix_mismatch_behavior` + `input_transformations`
+  if (options?.enableThinkingBindingControls)
+    bf.add('thinking-binding-controls-2026-08-01');
 
   return [...bf];
 }

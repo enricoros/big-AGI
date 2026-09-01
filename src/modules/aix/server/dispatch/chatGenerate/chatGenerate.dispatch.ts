@@ -125,7 +125,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
           const invokeUrl = bedrockURLRuntime(bedrockResolveRegion(access), model.id, 'invoke', streaming);
 
           // body
-          const bedrockHostedFeatures = aixAnthropicHostedFeatures(model, chatGenerate);
+          const bedrockHostedFeatures = aixAnthropicHostedFeatures(model, chatGenerate, 'bedrock');
           // NOTE: the 'bedrock' target already removed the fields Bedrock's schema rejects (effort, speed).
           // What's left below is envelope translation only: the Anthropic schema requires these, Bedrock
           // carries the same information in the URL/body instead - so they cannot be dropped adapter-side.
