@@ -1,13 +1,14 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Chip, ColorPaletteProp, Divider, Tooltip } from '@mui/joy';
+import { Box, Chip, ChipDelete, ColorPaletteProp, Divider, Tooltip } from '@mui/joy';
 import BrushRoundedIcon from '@mui/icons-material/BrushRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CodeIcon from '@mui/icons-material/Code';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import RepeatIcon from '@mui/icons-material/Repeat';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 
@@ -51,6 +52,18 @@ const _styles = {
     fontSize: '1rem',
     mr: 0.5,
     animation: `${animationSpinHalfPause} 2s ease-in-out infinite`,
+  },
+
+  noticeChip: {
+    // mx: 1.5,
+    my: '1px',
+    pl: 1.5,
+    pr: 1.75,
+    minHeight: '1.5rem', // similar parts, modelOps and paired tools, are 1.75rem
+    gap: 1,
+    color: 'text.tertiary',
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
   },
 
   opList: {
@@ -112,6 +125,28 @@ function RenderChipFollowUp(props: {
       {props.text}
     </Chip>
   )
+}
+
+
+// --- Render Notice ---
+
+function RenderChipNotice({ text, detail, fragmentId, onFragmentDelete }: {
+  text: string,
+  detail?: string, // shown on hover
+  fragmentId: DMessageFragmentId,
+  onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
+}) {
+  const chip = (
+    <Chip
+      size='sm'
+      startDecorator={<InfoOutlinedIcon />}
+      endDecorator={!onFragmentDelete ? undefined : <ChipDelete onDelete={() => onFragmentDelete(fragmentId)} />}
+      sx={_styles.noticeChip}
+    >
+      {text}
+    </Chip>
+  );
+  return !detail ? chip : <Tooltip title={detail} variant='outlined' placement='top' arrow sx={_styles.opChipTooltip}>{chip}</Tooltip>;
 }
 
 
@@ -388,7 +423,7 @@ interface BlockPartPlaceholderProps {
 }
 
 /**
- * Transient placeholder: follow-ups, retries, model-op progress (with PFC nesting), or italic text.
+ * Transient placeholder: follow-ups, retries, model-op progress (with PFC nesting), dismissible notices, or italic text.
  */
 export function BlockPartPlaceholder({ placeholderPart, contentScaling, messagePendingIncomplete, showAsDataStreamViz, zenMode, fragmentId, onFragmentDelete }: BlockPartPlaceholderProps){
 
@@ -396,8 +431,8 @@ export function BlockPartPlaceholder({ placeholderPart, contentScaling, messageP
   const [showVisualization, setShowVisualization] = React.useState(false);
 
   // derived state
-  const { pText, pType, opLog, aixControl } = placeholderPart;
-  const shouldShowViz = showAsDataStreamViz && !opLog?.length && !aixControl;
+  const { pText, pDetail, pType, opLog, aixControl } = placeholderPart;
+  const shouldShowViz = showAsDataStreamViz && !opLog?.length && !aixControl && pType !== 'notice';
 
 
   // [effect] if allowed trigger the viz effect in 6.28 seconds, otherwise clear it
@@ -421,6 +456,11 @@ export function BlockPartPlaceholder({ placeholderPart, contentScaling, messageP
   // 2. AIX Control renderer - only for error correction retry
   if (aixControl?.ctl)
     return <RenderChipAixControl text={pText} aixControl={aixControl} />;
+
+  // 2b. Neutral dismissible notice (e.g. earlier reasoning dropped)
+  if (pType === 'notice') return zenMode ? null : (
+    <RenderChipNotice text={pText} detail={pDetail} fragmentId={fragmentId} onFragmentDelete={onFragmentDelete} />
+  );
 
   // 3. Model operation render - stacked list when multiple operations, single chip otherwise
   if (opLog?.length) return zenMode ? null : (

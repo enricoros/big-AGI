@@ -27,6 +27,17 @@ const ELLIPSIZE_DEV_ISSUE_MESSAGES = 4096; // for _appendReassemblyDevError
 const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = false; // 2025-10-10: put errors in the dedicated part
 const VP_PERSISTENCE_DELAY = 500; // persistence of vision for voidPlaceholders
 
+/** Placeholders the reassembler manages (progress, follow-ups, controls) - 'notice' placeholders are user-dismissed: never auto-removed or recycled */
+const _isTransientPlaceholder = (f: Parameters<typeof isVoidPlaceholderFragment>[0]) => isVoidPlaceholderFragment(f) && f.part.pType !== 'notice';
+
+/** Short display text (+ hover detail) for a server-side input rewrite - pure UI, no semantics carried into the message */
+function _inputTransformNotice({ itt, cause, paths }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'input-transform' }>): { text: string, detail: string } {
+  const why = cause === 'history-edited' ? 'History edited' : cause === 'model-switch' ? 'Model changed' : cause;
+  const what = itt !== 'thinking-dropped' ? itt : paths.length > 1 ? `ignored ${paths.length} reasoning blocks` : 'ignored 1 reasoning block';
+  const where = paths.map(p => p.replace(/^messages\.(\d+)\.content\.(\d+).*$/, '$1.$2')).join(', '); // wire positions: message.block
+  return { text: `${why}: ${what}`, detail: `Harmless: the model rethinks from the messages as they are now.\nIgnored indices: ${where} (zero-based)` };
+}
+
 
 // Future: Reassembly Policies
 // type ReassemblyPolicyVoidPlaceholder =
@@ -441,9 +452,11 @@ export class ContentReassembler {
           case 'set-upstream-handle':
             this.onResponseHandle(op);
             break;
-          case 'input-transform': // the server rewrote our request (e.g. dropped a stale thinking block) - client-side log only for now, no fragment
-            console.log(`[AIX] input-transform: ${op.itt} x${op.paths.length} (${op.cause})`);
+          case 'input-transform': { // pure display: a neutral, dismissible notice on this message
+            const { text, detail } = _inputTransformNotice(op);
+            this._pushFragment(createPlaceholderVoidFragment(text, 'notice', undefined, undefined, detail));
             break;
+          }
           default:
             // noinspection JSUnusedLocalSymbols
             const _exhaustiveCheck: never = op;
@@ -872,7 +885,7 @@ export class ContentReassembler {
       cts: anchorCts,
     };
 
-    const phIdx = this.S.fragments.findLastIndex(isVoidPlaceholderFragment);
+    const phIdx = this.S.fragments.findLastIndex(_isTransientPlaceholder);
     if (phIdx < 0) {
 
       // New placeholder with initial opLog entry (root level = 0)
@@ -1001,7 +1014,7 @@ export class ContentReassembler {
   }
 
   private _removeAllVoidPlaceholders(): void {
-    this.S.fragments = this.S.fragments.filter(f => !isVoidPlaceholderFragment(f));
+    this.S.fragments = this.S.fragments.filter(f => !_isTransientPlaceholder(f));
     // _textFragmentIndex may now be invalid - null it since this runs at finalization only
     this.S._textFragmentIndex = null;
   }
@@ -1013,14 +1026,14 @@ export class ContentReassembler {
     //   return isVoidPlaceholderFragment(f) && !f.part.opLog?.length;
     // }
     // skip if none
-    if (this.S.fragments.findLastIndex(isVoidPlaceholderFragment) < 0) return false;
+    if (this.S.fragments.findLastIndex(_isTransientPlaceholder) < 0) return false;
 
     // delay before removal
     await new Promise(resolve => setTimeout(resolve, VP_PERSISTENCE_DELAY));
 
     // for stability, search the fragment Index again - this must not have changed, as any mutation would be queued to
     // this awaited function, but better safe than sorry
-    const idx = this.S.fragments.findLastIndex(isVoidPlaceholderFragment);
+    const idx = this.S.fragments.findLastIndex(_isTransientPlaceholder);
     if (idx < 0) return true; // already removed during the delay
     this._spliceFragment(idx);
     return true;

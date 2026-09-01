@@ -66,7 +66,7 @@ export namespace V4ToHeadConverters {
 
       // [Show Terminated] convert a Placeholder fragment [part.pt='ph'] to an Error fragment
       const isLastFragment = (i === m.fragments.length - 1);
-      if (isLastFragment && isVoidPlaceholderFragment(fragment)) // [PH-LIFECYCLE]
+      if (isLastFragment && isVoidPlaceholderFragment(fragment) && fragment.part.pType !== 'notice') // [PH-LIFECYCLE] - notices are user-dismissed, not incomplete
         m.fragments[i] = createErrorContentFragment(
           'opLog' in fragment.part ? '(message incomplete)'
             : fragment.part.pText ? `(did not complete: ${fragment.part.pText})`
