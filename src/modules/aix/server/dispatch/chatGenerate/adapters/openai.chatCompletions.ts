@@ -81,6 +81,17 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (openAIDialect === 'openrouter')
     _capTrailingCacheBreakpoints(chatMessages, 4);
 
+  // [OpenRouter -> Anthropic, 2026-09-01] Fable/Mythos 5.x reject forced tool use upstream: _toOpenAIToolChoice degrades
+  // 'required' to 'auto', and this steering hint keeps the call rate at forced level (mirrors the native adapter's downgrade)
+  if (openAIDialect === 'openrouter' && chatGenerate.toolsPolicy?.type === 'any' && chatGenerate.tools?.length && _isOrtForcedToolRejectingAnt(model.id)) {
+    const mustUseHint = 'IMPORTANT: You MUST respond by calling one of the provided tools. Do not respond with text.';
+    const firstMessage = chatMessages[0];
+    if (firstMessage?.role === 'system' && typeof firstMessage.content === 'string')
+      firstMessage.content += '\n\n' + mustUseHint;
+    else
+      chatMessages.unshift({ role: 'system', content: mustUseHint });
+  }
+
   // [DeepSeek, 2026-04-24] When tools are present and thinking isn't disabled, V4 demands reasoning_content on EVERY assistant message in history
   // Inject '' placeholder where missing; real reasoning is attached by _toOpenAIMessages
   if (openAIDialect === 'deepseek' && chatGenerate.tools?.length)
@@ -939,6 +950,11 @@ function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsP
       if (openAIDialect === 'moonshot' && model.reasoningEffort !== 'none'
         && !(model.id === 'k3' || model.id.startsWith('kimi-k3') || model.id.startsWith('moonshot-v1')))
         return 'auto';
+      // [OpenRouter -> Anthropic, 2026-09-01] Fable/Mythos 5.x reject forced tool use and OR relays the 400 ('tool_choice: type "tool"
+      // and "any" are not supported for this model.', probed on claude-fable-5.1; Fable 5 400s with the older wording). Degrade to
+      // 'auto' - the steering hint injected into the system message above keeps our single-tool callers calling the tool.
+      if (openAIDialect === 'openrouter' && _isOrtForcedToolRejectingAnt(model.id))
+        return 'auto';
       return 'required';
     // DISABLED 2026-07-17 - forced named tool, see ToolsPolicy_schema. [Moonshot] probe-verified: named tool_choice
     // 400s ("tool_choice 'specified' is incompatible with thinking enabled") on all thinking-mode Kimi requests -
@@ -946,6 +962,12 @@ function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsP
     // case 'function_call':
     //   return { type: 'function' as const, function: { name: itp.function_call.name } };
   }
+}
+
+
+/** OpenRouter ids of Anthropic models that reject forced tool_choice upstream: Fable/Mythos 5 and 5.x, and the '~' router alias that resolves to the latest Fable. */
+function _isOrtForcedToolRejectingAnt(modelId: string): boolean {
+  return /^~?anthropic\/claude-(fable|mythos)-(5|latest)/.test(modelId);
 }
 
 
