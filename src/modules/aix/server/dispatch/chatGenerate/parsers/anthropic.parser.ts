@@ -147,7 +147,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
         // -> [2026-09-01] Preserved thinking: replayed thinking blocks the API dropped (edited history, or a model switch)
         if (responseMessage.input_transformations?.length)
-          pt.sendCGControl({ cg: 'notice', nt: 'thinking-dropped', drops: responseMessage.input_transformations });
+          _sendInputTransforms(pt, responseMessage.input_transformations);
 
         if (responseMessage.usage) {
           chatInTokens = responseMessage.usage.input_tokens;
@@ -573,7 +573,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
     // -> [2026-09-01] Preserved thinking: dropped replayed thinking blocks
     if (input_transformations?.length)
-      pt.sendCGControl({ cg: 'notice', nt: 'thinking-dropped', drops: input_transformations });
+      _sendInputTransforms(pt, input_transformations);
 
     // -> Content Blocks - Non-Streaming
     for (let i = 0; i < content.length; i++) {
@@ -748,6 +748,20 @@ function _emitContainerState(pt: IParticleTransmitter, container: { id: string; 
     vendor: 'anthropic',
     state: { container: { id: container.id, expiresAt: container.expires_at } },
   });
+}
+
+/** [2026-09-01] Preserved thinking: relay the replayed thinking blocks the API dropped, one particle per vendor reason (normalized to an AIX cause). */
+function _sendInputTransforms(pt: IParticleTransmitter, transforms: NonNullable<AnthropicWire_API_Message_Create.Response['input_transformations']>): void {
+  const pathsByReason = new Map<string, string[]>();
+  for (const { type, path, reason } of transforms) {
+    if (type !== 'thinking_dropped') {
+      aixResilientUnknownValue('Anthropic', 'inputTransformationType', type);
+      continue;
+    }
+    pathsByReason.set(reason, [...(pathsByReason.get(reason) ?? []), path]);
+  }
+  for (const [reason, paths] of pathsByReason)
+    pt.sendCGControl({ cg: 'input-transform', itt: 'thinking-dropped', cause: reason === 'prefix_binding_mismatch' ? 'history-edited' : reason === 'model_binding_mismatch' ? 'model-switch' : reason, reason, paths });
 }
 
 /** Compose a human-readable error string from Anthropic's stop_details. Returns undefined when nothing useful to surface. */

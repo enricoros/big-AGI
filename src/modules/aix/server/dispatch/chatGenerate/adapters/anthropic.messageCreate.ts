@@ -272,7 +272,7 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
 
   // [Anthropic, 2026-09-01] Preserved thinking: on Fable 5.1+ a replayed thinking block is valid only against the unchanged
   // system/tools/history prefix, and new accounts 400 after any edit (routine here: edits, deletes, persona/tool changes).
-  // 'drop_block' drops the stale blocks instead (accepted on every model, probed); the parser relays the drops as a notice.
+  // 'drop_block' drops the stale blocks instead (accepted on every model, probed); the parser relays the drops as 'input-transform' particles.
   if (hostedFeatures.enableThinkingBindingControls && payload.thinking && payload.thinking.type !== 'disabled')
     payload.thinking.block_binding = { prefix_mismatch_behavior: 'drop_block' };
 

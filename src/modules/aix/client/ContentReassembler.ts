@@ -441,8 +441,8 @@ export class ContentReassembler {
           case 'set-upstream-handle':
             this.onResponseHandle(op);
             break;
-          case 'notice': // semantic server notice - client-side log only for now, no fragment
-            console.log(`[AIX] ${op.nt}:`, op.drops.map(d => `${d.path} (${d.reason})`).join(', '));
+          case 'input-transform': // the server rewrote our request (e.g. dropped a stale thinking block) - client-side log only for now, no fragment
+            console.log(`[AIX] input-transform: ${op.itt} x${op.paths.length} (${op.cause})`);
             break;
           default:
             // noinspection JSUnusedLocalSymbols

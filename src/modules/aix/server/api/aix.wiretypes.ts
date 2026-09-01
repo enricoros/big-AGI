@@ -744,7 +744,7 @@ export namespace AixWire_Particles {
     | { cg: 'set-model', name: string }
     | { cg: 'set-provider-infra', label: string }
     | { cg: 'set-upstream-handle', handle: { uht: 'vnd.oai.responses' | 'vnd.gem.interactions', runId: string, createdAt: number | null, expiresAt: number | null } }
-    | { cg: 'notice', nt: 'thinking-dropped', drops: { type: string, path: string, reason: string }[] } // [Anthropic, 2026-09-01] replayed thinking blocks the API dropped (reason: 'prefix_binding_mismatch' | 'model_binding_mismatch'); client-side log for now
+    | { cg: 'input-transform', itt: 'thinking-dropped', cause: 'history-edited' | 'model-switch' | (string & {}), reason: string, paths: string[] } // the server rewrote our request: dropped replayed thinking blocks, one particle per vendor reason; `cause` normalizes `reason` (open set), `paths` are wire locations; client-side log for now
     | { cg: '_debugDispatchRequest', security: 'dev-env', dispatchRequest: { url: string, headers: string, body: string, bodySize: number } } // may generalize this in the future
     | { cg: '_debugProfiler', measurements: Record<string, number | string>[] };
 
