@@ -19,6 +19,9 @@ const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a
  *   created >= 2026-08-31, only against an unchanged system/tools/history prefix (400 otherwise). The adapter sends 'drop_block' on
  *   every thinking request and relays the drops to the client as a 'notice' particle.
  * - Response: added `input_transformations` ([{ type: 'thinking_dropped', path, reason }], header-gated; on message_start when streaming)
+ * - Models: claude-fable-5-1 / claude-mythos-5-1 - Fable 5's surface; forced tool_choice still 400 (reworded), the adapter's downgrade covers '-5-1'
+ * - Request.thinking.display: added 'updates' (beta thinking-display-updates-2026-08-18) - progress lines only; not sent, 'summarized' includes them
+ * - NOT adopted (beta): per-message effort (mid-conversation-output-config-2026-07-01), turn-scoped system messages (mid-conversation-system-clear-at-2026-08-21)
  *
  * ### 2026-06-30 - API Sync: new tool versions, refusal categories, Sonnet 5 verified
  * - Tools: Added web_search_20260318 / web_fetch_20260318 (GA, 2026-06-11) - adds `response_inclusion` ('full'|'excluded')
@@ -1053,7 +1056,8 @@ export namespace AnthropicWire_API_Message_Create {
       // [Anthropic, 4.6+] Adaptive thinking - Claude decides when and how much to think
       z.object({
         type: z.literal('adaptive'),
-        display: z.enum(['summarized' /* default */, 'omitted']).optional(),
+        // 'updates' (beta thinking-display-updates-2026-08-18): progress lines between tool calls only - 400 without the header
+        display: z.enum(['summarized' /* default */, 'omitted', 'updates']).optional(),
         block_binding: ThinkingBlockBinding_schema.optional(),
       }),
       // Requires a minimum budget of 1,024 tokens and counts towards your max_tokens limit.

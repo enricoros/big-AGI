@@ -333,7 +333,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       }
 
       // [Anthropic, 2026-08-17] The Claude 5 generation thinks by default THROUGH OpenRouter (probed: sonnet-5
-      // with no `reasoning` field spends reasoning tokens, 4.8 and older spend none), and Fable 5 rejects
+      // with no `reasoning` field spends reasoning tokens, 4.8 and older spend none), and Fable 5/5.1 reject
       // reasoning.enabled=false outright ('Reasoning is mandatory for this endpoint'). Since sending no field no
       // longer means "off", the non-thinking twin openRouterInjectVariants derives from the thinking-budget spec
       // would be a mislabel (no brain icon, but it reasons and bills for it): drop the spec so those models ship

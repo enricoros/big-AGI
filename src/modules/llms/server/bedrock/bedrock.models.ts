@@ -15,6 +15,7 @@
 // - Anthropic coverage is complete: every served 'anthropic.*' id resolves through llmBedrockFindAnthropicModel
 //   (fable-5, opus-5/4-8/4-7/4-6, sonnet-5/4-6, opus-4-5, sonnet-4-5, haiku-4-5, opus-4-1, sonnet-4, haiku-3).
 //   The one exception is claude-3-sonnet-20240229 (0-day path, hidden). Mythos 5 is not offered on Bedrock.
+//   [2026-09-01] +fable-5-1 (foundation model + us./global. profiles, ACTIVE; invoke 403 on this account). Mythos 5.1 not offered.
 // - Mantle also lists 6 undated 'anthropic.*' aliases, but they answer NEITHER OpenAI route ("does not support
 //   the '/v1/chat/completions' API", same for '/v1/responses') - Anthropic on Bedrock is invoke-only.
 // - Mantle accepts OpenAI tools on every id probed except writer.palmyra-vision-7b (see SKIP_MANTLE_TOOLS_IDS):
@@ -469,6 +470,7 @@ function _bedrockModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema)
 
   // --- Anthropic: family > class > variant > region ---
   const familyPrecedence: string[][] = [
+    ['-fable-5-1', '-mythos-5-1', '-opus-5-1', '-sonnet-5-1', '-haiku-5-1'], // Claude 5.1 gen
     ['-fable-5', '-mythos-5', '-opus-5', '-sonnet-5', '-haiku-5'], // Claude 5 gen
     ['-4-8'], ['-4-7'], ['-4-6'], ['-4-5-'], ['-4-1-'], ['-4-'], ['-3-7-'], ['-3-5-'], ['-3-'],
   ];

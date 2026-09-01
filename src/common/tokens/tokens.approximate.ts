@@ -117,7 +117,7 @@ function detectContentType(text: string): keyof typeof LANGUAGE_MULTIPLIERS {
   return 'default';
 }
 
-// Models on the Opus 4.7+ tokenizer: opus-4-7/8/9, Fable 5, Mythos 5/Preview - in both Anthropic ('claude-opus-4-7') and OpenRouter ('claude-4.7-opus') id shapes
+// Models on the Opus 4.7+ tokenizer: opus-4-7/8/9, Fable 5/5.1, Mythos 5/5.1/Preview - in both Anthropic ('claude-opus-4-7') and OpenRouter ('claude-4.7-opus') id shapes
 const _CLAUDE_NEW_TOKENIZER_RE = /(opus[-.]4[-.][789]|4[-.][789][-.]opus|fable|mythos)/;
 
 /**
@@ -131,7 +131,7 @@ function getModelFamily(llm: DLLM): keyof typeof TOKEN_RATIOS {
   // Use indexOf for faster string matching (no need to toLowerCase for common cases)
   if (modelId.indexOf('gpt') !== -1 || modelRef.indexOf('gpt') !== -1) return 'gpt';
   if (modelId.indexOf('claude') !== -1 || modelRef.indexOf('claude') !== -1) {
-    // Opus 4.7 introduced a denser tokenizer, also used by 4.8 and Fable/Mythos 5
+    // Opus 4.7 introduced a denser tokenizer, also used by 4.8 and Fable/Mythos 5.x
     // (also matches OpenRouter-style ids, e.g. 'claude-4.7-opus')
     if (_CLAUDE_NEW_TOKENIZER_RE.test(modelId) || _CLAUDE_NEW_TOKENIZER_RE.test(modelRef)) return 'claude-47';
     return 'claude';
