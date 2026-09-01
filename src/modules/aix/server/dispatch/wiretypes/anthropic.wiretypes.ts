@@ -16,7 +16,8 @@ const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a
  * ### 2026-09-01 - API Sync: Claude Fable 5.1 / Mythos 5.1 (launch-verified live)
  * - Request.thinking: added `block_binding.prefix_mismatch_behavior` ('error'|'drop_block'; beta thinking-binding-controls-2026-08-01).
  *   Preserved thinking: Fable 5.1 blocks replay only on Fable/Mythos 5.1+ (older models drop them, unbilled) and, for accounts
- *   created >= 2026-08-31, only against an unchanged system/tools/history prefix (400 otherwise). The adapter sends 'drop_block' on 5.1+.
+ *   created >= 2026-08-31, only against an unchanged system/tools/history prefix (400 otherwise). The adapter sends 'drop_block' on
+ *   every thinking request and relays the drops to the client as a 'notice' particle.
  * - Response: added `input_transformations` ([{ type: 'thinking_dropped', path, reason }], header-gated; on message_start when streaming)
  *
  * ### 2026-06-30 - API Sync: new tool versions, refusal categories, Sonnet 5 verified

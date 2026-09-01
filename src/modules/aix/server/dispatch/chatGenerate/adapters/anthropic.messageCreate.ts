@@ -14,9 +14,6 @@ import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser,
 const hotFixImagePartsFirst = true;
 const hotFixMapModelImagesToUser = true;
 const hotFixDisableThinkingWhenToolsForced = true; // "Thinking may not be enabled when tool_choice forces tool use."
-// [Anthropic, 2026-09-01] Preserved thinking: models that bind replayed thinking blocks to the conversation prefix - Fable/Mythos 5.1
-// and (per Anthropic) every later model; the 5.0 generation only runs the drop-only model check. Substring-matches Bedrock/OR ids.
-const hotFixPreservedThinkingModelRe = /claude-(fable|mythos|opus|sonnet|haiku)-(5-\d|[6-9])/;
 const hotFixAntSeparateContiguousThinkingBlocks = true; // Interleave continuous thinking blocks (without aText) with the following text block, instead of merging them into a single block - should be more robust to unexpected thinking block formats and to changes in the thinking block format, as we have seen some variations and we might see more in the future
 // const hotFixAntShipNoEmptyTextBlocks = true; // If empty text blocks are found (e.g. produced by the API), do not ship them or things will break
 
@@ -79,7 +76,7 @@ export function aixAnthropicHostedFeatures(model: AixAPI_Model, chatGenerate: Ai
     enableSkills: !!model.vndAntSkills,
     enableStrictOutputs: !!model.strictJsonOutput || !!model.strictToolInvocations,
     enableToolAdvanced20251120: !!model.vndAntToolSearch || programmaticToolCalling,
-    enableThinkingBindingControls: target === 'anthropic' && hotFixPreservedThinkingModelRe.test(model.id), // Bedrock 400s the body field (probed 2026-09-01)
+    enableThinkingBindingControls: target === 'anthropic', // every thinking request; Bedrock 400s the body field (probed 2026-09-01)
     modelIdForPerModelFeatures: model.id,
   };
 }
@@ -272,9 +269,8 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
   }
 
   // [Anthropic, 2026-09-01] Preserved thinking: on Fable 5.1+ a replayed thinking block is valid only against the unchanged
-  // system/tools/history prefix - accounts created >= 2026-08-31 get a 400 after any edit ('The block is bound to a different
-  // conversation'), which big-AGI does routinely (edits, deletes, persona/tool changes). 'drop_block' (beta header from
-  // enableThinkingBindingControls) drops the stale blocks instead, reported in `input_transformations`; 400 with 'disabled'.
+  // system/tools/history prefix, and new accounts 400 after any edit (routine here: edits, deletes, persona/tool changes).
+  // 'drop_block' drops the stale blocks instead (accepted on every model, probed); the parser relays the drops as a notice.
   if (hostedFeatures.enableThinkingBindingControls && payload.thinking && payload.thinking.type !== 'disabled')
     payload.thinking.block_binding = { prefix_mismatch_behavior: 'drop_block' };
 
