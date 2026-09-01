@@ -415,6 +415,7 @@ interface BlockPartPlaceholderProps {
   messagePendingIncomplete: boolean,
   showAsDataStreamViz?: boolean,
   zenMode?: boolean,
+  showNotices?: boolean, // dismissible notices: Extra visibility only
 
   // used for self deletion
   fragmentId: DMessageFragmentId,
@@ -425,7 +426,7 @@ interface BlockPartPlaceholderProps {
 /**
  * Transient placeholder: follow-ups, retries, model-op progress (with PFC nesting), dismissible notices, or italic text.
  */
-export function BlockPartPlaceholder({ placeholderPart, contentScaling, messagePendingIncomplete, showAsDataStreamViz, zenMode, fragmentId, onFragmentDelete }: BlockPartPlaceholderProps){
+export function BlockPartPlaceholder({ placeholderPart, contentScaling, messagePendingIncomplete, showAsDataStreamViz, zenMode, showNotices, fragmentId, onFragmentDelete }: BlockPartPlaceholderProps){
 
   // state
   const [showVisualization, setShowVisualization] = React.useState(false);
@@ -458,7 +459,7 @@ export function BlockPartPlaceholder({ placeholderPart, contentScaling, messageP
     return <RenderChipAixControl text={pText} aixControl={aixControl} />;
 
   // 2b. Neutral dismissible notice (e.g. earlier reasoning dropped)
-  if (pType === 'notice') return zenMode ? null : (
+  if (pType === 'notice') return !showNotices ? null : (
     <RenderChipNotice text={pText} detail={pDetail} fragmentId={fragmentId} onFragmentDelete={onFragmentDelete} />
   );
 

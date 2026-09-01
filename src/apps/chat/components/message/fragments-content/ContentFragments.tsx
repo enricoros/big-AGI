@@ -183,6 +183,7 @@ export function ContentFragments(props: {
                 messagePendingIncomplete={!!props.messagePendingIncomplete}
                 showAsDataStreamViz={showDataStreamViz}
                 zenMode={props.uiComplexityMode === 'minimal'}
+                showNotices={props.uiComplexityMode === 'extra'}
                 onFragmentDelete={props.messagePendingIncomplete ? undefined : props.onFragmentDelete}
               />
             );
