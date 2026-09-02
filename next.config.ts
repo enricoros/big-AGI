@@ -149,6 +149,16 @@ void validateEnv; // Triggers env validation - throws if required vars are missi
 if (process.env.NODE_ENV !== 'production') ['./public/sw.js', './public/sw.js.map'].forEach((f) => rmSync(new URL(f, import.meta.url), { force: true }));
 
 
+// conditionally enable the nextjs bundle analyzer
+// ORDER: before PostHog - withBundleAnalyzer Object.assign's onto the config object, while
+//        withPostHogConfig returns a function-form config; wrapping that would keep only
+//        {webpack} and silently drop the rest of the config
+import withBundleAnalyzer from '@next/bundle-analyzer';
+if (process.env.ANALYZE_BUNDLE) {
+  nextConfig = withBundleAnalyzer({ openAnalyzer: true })(nextConfig) as NextConfig;
+}
+
+
 // PostHog error reporting with source maps for production builds
 import { withPostHogConfig } from '@posthog/nextjs-config';
 if (process.env.POSTHOG_API_KEY && process.env.POSTHOG_ENV_ID) {
@@ -165,13 +175,6 @@ if (process.env.POSTHOG_API_KEY && process.env.POSTHOG_ENV_ID) {
       deleteAfterUpload: false, // false: leave them in the tree, which would also help debugging of open-source installs
     },
   });
-}
-
-
-// conditionally enable the nextjs bundle analyzer
-import withBundleAnalyzer from '@next/bundle-analyzer';
-if (process.env.ANALYZE_BUNDLE) {
-  nextConfig = withBundleAnalyzer({ openAnalyzer: true })(nextConfig) as NextConfig;
 }
 
 
