@@ -34,6 +34,7 @@ const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
   // new symlinks that are too vague and high risk; let the user pick the correct model
   'models/gemini-pro-latest',
   'models/gemini-flash-latest',
+  'models/gemini-flash-latest-high-res-exp', // same displayName as the plain alias, routes to gemini-3.8-flash (verified 2026-09-02); would surface as an uncurated duplicate
   'models/gemini-flash-lite-latest',
 ];
 
@@ -77,10 +78,16 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/gemini-api/docs/pricing (August 31, 2026)
+// Pricing based on https://ai.google.dev/gemini-api/docs/pricing (September 2, 2026)
 
-// NOTE(2027-01-01): 3.7/3.6 Flash introductory pricing expires December 31, 2026 - flip both consts
-// to the list prices in their comments (pricing page + latest-model page state the promo covers both)
+// NOTE(2027-01-01): 3.8/3.7/3.6 Flash introductory pricing expires December 31, 2026 - flip all three consts
+// to the list prices in their comments (pricing page + latest-model page state the promo covers all three)
+
+const gemini38FlashPricing: ModelDescriptionSchema['chatPrice'] = {
+  input: 0.75, // introductory through 2026-12-31, then $1.50 - same promo as 3.7/3.6 Flash; no per-modality split stated
+  output: 3.75, // including thinking tokens; $7.50 from 2027-01-01
+  cache: { cType: 'oai-ac', read: 0.075 }, // $0.15 from 2027-01-01; storage $0.50/MTok-hour -> $1.00 (not tracked here)
+};
 
 const gemini37FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.75, // introductory through 2026-12-31, then $1.50; no per-modality split stated
@@ -213,14 +220,14 @@ const geminiRoboticsER2Pricing: ModelDescriptionSchema['chatPrice'] = {
 const IF_25 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching, LLM_IF_Inputs_Video];
 const IF_30 = [...IF_25]; // Note: Gemini 3 Developer Guide recommends temperature=1.0, which is now set as the default via initialTemperature
 
-// Gemini Thinking Control (as of 2026-08-13):
+// Gemini Thinking Control (as of 2026-09-02):
 // - Gemini 3 models use `thinkingLevel` (llmVndGemEffort) - NOT thinkingBudget.
-//   Levels are per-model (docs thinking page table): 3.7 Flash=['low','medium','high'] (default 'medium'; 'minimal' 400s),
+//   Levels are per-model (docs thinking page table): 3.8/3.7 Flash=['low','medium','high'] (default 'medium'; 'minimal' 400s),
 //   3.6/3.5 Flash + 3.5 Flash-Lite=['minimal','low','medium','high'] (Flash default 'medium'), 3.1 Pro/3 Pro=['low','medium','high'] (default 'high').
 //   Pro does not support disabling thinking. Flash's 'minimal' does not guarantee thinking is off.
 // - Gemini 2.5 models use `thinkingBudget` (llmVndGeminiThinkingBudget) - NOT thinkingLevel.
 //   Budget=0 disables thinking (Flash/Flash-Lite only; Pro cannot disable). Undefined = auto.
-// Note: thinkingBudget is ACCEPTED on-wire by Gemini 3 models (3.6/3.7 verified 2026-08-13; 3.6 still 400'd it on
+// Note: thinkingBudget is ACCEPTED on-wire by Gemini 3 models (3.6/3.7 verified 2026-08-13, 3.8 on 2026-09-02; 3.6 still 400'd it on
 // 2026-07-22) but NOT honored as a budget: on 3.7, budget=0 does NOT disable thinking (~75 thought tokens) and values
 // bucket to level-like behavior (0/512 -> ~low, 32768 -> ~high) - a compat shim. The docs prescribe thinkingLevel
 // (the thinking page no longer documents thinkingBudget at all; latest-model migration: "Replace thinking_budget with
@@ -241,6 +248,28 @@ type _GeminiModelDef = {
 } & Pick<ModelDescriptionSchema, 'pubDate' | 'interfaces' | 'parameterSpecs' | 'chatPrice' | 'hidden' | 'benchmark'> & { pubDate: string /* make it required */ };
 
 const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
+
+  /// Generation 3.8
+
+  // 3.8 Flash (Stable) - Released September 2, 2026; successor to 3.7 Flash at the same price (intro through 2026-12-31)
+  // Verified live 2026-09-02 (+ sweep): thinkingLevel ['low','medium','high'], 'minimal' 400s; thinkingBudget accepted
+  // on-wire but not exposed (budget=0 == 'low', same as 3.7); fn/search/url-context/code-exec/media-res/JSON schema/SSE OK
+  // '3.8 Flash Cyber' sibling: not on the API list (404 by id), Fairwind-gated
+  {
+    id: 'models/gemini-3.8-flash',
+    labelOverride: 'Gemini 3.8 Flash',
+    pubDate: '20260902',
+    chatPrice: gemini38FlashPricing,
+    interfaces: IF_30,
+    parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high'] }, // no 'minimal' (docs + live 400); default 'medium' per docs
+      { paramId: 'llmVndGeminiMediaResolution' },
+      { paramId: 'llmVndGeminiCodeExecution' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+    ],
+    benchmark: { cbaElo: 1490 + 1 }, // no LMArena entry yet (2026-09-02): 3.7 Flash's 1490 +1 so it ranks above its predecessor - replace with the arena score once posted
+  },
+
 
   /// Generation 3.7
 
@@ -625,8 +654,8 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
   },
 
   // Antigravity Agent Preview - Released May 19, 2026
-  // General-purpose managed agent: powered by Gemini 3.7 Flash by default (docs 2026-08-13; default moved
-  // 3.5 -> 3.6 on 2026-07-28, -> 3.7 on 2026-08-13; selectable via agent_config.model, which we don't send),
+  // General-purpose managed agent: powered by Gemini 3.8 Flash by default (docs 2026-09-02; default moved
+  // 3.5 -> 3.6 on 2026-07-28, -> 3.7 on 2026-08-13, -> 3.8 on 2026-09-02; selectable via agent_config.model, which we don't send),
   // runs inside a Google-hosted Linux sandbox with default tools (code_execution, google_search, url_context).
   // 1M context (compacted at ~135k), 64K output. Sandbox compute is not billed during the preview. We send
   // `environment: "remote"` (fresh sandbox per run) and intentionally omit `background` (upstream
@@ -637,7 +666,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     labelOverride: 'Antigravity Agent Preview (2026-05)',
     pubDate: '20260519',
     isPreview: true,
-    chatPrice: gemini37FlashPricing, // PAYG on underlying tokens - default model is gemini-3.7-flash as of 2026-08-13; tool/compute not billed during preview
+    chatPrice: gemini38FlashPricing, // PAYG on underlying tokens - default model is gemini-3.8-flash as of 2026-09-02; tool/compute not billed during preview
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_Interactions],
     // No per-model parameters yet - default tool set is enabled implicitly. Future: expose env handle
     // reuse for stateful sessions, or a tools-allowlist parameter to restrict the default set.
@@ -813,6 +842,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
   // REMOVED MODELS - we do not support Native Audio / Live API models:
   // - models/gemini-3.5-live-translate-preview (Live API, real-time translation)
   // - models/gemini-3.1-flash-live-preview (Live API, released March 26, 2026)
+  // - models/gemini-robotics-er-2-streaming-preview (bidiGenerateContent only, 400s on generateContent - verified 2026-09-02)
   // - models/gemini-2.5-flash-native-audio-latest / -preview-09-2025 / -preview-12-2025
   // REMOVED MODELS (old dialog models superseded by native audio preview):
   // - models/gemini-2.5-flash-preview-native-audio-dialog
@@ -996,6 +1026,9 @@ const _sortOderIdPrefix: string[] = [
   // speculative: sort a future Gemini 4 family above everything the day it appears (both id dialects)
   'models/gemini-4-',
   'models/gemini-4.',
+  'models/gemini-3.8-flash',
+  'models/gemini-3.8-',
+  'models/gemini-3.8',
   'models/gemini-3.7-flash',
   'models/gemini-3.7-',
   'models/gemini-3.7',
