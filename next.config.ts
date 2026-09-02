@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 import type { WebpackConfigContext } from 'next/dist/server/config-shared';
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, rmSync } from 'node:fs';
 
 
 // Log only on the first pass (next build evaluates this module twice: build() setup, then the webpack step)
@@ -141,6 +141,12 @@ let nextConfig: NextConfig = {
 // Validate environment variables at build time, if required. Server env vars will be actually read and used at runtime (cloud/edge).
 import { env as validateEnv } from '~/server/env.server';
 void validateEnv; // Triggers env validation - throws if required vars are missing
+
+
+// Stale service workers: a build on another branch line may leave a generated (gitignored)
+// public/sw.js behind, which survives branch switches - delete it so dev serves 404 at /sw.js
+// and browsers auto-unregister anything stale.
+if (process.env.NODE_ENV !== 'production') ['./public/sw.js', './public/sw.js.map'].forEach((f) => rmSync(new URL(f, import.meta.url), { force: true }));
 
 
 // PostHog error reporting with source maps for production builds
