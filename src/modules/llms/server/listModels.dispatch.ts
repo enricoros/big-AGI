@@ -16,7 +16,7 @@ import { llmsAntFuseModelKnowledge, llmsAntInjectVariants, llmsAntValidateModelD
 import { ANTHROPIC_API_PATHS, anthropicAccess } from './anthropic/anthropic.access';
 
 // protocol: Bedrock
-import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLControlPlane, bedrockURLMantle } from './bedrock/bedrock.access';
+import { bedrockAccessAsync, bedrockModelAllowed, bedrockResolveRegion, bedrockURLControlPlane, bedrockURLMantle } from './bedrock/bedrock.access';
 import { bedrockModelsToDescriptions, BedrockWire_API_Models_List } from './bedrock/bedrock.models';
 
 // protocol: Gemini
@@ -206,7 +206,9 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           };
         },
         convertToDescriptions: ({ foundationModels, inferenceProfiles, mantleModelIds }) =>
-          bedrockModelsToDescriptions(foundationModels, inferenceProfiles, mantleModelIds),
+          bedrockModelsToDescriptions(foundationModels, inferenceProfiles, mantleModelIds)
+            // server-side model allowlist (BEDROCK_MODEL_ALLOWLIST) - pass-through when unset
+            .filter(model => bedrockModelAllowed(model.id)),
       });
     }
 

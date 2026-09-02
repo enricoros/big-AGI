@@ -59,6 +59,7 @@ export const env = createEnv({
     BEDROCK_SECRET_ACCESS_KEY: z.string().optional(),
     BEDROCK_SESSION_TOKEN: z.string().optional(), // required with the other 2 on corporate accounts sometimes
     BEDROCK_REGION: z.string().optional(),
+    BEDROCK_MODEL_ALLOWLIST: z.string().optional(), // comma-separated model IDs; matches full or region-prefix-stripped IDs; unset = all models
 
     // LLM: Cerebras
     CEREBRAS_API_KEY: z.string().optional(),
