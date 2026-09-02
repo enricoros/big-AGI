@@ -144,9 +144,11 @@ void validateEnv; // Triggers env validation - throws if required vars are missi
 
 
 // Stale service workers: a build on another branch line may leave a generated (gitignored)
-// public/sw.js behind, which survives branch switches - delete it so dev serves 404 at /sw.js
-// and browsers auto-unregister anything stale.
-if (process.env.NODE_ENV !== 'production') ['./public/sw.js', './public/sw.js.map'].forEach((f) => rmSync(new URL(f, import.meta.url), { force: true }));
+// public/sw.js behind, which survives branch switches - and .dockerignore admits public/, so a
+// production build would even ship it. This branch never emits a worker: always delete. Note a
+// 404 at /sw.js does NOT unregister an existing worker (w3c/ServiceWorker#204, wontfix) - only
+// unregister(), a replacement no-op worker at the same URL, or DevTools do.
+['./public/sw.js', './public/sw.js.map'].forEach((f) => rmSync(new URL(f, import.meta.url), { force: true }));
 
 
 // conditionally enable the nextjs bundle analyzer
