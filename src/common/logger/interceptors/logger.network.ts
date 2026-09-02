@@ -1,5 +1,6 @@
 import { isBrowser } from '~/common/util/pwaUtils';
 import { logger } from '~/common/logger';
+import { netStateIsBrowserOffline } from '~/common/util/netstate';
 
 
 /**
@@ -38,7 +39,7 @@ export function setupClientFetchErrorsLogging(): () => void {
           // example action - shall open connection troubleshooting panel or check connection
           label: 'Check Connection',
           handler: async () => {
-            if (navigator.onLine)
+            if (!netStateIsBrowserOffline())
               logger.info('Device appears to be online. Issue might be server-related.');
             else
               logger.warn('Device is offline. Please check your internet connection.');

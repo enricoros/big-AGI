@@ -1,5 +1,7 @@
 import { QueryClient } from '@tanstack/react-query';
 
+import { netStateInstall } from '~/common/util/netstate';
+
 
 let queryClient: QueryClient | null = null;
 
@@ -24,6 +26,7 @@ export function reactQueryClientSingleton(): QueryClient {
         },
       },
     });
+    netStateInstall(); // netstate takes over online detection (listeners + seed; no-op on server)
   }
   return queryClient;
 }
