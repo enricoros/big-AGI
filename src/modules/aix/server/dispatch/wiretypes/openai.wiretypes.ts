@@ -1259,7 +1259,7 @@ export namespace OpenAIWire_Responses_Items {
       // Action type: 'open_page' - opens/visits a specific web page
       z.object({
         type: z.literal('open_page'),
-        url: z.string().nullable(), // URL to open (can be null in some cases)
+        url: z.string().nullish(), // URL to open (can be null in some cases; [Meta AI] absent on 'failed' opens)
       }),
 
       // Action type: 'find_in_page' - searches for a pattern within an opened page

@@ -180,6 +180,10 @@ class ResponseParserStateMachine {
     return !!diff;
   }
 
+  get responseModel() {
+    return this.#response?.model;
+  }
+
   get responseId() {
     return this.#response?.id ?? 'new response';
   }
@@ -320,7 +324,7 @@ class ResponseParserStateMachine {
  * OpenAI Responses API Streaming Parser
  *
  * @param rspVendor the Responses vendor (AixWire_Vendors.RSP_VENDORS) - tags the reasoning continuity handle so it round-trips back
- *   to the SAME provider. The OpenAI Responses wire format is shared with xAI, but the encrypted_content blob
+ *   to the SAME provider. The OpenAI Responses wire format is shared with xAI and Meta, but the encrypted_content blob
  *   and the rs_... id are vendor-server-private (different keys, different state). Mixing them produces
  *   "Item with id rs_... not found" or worse silent corruption.
  */
@@ -557,7 +561,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
                 _imageGenerationMimeType(doneItem), // infer from output_format echoed in the item
                 igResult,
                 igRevisedPrompt || 'Generated image',
-                R.imageGenToolCfg?.model || AIX_OAI_DEFAULT_IMAGE_GEN_MODEL, // generator: prefer the cached tool config, fallback to current default
+                R.imageGenToolCfg?.model || R.responseModel || AIX_OAI_DEFAULT_IMAGE_GEN_MODEL, // generator: the cached tool config, else the responding model ([Meta AI] muse-image-1.0 echoes no tools), else the OpenAI default
                 igRevisedPrompt || '', // prompt used
               );
             else
@@ -1120,7 +1124,7 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
               _imageGenerationMimeType(oItem), // infer from output_format echoed in the item
               igResult,
               igRevisedPrompt || 'Generated image',
-              imageGenToolCfg?.model || AIX_OAI_DEFAULT_IMAGE_GEN_MODEL, // generator: read from echoed tools (API does not echo model per-item), fallback to current default
+              imageGenToolCfg?.model || response.model || AIX_OAI_DEFAULT_IMAGE_GEN_MODEL, // generator: the echoed tools (the API does not echo the model per item), else the responding model ([Meta AI] muse-image-1.0 echoes no tools), else the OpenAI default
               igRevisedPrompt || '', // prompt used
             );
           else
@@ -1298,17 +1302,21 @@ function _prettyImageGenConfigSuffix(cfg: TImageGenToolCfg | undefined): string 
 /**
  * Infers the mime type from the image_generation_call output item's output_format field.
  * The API echoes the output_format in the done item (e.g. 'png', 'webp', 'jpeg').
+ * [Meta AI] muse-image-1.0 echoes no output_format (and defaults to webp): sniff the base64 magic instead.
  */
-function _imageGenerationMimeType(item: { output_format?: string }): string {
+function _imageGenerationMimeType(item: { output_format?: string, result?: string }): string {
   switch (item?.output_format) {
     case 'webp':
       return 'image/webp';
     case 'jpeg':
       return 'image/jpeg';
     case 'png':
-    default:
       return 'image/png';
   }
+  const b64Head = item?.result?.slice(0, 5) ?? '';
+  if (b64Head.startsWith('UklGR')) return 'image/webp'; // 'RIFF....WEBP'
+  if (b64Head.startsWith('/9j/')) return 'image/jpeg'; // 0xFF 0xD8 0xFF
+  return 'image/png'; // 'iVBOR' (0x89 'PNG'), and the OpenAI default
 }
 
 /**

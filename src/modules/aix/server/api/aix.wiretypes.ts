@@ -99,11 +99,11 @@ export namespace AixWire_Vendors {
    * Responses-API dialect vendors: the OpenAI Responses wire format is shared by these, but each keeps its OWN `_vnd`
    * namespace for continuity state (encrypted reasoning blobs, server-side item ids, message phase) - the blobs are
    * vendor-server-private and must round-trip back to the SAME vendor only (OpenAI 404s "Item with id rs_... not
-   * found"). The parser is tagged with the dialect, the adapter reads its own key.
+   * found", Meta 400s "not found or has expired"). The parser is tagged with the dialect, the adapter reads its own key.
    * Adding one: append here, add the key in `AixWire_Parts._vnd` and in `DMessageFragmentVendorState` (chat.fragments.ts),
    * then map the transport dialect to it in openai.responsesCreate.ts (`_RSP_DIALECT_QUIRKS`).
    */
-  export const RSP_VENDORS = ['openai', 'sakanaai', 'xai'] as const satisfies (keyof DMessageFragmentVendorStateKnown)[];
+  export const RSP_VENDORS = ['metaai', 'openai', 'sakanaai', 'xai'] as const satisfies (keyof DMessageFragmentVendorStateKnown)[];
   export type RspVendor = typeof RSP_VENDORS[number];
   export function isRspVendor(vendor: string): vendor is RspVendor {
     return (RSP_VENDORS as readonly string[]).includes(vendor);
@@ -117,7 +117,7 @@ export namespace AixWire_Vendors {
       id: z.string().optional(),               // rs_... - item id
       encryptedContent: z.string().optional(), // blob returned when include:['reasoning.encrypted_content']
     }).optional(),
-    // message phase (on text parts): gpt-5.4+ tags assistant messages 'commentary' | 'final_answer';
+    // message phase (on text parts): gpt-5.4+ and Muse Spark tag assistant messages 'commentary' | 'final_answer';
     // resent on replay (dropping it degrades performance per OpenAI docs)
     phase: z.enum(['commentary', 'final_answer']).optional(),
   });
@@ -134,6 +134,7 @@ export namespace AixWire_Vendors {
     }).optional(),
     // one optional key per Responses dialect - `satisfies` keeps this list in lockstep with RSP_VENDORS
     ...({
+      metaai: _RspVndState_schema.optional(),
       openai: _RspVndState_schema.optional(),
       sakanaai: _RspVndState_schema.optional(),
       xai: _RspVndState_schema.optional(),

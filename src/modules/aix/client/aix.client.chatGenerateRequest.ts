@@ -428,7 +428,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             // - Anthropic: part.textSignature / part.redactedData (bespoke fields, see Anthropic extended thinking docs)
             // - Responses vendors (AixWire_Vendors.RSP_VENDORS) / Gemini: _vnd sidecar (reasoningItem.* / thoughtSignature, opaque continuity handle)
             // - DeepSeek V4 (OpenAI chat-completions): plain reasoning text in aText is the payload itself
-            const rspReasoning = _vnd && AixWire_Vendors.RSP_VENDORS.map(d => _vnd[d]?.reasoningItem).find(r => !!r); // any namespace: the adapter replays only its own
+            const rspReasoning = _vnd && AixWire_Vendors.RSP_VENDORS.map(d => _vnd[d]?.reasoningItem).find(r => !!r); // any namespace: the adapter replays only its own; Muse Spark often returns an empty summary, so the handle is the only signal
             const hasReasoningHandle =
               (aPart.textSignature || aPart.redactedData?.length)
               || (rspReasoning?.encryptedContent || rspReasoning?.id)

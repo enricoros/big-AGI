@@ -35,6 +35,7 @@ import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from '
 
 /** OpenAI-compatible dialects that serve ONLY the Responses API (every model), regardless of the per-model vndOaiResponsesAPI flag */
 const RESPONSES_ONLY_DIALECTS: ReadonlySet<OpenAIDialects> = new Set<OpenAIDialects>([
+  'metaai', // Meta Muse models: Responses is the only Meta surface carrying reasoning across turns
   'sakanaai', // Sakana Fugu models: tools, multimodal, reasoning
   'xai', // all xAI models (own adapter)
 ]);

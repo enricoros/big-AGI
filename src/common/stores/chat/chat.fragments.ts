@@ -105,7 +105,8 @@ export type DMessageFragmentVendorStateKnown = {
     thoughtSignature?: string; // Gemini 3+ - echoed back to maintain reasoning context
   };
   // Responses-API vendors (AixWire_Vendors.RSP_VENDORS in aix.wiretypes.ts): one namespace each, same shape. The handles are
-  // vendor-server-private (encryption keys + item ids): OpenAI's never go to xAI, and vice versa.
+  // vendor-server-private (encryption keys + item ids): OpenAI's never go to xAI or Meta, and vice versa.
+  metaai?: _DMessageFragmentRspState;
   openai?: _DMessageFragmentRspState;
   sakanaai?: _DMessageFragmentRspState;
   xai?: _DMessageFragmentRspState;

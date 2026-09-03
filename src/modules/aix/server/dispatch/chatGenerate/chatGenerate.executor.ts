@@ -340,6 +340,9 @@ async function* _consumeDispatchStream(
 
       // ignore events post termination
       if (chatGenerateTx.isEnded) {
+        // the SSE '[DONE]' sentinel after the terminal event is not a protocol issue ([Meta AI] Responses closes every stream with it)
+        if (demuxedItem.type === 'event' && demuxedItem.data === '[DONE]')
+          break; // inner for {}, will break outer
         // DEV-only message to fix dispatch protocol parsing -- warning on, because this is important and a sign of a bug
         console.warn(`[AIX] _consumeDispatchStream: ${_d.prettyDialect}: received stream event after termination. ignoring.`, demuxedItem);
         break; // inner for {}, will break outer

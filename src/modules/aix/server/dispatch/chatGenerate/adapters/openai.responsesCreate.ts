@@ -36,6 +36,10 @@ interface RspDialectQuirks {
   codeInterpreterTool: boolean;
   /** image generation tool may request WebP output */
   imageGenWebP: boolean;
+  /** tool_choice accepts only 'auto' (a restrictive tools policy degrades to 'auto') */
+  toolChoiceOnlyAuto: boolean;
+  /** lowest max_output_tokens the validator accepts */
+  minOutputTokens?: number;
 }
 
 const _RSP_QUIRKS_DEFAULT: RspDialectQuirks = {
@@ -45,6 +49,7 @@ const _RSP_QUIRKS_DEFAULT: RspDialectQuirks = {
   webSearchTool: 'full',
   codeInterpreterTool: true,
   imageGenWebP: true,
+  toolChoiceOnlyAuto: false,
 };
 
 const _RSP_DIALECT_QUIRKS: Partial<Record<OpenAIDialects, Partial<RspDialectQuirks>>> = {
@@ -56,6 +61,9 @@ const _RSP_DIALECT_QUIRKS: Partial<Record<OpenAIDialects, Partial<RspDialectQuir
   sakanaai: { vndNamespace: 'sakanaai', webSearchTool: 'bare' },
   // [xAI] own adapter (xai.responsesCreate.ts) and own namespace; listed for the parser tag only
   xai: { vndNamespace: 'xai' },
+  // [Meta AI, 2026-09-02] api.meta.ai: strict validator (unknown top-level params 400), tool_choice 'auto' only, max_output_tokens >= 16,
+  // truncation 'disabled' only, effort 'none' rejected; reasoning items are Meta-private (own namespace)
+  metaai: { vndNamespace: 'metaai', toolChoiceOnlyAuto: true, minOutputTokens: 16 },
 };
 
 function _rspQuirks(dialect: OpenAIDialects): RspDialectQuirks {
@@ -127,7 +135,7 @@ export function aixToOpenAIResponses(
 
     // Tools
     tools: chatGenerate.tools && _toOpenAIResponsesTools(chatGenerate.tools, strictToolInvocations),
-    tool_choice: chatGenerate.toolsPolicy && _toOpenAIResponsesToolChoice(chatGenerate.toolsPolicy),
+    tool_choice: chatGenerate.toolsPolicy && _toOpenAIResponsesToolChoice(chatGenerate.toolsPolicy, quirks.toolChoiceOnlyAuto),
     // parallel_tool_calls: undefined, // response if unset: true
 
     // Operations Config - use unified effort, fall back to deprecated field
@@ -155,6 +163,10 @@ export function aixToOpenAIResponses(
     delete payload.temperature;
     payload.top_p = model.topP;
   }
+
+  // validator floor on max_output_tokens ([Meta AI] >= 16, 400 below; reasoning tokens share the budget)
+  if (quirks.minOutputTokens && typeof payload.max_output_tokens === 'number' && payload.max_output_tokens < quirks.minOutputTokens)
+    payload.max_output_tokens = quirks.minOutputTokens;
 
   // Structured Outputs - JSON output grammar
   if (model.strictJsonOutput)
@@ -741,14 +753,16 @@ function _toOpenAIResponsesTools(itds: AixTools_ToolDefinition[], strictToolInvo
   });
 }
 
-function _toOpenAIResponsesToolChoice(itp: AixTools_ToolsPolicy): NonNullable<TRequest['tool_choice']> {
+function _toOpenAIResponsesToolChoice(itp: AixTools_ToolsPolicy, onlyAuto: boolean): NonNullable<TRequest['tool_choice']> {
   // NOTE: we don't support forcing hosted tools yet
   const itpType = itp.type;
   switch (itpType) {
     case 'auto':
       return 'auto';
     case 'any':
-      return 'required';
+      // [Meta AI] only 'auto' is accepted ('none', 'required' and named choices 400 - verified 2026-09-02): degrade rather
+      // than reject the request; the tool descriptions still steer the model
+      return onlyAuto ? 'auto' : 'required';
     // DISABLED 2026-07-17 - forced named tool, see ToolsPolicy_schema
     // case 'function_call':
     //   return { type: 'function' as const, name: itp.function_call.name };

@@ -83,6 +83,7 @@ export function messageMeasureSizes(message: DMessage | undefined): MsgMeasureSi
             if (vs.gemini?.thoughtSignature)
               reasoningEncBytes += _b64ApproxBytes(vs.gemini.thoughtSignature);
             break;
+          case 'metaai':
           case 'openai':
           case 'sakanaai':
           case 'xai':
