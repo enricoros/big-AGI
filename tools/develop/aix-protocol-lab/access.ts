@@ -20,6 +20,7 @@ const KEY_FILES = ['.env.api-keys', '.env.local', '.env'];
 const FLAVOR_KEY_VAR: Record<LabFlavor, string> = {
   'anthropic-messages': 'ANTHROPIC_API_KEY',
   'openai-responses': 'OPENAI_API_KEY',
+  'metaai-responses': 'METAAI_API_KEY',
   'openai-chat': 'OPENAI_API_KEY',
   'gemini-generate': 'GEMINI_API_KEY',
   'gemini-interactions': 'GEMINI_API_KEY',
@@ -74,6 +75,11 @@ export function accessForFlavor(flavor: LabFlavor): { access: AixAPI_Access; key
       return {
         keySource: key.source,
         access: { dialect: 'openai', oaiKey: key.value, oaiOrg: '', oaiHost: '' },
+      };
+    case 'metaai-responses':
+      return {
+        keySource: key.source,
+        access: { dialect: 'metaai', oaiKey: key.value, oaiOrg: '', oaiHost: '' },
       };
     case 'gemini-generate':
     case 'gemini-interactions':

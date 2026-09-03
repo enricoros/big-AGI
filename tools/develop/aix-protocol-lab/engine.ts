@@ -129,6 +129,8 @@ function _replayParserFor(meta: LabRunMeta): ChatGenerateParseFunction {
       return meta.streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS();
     case 'openai-responses':
       return meta.streaming ? createOpenAIResponsesEventParser('openai') : createOpenAIResponseParserNS('openai');
+    case 'metaai-responses':
+      return meta.streaming ? createOpenAIResponsesEventParser('metaai') : createOpenAIResponseParserNS('metaai');
     case 'openai-chat':
       return meta.streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS();
     case 'gemini-generate':

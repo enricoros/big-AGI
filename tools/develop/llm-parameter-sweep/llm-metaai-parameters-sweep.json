@@ -1,0 +1,40 @@
+{
+  "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
+  "_evaluated": "Evaluated: fn, metaai-reasoning-effort, metaai-web-search, oai-temperature-think-high, oai-temperature-think-none, temperature. If missing, the parameter is not supported by that model.",
+  "_modelFilter": "muse-spark",
+  "muse-spark-1.3": {
+    "fn": ["auto","roundtrip"],
+    "metaai-reasoning-effort": ["minimal","low","medium","high","xhigh"],
+    "metaai-web-search": ["low","medium","high"],
+    "oai-temperature-think-high-range": [0,1.5],
+    "temperature-range": [0,1.5]
+  },
+  "muse-spark-1.2": {
+    "fn": ["auto","roundtrip"],
+    "metaai-reasoning-effort": ["minimal","low","medium","high","xhigh"],
+    "metaai-web-search": ["low","medium","high"],
+    "oai-temperature-think-high-range": [0,1.5],
+    "temperature-range": [0,1.5]
+  },
+  "muse-spark-1.1": {
+    "fn": ["auto","roundtrip"],
+    "metaai-reasoning-effort": ["minimal","low","medium","high","xhigh"],
+    "metaai-web-search": ["low","medium","high"],
+    "oai-temperature-think-high-range": [0,1.5],
+    "temperature-range": [0,1.5]
+  },
+  "muse-spark-1.3-contributor": {
+    "fn": ["auto","roundtrip"],
+    "metaai-reasoning-effort": ["minimal","low","medium","high","xhigh"],
+    "metaai-web-search": ["low","medium","high"],
+    "oai-temperature-think-high-range": [0,1],
+    "temperature-range": [0,1.5]
+  },
+  "muse-spark-1.2-contributor": {
+    "fn": ["auto","roundtrip"],
+    "metaai-reasoning-effort": ["minimal","low","medium","high","xhigh"],
+    "metaai-web-search": ["low","medium","high"],
+    "oai-temperature-think-high-range": [0,1.5],
+    "temperature-range": [0,1.5]
+  }
+}

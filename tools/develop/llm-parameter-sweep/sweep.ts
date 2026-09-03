@@ -193,6 +193,27 @@ const SWEEP_DEFINITIONS = [
     mode: 'enumerate',
   }),
 
+  // Meta AI: reasoning effort (Responses API)
+  // Muse Spark: minimal/low/medium/high/xhigh ('none' 400s on every Spark model, 'max' announced for 1.3 but not served yet - 2026-09-02)
+  defineSweep({
+    name: 'metaai-reasoning-effort',
+    description: 'Meta reasoning.effort values',
+    applicability: { type: 'dialects', dialects: ['metaai'] },
+    applyToModel: (value) => ({ reasoningEffort: value }),
+    values: ['none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] satisfies AixAPI_Model['reasoningEffort'][],
+    mode: 'enumerate',
+  }),
+
+  // Meta AI: web search context (the OpenAI-shaped hosted web_search tool; $2.50 / 1K queries)
+  defineSweep({
+    name: 'metaai-web-search',
+    description: 'Meta web_search search_context_size values',
+    applicability: { type: 'dialects', dialects: ['metaai'] },
+    applyToModel: (value) => ({ vndOaiWebSearchContext: value }),
+    values: ['low', 'medium', 'high'] satisfies AixAPI_Model['vndOaiWebSearchContext'][],
+    mode: 'enumerate',
+  }),
+
 ] as const satisfies SweepDefinition<any>[];
 
 
@@ -282,9 +303,14 @@ const TOOL_PROBE_DEFINITIONS: ToolProbeDefinition[] = [
     validateArgs: (args) => typeof args?.location === 'string' && args.location.length > 0,
     // [2026-06-09] 'required' must reflect raw API support for forced tool use: on adaptive-only Anthropic
     // models (Fable/Mythos 5) the adapter downgrades 'any' -> 'auto' + system hint, which would pass here.
-    preflightFail: (body, dialect) => dialect !== 'anthropic' ? null
-      : body?.tool_choice?.type === 'any' ? null
-        : `coerced on wire: tool_choice=${JSON.stringify(body?.tool_choice ?? null)} (expected type 'any')`,
+    // [2026-09-02] same for Meta (tool_choice accepts only 'auto', the Responses adapter degrades). Judged only when
+    // the body carries a `tool_choice` (Anthropic object / OpenAI-family string); Gemini's tool_config is not inspected.
+    preflightFail: (body) => {
+      const tc = body?.tool_choice;
+      if (tc === undefined || tc === null) return null;
+      const forced = tc?.type === 'any' || tc?.type === 'function' || tc === 'required';
+      return forced ? null : `coerced on wire: tool_choice=${JSON.stringify(tc)} (expected a forced tool choice)`;
+    },
   },
   {
     name: 'fn',
@@ -1429,6 +1455,7 @@ function createSingleVendorConfig(dialect: string, key: string, host?: string): 
     case 'groq':
     case 'lmstudio':
     case 'localai':
+    case 'metaai':
     case 'mistral':
     case 'moonshot':
     case 'openrouter':

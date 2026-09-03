@@ -31,6 +31,7 @@ const CALL_ARG_STRING_CLAMP = 8192; // transmitter call args are a convenience v
 export type LabFlavor =
   | 'anthropic-messages'
   | 'openai-responses'
+  | 'metaai-responses'
   | 'openai-chat'
   | 'gemini-generate'
   | 'gemini-interactions';

@@ -65,6 +65,7 @@ checks report on top). Replays of a capture are deterministic and diffed automat
 |---|---|---|---|
 | anthropic-messages | typed SSE, explicit block lifecycle | claude-sonnet-4-6 | `codeExec` unlocks via a PTC tool (`allowed_callers: ['code_execution']`) - there is no direct switch |
 | openai-responses | typed events, sequence_number + addressed items | gpt-5.2 | `--oracle` supported; no hosted fetch tool |
+| metaai-responses | same grammar on api.meta.ai, `data: [DONE]` terminator, interleaved items | muse-spark-1.3 | reasoning + hosted `web_search`; no code exec / fetch; `--model muse-image-1.0 --no-stream` for image output |
 | openai-chat | chunked deltas, `[DONE]` terminator | gpt-4.1-mini | degenerate grammar, no hosted tools |
 | gemini-generate | chunked full objects, no event types | gemini-3-flash-preview | spans are parser-inferred |
 | gemini-interactions | typed step events | antigravity-preview-05-2026 | agent-implicit tools; resumable |

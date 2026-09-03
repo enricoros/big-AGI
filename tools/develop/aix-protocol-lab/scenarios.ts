@@ -14,6 +14,9 @@
  * | webFetch  | vndAntWebFetch               | (none)                    | (none)      | vndGeminiUrlContext        | (agent-implicit)    |
  * | codeExec  | PTC-unlock tool [1]          | vndOaiCodeInterpreter     | (none)      | vndGeminiCodeExecution     | (agent-implicit)    |
  *
+ * metaai-responses (Muse Spark on api.meta.ai, dialect-routed to Responses): reasoning -> reasoningEffort,
+ * webSearch -> vndOaiWebSearchContext; no hosted fetch or code execution on Meta (recorded as unsupported).
+ *
  * [1] Anthropic has no direct code-execution switch: aixAnthropicHostedFeatures() enables the
  *     code_execution tool for Skills or Programmatic Tool Calling. The lab unlocks it the PTC way,
  *     with a trivial function tool carrying allowed_callers: ['direct', 'code_execution'] - which
@@ -30,6 +33,7 @@ import type { LabFlavor } from './trace';
 export const LAB_DEFAULT_MODELS: Record<LabFlavor, string> = {
   'anthropic-messages': 'claude-sonnet-4-6',
   'openai-responses': 'gpt-5.2',
+  'metaai-responses': 'muse-spark-1.3',
   'openai-chat': 'gpt-4.1-mini',
   'gemini-generate': 'models/gemini-3-flash-preview',
   'gemini-interactions': 'models/antigravity-preview-05-2026',
@@ -245,6 +249,14 @@ export function compileScenario(flavor: LabFlavor, scenario: LabScenario, modelI
       if (caps.webSearch) model.vndOaiWebSearchContext = 'medium';
       if (caps.codeExec) model.vndOaiCodeInterpreter = 'auto';
       if (caps.webFetch) unsupportedCaps.push('webFetch'); // no hosted fetch tool on the Responses API
+      break;
+
+    case 'metaai-responses':
+      // Muse Spark: reasoning ladder minimal..xhigh ('none' 400s), hosted web_search; no code interpreter or fetch tools
+      if (caps.reasoning) model.reasoningEffort = 'medium';
+      if (caps.webSearch) model.vndOaiWebSearchContext = 'medium';
+      if (caps.codeExec) unsupportedCaps.push('codeExec');
+      if (caps.webFetch) unsupportedCaps.push('webFetch');
       break;
 
     case 'openai-chat':
