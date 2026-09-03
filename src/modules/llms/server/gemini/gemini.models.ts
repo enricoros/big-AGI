@@ -267,7 +267,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1490 + 1 }, // no LMArena entry yet (2026-09-02): 3.7 Flash's 1490 +1 so it ranks above its predecessor - replace with the arena score once posted
+    benchmark: { cbaElo: 1494 }, // gemini-3.8-flash-high (LMArena 2026-09-02, preliminary, CI +/-9)
   },
 
 
@@ -291,7 +291,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
     ],
-    benchmark: { cbaElo: 1490 }, // gemini-3.7-flash-high (LMArena 2026-08-13, preliminary, CI +/-8)
+    benchmark: { cbaElo: 1491 }, // gemini-3.7-flash-high (LMArena 2026-09-02, preliminary, CI +/-8)
   },
 
   // REMOVED: models/gemini-3.7-flash-video-understanding-eap - EAP checkpoint of 3.7 Flash tuned for video
