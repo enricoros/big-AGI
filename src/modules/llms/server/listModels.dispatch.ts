@@ -493,7 +493,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
 
             case 'metaai':
               // [Meta AI] ids-only list (created is a constant 0, no type field): caps/pricing/params from the curated
-              // table, the image and transcription ids are filtered out by name
+              // table; the transcription id is filtered out by name, the image model is curated and kept
               return metaAIModelsToModelDescriptions(maybeModels);
 
             case 'mistral':

@@ -264,11 +264,12 @@ describe('listModels enumeration', () => {
       { dialect: 'metaai', ...openAIShape({ oaiKey: E.METAAI_API_KEY || '' }) } as AixAPI_Access,
       1, 'metaai/live',
     );
-    // the catalog mixes families and the list API has no type field: the image and transcription ids must be filtered out
-    ok(!models.some(m => m.id.startsWith('muse-image-') || m.id.startsWith('muse-voice-')), 'metaai: non-chat models are dropped');
+    // the catalog mixes families and the list API has no type field: the transcription id must be filtered out, the image model curated
+    ok(!models.some(m => m.id.startsWith('muse-voice-')), 'metaai: transcription model is dropped');
     ok(models.some(m => m.id.startsWith('muse-spark-')), 'metaai: Muse Spark family present');
-    // curated entries always carry a measured context; 0-day '[?]' arrivals legitimately have null
-    ok(models.filter(m => !llmsIsLabelUncurated(m.label)).every(m => m.contextWindow !== null), 'metaai: all curated models carry a context window');
+    ok(models.filter(m => m.id.startsWith('muse-image-')).every(m => m.interfaces.includes('outputs-image')), 'metaai: Muse Image is an image-output model');
+    // curated chat entries always carry a measured context; 0-day '[?]' arrivals and the image model (undocumented) legitimately have null
+    ok(models.filter(m => !llmsIsLabelUncurated(m.label) && !m.interfaces.includes('outputs-image')).every(m => m.contextWindow !== null), 'metaai: all curated chat models carry a context window');
   });
 
   test('openai-compat/mistral: live listing', { skip: skipIfMissing('MISTRAL_API_KEY') }, async () => {

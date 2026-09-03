@@ -1,6 +1,6 @@
 import * as z from 'zod/v4';
 
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoStream, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
 
 import { serverCapitalizeFirstLetter } from '~/server/wire';
 
@@ -74,9 +74,16 @@ const _SPARK_MAX_OUTPUT_TOKENS = 131072;
 // Muse Spark is "tuned to run at the defaults (temperature=1.0, top_p=1.0)" - dev.meta.ai/docs/protocols/responses
 const _SPARK_INITIAL_TEMPERATURE = 1.0;
 
-// Release dates: 1.1 2026-07-09 (ai.meta.com/blog/introducing-muse-spark-meta-model-api), 1.2 2026-08-05
-// (research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2), 1.3 2026-09-02 (Meta research blog, Wikipedia
-// 'Muse Spark' release table). The API exposes no dates (created: 0), so these are editorial.
+// Muse Image 1.0 - image generation over the Responses API ($0.01 per generated image, flat; not modeled in chatPrice).
+// Accepts text + reference images, returns one 'image_generation_call' item with base64 WebP and an empty message. The
+// server streams no item events for it (response.created -> response.completed only, probed 2026-09-02), so it runs
+// non-streaming: the NS parser reads the final output items. Accepts ONLY the image_generation tool (function/web_search
+// tools 400), so no Fn interface and no params; the tool's reasoning_strength/size controls are not wired.
+const _museImageInterfaces: ModelDescriptionSchema['interfaces'] = [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText, LLM_IF_HOTFIX_NoStream];
+
+// Release dates: 1.1 2026-07-09 (ai.meta.com/blog/introducing-muse-spark-meta-model-api, which also dates Muse Image to
+// the same week - 07-07), 1.2 2026-08-05 (research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2), 1.3 2026-09-02
+// (Meta research blog, Wikipedia 'Muse Spark' release table). The API exposes no dates (created: 0), so these are editorial.
 //
 // Array order = display order. Contributor variants are hidden by default: they train on the user's prompts and
 // completions, so opting in should be a deliberate choice (unhide in the models list).
@@ -116,6 +123,14 @@ const _knownMetaAIModels = llmsDefineManualMappings([
     chatPrice: _sparkStandardPrice,
     initialTemperature: _SPARK_INITIAL_TEMPERATURE,
     pubDate: '20260709',
+  },
+  {
+    idPrefix: 'muse-image-1.0',
+    label: 'Muse Image 1.0',
+    description: 'Meta\'s image generation model: generates and edits images from text and reference images, with built-in web and image search. Flat $0.01 per generated image. Non-streaming.',
+    contextWindow: null, // undocumented for the image model (the text prompt is small by construction)
+    interfaces: _museImageInterfaces,
+    pubDate: '20260707',
   },
   {
     idPrefix: 'muse-spark-1.3-contributor',
@@ -178,10 +193,10 @@ export function llmOrtMetaLookup(orModelName: string): OrtVendorLookupResult | u
 }
 
 
-// [Meta AI] The list API is type-blind and the catalog mixes families: 'muse-image-1.0' (image output over Responses,
-// accepts only the image_generation tool) and 'muse-voice-transcribe-1.0' (own /v1/asr endpoints; 404 model_not_found
-// on /v1/responses) are listed next to the chat models and must never reach the chat picker.
-const _METAAI_NON_CHAT_PREFIXES = ['muse-image-', 'muse-voice-transcribe-'];
+// [Meta AI] The list API is type-blind and the catalog mixes families: 'muse-voice-transcribe-1.0' (speech-to-text on its
+// own /v1/asr endpoints; 404 model_not_found on /v1/responses) is listed next to the chat models and must never reach
+// the chat picker. Muse Image stays: it is a Responses-API model with image output (curated above).
+const _METAAI_NON_CHAT_PREFIXES = ['muse-voice-transcribe-'];
 
 
 function _prettyModelId(id: string): string {
