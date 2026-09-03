@@ -109,6 +109,7 @@ const ModelParameterSpec_schema = z.object({
     // OpenAI
     'llmVndOaiReasoningMode',
     'llmVndOaiRestoreMarkdown',
+    'llmVndOaiServiceTier',
     'llmVndOaiVerbosity',
     'llmVndOaiWebSearchContext',
     'llmVndOaiWebSearchGeolocation',

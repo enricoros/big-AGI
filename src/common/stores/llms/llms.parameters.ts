@@ -410,6 +410,18 @@ export const DModelParameterRegistry = {
     // undefined means vendor default ('standard')
   }),
 
+  llmVndOaiServiceTier: _enumDef({
+    // [2026-09-03, OpenAI] request `service_tier`: 'flex' = slower, batch rates; 'fast' (formerly 'priority') = up to 2.5x faster, 2x rates.
+    // Multipliers apply to every token class after the cache discount; per-call tool fees are flat. The response echoes the tier
+    // actually served ('default' on a downgrade), which the parser turns into the confirmed multiplier (metrics $xPrice).
+    label: 'Service Tier',
+    type: 'enum',
+    description: 'Flex: slower at half price. Fast: faster at double price. Downgrades bill at standard rates.',
+    values: ['flex', 'fast'],
+    enumPriceMultiplier: { flex: 0.5, fast: 2 },
+    // undefined means standard processing (omitted from the request)
+  }),
+
   llmVndOaiVerbosity: _enumDef({
     label: 'Verbosity',
     type: 'enum',

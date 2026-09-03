@@ -173,6 +173,10 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (model.vndOaiReasoningMode && openAIDialect !== 'openrouter')
     throw new Error('OpenAI Chat Completions API does not support the Reasoning Mode parameter (Responses API only)');
 
+  // [2026-09-03, OpenAI] processing tier (native only - compatible hosts do not know it)
+  if (model.vndOaiServiceTier && openAIDialect === 'openai')
+    payload.service_tier = model.vndOaiServiceTier;
+
   // [OpenAI] Vendor-specific reasoning effort
   const reasoningEffort = model.reasoningEffort; // ?? model.vndOaiReasoningEffort;
   if (reasoningEffort

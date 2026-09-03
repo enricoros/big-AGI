@@ -212,6 +212,10 @@ export function aixToOpenAIResponses(
   if (model.vndOaiReasoningMode)
     payload.reasoning = { ...payload.reasoning, mode: model.vndOaiReasoningMode };
 
+  // [2026-09-03, OpenAI] processing tier: flex (0.5x) | fast (2x); the response echoes the tier served
+  if (model.vndOaiServiceTier)
+    payload.service_tier = model.vndOaiServiceTier;
+
   // ALWAYS REQUEST Reasoning items: always include encrypted_content if there's any reasoning done; we had this inside the
   // former block, but models can reason even if reasoningEffort === undefined;
   if (!payload.store && reasoningEffort !== 'none') {

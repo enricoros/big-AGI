@@ -156,6 +156,10 @@ export function azureDeploymentToModelDescription(deployment: AzureOpenAIDeploym
   if (AZURE_FORCE_DISABLE_IMAGE_GENERATION_TOOL && restOfModelDescription.parameterSpecs?.length)
     restOfModelDescription.parameterSpecs = restOfModelDescription.parameterSpecs.filter(({ paramId }) => paramId !== 'llmVndOaiImageGeneration');
 
+  // Azure has no processing tiers: drop the OpenAI service tier parameter (the adapters do not send it to Azure either)
+  if (restOfModelDescription.parameterSpecs?.length)
+    restOfModelDescription.parameterSpecs = restOfModelDescription.parameterSpecs.filter(({ paramId }) => paramId !== 'llmVndOaiServiceTier');
+
 
   return {
     id: deploymentName,

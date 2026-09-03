@@ -78,6 +78,12 @@ const _oaiReasoningModeOptions = [
   { value: _UNSPECIFIED, label: 'Default', description: 'Default (Standard)' } as const,
 ] as const;
 
+const _oaiServiceTierOptions = [
+  { value: 'fast', label: 'Fast', description: 'Up to 2.5x faster, 2x price' } as const,
+  { value: 'flex', label: 'Flex', description: 'Slower, half price' } as const,
+  { value: _UNSPECIFIED, label: 'Standard', description: 'Standard processing' } as const,
+] as const;
+
 const _verbosityOptions = [
   { value: 'high', label: 'Detailed', description: 'Thorough responses, great for audits' } as const,
   { value: 'medium', label: 'Balanced', description: 'Standard detail level (default)' } as const,
@@ -283,6 +289,7 @@ export function LLMParametersEditor(props: {
     llmVndOaiEffort,
     llmVndOaiReasoningMode,
     llmVndOaiRestoreMarkdown,
+    llmVndOaiServiceTier,
     llmVndOaiWebSearchContext,
     llmVndOaiWebSearchGeolocation,
     llmVndOaiImageGeneration,
@@ -481,6 +488,19 @@ export function LLMParametersEditor(props: {
           else onChangeParameter({ llmVndOaiReasoningMode: value });
         }}
         options={_oaiReasoningModeOptions}
+      />
+    )}
+    {/* OpenAI Service Tier */}
+    {showParam('llmVndOaiServiceTier') && (
+      <FormSelectControl
+        title='Service Tier'
+        tooltip='Fast: faster at 2x price. Flex: slower at half price. A downgraded request bills at standard rates.'
+        value={llmVndOaiServiceTier ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndOaiServiceTier');
+          else onChangeParameter({ llmVndOaiServiceTier: value });
+        }}
+        options={_oaiServiceTierOptions}
       />
     )}
     {/* Moonshot/Z.ai Thinking */}

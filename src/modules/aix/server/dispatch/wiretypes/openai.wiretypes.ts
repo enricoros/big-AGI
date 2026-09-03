@@ -15,6 +15,15 @@ import * as z from 'zod/v4';
 //
 
 
+/**
+ * Processing tier - request and response, Chat Completions and Responses (xAI echoes it too).
+ * Request: 'flex' (0.5x, slower), 'fast' (2x, up to 2.5x faster; 'priority' is the legacy name, still accepted), 'default', 'auto'.
+ * Response: the tier actually served - 'default' on a downgraded fast/flex request, 'priority' for fast.
+ * Open to new tiers ('ultrafast' is gated today) rather than failing on an unknown value.
+ */
+const OpenAIWire_ServiceTier_schema = z.enum(['auto', 'default', 'flex', 'fast', 'priority']).or(z.string());
+
+
 export namespace OpenAIWire_ContentParts {
 
   /// Content parts - Input
@@ -509,7 +518,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     // (OMITTED BY CHOICE) advanced API configuration
     // store: z.boolean().optional(), // Defaults to false. Whether or not to store the output of this chat completion request for use in our model distillation or evals products.
     // metadata: z.record(z.string(), z.any()).optional(), // Developer-defined tags and values used for filtering completions in [the dashboard](https://platform.openai.com/completions)
-    // service_tier: z.string().optional(),
+    service_tier: OpenAIWire_ServiceTier_schema.nullish(), // [2026-09-03]
 
   });
 
@@ -1691,10 +1700,10 @@ export namespace OpenAIWire_API_Responses {
       // 'computer_call_output.output.image_url',
     ])).optional(), // additional output to include in the response
     user: z.string().optional(), // stable identifier for your end-users
+    service_tier: OpenAIWire_ServiceTier_schema.nullish(), // [2026-09-03]
 
     // Unused
     // metadata: z.record(z.string(), z.any()).optional(), // set of 16 key-value pairs that can be attached to an object
-    // service_tier: z.enum(['auto', 'default', 'flex', 'priority']).nullish(),
     // prompt: z.object({ // reference to a prompt template and its variables
     //   id: z.string(),
     //   version: z.string().optional(),
