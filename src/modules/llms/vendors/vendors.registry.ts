@@ -11,6 +11,7 @@ import { ModelVendorGemini } from './gemini/gemini.vendor';
 import { ModelVendorGroq } from './groq/groq.vendor';
 import { ModelVendorLMStudio } from './lmstudio/lmstudio.vendor';
 import { ModelVendorLocalAI } from './localai/localai.vendor';
+import { ModelVendorMetaAI } from './metaai/metaai.vendor';
 import { ModelVendorMistral } from './mistral/mistral.vendor';
 import { ModelVendorModular } from './modular/modular.vendor';
 import { ModelVendorMoonshot } from './moonshot/moonshot.vendor';
@@ -39,6 +40,7 @@ export type ModelVendorId =
   | 'groq'
   | 'lmstudio'
   | 'localai'
+  | 'metaai'
   | 'mistral'
   | 'modular'
   | 'moonshot'
@@ -66,6 +68,7 @@ const MODEL_VENDOR_REGISTRY = {
   groq: ModelVendorGroq,
   lmstudio: ModelVendorLMStudio,
   localai: ModelVendorLocalAI,
+  metaai: ModelVendorMetaAI,
   mistral: ModelVendorMistral,
   modular: ModelVendorModular,
   moonshot: ModelVendorMoonshot,

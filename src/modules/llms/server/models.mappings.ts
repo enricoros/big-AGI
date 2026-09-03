@@ -13,7 +13,7 @@ import type { ModelDescriptionSchema } from './llm.server.types';
  * Not an "uncatalogued" badge: API-characterized 0-day arrivals stay unmarked.
  *
  * Mark:    type-blind catalogs (ids only), where a video/TTS/embedding id could masquerade as
- *          chat - nvidianim, modular, sakanaai, moonshot, groq, deepseek, alibaba - plus the
+ *          chat - nvidianim, modular, sakanaai, metaai, moonshot, groq, deepseek, alibaba - plus the
  *          'super' resolution below (unknown variant of a known family).
  * Don't:   a type/modality filter proves chat - gemini, xai, together, novita, chutesai, cerebras.
  *

@@ -558,6 +558,12 @@ export function prettyShortChatModelName(model: string | undefined): string {
       .replace(/-20\d{6}$/, '') // strip dated snapshot suffix (e.g. -20260615)
       .split('-').map(s => /^v\d/.test(s) ? s : s.charAt(0).toUpperCase() + s.slice(1)).join(' '); // keep version tokens as-is (v1.1, not V1.1)
   }
+  // [Meta AI] muse-spark-1.3, muse-spark-1.3-contributor, muse-image-1.0 (service prefix already stripped by the auto-label heuristic)
+  if (model.startsWith('muse-')) {
+    return model
+      .replace(/-contributor$/, ' (Contributor)')
+      .split('-').map(s => /^\d/.test(s) ? s : s.charAt(0).toUpperCase() + s.slice(1)).join(' '); // keep version tokens as-is (1.3)
+  }
   // [FireworksAI]
   if (model.includes('accounts/')) {
     const index = model.indexOf('accounts/');

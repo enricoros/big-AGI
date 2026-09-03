@@ -18,6 +18,7 @@ import { GeminiServiceSetup } from '../vendors/gemini/GeminiServiceSetup';
 import { GroqServiceSetup } from '../vendors/groq/GroqServiceSetup';
 import { LMStudioServiceSetup } from '../vendors/lmstudio/LMStudioServiceSetup';
 import { LocalAIServiceSetup } from '../vendors/localai/LocalAIServiceSetup';
+import { MetaAIServiceSetup } from '../vendors/metaai/MetaAIServiceSetup';
 import { MistralServiceSetup } from '../vendors/mistral/MistralServiceSetup';
 import { ModularServiceSetup } from '../vendors/modular/ModularServiceSetup';
 import { MoonshotServiceSetup } from '../vendors/moonshot/MoonshotServiceSetup';
@@ -49,6 +50,7 @@ const vendorSetupComponents: Record<ModelVendorId, React.ComponentType<{ service
   groq: GroqServiceSetup,
   lmstudio: LMStudioServiceSetup,
   localai: LocalAIServiceSetup,
+  metaai: MetaAIServiceSetup,
   mistral: MistralServiceSetup,
   modular: ModularServiceSetup,
   moonshot: MoonshotServiceSetup,
@@ -80,6 +82,7 @@ export const VENDOR_DOCS: Record<ModelVendorId, SiteDocSlug> = {
   groq: 'connect-groq',
   lmstudio: 'connect-lmstudio',
   localai: 'connect-localai',
+  metaai: 'connect-meta',
   mistral: 'connect-mistral',
   modular: 'connect-modular',
   moonshot: 'connect-moonshot-ai',

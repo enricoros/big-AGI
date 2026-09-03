@@ -9,6 +9,7 @@ import { llmOrtAntLookup_ThinkingVariants } from '../../anthropic/anthropic.mode
 import { llmOrtGemLookup } from '../../gemini/gemini.models';
 import { llmOrtMoonshotLookup } from './moonshot.models';
 import { llmOrtOaiLookup } from './openai.models';
+import { llmOrtMetaLookup } from './metaai.models';
 import { llmOrtSakLookup } from './sakanaai.models';
 import { llmOrtXaiLookup } from './xai.models';
 import { llmOrtZaiLookup } from './zai.models';
@@ -388,7 +389,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       }
       break;
 
-    case modelIdUnaliased.startsWith('x-ai/') || modelIdUnaliased.startsWith('moonshotai/') || modelIdUnaliased.startsWith('z-ai/') || modelIdUnaliased.startsWith('deepseek/') || modelIdUnaliased.startsWith('sakana/'):
+    case modelIdUnaliased.startsWith('x-ai/') || modelIdUnaliased.startsWith('moonshotai/') || modelIdUnaliased.startsWith('z-ai/') || modelIdUnaliased.startsWith('deepseek/') || modelIdUnaliased.startsWith('sakana/') || modelIdUnaliased.startsWith('meta/'):
       // inherit native truth (pubDate + real effort ladders): OR's own reasoning fields and `created` are unreliable here
       if (modelIdUnaliased.startsWith('x-ai/'))
         _mergeLookup(llmOrtXaiLookup(llmRef));
@@ -398,6 +399,8 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
         _mergeLookup(llmOrtZaiLookup(llmRef));
       else if (modelIdUnaliased.startsWith('sakana/'))
         _mergeLookup(llmOrtSakLookup(llmRef));
+      else if (modelIdUnaliased.startsWith('meta/'))
+        _mergeLookup(llmOrtMetaLookup(llmRef)); // Muse Spark; 'meta/muse-glimmer-30b' (open weights, not on api.meta.ai) falls through
 
       // ':free' tiers are thinner than their paid twin (glm-5.2:free has no tool endpoints, probed 2026-08-17): OR's
       // per-endpoint `supported_parameters` wins over the inherited Fn interface

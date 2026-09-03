@@ -4,9 +4,9 @@
  * This module only imports zod for schema definition and provides access logic
  * that works identically on server and client environments.
  *
- * Supports 19 OpenAI-compatible dialects: alibaba, azure, cerebras, cohere, deepseek, groq, lmstudio,
- * localai, mistral, modular, moonshot, nvidianim, openai, openrouter, perplexity, sakanaai, togetherai,
- * xai, zai
+ * Supports 20 OpenAI-compatible dialects: alibaba, azure, cerebras, cohere, deepseek, groq, lmstudio,
+ * localai, metaai, mistral, modular, moonshot, nvidianim, openai, openrouter, perplexity, sakanaai,
+ * togetherai, xai, zai
  */
 
 import * as z from 'zod/v4';
@@ -28,6 +28,7 @@ const DEFAULT_DEEPSEEK_HOST = 'https://api.deepseek.com';
 const DEFAULT_GROQ_HOST = 'https://api.groq.com/openai';
 const DEFAULT_LMSTUDIO_HOST = 'http://localhost:1234';
 const DEFAULT_LOCALAI_HOST = 'http://127.0.0.1:8080';
+const DEFAULT_METAAI_HOST = 'https://api.meta.ai'; // Meta AI (the Meta Model API) - Responses, Chat Completions and Messages under /v1
 const DEFAULT_MISTRAL_HOST = 'https://api.mistral.ai';
 const DEFAULT_MODULAR_HOST = 'https://api.modular.com'; // Modular Cloud - host is user-overridable to point at a self-hosted MAX server
 const DEFAULT_MOONSHOT_HOST = 'https://api.moonshot.ai';
@@ -95,7 +96,7 @@ export type OpenAIAccessSchema = z.infer<typeof openAIAccessSchema>;
 export const openAIAccessSchema = z.object({
   dialect: z.enum([
     'alibaba', 'azure', 'cerebras', 'cohere', 'deepseek', 'groq', 'lmstudio',
-    'localai', 'mistral', 'modular', 'moonshot', 'nvidianim', 'openai',
+    'localai', 'metaai', 'mistral', 'modular', 'moonshot', 'nvidianim', 'openai',
     'openrouter', 'perplexity', 'sakanaai', 'togetherai', 'xai', 'zai',
   ]),
   clientSideFetch: z.boolean().optional(), // optional: backward compatibility from newer server version - can remove once all clients are updated
@@ -228,6 +229,27 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           ...(localAIKey && { Authorization: `Bearer ${localAIKey}` }),
         },
         url: localAIHost + apiPath,
+      };
+
+    case 'metaai':
+      // [Meta AI, 2026-09-02] Meta Model API (api.meta.ai): Muse models over the OpenAI Responses API (Chat Completions and
+      // Anthropic Messages are also served, but only Responses carries reasoning across turns) - https://dev.meta.ai/docs/api-reference
+      // Bearer key; served keys are 'LLM_<digits>_<secret>' (the docs print 'LLM|...'). Unknown top-level request params 400.
+      let metaaiKey = access.oaiKey || env.METAAI_API_KEY || '';
+      const metaaiHost = llmsFixupHost(access.oaiHost || env.METAAI_API_HOST || DEFAULT_METAAI_HOST, apiPath);
+
+      // Use function to select a random key if multiple keys are provided
+      metaaiKey = llmsRandomKeyFromMultiKey(metaaiKey);
+
+      if (!metaaiKey || !metaaiHost)
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Meta AI API Key or Host. Add it on the UI (Models Setup) or server side (your deployment).' });
+
+      return {
+        headers: {
+          'Authorization': `Bearer ${metaaiKey}`,
+          'Content-Type': 'application/json',
+        },
+        url: metaaiHost + apiPath,
       };
 
     case 'mistral':

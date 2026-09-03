@@ -182,7 +182,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     && openAIDialect !== 'nvidianim' // NVIDIA rejects unknown params and gpt-oss strictly validates reasoning_effort - dedicated block below
     && openAIDialect !== 'perplexity' // Perplexity has its own block below with stricter validation
   ) {
-    // for: 'azure' | 'cerebras' | 'cohere' | 'groq' | 'lmstudio' | 'localai' | 'mistral' | 'modular' | 'openai' | 'sakanaai' | 'togetherai' | 'xai'
+    // for: 'azure' | 'cerebras' | 'cohere' | 'groq' | 'lmstudio' | 'localai' | 'metaai' | 'mistral' | 'modular' | 'openai' | 'sakanaai' | 'togetherai' | 'xai'
     payload.reasoning_effort = reasoningEffort;
   }
 

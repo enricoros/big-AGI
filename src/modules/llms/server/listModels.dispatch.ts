@@ -51,6 +51,7 @@ import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/model
 import { nvidiaNIMHeuristic, nvidiaNIMModelsToModelDescriptions } from './openai/models/nvidianim.models';
 import { lmStudioFetchModels, lmStudioModelsToModelDescriptions } from './openai/models/lmstudio.models';
 import { localAIModelSortFn, localAIModelToModelDescription } from './openai/models/localai.models';
+import { metaAIModelsToModelDescriptions } from './openai/models/metaai.models';
 import { mistralModels } from './openai/models/mistral.models';
 import { modularModelsToModelDescriptions } from './openai/models/modular.models';
 import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescription } from './openai/models/moonshot.models';
@@ -388,6 +389,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'deepseek':
     case 'groq':
     case 'localai':
+    case 'metaai':
     case 'mistral':
     case 'modular':
     case 'moonshot':
@@ -488,6 +490,11 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               return maybeModels
                 .map(({ id }) => localAIModelToModelDescription(id))
                 .sort(localAIModelSortFn);
+
+            case 'metaai':
+              // [Meta AI] ids-only list (created is a constant 0, no type field): caps/pricing/params from the curated
+              // table, the image and transcription ids are filtered out by name
+              return metaAIModelsToModelDescriptions(maybeModels);
 
             case 'mistral':
               return mistralModels(maybeModels);

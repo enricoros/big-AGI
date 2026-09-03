@@ -175,5 +175,13 @@
     "oaiOrg": "",
     "oaiHost": "",
     "heliKey": ""
+  },
+  "metaai": {
+    "_comment": "Meta AI (api.meta.ai, the Meta Model API) - Muse Spark family over the Responses API, curated catalog (ids-only list)",
+    "dialect": "metaai",
+    "oaiKey": "YOUR_METAAI_API_KEY_HERE",
+    "oaiOrg": "",
+    "oaiHost": "",
+    "heliKey": ""
   }
 }

@@ -19,6 +19,7 @@ export type SitePageSlug =
   | 'gemini'
   | 'groq'
   | 'localai'
+  | 'meta'
   | 'minimax'
   | 'mistral'
   | 'models'

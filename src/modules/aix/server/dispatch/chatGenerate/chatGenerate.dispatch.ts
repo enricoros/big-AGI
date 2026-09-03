@@ -272,6 +272,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     case 'groq':
     case 'lmstudio':
     case 'localai':
+    case 'metaai':
     case 'mistral':
     case 'modular':
     case 'moonshot':
@@ -394,6 +395,7 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
     case 'groq':
     case 'lmstudio':
     case 'localai':
+    case 'metaai':
     case 'mistral':
     case 'modular':
     case 'moonshot':
