@@ -55,11 +55,8 @@ export const useAIPreferencesStore = create<AIPreferencesState & AIPreferencesAc
 
 }), {
   name: 'app-ai-preferences',
-  version: 1,
-  migrate: (state: any, fromVersion: number): AIPreferencesState => {
-    // this is here just to silence a warning when downgrading from dev
-    return state;
-  },
+  version: 2, // matches the hosted branch, which persists more fields under this key
+  migrate: (state: any): AIPreferencesState => state, // no shape change here: passthrough re-stamps older blobs, keeps unknown fields
 }));
 
 
