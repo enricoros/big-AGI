@@ -51,8 +51,9 @@ const _RSP_DIALECT_QUIRKS: Partial<Record<OpenAIDialects, Partial<RspDialectQuir
   // [Azure] lags OpenAI: no web search ("Hosted tool 'web_search' is not supported", still true 2025-11-18), no code interpreter,
   // no WebP image output, and the message phase / reasoning.context schema fields may lag too
   azure: { emitMessagePhase: false, reasoningContextAllTurns: false, webSearchTool: 'none', codeInterpreterTool: false, imageGenWebP: false },
-  // [Sakana.ai] bare web_search tool (context size tolerated since ~2026-07 but undocumented)
-  sakanaai: { webSearchTool: 'bare' },
+  // [Sakana.ai] bare web_search tool (context size tolerated since ~2026-07 but undocumented); own namespace: its encrypted reasoning
+  // items are Sakana-private (unusable at OpenAI, and vice versa)
+  sakanaai: { vndNamespace: 'sakanaai', webSearchTool: 'bare' },
   // [xAI] own adapter (xai.responsesCreate.ts) and own namespace; listed for the parser tag only
   xai: { vndNamespace: 'xai' },
 };

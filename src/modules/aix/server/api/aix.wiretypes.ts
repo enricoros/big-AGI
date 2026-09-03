@@ -103,7 +103,7 @@ export namespace AixWire_Vendors {
    * Adding one: append here, add the key in `AixWire_Parts._vnd` and in `DMessageFragmentVendorState` (chat.fragments.ts),
    * then map the transport dialect to it in openai.responsesCreate.ts (`_RSP_DIALECT_QUIRKS`).
    */
-  export const RSP_VENDORS = ['openai', 'xai'] as const satisfies (keyof DMessageFragmentVendorStateKnown)[];
+  export const RSP_VENDORS = ['openai', 'sakanaai', 'xai'] as const satisfies (keyof DMessageFragmentVendorStateKnown)[];
   export type RspVendor = typeof RSP_VENDORS[number];
   export function isRspVendor(vendor: string): vendor is RspVendor {
     return (RSP_VENDORS as readonly string[]).includes(vendor);
@@ -135,6 +135,7 @@ export namespace AixWire_Vendors {
     // one optional key per Responses dialect - `satisfies` keeps this list in lockstep with RSP_VENDORS
     ...({
       openai: _RspVndState_schema.optional(),
+      sakanaai: _RspVndState_schema.optional(),
       xai: _RspVndState_schema.optional(),
     } satisfies Record<RspVendor, z.ZodOptional<typeof _RspVndState_schema>>),
   });
