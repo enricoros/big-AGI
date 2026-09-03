@@ -15,6 +15,22 @@ export type LlmsOpenAIModelId = typeof _knownOpenAIChatModels[number]['idPrefix'
 // OpenAI Model Variants
 export const hardcodedOpenAIVariants: ModelVariantMap = {
 
+  // GPT-6 Astra: Pro reasoning mode, carried over from 5.6 (not yet probed on Astra; Sol Pro: whole answers, ~1.7K token scaffold)
+  'gpt-6-astra': {
+    idVariant: '::pro',
+    label: 'GPT-6 Astra Pro',
+    description: 'GPT-6 Astra with Pro reasoning mode: performs additional model work for the hardest problems. Answers arrive whole (no incremental streaming), billed at standard GPT-6 Astra rates.',
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningMode', initialValue: 'pro', hidden: true }, // factory 'pro', not changeable
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+  },
+
   // GPT-5.6 Sol: Pro reasoning mode (successor to the standalone '-pro' models - gpt-5.6-pro does not exist),
   // and reasoning disabled (non-thinking) - both verified live 2026-07-10
   'gpt-5.6-sol': [
@@ -146,6 +162,45 @@ const IFS_CHAT_CACHE_REASON: DModelInterfaceV1[] = [LLM_IF_OAI_Chat, LLM_IF_OAI_
 type _OpenAIModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 
 export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
+
+  /// GPT-6 series - released September 3, 2026 (Trusted Access enterprises first; API and ChatGPT plans "in the coming days")
+  // Single tier so far; the id is the stable pointer (no dated snapshot, no bare 'gpt-6' alias in the docs).
+  // From the official model page + guide (2026-09-03), not yet live-probed:
+  // - 1,050,000 context (922,000 max input) / 128,000 max output / knowledge cutoff Apr 30, 2026; text+image in, text out
+  // - reasoning.effort: low|medium|high|xhigh|max - 'none' and 'minimal' rejected, so no No-thinking variant; reasoning.mode 'pro' works
+  // - no temperature/top_p/logprobs; tool calling requires the Responses API (Chat Completions: text only)
+  // - tools: web_search, file_search, image_generation, code_interpreter, hosted_shell, apply_patch, skills, computer_use, mcp, tool_search
+  // - not modeled in chatPrice: cache WRITE $12.50 (1.25x input, see the 5.6 FIXME below), Batch/Flex 50%, Fast 2x
+  // Shipped alongside, not adopted: async tool calling (`async: true` on tools), mid-turn steering over WebSockets,
+  // `configuration_update` input items (change effort mid-conversation, cache prefix intact), `prompt_cache_options.ttl: '30m'`
+  // replacing `prompt_cache_retention`, asynchronous misalignment monitoring (can stop a conversation for review).
+
+  // GPT-6 Astra - flagship
+  {
+    idPrefix: 'gpt-6-astra',
+    label: 'GPT-6 Astra',
+    pubDate: '20260903',
+    description: 'Most capable OpenAI model, built for the hardest end-to-end work: reasoning, coding, computer use, research, and document creation. Fewer output tokens per task than GPT-5.6 Sol. 1M token context.',
+    contextWindow: 1050000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiReasoningMode' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: { // >272K input tokens: the full request bills at 2x input/cache, 1.5x output
+      input: [{ upTo: 272000, price: 10 }, { upTo: null, price: 20 }],
+      output: [{ upTo: 272000, price: 50 }, { upTo: null, price: 75 }],
+      cache: { cType: 'oai-ac', read: [{ upTo: 272000, price: 1 }, { upTo: null, price: 2 }] },
+    },
+    // benchmark: no arena data yet
+  },
+
 
   /// GPT-5.6 series - Announced June 26, 2026 (limited preview); GA on the API July 9, 2026 (tier pointers listed on /v1/models)
   // New naming: the number is the generation; Sol/Terra/Luna are durable capability tiers (intelligence/balance/cost).
@@ -1309,6 +1364,9 @@ export function openAIInjectVariants(acc: ModelDescriptionSchema[], model: Model
 
 
 const _manualOrderingIdPrefixes = [
+  // GPT-6
+  'gpt-6-astra',
+  'gpt-6-',
   // GPT-5.6 (Sol/Terra/Luna tiers)
   'gpt-5.6-sol',
   'gpt-5.6-terra',
