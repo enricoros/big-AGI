@@ -8,4 +8,5 @@ export type ChatExecuteMode =
   | 'generate-content'
   | 'generate-image'
   | 'react-content'
+  | 'slm-content'
   ;
