@@ -13,6 +13,7 @@
  */
 
 import type { AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
+import { AixWire_Vendors } from '~/modules/aix/server/api/aix.wiretypes';
 import { AixDemuxers } from '~/modules/aix/server/dispatch/stream.demuxers';
 
 import type { LabEvent, LabRun } from './trace';
@@ -698,7 +699,7 @@ function _particleAtoms(particles: AixWire_Particles.ChatGenerateOp[]): _WireAto
         case 'svs':
           // opaque continuity blobs ARE the signature representation for some vendors
           if ((p.vendor === 'gemini' && (p.state as any)?.thoughtSignature)
-            || ((p.vendor === 'openai' || p.vendor === 'xai') && (p.state as any)?.reasoningItem?.encryptedContent))
+            || (AixWire_Vendors.isRspVendor(p.vendor) && (p.state as any)?.reasoningItem?.encryptedContent))
             atoms.reasoningSigs++;
           break;
       }

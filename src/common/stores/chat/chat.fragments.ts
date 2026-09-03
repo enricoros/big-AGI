@@ -98,27 +98,26 @@ type _DMessageFragmentWrapper<TFragment, TPart extends { pt: string }> = {
  * - Lossy-safe: Can be dropped during conversion/export without breaking functionality.
  * - Graceful-degrade on missing.
  */
-export type DMessageFragmentVendorState = Record<string, unknown> & {
+export type DMessageFragmentVendorState = Record<string, unknown> & DMessageFragmentVendorStateKnown;
+export type DMessageFragmentVendorStateKnown = {
+  // Future: anthropic?: { ... }
   gemini?: {
     thoughtSignature?: string; // Gemini 3+ - echoed back to maintain reasoning context
   };
-  openai?: {
-    // Responses API reasoning item continuity handle.
-    // IMPORTANT: OpenAI-private encryption + server-side item id; never round-trip to xAI.
-    reasoningItem?: { id?: string; encryptedContent?: string; };
-    // Responses API message phase (on text fragments): 'commentary' (preamble/progress) vs 'final_answer'.
-    // gpt-5.4+ set it on every assistant message; replayed on follow-up requests.
-    phase?: 'commentary' | 'final_answer';
-  };
-  xai?: {
-    // xAI Responses API reasoning item continuity handle.
-    // IMPORTANT: xAI-private encryption + server-side item id; never round-trip to OpenAI.
-    reasoningItem?: { id?: string; encryptedContent?: string; };
-    // message phase - captured via the shared Responses parser; not replayed to xAI yet
-    phase?: 'commentary' | 'final_answer';
-  };
-  // Future: anthropic?: { ... }
+  // Responses-API vendors (AixWire_Vendors.RSP_VENDORS in aix.wiretypes.ts): one namespace each, same shape. The handles are
+  // vendor-server-private (encryption keys + item ids): OpenAI's never go to xAI, and vice versa.
+  openai?: _DMessageFragmentRspState;
+  xai?: _DMessageFragmentRspState;
 }
+
+// Responses-API continuity state, one namespace per vendor (mirrors AixWire_Parts._vnd.<AixWire_Vendors.RspVendor>)
+type _DMessageFragmentRspState = {
+  // reasoning item continuity handle (rs_... id + encrypted_content), replayed on follow-up requests to the SAME vendor
+  reasoningItem?: { id?: string; encryptedContent?: string; };
+  // message phase on text fragments: 'commentary' (preamble/progress) vs 'final_answer'; replayed on follow-up requests
+  phase?: 'commentary' | 'final_answer';
+};
+
 
 
 /// Parts - STABLE ///

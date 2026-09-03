@@ -1,7 +1,7 @@
 import * as z from 'zod/v4';
 
 // Used to align Particles to the Typescript definitions from the frontend-side, on 'chat.fragments.ts'
-import type { DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
+import type { DMessageFragmentVendorStateKnown, DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
 
 import { anthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.access';
 import { bedrockAccessSchema } from '~/modules/llms/server/bedrock/bedrock.access';
@@ -92,47 +92,63 @@ export namespace OpenAPI_Schema {
 
 }
 
+
+export namespace AixWire_Vendors {
+
+  /**
+   * Responses-API dialect vendors: the OpenAI Responses wire format is shared by these, but each keeps its OWN `_vnd`
+   * namespace for continuity state (encrypted reasoning blobs, server-side item ids, message phase) - the blobs are
+   * vendor-server-private and must round-trip back to the SAME vendor only (OpenAI 404s "Item with id rs_... not
+   * found"). The parser is tagged with the dialect, the adapter reads its own key.
+   * Adding one: append here, add the key in `AixWire_Parts._vnd` and in `DMessageFragmentVendorState` (chat.fragments.ts),
+   * then map the transport dialect to it in openai.responsesCreate.ts (`_RSP_DIALECT_QUIRKS`).
+   */
+  export const RSP_VENDORS = ['openai', 'xai'] as const satisfies (keyof DMessageFragmentVendorStateKnown)[];
+  export type RspVendor = typeof RSP_VENDORS[number];
+  export function isRspVendor(vendor: string): vendor is RspVendor {
+    return (RSP_VENDORS as readonly string[]).includes(vendor);
+  }
+
+  /** One Responses-dialect namespace - the same shape for every RspVendor */
+  const _RspVndState_schema = z.object({
+    // reasoning item continuity handle: mirrors the source output item ({ id, encrypted_content }); parallels
+    // _vnd Anthropic's { container: { id, expiresAt } } pattern
+    reasoningItem: z.object({
+      id: z.string().optional(),               // rs_... - item id
+      encryptedContent: z.string().optional(), // blob returned when include:['reasoning.encrypted_content']
+    }).optional(),
+    // message phase (on text parts): gpt-5.4+ tags assistant messages 'commentary' | 'final_answer';
+    // resent on replay (dropping it degrades performance per OpenAI docs)
+    phase: z.enum(['commentary', 'final_answer']).optional(),
+  });
+
+  /**
+   * Every namespace is optional and any subset may be present (a fragment normally carries one vendor's state).
+   * NOTE: not a z.record / z.partialRecord over the enum: in zod 4 an enum-keyed record rejects every key outside the
+   * enum (`invalid_key`, verified 4.4.3), so it can neither sit next to `gemini` nor tolerate state from a vendor this
+   * build does not know. A z.object strips unknown keys instead - dropped, not fatal.
+   */
+  export const VndState_schema = z.object({
+    gemini: z.object({
+      thoughtSignature: z.string().optional(),
+    }).optional(),
+    // one optional key per Responses dialect - `satisfies` keeps this list in lockstep with RSP_VENDORS
+    ...({
+      openai: _RspVndState_schema.optional(),
+      xai: _RspVndState_schema.optional(),
+    } satisfies Record<RspVendor, z.ZodOptional<typeof _RspVndState_schema>>),
+  });
+
+}
+
+
 export namespace AixWire_Parts {
 
   /** Parts that come from the model shall inherit this, so they can echo-back vendor data */
   const _BasePart_schema = z.object({
 
     /** DMessageFragment.vendorState <- model-generated, vendor-specific opaque state (protocol continuity, not content) */
-    _vnd: z.object({
-      gemini: z.object({
-        thoughtSignature: z.string().optional(),
-      }).optional(),
-      openai: z.object({
-        // Responses API reasoning item continuity handle. Sub-object mirrors the shape of the source output item
-        // and parallels _vnd Anthropic's { container: { id, expiresAt } } pattern.
-        // IMPORTANT: this blob is OpenAI-server-encrypted; do NOT round-trip to xAI (different keys + private item ids).
-        reasoningItem: z.object({
-          id: z.string().optional(),               // rs_... - item id
-          encryptedContent: z.string().optional(), // blob returned when include:['reasoning.encrypted_content']
-        }).optional(),
-        // Responses API message phase (on text parts): gpt-5.4+ set it on every assistant message;
-        // resent on replay (dropping it degrades performance per OpenAI docs)
-        phase: z.enum(['commentary', 'final_answer']).optional(),
-      }).optional(),
-      xai: z.object({
-        // xAI Responses API reasoning item continuity handle. Same WIRE shape as OpenAI's, but the encrypted_content
-        // is encrypted with xAI's keys and the item id references xAI server state - NOT cross-portable to OpenAI.
-        reasoningItem: z.object({
-          id: z.string().optional(),
-          encryptedContent: z.string().optional(),
-        }).optional(),
-        // message phase - captured via the shared Responses parser; not replayed to xAI yet
-        phase: z.enum(['commentary', 'final_answer']).optional(),
-      }).optional(),
-      // NOTE: we do NOT use this mechanism for per-vendor customization/ALT for parts
-      // anthropic: z.object({
-      //   containerUpload: z.object({
-      //     fileId: z.string(),
-      //     containerId: z.string().optional(),
-      //   }).optional(),
-      // }).optional(),
-    }).optional(),
-    // _vnd: z.record(z.string(), z.unknown()).optional(),
+    _vnd: AixWire_Vendors.VndState_schema.optional(),
 
   });
 
@@ -839,8 +855,7 @@ export namespace AixWire_Particles {
       | { vendor: 'openai-container', state: { container: { id: string; expiresAt: string } } } // message-level - OpenAI Responses code-interpreter container reuse; 20min TTL stamped by parser
       | { vendor: 'gemini-envid', state: { environment: { id: string; expiresAt: string | null } } } // message-level - Gemini Interactions sandbox handle (today: Antigravity); 7d TTL stamped by parser
       | { vendor: 'gemini', state: { thoughtSignature: string } } // fragment-level
-      | { vendor: 'openai', state: { reasoningItem?: { id?: string, encryptedContent?: string }, messagePhase?: 'commentary' | 'final_answer' } } // fragment-level: reasoningItem attaches to the last (ma) fragment; messagePhase breaks + tags the NEXT text fragment
-      | { vendor: 'xai', state: { reasoningItem?: { id?: string, encryptedContent?: string }, messagePhase?: 'commentary' | 'final_answer' } } // fragment-level - DISTINCT from openai (different encryption keys, different server-side ids)
+      | { vendor: AixWire_Vendors.RspVendor, state: { reasoningItem?: { id?: string, encryptedContent?: string }, messagePhase?: 'commentary' | 'final_answer' } } // fragment-level, one namespace per Responses vendor (AixWire_Vendors.RSP_VENDORS): reasoningItem attaches to the last (ma) fragment; messagePhase breaks + tags the NEXT text fragment. Vendor-private (keys + server-side ids), never crosses namespaces
       // | { vendor: string, state: Record<string, unknown> } // disable catch-all becasue it forces casts in type discriminations
       )
     ;

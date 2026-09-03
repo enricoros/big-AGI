@@ -10,6 +10,7 @@ import { imageBlobConvertType, imageBlobResizeIfNeeded, LLMImageResizeMode } fro
 
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_UserMessage, AixParts_InlineImagePart, AixParts_MetaCacheControl, AixParts_MetaInReferenceToPart, AixParts_ModelAuxPart } from '../server/api/aix.wiretypes';
+import { AixWire_Vendors } from '../server/api/aix.wiretypes';
 
 // TODO: remove console messages to zero, or replace with throws or something
 
@@ -425,12 +426,12 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
           case 'ma':
             // Preserve reasoning continuity across turns. Three channels, any one is sufficient:
             // - Anthropic: part.textSignature / part.redactedData (bespoke fields, see Anthropic extended thinking docs)
-            // - OpenAI Responses / Gemini: _vnd sidecar (reasoningItem.* / thoughtSignature, opaque continuity handle)
+            // - Responses vendors (AixWire_Vendors.RSP_VENDORS) / Gemini: _vnd sidecar (reasoningItem.* / thoughtSignature, opaque continuity handle)
             // - DeepSeek V4 (OpenAI chat-completions): plain reasoning text in aText is the payload itself
-            const oaiReasoning = _vnd?.openai?.reasoningItem;
+            const rspReasoning = _vnd && AixWire_Vendors.RSP_VENDORS.map(d => _vnd[d]?.reasoningItem).find(r => !!r); // any namespace: the adapter replays only its own
             const hasReasoningHandle =
               (aPart.textSignature || aPart.redactedData?.length)
-              || (oaiReasoning?.encryptedContent || oaiReasoning?.id)
+              || (rspReasoning?.encryptedContent || rspReasoning?.id)
               || (aPart.aText && aPart.aType === 'reasoning'); // DeepSeek V4 reasoning in plain text - NOTE: will send LOTS of 'ma' parts (e.g. to Gemini, which doesn't even need them)
             if (hasReasoningHandle) {
               const aModelAuxPart = aPart as AixParts_ModelAuxPart; // NOTE: this is a forced cast from readonly string[] to string[], but not a big deal here

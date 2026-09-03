@@ -1,5 +1,5 @@
 import { DMessage, messageFragmentsReduceText } from './chat.message';
-import { isVoidThinkingFragment } from './chat.fragments';
+import { isVoidThinkingFragment, type DMessageFragmentVendorStateKnown } from './chat.fragments';
 
 
 // configuration
@@ -71,16 +71,28 @@ export function messageMeasureSizes(message: DMessage | undefined): MsgMeasureSi
         for (const blob of fragment.part.redactedData)
           reasoningEncBytes += _b64ApproxBytes(blob);
     }
-    // per-fragment vendor reasoning sidecars (opaque/encrypted): Gemini signature, OpenAI/xAI reasoning items
+    // per-fragment vendor reasoning sidecars (opaque/encrypted): Gemini signature, Responses-dialect reasoning items
     const vs = 'vendorState' in fragment ? fragment.vendorState : undefined;
     if (vs) {
-      if (vs.gemini?.thoughtSignature)
-        reasoningEncBytes += _b64ApproxBytes(vs.gemini.thoughtSignature);
-      if (vs.openai?.reasoningItem?.encryptedContent)
-        reasoningEncBytes += _b64ApproxBytes(vs.openai.reasoningItem.encryptedContent);
-      if (vs.xai?.reasoningItem?.encryptedContent)
-        reasoningEncBytes += _b64ApproxBytes(vs.xai.reasoningItem.encryptedContent);
-      // NOTE: add more in the future if we have vendor state on a Fragment which contains reasoning
+      // exhaustive over the known namespaces: a key added to DMessageFragmentVendorStateKnown fails the never check
+      // below until handled here; keys at rest that are not known (index signature) fall into default and are skipped
+      for (const key of Object.keys(vs)) {
+        const vendor = key as keyof DMessageFragmentVendorStateKnown;
+        switch (vendor) {
+          case 'gemini':
+            if (vs.gemini?.thoughtSignature)
+              reasoningEncBytes += _b64ApproxBytes(vs.gemini.thoughtSignature);
+            break;
+          case 'openai':
+          case 'xai':
+            if (vs[vendor]?.reasoningItem?.encryptedContent)
+              reasoningEncBytes += _b64ApproxBytes(vs[vendor].reasoningItem.encryptedContent);
+            break;
+          default:
+            const _exhaustiveCheck: never = vendor;
+            break;
+        }
+      }
     }
   }
 

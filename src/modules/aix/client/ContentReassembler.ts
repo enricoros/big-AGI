@@ -11,6 +11,7 @@ import { metricsChatGenerateLgToMd, metricsFinishChatGenerateLg, metricsPendChat
 import { nanoidToUuidV4 } from '~/common/util/idUtils';
 
 import type { AixWire_Particles } from '../server/api/aix.wiretypes';
+import { AixWire_Vendors } from '../server/api/aix.wiretypes';
 
 import type { AixClientDebugger, AixFrameId } from './debugger/memstore-aix-client-debugger';
 import { aixClientDebugger_completeFrame, aixClientDebugger_init, aixClientDebugger_recordParticleReceived, aixClientDebugger_setProfilerMeasurements, aixClientDebugger_setRequest } from './debugger/reassembler-debug';
@@ -69,7 +70,7 @@ type ReassemblyState = AixChatGenerateContent_LL & {
   /** Cursor: index of the open text fragment for appending, or null if none is open */
   _textFragmentIndex: number | null;
   /** Pending message phase (OpenAI/xAI Responses): set at message-item open, stamped on the NEXT text fragment created */
-  _pendingTextPhase: { vendor: 'openai' | 'xai', phase: 'commentary' | 'final_answer' } | null;
+  _pendingTextPhase: { rspVendor: AixWire_Vendors.RspVendor, phase: 'commentary' | 'final_answer' } | null;
   /** set/overwritten during streaming, consumed by finalizeReassembly() */
   cgMetricsLg: undefined | AixChatGenerateContent_LL_Result['cgMetricsLg'];
   /** Raw termination cause: undetermined yet, client-set, or received from the wire on {cg:'end'} */
@@ -496,7 +497,7 @@ export class ContentReassembler {
 
     // stamp the pending message phase on the new text fragment
     if (this.S._pendingTextPhase) {
-      newTextFragment.vendorState = { [this.S._pendingTextPhase.vendor]: { phase: this.S._pendingTextPhase.phase } };
+      newTextFragment.vendorState = { [this.S._pendingTextPhase.rspVendor]: { phase: this.S._pendingTextPhase.phase } };
       this.S._pendingTextPhase = null;
     }
 
@@ -977,12 +978,12 @@ export class ContentReassembler {
       return; // session handle is message-scoped, not fragment-scoped
     }
 
-    // Message phase (OpenAI/xAI Responses): sent at message-item open, before any text. Break text
+    // Message phase (Responses dialects): sent at message-item open, before any text. Break text
     // accumulation so adjacent items (commentary then final_answer) land in distinct fragments, and
     // stamp the phase on the next text fragment created (see onAppendText).
-    if ((vendor === 'openai' || vendor === 'xai') && 'messagePhase' in state && state.messagePhase) {
+    if (AixWire_Vendors.isRspVendor(vendor) && 'messagePhase' in state && state.messagePhase) {
       this.S._textFragmentIndex = null;
-      this.S._pendingTextPhase = { vendor, phase: state.messagePhase };
+      this.S._pendingTextPhase = { rspVendor: vendor, phase: state.messagePhase };
       return;
     }
 
@@ -997,8 +998,8 @@ export class ContentReassembler {
     // Guard: reasoningItem state must land on the ma (reasoning) fragment that produced it.
     // If no summary was appended during the reasoning item (summary disabled / skipped), the last
     // fragment will belong to an unrelated preceding item - dropping the handle is safer than contaminating.
-    // Applies to both OpenAI and xAI namespaces; each is opaque/private to its producing vendor.
-    if ((vendor === 'openai' || vendor === 'xai') && 'reasoningItem' in state && lastFragment.part.pt !== 'ma') {
+    // Applies to every Responses-dialect namespace; each is opaque/private to its producing vendor.
+    if (AixWire_Vendors.isRspVendor(vendor) && 'reasoningItem' in state && lastFragment.part.pt !== 'ma') {
       console.warn(`[ContentReassembler] ${vendor} reasoningItem state without preceding ma fragment - dropping continuity handle`, { lastFragmentPt: lastFragment.part.pt });
       return;
     }

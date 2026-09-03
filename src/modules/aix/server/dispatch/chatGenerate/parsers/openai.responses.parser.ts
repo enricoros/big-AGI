@@ -2,7 +2,7 @@ import { safeErrorString } from '~/server/wire';
 
 import { hasKeys } from '~/common/util/objectUtils';
 
-import type { AixWire_Particles } from '../../../api/aix.wiretypes';
+import type { AixWire_Particles, AixWire_Vendors } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
 import { AIX_OAI_DEFAULT_IMAGE_GEN_MODEL } from '../adapters/openai.responsesCreate';
@@ -319,17 +319,17 @@ class ResponseParserStateMachine {
 /**
  * OpenAI Responses API Streaming Parser
  *
- * @param vendor 'openai' (default) or 'xai' - tags the reasoning continuity handle so it round-trips back
+ * @param rspVendor the Responses vendor (AixWire_Vendors.RSP_VENDORS) - tags the reasoning continuity handle so it round-trips back
  *   to the SAME provider. The OpenAI Responses wire format is shared with xAI, but the encrypted_content blob
  *   and the rs_... id are vendor-server-private (different keys, different state). Mixing them produces
  *   "Item with id rs_... not found" or worse silent corruption.
  */
-export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): ChatGenerateParseFunction {
+export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspVendor): ChatGenerateParseFunction {
 
   const R = new ResponseParserStateMachine();
 
   // [xAI] grok-4.6 leaks internal citation directives into web_search answer text - strip them (see xai.transform-citationsLeak.ts)
-  const xaiCitationsFilter = vendor === 'xai' ? new XAIDefectiveCitationsFilter() : undefined;
+  const xaiCitationsFilter = rspVendor === 'xai' ? new XAIDefectiveCitationsFilter() : undefined;
 
   return function(pt: IParticleTransmitter, eventData: string) {
 
@@ -476,7 +476,7 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
         if (event.item.type === 'message') {
           const messagePhase = event.item.phase;
           if (messagePhase === 'commentary' || messagePhase === 'final_answer')
-            pt.sendSetVendorState({ p: 'svs', vendor: vendor, state: { messagePhase } });
+            pt.sendSetVendorState({ p: 'svs', vendor: rspVendor, state: { messagePhase } });
         }
         break;
 
@@ -503,18 +503,18 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
             // - neither: nothing to round-trip
             // [DEV] surface divergences from this contract
             if (!reasoningId && !reasoningEC)
-              console.warn(`[DEV] AIX: ${vendor} Responses: reasoning item done with neither id nor encrypted_content - no continuity handle captured for this turn`, { doneItem });
+              console.warn(`[DEV] AIX: ${rspVendor} Responses: reasoning item done with neither id nor encrypted_content - no continuity handle captured for this turn`, { doneItem });
             else if (!reasoningEC)
-              console.log(`[DEV] AIX: ${vendor} Responses: reasoning item done has id but no encrypted_content - dropping handle (stateless round-trip requires include:['reasoning.encrypted_content'] on the request)`);
+              console.log(`[DEV] AIX: ${rspVendor} Responses: reasoning item done has id but no encrypted_content - dropping handle (stateless round-trip requires include:['reasoning.encrypted_content'] on the request)`);
             else if (!reasoningId)
-              console.log(`[DEV] AIX: ${vendor} Responses: reasoning item done has encrypted_content but no id - dropping handle (incomplete reasoning item from upstream)`);
+              console.log(`[DEV] AIX: ${rspVendor} Responses: reasoning item done has encrypted_content but no id - dropping handle (incomplete reasoning item from upstream)`);
 
             if (reasoningEC && reasoningId) {
               // Defensive: ensure an ma fragment exists as the attach target for the svs particle below.
               pt.appendReasoningText('');
               pt.sendSetVendorState({
                 p: 'svs',
-                vendor: vendor,
+                vendor: rspVendor,
                 state: {
                   reasoningItem: {
                     id: reasoningId,
@@ -875,10 +875,10 @@ export function createOpenAIResponsesEventParser(vendor: 'openai' | 'xai'): Chat
 /**
  * OpenAI Responses API Non-Streaming Parser
  *
- * @param vendor 'openai' (default) or 'xai' - see createOpenAIResponsesEventParser for the rationale on
- *   why xAI gets its own _vnd namespace (different encryption keys + private item ids).
+ * @param rspVendor the Responses vendor (AixWire_Vendors.RSP_VENDORS) - see createOpenAIResponsesEventParser for the rationale on
+ *   why each vendor gets its own _vnd namespace (different encryption keys + private item ids).
  */
-export function createOpenAIResponseParserNS(vendor: 'openai' | 'xai'): ChatGenerateParseFunction {
+export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendor): ChatGenerateParseFunction {
 
   const parserCreationTimestamp = Date.now();
 
@@ -1021,11 +1021,11 @@ export function createOpenAIResponseParserNS(vendor: 'openai' | 'xai'): ChatGene
 
           // [DEV] surface cases that diverge from our continuity round-trip expectations (see streaming path for rationale)
           if (!reasoningId && !reasoningEC)
-            console.warn(`[DEV] AIX: ${vendor}-Response-NS: reasoning item has neither id nor encrypted_content - no continuity handle captured for this turn`, { oItem });
+            console.warn(`[DEV] AIX: ${rspVendor}-Response-NS: reasoning item has neither id nor encrypted_content - no continuity handle captured for this turn`, { oItem });
           else if (!reasoningEC)
-            console.log(`[DEV] AIX: ${vendor}-Response-NS: reasoning item has id but no encrypted_content - dropping handle (stateless round-trip requires include:['reasoning.encrypted_content'] on the request)`);
+            console.log(`[DEV] AIX: ${rspVendor}-Response-NS: reasoning item has id but no encrypted_content - dropping handle (stateless round-trip requires include:['reasoning.encrypted_content'] on the request)`);
           else if (!reasoningId)
-            console.log(`[DEV] AIX: ${vendor}-Response-NS: reasoning item has encrypted_content but no id - dropping handle (incomplete reasoning item from upstream)`);
+            console.log(`[DEV] AIX: ${rspVendor}-Response-NS: reasoning item has encrypted_content but no id - dropping handle (incomplete reasoning item from upstream)`);
 
           // Capture ONLY when both id and encryptedContent are present (canonical, complete handle).
           if (reasoningEC && reasoningId) {
@@ -1033,7 +1033,7 @@ export function createOpenAIResponseParserNS(vendor: 'openai' | 'xai'): ChatGene
             pt.appendReasoningText('');
             pt.sendSetVendorState({
               p: 'svs',
-              vendor: vendor,
+              vendor: rspVendor,
               state: {
                 reasoningItem: {
                   id: reasoningId,
@@ -1061,7 +1061,7 @@ export function createOpenAIResponseParserNS(vendor: 'openai' | 'xai'): ChatGene
 
           // [gpt-5.4+] forward the message phase before the item's text (mirrors the streaming path)
           if (messagePhase === 'commentary' || messagePhase === 'final_answer')
-            pt.sendSetVendorState({ p: 'svs', vendor: vendor, state: { messagePhase } });
+            pt.sendSetVendorState({ p: 'svs', vendor: rspVendor, state: { messagePhase } });
 
           // Message
           for (const content of messageContent) {
@@ -1069,7 +1069,7 @@ export function createOpenAIResponseParserNS(vendor: 'openai' | 'xai'): ChatGene
             switch (contentType) {
               case 'output_text':
                 // [xAI] strip leaked citation directives (see xai.transform-citationsLeak.ts)
-                pt.appendText(vendor === 'xai' ? stripXAIDefectiveCitations(content.text || '') : (content.text || ''));
+                pt.appendText(rspVendor === 'xai' ? stripXAIDefectiveCitations(content.text || '') : (content.text || ''));
 
                 // -> URL Citations: Parse annotations if present
                 if (content.annotations && Array.isArray(content.annotations))

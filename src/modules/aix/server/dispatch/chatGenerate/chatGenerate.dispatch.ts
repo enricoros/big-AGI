@@ -1,5 +1,5 @@
 import { ANTHROPIC_API_PATHS, anthropicAccess, anthropicBetaFeatures } from '~/modules/llms/server/anthropic/anthropic.access';
-import { OPENAI_API_PATHS, openAIAccess } from '~/modules/llms/server/openai/openai.access';
+import { OPENAI_API_PATHS, openAIAccess, OpenAIDialects } from '~/modules/llms/server/openai/openai.access';
 import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLMantle, bedrockURLRuntime } from '~/modules/llms/server/bedrock/bedrock.access';
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
@@ -17,7 +17,7 @@ import { aixToBedrockConverse } from './adapters/bedrock.converse';
 import { aixToGeminiGenerateContent } from './adapters/gemini.generateContent';
 import { aixToGeminiInteractionsCreate } from './adapters/gemini.interactionsCreate';
 import { aixToOpenAIChatCompletions } from './adapters/openai.chatCompletions';
-import { aixToOpenAIResponses } from './adapters/openai.responsesCreate';
+import { aixToOpenAIResponses, openAIDialectToRspVendor } from './adapters/openai.responsesCreate';
 import { aixToXAIResponses } from './adapters/xai.responsesCreate';
 
 import type { IParticleTransmitter } from './parsers/IParticleTransmitter';
@@ -32,6 +32,13 @@ import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from '
 
 
 // -- Dispatch types --
+
+/** OpenAI-compatible dialects that serve ONLY the Responses API (every model), regardless of the per-model vndOaiResponsesAPI flag */
+const RESPONSES_ONLY_DIALECTS: ReadonlySet<OpenAIDialects> = new Set<OpenAIDialects>([
+  'sakanaai', // Sakana Fugu models: tools, multimodal, reasoning
+  'xai', // all xAI models (own adapter)
+]);
+
 
 export type ChatGenerateDispatch = {
   request: ChatGenerateDispatchRequest;
@@ -277,11 +284,11 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     case 'xai':
     case 'zai':
 
-      // newer: OpenAI Responses API, for models that support it and all XAI/Sakana models
-      const isSakanaModel = dialect === 'sakanaai'; // All Sakana Fugu models use the Responses API (tools, multimodal, reasoning)
-      const isXAIModel = dialect === 'xai'; // All XAI models are accessed via Responses now
-      const isResponsesAPI = !!model.vndOaiResponsesAPI || isSakanaModel || isXAIModel;
+      // newer: OpenAI Responses API - per model (vndOaiResponsesAPI) or for the dialects served on Responses only
+      const isResponsesAPI = !!model.vndOaiResponsesAPI || RESPONSES_ONLY_DIALECTS.has(dialect);
       if (isResponsesAPI) {
+        // parser namespace for the reasoning continuity blobs (vendor-private keys + server-side ids), see the note below
+        const responsesVendor = openAIDialectToRspVendor(dialect);
         return {
           request: {
             ...openAIAccess(access, model.id, OPENAI_API_PATHS.responses),
@@ -296,7 +303,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
              *
              * Note: Response format is compatible with OpenAI parser.
              */
-            body: isXAIModel
+            body: dialect === 'xai' // xAI has its own Responses adapter
               ? aixToXAIResponses(model, chatGenerate, streaming, enableResumability)
               : aixToOpenAIResponses(dialect, model, chatGenerate, streaming, enableResumability),
           },
@@ -305,8 +312,8 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
           // (encrypted_content + rs_... id) land in the matching _vnd namespace and never leak
           // across providers (different keys + different server-side state).
           chatGenerateParse: streaming
-            ? createOpenAIResponsesEventParser(isXAIModel ? 'xai' : 'openai')
-            : createOpenAIResponseParserNS(isXAIModel ? 'xai' : 'openai'),
+            ? createOpenAIResponsesEventParser(responsesVendor)
+            : createOpenAIResponseParserNS(responsesVendor),
         };
       }
 

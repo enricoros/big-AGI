@@ -2,7 +2,7 @@ import * as z from 'zod/v4';
 
 import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.access';
 
-import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
+import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy, AixWire_Vendors } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Responses, OpenAIWire_Responses_Items, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
 
 import { aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixTexts_to_OpenAIInstructionText } from './openai.chatCompletions';
@@ -17,6 +17,54 @@ export const AIX_OAI_DEFAULT_IMAGE_GEN_MODEL: Exclude<Extract<TRequestTool, { ty
 type TRequest = OpenAIWire_API_Responses.Request;
 type TRequestInput = OpenAIWire_Responses_Items.InputItem;
 type TRequestTool = OpenAIWire_Responses_Tools.Tool;
+
+
+/**
+ * Per-dialect quirks of the OpenAI Responses wire format: the envelope is shared, the validators are not.
+ * Defaults = native OpenAI; a dialect overrides only what deviates. Add a row here, not another `isDialectX` flag.
+ */
+interface RspDialectQuirks {
+  /** `_vnd` namespace for continuity state (encrypted reasoning items, message phase) and the parser tag - vendor-private */
+  vndNamespace: AixWire_Vendors.RspVendor;
+  /** replay assistant messages with their `phase` (harmless on older OpenAI models: accepted and ignored) */
+  emitMessagePhase: boolean;
+  /** `reasoning.context: 'all_turns'` on gpt-5.4+ */
+  reasoningContextAllTurns: boolean;
+  /** hosted web_search tool shape: 'full' (context size, location, external access), 'bare' ({ type } only), 'none' (unsupported) */
+  webSearchTool: 'full' | 'bare' | 'none';
+  /** hosted code_interpreter tool */
+  codeInterpreterTool: boolean;
+  /** image generation tool may request WebP output */
+  imageGenWebP: boolean;
+}
+
+const _RSP_QUIRKS_DEFAULT: RspDialectQuirks = {
+  vndNamespace: 'openai',
+  emitMessagePhase: true,
+  reasoningContextAllTurns: true,
+  webSearchTool: 'full',
+  codeInterpreterTool: true,
+  imageGenWebP: true,
+};
+
+const _RSP_DIALECT_QUIRKS: Partial<Record<OpenAIDialects, Partial<RspDialectQuirks>>> = {
+  // [Azure] lags OpenAI: no web search ("Hosted tool 'web_search' is not supported", still true 2025-11-18), no code interpreter,
+  // no WebP image output, and the message phase / reasoning.context schema fields may lag too
+  azure: { emitMessagePhase: false, reasoningContextAllTurns: false, webSearchTool: 'none', codeInterpreterTool: false, imageGenWebP: false },
+  // [Sakana.ai] bare web_search tool (context size tolerated since ~2026-07 but undocumented)
+  sakanaai: { webSearchTool: 'bare' },
+  // [xAI] own adapter (xai.responsesCreate.ts) and own namespace; listed for the parser tag only
+  xai: { vndNamespace: 'xai' },
+};
+
+function _rspQuirks(dialect: OpenAIDialects): RspDialectQuirks {
+  return { ..._RSP_QUIRKS_DEFAULT, ..._RSP_DIALECT_QUIRKS[dialect] };
+}
+
+/** The `_vnd` namespace / parser tag for an OpenAI-compatible dialect served over the Responses API */
+export function openAIDialectToRspVendor(dialect: OpenAIDialects): AixWire_Vendors.RspVendor {
+  return _rspQuirks(dialect).vndNamespace;
+}
 
 
 /**
@@ -47,8 +95,8 @@ export function aixToOpenAIResponses(
 
   const hotFixNoTruncateAuto = isOpenAIComputerUse;
 
-  const isDialectAzure = openAIDialect === 'azure';
-  const isDialectSakana = openAIDialect === 'sakanaai';
+  // per-dialect deviations from native OpenAI (see _RSP_DIALECT_QUIRKS)
+  const quirks = _rspQuirks(openAIDialect);
 
   // ---
   // construct the request payload
@@ -59,8 +107,7 @@ export function aixToOpenAIResponses(
   // const strictJsonOutput = !!model.strictJsonOutput;
   const strictToolInvocations = !!model.strictToolInvocations;
 
-  // emitMessagePhase: harmless on older OpenAI models (accepted and ignored), off for Azure (may lag this schema)
-  const { requestInput, requestInstructions } = _toOpenAIResponsesRequestInput(chatGenerate.systemMessage, chatGenerate.chatSequence, model.vndOaiContainerId, !isDialectAzure);
+  const { requestInput, requestInstructions } = _toOpenAIResponsesRequestInput(chatGenerate.systemMessage, chatGenerate.chatSequence, model.vndOaiContainerId, quirks.emitMessagePhase, quirks.vndNamespace);
 
   // Pair every interior function_call with a function_call_output, or the request is rejected wholesale
   _pairInteriorFunctionCalls(requestInput);
@@ -143,7 +190,7 @@ export function aixToOpenAIResponses(
     // Gate: gpt-5.4+ (older models 400 on 'all_turns'), not Azure (may lag), not effort 'none'.
     const gptGen = /^gpt-(\d+)(?:\.(\d+))?/.exec(model.id);
     const supportsAllTurns = !!gptGen && (+gptGen[1] > 5 || (+gptGen[1] === 5 && +(gptGen[2] || 0) >= 4));
-    if (supportsAllTurns && reasoningEffort !== 'none' && !isDialectAzure)
+    if (supportsAllTurns && reasoningEffort !== 'none' && quirks.reasoningContextAllTurns)
       payload.reasoning.context = 'all_turns';
   }
 
@@ -182,10 +229,10 @@ export function aixToOpenAIResponses(
      * NOTE: as of 2025-09-12, we still get the "Hosted tool 'web_search' is not supported with gpt-5-mini-2025-08-07"
      *       warning from Azure OpenAI V1. We shall check in the future if this is resolved.
      */
-    if (isDialectAzure) {
+    if (quirks.webSearchTool === 'none') {
       // [2025-11-18] Azure OpenAI still doesn't support web search tool yet - confirmed
       // [2025-09-12] Azure OpenAI doesn't support web search tool yet, and we also remove the "parameter" so we shall not come here
-      console.log('[DEV] Azure OpenAI Responses: skipping web search tool due to Azure limitations');
+      console.log(`[DEV] ${openAIDialect} Responses: skipping web search tool - not supported by this dialect`);
     } else if (reasoningEffort === 'minimal') {
       // 2026-02-17: Validated: Web search is not supported when the reasoning effort is 'minimal'
       // console.log('[DEV] OpenAI Responses: skipping web search tool due to reasoning effort being set to minimal');
@@ -196,8 +243,8 @@ export function aixToOpenAIResponses(
         payload.tools = [];
       const webSearchTool: TRequestTool = model.id.includes('-deep-research') ? {
         type: 'web_search_preview', // HOTFIX for deep research models, which only seem to support the outdated 'web_search_preview' tool
-      } : isDialectSakana ? {
-        type: 'web_search', // [Sakana.ai] bare tool - context size is tolerated since ~2026-07 but undocumented (location/access unverified), so keep emitting bare
+      } : quirks.webSearchTool === 'bare' ? {
+        type: 'web_search', // bare tool, no options (see _RSP_DIALECT_QUIRKS)
       } : {
         type: 'web_search',
         search_context_size: model.vndOaiWebSearchContext ?? undefined,
@@ -225,9 +272,9 @@ export function aixToOpenAIResponses(
      * - does not support image generation tool at all ({"type":"error","error":{"type":"invalid_request_error","code":null,"message":"There was an issue with your request. Please check your inputs and try again","param":null}})
      * - does not support WebP output format
      */
-    const azureImageWorkarounds = isDialectAzure;
-    if (azureImageWorkarounds)
-      console.warn('[DEV] Azure OpenAI Responses: trying image generation tool despite Azure limitations');
+    const noWebPImageOutput = !quirks.imageGenWebP;
+    if (noWebPImageOutput)
+      console.warn(`[DEV] ${openAIDialect} Responses: trying image generation tool despite dialect limitations (PNG only)`);
 
     // Add the image generation tool to the request
     if (!payload.tools?.length)
@@ -241,7 +288,7 @@ export function aixToOpenAIResponses(
       ...(imageMode === 'mq' ? { quality: 'medium' } : { /* quality: 'high' -- auto */ }),
       // ...(imageMode === 'hq' ? ... auto ... ),
       ...(imageMode === 'hq_edit' && { input_fidelity: 'high' }),
-      ...(imageMode !== 'hq_png' && !azureImageWorkarounds && { output_format: 'webp' }),
+      ...(imageMode !== 'hq_png' && !noWebPImageOutput && { output_format: 'webp' }),
       moderation: 'low',
     };
     payload.tools.push(imageGenerationTool);
@@ -250,8 +297,8 @@ export function aixToOpenAIResponses(
   // Tool: Code Interpreter: Python code execution in sandboxed container ($0.03/container)
   const requestCodeInterpreterTool = model.vndOaiCodeInterpreter === 'auto';
   if (requestCodeInterpreterTool && !skipHostedToolsDueToCustomTools) {
-    if (isDialectAzure) {
-      console.log('[DEV] Azure OpenAI Responses: skipping code interpreter tool due to Azure limitations');
+    if (!quirks.codeInterpreterTool) {
+      console.log(`[DEV] ${openAIDialect} Responses: skipping code interpreter tool - not supported by this dialect`);
     } else {
       // Add the code interpreter tool to the request
       if (!payload.tools?.length)
@@ -293,7 +340,7 @@ export function aixToOpenAIResponses(
 }
 
 
-function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage | null, chatSequence: AixMessages_ChatMessage[], sessionContainerId: string | undefined, emitMessagePhase: boolean): { requestInput: TRequestInput[], requestInstructions: TRequest['instructions'] } {
+function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage | null, chatSequence: AixMessages_ChatMessage[], sessionContainerId: string | undefined, emitMessagePhase: boolean, vndNamespace: AixWire_Vendors.RspVendor): { requestInput: TRequestInput[], requestInstructions: TRequest['instructions'] } {
 
   /**
    * Instructions to the model
@@ -518,7 +565,7 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
           switch (mPt) {
 
             case 'text':
-              modelMessage(emitMessagePhase ? modelPart._vnd?.openai?.phase : undefined).content.push({
+              modelMessage(emitMessagePhase ? modelPart._vnd?.[vndNamespace]?.phase : undefined).content.push({
                 type: 'output_text',
                 text: modelPart.text,
               });
@@ -573,16 +620,17 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
               break;
 
             case 'ma':
-              // Preserve reasoning continuity across turns via _vnd.openai.reasoningItem (set by openai.responses.parser).
+              // Preserve reasoning continuity across turns via _vnd.<vndNamespace>.reasoningItem (set by openai.responses.parser,
+              // tagged with the producing Responses dialect - blobs never cross providers).
               // Round-trip ONLY when both encrypted_content AND id are present (canonical, complete handle).
               // - bare id without EC -> 404 "Item with id rs_... not found" in stateless mode
               // - bare EC without id -> torn handle, undefined behavior across providers/versions
               // Defense-in-depth: matches the parser's capture gate; rejects torn handles even if any sneak through.
               // ma fragments without an openai handle are common (e.g., DeepSeek reasoning_content emits ma fragments
               // with no continuity blob) - skip without warning to avoid log noise on cross-vendor history.
-              const oaiReasoning = modelPart._vnd?.openai?.reasoningItem;
-              if (oaiReasoning?.encryptedContent && oaiReasoning?.id)
-                newReasoningMessage(oaiReasoning.id, oaiReasoning.encryptedContent);
+              const rspReasoning = modelPart._vnd?.[vndNamespace]?.reasoningItem;
+              if (rspReasoning?.encryptedContent && rspReasoning?.id)
+                newReasoningMessage(rspReasoning.id, rspReasoning.encryptedContent);
               break;
 
             case 'tool_response':
