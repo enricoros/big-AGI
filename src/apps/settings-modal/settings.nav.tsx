@@ -22,8 +22,7 @@ import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 export type SettingsNavId =
   | 'appearance' | 'ai'
   | 'voice' | 'voice-in' | 'voice-out'
-  | 'draw'
-  | 'tools' | 'tools-browse' | 'tools-search'
+  | 'tools' | 'tools-draw' | 'tools-browse' | 'tools-search'
   | 'labs';
 
 export interface SettingsNavNode {
@@ -49,10 +48,10 @@ export const SETTINGS_NAV: SettingsNavNode[] = [
       { id: 'voice-out', label: 'Output', path: 'Voice > Output', icon: <PhVoice />, description: 'Speech, voices, auto-speak' },
     ],
   },
-  { id: 'draw', label: 'Draw', icon: <FormatPaintTwoToneIcon /> },
   {
     id: 'tools', label: 'Tools', icon: <ConstructionIcon />,
     children: [
+      { id: 'tools-draw', label: 'Draw', path: 'Tools > Draw', icon: <FormatPaintTwoToneIcon />, description: 'Image generation engines' },
       { id: 'tools-browse', label: 'Browsing', path: 'Tools > Browsing', icon: <LanguageRoundedIcon />, description: 'Load web pages into chats' },
       { id: 'tools-search', label: 'Custom Search', path: 'Tools > Custom Search', icon: <SearchIcon />, description: 'Google Programmable Search' },
     ],
@@ -83,6 +82,9 @@ export function resolveSettingsNavId(tab: PreferencesTabId): SettingsNavId {
     // return !llmsStoreState().sources?.length ? 'ai' : 'appearance';
     return 'appearance';
   }
+  // legacy alias: Draw moved under Tools, callers still deep-link with 'draw'
+  if (tab === 'draw')
+    return 'tools-draw';
   // every remaining PreferencesTabId member coincides with a SettingsNavId
   return tab;
 }
@@ -98,6 +100,7 @@ export function getSettingsNavTopLevelGroup(id: SettingsNavId): SettingsNavId {
     case 'voice-in':
     case 'voice-out':
       return 'voice';
+    case 'tools-draw':
     case 'tools-browse':
     case 'tools-search':
       return 'tools';

@@ -12,7 +12,7 @@ export type PreferencesTabId =
   | 'chat' | 'voice' | 'draw' | 'tools' // legacy aliases (still valid; resolved to nav nodes inside SettingsModal)
   | 'appearance' | 'ai' | 'labs' // new top-level leaves
   | 'voice-in' | 'voice-out' // Voice sub-items
-  | 'tools-browse' | 'tools-search' // Tools sub-items
+  | 'tools-draw' | 'tools-browse' | 'tools-search' // Tools sub-items
   | undefined;
 
 export type ModelOptionsContext = 'full' | 'parameters';
