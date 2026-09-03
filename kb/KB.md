@@ -25,6 +25,7 @@ Architecture and system documentation is available in the `/kb/` knowledge base,
 
 #### LLM - Vendor APIs
 - **[LLM-gemini-interactions.md](modules/LLM-gemini-interactions.md)** - Gemini Interactions API (Deep Research): endpoints, status taxonomy, two retrieval paths (SSE replay vs JSON GET), known failure modes (10-min cuts, zombies), UI surface
+- **[LLM-metaai-responses.md](modules/LLM-metaai-responses.md)** - Meta AI (Muse, the Meta Model API) over the Responses dialect: catalog and tiers, request contract (strict params, `tool_choice` auto-only, effort ladder, stateless reasoning replay), stream quirks, errors and CORS, what is deliberately not wired
 
 ### Systems Documentation
 

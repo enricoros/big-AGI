@@ -72,6 +72,7 @@ Three categories:
 | Gemini | Hybrid | `gemini/gemini.models.ts` | `_knownGeminiModels` | 33 | 33/33 HIGH |
 | OpenAI | Hybrid | `openai/models/openai.models.ts` | `_knownOpenAIChatModels` | 96 | 95/96 HIGH/MED (`osb-120b` skipped, speculative) |
 | xAI | Hybrid | `openai/models/xai.models.ts` | `_knownXAIChatModels` | 13 | 13/13 HIGH (pilot) |
+| Meta AI | Hybrid | `openai/models/metaai.models.ts` | `_knownMetaAIModels` | 6 | 6/6 HIGH (announcement posts; the API's `created` is a constant 0 and there is no changelog - see `/llms:update-models-metaai`) |
 | Mistral | Hybrid | `openai/models/mistral.models.ts` | `_knownMistralModelDetails` | 41 | 41/41 (40 HIGH, 1 MED for legacy `mistral-medium`) |
 | Moonshot (Kimi) | Hybrid | `openai/models/moonshot.models.ts` | `_knownMoonshotModels` | 13 | 13/13 (10 HIGH, 3 MED for v1 base models) |
 | Perplexity | Editorial | `openai/models/perplexity.models.ts` | `_knownPerplexityChatModels` | 4 | 4/4 HIGH |
@@ -117,7 +118,7 @@ Canonical symbols: `llmsLabelUncurated()` / `llmsIsLabelUncurated()` in `src/mod
 - `tools/data/llms/llm-registry-sync.ts` drops `[?]`-labeled models with `contextWindow === null` before both its local DB and the PostHog `llms_model_spec` push - they never reach big-agi.com.
 - The website strips bracketed segments from `[?]` labels and sinks the pubDate (no NEW badge, bottom of Released sort). Its detection is an independent regex in the website repo (`posthog.server.ts` / `llm.vendors.rankings.ts`) - keep in sync on change.
 
-**Marked** (type-blind list APIs): `fromManualMapping` 'super' resolution (unknown variant of a known family), plus the 0-day fallbacks in nvidianim, modular, sakanaai, moonshot, groq, deepseek, alibaba, and native OpenAI (Azure included via `isLikelyOpenAI: true`).
+**Marked** (type-blind list APIs): `fromManualMapping` 'super' resolution (unknown variant of a known family), plus the 0-day fallbacks in nvidianim, modular, sakanaai, metaai, moonshot, groq, deepseek, alibaba, and native OpenAI (Azure included via `isLikelyOpenAI: true`).
 
 **Unmarked** (a type/modality filter proves chat): gemini, xai, together, novita, chutesai, cerebras - each carries an in-file "no '[?]' marker (evaluated 2026-08-14)" comment. Companion rule everywhere: never invent a context window - API value or `null`.
 

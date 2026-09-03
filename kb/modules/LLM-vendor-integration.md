@@ -62,6 +62,19 @@ user demand to warrant a dedicated setup flow.
 - Possibly more files, e.g. wires, etc.
 - See existing providers and commits that added them for full scope
 
+**Compile-gated surfaces** (the `ModelVendorId` union makes each a build error until filled - measured on the
+`metaai` add, 2026-09-02): `vendors.registry.ts` map, `LLMVendorIcon.tsx` map (+ `npm run gen:icon-sprites`),
+`LLMVendorSetup.tsx` component map and `VENDOR_DOCS` (slug must exist in `src/common/gen/com.site.docs.slug.ts`,
+mirrored from the website repo), `llms.defs.manifest.ts` bucket (+ regenerate `gen/llms.defs.versions.ts`),
+`openai.access.ts` dialect enum + switch, `listModels.dispatch.ts` two switches, `chatGenerate.dispatch.ts` two
+fallthrough groups, `tools/data/llms/llm-registry-sync.ts` switch. Silent surfaces: `env.server.ts`, the
+`update-models-<vendor>` skill, `tools/develop/llm-parameter-sweep`, `tools/develop/aix-protocol-lab`, README,
+`docs/environment-variables.md`, `docs/k8s/env-secret.yaml`, `dMessageUtils.prettyShortChatModelName`, the KB rosters.
+A vendor served over the OpenAI Responses API additionally gets: a row in `_RSP_DIALECT_QUIRKS` (`openai.responsesCreate.ts`,
+validator deviations) and, when its reasoning blobs are vendor-private, its own namespace in `AixWire_Vendors.RSP_VENDORS`
+(`aix.wiretypes.ts` + the mirrored key in `chat.fragments.ts`), plus `RESPONSES_ONLY_DIALECTS` in `chatGenerate.dispatch.ts`
+when every model of the vendor is Responses-only.
+
 **When to use this path**: Only when the provider has a meaningfully different API protocol
 (not OpenAI-compatible), or when there is significant user demand AND the provider offers
 unique capabilities that benefit from dedicated UI (e.g., Ollama's local model management).

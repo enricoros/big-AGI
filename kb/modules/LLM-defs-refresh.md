@@ -51,7 +51,7 @@ buckets, following real value-import dependencies:
 
 - `azure` claims `openai.models.ts` (deployments resolve against the OpenAI curated table).
 - `bedrock` claims `anthropic.models.ts` (mantled Anthropic models).
-- `openrouter` claims the `anthropic/gemini/moonshot/openai/sakanaai/xai/zai` models files
+- `openrouter` claims the `anthropic/gemini/metaai/moonshot/openai/sakanaai/xai/zai` models files
   (per-creator parameter inheritance via the `llmOrt*Lookup` tables) - an OpenAI defs edit
   correctly rolls OpenRouter. The generator's import audit flags any new lookup import until it
   is claimed here.
@@ -63,7 +63,7 @@ buckets, following real value-import dependencies:
   OpenAI (LiteLLM, corporate gateways) sits behind a custom host but is parsed by the first-party
   parser, so first-party edits must reach it. Custom-host OpenAI services (non `api.openai.com`
   `oaiHost`) compare against this bucket instead of `openai`. Its `ignoreImports` leaves the
-  other creator lookups (anthropic/gemini/moonshot/sakanaai/xai/zai, OpenRouter inheritance)
+  other creator lookups (anthropic/gemini/metaai/moonshot/sakanaai/xai/zai, OpenRouter inheritance)
   untracked - owner decision, bump its `epoch` for an editorial roll.
 
 Generator integrity gates (fail the dev/build run): claimed files must exist; every
