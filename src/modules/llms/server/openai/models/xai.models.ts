@@ -31,11 +31,15 @@ const DEV_DEBUG_XAI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO I
 // Verified: 2026-08-17 via live /v1/language-models + /v1/models + docs.x.ai/developers/models + release-notes + effort probes: same 7 chat models, prices/contexts unchanged, nothing retired; grok-latest now routes to grok-4.6 (was 4.3), grok-build-latest still 4.5; grok-4.6-latest and grok-5 both 404; effort domains re-confirmed (4.6/4.5 reject 'none', 4.3 accepts it); CBA ELO refresh
 // Verified: 2026-08-31 via live /v1/language-models + /v1/models + docs.x.ai/developers/models: same 7 chat models, prices/contexts/aliases unchanged, nothing retired, no new models announced
 
+// Server-side tools (web search, X search): $5 / 1K calls, on top of tokens
+const XAI_PRICE_TOOLS: NonNullable<ModelDescriptionSchema['chatPrice']>['tools'] = { webSearch: 5 };
+
 // Pricing for Grok 4.3 / 4.20 flagship family (unified $1.25/$2.50 since May 2026; >200K tier per live API 2026-07-08)
 const PRICE_FLAGSHIP = {
   input: [{ upTo: 200000, price: 1.25 }, { upTo: null, price: 2.50 }],
   output: [{ upTo: 200000, price: 2.50 }, { upTo: null, price: 5.00 }],
   cache: { read: [{ upTo: 200000, price: 0.20 }, { upTo: null, price: 0.40 }] },
+  tools: XAI_PRICE_TOOLS,
 };
 
 // Interfaces: ALL XAI MODELS use the OpenAI Responses API (XAI dialect)
@@ -89,6 +93,7 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
       input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
       output: [{ upTo: 200000, price: 6.00 }, { upTo: null, price: 12.00 }],
       cache: { read: [{ upTo: 200000, price: 0.50 }, { upTo: null, price: 1.00 }] }, // higher than grok-4.5's 0.30/0.60 - tick-verified 2026-08-13
+      tools: XAI_PRICE_TOOLS,
     },
     benchmark: { cbaElo: 1464 }, // grok-4.6-high (CBA name)
   },
@@ -110,6 +115,7 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
       input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
       output: [{ upTo: 200000, price: 6.00 }, { upTo: null, price: 12.00 }],
       cache: { read: [{ upTo: 200000, price: 0.30 }, { upTo: null, price: 0.60 }] },
+      tools: XAI_PRICE_TOOLS,
     },
     benchmark: { cbaElo: 1469 }, // grok-4.5
   },
@@ -196,6 +202,7 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
       input: [{ upTo: 200000, price: 1.00 }, { upTo: null, price: 2.00 }],
       output: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
       cache: { read: [{ upTo: 200000, price: 0.20 }, { upTo: null, price: 0.40 }] },
+      tools: XAI_PRICE_TOOLS,
     },
   },
 

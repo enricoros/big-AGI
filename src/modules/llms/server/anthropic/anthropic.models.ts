@@ -30,6 +30,9 @@ function _hasLegacy1MContextOptIn(model: Pick<ModelDescriptionSchema, 'parameter
 
 
 const IF_4 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_ANT_PromptCaching];
+
+// Web search: $10 / 1K searches (web fetch free); result tokens bill as input
+const ANT_PRICE_TOOLS: NonNullable<ModelDescriptionSchema['chatPrice']>['tools'] = { webSearch: 10 };
 const IF_4_R = [...IF_4, LLM_IF_OAI_Reasoning];
 // 4.7+: temperature/top_p/top_k return 400; HOTFIX strips temperature client-side (top_p handled in dispatch)
 const IF_47 = [...IF_4, LLM_IF_HOTFIX_NoTemperature];
@@ -293,7 +296,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // Fable 5.1 (launch-verified 2026-09-01): Fable 5's surface and constraints (adaptive-only, no sampling params/prefill/speed,
     // forced tool_choice 400, refusals, 30-day retention), same tokenizer; cache reads $0.25 (0.025x, vs 0.1x elsewhere),
     // knowledge cutoff Jun 2026. New: preserved thinking (replayed thinking blocks bound to model + prefix) - handled in AIX.
-    chatPrice: { input: 10, output: 50, cache: { read: 0.25, write: 12.50, duration: 300 } },
+    chatPrice: { input: 10, output: 50, cache: { read: 0.25, write: 12.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1506 + 4 }, // (no arena data yet - launched 2026-09-01) assuming: claude-fable-5 + 4
   },
   {
@@ -311,7 +314,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     ],
     // Mythos 5.1: same specs/pricing/constraints as Fable 5.1; invitation-only (404 elsewhere, not on OpenRouter/Bedrock).
     // Skips the history-editing check on replayed thinking blocks (model binding only).
-    chatPrice: { input: 10, output: 50, cache: { read: 0.25, write: 12.50, duration: 300 } },
+    chatPrice: { input: 10, output: 50, cache: { read: 0.25, write: 12.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1506 + 5 }, // (no arena data yet) assuming: claude-fable-5-1 + 1
   },
 
@@ -334,7 +337,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // to 'auto' + system hint). New vs 4.8: always-on adaptive thinking (no thinking config needed),
     // safety classifiers (stop_reason 'refusal' + stop_details.category incl. 'reasoning_extraction', opt-in `fallbacks` beta),
     // 512-token min cacheable prompt, requires 30-day data retention (no ZDR). No fast mode at launch.
-    chatPrice: { input: 10, output: 50, cache: { read: 1.00, write: 12.50, duration: 300 } },
+    chatPrice: { input: 10, output: 50, cache: { read: 1.00, write: 12.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1506 }, // claude-fable-5
   },
   {
@@ -351,7 +354,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
       ...ANT_TOOLS_DYNAMIC,
     ],
     // Mythos 5: same specs/pricing/constraints as Fable 5; invitation-only, /v1/models lists it only for approved orgs
-    chatPrice: { input: 10, output: 50, cache: { read: 1.00, write: 12.50, duration: 300 } },
+    chatPrice: { input: 10, output: 50, cache: { read: 1.00, write: 12.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1506 + 1 }, // (no arena data yet) assuming: claude-fable-5 + 1
   },
 
@@ -382,7 +385,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // downgrade needed. New vs 4.8: thinking on by default (effort is the depth control); mid-conversation
     // tool changes (beta `mid-conversation-tool-changes-2026-07-01`); `fallbacks` 'default' mode (beta
     // `server-side-fallback-2026-07-01`).
-    chatPrice: { input: 5, output: 25, cache: { read: 0.50, write: 6.25, duration: 300 } },
+    chatPrice: { input: 5, output: 25, cache: { read: 0.50, write: 6.25, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1493 }, // claude-opus-5-high (also: claude-opus-5-max=1489)
   },
 
@@ -408,7 +411,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // New tokenizer: ~30% more tokens vs Sonnet 4.6 (per-token price unchanged). First Sonnet with cyber safeguards (refusals:
     // stop_reason 'refusal', HTTP 200). Pricing: $2/$10 (cache w$2.50/r$0.20) - the launch "introductory" price became the
     // STANDARD price on 2026-08-10; the scheduled 2026-09-01 increase to $3/$15 will not occur (pricing page + release notes).
-    chatPrice: { input: 2, output: 10, cache: { read: 0.20, write: 2.50, duration: 300 } },
+    chatPrice: { input: 2, output: 10, cache: { read: 0.20, write: 2.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1462 }, // claude-sonnet-5-high
   },
 
@@ -429,7 +432,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // Opus 4.8: flat $5/$25 pricing across entire 1M context window (same as Opus 4.7). Inherits Opus 4.7 API constraints:
     // adaptive-only thinking (budget_tokens rejected), temperature/top_p/top_k rejected, new tokenizer (~1x to 1.35x tokens), no prefill.
     // New vs 4.7: mid-conversation system messages, refusal stop_details, 1,024-token min cacheable prompt.
-    chatPrice: { input: 5, output: 25, cache: { read: 0.50, write: 6.25, duration: 300 } },
+    chatPrice: { input: 5, output: 25, cache: { read: 0.50, write: 6.25, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1474 }, // claude-opus-4-8
   },
 
@@ -451,7 +454,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // Opus 4.7: flat $5/$25 pricing across entire 1M context window (no long-context premium)
     // Breaking changes vs 4.6: extended thinking budgets removed (adaptive-only), temperature/top_p/top_k rejected,
     // thinking content omitted by default, new tokenizer (~1x to 1.35x tokens for same text), no prefill.
-    chatPrice: { input: 5, output: 25, cache: { read: 0.50, write: 6.25, duration: 300 } },
+    chatPrice: { input: 5, output: 25, cache: { read: 0.50, write: 6.25, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1494 }, // claude-opus-4-7
   },
 
@@ -472,7 +475,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
       ...ANT_TOOLS_DYNAMIC,
     ],
     // Opus 4.6: flat $5/$25 pricing (1M context GA at standard pricing since 2026-03-13, no opt-in required)
-    chatPrice: { input: 5, output: 25, cache: { read: 0.50, write: 6.25, duration: 300 } },
+    chatPrice: { input: 5, output: 25, cache: { read: 0.50, write: 6.25, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1497 }, // claude-opus-4-6
   },
   {
@@ -488,7 +491,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
       ...ANT_TOOLS_DYNAMIC,
     ],
     // Sonnet 4.6: flat $3/$15 pricing (1M context GA at standard pricing since 2026-03-13, no opt-in required)
-    chatPrice: { input: 3, output: 15, cache: { read: 0.30, write: 3.75, duration: 300 } },
+    chatPrice: { input: 3, output: 15, cache: { read: 0.30, write: 3.75, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1472 }, // claude-sonnet-4-6
   },
 
@@ -505,7 +508,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high'] },
       ...ANT_TOOLS,
     ],
-    chatPrice: { input: 5, output: 25, cache: { read: 0.50, write: 6.25, duration: 300 } },
+    chatPrice: { input: 5, output: 25, cache: { read: 0.50, write: 6.25, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1469 }, // claude-opus-4-5-20251101
   },
   {
@@ -530,6 +533,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
         write: [{ upTo: 200000, price: 3.75 }, { upTo: null, price: 7.50 }],
         duration: 300,
       },
+      tools: ANT_PRICE_TOOLS,
     },
     benchmark: { cbaElo: 1455 }, // claude-sonnet-4-5-20250929
   },
@@ -542,7 +546,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: ANT_TOOLS,
-    chatPrice: { input: 1, output: 5, cache: { read: 0.10, write: 1.25, duration: 300 } },
+    chatPrice: { input: 1, output: 5, cache: { read: 0.10, write: 1.25, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1413 }, // claude-haiku-4-5-20251001
   },
 
@@ -557,7 +561,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     maxCompletionTokens: 32000,
     interfaces: IF_4,
     parameterSpecs: ANT_TOOLS,
-    chatPrice: { input: 15, output: 75, cache: { read: 1.50, write: 18.75, duration: 300 } },
+    chatPrice: { input: 15, output: 75, cache: { read: 1.50, write: 18.75, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1447 }, // claude-opus-4-1-20250805
     isLegacy: true,
   },
@@ -573,7 +577,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     maxCompletionTokens: 32000,
     interfaces: IF_4,
     parameterSpecs: ANT_TOOLS,
-    chatPrice: { input: 15, output: 75, cache: { read: 1.50, write: 18.75, duration: 300 } },
+    chatPrice: { input: 15, output: 75, cache: { read: 1.50, write: 18.75, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1413 }, // claude-opus-4-20250514
     isLegacy: true,
   },
@@ -600,6 +604,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
         write: [{ upTo: 200000, price: 3.75 }, { upTo: null, price: 7.50 }],
         duration: 300,
       },
+      tools: ANT_PRICE_TOOLS,
     },
     benchmark: { cbaElo: 1389 }, // claude-sonnet-4-20250514
     isLegacy: true,
@@ -615,7 +620,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     maxCompletionTokens: 64000,
     interfaces: IF_4,
     parameterSpecs: ANT_TOOLS,
-    chatPrice: { input: 3, output: 15, cache: { read: 0.30, write: 3.75, duration: 300 } },
+    chatPrice: { input: 3, output: 15, cache: { read: 0.30, write: 3.75, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1371 }, // claude-3-7-sonnet-20250219
     hidden: true, // retired
     isLegacy: true,
@@ -633,7 +638,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     maxCompletionTokens: 8192,
     interfaces: IF_4,
     parameterSpecs: ANT_TOOLS,
-    chatPrice: { input: 0.80, output: 4.00, cache: { read: 0.08, write: 1.00, duration: 300 } },
+    chatPrice: { input: 0.80, output: 4.00, cache: { read: 0.08, write: 1.00, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1323 }, // claude-3-5-haiku-20241022
     hidden: true, // retired
     isLegacy: true,
@@ -650,7 +655,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     contextWindow: 200000,
     maxCompletionTokens: 4096,
     interfaces: IF_4,
-    chatPrice: { input: 0.25, output: 1.25, cache: { read: 0.03, write: 0.30, duration: 300 } },
+    chatPrice: { input: 0.25, output: 1.25, cache: { read: 0.03, write: 0.30, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1260 }, // claude-3-haiku-20240307
     isLegacy: true,
   },

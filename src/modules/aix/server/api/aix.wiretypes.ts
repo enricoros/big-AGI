@@ -807,6 +807,9 @@ export namespace AixWire_Particles {
     TOutR?: number,       // Portion of TOut that was used for reasoning (e.g. not for output)
     // TOutA?: number,    // Portion of TOut that was used for Audio
 
+    // n = Counts of per-call billed server tools
+    nWebSearch?: number,  // web searches executed
+
     // dt = milliseconds
     dtStart?: number,
     dtInner?: number,

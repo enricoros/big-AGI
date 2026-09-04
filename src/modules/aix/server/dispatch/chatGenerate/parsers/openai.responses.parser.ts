@@ -407,7 +407,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
 
       case 'response.completed':
         // CHANGE of { ..fields.. } expected
-        R.setResponse(eventType, event.response, ['status', 'output', 'usage' /*, 'service_tier', 'completed_at' (not yet parsed) */]);
+        R.setResponse(eventType, event.response, ['status', 'output', 'usage', 'tool_usage' /*, 'service_tier', 'completed_at' (not yet parsed) */]); // tool_usage fills in along the way
 
         // -> Status: determine stop reason based on streamed content
         pt.setTokenStopReason(R.hasFunctionCalls ? 'ok-tool_invocations' : 'ok');
@@ -416,7 +416,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
         // TODO: verify that we correctly captured all the outputs?
 
         // -> Metrics: timing always, tokens only when the usage block carries them (#1149)
-        pt.updateMetrics(_fromResponseMetrics(event.response.usage, R.parserCreationTimestamp, R.timeToFirstEvent));
+        pt.updateMetrics(_fromResponseMetrics(event.response, R.parserCreationTimestamp, R.timeToFirstEvent));
 
         // -> End of the response
         R.markResponseSealed();
@@ -429,7 +429,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
         R.markResponseSealed();
 
         // -> Metrics: timing always, even on failure (#1149; wrapped-failed responses carry usage: null)
-        pt.updateMetrics(_fromResponseMetrics(event.response.usage, R.parserCreationTimestamp, R.timeToFirstEvent));
+        pt.updateMetrics(_fromResponseMetrics(event.response, R.parserCreationTimestamp, R.timeToFirstEvent));
 
         // #1149 salvage: completed message + streamed text -> success (see _isSalvageableFailedOutput)
         const failedError = event.response.error;
@@ -453,7 +453,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
         R.markResponseSealed();
 
         // -> Metrics: timing always, tokens when the usage block carries them (#1149)
-        pt.updateMetrics(_fromResponseMetrics(event.response.usage, R.parserCreationTimestamp, R.timeToFirstEvent));
+        pt.updateMetrics(_fromResponseMetrics(event.response, R.parserCreationTimestamp, R.timeToFirstEvent));
 
         // -> Status: handle incomplete response
         if (event.response.incomplete_details?.reason === 'max_output_tokens')
@@ -916,7 +916,7 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
     // NOTE: we don't do it for full responses, because they're supposed to be 'complete' - i.e. no 'background' execution
 
     // -> Metrics: timing always, tokens only when the usage block carries them (#1149)
-    pt.updateMetrics(_fromResponseMetrics(response.usage, parserCreationTimestamp, undefined));
+    pt.updateMetrics(_fromResponseMetrics(response, parserCreationTimestamp, undefined));
 
     // -> Status
 
@@ -1162,7 +1162,8 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
 }
 
 
-function _fromResponseMetrics(usage: OpenAIWire_API_Responses.Response['usage'], parserCreationTimestamp: number, timeToFirstEvent: number | undefined): AixWire_Particles.CGSelectMetrics {
+function _fromResponseMetrics(response: Pick<OpenAIWire_API_Responses.Response, 'usage' | 'tool_usage'> | undefined, parserCreationTimestamp: number, timeToFirstEvent: number | undefined): AixWire_Particles.CGSelectMetrics {
+  const usage = response?.usage;
 
   // Time Metrics - measured locally (parser-creation -> now), independent of the upstream `usage` block.
   // Emitted UNCONDITIONALLY: long-running Responses models (o-series `-pro`, deep-research, background
@@ -1217,6 +1218,13 @@ function _fromResponseMetrics(usage: OpenAIWire_API_Responses.Response['usage'],
   }
 
   // TODO: Output breakdown: Audio
+
+  // per-call server tools: web searches (OpenAI tool_usage, xAI web + X search)
+  const webSearches = (response?.tool_usage?.web_search?.num_requests ?? 0)
+    + (usage.server_side_tool_usage_details?.web_search_calls ?? 0)
+    + (usage.server_side_tool_usage_details?.x_search_calls ?? 0);
+  if (webSearches > 0)
+    metricsUpdate.nWebSearch = webSearches;
 
   // [xAI] exact charge (1 tick = 1e-10 USD)
   if (typeof usage.cost_in_usd_ticks === 'number')

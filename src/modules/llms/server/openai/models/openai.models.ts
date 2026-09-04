@@ -164,6 +164,9 @@ const IFS_CHAT_CACHE_REASON: DModelInterfaceV1[] = [LLM_IF_OAI_Chat, LLM_IF_OAI_
 // pubDate is REQUIRED on every real model entry (same pattern as _ZaiModelDef in zai.models.ts).
 type _OpenAIModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 
+// Web search: $10 / 1K calls on every model, on top of the result tokens (input)
+const OAI_PRICE_TOOLS: NonNullable<ModelDescriptionSchema['chatPrice']>['tools'] = { webSearch: 10 };
+
 export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 
   /// GPT-6 series - released September 3, 2026 (Trusted Access enterprises first; API and ChatGPT plans "in the coming days")
@@ -173,7 +176,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   // - reasoning.effort: low|medium|high|xhigh|max - 'none' and 'minimal' rejected, so no No-thinking variant; reasoning.mode 'pro' works
   // - no temperature/top_p/logprobs; tool calling requires the Responses API (Chat Completions: text only)
   // - tools: web_search, file_search, image_generation, code_interpreter, hosted_shell, apply_patch, skills, computer_use, mcp, tool_search
-  // - priced: 272K tier, 1.25x cache write; Flex/Fast via llmVndOaiServiceTier
+  // - priced: 272K tier, 1.25x cache write, $10/1K web search; Flex/Fast via llmVndOaiServiceTier
   // Shipped alongside, not adopted: async tool calling (`async: true` on tools), mid-turn steering over WebSockets,
   // `configuration_update` input items (change effort mid-conversation, cache prefix intact), `prompt_cache_options.ttl: '30m'`
   // replacing `prompt_cache_retention`, asynchronous misalignment monitoring (can stop a conversation for review).
@@ -201,6 +204,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       input: [{ upTo: 272000, price: 10 }, { upTo: null, price: 20 }],
       output: [{ upTo: 272000, price: 50 }, { upTo: null, price: 75 }],
       cache: { read: [{ upTo: 272000, price: 1 }, { upTo: null, price: 2 }], write: [{ upTo: 272000, price: 12.5 }, { upTo: null, price: 25 }] },
+      tools: OAI_PRICE_TOOLS,
     },
     // benchmark: no arena data yet
   },
@@ -224,7 +228,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   // NOT yet adopted (shipped Jul 9 alongside 5.6, per API changelog): programmatic tool calling, explicit
   // prompt-cache controls, image detail 'original'.
   // PRICING: implicit caching writes every cold prompt at 1.25x (cache.write); >272K input bills the full request at
-  // 2x input/cache and 1.5x output; Flex 0.5x / Fast 2x via llmVndOaiServiceTier.
+  // 2x input/cache and 1.5x output; web search $10/1K; Flex 0.5x / Fast 2x via llmVndOaiServiceTier.
 
   // GPT-5.6 Sol - flagship
   {
@@ -249,6 +253,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       input: [{ upTo: 272000, price: 4 }, { upTo: null, price: 8 }],
       output: [{ upTo: 272000, price: 20 }, { upTo: null, price: 30 }],
       cache: { read: [{ upTo: 272000, price: 0.4 }, { upTo: null, price: 0.8 }], write: [{ upTo: 272000, price: 5 }, { upTo: null, price: 10 }] },
+      tools: OAI_PRICE_TOOLS,
     },
     benchmark: { cbaElo: 1481 }, // gpt-5.6-sol-xhigh
   },
@@ -276,6 +281,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       input: [{ upTo: 272000, price: 2 }, { upTo: null, price: 4 }],
       output: [{ upTo: 272000, price: 12 }, { upTo: null, price: 18 }],
       cache: { read: [{ upTo: 272000, price: 0.2 }, { upTo: null, price: 0.4 }], write: [{ upTo: 272000, price: 2.5 }, { upTo: null, price: 5 }] },
+      tools: OAI_PRICE_TOOLS,
     },
     benchmark: { cbaElo: 1464 }, // gpt-5.6-terra-xhigh
   },
@@ -303,6 +309,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       input: [{ upTo: 272000, price: 0.2 }, { upTo: null, price: 0.4 }],
       output: [{ upTo: 272000, price: 1.2 }, { upTo: null, price: 1.8 }],
       cache: { read: [{ upTo: 272000, price: 0.02 }, { upTo: null, price: 0.04 }], write: [{ upTo: 272000, price: 0.25 }, { upTo: null, price: 0.5 }] },
+      tools: OAI_PRICE_TOOLS,
     },
     benchmark: { cbaElo: 1450 }, // gpt-5.6-luna-xhigh
   },
@@ -330,7 +337,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmVndOaiCodeInterpreter' },
     ],
-    chatPrice: { input: 5, cache: { read: 0.5 }, output: 30 },
+    chatPrice: { input: 5, cache: { read: 0.5 }, output: 30, tools: OAI_PRICE_TOOLS },
     // benchmark: not measurable - the pointer moves under a stable id
   },
 
@@ -359,6 +366,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       input: [{ upTo: 272000, price: 5 }, { upTo: null, price: 10 }],
       output: [{ upTo: 272000, price: 30 }, { upTo: null, price: 45 }],
       cache: { read: [{ upTo: 272000, price: 0.5 }, { upTo: null, price: 1 }] },
+      tools: OAI_PRICE_TOOLS,
     },
     benchmark: { cbaElo: 1482 }, // gpt-5.5-high
   },
@@ -384,7 +392,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { input: [{ upTo: 272000, price: 30 }, { upTo: null, price: 60 }], output: [{ upTo: 272000, price: 180 }, { upTo: null, price: 270 }] },
+    chatPrice: { input: [{ upTo: 272000, price: 30 }, { upTo: null, price: 60 }], output: [{ upTo: 272000, price: 180 }, { upTo: null, price: 270 }], tools: OAI_PRICE_TOOLS },
     // benchmark: TBD
   },
   {
@@ -418,6 +426,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       input: [{ upTo: 272000, price: 2.5 }, { upTo: null, price: 5 }],
       output: [{ upTo: 272000, price: 15 }, { upTo: null, price: 22.5 }],
       cache: { read: [{ upTo: 272000, price: 0.25 }, { upTo: null, price: 0.5 }] },
+      tools: OAI_PRICE_TOOLS,
     },
     benchmark: { cbaElo: 1476 }, // gpt-5.4-high
   },
@@ -443,7 +452,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { input: [{ upTo: 272000, price: 30 }, { upTo: null, price: 60 }], output: [{ upTo: 272000, price: 180 }, { upTo: null, price: 270 }] },
+    chatPrice: { input: [{ upTo: 272000, price: 30 }, { upTo: null, price: 60 }], output: [{ upTo: 272000, price: 180 }, { upTo: null, price: 270 }], tools: OAI_PRICE_TOOLS },
     // benchmark: TBD
   },
   {
@@ -469,7 +478,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiCodeInterpreter' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { input: 0.75, cache: { read: 0.075 }, output: 4.5 },
+    chatPrice: { input: 0.75, cache: { read: 0.075 }, output: 4.5, tools: OAI_PRICE_TOOLS },
     benchmark: { cbaElo: 1448 }, // gpt-5.4-mini-high
   },
   {
@@ -495,7 +504,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiCodeInterpreter' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { input: 0.2, cache: { read: 0.02 }, output: 1.25 },
+    chatPrice: { input: 0.2, cache: { read: 0.02 }, output: 1.25, tools: OAI_PRICE_TOOLS },
     benchmark: { cbaElo: 1402 }, // gpt-5.4-nano-high
   },
   {
@@ -523,7 +532,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { input: 1.75, cache: { read: 0.175 }, output: 14 },
+    chatPrice: { input: 1.75, cache: { read: 0.175 }, output: 14, tools: OAI_PRICE_TOOLS },
     // benchmark: TBD
   },
 
@@ -552,7 +561,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiCodeInterpreter' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { input: 1.75, cache: { read: 0.175 }, output: 14 },
+    chatPrice: { input: 1.75, cache: { read: 0.175 }, output: 14, tools: OAI_PRICE_TOOLS },
     benchmark: { cbaElo: 1437 }, // gpt-5.2-high
   },
   {
@@ -580,7 +589,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiImageGeneration' },
     ],
-    chatPrice: { input: 1.75, cache: { read: 0.175 }, output: 14 },
+    chatPrice: { input: 1.75, cache: { read: 0.175 }, output: 14, tools: OAI_PRICE_TOOLS },
     // benchmark: TBD
   },
 
@@ -603,7 +612,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { input: 21, output: 168 },
+    chatPrice: { input: 21, output: 168, tools: OAI_PRICE_TOOLS },
     // benchmark: TBD
   },
   {
@@ -633,7 +642,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiCodeInterpreter' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { input: 1.25, cache: { read: 0.125 }, output: 10 },
+    chatPrice: { input: 1.25, cache: { read: 0.125 }, output: 10, tools: OAI_PRICE_TOOLS },
     benchmark: { cbaElo: 1455 }, // gpt-5.1-high
   },
   {
@@ -663,7 +672,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { input: 1.25, cache: { read: 0.125 }, output: 10 },
+    chatPrice: { input: 1.25, cache: { read: 0.125 }, output: 10, tools: OAI_PRICE_TOOLS },
     // benchmark: TBD
   },
   {
@@ -682,7 +691,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { input: 0.25, cache: { read: 0.025 }, output: 2 },
+    chatPrice: { input: 0.25, cache: { read: 0.025 }, output: 2, tools: OAI_PRICE_TOOLS },
     // benchmark: TBD
   },
   {
@@ -701,7 +710,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiImageGeneration' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { input: 1.25, cache: { read: 0.125 }, output: 10 },
+    chatPrice: { input: 1.25, cache: { read: 0.125 }, output: 10, tools: OAI_PRICE_TOOLS },
     // benchmark: TBD
   },
 
@@ -726,7 +735,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiCodeInterpreter' }, // code execution in sandboxed container
       { paramId: 'llmForceNoStream' }, // non-streaming option for unverified organizations
     ],
-    chatPrice: { input: 1.25, cache: { read: 0.125 }, output: 10 },
+    chatPrice: { input: 1.25, cache: { read: 0.125 }, output: 10, tools: OAI_PRICE_TOOLS },
     benchmark: { cbaElo: 1434 }, // gpt-5-high
   },
   {
@@ -748,7 +757,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     maxCompletionTokens: 128000, // official docs: 128K max output (272K is input limit within 400K context)
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiImageGeneration' }, { paramId: 'llmForceNoStream' }], // reasoning effort is fixed at 'high'
-    chatPrice: { input: 15, output: 120 },
+    chatPrice: { input: 15, output: 120, tools: OAI_PRICE_TOOLS },
     // benchmark: has not been measured yet
   },
   {
@@ -772,7 +781,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     maxCompletionTokens: 100000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision], // no function calling
     parameterSpecs: [{ paramId: 'llmVndOaiWebSearchContext', initialValue: 'medium' }], // Search enabled by default
-    chatPrice: { input: 1.25, cache: { read: 0.125 }, output: 10 },
+    chatPrice: { input: 1.25, cache: { read: 0.125 }, output: 10, tools: OAI_PRICE_TOOLS },
     // benchmark: TBD
   },
   {
@@ -794,7 +803,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     maxCompletionTokens: 128000,
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['minimal', 'low', 'medium', 'high'] }, { paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiImageGeneration' }, { paramId: 'llmForceNoStream' }],
-    chatPrice: { input: 0.25, cache: { read: 0.025 }, output: 2 },
+    chatPrice: { input: 0.25, cache: { read: 0.025 }, output: 2, tools: OAI_PRICE_TOOLS },
     benchmark: { cbaElo: 1390 }, // gpt-5-mini-high
   },
   {
@@ -816,7 +825,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     maxCompletionTokens: 128000,
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['minimal', 'low', 'medium', 'high'] }, { paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiVerbosity' }, { paramId: 'llmVndOaiImageGeneration' }],
-    chatPrice: { input: 0.05, cache: { read: 0.005 }, output: 0.4 },
+    chatPrice: { input: 0.05, cache: { read: 0.005 }, output: 0.4, tools: OAI_PRICE_TOOLS },
     benchmark: { cbaElo: 1337 }, // gpt-5-nano-high
   },
   {
@@ -873,7 +882,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     maxCompletionTokens: 100000,
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, { paramId: 'llmVndOaiWebSearchContext' }, { paramId: 'llmVndOaiImageGeneration' }, { paramId: 'llmForceNoStream' }],
-    chatPrice: { input: 20, output: 80 },
+    chatPrice: { input: 20, output: 80, tools: OAI_PRICE_TOOLS },
     // benchmark: has not been measured yet
   },
   {

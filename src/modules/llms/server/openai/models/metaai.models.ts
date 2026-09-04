@@ -30,11 +30,12 @@ const _wireMetaAIModelItemSchema = z.object({
 // [Meta AI] Pricing, USD per 1M tokens - https://dev.meta.ai/docs/pricing-rate-limits (2026-09-02).
 // Flat ("no long-context premium"); all Standard Spark versions share one rate. Caching is automatic
 // (prefix KV, no breakpoints, no write charge): cached input bills at the reduced 'read' rate.
-// Not modeled: web search grounding at $2.50 / 1K queries on top of tokens.
+// Web search grounding: $2.50 / 1K queries on top of tokens.
 const _sparkStandardPrice: ModelDescriptionSchema['chatPrice'] = {
   input: 1.25,
   output: 4.25,
   cache: { read: 0.15 },
+  tools: { webSearch: 2.5 },
 };
 
 // [Meta AI] Contributor tier: the same model at ~12x/21x lower rates, in exchange for permission to train on
@@ -43,6 +44,7 @@ const _sparkContributorPrice: ModelDescriptionSchema['chatPrice'] = {
   input: 0.10,
   output: 0.20,
   cache: { read: 0.002 },
+  tools: { webSearch: 2.5 },
 };
 
 

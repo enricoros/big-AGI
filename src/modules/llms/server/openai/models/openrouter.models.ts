@@ -193,6 +193,10 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     // one cache shape: write only when quoted (OpenAI 5.6+, Anthropic), no duration (OR quotes no TTL)
     if (cacheReadPrice)
       chatPrice.cache = { read: cacheReadPrice, ...(cacheWritePrice && { write: cacheWritePrice }) };
+    // OR quotes web search $ per call; we keep $ per 1K
+    const webSearchPerCall = parseFloat(pricing.web_search ?? '');
+    if (webSearchPerCall > 0)
+      chatPrice.tools = { webSearch: webSearchPerCall * 1000 };
   }
 
   // -- Pricing: free --

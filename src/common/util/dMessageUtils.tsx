@@ -305,8 +305,8 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
   // the provider-reported (billed) cost is the headline when present; the price-table estimate demotes to a footnote
   const $cHeadline = metrics.$cReported ?? metrics.$c;
   const $cEstimated = (metrics.$cReported !== undefined && metrics.$c !== undefined) ? metrics.$c : undefined;
-  // cost by class, when cache is in play
-  const showCostByClass = metrics.$cCacheR !== undefined || metrics.$cCacheW !== undefined;
+  // cost by class, when cache or tools are in play
+  const showCostByClass = metrics.$cCacheR !== undefined || metrics.$cCacheW !== undefined || metrics.$cTools !== undefined;
 
   return <Box sx={tooltipMetricsGridSx}>
 
@@ -319,6 +319,7 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
       {', '}<b>{metrics.TOut?.toLocaleString() || ''}</b> out
       {metrics.TOutR !== undefined && <> (<b>{metrics.TOutR?.toLocaleString() || ''}</b> for reasoning)</>}
       {/*{metrics.TOutA !== undefined && <> (<b>{metrics.TOutA?.toLocaleString() || ''}</b> for audio)</>}*/}
+      {!!metrics.nWebSearch && <>{', '}<b>{metrics.nWebSearch.toLocaleString()}</b> {metrics.nWebSearch === 1 ? 'search' : 'searches'}</>}
     </div>}
 
     {/* Timings */}
@@ -350,6 +351,7 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
         {metrics.$cCacheR !== undefined && <>{' · '}read {formatModelsCost(metrics.$cCacheR / 100)}</>}
         {metrics.$cCacheW !== undefined && <>{' · '}wrote {formatModelsCost(metrics.$cCacheW / 100)}</>}
         {metrics.$cOut !== undefined && <>{' · '}out {formatModelsCost(metrics.$cOut / 100)}</>}
+        {metrics.$cTools !== undefined && <>{' · '}tools {formatModelsCost(metrics.$cTools / 100)}</>}
       </small>
     </div>}
     {/* Add the local price-table estimate underneath, when the headline is the billed cost */}

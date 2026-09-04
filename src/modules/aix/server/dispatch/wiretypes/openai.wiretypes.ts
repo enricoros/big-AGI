@@ -1750,10 +1750,20 @@ export namespace OpenAIWire_API_Responses {
         reasoning_tokens: z.number().optional(),
       }).optional(),
       total_tokens: z.number(),
-      // [xAI] exact charge (1 tick = 1e-10 USD)
+      // [xAI] exact charge (1 tick = 1e-10 USD) and per-tool call counts
       cost_in_usd_ticks: z.number().nullish(),
+      server_side_tool_usage_details: z.object({
+        web_search_calls: z.number().nullish(),
+        x_search_calls: z.number().nullish(),
+      }).nullish(),
     }).nullish(),
 
+    // [OpenAI] per-tool usage outside `usage`: web search calls bill per call; image_gen has its own token split (not priced yet)
+    tool_usage: z.object({
+      web_search: z.object({
+        num_requests: z.number().nullish(), // counts 'search' actions only (open_page is free)
+      }).nullish(),
+    }).nullish(),
 
     // Echo State management & API options (with defaults)
     background: z.boolean().optional(), // (false)

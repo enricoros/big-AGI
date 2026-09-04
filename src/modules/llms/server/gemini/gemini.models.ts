@@ -83,34 +83,42 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 // NOTE(2027-01-01): 3.8/3.7/3.6 Flash introductory pricing expires December 31, 2026 - flip all three consts
 // to the list prices in their comments (pricing page + latest-model page state the promo covers all three)
 
+// Google Search grounding: $14 / 1K queries after 5,000 free per month, shared across the 3.x models
+const GEM_PRICE_TOOLS: NonNullable<ModelDescriptionSchema['chatPrice']>['tools'] = { webSearch: 14 };
+
 const gemini38FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.75, // introductory through 2026-12-31, then $1.50 - same promo as 3.7/3.6 Flash; no per-modality split stated
   output: 3.75, // including thinking tokens; $7.50 from 2027-01-01
   cache: { read: 0.075 }, // $0.15 from 2027-01-01; storage $0.50/MTok-hour -> $1.00 (not tracked here)
+  tools: GEM_PRICE_TOOLS,
 };
 
 const gemini37FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.75, // introductory through 2026-12-31, then $1.50; no per-modality split stated
   output: 3.75, // including thinking tokens; $7.50 from 2027-01-01
   cache: { read: 0.075 }, // $0.15 from 2027-01-01; storage $0.50/MTok-hour -> $1.00 (not tracked here)
+  tools: GEM_PRICE_TOOLS,
 };
 
 const gemini36FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.75, // introductory through 2026-12-31 (extended to 3.6 alongside the 3.7 launch), then $1.50; no per-modality split stated
   output: 3.75, // including thinking tokens; $7.50 from 2027-01-01 - list price stays cheaper than 3.5 Flash's $9.00
   cache: { read: 0.075 }, // $0.15 from 2027-01-01; storage $0.50/MTok-hour -> $1.00 (not tracked here)
+  tools: GEM_PRICE_TOOLS,
 };
 
 const gemini35FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 1.50, // text/image/video; cache storage $1.00/MTok-hour (not tracked here)
   output: 9.00, // including thinking tokens
   cache: { read: 0.15 },
+  tools: GEM_PRICE_TOOLS,
 };
 
 const gemini35FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.30, // all modalities, no per-modality split
   output: 2.50, // including thinking tokens
   cache: { read: 0.03 },
+  tools: GEM_PRICE_TOOLS,
 };
 
 // Gemini Omni Flash (video generation), paid-tier only. Official (2026-06/07):
@@ -130,6 +138,7 @@ const gemini31FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.25, // text/image/video; audio is $0.50 but we don't differentiate yet
   output: 1.50,
   cache: { read: 0.025 }, // text/image/video; audio is $0.05 but we don't differentiate yet
+  tools: GEM_PRICE_TOOLS,
 };
 
 const gemini31FlashImagePricing: ModelDescriptionSchema['chatPrice'] = {
@@ -151,6 +160,7 @@ const gemini30ProPricing: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
   output: [{ upTo: 200000, price: 12.00 }, { upTo: null, price: 18.00 }],
   cache: { read: [{ upTo: 200000, price: 0.20 }, { upTo: null, price: 0.40 }] },
+  tools: GEM_PRICE_TOOLS,
 };
 
 const gemini30ProImagePricing: ModelDescriptionSchema['chatPrice'] = {
@@ -165,6 +175,7 @@ const gemini30FlashPricing: ModelDescriptionSchema['chatPrice'] = {
   input: 0.50, // text/image/video; audio is $1.00 but we don't differentiate yet
   output: 3.00,
   cache: { read: 0.05 }, // text/image/video; audio is $0.10 but we don't differentiate yet
+  tools: GEM_PRICE_TOOLS,
 };
 
 const gemini25ProPricing: ModelDescriptionSchema['chatPrice'] = {

@@ -1131,13 +1131,14 @@ function _createAnthropicPauseTurnContinuation(
 }
 
 
-/** Usage -> counts. One mapper for message_start, message_delta (final) and the non-streaming response. input_tokens excludes the cache classes. */
+/** Usage -> counts, tool calls, served tier. One mapper for message_start, message_delta (final) and the non-streaming response. input_tokens excludes the cache classes. */
 function _fromAnthropicUsage(usage: {
   input_tokens?: number | null,
   output_tokens: number,
   output_tokens_details?: { thinking_tokens: number } | null,
   cache_read_input_tokens?: number | null,
   cache_creation_input_tokens?: number | null,
+  server_tool_use?: { web_search_requests?: number } | null,
 }): AixWire_Particles.CGSelectMetrics {
   const metrics: AixWire_Particles.CGSelectMetrics = { TOut: usage.output_tokens };
   if (typeof usage.input_tokens === 'number')
@@ -1149,6 +1150,9 @@ function _fromAnthropicUsage(usage: {
   // reasoning tokens are a subset of output_tokens (already in TOut) - surfaced as a breakdown, like OpenAI/Gemini
   if (typeof usage.output_tokens_details?.thinking_tokens === 'number')
     metrics.TOutR = usage.output_tokens_details.thinking_tokens;
+  // per-call billed server tools
+  if (usage.server_tool_use?.web_search_requests)
+    metrics.nWebSearch = usage.server_tool_use.web_search_requests;
   return metrics;
 }
 

@@ -35,6 +35,9 @@ type MetricsChatGenerateTokens = {
   TOutR?: number,       // Portion of TOut that was used for reasoning (e.g. not for output)
   // TOutA?: number,    // Portion of TOut that was used for Audio
 
+  // n = Counts (per-call billed server tools)
+  nWebSearch?: number,  // web searches executed - OpenAI tool_usage, Anthropic server_tool_use, xAI server-side tools, Gemini grounding queries
+
   // If set, indicates unreliability or Stop Reason (sR)
   TsR?:
     | 'pending'         // still being generated (could be stuck in this state if data got corrupted)
@@ -64,6 +67,7 @@ export type MetricsChatGenerateCost_Md = {
   $cCacheR?: number,    // cache reads (only when read tokens > 0)
   $cCacheW?: number,    // cache writes (only when write tokens > 0)
   $cOut?: number,       // output, reasoning included
+  $cTools?: number,     // per-call tool fees (only when calls > 0)
   $code?:
     | 'free'            // generated for free
     | 'partial-msg'     // partial message generated
@@ -127,8 +131,8 @@ export function metricsFinishChatGenerateLg(metrics: DMetricsChatGenerate_Lg | u
 // ChatGenerate extraction for DMessage's smaller metrics
 
 const _MD_OPTIONAL_KEYS: readonly (keyof DMetricsChatGenerate_Md)[] = [
-  '$c', '$cReported', '$cdCache', '$cIn', '$cCacheR', '$cCacheW', '$cOut', '$code', // select costs
-  'TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', // select token counts
+  '$c', '$cReported', '$cdCache', '$cIn', '$cCacheR', '$cCacheW', '$cOut', '$cTools', '$code', // select costs
+  'TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', 'nWebSearch', // select token and call counts
   'dtAll', 'dtStart', 'vTOutInner', // select token timings/velocities
   'TsR', // stop reason
 ];
@@ -177,9 +181,10 @@ function _computeCostsFromPricing(metrics: Readonly<DMetricsChatGenerate_Md>, pr
   const inCacheWriteTokens = metrics.TCacheWrite || 0;
   const sumInputTokens = inNewTokens + inCacheReadTokens + inCacheWriteTokens;
   const outTokens = metrics.TOut || 0;
+  const webSearchCalls = metrics.nWebSearch || 0;
 
   // usage: presence
-  if (!sumInputTokens && !outTokens)
+  if (!sumInputTokens && !outTokens && !webSearchCalls)
     return { $code: 'no-tokens' };
 
   // pricing: presence
@@ -206,6 +211,11 @@ function _computeCostsFromPricing(metrics: Readonly<DMetricsChatGenerate_Md>, pr
   // Unknown prices are the norm, not the edge: a class with no price contributes nothing to $c and emits no breakdown key,
   // and the estimate is flagged partial. Never an invented rate.
 
+  // per-call tool fees
+  const webSearchFee = pricing.tools?.webSearch;
+  const $tools = (webSearchCalls > 0 && webSearchFee !== undefined) ? webSearchCalls * webSearchFee / 1000 : undefined;
+  const toolsUnpriced = webSearchCalls > 0 && $tools === undefined;
+
   // cache classes: inside a priced cache block an absent write price means writes bill as input (a vendor fact, never 0);
   // with no cache block, or a tier gap, the class is unknown
   const cachePricing = pricing.cache;
@@ -213,22 +223,23 @@ function _computeCostsFromPricing(metrics: Readonly<DMetricsChatGenerate_Md>, pr
   const $cacheWrite = !inCacheWriteTokens ? undefined : getLlmCostForTokens(tierTokens, inCacheWriteTokens, cachePricing ? (cachePricing.write ?? pricing.input) : undefined);
   const cacheUnpriced = (inCacheReadTokens > 0 && $cacheRead === undefined) || (inCacheWriteTokens > 0 && $cacheWrite === undefined);
   const cachePriced = (inCacheReadTokens > 0 || inCacheWriteTokens > 0) && !cacheUnpriced;
-  if (cacheUnpriced)
-    console.log(`Unpriced cache usage for ${logLlmRefId}`);
+  if (cacheUnpriced || toolsUnpriced)
+    console.log(`Unpriced usage for ${logLlmRefId}: cache=${cacheUnpriced}, tools=${toolsUnpriced}`);
 
   const $cache = ($cacheRead ?? 0) + ($cacheWrite ?? 0);
 
   // an unpriced class wins over a truncated message
-  const $code = cacheUnpriced ? 'partial-price' : isPartialMessage ? 'partial-msg' : undefined;
+  const $code = (toolsUnpriced || cacheUnpriced) ? 'partial-price' : isPartialMessage ? 'partial-msg' : undefined;
 
   return {
-    $c: usdToCents($in + $cache + $out),
+    $c: usdToCents($in + $cache + $out + ($tools ?? 0)),
     // cache advantage: the input side as if uncached, minus actual - only when every cache class is priced
     ...(cachePriced && { $cdCache: usdToCents(getLlmCostForTokens(tierTokens, sumInputTokens, pricing.input)! - $in - $cache) }),
     $cIn: usdToCents($in),
     ...($cacheRead !== undefined && { $cCacheR: usdToCents($cacheRead) }),
     ...($cacheWrite !== undefined && { $cCacheW: usdToCents($cacheWrite) }),
     $cOut: usdToCents($out),
+    ...($tools !== undefined && { $cTools: usdToCents($tools) }),
     ...($code && { $code }),
   };
 }

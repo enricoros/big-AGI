@@ -321,7 +321,9 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
         }
       }
 
-      // -> Candidates[0] -> Grounding Metadata
+      // -> Candidates[0] -> Grounding Metadata: executed queries bill per query
+      if (candidate0.groundingMetadata?.webSearchQueries?.length)
+        pt.updateMetrics({ nWebSearch: candidate0.groundingMetadata.webSearchQueries.length });
       if (candidate0.groundingMetadata?.groundingChunks?.length) {
         /**
          * TODO: improve parsing of grounding metadata, including:

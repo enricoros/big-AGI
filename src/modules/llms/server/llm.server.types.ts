@@ -53,6 +53,10 @@ const PricingChatGenerate_schema = z.object({
     // (llmsWireCompatCacheTag), dropped by current clients on ingest (llm.client.ts). TODO: delete after 2026-12-03, all three sites
     cType: z.enum(['ant-bp', 'oai-ac']).optional(),
   }).optional(),
+  // per-call server tool fees, $ per 1,000 calls - see DPricingChatGenerate['tools']
+  tools: z.object({
+    webSearch: z.number().optional(),
+  }).optional(),
   // Not for the server-side, computed on the client only
   // _isFree: z.boolean().optional(),
 });

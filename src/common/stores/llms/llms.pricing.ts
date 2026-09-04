@@ -21,6 +21,9 @@ export type DPricingChatGenerate = {
     write?: DTieredPricing; // cache writes; absent = billed as input (Gemini, DeepSeek, OpenAI before 5.6)
     duration?: number; // seconds a written entry lives, informational
   };
+  tools?: {
+    webSearch?: number;
+  };
   // NOT in AixWire_API_ListModels.PricingChatGenerate_schema
   _isFree?: boolean; // precomputed, so we avoid recalculating it
 }
@@ -91,7 +94,7 @@ export function getLlmCostForTokens(tierTokens: number, tokens: number, pricing:
  * price multipliers (e.g. fast mode = 6x). Self-contained: reads the DLLM, resolves
  * parameter values, looks up enumPriceMultiplier in the registry, and applies.
  *
- * Note: does NOT affect isLLMChatFree_cached (free * N = free).
+ * Note: does NOT affect isLLMChatFree_cached (free * N = free). Per-call tool fees are not multiplied.
  */
 export function llmChatPricing_adjusted(llm: DLLM | null): DPricingChatGenerate | undefined {
   if (!llm) return undefined;
