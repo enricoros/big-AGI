@@ -696,7 +696,7 @@ function _finalizeLlmMetricsWithCosts(cgMetricsLg: undefined | DMetricsChatGener
 
   // Compute costs
   const logLlmRefId = getAllModelParameterValues(llm.initialParameters, llm.userParameters).llmRef || llm.id;
-  const adjChatPricing = llmChatPricing_adjusted(llm);
+  const adjChatPricing = llmChatPricing_adjusted(llm, cgMetricsLg?.$xPrice); // the served tier (when echoed) wins over the requested one
   const costs = metricsComputeChatGenerateCostsMd(metricsMd, adjChatPricing, logLlmRefId);
   if (!costs) {
     // FIXME: we shall warn that the costs are missing, as the only way to get pricing is through surfacing missing prices

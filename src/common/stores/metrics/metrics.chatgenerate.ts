@@ -68,6 +68,7 @@ export type MetricsChatGenerateCost_Md = {
   $cCacheW?: number,    // cache writes (only when write tokens > 0)
   $cOut?: number,       // output, reasoning included
   $cTools?: number,     // per-call tool fees (only when calls > 0)
+  $xPrice?: number,     // provider-confirmed price multiplier vs listed rates (echoed service tier: flex 0.5, fast 2, ...); parsed, and used over the parameter-side multiplier
   $code?:
     | 'free'            // generated for free
     | 'partial-msg'     // partial message generated
@@ -131,7 +132,7 @@ export function metricsFinishChatGenerateLg(metrics: DMetricsChatGenerate_Lg | u
 // ChatGenerate extraction for DMessage's smaller metrics
 
 const _MD_OPTIONAL_KEYS: readonly (keyof DMetricsChatGenerate_Md)[] = [
-  '$c', '$cReported', '$cdCache', '$cIn', '$cCacheR', '$cCacheW', '$cOut', '$cTools', '$code', // select costs
+  '$c', '$cReported', '$cdCache', '$cIn', '$cCacheR', '$cCacheW', '$cOut', '$cTools', '$xPrice', '$code', // select costs
   'TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', 'nWebSearch', // select token and call counts
   'dtAll', 'dtStart', 'vTOutInner', // select token timings/velocities
   'TsR', // stop reason
@@ -149,6 +150,10 @@ export function metricsChatGenerateLgToMd(metrics: DMetricsChatGenerate_Lg): DMe
     // [OpenAI] we also ignore a TOutA of 0 (no audio in this output)
     // if (key === 'TOutA' && metrics.TOutA === 0)
     //   continue;
+
+    // 1x is the norm: not stored (the finalizer reads the Lg value)
+    if (key === '$xPrice' && metrics.$xPrice === 1)
+      continue;
 
     if (metrics[key] !== undefined) {
       extracted[key] = metrics[key] as any;

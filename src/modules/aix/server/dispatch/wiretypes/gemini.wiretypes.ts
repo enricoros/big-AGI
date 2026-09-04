@@ -947,6 +947,9 @@ export namespace GeminiWire_API_Generate_Content {
     // (optional: only for thinking models - and not in all packets) tokens of thoughts for thinking models
     thoughtsTokenCount: z.number().optional(),
 
+    // served tier: 'standard' | 'flex' | 'priority' | 'batch'
+    serviceTier: z.string().nullish(),
+
     // Modality breakdowns - mostly commented out because we don't want to spend energy parsing them for now (we don't use them)
     promptTokensDetails: z.array(ModalityTokenCount_schema).optional(),
     cacheTokensDetails: z.array(ModalityTokenCount_schema).optional(),

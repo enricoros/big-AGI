@@ -1758,6 +1758,7 @@ export namespace OpenAIWire_API_Responses {
       }).nullish(),
     }).nullish(),
 
+    service_tier: OpenAIWire_ServiceTier_schema.nullish(), // the tier served ('default' on a downgrade); on streams already on 'response.created'
     // [OpenAI] per-tool usage outside `usage`: web search calls bill per call; image_gen has its own token split (not priced yet)
     tool_usage: z.object({
       web_search: z.object({

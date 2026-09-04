@@ -94,9 +94,11 @@ export function getLlmCostForTokens(tierTokens: number, tokens: number, pricing:
  * price multipliers (e.g. fast mode = 6x). Self-contained: reads the DLLM, resolves
  * parameter values, looks up enumPriceMultiplier in the registry, and applies.
  *
+ * `confirmedMultiplier`: the served tier (metrics `$xPrice`) replaces the parameter-derived multiplier.
+ *
  * Note: does NOT affect isLLMChatFree_cached (free * N = free). Per-call tool fees are not multiplied.
  */
-export function llmChatPricing_adjusted(llm: DLLM | null): DPricingChatGenerate | undefined {
+export function llmChatPricing_adjusted(llm: DLLM | null, confirmedMultiplier?: number): DPricingChatGenerate | undefined {
   if (!llm) return undefined;
 
   // base chat pricing
@@ -104,7 +106,7 @@ export function llmChatPricing_adjusted(llm: DLLM | null): DPricingChatGenerate 
   if (!gcPricing) return undefined;
 
   // compute composed multiplier from active enum parameters
-  const multiplier = _computePriceMultiplier(llm.parameterSpecs, llm.initialParameters, llm.userParameters);
+  const multiplier = confirmedMultiplier ?? _computePriceMultiplier(llm.parameterSpecs, llm.initialParameters, llm.userParameters);
   if (multiplier === 1) return gcPricing;
 
   // Apply the multiplier per present class - never emit `key: undefined` (missing and undefined differ on the wire and at rest)

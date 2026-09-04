@@ -407,7 +407,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
 
       case 'response.completed':
         // CHANGE of { ..fields.. } expected
-        R.setResponse(eventType, event.response, ['status', 'output', 'usage', 'tool_usage' /*, 'service_tier', 'completed_at' (not yet parsed) */]); // tool_usage fills in along the way
+        R.setResponse(eventType, event.response, ['status', 'output', 'usage', 'service_tier', 'tool_usage' /*, 'completed_at' (not parsed) */]); // service_tier settles ('auto' -> served tier) and tool_usage fills in along the way
 
         // -> Status: determine stop reason based on streamed content
         pt.setTokenStopReason(R.hasFunctionCalls ? 'ok-tool_invocations' : 'ok');
@@ -1162,7 +1162,7 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
 }
 
 
-function _fromResponseMetrics(response: Pick<OpenAIWire_API_Responses.Response, 'usage' | 'tool_usage'> | undefined, parserCreationTimestamp: number, timeToFirstEvent: number | undefined): AixWire_Particles.CGSelectMetrics {
+function _fromResponseMetrics(response: Pick<OpenAIWire_API_Responses.Response, 'usage' | 'service_tier' | 'tool_usage'> | undefined, parserCreationTimestamp: number, timeToFirstEvent: number | undefined): AixWire_Particles.CGSelectMetrics {
   const usage = response?.usage;
 
   // Time Metrics - measured locally (parser-creation -> now), independent of the upstream `usage` block.
@@ -1230,7 +1230,26 @@ function _fromResponseMetrics(response: Pick<OpenAIWire_API_Responses.Response, 
   if (typeof usage.cost_in_usd_ticks === 'number')
     metricsUpdate.$cReported = usdToCents(usage.cost_in_usd_ticks / 1e10);
 
+  // served tier -> confirmed multiplier; unknown tiers stay on the parameter side
+  const $xPrice = _priceMultiplierFromServiceTier(response?.service_tier);
+  if ($xPrice !== undefined)
+    metricsUpdate.$xPrice = $xPrice;
+
   return metricsUpdate;
+}
+
+function _priceMultiplierFromServiceTier(serviceTier: string | null | undefined): number | undefined {
+  switch (serviceTier) {
+    case 'default':
+      return 1;
+    case 'flex':
+      return 0.5;
+    case 'priority':
+    case 'fast':
+      return 2;
+    default: // 'auto', 'ultrafast' (gated, unpublished price), absent
+      return undefined;
+  }
 }
 
 /**

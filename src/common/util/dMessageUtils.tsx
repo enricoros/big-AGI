@@ -343,6 +343,7 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
           : <>cache surcharge: <b>{formatModelsCost(-metrics.$cdCache / 100)}</b></>
         })</small>
       </>}
+      {metrics.$xPrice !== undefined && metrics.$xPrice !== 1 && <>{' '}<small>at <b>{metrics.$xPrice}x</b> tier</small></>}
     </div>}
     {showCostByClass && <div></div>}
     {showCostByClass && <div>

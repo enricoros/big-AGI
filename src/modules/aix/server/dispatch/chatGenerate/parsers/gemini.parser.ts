@@ -118,6 +118,11 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           metricsUpdate.TIn = (metricsUpdate.TIn ?? 0) - metricsUpdate.TCacheRead;
       }
 
+      // Served tier -> confirmed price multiplier
+      const $xPrice = _gemPriceMultiplier(generationChunk.usageMetadata.serviceTier);
+      if ($xPrice !== undefined)
+        metricsUpdate.$xPrice = $xPrice;
+
       if (isStreaming && timeToFirstEvent !== undefined)
         metricsUpdate.dtStart = timeToFirstEvent;
 
@@ -561,3 +566,17 @@ function _geminiJsonSummary(v: unknown, maxLen = 512): string | undefined {
 }
 
 
+/** Served tier -> confirmed multiplier: standard 1x, flex and batch 0.5x, priority 1.8x */
+function _gemPriceMultiplier(serviceTier: string | null | undefined): number | undefined {
+  switch (serviceTier) {
+    case 'standard':
+      return 1;
+    case 'flex':
+    case 'batch':
+      return 0.5;
+    case 'priority':
+      return 1.8;
+    default:
+      return undefined;
+  }
+}

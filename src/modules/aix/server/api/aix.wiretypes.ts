@@ -820,6 +820,7 @@ export namespace AixWire_Particles {
 
     // $c = Cents of USD
     $cReported?: number,  // Total cost in cents as reported by provider (e.g. Perplexity usage.cost.total_cost)
+    $xPrice?: number,     // Provider-confirmed price multiplier vs listed rates, from the echoed service tier (flex 0.5, fast 2, ...)
   };
 
   // TextParticle / PartParticle - keep in line with the DMessage*Part counterparts

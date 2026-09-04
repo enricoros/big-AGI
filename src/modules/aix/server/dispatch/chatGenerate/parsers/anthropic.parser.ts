@@ -1139,6 +1139,9 @@ function _fromAnthropicUsage(usage: {
   cache_read_input_tokens?: number | null,
   cache_creation_input_tokens?: number | null,
   server_tool_use?: { web_search_requests?: number } | null,
+  service_tier?: string | null,
+  inference_geo?: string | null,
+  speed?: string | null,
 }): AixWire_Particles.CGSelectMetrics {
   const metrics: AixWire_Particles.CGSelectMetrics = { TOut: usage.output_tokens };
   if (typeof usage.input_tokens === 'number')
@@ -1153,9 +1156,20 @@ function _fromAnthropicUsage(usage: {
   // per-call billed server tools
   if (usage.server_tool_use?.web_search_requests)
     metrics.nWebSearch = usage.server_tool_use.web_search_requests;
+  // served tier/geo (not on the delta)
+  const $xPrice = _antPriceMultiplier(usage);
+  if ($xPrice !== undefined)
+    metrics.$xPrice = $xPrice;
   return metrics;
 }
 
+/** Served tags -> confirmed multiplier: batch 0.5x, US residency 1.1x. A served 'fast' is per-model priced and stays on the parameter side; 'standard' confirms plain rates. */
+function _antPriceMultiplier(usage: { service_tier?: string | null, inference_geo?: string | null, speed?: string | null }): number | undefined {
+  if (usage.speed === 'fast') return undefined;
+  const multiplier = (usage.service_tier === 'batch' ? 0.5 : 1) * (usage.inference_geo === 'us' ? 1.1 : 1);
+  if (multiplier === 1 && usage.speed !== 'standard') return undefined; // nothing confirmed
+  return Math.round(multiplier * 1000) / 1000;
+}
 
 function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.Response['stop_reason'], debugCaller: string) {
   switch (stopReason) {
