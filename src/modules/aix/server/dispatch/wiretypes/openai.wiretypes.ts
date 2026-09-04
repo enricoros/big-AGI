@@ -1750,6 +1750,8 @@ export namespace OpenAIWire_API_Responses {
         reasoning_tokens: z.number().optional(),
       }).optional(),
       total_tokens: z.number(),
+      // [xAI] exact charge (1 tick = 1e-10 USD)
+      cost_in_usd_ticks: z.number().nullish(),
     }).nullish(),
 
 

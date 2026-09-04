@@ -100,7 +100,8 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
     // -> Stats - before candidates to endings won't interfere/block
     if (generationChunk.usageMetadata) {
       const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
-        TIn: generationChunk.usageMetadata.promptTokenCount,
+        // tool-use prompt tokens (code execution) bill as input, outside promptTokenCount
+        TIn: generationChunk.usageMetadata.promptTokenCount + (generationChunk.usageMetadata.toolUsePromptTokenCount ?? 0),
         TOut: generationChunk.usageMetadata.candidatesTokenCount,
       };
 
@@ -113,7 +114,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
       // Subtract auto-cached (read) input tokens
       if (generationChunk.usageMetadata.cachedContentTokenCount) {
         metricsUpdate.TCacheRead = generationChunk.usageMetadata.cachedContentTokenCount;
-        if ((metricsUpdate.TIn ?? 0) > metricsUpdate.TCacheRead)
+        if ((metricsUpdate.TIn ?? 0) >= metricsUpdate.TCacheRead)
           metricsUpdate.TIn = (metricsUpdate.TIn ?? 0) - metricsUpdate.TCacheRead;
       }
 
@@ -556,3 +557,5 @@ function _geminiJsonSummary(v: unknown, maxLen = 512): string | undefined {
   const half = Math.floor((maxLen - ellipsis.length) / 2);
   return s.slice(0, half) + ellipsis + s.slice(-half);
 }
+
+

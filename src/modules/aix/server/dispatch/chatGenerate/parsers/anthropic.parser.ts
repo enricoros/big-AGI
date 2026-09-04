@@ -151,18 +151,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
         if (responseMessage.usage) {
           chatInTokens = responseMessage.usage.input_tokens;
-          const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
-            TIn: chatInTokens,
-            TOut: responseMessage.usage.output_tokens,
-            dtStart: timeToFirstEvent,
-          };
-          if (responseMessage.usage.cache_read_input_tokens || responseMessage.usage.cache_creation_input_tokens) {
-            if (typeof responseMessage.usage.cache_read_input_tokens === 'number')
-              metricsUpdate.TCacheRead = responseMessage.usage.cache_read_input_tokens;
-            if (typeof responseMessage.usage.cache_creation_input_tokens === 'number')
-              metricsUpdate.TCacheWrite = responseMessage.usage.cache_creation_input_tokens;
-          }
-          pt.updateMetrics(metricsUpdate);
+          pt.updateMetrics({ ..._fromAnthropicUsage(responseMessage.usage), dtStart: timeToFirstEvent });
         }
 
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant message_start: model=${responseMessage.model}, TIn=${chatInTokens || 0}, container=${responseMessage.container?.id || 'none'}`);
@@ -458,11 +447,10 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
           if (usage?.output_tokens) {
             const elapsedTimeSeconds = elapsedTimeMilliseconds / 1000;
             const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
-            metricsUpdate.TIn = chatInTokens !== undefined ? chatInTokens : -1;
-            metricsUpdate.TOut = usage.output_tokens;
-            // reasoning tokens are a subset of output_tokens (already in TOut) - surfaced as a breakdown, like OpenAI/Gemini
-            if (typeof usage.output_tokens_details?.thinking_tokens === 'number')
-              metricsUpdate.TOutR = usage.output_tokens_details.thinking_tokens;
+            // the delta carries the final input side (server tool results land here, not in message_start)
+            Object.assign(metricsUpdate, _fromAnthropicUsage(usage));
+            if (metricsUpdate.TIn === undefined)
+              metricsUpdate.TIn = chatInTokens ?? -1;
             metricsUpdate.vTOutInner = Math.round(chatOutRate * 100) / 100; // Round to 2 decimal places
           }
           pt.updateMetrics(metricsUpdate);
@@ -683,25 +671,12 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     }
 
     // -> Stats: timing always (measured locally); token/cache fields only when the usage block is present (#1149)
-    const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
+    pt.updateMetrics({
+      ...(usage ? _fromAnthropicUsage(usage) : {}),
       // vTOutInner: // we don't know the server-side rate
       // dtStart / dtInner: // we don't know
       dtAll: Date.now() - parserCreationTimestamp,
-    };
-    if (usage) {
-      metricsUpdate.TIn = usage.input_tokens;
-      metricsUpdate.TOut = usage.output_tokens;
-      if (usage.cache_read_input_tokens || usage.cache_creation_input_tokens) {
-        if (typeof usage.cache_read_input_tokens === 'number')
-          metricsUpdate.TCacheRead = usage.cache_read_input_tokens;
-        if (typeof usage.cache_creation_input_tokens === 'number')
-          metricsUpdate.TCacheWrite = usage.cache_creation_input_tokens;
-      }
-      // reasoning tokens are a subset of output_tokens (already in TOut) - surfaced as a breakdown, like OpenAI/Gemini
-      if (typeof usage.output_tokens_details?.thinking_tokens === 'number')
-        metricsUpdate.TOutR = usage.output_tokens_details.thinking_tokens;
-    }
-    pt.updateMetrics(metricsUpdate);
+    });
 
     // Continuation: when pause_turn, throw to trigger re-dispatch with accumulated content
     if (stop_reason === 'pause_turn')
@@ -1153,6 +1128,28 @@ function _createAnthropicPauseTurnContinuation(
       };
     },
   };
+}
+
+
+/** Usage -> counts. One mapper for message_start, message_delta (final) and the non-streaming response. input_tokens excludes the cache classes. */
+function _fromAnthropicUsage(usage: {
+  input_tokens?: number | null,
+  output_tokens: number,
+  output_tokens_details?: { thinking_tokens: number } | null,
+  cache_read_input_tokens?: number | null,
+  cache_creation_input_tokens?: number | null,
+}): AixWire_Particles.CGSelectMetrics {
+  const metrics: AixWire_Particles.CGSelectMetrics = { TOut: usage.output_tokens };
+  if (typeof usage.input_tokens === 'number')
+    metrics.TIn = usage.input_tokens;
+  if (usage.cache_read_input_tokens)
+    metrics.TCacheRead = usage.cache_read_input_tokens;
+  if (usage.cache_creation_input_tokens)
+    metrics.TCacheWrite = usage.cache_creation_input_tokens;
+  // reasoning tokens are a subset of output_tokens (already in TOut) - surfaced as a breakdown, like OpenAI/Gemini
+  if (typeof usage.output_tokens_details?.thinking_tokens === 'number')
+    metrics.TOutR = usage.output_tokens_details.thinking_tokens;
+  return metrics;
 }
 
 

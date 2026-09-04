@@ -84,7 +84,10 @@ export function createBedrockConverseStreamParser(): ChatGenerateParseFunction {
         case 'metadata': {
           const { usage, metrics } = BedrockConverseWire_API.event_Metadata_schema.parse(parsed);
           pt.updateMetrics({
+            // inputTokens excludes the cache classes (additive, like Anthropic)
             TIn: usage.inputTokens,
+            ...(usage.cacheReadInputTokens && { TCacheRead: usage.cacheReadInputTokens }),
+            ...(usage.cacheWriteInputTokens && { TCacheWrite: usage.cacheWriteInputTokens }),
             TOut: usage.outputTokens,
             ...(metrics?.latencyMs ? { dtInner: metrics.latencyMs } : {}),
             dtAll: Date.now() - parserCreationTimestamp,
@@ -148,7 +151,9 @@ export function createBedrockConverseParserNS(): ChatGenerateParseFunction {
 
     // Metrics
     pt.updateMetrics({
-      TIn: response.usage.inputTokens,
+      TIn: response.usage.inputTokens, // exclusive of the cache classes
+      ...(response.usage.cacheReadInputTokens && { TCacheRead: response.usage.cacheReadInputTokens }),
+      ...(response.usage.cacheWriteInputTokens && { TCacheWrite: response.usage.cacheWriteInputTokens }),
       TOut: response.usage.outputTokens,
       ...(response.metrics?.latencyMs ? { dtInner: response.metrics.latencyMs } : {}),
       dtAll: Date.now() - parserCreationTimestamp,

@@ -1,6 +1,7 @@
 import { safeErrorString } from '~/server/wire';
 
 import { hasKeys } from '~/common/util/objectUtils';
+import { usdToCents } from '~/common/util/costUtils';
 
 import type { AixWire_Particles, AixWire_Vendors } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
@@ -1216,6 +1217,10 @@ function _fromResponseMetrics(usage: OpenAIWire_API_Responses.Response['usage'],
   }
 
   // TODO: Output breakdown: Audio
+
+  // [xAI] exact charge (1 tick = 1e-10 USD)
+  if (typeof usage.cost_in_usd_ticks === 'number')
+    metricsUpdate.$cReported = usdToCents(usage.cost_in_usd_ticks / 1e10);
 
   return metricsUpdate;
 }
