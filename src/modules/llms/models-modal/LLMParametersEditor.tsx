@@ -159,6 +159,11 @@ const _antWebSearchOptions = [
   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
 ] as const;
 
+const _bedrockWebSearchOptions = [
+  { value: 'auto', label: 'On', description: 'AWS-native web search, executed server-side by Bedrock' },
+  { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
+] as const;
+
 const _antWebFetchOptions = [
   { value: 'auto', label: 'On', description: 'Enable fetching web content and PDFs' },
   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
@@ -276,6 +281,7 @@ export function LLMParametersEditor(props: {
     llmVndAntWebFetchMaxUses,
     llmVndAntWebSearch,
     llmVndAntWebSearchMaxUses,
+    llmVndBedrockWebSearch,
     llmVndGemEffort,
     llmVndGeminiAgentViz,
     llmVndGeminiAspectRatio,
@@ -517,6 +523,20 @@ export function LLMParametersEditor(props: {
       />
     )}
 
+
+    {/* Bedrock: server-side Web Search via the deployment's AgentCore Gateway */}
+    {showParam('llmVndBedrockWebSearch') && (
+      <FormSelectControl
+        title='Web Search'
+        tooltip='AWS-native web search over an Amazon-operated index, executed server-side by Bedrock via the AgentCore Gateway configured on this deployment'
+        value={llmVndBedrockWebSearch ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndBedrockWebSearch');
+          else onChangeParameter({ llmVndBedrockWebSearch: value });
+        }}
+        options={_bedrockWebSearchOptions}
+      />
+    )}
 
     {showParam('llmVndAntWebSearch') && (
       <FormSelectControl

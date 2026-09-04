@@ -1285,6 +1285,35 @@ export namespace OpenAIWire_Responses_Items {
     }),
   });
 
+  // MCP items: server-side tool calls (OpenAI 'remote MCP servers', AWS Bedrock Mantle 'mcp' connectors)
+  // executed by the API provider; the client only observes discovery and call items.
+
+  const OutputMCPListToolsItem_schema = _OutputItemBase_schema.extend({
+    type: z.literal('mcp_list_tools'),
+    id: z.string(), // unique ID of the output item, e.g. mcpl_...
+    server_label: z.string().optional(), // echo of the tools[].server_label from the request
+    tools: z.array(z.object({
+      name: z.string(),
+      description: z.string().nullish(),
+      input_schema: z.any().optional(), // JSON schema of the tool input - unused
+      annotations: z.any().nullish(), // unused
+    })).optional(), // empty on .added, populated on .done
+    error: z.string().nullish(), // populated when the listing failed
+  });
+
+  const OutputMCPCallItem_schema = _OutputItemBase_schema.extend({
+    type: z.literal('mcp_call'),
+    id: z.string(), // unique ID of the output item, e.g. mc_...
+    name: z.string(), // tool name, e.g. 'web-search___WebSearch' (AgentCore Gateway: target___tool)
+    server_label: z.string().optional(),
+    arguments: z.string().optional(), // JSON string, complete on .done ('' on .added)
+    output: z.string().nullish(), // JSON string of the tool output, when completed
+    error: z.string().nullish(), // error message, when failed
+    approval_request_id: z.string().nullish(), // unused: we only dispatch require_approval: 'never'
+    // redefining to add 'failed' (per OpenAI spec) and 'calling' (defensive)
+    status: z.enum(['in_progress', 'completed', 'incomplete', 'calling', 'failed']).optional(),
+  });
+
   const OutputImageGenerationCallItem_schema = _OutputItemBase_schema.extend({
     type: z.literal('image_generation_call'),
     id: z.string(), // unique ID of the image generation call (output item ID)
@@ -1377,17 +1406,16 @@ export namespace OpenAIWire_Responses_Items {
     OutputWebSearchCallItem_schema, // xAI/OpenAI
     OutputCodeInterpreterCallItem_schema, // OpenAI/xAI
     OutputCustomToolCallItem_schema, // xAI x_search uses this (x_user_search, etc.)
+    OutputMCPCallItem_schema, // OpenAI remote MCP / Bedrock Mantle mcp connectors
+    OutputMCPListToolsItem_schema,
 
     // Additional output items to be added later:
     // XAI: x_search_call = not documented, will need rev-eng
 
     // OutputFileSearchCallItem_schema,
-    // OutputMCPCallItem_schema,
     // ComputerUseCallOutput_schema,
     // CodeInterpreterCallOutput_schema,
     // LocalShellCallOutput_schema,
-    // MCPToolCallOutput_schema,
-    // MCPListToolsOutput_schema,
     // MCPApprovalRequestOutput_schema,
 
   ]);
@@ -1588,10 +1616,18 @@ export namespace OpenAIWire_Responses_Tools {
   //   // OpenAI vector store feature - not implemented
   // });
 
-  // const MCPTool_schema = z.object({
-  //   type: z.literal('mcp'),
-  //   // MCP (Model Context Protocol) tools - not implemented yet
-  // });
+  // MCP tool - server-side execution of remote MCP servers/connectors
+  // OpenAI: 'remote MCP servers' (server_url or connector_id); AWS Bedrock Mantle: connector_id = Lambda or AgentCore Gateway ARN
+  const MCPTool_schema = z.object({
+    type: z.literal('mcp'),
+    server_label: z.string(), // unique identifier for this tool connector within the request
+    connector_id: z.string().optional(), // provider-specific connector (Bedrock: Lambda/AgentCore Gateway ARN; OpenAI: e.g. 'connector_dropbox')
+    server_url: z.string().optional(), // OpenAI-only alternative: URL of a remote MCP server
+    server_description: z.string().optional(), // human-readable description of the tools provided
+    require_approval: z.enum(['never', 'always']).or(z.any()).optional(), // Bedrock requires the literal 'never'; OpenAI also accepts a granular object
+    allowed_tools: z.array(z.string()).optional(), // optional tool filter
+    headers: z.record(z.string(), z.string()).optional(), // OpenAI-only: auth headers for server_url MCP servers
+  });
 
   // Combined tools
 
@@ -1604,8 +1640,8 @@ export namespace OpenAIWire_Responses_Tools {
     WebSearchTool_schema,
     ImageGenerationTool_schema,
     CodeInterpreterTool_schema,
+    MCPTool_schema, // server-side remote MCP servers/connectors (OpenAI, Bedrock Mantle)
     // FileSearchTool_schema, // OpenAI vector store - not implemented
-    // MCPTool_schema,
     // ComputerUseTool_schema,
     // LocalShellTool_schema,
   ]);
@@ -1997,41 +2033,43 @@ export namespace OpenAIWire_API_Responses {
     type: z.literal('response.image_generation_call.completed'),
   });
 
-  // Streaming > Tool invoke > Host MCP events (basic implementation)
+  // Streaming > Tool invoke > Host MCP events
+  // Flow (observed live on Bedrock Mantle, 2026-07-20): mcp_list_tools: in_progress -> completed|failed;
+  // mcp_call: in_progress -> [mcp_call_arguments.delta]* -> mcp_call_arguments.done -> completed|failed
 
-  // const OutputMCPCallInProgressEvent_schema = _OutputIndexedEvent_schema.extend({
-  //   type: z.literal('response.mcp_call.in_progress'),
-  // });
+  const OutputMCPCallInProgressEvent_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.mcp_call.in_progress'),
+  });
 
-  // const OutputMCPCallCompletedEvent_schema = _OutputIndexedEvent_schema.extend({
-  //   type: z.literal('response.mcp_call.completed'),
-  // });
+  const OutputMCPCallCompletedEvent_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.mcp_call.completed'),
+  });
 
-  // const OutputMCPCallFailedEvent_schema = _OutputIndexedEvent_schema.extend({
-  //   type: z.literal('response.mcp_call.failed'),
-  // });
+  const OutputMCPCallFailedEvent_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.mcp_call.failed'),
+  });
 
-  // const OutputMCPCallArgumentsDeltaEvent_schema = _OutputIndexedEvent_schema.extend({
-  //   type: z.literal('response.mcp_call_arguments.delta'),
-  //   delta: z.string(),
-  // });
+  const OutputMCPCallArgumentsDeltaEvent_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.mcp_call_arguments.delta'),
+    delta: z.string(),
+  });
 
-  // const OutputMCPCallArgumentsDoneEvent_schema = _OutputIndexedEvent_schema.extend({
-  //   type: z.literal('response.mcp_call_arguments.done'),
-  //   arguments: z.string(),
-  // });
+  const OutputMCPCallArgumentsDoneEvent_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.mcp_call_arguments.done'),
+    arguments: z.string(), // JSON string of the tool call arguments
+  });
 
-  // const OutputMCPListToolsInProgressEvent_schema = _OutputIndexedEvent_schema.extend({
-  //   type: z.literal('response.mcp_list_tools.in_progress'),
-  // });
+  const OutputMCPListToolsInProgressEvent_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.mcp_list_tools.in_progress'),
+  });
 
-  // const OutputMCPListToolsCompletedEvent_schema = _OutputIndexedEvent_schema.extend({
-  //   type: z.literal('response.mcp_list_tools.completed'),
-  // });
+  const OutputMCPListToolsCompletedEvent_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.mcp_list_tools.completed'),
+  });
 
-  // const OutputMCPListToolsFailedEvent_schema = _OutputIndexedEvent_schema.extend({
-  //   type: z.literal('response.mcp_list_tools.failed'),
-  // });
+  const OutputMCPListToolsFailedEvent_schema = _OutputIndexedEvent_schema.extend({
+    type: z.literal('response.mcp_list_tools.failed'),
+  });
 
   // Streaming > Tool invoke > Host Code interpreter events (xAI/OpenAI)
 
@@ -2154,14 +2192,14 @@ export namespace OpenAIWire_API_Responses {
     OutputImageGenerationCallCompletedEvent_schema,
 
     // Host Tool invoke > MCP events
-    // OutputMCPCallArgumentsDeltaEvent_schema,
-    // OutputMCPCallArgumentsDoneEvent_schema,
-    // OutputMCPCallInProgressEvent_schema,
-    // OutputMCPCallCompletedEvent_schema,
-    // OutputMCPCallFailedEvent_schema,
-    // OutputMCPListToolsInProgressEvent_schema,
-    // OutputMCPListToolsCompletedEvent_schema,
-    // OutputMCPListToolsFailedEvent_schema,
+    OutputMCPCallArgumentsDeltaEvent_schema,
+    OutputMCPCallArgumentsDoneEvent_schema,
+    OutputMCPCallInProgressEvent_schema,
+    OutputMCPCallCompletedEvent_schema,
+    OutputMCPCallFailedEvent_schema,
+    OutputMCPListToolsInProgressEvent_schema,
+    OutputMCPListToolsCompletedEvent_schema,
+    OutputMCPListToolsFailedEvent_schema,
 
     // Host Tool invoke > Code Interpreter events (xAI/OpenAI)
     OutputCodeInterpreterCallInProgressEvent_schema,
