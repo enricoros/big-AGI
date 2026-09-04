@@ -79,15 +79,6 @@ export namespace OpenAPI_Schema {
 
     // [array] schema of the items
     items: z.any().optional(), // could refer to self using z.lazy()....
-
-    // ignore but possibly useful properties..
-    // minimum: z.number().optional(),
-    // maximum: z.number().optional(),
-    // minLength: z.number().int().nonnegative().optional(),
-    // maxLength: z.number().int().nonnegative().optional(),
-    // pattern: z.string().optional(),
-    // default: z.any().optional(),
-    // additionalProperties: z.union([z.boolean(), jsonSchema]).optional(),
   });
 
 }

@@ -7,6 +7,7 @@ import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
+import { DMessageContentFragment, isContentFragment } from '~/common/stores/chat/chat.fragments';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 
 import { PersonaChatMessageSpeak } from './persona/PersonaChatMessageSpeak';
@@ -95,10 +96,55 @@ export async function runPersonaOnConversationHead(
     },
   );
 
-  // final message update (needed only in case of error)
-  const lastDMessage = messageStatus.lastDMessage;
+  // final message update
+  let lastDMessage = messageStatus.lastDMessage;
   if (messageStatus.outcome === 'failed')
     cHandler.messageEdit(assistantMessageId, lastDMessage, true, false);
+
+  // --- MCP Tool Execution Loop ---
+  const toolInvocations = lastDMessage.fragments.filter(
+    (f): f is DMessageContentFragment => isContentFragment(f) && f.part.pt === 'tool_invocation',
+  );
+
+  if (toolInvocations.length > 0 && !abortController.signal.aborted) {
+    try {
+      const { apiAsync } = await import('~/common/util/trpc.client');
+      const { create_FunctionCallResponse_ContentFragment } = await import('~/common/stores/chat/chat.fragments');
+
+      const newFragments = [...lastDMessage.fragments];
+
+      for (const tFrag of toolInvocations) {
+        if (tFrag.part.pt === 'tool_invocation' && tFrag.part.invocation.type === 'function_call') {
+          const fnName = tFrag.part.invocation.name;
+          let parsedArgs: Record<string, any> = {};
+          try {
+            parsedArgs = JSON.parse(tFrag.part.invocation.args || '{}');
+          } catch {
+            parsedArgs = {};
+          }
+
+          const result = await apiAsync.mcp.callTool.mutate({
+            name: fnName,
+            args: parsedArgs,
+          });
+
+          const responseFragment = create_FunctionCallResponse_ContentFragment(
+            tFrag.part.id,
+            !result.ok,
+            fnName,
+            result.output || result.error || 'Execution completed',
+            'client',
+          );
+          newFragments.push(responseFragment);
+        }
+      }
+
+      lastDMessage = { ...lastDMessage, fragments: newFragments };
+      cHandler.messageEdit(assistantMessageId, lastDMessage, true, false);
+    } catch (toolExecError) {
+      console.error('[MCP Execution Error]:', toolExecError);
+    }
+  }
 
   // special case: if the last message was aborted and had no content, delete it
   if (messageWasInterruptedAtStart(lastDMessage)) {
