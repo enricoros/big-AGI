@@ -57,7 +57,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072, // 128K
     parameterSpecs: _PS_Reasoning_Compulsory,
-    chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.26 } },
+    chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.26 } },
     initialTemperature: 1.0,
     benchmark: { cbaElo: 1487 }, // lmarena: glm-5.3-max
   },
@@ -75,7 +75,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 131072, // 128K
     parameterSpecs: _PS_Reasoning_Compulsory,
-    chatPrice: { input: 0.15, output: 0.5, cache: { cType: 'oai-ac', read: 0.03 } }, // list price; 50% promo (0.075/0.25, cache 0.015) through 2026-09-09
+    chatPrice: { input: 0.15, output: 0.5, cache: { read: 0.03 } }, // list price; 50% promo (0.075/0.25, cache 0.015) through 2026-09-09
     initialTemperature: 1.0, // HF generation_config
     // benchmark: not on lmarena as of 2026-08-27
   },
@@ -92,7 +92,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072, // 128K
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] }],
-    chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.26 } },
+    chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.26 } },
     initialTemperature: 1.0,
     benchmark: { cbaElo: 1470 }, // lmarena: glm-5.2-max
   },
@@ -108,7 +108,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072, // 128K
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 1.4, output: 4.4, cache: { cType: 'oai-ac', read: 0.26 } },
+    chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.26 } },
     initialTemperature: 1.0,
     benchmark: { cbaElo: 1468 }, // lmarena: glm-5.1
   },
@@ -121,7 +121,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072, // 128K
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 1, output: 3.2, cache: { cType: 'oai-ac', read: 0.2 } },
+    chatPrice: { input: 1, output: 3.2, cache: { read: 0.2 } },
     initialTemperature: 1.0, // Z.ai default for GLM-5
     benchmark: { cbaElo: 1457 }, // lmarena: glm-5
   },
@@ -135,7 +135,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072, // 128K
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 1.2, output: 4, cache: { cType: 'oai-ac', read: 0.24 } },
+    chatPrice: { input: 1.2, output: 4, cache: { read: 0.24 } },
     initialTemperature: 1.0,
   },
 
@@ -150,7 +150,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072,
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 0.6, output: 2.2, cache: { cType: 'oai-ac', read: 0.11 } },
+    chatPrice: { input: 0.6, output: 2.2, cache: { read: 0.11 } },
     initialTemperature: 1.0,
     benchmark: { cbaElo: 1442 }, // lmarena: glm-4.7
   },
@@ -163,7 +163,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072,
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 0.07, output: 0.4, cache: { cType: 'oai-ac', read: 0.01 } },
+    chatPrice: { input: 0.07, output: 0.4, cache: { read: 0.01 } },
     initialTemperature: 1.0,
   },
   {
@@ -192,7 +192,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 131072, // 128K
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 1.2, output: 4, cache: { cType: 'oai-ac', read: 0.24 } },
+    chatPrice: { input: 1.2, output: 4, cache: { read: 0.24 } },
     initialTemperature: 0.8, // Z.ai default for vision models
     benchmark: { cbaElo: 1433 }, // lmarena: glm-5v-turbo
   },
@@ -208,7 +208,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 32768,
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 0.04, output: 0.4, cache: { cType: 'oai-ac', read: 0.004 } },
+    chatPrice: { input: 0.04, output: 0.4, cache: { read: 0.004 } },
     initialTemperature: 0.8, // Z.ai default for vision models
     hidden: true,
   },
@@ -233,7 +233,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 32768,
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 0.3, output: 0.9, cache: { cType: 'oai-ac', read: 0.05 } },
+    chatPrice: { input: 0.3, output: 0.9, cache: { read: 0.05 } },
     initialTemperature: 0.8,
     benchmark: { cbaElo: 1377 }, // lmarena: glm-4.6v
   },
@@ -249,7 +249,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 131072,
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 0.6, output: 2.2, cache: { cType: 'oai-ac', read: 0.11 } },
+    chatPrice: { input: 0.6, output: 2.2, cache: { read: 0.11 } },
     initialTemperature: 1.0,
     benchmark: { cbaElo: 1424 }, // lmarena: glm-4.6
   },
@@ -294,7 +294,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 16384,
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 0.6, output: 1.8, cache: { cType: 'oai-ac', read: 0.11 } },
+    chatPrice: { input: 0.6, output: 1.8, cache: { read: 0.11 } },
     initialTemperature: 0.8,
     benchmark: { cbaElo: 1353 }, // lmarena: glm-4.5v
     hidden: true,
@@ -324,7 +324,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 98304,
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 1.1, output: 4.5, cache: { cType: 'oai-ac', read: 0.22 } },
+    chatPrice: { input: 1.1, output: 4.5, cache: { read: 0.22 } },
     initialTemperature: 0.6,
     hidden: true,
   },
@@ -337,7 +337,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 98304,
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 0.2, output: 1.1, cache: { cType: 'oai-ac', read: 0.03 } },
+    chatPrice: { input: 0.2, output: 1.1, cache: { read: 0.03 } },
     initialTemperature: 0.6,
     benchmark: { cbaElo: 1373 }, // lmarena: glm-4.5-air
     hidden: true,
@@ -351,7 +351,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 98304,
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 2.2, output: 8.9, cache: { cType: 'oai-ac', read: 0.45 } },
+    chatPrice: { input: 2.2, output: 8.9, cache: { read: 0.45 } },
     initialTemperature: 0.6,
     hidden: true,
   },
@@ -364,7 +364,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Reasoning,
     maxCompletionTokens: 98304,
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 0.6, output: 2.2, cache: { cType: 'oai-ac', read: 0.11 } },
+    chatPrice: { input: 0.6, output: 2.2, cache: { read: 0.11 } },
     initialTemperature: 0.6,
     benchmark: { cbaElo: 1411 }, // lmarena: glm-4.5
   },

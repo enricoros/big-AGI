@@ -53,7 +53,7 @@ const _modularKnownModels = llmsDefineManualMappings([
     maxCompletionTokens: 131072, // unverified
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
     benchmark: { cbaElo: 1444 }, // lmarena: minimax-m3
-    chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.06 } },
+    chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.06 } },
   },
   {
     idPrefix: 'google/gemma-4-31b-it',
@@ -93,7 +93,7 @@ const _modularKnownModels = llmsDefineManualMappings([
     // 'high' ~30, 'max' ~215 - the same none/high/max shape as GLM 5.2 below (default = on)
     parameterSpecs: _PS_GlmEffort,
     benchmark: { cbaElo: 1487 }, // lmarena: glm-5.3-max
-    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.26 } }, // modular.com/pricing 2026-08-31, same card as GLM 5.2
+    chatPrice: { input: 1.40, output: 4.40, cache: { read: 0.26 } }, // modular.com/pricing 2026-08-31, same card as GLM 5.2
   },
   {
     idPrefix: 'z-ai/glm-5.2',
@@ -110,7 +110,7 @@ const _modularKnownModels = llmsDefineManualMappings([
     // (~1.1K, ~1.6x) - Z.ai's documented native mapping. Streams reasoning as delta.reasoning (not reasoning_content) - parser reads both.
     parameterSpecs: _PS_GlmEffort,
     benchmark: { cbaElo: 1471 }, // lmarena: glm-5.2-max
-    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.26 } },
+    chatPrice: { input: 1.40, output: 4.40, cache: { read: 0.26 } },
   },
 ]);
 

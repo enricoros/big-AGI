@@ -8,7 +8,7 @@ import { createDebugWireLogger } from '~/server/wire';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import type { ModelDescriptionSchema } from './llm.server.types';
-import { llmDevValidateParameterSpecs_DEV, llmsAutoImplyInterfaces } from './models.mappings';
+import { llmDevValidateParameterSpecs_DEV, llmsAutoImplyInterfaces, llmsWireCompatCacheTag } from './models.mappings';
 
 
 // protocol: Anthropic
@@ -87,7 +87,8 @@ export async function listModelsRunDispatch(access: AixAPI_Access, signal?: Abor
   const dispatch = _listModelsCreateDispatch(access, signal);
   const wireModels = await dispatch.fetchModels();
   const models = dispatch.convertToDescriptions(wireModels)
-    .map(llmsAutoImplyInterfaces); // auto-inject implied IFs from parameterSpecs
+    .map(llmsAutoImplyInterfaces) // auto-inject implied IFs from parameterSpecs
+    .map(llmsWireCompatCacheTag); // legacy cache tag for older clients - TODO: delete after 2026-12-03
 
   // DEV: validate parameterSpecs (enumValues ⊆ registry values, paramId existence)
   if (process.env.NODE_ENV === 'development')

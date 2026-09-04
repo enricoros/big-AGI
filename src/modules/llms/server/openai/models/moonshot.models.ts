@@ -98,7 +98,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     // when unset) - it was silently ignored at K3 launch; thinking {type:'disabled'} still zeroes reasoning despite metadata
     // 'supports_thinking_type: only' and the OpenAPI K3 schema dropping `thinking`, so keep the Off level
     parameterSpecs: _PS_ReasoningEffort,
-    chatPrice: { input: 3.00, output: 15.00, cache: { cType: 'oai-ac', read: 0.30 } },
+    chatPrice: { input: 3.00, output: 15.00, cache: { read: 0.30 } },
     benchmark: { cbaElo: 1489 }, // kimi-k3-max
   },
 
@@ -112,7 +112,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     maxCompletionTokens: 32768,
     interfaces: IF_K2_7_CODE,
     // no _PS_Reasoning - thinking is always on (cannot be disabled)
-    chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.19 } },
+    chatPrice: { input: 0.95, output: 4.00, cache: { read: 0.19 } },
     benchmark: { cbaElo: 1461 + 2 } // not available yet, assuming kimi-k2.6 + 2
   },
   {
@@ -123,7 +123,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     contextWindow: 262144,
     maxCompletionTokens: 32768,
     interfaces: IF_K2_7_CODE,
-    chatPrice: { input: 1.90, output: 8.00, cache: { cType: 'oai-ac', read: 0.38 } },
+    chatPrice: { input: 1.90, output: 8.00, cache: { read: 0.38 } },
     benchmark: { cbaElo: 1461 + 1 } // not available yet, assuming kimi-k2.6 + 1
   },
 
@@ -137,7 +137,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     maxCompletionTokens: 32768,
     interfaces: IF_K2_5,
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.16 } },
+    chatPrice: { input: 0.95, output: 4.00, cache: { read: 0.16 } },
     benchmark: { cbaElo: 1461 } // kimi-k2.6
   },
 
@@ -152,7 +152,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     maxCompletionTokens: 32768,
     interfaces: IF_K2_5,
     parameterSpecs: _PS_Reasoning,
-    chatPrice: { input: 0.60, output: 3.00, cache: { cType: 'oai-ac', read: 0.10 } },
+    chatPrice: { input: 0.60, output: 3.00, cache: { read: 0.10 } },
     benchmark: { cbaElo: 1450 }, // kimi-k2.5-thinking
   },
 
@@ -169,7 +169,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     maxCompletionTokens: 65536,
     interfaces: IF_K2_REASON,
     // parameterSpecs: [{ paramId: 'llmVndMoonshotWebSearch' }], // NOT WORKING YET
-    chatPrice: { input: 1.15, output: 8.00, cache: { cType: 'oai-ac', read: 0.15 } },
+    chatPrice: { input: 1.15, output: 8.00, cache: { read: 0.15 } },
     benchmark: { cbaElo: 1430 }, // kimi-k2-thinking-turbo
   },
   // Thinking
@@ -183,7 +183,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     maxCompletionTokens: 65536,
     interfaces: IF_K2_REASON,
     // parameterSpecs: [{ paramId: 'llmVndMoonshotWebSearch' }],
-    chatPrice: { input: 0.60, output: 2.50, cache: { cType: 'oai-ac', read: 0.15 } },
+    chatPrice: { input: 0.60, output: 2.50, cache: { read: 0.15 } },
     benchmark: { cbaElo: 1418 + 2 }, // UNKNOWN +2 over 0905, to be at the top here
   },
 
@@ -198,7 +198,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     maxCompletionTokens: 32768,
     interfaces: IF_K2,
     // parameterSpecs: [{ paramId: 'llmVndMoonshotWebSearch' }],
-    chatPrice: { input: 0.60, output: 2.50, cache: { cType: 'oai-ac', read: 0.15 } },
+    chatPrice: { input: 0.60, output: 2.50, cache: { read: 0.15 } },
     isPreview: true,
     benchmark: { cbaElo: 1418 }, // kimi-k2-0905-preview
   },
@@ -212,7 +212,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     maxCompletionTokens: 16384,
     interfaces: IF_K2,
     // parameterSpecs: [{ paramId: 'llmVndMoonshotWebSearch' }],
-    chatPrice: { input: 0.60, output: 2.50, cache: { cType: 'oai-ac', read: 0.15 } },
+    chatPrice: { input: 0.60, output: 2.50, cache: { read: 0.15 } },
     isPreview: true,
     benchmark: { cbaElo: 1418 }, // kimi-k2-0711-preview
   },
@@ -226,7 +226,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     maxCompletionTokens: 32768,
     interfaces: IF_K2,
     // parameterSpecs: [{ paramId: 'llmVndMoonshotWebSearch' }],
-    chatPrice: { input: 1.15, output: 8.00, cache: { cType: 'oai-ac', read: 0.15 } },
+    chatPrice: { input: 1.15, output: 8.00, cache: { read: 0.15 } },
     isPreview: true,
   },
 

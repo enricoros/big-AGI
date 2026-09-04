@@ -41,7 +41,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     chatPrice: {
       input: [{ upTo: 512000, price: 0.30 }, { upTo: null, price: 0.60 }],
       output: [{ upTo: 512000, price: 1.20 }, { upTo: null, price: 2.40 }],
-      cache: { cType: 'oai-ac', read: [{ upTo: 512000, price: 0.06 }, { upTo: null, price: 0.12 }] },
+      cache: { read: [{ upTo: 512000, price: 0.06 }, { upTo: null, price: 0.12 }] },
     },
     benchmark: { cbaElo: 1444 }, // lmarena: minimax-m3
   },
@@ -55,7 +55,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     contextWindow: 204800,
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.06 } },
+    chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.06 } },
     benchmark: { cbaElo: 1416 }, // lmarena: minimax-m2.7
   },
   {
@@ -66,7 +66,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     contextWindow: 204800,
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.06 } },
+    chatPrice: { input: 0.60, output: 2.40, cache: { read: 0.06 } },
     benchmark: { cbaElo: 1416 }, // same weights as minimax-m2.7
   },
 
@@ -79,7 +79,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     contextWindow: 204800,
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.03 } },
+    chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.03 } },
     benchmark: { cbaElo: 1390 }, // lmarena: minimax-m2.5
     hidden: true, // vendor Legacy
   },
@@ -91,7 +91,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     contextWindow: 204800,
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.03 } },
+    chatPrice: { input: 0.60, output: 2.40, cache: { read: 0.03 } },
     benchmark: { cbaElo: 1390 }, // same weights as minimax-m2.5
     hidden: true, // vendor Legacy
   },
@@ -117,7 +117,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     contextWindow: 204800,
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.03 } },
+    chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.03 } },
     hidden: true, // yield to newer
   },
   {
@@ -128,7 +128,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     contextWindow: 204800,
     maxCompletionTokens: 131072,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.03 } },
+    chatPrice: { input: 0.60, output: 2.40, cache: { read: 0.03 } },
     hidden: true, // yield to newer
   },
 
@@ -141,7 +141,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     contextWindow: 204800,
     maxCompletionTokens: 128000,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.03 } },
+    chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.03 } },
     hidden: true, // yield to newer
   },
 

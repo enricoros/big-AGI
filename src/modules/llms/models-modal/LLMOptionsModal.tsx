@@ -73,23 +73,10 @@ function prettyPricingComponent(pricingChatGenerate: DPricingChatGenerate): Reac
   const inputPrice = formatPrice(pricingChatGenerate.input);
   const outputPrice = formatPrice(pricingChatGenerate.output);
 
-  let cacheInfo = '';
-  if (pricingChatGenerate.cache) {
-    switch (pricingChatGenerate.cache.cType) {
-      case 'ant-bp': {
-        const { read, write, duration } = pricingChatGenerate.cache;
-        cacheInfo = `Cache: Read ${formatPrice(read)}, Write ${formatPrice(write)}, Duration: ${duration}s`;
-        break;
-      }
-      case 'oai-ac': {
-        const { read } = pricingChatGenerate.cache;
-        cacheInfo = `Cache: Read ${formatPrice(read)}`;
-        break;
-      }
-      default:
-        throw new Error('LLMOptionsModal: Unknown cache type');
-    }
-  }
+  const cache = pricingChatGenerate.cache;
+  const cacheInfo = !cache ? '' : `Cache: Read ${formatPrice(cache.read)}`
+    + (cache.write !== undefined ? `, Write ${formatPrice(cache.write)}` : '')
+    + (cache.duration !== undefined ? `, Duration: ${cache.duration}s` : '');
 
   return (
     <div>

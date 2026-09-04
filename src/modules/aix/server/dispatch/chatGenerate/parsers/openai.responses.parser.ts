@@ -1187,13 +1187,20 @@ function _fromResponseMetrics(usage: OpenAIWire_API_Responses.Response['usage'],
 
   // Input Metrics
 
-  // Input redistribution: Cache Read
+  // Input redistribution: Cache Read, Cache Write (input_tokens is inclusive of both)
   if (usage.input_tokens_details) {
     const TCacheRead = usage.input_tokens_details.cached_tokens;
     if (TCacheRead !== undefined && TCacheRead > 0) {
       metricsUpdate.TCacheRead = TCacheRead;
       if (metricsUpdate.TIn !== undefined)
         metricsUpdate.TIn -= TCacheRead;
+    }
+    // GPT-5.6+ written tokens (priced by cache.write)
+    const TCacheWrite = usage.input_tokens_details.cache_write_tokens;
+    if (TCacheWrite && TCacheWrite > 0) {
+      metricsUpdate.TCacheWrite = TCacheWrite;
+      if (metricsUpdate.TIn !== undefined)
+        metricsUpdate.TIn -= TCacheWrite;
     }
   }
 

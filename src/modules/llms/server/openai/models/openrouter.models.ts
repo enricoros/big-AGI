@@ -190,21 +190,9 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   };
 
   if (chatPrice) {
-    if (cacheWritePrice && cacheReadPrice) {
-      // if writing, assume anthropic-style
-      chatPrice.cache = {
-        cType: 'ant-bp',
-        read: cacheReadPrice,
-        write: cacheWritePrice,
-        duration: 300, // 5 minutes default
-      };
-    } else if (cacheReadPrice) {
-      // if only reading, assume openai-style
-      chatPrice.cache = {
-        cType: 'oai-ac',
-        read: cacheReadPrice,
-      };
-    }
+    // one cache shape: write only when quoted (OpenAI 5.6+, Anthropic), no duration (OR quotes no TTL)
+    if (cacheReadPrice)
+      chatPrice.cache = { read: cacheReadPrice, ...(cacheWritePrice && { write: cacheWritePrice }) };
   }
 
   // -- Pricing: free --

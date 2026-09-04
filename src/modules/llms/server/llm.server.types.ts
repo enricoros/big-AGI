@@ -44,19 +44,15 @@ const PricingChatGenerate_schema = z.object({
   output: TieredPricing_schema.optional(),
   // Future: Perplexity has a cost per request, consider this for future additions
   // perRequest: z.number().optional(), // New field for fixed per-request pricing
-  cache: z.discriminatedUnion('cType', [
-    z.object({
-      cType: z.literal('ant-bp'), // [Anthropic] Breakpoint-based caching
-      read: TieredPricing_schema,
-      write: TieredPricing_schema,
-      duration: z.number(),
-    }),
-    z.object({
-      cType: z.literal('oai-ac'), // [OpenAI] Automatic Caching
-      read: TieredPricing_schema,
-      // write: TieredPricing_schema, // Not needed, as it's the same as input cost, i.e. = 0
-    }),
-  ]).optional(),
+  // prompt cache, one shape for every vendor - see DPricingChatGenerate['cache'] (llms.pricing.ts) for the field semantics
+  cache: z.object({
+    read: TieredPricing_schema,
+    write: TieredPricing_schema.optional(), // absent = writes bill as plain input
+    duration: z.number().optional(), // seconds, informational
+    // wire compatibility: clients built before 2026-09-03 switch on this tag and throw without it - derived by the server
+    // (llmsWireCompatCacheTag), dropped by current clients on ingest (llm.client.ts). TODO: delete after 2026-12-03, all three sites
+    cType: z.enum(['ant-bp', 'oai-ac']).optional(),
+  }).optional(),
   // Not for the server-side, computed on the client only
   // _isFree: z.boolean().optional(),
 });

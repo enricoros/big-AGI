@@ -232,7 +232,7 @@ export function togetherAIModelsToModelDescriptions(wireModels: unknown): ModelD
         if (input > 0 || output > 0 || model.id.endsWith('-Free'))
           chatPrice = {
             input,
-            ...(!!cached_input && cached_input > 0 && cached_input < input && { cache: { cType: 'oai-ac' as const, read: cached_input } }),
+            ...(!!cached_input && cached_input > 0 && cached_input < input && { cache: { read: cached_input } }),
             output,
           };
       }

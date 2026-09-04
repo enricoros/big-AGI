@@ -35,7 +35,7 @@ const _wireSakanaAIModelItemSchema = z.object({
 const _fuguUltraPrice: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 272000, price: 5 }, { upTo: null, price: 10 }],
   output: [{ upTo: 272000, price: 30 }, { upTo: null, price: 45 }],
-  cache: { cType: 'oai-ac', read: [{ upTo: 272000, price: 0.5 }, { upTo: null, price: 1 }] },
+  cache: { read: [{ upTo: 272000, price: 0.5 }, { upTo: null, price: 1 }] },
 };
 
 // Fugu params (Responses API). Reasoning effort: validation enumerates 'high' / 'xhigh' / 'max' (re-verified
@@ -64,7 +64,7 @@ const _fuguUltraInterfaces = [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_
 const _fuguCyberPrice: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 272000, price: 6 }, { upTo: null, price: 12 }],
   output: [{ upTo: 272000, price: 36 }, { upTo: null, price: 54 }],
-  cache: { cType: 'oai-ac', read: [{ upTo: 272000, price: 0.6 }, { upTo: null, price: 1.2 }] },
+  cache: { read: [{ upTo: 272000, price: 0.6 }, { upTo: null, price: 1.2 }] },
 };
 
 // [Sakana.ai] Sakana Namazu flat PAYG pricing (USD per 1M tokens) - no context-size tiers, unlike Fugu.
@@ -73,7 +73,7 @@ const _fuguCyberPrice: ModelDescriptionSchema['chatPrice'] = {
 const _namazuPrice: ModelDescriptionSchema['chatPrice'] = {
   input: 0.95,
   output: 4,
-  cache: { cType: 'oai-ac', read: 0.15 },
+  cache: { read: 0.15 },
 };
 
 // Namazu interfaces/params, all empirically verified 2026-08-04 on the Responses API (Chat Completions is also

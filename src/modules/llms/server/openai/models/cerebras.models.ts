@@ -56,7 +56,7 @@ const _knownCerebrasModels = llmsDefineModels<_CerebrasModelDef>()([
       { paramId: 'llmVndOaiEffort', enumValues: ['none', 'high'] },
     ],
     // cache: no discount - cached input bills at the standard input rate (rate must still be declared, or cached tokens would price at 0)
-    chatPrice: { input: 0.99, output: 1.49, cache: { cType: 'oai-ac', read: 0.99 } },
+    chatPrice: { input: 0.99, output: 1.49, cache: { read: 0.99 } },
     benchmark: { cbaElo: 1451 }, // lmarena: gemma-4-31b
   },
 
@@ -74,7 +74,7 @@ const _knownCerebrasModels = llmsDefineModels<_CerebrasModelDef>()([
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
     ],
     // cache: no discount - cached input bills at the standard input rate (rate must still be declared, or cached tokens would price at 0)
-    chatPrice: { input: 0.35, output: 0.75, cache: { cType: 'oai-ac', read: 0.35 } },
+    chatPrice: { input: 0.35, output: 0.75, cache: { read: 0.35 } },
     benchmark: { cbaElo: 1352 }, // lmarena: gpt-oss-120b
   },
 

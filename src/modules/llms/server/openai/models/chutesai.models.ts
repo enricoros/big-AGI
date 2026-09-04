@@ -168,7 +168,6 @@ export function chutesAIModelsToModelDescriptions(wireModels: unknown): ModelDes
           output: completionP,
           ...(hasValidCacheRead && {
             cache: {
-              cType: 'oai-ac' as const,
               read: cacheReadP,
             },
           }),

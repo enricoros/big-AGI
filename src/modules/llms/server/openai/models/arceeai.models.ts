@@ -123,7 +123,7 @@ export function arceeAIModelsToModelDescriptions(wireModelsResponse: unknown): M
       const chatPrice = (inputPrice !== undefined || outputPrice !== undefined) ? {
         input: inputPrice,
         output: outputPrice,
-        ...(cacheReadPrice ? { cache: { cType: 'oai-ac' as const, read: cacheReadPrice } } : {}),
+        ...(cacheReadPrice ? { cache: { read: cacheReadPrice } } : {}),
       } : undefined;
 
       return fromManualMapping(_arceeKnownModels, model.id, model.created ?? undefined, undefined, {

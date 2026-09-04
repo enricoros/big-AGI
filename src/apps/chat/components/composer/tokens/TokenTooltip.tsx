@@ -58,6 +58,10 @@ export function tokenCountsMathAndMessage(tokenLimit: number | 0, directTokens: 
             `       Input tokens: ${_alignRight(usedInputTokens)}\n` +
             `    Input Price $/M: ${inputPricePerM.toFixed(2).padStart(8)}\n` +
             `         Input cost: ${('$' + costMin.toFixed(4)).padStart(8)}\n`;
+          // cold prompt: the cache write rate applies (GPT-5.6+, Anthropic breakpoints)
+          const costWrite = getLlmCostForTokens(usedInputTokens, usedInputTokens, chatPricing.cache?.write);
+          if (costWrite !== undefined && costWrite > costMin)
+            message += `  Cold (cache write): ${('$' + costWrite.toFixed(4)).padStart(8)}\n`;
         }
 
         if (costOutMax !== undefined) {

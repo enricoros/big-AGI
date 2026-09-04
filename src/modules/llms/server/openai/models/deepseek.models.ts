@@ -84,7 +84,7 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
       { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
     ],
     maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
-    chatPrice: { input: 1.32, output: 3.96, cache: { cType: 'oai-ac', read: 0.044 } }, // peak card
+    chatPrice: { input: 1.32, output: 3.96, cache: { read: 0.044 } }, // peak card
     benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro (preview-era votes, 54k since 0424; the only 0813 row, -max-20260813, is AutoEval-only at 1465, unranked)
   },
   {
@@ -102,7 +102,7 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
       { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
     ],
     maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
-    chatPrice: { input: 0.44, output: 1.32, cache: { cType: 'oai-ac', read: 0.014 } }, // peak card
+    chatPrice: { input: 0.44, output: 1.32, cache: { read: 0.014 } }, // peak card
     benchmark: { cbaElo: 1435 }, // lmarena: deepseek-v4-flash (distinct from the -high-preview entry, 1438)
   },
   {
@@ -118,7 +118,7 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
       { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
     ],
     maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
-    chatPrice: { input: 0.44, output: 1.32, cache: { cType: 'oai-ac', read: 0.014 } }, // peak card, same as flash; images billed as input tokens by dimensions
+    chatPrice: { input: 0.44, output: 1.32, cache: { read: 0.014 } }, // peak card, same as flash; images billed as input tokens by dimensions
     // no benchmark: not on lmarena yet (released 2026-08-21)
   },
   // Legacy aliases - API routes both to deepseek-v4-flash with thinking pre-set
@@ -129,7 +129,7 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
     contextWindow: 1_048_576,
     interfaces: [...IF_4, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 65536,
-    chatPrice: { input: 0.44, output: 1.32, cache: { cType: 'oai-ac', read: 0.014 } }, // peak card
+    chatPrice: { input: 0.44, output: 1.32, cache: { read: 0.014 } }, // peak card
     benchmark: { cbaElo: 1435 - 1 }, // lmarena: deepseek-v4-flash - 1 (yield)
     isLegacy: true,
   },
@@ -140,7 +140,7 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
     contextWindow: 1_048_576,
     interfaces: IF_4,
     maxCompletionTokens: 65536,
-    chatPrice: { input: 0.44, output: 1.32, cache: { cType: 'oai-ac', read: 0.014 } }, // peak card
+    chatPrice: { input: 0.44, output: 1.32, cache: { read: 0.014 } }, // peak card
     benchmark: { cbaElo: 1435 - 2 }, // lmarena: deepseek-v4-flash - 2 (yield)
     isLegacy: true,
   },

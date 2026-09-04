@@ -13,30 +13,26 @@ export type DModelPricing = {
 // NOTE: (!) keep this in sync with PricingChatGenerate_schema (modules/llms/server/llm.server.types.ts)
 export type DPricingChatGenerate = {
   // unit: 'USD_Mtok',
-  input?: DTieredPricing;
-  output?: DTieredPricing;
+  input?: DTieredPricing;   // uncached input
+  output?: DTieredPricing;  // all output, reasoning included
+  /** Prompt cache, one shape for every vendor. Tiered like input/output, on the request's total input. */
   cache?: {
-    cType: 'ant-bp';
-    read: DTieredPricing;
-    write: DTieredPricing;
-    duration: number; // seconds
-  } | {
-    cType: 'oai-ac';
-    read: DTieredPricing;
-    // write: DTieredPricing; // Not needed, as it's automatic
+    read: DTieredPricing; // cache hits
+    write?: DTieredPricing; // cache writes; absent = billed as input (Gemini, DeepSeek, OpenAI before 5.6)
+    duration?: number; // seconds a written entry lives, informational
   };
   // NOT in AixWire_API_ListModels.PricingChatGenerate_schema
   _isFree?: boolean; // precomputed, so we avoid recalculating it
 }
 
-type DTieredPricing = DPricePerMToken | DPriceUpTo[];
+type DTieredPricing = _DPricePerMToken | _DPriceUpTo[];
 
-type DPriceUpTo = {
+type _DPricePerMToken = number | 'free';
+
+type _DPriceUpTo = {
   upTo: number | null,
-  price: DPricePerMToken
+  price: _DPricePerMToken
 };
-
-type DPricePerMToken = number | 'free';
 
 
 /// detect Free Pricing
@@ -108,21 +104,17 @@ export function llmChatPricing_adjusted(llm: DLLM | null): DPricingChatGenerate 
   const multiplier = _computePriceMultiplier(llm.parameterSpecs, llm.initialParameters, llm.userParameters);
   if (multiplier === 1) return gcPricing;
 
-  // Apply multiplier to all pricing tiers
+  // Apply the multiplier per present class - never emit `key: undefined` (missing and undefined differ on the wire and at rest)
   return {
     ...gcPricing,
     ...(gcPricing.input !== undefined ? { input: _multiplyTieredPricing(gcPricing.input, multiplier) } : {}),
     ...(gcPricing.output !== undefined ? { output: _multiplyTieredPricing(gcPricing.output, multiplier) } : {}),
     ...(!gcPricing.cache ? {} : {
-      cache: gcPricing.cache.cType === 'ant-bp' ? {
-        cType: 'ant-bp',
+      cache: {
+        ...gcPricing.cache,
         read: _multiplyTieredPricing(gcPricing.cache.read, multiplier),
-        write: _multiplyTieredPricing(gcPricing.cache.write, multiplier),
-        duration: gcPricing.cache.duration,
-      } : gcPricing.cache.cType === 'oai-ac' ? {
-        cType: 'oai-ac',
-        read: _multiplyTieredPricing(gcPricing.cache.read, multiplier),
-      } : undefined,
+        ...(gcPricing.cache.write !== undefined ? { write: _multiplyTieredPricing(gcPricing.cache.write, multiplier) } : {}),
+      },
     }),
   };
 }
@@ -161,7 +153,7 @@ function _computePriceMultiplier(parameterSpecs: DModelParameterSpecAny[], initi
 function _multiplyTieredPricing(pricing: DTieredPricing, multiplier: number): DTieredPricing {
   if (pricing === 'free') return 'free';
   if (typeof pricing === 'number') return pricing * multiplier;
-  // if not 'free' or number, must be DPriceUpTo[]
+  // if not 'free' or number, must be _DPriceUpTo[]
   return pricing.map(tier => ({
     ...tier,
     price: tier.price === 'free' ? 'free' as const : tier.price * multiplier,

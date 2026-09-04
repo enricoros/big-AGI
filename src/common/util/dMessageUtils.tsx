@@ -305,6 +305,8 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
   // the provider-reported (billed) cost is the headline when present; the price-table estimate demotes to a footnote
   const $cHeadline = metrics.$cReported ?? metrics.$c;
   const $cEstimated = (metrics.$cReported !== undefined && metrics.$c !== undefined) ? metrics.$c : undefined;
+  // cost by class, when cache is in play
+  const showCostByClass = metrics.$cCacheR !== undefined || metrics.$cCacheW !== undefined;
 
   return <Box sx={tooltipMetricsGridSx}>
 
@@ -337,9 +339,18 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
         {' '}<small>(
         {metrics.$cdCache > 0
           ? <>cache savings: <b>{formatModelsCost(metrics.$cdCache / 100)}</b></>
-          : <>cache costs: <b>{formatModelsCost(-metrics.$cdCache / 100)}</b></>
+          : <>cache surcharge: <b>{formatModelsCost(-metrics.$cdCache / 100)}</b></>
         })</small>
       </>}
+    </div>}
+    {showCostByClass && <div></div>}
+    {showCostByClass && <div>
+      <small>
+        {metrics.$cIn !== undefined && <>in {formatModelsCost(metrics.$cIn / 100)}</>}
+        {metrics.$cCacheR !== undefined && <>{' · '}read {formatModelsCost(metrics.$cCacheR / 100)}</>}
+        {metrics.$cCacheW !== undefined && <>{' · '}wrote {formatModelsCost(metrics.$cCacheW / 100)}</>}
+        {metrics.$cOut !== undefined && <>{' · '}out {formatModelsCost(metrics.$cOut / 100)}</>}
+      </small>
     </div>}
     {/* Add the local price-table estimate underneath, when the headline is the billed cost */}
     {$cEstimated !== undefined && <div></div>}

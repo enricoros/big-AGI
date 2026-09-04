@@ -112,7 +112,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // Groq rejects 'none' on gpt-oss
     ],
-    chatPrice: { input: 0.15, output: 0.60, cache: { cType: 'oai-ac', read: 0.075 } },
+    chatPrice: { input: 0.15, output: 0.60, cache: { read: 0.075 } },
     benchmark: { cbaElo: 1352 }, // lmarena: gpt-oss-120b
   },
   {
@@ -127,7 +127,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // Groq rejects 'none' on gpt-oss
     ],
-    chatPrice: { input: 0.075, output: 0.30, cache: { cType: 'oai-ac', read: 0.0375 } },
+    chatPrice: { input: 0.075, output: 0.30, cache: { read: 0.0375 } },
   },
   {
     idPrefix: 'openai/gpt-oss-20b',
@@ -140,7 +140,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, // Groq rejects 'none' on gpt-oss
     ],
-    chatPrice: { input: 0.075, output: 0.30, cache: { cType: 'oai-ac', read: 0.0375 } },
+    chatPrice: { input: 0.075, output: 0.30, cache: { read: 0.0375 } },
     benchmark: { cbaElo: 1318 }, // lmarena: gpt-oss-20b
   },
 

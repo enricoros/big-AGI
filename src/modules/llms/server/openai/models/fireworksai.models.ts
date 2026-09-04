@@ -59,7 +59,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_VISION_REASON,
     // thinking compulsory ('none' 400s); n=6/arm: low ~0.18K chars, high ~0.25K, medium = xhigh = max = Default ~1.7K
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high'] }],
-    chatPrice: { input: 0.15, output: 0.50, cache: { cType: 'oai-ac', read: 0.03 } }, // joined the docs pricing table by 2026-08-31 (was unpriced at launch)
+    chatPrice: { input: 0.15, output: 0.50, cache: { read: 0.03 } }, // joined the docs pricing table by 2026-08-31 (was unpriced at launch)
   },
   {
     idPrefix: 'accounts/fireworks/models/glm-5p3',
@@ -71,7 +71,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     // thinking compulsory ('none' -> 400 "thinking-only model"); n=4/arm: low ~0.17K chars, medium = high ~0.25K, xhigh = Default ~5.5K, max ~8.3K
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high', 'max'] }],
     benchmark: { cbaElo: 1487 }, // lmarena: glm-5.3-max
-    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.26 } },
+    chatPrice: { input: 1.40, output: 4.40, cache: { read: 0.26 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/deepseek-v4-pro-0813',
@@ -83,7 +83,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     // [2026-08-14, all V4 ids] 'none' hard-off, low/high/max scale the trace; medium/xhigh/budgets also accepted - DeepSeek-direct tiers kept for UI parity
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
     benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro (the board's -max-20260813 row is AutoEval-only and unranked - same call as alibaba.models.ts / deepseek.models.ts)
-    chatPrice: { input: 1.32, output: 3.96, cache: { cType: 'oai-ac', read: 0.044 } }, // the docs pricing table now carries this id, at the model-page numbers (2026-08-28)
+    chatPrice: { input: 1.32, output: 3.96, cache: { read: 0.044 } }, // the docs pricing table now carries this id, at the model-page numbers (2026-08-28)
   },
   {
     // NOTE: listed with supports_image_input=false, yet reads images (live-verified 2026-08-28) - it shares the
@@ -96,7 +96,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_VISION_REASON,
     // [2026-08-17] unlike Alibaba's own serving, 'none' works (drops the thinking template); low ~0.9K chars, medium ~1.5K, high = xhigh = max = Default ~7K -> Off/Low/High
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high'] }],
-    chatPrice: { input: 2.00, output: 6.00, cache: { cType: 'oai-ac', read: 0.25 } },
+    chatPrice: { input: 2.00, output: 6.00, cache: { read: 0.25 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/nemotron-lightning-3p5-30b-a3b',
@@ -107,7 +107,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_REASON,
     parameterSpecs: _PS_Thinking,
     benchmark: { cbaElo: 1348 }, // lmarena: nvidia-nemotron-3.5-lightning-30b-a3b-nvfp4
-    chatPrice: { input: 0.05, output: 0.20, cache: { cType: 'oai-ac', read: 0.01 } },
+    chatPrice: { input: 0.05, output: 0.20, cache: { read: 0.01 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/muse-glimmer-30b',
@@ -119,7 +119,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     // 'minimal' 400s; low ~0.8K chars, medium ~1.6K, high = xhigh = max = Default ~2.5K. 'none' is accepted but NOT honored, so not offered
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high'] }],
     benchmark: { cbaElo: 1426 }, // lmarena: muse-glimmer
-    chatPrice: { input: 0.35, output: 1.50, cache: { cType: 'oai-ac', read: 0.04 } },
+    chatPrice: { input: 0.35, output: 1.50, cache: { read: 0.04 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/deepseek-v4-flash-0731',
@@ -130,7 +130,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_REASON,
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
     benchmark: { cbaElo: 1435 }, // lmarena: deepseek-v4-flash (distinct from the -high-preview row, 1438)
-    chatPrice: { input: 0.22, output: 0.66, cache: { cType: 'oai-ac', read: 0.007 } }, // repriced 2026-08-24 (docs table; was 0.14 / 0.028 / 0.28)
+    chatPrice: { input: 0.22, output: 0.66, cache: { read: 0.007 } }, // repriced 2026-08-24 (docs table; was 0.14 / 0.028 / 0.28)
   },
   {
     idPrefix: 'accounts/fireworks/models/kimi-k3',
@@ -141,7 +141,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_VISION_REASON,
     parameterSpecs: _PS_Thinking,
     benchmark: { cbaElo: 1489 }, // lmarena: kimi-k3-max
-    chatPrice: { input: 3.00, output: 15.00, cache: { cType: 'oai-ac', read: 0.30 } },
+    chatPrice: { input: 3.00, output: 15.00, cache: { read: 0.30 } },
   },
   {
     idPrefix: 'accounts/fireworks/routers/kimi-k3-fast',
@@ -151,7 +151,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_VISION_REASON,
     parameterSpecs: _PS_Thinking, // parity with the base id confirmed (same ladder fingerprint)
-    chatPrice: { input: 4.50, output: 22.50, cache: { cType: 'oai-ac', read: 0.45 } },
+    chatPrice: { input: 4.50, output: 22.50, cache: { read: 0.45 } },
   },
   {
     // Image input works as of 2026-08-28 (live-verified), reversing the 2026-08-17 probe where the endpoint answered
@@ -164,7 +164,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_VISION_REASON,
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high'] }],
     benchmark: { cbaElo: 1491 }, // lmarena: qwen3.8-max
-    chatPrice: { input: 2.00, output: 6.00, cache: { cType: 'oai-ac', read: 0.25 } },
+    chatPrice: { input: 2.00, output: 6.00, cache: { read: 0.25 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/inkling',
@@ -174,7 +174,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_VISION_REASON,
     benchmark: { cbaElo: 1442 }, // lmarena: inkling
-    chatPrice: { input: 1.00, output: 4.05, cache: { cType: 'oai-ac', read: 0.17 } }, // model page only - still absent from the serverless pricing table
+    chatPrice: { input: 1.00, output: 4.05, cache: { read: 0.17 } }, // model page only - still absent from the serverless pricing table
   },
   {
     idPrefix: 'accounts/fireworks/models/glm-5p2',
@@ -186,7 +186,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     // [2026-08-16] ablated: 'none' hard-off, low = medium = high (~1.2K chars), xhigh = max = default (~2.5K) - Z.ai's native 5.2 mapping; 'minimal' 400s
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] }],
     benchmark: { cbaElo: 1471 }, // lmarena: glm-5.2-max
-    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.14 } }, // re-verified 2026-08-17
+    chatPrice: { input: 1.40, output: 4.40, cache: { read: 0.14 } }, // re-verified 2026-08-17
   },
   {
     idPrefix: 'accounts/fireworks/routers/glm-5p2-fast',
@@ -196,7 +196,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_REASON,
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] }], // parity with glm-5p2 confirmed (router echoes it)
-    chatPrice: { input: 2.10, output: 6.60, cache: { cType: 'oai-ac', read: 0.21 } }, // re-verified 2026-08-17 ('GLM 5.2 Fast US' router: same price, not in /inference/v1/models)
+    chatPrice: { input: 2.10, output: 6.60, cache: { read: 0.21 } }, // re-verified 2026-08-17 ('GLM 5.2 Fast US' router: same price, not in /inference/v1/models)
   },
   {
     idPrefix: 'accounts/fireworks/models/kimi-k2p7-code',
@@ -206,7 +206,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     contextWindow: 262_144, // 256K
     interfaces: IF_CHAT_FN_VISION_REASON,
     parameterSpecs: _PS_Thinking,
-    chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.19 } },
+    chatPrice: { input: 0.95, output: 4.00, cache: { read: 0.19 } },
   },
   // 'accounts/fireworks/routers/kimi-k2p7-code-fast': retired from serverless (absent from /inference/v1/models,
   // generation 404s, dropped from the docs pricing table, 2026-08-31) - the base kimi-k2p7-code id stays
@@ -219,7 +219,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_REASON, // native multimodal upstream, but Fireworks serves it text-only (supports_image_input=false)
     parameterSpecs: _PS_Thinking, // 'adaptive' is also accepted here (Fireworks: "only supported by MiniMax M3"), but it is not an llmVndMiscEffort value
     benchmark: { cbaElo: 1444 }, // lmarena: minimax-m3
-    chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.06 } },
+    chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.06 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/qwen3p7-plus',
@@ -230,7 +230,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_VISION_REASON,
     parameterSpecs: _PS_Thinking, // 'max'/'xhigh' are accepted but indistinguishable from 'high' (live-probed 2026-08-17), so the ladder stops at 'high'
     benchmark: { cbaElo: 1458 }, // lmarena: qwen3.7-plus
-    chatPrice: { input: 0.40, output: 1.60, cache: { cType: 'oai-ac', read: 0.08 } },
+    chatPrice: { input: 0.40, output: 1.60, cache: { read: 0.08 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/nemotron-3-ultra-nvfp4',
@@ -241,7 +241,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_REASON,
     parameterSpecs: _PS_Thinking,
     benchmark: { cbaElo: 1427 }, // lmarena: nvidia-nemotron-3-ultra-550b-a55b-nvfp4
-    chatPrice: { input: 0.60, output: 2.40, cache: { cType: 'oai-ac', read: 0.12 } },
+    chatPrice: { input: 0.60, output: 2.40, cache: { read: 0.12 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/deepseek-v4-pro',
@@ -252,7 +252,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_REASON,
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
     benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro
-    chatPrice: { input: 1.74, output: 3.48, cache: { cType: 'oai-ac', read: 0.145 } },
+    chatPrice: { input: 1.74, output: 3.48, cache: { read: 0.145 } },
   },
   // 'accounts/fireworks/models/deepseek-v4-flash': the undated April checkpoint retired from serverless (control-plane
   // deprecationDate 2026-08-14 + supportsServerless=false, absent from /inference/v1/models, generation 404s, 2026-08-17)
@@ -265,7 +265,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     contextWindow: 262_144, // 256K
     interfaces: IF_CHAT_FN_VISION_REASON,
     benchmark: { cbaElo: 1461 }, // lmarena: kimi-k2.6
-    chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.16 } },
+    chatPrice: { input: 0.95, output: 4.00, cache: { read: 0.16 } },
   },
   // 'accounts/fireworks/routers/kimi-k2p6-turbo' (pricing-table name 'Kimi K2.6 Fast'): retired from serverless
   // (absent from /inference/v1/models, generation 404s, dropped from the docs pricing table, 2026-08-31)
@@ -277,7 +277,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     contextWindow: 196_608, // 192K
     interfaces: IF_CHAT_FN_REASON,
     benchmark: { cbaElo: 1416 }, // lmarena: minimax-m2.7
-    chatPrice: { input: 0.30, output: 1.20, cache: { cType: 'oai-ac', read: 0.06 } },
+    chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.06 } },
   },
   // 'accounts/fireworks/models/glm-5p1': retired from serverless (absent from /inference/v1/models, control plane supportsServerless=false, 2026-08-15); pricing page still lists it
   {
@@ -290,7 +290,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     // [2026-08-17] native OpenAI ladder, strictly validated ('none'/'max' -> 400); tiers real (~0.5K chars low vs ~3.7K high)
     parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }],
     benchmark: { cbaElo: 1352 }, // lmarena: gpt-oss-120b
-    chatPrice: { input: 0.15, output: 0.60, cache: { cType: 'oai-ac', read: 0.015 } },
+    chatPrice: { input: 0.15, output: 0.60, cache: { read: 0.015 } },
   },
   // 'accounts/fireworks/models/gpt-oss-20b': retired from serverless (control-plane deprecationDate 2026-08-27 +
   // supportsServerless=false, absent from /inference/v1/models, generation 404s, 2026-08-31) - gpt-oss-120b stays

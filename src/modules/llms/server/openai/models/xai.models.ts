@@ -35,7 +35,7 @@ const DEV_DEBUG_XAI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO I
 const PRICE_FLAGSHIP = {
   input: [{ upTo: 200000, price: 1.25 }, { upTo: null, price: 2.50 }],
   output: [{ upTo: 200000, price: 2.50 }, { upTo: null, price: 5.00 }],
-  cache: { cType: 'oai-ac' as const, read: [{ upTo: 200000, price: 0.20 }, { upTo: null, price: 0.40 }] },
+  cache: { read: [{ upTo: 200000, price: 0.20 }, { upTo: null, price: 0.40 }] },
 };
 
 // Interfaces: ALL XAI MODELS use the OpenAI Responses API (XAI dialect)
@@ -88,7 +88,7 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
     chatPrice: {
       input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
       output: [{ upTo: 200000, price: 6.00 }, { upTo: null, price: 12.00 }],
-      cache: { cType: 'oai-ac', read: [{ upTo: 200000, price: 0.50 }, { upTo: null, price: 1.00 }] }, // higher than grok-4.5's 0.30/0.60 - tick-verified 2026-08-13
+      cache: { read: [{ upTo: 200000, price: 0.50 }, { upTo: null, price: 1.00 }] }, // higher than grok-4.5's 0.30/0.60 - tick-verified 2026-08-13
     },
     benchmark: { cbaElo: 1464 }, // grok-4.6-high (CBA name)
   },
@@ -109,7 +109,7 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
     chatPrice: {
       input: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
       output: [{ upTo: 200000, price: 6.00 }, { upTo: null, price: 12.00 }],
-      cache: { cType: 'oai-ac', read: [{ upTo: 200000, price: 0.30 }, { upTo: null, price: 0.60 }] },
+      cache: { read: [{ upTo: 200000, price: 0.30 }, { upTo: null, price: 0.60 }] },
     },
     benchmark: { cbaElo: 1469 }, // grok-4.5
   },
@@ -195,7 +195,7 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
     chatPrice: {
       input: [{ upTo: 200000, price: 1.00 }, { upTo: null, price: 2.00 }],
       output: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
-      cache: { cType: 'oai-ac', read: [{ upTo: 200000, price: 0.20 }, { upTo: null, price: 0.40 }] },
+      cache: { read: [{ upTo: 200000, price: 0.20 }, { upTo: null, price: 0.40 }] },
     },
   },
 

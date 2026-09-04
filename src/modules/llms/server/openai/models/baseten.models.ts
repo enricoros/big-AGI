@@ -94,7 +94,7 @@ export function basetenModelsToModelDescriptions(wireModels: unknown): ModelDesc
       const chatPrice: ModelDescriptionSchema['chatPrice'] = (Number.isFinite(inputPriceM) && Number.isFinite(outputPriceM)) ? {
         input: inputPriceM,
         output: outputPriceM,
-        ...(Number.isFinite(cacheReadM) && cacheReadM > 0 ? { cache: { cType: 'oai-ac', read: cacheReadM } } : {}),
+        ...(Number.isFinite(cacheReadM) && cacheReadM > 0 ? { cache: { read: cacheReadM } } : {}),
       } : undefined;
 
       // description: catalog text (empty on some rows) + the serving quantization

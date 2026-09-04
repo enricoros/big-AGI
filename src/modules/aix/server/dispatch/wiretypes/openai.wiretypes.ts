@@ -1740,9 +1740,10 @@ export namespace OpenAIWire_API_Responses {
     output: z.array(OpenAIWire_Responses_Items.OutputItem_schema),
 
     usage: z.object({
-      input_tokens: z.number(),
+      input_tokens: z.number(), // inclusive of cached and written tokens
       input_tokens_details: z.object({
         cached_tokens: z.number().optional(),
+        cache_write_tokens: z.number().nullish(), // GPT-5.6+: written tokens (1.25x input; every cold prompt is written)
       }).optional(),
       output_tokens: z.number(),
       output_tokens_details: z.object({
@@ -1750,6 +1751,7 @@ export namespace OpenAIWire_API_Responses {
       }).optional(),
       total_tokens: z.number(),
     }).nullish(),
+
 
     // Echo State management & API options (with defaults)
     background: z.boolean().optional(), // (false)

@@ -34,7 +34,7 @@ const _wireMetaAIModelItemSchema = z.object({
 const _sparkStandardPrice: ModelDescriptionSchema['chatPrice'] = {
   input: 1.25,
   output: 4.25,
-  cache: { cType: 'oai-ac', read: 0.15 },
+  cache: { read: 0.15 },
 };
 
 // [Meta AI] Contributor tier: the same model at ~12x/21x lower rates, in exchange for permission to train on
@@ -42,7 +42,7 @@ const _sparkStandardPrice: ModelDescriptionSchema['chatPrice'] = {
 const _sparkContributorPrice: ModelDescriptionSchema['chatPrice'] = {
   input: 0.10,
   output: 0.20,
-  cache: { cType: 'oai-ac', read: 0.002 },
+  cache: { read: 0.002 },
 };
 
 

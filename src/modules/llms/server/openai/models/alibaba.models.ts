@@ -114,7 +114,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1000000, // 1M (live-probed input cap: 991,808)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K (live-probed with thinking on; 64K with thinking off)
-    chatPrice: { input: 2.00, output: 6.00, cache: { cType: 'oai-ac', read: 0.25 } }, // cache-hit input per the model page (not the 20% rule)
+    chatPrice: { input: 2.00, output: 6.00, cache: { read: 0.25 } }, // cache-hit input per the model page (not the 20% rule)
     benchmark: { cbaElo: 1491 }, // lmarena: qwen3.8-max
   },
   {
@@ -130,7 +130,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1000000, // 1M (live-probed input cap: 991,808)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K (live-probed max_tokens range, thinking on and off)
-    chatPrice: { input: 2.00, output: 6.00, cache: { cType: 'oai-ac', read: 0.25 } },
+    chatPrice: { input: 2.00, output: 6.00, cache: { read: 0.25 } },
   },
   {
     // Open-weights release of the Qwen3.8 flagship (live 2026-08-13). Its model page (published 2026-08-13), the Intl price
@@ -144,7 +144,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1000000, // 1M
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K
-    chatPrice: { input: 2.00, output: 6.00, cache: { cType: 'oai-ac', read: 0.25 } },
+    chatPrice: { input: 2.00, output: 6.00, cache: { read: 0.25 } },
   },
   {
     // Open-weights dense VL model of the Qwen3.8 line (Apache-2.0, 2026-08-14); DashScope only started serving it after the
@@ -158,7 +158,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1000000, // 1M
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K (max_tokens range live-probed)
-    chatPrice: { input: 0.50, output: 3.00, cache: { cType: 'oai-ac', read: 0.10 } },
+    chatPrice: { input: 0.50, output: 3.00, cache: { read: 0.10 } },
   },
   {
     // Latest Flash tier (listed 2026-08-26). Flat pricing - no input-length tiers, unlike qwen3.7-flash. Caps from the
@@ -172,7 +172,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1000000, // 1M (model page; live input cap 991,808)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K (model page + max_tokens range probe)
-    chatPrice: { input: 0.15, output: 0.47, cache: { cType: 'oai-ac', read: 0.016 } }, // Singapore model-page rates (flat); OR's Alibaba endpoint agrees
+    chatPrice: { input: 0.15, output: 0.47, cache: { read: 0.016 } }, // Singapore model-page rates (flat); OR's Alibaba endpoint agrees
   },
   {
     idPrefix: 'qwen3.7-max',
@@ -183,7 +183,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1000000, // 1M
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning], // text-only (no vision)
     maxCompletionTokens: 131072, // 128K (live-probed; docs still say 64K)
-    chatPrice: { input: 2.50, output: 7.50, cache: { cType: 'oai-ac', read: 0.50 } }, // implicit cache hit 0.50 (explicit hit 0.25)
+    chatPrice: { input: 2.50, output: 7.50, cache: { read: 0.50 } }, // implicit cache hit 0.50 (explicit hit 0.25)
     benchmark: { cbaElo: 1474 }, // lmarena: qwen3.7-max-preview (same model, pre-GA id)
   },
   {
@@ -319,7 +319,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Thinking,
     contextWindow: 1000000, maxCompletionTokens: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 0.10, output: 0.40, cache: { cType: 'oai-ac', read: 0.02 } }, // 20% implicit-hit rule
+    chatPrice: { input: 0.10, output: 0.40, cache: { read: 0.02 } }, // 20% implicit-hit rule
   },
   {
     idPrefix: 'qwen3.5-397b-a17b', label: 'Qwen3.5 397B-A17B', pubDate: '20260216', hidden: true,
@@ -447,7 +447,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1_000_000, // 1M (Alibaba serves a decimal 1M window, not DeepSeek-direct's 1,048,576)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
-    chatPrice: { input: 2.40, output: 4.80, cache: { cType: 'oai-ac', read: 0.20 } },
+    chatPrice: { input: 2.40, output: 4.80, cache: { read: 0.20 } },
     benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro
   },
   {
@@ -462,7 +462,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1_000_000, // 1M (live-probed: 'Range of input length should be [1, 1000000]')
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning], // text-only (no vision); thinking on by default
     maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
-    chatPrice: { input: 1.32, output: 3.96, cache: { cType: 'oai-ac', read: 0.132 } }, // peak card (Singapore model page: busy 1.32/3.96 hit 0.132, idle 0.66/1.98 hit 0.066); was flat 2.40/4.80 before 2026-08-17
+    chatPrice: { input: 1.32, output: 3.96, cache: { read: 0.132 } }, // peak card (Singapore model page: busy 1.32/3.96 hit 0.132, idle 0.66/1.98 hit 0.066); was flat 2.40/4.80 before 2026-08-17
     benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro (preview checkpoint; the board's 0813 row is AutoEval-only, not human votes)
   },
   {
@@ -474,7 +474,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1_000_000, // 1M (Alibaba serves a decimal 1M window)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
-    chatPrice: { input: 0.20, output: 0.40, cache: { cType: 'oai-ac', read: 0.04 } },
+    chatPrice: { input: 0.20, output: 0.40, cache: { read: 0.04 } },
     benchmark: { cbaElo: 1435 }, // lmarena: deepseek-v4-flash
   },
   {
@@ -487,7 +487,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1_000_000, // 1M
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
-    chatPrice: { input: 0.44, output: 1.32, cache: { cType: 'oai-ac', read: 0.044 } }, // peak card (Singapore model page: busy 0.44/1.32 hit 0.044, idle 0.22/0.66 hit 0.022); was flat 0.20/0.40 before 2026-08-17
+    chatPrice: { input: 0.44, output: 1.32, cache: { read: 0.044 } }, // peak card (Singapore model page: busy 0.44/1.32 hit 0.044, idle 0.22/0.66 hit 0.022); was flat 0.20/0.40 before 2026-08-17
     benchmark: { cbaElo: 1435 }, // lmarena: deepseek-v4-flash
     hidden: true, // dated snapshot; deepseek-v4-flash is the mainline entry for this tier (and now the cheaper one)
   },
@@ -500,7 +500,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1048576, // 1M
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K
-    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.28 } }, // repriced 2026-07-24 (was 1.10/3.851); implicit hit 0.28 on the Singapore model page since 2026-09-02 (was 0.35 = 25%; the Global regions still print 25% of 1.10)
+    chatPrice: { input: 1.40, output: 4.40, cache: { read: 0.28 } }, // repriced 2026-07-24 (was 1.10/3.851); implicit hit 0.28 on the Singapore model page since 2026-09-02 (was 0.35 = 25%; the Global regions still print 25% of 1.10)
     benchmark: { cbaElo: 1471 }, // lmarena: glm-5.2-max
   },
   {
@@ -512,7 +512,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1048576, // 1M (model page https://www.alibabacloud.com/help/en/model-studio/glm-5-2-fast, verified 2026-08-16)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K (live-probed 2026-07-24)
-    chatPrice: { input: 2.80, output: 8.80, cache: { cType: 'oai-ac', read: 0.56 } }, // Intl/Singapore price-table rows; implicit hit 0.56 on the model page's new Singapore row (2026-09-02; Beijing still 0.55 on 2.2 = 25%)
+    chatPrice: { input: 2.80, output: 8.80, cache: { read: 0.56 } }, // Intl/Singapore price-table rows; implicit hit 0.56 on the model page's new Singapore row (2026-09-02; Beijing still 0.55 on 2.2 = 25%)
     hidden: true, // preview-only for now (live id: glm-5.2-fast-preview, still preview 2026-08-16); un-hide when GA
   },
   {
@@ -521,7 +521,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Thinking,
     contextWindow: 202745, maxCompletionTokens: 131072, // 202,745 in (model page + live 'Range of input length' probe 2026-08-16; 169,984 with thinking on) / 128K out
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: 1.40, output: 4.40, cache: { cType: 'oai-ac', read: 0.28 } }, // cache = 20% implicit-hit rate per the model page (0.165 on 0.825, all regions)
+    chatPrice: { input: 1.40, output: 4.40, cache: { read: 0.28 } }, // cache = 20% implicit-hit rate per the model page (0.165 on 0.825, all regions)
   },
   {
     // Live on DashScope since the 08-17 pass; model page published 2026-08-24. Singapore $3/$15 with implicit cache 0.30
@@ -534,7 +534,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1048576, // 1M (live-probed: 'Range of input length should be [1, 1048576]')
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // house cap; live ceiling is 1,048,576 (= context window)
-    chatPrice: { input: 3.00, output: 15.00, cache: { cType: 'oai-ac', read: 0.30 } },
+    chatPrice: { input: 3.00, output: 15.00, cache: { read: 0.30 } },
   },
   {
     idPrefix: 'kimi-k2.7-code',
@@ -544,7 +544,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 262144, // 256K
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // house cap; live ceiling is 262144 (256K, = context window)
-    chatPrice: { input: 0.95, output: 4.00, cache: { cType: 'oai-ac', read: 0.19 } }, // repriced 2026-07-24 (was 0.8939/3.7131); cache = 20% implicit-hit rule (explicit: create 1.1875 / read 0.095)
+    chatPrice: { input: 0.95, output: 4.00, cache: { read: 0.19 } }, // repriced 2026-07-24 (was 0.8939/3.7131); cache = 20% implicit-hit rule (explicit: create 1.1875 / read 0.095)
   },
   {
     idPrefix: 'deepseek-v3.2',

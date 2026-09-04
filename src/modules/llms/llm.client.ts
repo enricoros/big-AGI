@@ -150,14 +150,20 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
   };
 
   // set the pricing
-  if (d.chatPrice && typeof d.chatPrice === 'object')
+  if (d.chatPrice && typeof d.chatPrice === 'object') {
+    // drop the wire-compat cache tag (the server emits it for older clients; not stored) - TODO: delete after 2026-12-03
+    const { cache, ...chatPrice } = d.chatPrice;
+    const cacheNoTag = cache ? { ...cache } : undefined;
+    if (cacheNoTag) delete cacheNoTag.cType;
     dllm.pricing = {
       chat: {
-        ...d.chatPrice,
+        ...chatPrice,
+        ...(cacheNoTag && { cache: cacheNoTag }),
         // compute the free status
         _isFree: isLLMChatPricingFree(d.chatPrice),
       },
     };
+  }
 
   // set other params from spec's initialValues
   if (dllm.parameterSpecs?.length)
