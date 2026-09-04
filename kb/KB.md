@@ -22,6 +22,8 @@ Architecture and system documentation is available in the `/kb/` knowledge base,
 - **[LLM-editorial-control.md](modules/LLM-editorial-pubdate.md)** - Where we have editorial control over per-model metadata vs dynamic discovery; `pubDate` field semantics, propagation chain, resolution rules, per-vendor matrix
 - **[LLM-editorial-auto-picks.md](modules/LLM-editorial-auto-picks.md)** - Per-domain Auto model resolution: 3-layer fallback (pin, editorial pick, ELO/cost heuristic), editorial table shape, tolerant matching, compile-time type-safety chain
 - **[LLM-defs-refresh.md](modules/LLM-defs-refresh.md)** - Per-vendor model-defs versioning + selective client refresh: semantic-hashed manifest buckets (generated committed map, bundled with the client - no server surface), per-service `defsV` stamps, `epoch` force-roll lever; replaces routine "roll AIX" for model updates
+- **[LLM-pricing-pipeline.md](modules/LLM-pricing-pipeline.md)** - price shape (tiers, cache read/write, per-call tools), usage parsing per vendor, cost calculator, served-tier reconciliation, surfaces
+- **[LLM-pricing-direction.md](modules/LLM-pricing-direction.md)** - 🧭 target rate card and usage record (disjoint classes, one tier switch, unit-named fees, cost lines, sub-usage), dedupe contract, incremental path
 
 #### LLM - Vendor APIs
 - **[LLM-gemini-interactions.md](modules/LLM-gemini-interactions.md)** - Gemini Interactions API (Deep Research): endpoints, status taxonomy, two retrieval paths (SSE replay vs JSON GET), known failure modes (10-min cuts, zombies), UI surface
