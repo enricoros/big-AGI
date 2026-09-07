@@ -11,6 +11,7 @@ import MicNoneIcon from '@mui/icons-material/MicNone';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { useChatLLMDropdown } from '../chat/components/layout-bar/useLLMDropdown';
+import { useChatMicTimeoutMsValue } from '../chat/store-app-chat';
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
 
@@ -89,6 +90,7 @@ export function Telephone(props: {
   const responseAbortController = React.useRef<AbortController | null>(null);
 
   // external state
+  const chatMicTimeoutMs = useChatMicTimeoutMsValue();
   const { chatLLMId: modelId, chatLLMDropdown: modelDropdown } = useChatLLMDropdown(llmDropdownRef);
   const { chatTitle, reMessages } = useChatStore(useShallow(state => {
     const conversation = props.callIntent.conversationId
@@ -114,7 +116,7 @@ export function Telephone(props: {
         setCallMessages(messages => [...messages, createDMessageTextContent('user', userSpeechTranscribed)]); // [state] append user:speech
     }
   }, []);
-  const { recognitionState, startRecognition, stopRecognition, toggleRecognition } = useSpeechRecognition('webSpeechApi', onSpeechResultCallback, 1000);
+  const { recognitionState, startRecognition, stopRecognition, toggleRecognition } = useSpeechRecognition('webSpeechApi', onSpeechResultCallback, chatMicTimeoutMs || 2000);
 
   // derived state
   const isRinging = stage === 'ring';
