@@ -59,4 +59,10 @@ export const ExecuteModeItems: { [key in ChatExecuteMode]: ModeDescription } = {
     sendColor: 'success',
     sendText: 'ReAct',
   },
+  'slm-content': {
+    label: 'Liquid Matrix',
+    description: 'Multi-agent orchestration - routes to specialist agents automatically',
+    sendColor: 'neutral',
+    sendText: 'Matrix',
+  },
 };
