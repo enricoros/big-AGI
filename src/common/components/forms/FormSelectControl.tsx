@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import type { SxProps } from '@mui/joy/styles/types';
+import type { ColorPaletteProp, SxProps } from '@mui/joy/styles/types';
 import { FormControl, Option, Select, SelectSlotsAndSlotProps } from '@mui/joy';
 
 import { FormLabelStart } from './FormLabelStart';
@@ -30,6 +30,7 @@ export const FormSelectControl = <TValue extends string>(props: {
   title?: React.ReactNode;
   tooltip?: React.ReactNode;
   size?: 'sm' | 'md' | 'lg';
+  color?: ColorPaletteProp; // e.g. 'accent' to mark a value driven by an outside state
   disabled?: boolean;
   options: Readonly<FormSelectOption<TValue>[]>;
   value?: TValue;
@@ -50,6 +51,7 @@ export const FormSelectControl = <TValue extends string>(props: {
       )}
       <Select
         size={props.size}
+        color={props.color}
         value={props.value}
         onChange={(_, value) => value && props.onChange(value as TValue)}
         placeholder={props.placeholder}
