@@ -322,6 +322,10 @@ const useAppChatPanesStore = create<AppChatPanesState & AppChatPanesActions>()(p
     _onConversationsChanged: (conversationIds: DConversationId[]) =>
       _set(state => {
         const { chatPanes, chatPaneFocusIndex } = state;
+        const focusedPaneId = chatPaneFocusIndex !== null ? chatPanes[chatPaneFocusIndex]?.paneId : undefined;
+
+        // chats kept by panes that stay valid: a pane losing its chat must not fall back on one of these, or two panes end up on the same chat
+        const takenIds = new Set(chatPanes.map(pane => pane.conversationId).filter((cId): cId is DConversationId => !!cId && conversationIds.includes(cId)));
 
         // handle panes
         let untouched = true;
@@ -344,18 +348,31 @@ const useAppChatPanesStore = create<AppChatPanesState & AppChatPanesActions>()(p
           if (!needsNewConversationId && newHistory.length === history.length)
             return chatPane;
 
-          const nextConversationId = newHistoryIndex >= 0 && newHistoryIndex < newHistory.length
-            ? newHistory[newHistoryIndex]
-            : newHistory.length > 0
-              ? newHistory[newHistory.length - 1]
-              : conversationIds[0] ?? null;
+          // replace a removed chat: history (current position, then most recent), else any chat - skipping chats shown in other panes (none left: the pane is dropped)
+          let nextConversationId = conversationId;
+          let nextHistory = newHistory;
+          let nextHistoryIndex = newHistoryIndex;
+          if (needsNewConversationId) {
+            const historyPick = [newHistoryIndex, ...newHistory.map((_hId, idx) => newHistory.length - 1 - idx)]
+              .find(idx => idx >= 0 && idx < newHistory.length && !takenIds.has(newHistory[idx]));
+            if (historyPick !== undefined) {
+              nextConversationId = newHistory[historyPick];
+              nextHistoryIndex = historyPick;
+            } else {
+              nextConversationId = conversationIds.find(cId => !takenIds.has(cId)) ?? null;
+              nextHistory = nextConversationId ? [...newHistory, nextConversationId].slice(-MAX_HISTORY_LENGTH) : newHistory;
+              nextHistoryIndex = nextHistory.length - 1;
+            }
+            if (nextConversationId)
+              takenIds.add(nextConversationId);
+          }
 
           untouched = false;
           return {
             ...chatPane,
             conversationId: nextConversationId,
-            history: newHistory,
-            historyIndex: newHistoryIndex,
+            history: nextHistory,
+            historyIndex: nextHistoryIndex,
           };
         }).filter(pane => !!pane.conversationId);
 
@@ -363,10 +380,11 @@ const useAppChatPanesStore = create<AppChatPanesState & AppChatPanesActions>()(p
         if (untouched && newPanes.length >= 1)
           return state;
 
-        // play it safe, and make sure a pane exists, and is focused
+        // play it safe, and make sure a pane exists, and is focused (follow the focused pane by id, as panes may have been dropped)
+        const newFocusIndex = newPanes.findIndex(pane => pane.paneId === focusedPaneId);
         return {
           chatPanes: newPanes.length ? newPanes : [_createChatPane(conversationIds[0] ?? null)],
-          chatPaneFocusIndex: (newPanes.length && chatPaneFocusIndex !== null && chatPaneFocusIndex < newPanes.length) ? chatPaneFocusIndex : 0,
+          chatPaneFocusIndex: newFocusIndex >= 0 ? newFocusIndex : Math.max(0, Math.min(chatPaneFocusIndex ?? 0, newPanes.length - 1)),
         };
       }),
 
