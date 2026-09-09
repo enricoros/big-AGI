@@ -1,4 +1,5 @@
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
+import { ortWebToolsToAixModel } from '~/modules/llms/vendors/openrouter/openrouter.webtools';
 
 import { vertexLinksAutoResolveFragments } from '~/modules/google/vertexai.client';
 
@@ -78,7 +79,7 @@ export function aixCreateModelFromLLMOptions(
     llmVndGeminiAgentViz, llmVndGeminiAspectRatio, llmVndGeminiImageSize, llmVndGeminiCodeExecution, llmVndGeminiComputerUse, llmVndGeminiGoogleSearch, llmVndGeminiMediaResolution, llmVndGeminiThinkingBudget,
     // llmVndMoonshotWebSearch,
     llmVndOaiReasoningMode, llmVndOaiRestoreMarkdown, llmVndOaiServiceTier, llmVndOaiVerbosity, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation, llmVndOaiImageGeneration, llmVndOaiCodeInterpreter,
-    llmVndOrtWebSearch,
+    llmVndOrtWebFetch, llmVndOrtWebSearch, llmVndOrtWebToolsAdvanced,
     llmVndPerplexityDateFilter, llmVndPerplexitySearchMode,
     llmVndXaiCodeExecution, llmVndXaiSearchInterval, llmVndXaiWebSearch, llmVndXaiXSearch, llmVndXaiXSearchHandles,
   } = {
@@ -177,8 +178,8 @@ export function aixCreateModelFromLLMOptions(
     ...(llmVndOaiImageGeneration ? { vndOaiImageGeneration: llmVndOaiImageGeneration } : {}), // legacy values are migrated by getAllModelParameterValues
     ...(llmVndOaiCodeInterpreter === 'auto' ? { vndOaiCodeInterpreter: llmVndOaiCodeInterpreter } : {}),
 
-    // OpenRouter
-    ...(llmVndOrtWebSearch === 'auto' ? { vndOrtWebSearch: 'auto' } : {}),
+    // OpenRouter - server tools, or the legacy plugin on endpoints without tool support
+    ...ortWebToolsToAixModel(llmInterfaces, llmVndOrtWebSearch, llmVndOrtWebFetch, llmVndOrtWebToolsAdvanced),
 
     // Perplexity
     ...(llmVndPerplexityDateFilter ? { vndPerplexityDateFilter: llmVndPerplexityDateFilter } : {}),

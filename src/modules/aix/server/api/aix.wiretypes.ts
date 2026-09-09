@@ -9,6 +9,8 @@ import { geminiAccessSchema } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccessSchema } from '~/modules/llms/server/ollama/ollama.access';
 import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.access';
 
+import { OrtMaxToolCalls_schema, OrtWebFetchTool_schema, OrtWebSearchTool, OrtWebSearchTool_schema } from './aix.wiretypes.openrouter';
+
 
 //
 // Design notes:
@@ -593,8 +595,10 @@ export namespace AixWire_API {
     vndOaiVerbosity: z.enum(['low', 'medium', 'high']).optional(),
     vndOaiWebSearchContext: z.enum(['low', 'medium', 'high']).optional(),
 
-    // OpenRouter
-    vndOrtWebSearch: z.enum(['auto']).optional(),
+    // OpenRouter - web tools run by OpenRouter itself, not by the model provider (types: aix.wiretypes.openrouter.ts)
+    vndOrtWebSearch: z.union([OrtWebSearchTool_schema, z.literal('auto').transform((): OrtWebSearchTool => ({ via: 'plugin' }))]).optional(), // 'auto': the plain switch of clients built before 2026-09-08, which always got the plugin; drop when no longer seen
+    vndOrtWebFetch: OrtWebFetchTool_schema.optional(),
+    vndOrtMaxToolCalls: OrtMaxToolCalls_schema.optional(), // server-tool step budget for the request, across search and fetch
 
     // Perplexity
     vndPerplexityDateFilter: z.enum(['unfiltered', '1m', '3m', '6m', '1y']).optional(),

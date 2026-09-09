@@ -769,6 +769,12 @@ function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usa
     }
   }
 
+  // [OpenRouter, 2026-09-08] server tools: searches run by OpenRouter (or by the provider on the 'native' engine),
+  // also reported for the legacy 'web' plugin. Fetches have no counter of their own (tool_calls_executed only).
+  const ortWebSearches = usage.server_tool_use_details?.web_search_requests;
+  if (ortWebSearches)
+    metricsUpdate.nWebSearch = ortWebSearches;
+
   return metricsUpdate;
 }
 

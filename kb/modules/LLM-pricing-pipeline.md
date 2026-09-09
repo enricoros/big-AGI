@@ -21,7 +21,7 @@ Rules:
 - Per-call fees are flat: not tiered, not scaled by service-tier multipliers. The tokens a tool injects bill as input on top.
 - Prices are per model, never ratios: cache reads are 0.1x input on most models but 0.025x on Fable 5.1.
 
-Not modeled: Anthropic 1h cache writes (2x; the adapter only sends 5m breakpoints), image-generation and audio token classes, explicit-cache storage per hour, container time, Perplexity per-request fees (its reported cost covers them).
+Not modeled: Anthropic 1h cache writes (2x; the adapter only sends 5m breakpoints), image-generation and audio token classes, explicit-cache storage per hour, container time, Perplexity per-request fees (its reported cost covers them), OpenRouter search fees per engine (the catalog's `web_search` price is the native engine's; Exa, Parallel and Perplexity differ, and the reported cost is exact).
 
 ## Usage parsing
 

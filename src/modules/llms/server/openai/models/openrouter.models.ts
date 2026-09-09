@@ -268,7 +268,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   // -- Parameters --
 
   const parameterSpecs: ModelDescriptionSchema['parameterSpecs'] = [
-    { paramId: 'llmVndOrtWebSearch' }, // OpenRouter web search is available for all models
+    { paramId: 'llmVndOrtWebSearch' }, // every model: the server tool on tool-capable endpoints, the legacy plugin elsewhere (see Web tools below)
   ] as const;
 
   // -- Vendor parameter & interface inheritance --
@@ -394,13 +394,6 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       else if (modelIdUnaliased.startsWith('meta/'))
         _mergeLookup(llmOrtMetaLookup(llmRef)); // Muse Spark; 'meta/muse-glimmer-30b' (open weights, not on api.meta.ai) falls through
 
-      // ':free' tiers are thinner than their paid twin (glm-5.2:free has no tool endpoints, probed 2026-08-17): OR's
-      // per-endpoint `supported_parameters` wins over the inherited Fn interface
-      if (model.supported_parameters && !model.supported_parameters.includes('tools')) {
-        const fnIndex = interfaces.indexOf(LLM_IF_OAI_Fn);
-        if (fnIndex !== -1) interfaces.splice(fnIndex, 1);
-      }
-
       // 0-day: xAI/Grok/Moonshot/Z.ai/DeepSeek/Sakana models get default reasoning effort if not inherited.
       // Checks llmVndOaiEffort too (else an inherited spec gets a 2nd control stacked); skips mandatory models,
       // where a binary on/off is meaningless.
@@ -458,6 +451,14 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   }
 
 
+  // ':free' tiers are thinner than their paid twin (glm-5.2:free has no tool endpoints, probed 2026-08-17): OR's
+  // per-endpoint `supported_parameters` wins over an Fn interface inherited from the native defs, in every vendor
+  // branch - the web tools below and the client's plugin fallback both read the merged interface
+  if (model.supported_parameters && !model.supported_parameters.includes('tools')) {
+    const fnIndex = interfaces.indexOf(LLM_IF_OAI_Fn);
+    if (fnIndex !== -1) interfaces.splice(fnIndex, 1);
+  }
+
   // 'none' 400s where OR marks reasoning mandatory (verified: grok-4.5, grok-4.20-multi-agent, grok-build-0.1),
   // and that holds in every vendor branch (gemini-3.5/3.6-flash, gpt-5.x-pro/-codex, claude-fable-5, ...), so
   // the strip runs on the merged specs. Replace, don't mutate - specs may be shared with the native defs.
@@ -465,6 +466,19 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     parameterSpecs.forEach((spec, i) => {
       if ((spec.paramId === 'llmVndOaiEffort' || spec.paramId === 'llmVndMiscEffort') && spec.enumValues?.includes('none'))
         parameterSpecs[i] = { ...spec, enumValues: spec.enumValues.filter(v => v !== 'none') };
+    });
+
+
+  // -- Web tools --
+
+  // The server tools need a tool-capable endpoint (aix.wiretypes.openrouter.ts): those models get fetch and the
+  // advanced options; the others keep the legacy 'web' plugin, a plain on/off since the plugin takes no engine or limits
+  if (interfaces.includes(LLM_IF_OAI_Fn))
+    parameterSpecs.push({ paramId: 'llmVndOrtWebFetch' }, { paramId: 'llmVndOrtWebToolsAdvanced' });
+  else
+    parameterSpecs.forEach((spec, i) => {
+      if (spec.paramId === 'llmVndOrtWebSearch')
+        parameterSpecs[i] = { ...spec, enumValues: ['auto'] };
     });
 
 

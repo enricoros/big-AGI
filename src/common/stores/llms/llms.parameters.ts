@@ -472,14 +472,34 @@ export const DModelParameterRegistry = {
 
 
   // OpenRouter-specific
+  // Web tools run by OpenRouter itself (aix.wiretypes.openrouter.ts); engine values mirror the wire enums, compile-time
+  // checked in openrouter.webtools.ts
 
   llmVndOrtWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
     label: 'Web Search',
     type: 'enum',
-    description: 'Enable OpenRouter web search (uses native search for OpenAI/Anthropic, Exa for others)',
-    values: ['auto'],
+    description: 'Web search run by OpenRouter; Auto picks native or Exa',
+    values: [
+      'auto', // original type to discriminate on/off
+      'native', 'exa', 'parallel', 'firecrawl', 'perplexity', // [OpenRouter, 2026-09-08] added types for engine specialization
+    ],
+    // undefined means off; 'auto' is also the pre-2026-09-08 plain on-switch
+  }),
+
+  llmVndOrtWebFetch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
+    label: 'Web Fetch',
+    type: 'enum',
+    description: 'Web fetch run by OpenRouter: the model reads pages by URL',
+    values: ['auto', 'native', 'exa', 'openrouter', 'firecrawl', 'parallel'], // [OpenRouter, 2026-09-08] differentiated search vs fetch
     // undefined means off
   }),
+
+  llmVndOrtWebToolsAdvanced: {
+    label: 'Web Tools Options',
+    type: 'string',
+    description: 'Depth and limits for OpenRouter web search and fetch',
+    // undefined means OpenRouter defaults; a JSON string, codec in openrouter.webtools.ts
+  },
 
 
   // Perplexity-specific parameters

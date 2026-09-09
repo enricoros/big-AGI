@@ -116,7 +116,9 @@ const ModelParameterSpec_schema = z.object({
     'llmVndOaiImageGeneration',
     'llmVndOaiCodeInterpreter',
     // OpenRouter
+    'llmVndOrtWebFetch',
     'llmVndOrtWebSearch',
+    'llmVndOrtWebToolsAdvanced',
     // Perplexity
     'llmVndPerplexityDateFilter',
     'llmVndPerplexitySearchMode',

@@ -56,10 +56,10 @@ function _nousNormalizeWireModel(wireModel: any): any {
   };
 }
 
-// parameterSpecs that only the 'openrouter' dialect can emit (plugins, tunneled Anthropic thinking /
-// Gemini efforts, Responses-only reasoning mode) - dead or throwing under the 'openai' dialect
+// parameterSpecs that only the 'openrouter' dialect can emit - dead or throwing under the 'openai' dialect: every
+// OpenRouter-own parameter (the 'llmVndOrt' prefix, filtered below) plus the tunneled Anthropic thinking / Gemini
+// efforts and the Responses-only reasoning mode
 const _nousDroppedParamIds: string[] = [
-  'llmVndOrtWebSearch',
   'llmVndAntThinkingBudget',
   'llmVndAntEffort',
   'llmVndGemEffort',
@@ -72,7 +72,7 @@ const _nousDroppedParamIds: string[] = [
 /** Adapt an OpenRouter-mapped description to the plain 'openai' request dialect. */
 function _nousAdaptToOpenAIDialect(model: ModelDescriptionSchema): ModelDescriptionSchema {
 
-  let parameterSpecs = model.parameterSpecs?.filter(p => !_nousDroppedParamIds.includes(p.paramId));
+  let parameterSpecs = model.parameterSpecs?.filter(p => !p.paramId.startsWith('llmVndOrt') && !_nousDroppedParamIds.includes(p.paramId));
 
   // Hermes runs on Nous' own vLLM backend, which ignores `reasoning_effort` (probe-verified: 'high'
   // and 'none' both no-op) - drop the effort control there; hybrid reasoning stays prompt-triggered.

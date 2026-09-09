@@ -296,6 +296,28 @@ export namespace OpenAIWire_Tools {
         description: z.string().optional(),
       }),
     }),
+    // [OpenRouter, 2026-09-08] server tools, run by OpenRouter itself (behavior: aix.wiretypes.openrouter.ts). Parameter
+    // names are OpenRouter's: https://openrouter.ai/docs/guides/features/server-tools/web-search and /web-fetch
+    z.object({
+      type: z.literal('openrouter:web_search'),
+      parameters: z.object({
+        engine: z.enum(['auto', 'native', 'exa', 'parallel', 'firecrawl', 'perplexity']).optional(), // default 'auto': native where the provider has it, else Exa
+        mode: z.string().optional(), // Exa: instant|fast|auto|deep-lite|deep|deep-reasoning, Parallel: turbo|fast|basic|advanced; not validated against the engine upstream
+        max_results: z.number().int().min(1).max(25).optional(), // Perplexity: 1-20; ignored by native
+        max_uses: z.number().int().min(1).optional(), // accepted but not enforced when probed
+        max_total_results: z.number().int().min(1).optional(),
+        search_context_size: z.enum(['low', 'medium', 'high']).optional(), // ignored by native and Firecrawl
+        max_characters: z.number().int().min(1).max(100000).optional(), // wins over search_context_size; ignored by native and Firecrawl
+      }).optional(),
+    }),
+    z.object({
+      type: z.literal('openrouter:web_fetch'),
+      parameters: z.object({
+        engine: z.enum(['auto', 'native', 'exa', 'openrouter', 'firecrawl', 'parallel']).optional(),
+        max_uses: z.number().int().min(1).optional(), // accepted but not enforced when probed
+        max_content_tokens: z.number().int().min(1).optional(),
+      }).optional(),
+    }),
   ]);
 
   export const ToolChoice_schema = z.union([
@@ -440,7 +462,11 @@ export namespace OpenAIWire_API_Chat_Completions {
 
     // -- Vendor-specific extensions to the request --
 
+    // [OpenRouter, 2026-09-08] server-tool step budget, shared by every 'openrouter:*' tool; default and cap 30 upstream (accepted but not enforced when probed)
+    max_tool_calls: z.number().int().min(1).max(30).optional(),
+
     // [OpenRouter, 2025-10-22] OpenRouter-specific plugins parameter for web search and other hosted tools
+    // [OpenRouter, 2026-09-08] the 'web' plugin is deprecated upstream in favor of the 'openrouter:web_search' tool; kept for endpoints without tool support
     plugins: z.array(z.union([
       z.object({
         id: z.literal('web'),
@@ -590,6 +616,13 @@ export namespace OpenAIWire_API_Chat_Completions {
         total_cost: z.number().optional(),
       }),
     ]).nullish(),
+
+    // [OpenRouter, 2026-09-08] server tools ('openrouter:web_search' / 'web_fetch') counters; web_search_requests is also reported for the legacy 'web' plugin
+    server_tool_use_details: z.object({
+      web_search_requests: z.number().nullish(),
+      tool_calls_requested: z.number().nullish(),
+      tool_calls_executed: z.number().nullish(),
+    }).nullish(),
 
     // [OpenRouter, 2025-10-22] additional usage fields when used with Chutes
     // is_byok: z.boolean().optional(), // Bring Your Own Key indicator
