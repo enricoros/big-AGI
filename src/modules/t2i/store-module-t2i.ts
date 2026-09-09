@@ -5,6 +5,7 @@ import { agiUuidV4 } from '~/common/util/idUtils';
 import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
 
 import type { DT2ICredentialsAny, DT2IEngine, DT2IEngineAny, DT2IEngineId, DT2IVendorType } from './t2i.types';
+import { isDalleModelId } from './t2i.config';
 import { t2iFindVendor, t2iFindVendorForLLMVendor } from './t2i.vendors-registry';
 
 
@@ -187,13 +188,27 @@ export const useT2IStore = create<T2IStore>()(persist(
 
   }), {
     name: 'app-module-t2i',
-    version: 2,
+    version: 3,
 
     // 2: engine-instance store (ASRx-style) - discard the v1 shape ({selectedT2IProviderId});
     //    auto-detection re-creates engines and re-resolves the active one
+    // 3: DALL·E 2/3 retired - null their model selection (-> auto) and drop their profile fields
     migrate: (state: unknown, fromVersion) => {
       if (fromVersion < 2)
         return { engines: {}, activeEngineId: null, hasInitializedLlms: false };
+      if (fromVersion < 3) {
+        const engines = (state as T2IStoreState)?.engines ?? {};
+        for (const engine of Object.values(engines)) {
+          const profile: any = engine?.profile;
+          if (profile?.dialect !== 'dalle') continue;
+          if (!isDalleModelId(profile.dalleModelId)) profile.dalleModelId = null;
+          delete profile.dalleNoRewrite;
+          delete profile.dalleSizeD3;
+          delete profile.dalleQualityD3;
+          delete profile.dalleStyleD3;
+          delete profile.dalleSizeD2;
+        }
+      }
       return state;
     },
 

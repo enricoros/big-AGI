@@ -46,7 +46,7 @@ How to set up AI models and features in big-AGI.
 - **Enhanced AI Features**:
   - **[Web Browsing](config-feature-browse.md)**: Enable web page download through third-party services or your own cloud
   - **Web Search**: Google Search API (see '[Environment Variables](environment-variables.md)')
-  - **Image Generation**: GPT Image (gpt-image-1), Nano Banana, DALL·E 3 and 2
+  - **Image Generation**: GPT Image 2.5, 2 and 1.x, Nano Banana
   - **Voice Synthesis**: ElevenLabs, Inworld, OpenAI TTS, LocalAI, or browser Web Speech API
   - **[Google Drive](config-feature-google-drive.md)**: Attach files from Google Drive
 

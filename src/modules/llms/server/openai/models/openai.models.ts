@@ -1346,7 +1346,7 @@ const openAIModelsDenyList: string[] = [
   'gpt-5-image', 'gpt-5-image-mini',
 
   // Image models: /v1/images/generations (gpt-image-2.5-* are not in the /models listing as of 2026-09-09, listed here in case they appear)
-  'gpt-image-2.5-flare', 'gpt-image-2.5-sunburst', 'gpt-image-2', 'gpt-image-1.5', 'chatgpt-image-latest' /* shutdown 2026-12-01 */, 'gpt-image-1', 'gpt-image-1-mini', 'dall-e-3', 'dall-e-2',
+  'gpt-image-2.5-flare', 'gpt-image-2.5-sunburst', 'gpt-image-2', 'gpt-image-1.5', 'chatgpt-image-latest' /* shutdown 2026-12-01 */, 'gpt-image-1', 'gpt-image-1-mini',
 
   // Video models: /v1/videos
   'sora-2-pro', 'sora-2',

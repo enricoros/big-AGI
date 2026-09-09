@@ -1,9 +1,9 @@
-import type { DalleImageQualityGI, DalleImageSize, DalleModelId, DalleModelSelection, DProfileDalle, GPTImageModelId } from './t2i.types';
+import type { DalleImageQualityGI, DalleModelId, DalleModelSelection, DalleSizeGI, DProfileDalle } from './t2i.types';
 
 
 // configuration
 export const DALLE_DEFAULT_MODEL_ID: DalleModelId = 'gpt-image-2.5-flare'; // 'Auto' selection, and fallback when none is set
-export const DALLE_DEFAULT_IMAGE_SIZE: DalleImageSize = '1024x1024'; // this works in all
+export const DALLE_DEFAULT_IMAGE_SIZE: DalleSizeGI = '1024x1024';
 
 
 // --- OpenAI/DALL·E-protocol model catalog helpers ---
@@ -17,30 +17,11 @@ export function resolveDalleModelId(selection: DalleModelSelection): DalleModelI
   return selection ?? DALLE_DEFAULT_MODEL_ID;
 }
 
-/**
- * Get the model family for a given image model.
- * Models in the same family share settings, capabilities, and UI.
- *
- * @param modelId - The specific model ID
- * @returns The model family identifier
- *
- * Future: When adding new model families (e.g. Google Imagen, xAI):
- * - Add new return types: 'google-imagen' | 'xai-grok-image'
- * - Update all family-based checks to handle new families
- * - Each family can have its own settings/pricing structure
- */
-export function getImageModelFamily(modelId: DalleModelId): 'gpt-image' | 'dall-e-3' | 'dall-e-2' {
-  if (isGPTImageModelId(modelId))
-    return 'gpt-image';
-  if (modelId === 'dall-e-3')
-    return 'dall-e-3';
-  return 'dall-e-2';
-}
+export const DALLE_MODEL_IDS: readonly DalleModelId[] = ['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst', 'gpt-image-2', 'gpt-image-1.5', 'gpt-image-1', 'gpt-image-1-mini'];
 
-const GPT_IMAGE_MODEL_IDS: readonly GPTImageModelId[] = ['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst', 'gpt-image-2', 'gpt-image-1.5', 'gpt-image-1', 'gpt-image-1-mini'];
-
-export function isGPTImageModelId(modelId: DalleModelId): modelId is GPTImageModelId {
-  return (GPT_IMAGE_MODEL_IDS as readonly string[]).includes(modelId);
+/** Persisted profiles may carry retired ids (e.g. dall-e-3) - the store migration nulls them, this is the runtime guard. */
+export function isDalleModelId(modelId: unknown): modelId is DalleModelId {
+  return (DALLE_MODEL_IDS as readonly unknown[]).includes(modelId);
 }
 
 /** gpt-image-2.5 (flare, sunburst): 'xhigh' and 'max' quality tiers, arbitrary sizes (not exposed yet) */
@@ -65,17 +46,12 @@ export function t2iDefaultDalleProfile(): DProfileDalle {
   return {
     dialect: 'dalle',
     dalleModelId: null, // auto-select latest
-    dalleNoRewrite: false,
     dalleSizeGI: '1024x1024',
     dalleQualityGI: 'high',
     dalleBackgroundGI: 'auto',
     dalleOutputFormatGI: 'webp',
     dalleOutputCompressionGI: 100,
     dalleModerationGI: 'low',
-    dalleSizeD3: '1024x1024',
-    dalleQualityD3: 'hd',
-    dalleStyleD3: 'vivid',
-    dalleSizeD2: '1024x1024',
   };
 }
 
@@ -92,7 +68,7 @@ export const OPENROUTER_IMAGE_MODELS: { value: string, label: string }[] = [
   { value: 'google/gemini-3-pro-image', label: 'Gemini 3 Pro Image (Nano Banana Pro)' },
   { value: 'google/gemini-3.1-flash-image', label: 'Gemini 3.1 Flash Image' },
   { value: 'google/gemini-2.5-flash-image', label: 'Gemini 2.5 Flash Image (Nano Banana)' },
-  { value: 'openai/gpt-image-2', label: 'GPT Image 2' },
+  { value: 'openai/gpt-image-2.5-flare', label: 'GPT Image 2.5 Flare' },
   { value: 'openai/gpt-image-1-mini', label: 'GPT Image 1 Mini' },
   { value: 'black-forest-labs/flux.2-max', label: 'FLUX.2 Max' },
   { value: 'black-forest-labs/flux.2-pro', label: 'FLUX.2 Pro' },
@@ -128,7 +104,7 @@ export function openRouterImageModelLabel(modelId: string | null): string {
 export function t2iIsPainterName(generatorName: string | undefined): boolean {
   if (!generatorName) return false;
   return generatorName.startsWith('GPT Image')
-    || generatorName.startsWith('DALL·E')
+    || generatorName.startsWith('DALL·E') // retired painter, still in message history
     || generatorName === 'LocalAI'
     || generatorName === 'Prodia' // legacy painter
     || OPENROUTER_IMAGE_MODELS.some(m => m.label === generatorName); // OpenRouter painters are the model labels

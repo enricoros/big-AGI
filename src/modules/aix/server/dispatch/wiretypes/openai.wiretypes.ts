@@ -904,44 +904,33 @@ export namespace OpenAIWire_API_Images_Generations {
   export type Request = z.infer<typeof Request_schema>;
   const Request_schema = z.object({
 
-    // 32,000 for gpt-image family, 4,000 for dall-e-3, 1,000 for dall-e-2
+    // 32,000 for the gpt-image family
     prompt: z.string().max(32000),
 
-    model: z.union([
-      GptImageModels_schema,
-      z.enum([
-        'dall-e-3',
-        'dall-e-2', // default
-      ]),
-    ]).optional(),
+    // DALL·E 2/3 were removed from the API on 2026-05-12
+    model: GptImageModels_schema.optional(),
 
-    // The number of images to generate. Must be between 1 and 10. For dall-e-3, only n=1 is supported.
+    // The number of images to generate. Must be between 1 and 10.
     n: z.number().min(1).max(10).nullable().optional(),
 
     // Image quality
     quality: z.enum([
       'auto',                   // default
       'max', 'xhigh',           // gpt-image-2.5 only (400 on older)
-      'high', 'medium', 'low',  // gpt-image
-      'hd', 'standard',         // dall-e-3: hd | standard, dall-e-2: only standard
+      'high', 'medium', 'low',
     ]).optional(),
 
-    // The format in which generated images with dall-e-2 and dall-e-3 are returned.
-    // GPT Image models will always return base64-encoded images and do NOT support this parameter.
+    // GPT Image models always return base64 and reject this parameter ('Unknown parameter'); kept for the LocalAI dialect
     response_format: z.enum(['url', 'b64_json']).optional(),
 
-    // size of the generated images
+    // size of the generated images - the API also accepts arbitrary WxH (multiples of 16, 1:3..3:1, longest edge 3840), not exposed yet
     size: z.enum([
-      'auto',       // GI (or default if omitted)
-      '256x256',    //          D2
-      '512x512',    //          D2
-      '1024x1024',  // GI  D3  D2
-      // landscape
-      '1536x1024',  // GI
-      '1792x1024',  //      D3
-      // portrait
-      '1024x1536',  // GI
-      '1024x1792',  //      D3
+      'auto',       // default if omitted
+      '1024x1024',
+      '1536x1024',  // landscape
+      '1024x1536',  // portrait
+      '256x256',    // LocalAI only
+      '512x512',    // LocalAI only
     ]).optional(),
 
     // optional unique identifier representing your end-user
@@ -961,12 +950,6 @@ export namespace OpenAIWire_API_Images_Generations {
 
     // WEBP/JPEG compression level for GPT Image models
     output_compression: z.number().min(0).max(100).int().optional(),
-
-
-    // -- Dall-E 3 Specific Parameters --
-
-    // DALL-E 3 ONLY - style - defaults to vivid
-    style: z.enum(['vivid', 'natural']).optional(),
 
   });
 
@@ -1007,17 +990,14 @@ export namespace OpenAIWire_API_Images_Edits {
    */
   export const Request_schema = z.object({
 
-    // 32,000 for gpt-image, 1,000 for dall-e-2
+    // 32,000 for the gpt-image family
     prompt: z.string().max(32000),
 
     // image: file | file[] - REQUIRED - Handled as file uploads in FormData ('image' field)
 
     // mask: file - OPTIONAL - Handled as file upload in FormData ('mask' field)
 
-    model: z.union([
-      OpenAIWire_API_Images_Generations.GptImageModels_schema,
-      z.enum(['dall-e-2' /* dall-e-3 does not do image edits */]),
-    ]).optional(),
+    model: OpenAIWire_API_Images_Generations.GptImageModels_schema.optional(),
 
     // Number of images to generate, between 1 and 10
     n: z.number().min(1).max(10).nullable().optional(),
@@ -1026,23 +1006,15 @@ export namespace OpenAIWire_API_Images_Edits {
     quality: z.enum([
       'auto',                   // default
       'max', 'xhigh',           // gpt-image-2.5 only (400 on older)
-      'high', 'medium', 'low',  // gpt-image
-      'standard',               // dall-e-2: only standard
+      'high', 'medium', 'low',
     ]).optional(),
-
-    // response_format: string - OPTIONAL - Defaults to 'url'. Only for DALL-E 2. GPT Image models always return b64_json.
-    // OMITTED here as we'll enforce b64_json or handle it based on model if DALL-E 2 edit were supported.
 
     // size of the generated images
     size: z.enum([
-      'auto',       // GI (or default if omitted)
-      '256x256',    //          D2
-      '512x512',    //          D2
-      '1024x1024',  // GI       D2
-      // landscape
-      '1536x1024',  // GI
-      // portrait
-      '1024x1536',  // GI
+      'auto',       // default if omitted
+      '1024x1024',
+      '1536x1024',  // landscape
+      '1024x1536',  // portrait
     ]).optional(),
 
     // optional unique identifier representing your end-user

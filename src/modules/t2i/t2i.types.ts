@@ -65,20 +65,12 @@ export type DT2IProfile<TVt extends DT2IVendorType> = _TypeMap[TVt]['profile'];
 export interface DProfileDalle {
   dialect: 'dalle';
   dalleModelId: DalleModelSelection; // null = auto-select latest
-  dalleNoRewrite: boolean;
-  // -- GPT Image family --
   dalleSizeGI: DalleSizeGI;
   dalleQualityGI: DalleImageQualityGI;
   dalleBackgroundGI: DalleBackgroundGI;
   dalleOutputFormatGI: DalleOutputFormatGI;
   dalleOutputCompressionGI: number;
   dalleModerationGI: DalleModerationGI;
-  // -- DALL·E 3 --
-  dalleSizeD3: DalleSizeD3;
-  dalleQualityD3: DalleImageQualityD3;
-  dalleStyleD3: DalleImageStyleD3;
-  // -- DALL·E 2 --
-  dalleSizeD2: DalleSizeD2;
 }
 
 export interface DProfileOpenRouterImages {
@@ -87,28 +79,18 @@ export interface DProfileOpenRouterImages {
 }
 
 
-// OpenAI/DALL·E-protocol model and output types
+// OpenAI/DALL·E-protocol model and output types - GPT Image family only: DALL·E 2/3 left the OpenAI API on 2026-05-12 (Azure and OpenRouter too)
 
-// Note: 'chatgpt-image-latest' also exists (mirrors gpt-image-1.5 pricing, shutdown 2026-12-01)
+// Shutdowns: gpt-image-1 2026-10-23 (OpenAI and Azure); gpt-image-1.5, gpt-image-1-mini and chatgpt-image-latest 2026-12-01 on OpenAI, 2027 on Azure
 export type GPTImageModelId = 'gpt-image-2.5-flare' | 'gpt-image-2.5-sunburst' | 'gpt-image-2' | 'gpt-image-1.5' | 'gpt-image-1' | 'gpt-image-1-mini';
-export type DalleModelId = GPTImageModelId | 'dall-e-3' | 'dall-e-2';
+export type DalleModelId = GPTImageModelId;
 export type DalleModelSelection = DalleModelId | null; // null = auto-select latest
 
-export type DalleImageQuality = DalleImageQualityGI | DalleImageQualityD3;
-export type DalleImageQualityGI = 'max' | 'xhigh' | 'high' | 'medium' | 'low'; // GPT Image family - 'xhigh' and 'max' are gpt-image-2.5 only
-export type DalleImageQualityD3 = 'hd' | 'standard'; // DALL·E 3
-
-export type DalleImageStyleD3 = 'vivid' | 'natural';
-
+export type DalleImageQualityGI = 'max' | 'xhigh' | 'high' | 'medium' | 'low'; // 'xhigh' and 'max' are gpt-image-2.5 only
 export type DalleBackgroundGI = 'auto' | 'transparent' | 'opaque';
 export type DalleOutputFormatGI = 'png' | 'jpeg' | 'webp';
 export type DalleModerationGI = 'auto' | 'low';
-
-export type DalleImageSize = DalleSizeGI | DalleSizeD3 | DalleSizeD2;
-export type DalleSize = DalleImageSize;
 export type DalleSizeGI = '1024x1024' | '1536x1024' | '1024x1536'; // 'auto': would force w/h inference in the server, so we remove it
-export type DalleSizeD3 = '1024x1024' | '1792x1024' | '1024x1792';
-export type DalleSizeD2 = '256x256' | '512x512' | '1024x1024';
 
 
 // Credentials

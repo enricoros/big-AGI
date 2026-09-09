@@ -46,33 +46,11 @@ const createImageConfigGI = _createImageConfigBase.extend({
   moderation: z.enum(['low', 'auto']).optional(),
 });
 
-// DALL-E 3
-const createImageConfigD3 = _createImageConfigBase.extend({
-  model: z.literal('dall-e-3'),
-  count: z.number().min(1).max(1), // DALL-E 3 only supports n=1
-  prompt: z.string().max(4000),
-  quality: z.enum(['standard', 'hd']),
-  size: z.enum(['1024x1024', '1792x1024', '1024x1792']),
-  style: z.enum(['vivid', 'natural']).optional(),
-  response_format: z.enum([/*'url',*/ 'b64_json']).optional(),
-});
-
-// DALL-E 2
-const createImageConfigD2 = _createImageConfigBase.extend({
-  model: z.literal('dall-e-2'),
-  prompt: z.string().max(1000),
-  quality: z.literal('standard').optional(),
-  size: z.enum(['256x256', '512x512', '1024x1024']),
-  response_format: z.enum([/*'url',*/ 'b64_json']).optional(),
-});
-
 // [LocalAI] simple default configuration
 const createImageConfigLocalAI = _createImageConfigBase.extend({
   model: z.enum([
-    'stablediffusion', // default, mapped to 'gpt-image-1'
-    'dreamshaper', // mapped to 'high', mapped to 'gpt-image-1-mini'
-    'sd-3.5-large-ggml', // mapped to 'medium', mapped to 'dall-e-3'
-    'sd-3.5-medium-ggml', // mapped to 'medium', mapped to 'dall-e-2'
+    'stablediffusion', // default, for the gpt-image models
+    'dreamshaper', // for 'gpt-image-1-mini'
   ]),
   prompt: z.string(),
   size: z.enum([
@@ -94,9 +72,7 @@ const createImagesInputSchema = z.object({
   access: openAIAccessSchema,
   // for this object sync with <> OpenAIWire_API_Images_Generations.Request_schema
   generationConfig: z.discriminatedUnion('model', [
-    createImageConfigGI, // handles both gpt-image-1 and gpt-image-1-mini
-    createImageConfigD3,
-    createImageConfigD2,
+    createImageConfigGI,
     createImageConfigLocalAI,
   ]),
   editConfig: z.object({
@@ -204,12 +180,6 @@ export const llmOpenAIRouter = createTRPCRouter({
       // validate input
       if (isEdit && !isGptImageFamily)
         throw new TRPCError({ code: 'BAD_REQUEST', message: `Image editing is only supported for GPT Image models` });
-      if (config.model === 'dall-e-3' && config.count > 1)
-        throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] dall-e-3 model does not support more than 1 image` });
-      // if (config.model !== 'gpt-image-1' && (config.background || config.moderation || config.output_compression || config.output_format))
-      //   throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] background, moderation, output_compression, output_format are only supported for gpt-image-1` });
-      // if (config.model !== 'dall-e-3' && config.style)
-      //   throw new TRPCError({ code: 'BAD_REQUEST', message: `[OpenAI Issue] style is only supported for dall-e-3` });
 
 
       // Prepare request body (JSON for generation, FormData for edit)
@@ -220,7 +190,7 @@ export const llmOpenAIRouter = createTRPCRouter({
 
         const { model, count, ...restConfig } = config;
         requestBody = {
-          ...restConfig, // includes response_format for dall-e-3 and dall-e-2 models
+          ...restConfig, // includes response_format for LocalAI
           model: model as any, // [LocalAI] Fix: LocalAI wants 'stablediffusion' as model name
           n: count,
           user: config.user || 'Big-AGI',
@@ -242,7 +212,6 @@ export const llmOpenAIRouter = createTRPCRouter({
         if (count > 1) requestBody.append('n', '' + count);
         if (quality && (quality as string) !== 'auto') requestBody.append('quality', quality);
         if (size && (size as string) !== 'auto') requestBody.append('size', size);
-        // if (model === 'dall-e-2') requestBody.append('response_format', 'b64_json');
         requestBody.append('user', user || 'Big-AGI');
 
         // append input images
