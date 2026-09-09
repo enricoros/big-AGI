@@ -31,8 +31,9 @@ const _styles = {
   },
 } as const satisfies Record<string, SxProps>;
 
-// read-only header: same layout, inert (no hover, no click, no chevron)
+// read-only header: same layout, inert (no hover, no click, chevron hidden but still laid out)
 const _headerStaticSx = { ..._styles.headerButton, pointerEvents: 'none' } as const satisfies SxProps;
+const _headerCollapserHiddenSx = { ..._styles.headerCollapser, visibility: 'hidden' } as const satisfies SxProps;
 
 
 export function ListItemGroupCollapser<TId extends string>(props: {
@@ -43,23 +44,21 @@ export function ListItemGroupCollapser<TId extends string>(props: {
   readOnly?: boolean; // static section label: collapse is display-only bypassed (e.g. while filtering), so no chevron or click
 }) {
 
-  if (props.readOnly)
-    return (
-      <ListItem>
-        <ListItemButton color='neutral' tabIndex={-1} sx={_headerStaticSx}>
-          <div style={_styles.headerDeco} />
-          <div>{props.label}</div>
-        </ListItemButton>
-      </ListItem>
-    );
+  const { readOnly } = props;
 
   return (
     <ListItem>
-      <ListItemButton color='neutral' aria-expanded={!props.isCollapsed} onClick={() => props.onToggleCollapse(props.id)} sx={_styles.headerButton}>
+      <ListItemButton
+        color='neutral'
+        aria-expanded={readOnly ? undefined : !props.isCollapsed}
+        tabIndex={readOnly ? -1 : undefined}
+        onClick={readOnly ? undefined : () => props.onToggleCollapse(props.id)}
+        sx={readOnly ? _headerStaticSx : _styles.headerButton}
+      >
         {/*{serviceVendor?.id && <ListItemDecorator><LLMVendorIconSprite vendorId={serviceVendor.id} /></ListItemDecorator>}*/}
         <div style={_styles.headerDeco} />
         <div>{props.label}</div>
-        <ExpandMoreIcon sx={_styles.headerCollapser} />
+        <ExpandMoreIcon sx={readOnly ? _headerCollapserHiddenSx : _styles.headerCollapser} />
       </ListItemButton>
     </ListItem>
   );
