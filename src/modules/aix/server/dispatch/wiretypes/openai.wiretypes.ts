@@ -893,6 +893,8 @@ export namespace OpenAIWire_API_Images_Generations {
 
   /** GPT Image family models - shared between this namespace, Images_Edits, and the Responses image_generation tool. */
   export const GptImageModels_schema = z.enum([
+    'gpt-image-2.5-flare', // 2026-09-08 - fast, default; +'xhigh'/'max' quality, arbitrary WxH sizes (mult of 16, 1:3..3:1, <=3840)
+    'gpt-image-2.5-sunburst', // 2026-09-08 - same price/tokens as flare, ~2x latency, tuned for edit precision
     'gpt-image-2',
     'gpt-image-1.5',
     'gpt-image-1',
@@ -919,6 +921,7 @@ export namespace OpenAIWire_API_Images_Generations {
     // Image quality
     quality: z.enum([
       'auto',                   // default
+      'max', 'xhigh',           // gpt-image-2.5 only (400 on older)
       'high', 'medium', 'low',  // gpt-image
       'hd', 'standard',         // dall-e-3: hd | standard, dall-e-2: only standard
     ]).optional(),
@@ -1022,6 +1025,7 @@ export namespace OpenAIWire_API_Images_Edits {
     // Image quality
     quality: z.enum([
       'auto',                   // default
+      'max', 'xhigh',           // gpt-image-2.5 only (400 on older)
       'high', 'medium', 'low',  // gpt-image
       'standard',               // dall-e-2: only standard
     ]).optional(),
@@ -1546,7 +1550,8 @@ export namespace OpenAIWire_Responses_Tools {
     background: z.enum(['transparent', 'opaque', 'auto']).optional(), // defaults to 'auto'
     /**
      * Control how much effort the model will exert to match the style and features, especially facial features, of input images.
-     * Supported for gpt-image-1 / gpt-image-1.5+ (not gpt-image-1-mini). Defaults to 'low'.
+     * Only gpt-image-1 and gpt-image-1.5 accept it - gpt-image-2 and gpt-image-2.5 return 400 `invalid_input_fidelity_model`
+     * (verified 2026-09-09, despite the docs saying "1.5 and later"). Defaults to 'low'.
      */
     input_fidelity: z.enum(['high', 'low']).optional(),
     input_image_mask: z.object({
@@ -1562,8 +1567,8 @@ export namespace OpenAIWire_Responses_Tools {
     output_format: z.enum(['png', 'webp', 'jpeg']).optional(),
     /** Number of partial images to generate in streaming mode, from 0 (default) to 3. */
     partial_images: z.number().int().min(0).max(3).optional(),
-    /** Quality of the generated image. Defaults to 'auto' */
-    quality: z.enum(['low', 'medium', 'high', 'auto']).optional(),
+    /** Quality of the generated image. Defaults to 'auto' - which resolves to 'low' on simple prompts (verified 2026-09-09). 'xhigh'/'max' are gpt-image-2.5 only. */
+    quality: z.enum(['low', 'medium', 'high', 'xhigh', 'max', 'auto']).optional(),
     /** Default: auto */
     size: z.enum(['1024x1024', '1024x1536', '1536x1024', 'auto']).or(z.string()).optional(),
     // Not supported in the request, echoed by the API, but always 1

@@ -9,8 +9,8 @@ import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers'
 
 // IMPORTANT: Import TYPE (!)
 import type { T2iCreateImageOutput, T2iGenerateOptions } from '../t2i.server';
-import type { DalleImageQuality, DalleModelId, DalleModelSelection, DalleSize, DProfileDalle } from '../t2i.types';
-import { getImageModelFamily, resolveDalleModelId } from '../t2i.config';
+import type { DalleImageQuality, DalleImageQualityGI, DalleModelId, DalleModelSelection, DalleSize, DalleSizeGI, DProfileDalle } from '../t2i.types';
+import { clampGPTImageQuality, getImageModelFamily, isGPTImage25ModelId, isGPTImageModelId, resolveDalleModelId } from '../t2i.config';
 
 
 /**
@@ -88,7 +88,9 @@ export async function openAIGenerateImagesOrThrow(
       access: findServiceAccessOrThrow<{}, OpenAIAccessSchema>(modelServiceIdForAccess).transportAccess,
       // [LocalAI, 2025-11-18] LocalAI uses the default model 'stablediffusion' and we don't have any dynamic model selection yet
       generationConfig: modelVendor === 'localai' ? {
-        model: dalleModelId === 'gpt-image-2' ? 'stablediffusion'
+        model: dalleModelId === 'gpt-image-2.5-flare' ? 'stablediffusion'
+          : dalleModelId === 'gpt-image-2.5-sunburst' ? 'stablediffusion'
+          : dalleModelId === 'gpt-image-2' ? 'stablediffusion'
           : dalleModelId === 'gpt-image-1' ? 'stablediffusion'
             : dalleModelId === 'gpt-image-1-mini' ? 'dreamshaper'
               : dalleModelId === 'dall-e-3' ? 'sd-3.5-large-ggml'
@@ -101,12 +103,12 @@ export async function openAIGenerateImagesOrThrow(
           : dalleSizeGI === '1024x1536' ? '256x256'
             : '1024x1024',
         response_format: 'b64_json',
-      } : getImageModelFamily(dalleModelId) === 'gpt-image' ? {
-        model: dalleModelId as 'gpt-image-2' | 'gpt-image-1.5' | 'gpt-image-1' | 'gpt-image-1-mini',
+      } : isGPTImageModelId(dalleModelId) ? {
+        model: dalleModelId,
         prompt: prompt.slice(0, 32000 - 1), // GPT Image family accepts much longer prompts
         count: imageCount,
         size: dalleSizeGI,
-        quality: dalleQualityGI,
+        quality: clampGPTImageQuality(dalleModelId, dalleQualityGI), // per-model tiers: the API 400s on unsupported ones
         background: dalleBackgroundGI,
         output_format: dalleOutputFormatGI,
         output_compression: dalleOutputCompressionGI,
@@ -203,6 +205,8 @@ export async function openAIGenerateImagesOrThrow(
 
 export function openAIImageModelsGeneratorName(dalleModelSelection: DalleModelSelection) {
   const dalleModelId = resolveDalleModelId(dalleModelSelection);
+  if (dalleModelId === 'gpt-image-2.5-flare') return 'GPT Image 2.5 Flare';
+  if (dalleModelId === 'gpt-image-2.5-sunburst') return 'GPT Image 2.5 Sunburst';
   if (dalleModelId === 'gpt-image-2') return 'GPT Image 2';
   if (dalleModelId === 'gpt-image-1.5') return 'GPT Image 1.5';
   if (dalleModelId === 'gpt-image-1') return 'GPT Image 1';
@@ -218,59 +222,74 @@ export function openAIImageModelsGeneratorName(dalleModelSelection: DalleModelSe
  */
 const IMAGE_MODEL_PRICING = {
   // Token-based pricing (GPT Image family). Per $1M tokens. Note: chatgpt-image-latest mirrors gpt-image-1.5.
-  // Cached-input discounts exist (gpt-image-2/1.5: $2/img $1.25/txt, gpt-image-1: $2.50/img $1.25/txt,
+  // Cached-input discounts exist (gpt-image-2.5/2/1.5: $2/img $1.25/txt, gpt-image-1: $2.50/img $1.25/txt,
   // gpt-image-1-mini: $0.25/img $0.20/txt) but are not tracked here yet - add when the usage field is wired up.
-  'gpt-image-2':      { inputText: 5.00, inputImage:  8.00, outputImage: 30.00 },
-  'gpt-image-1.5':    { inputText: 5.00, inputImage:  8.00, outputImage: 32.00 },
-  'gpt-image-1':      { inputText: 5.00, inputImage: 10.00, outputImage: 40.00 },
-  'gpt-image-1-mini': { inputText: 2.00, inputImage:  2.50, outputImage:  8.00 },
+  'gpt-image-2.5-flare':    { inputText: 5.00, inputImage:  8.00, outputImage: 30.00 },
+  'gpt-image-2.5-sunburst': { inputText: 5.00, inputImage:  8.00, outputImage: 30.00 },
+  'gpt-image-2':            { inputText: 5.00, inputImage:  8.00, outputImage: 30.00 },
+  'gpt-image-1.5':          { inputText: 5.00, inputImage:  8.00, outputImage: 32.00 },
+  'gpt-image-1':            { inputText: 5.00, inputImage: 10.00, outputImage: 40.00 },
+  'gpt-image-1-mini':       { inputText: 2.00, inputImage:  2.50, outputImage:  8.00 },
   // Fixed pricing models handled separately in openAIImageModelsPricing()
   'dall-e-3': null,
   'dall-e-2': null,
-} as const;
+} as const satisfies Record<DalleModelId, null | { inputText: number, inputImage: number, outputImage: number }>;
 
 function openAIImageModelsPrice(modelId: DalleModelId): undefined | { inputText: number, inputImage: number, outputImage: number } {
   return IMAGE_MODEL_PRICING[modelId] || undefined;
 }
 
 /**
+ * Output image tokens per quality and size - the billing basis for the GPT Image family (x outputImage price).
+ * OpenAI only publishes the gpt-image-1 table; the 2.5 and 2 rows are `usage.output_tokens` measured on 2026-09-09.
+ * Each generation re-ladders: gpt-image-2 'medium' = gpt-image-2.5 'high', gpt-image-2 'high' = gpt-image-2.5 'max'.
+ */
+type _GITokensBySize = Record<DalleSizeGI, number>; // [1024x1024, 1536x1024, 1024x1536]
+const _giTok = (square: number, landscape: number, portrait: number): _GITokensBySize => ({ '1024x1024': square, '1536x1024': landscape, '1024x1536': portrait });
+const GPT_IMAGE_OUTPUT_TOKENS: Record<'gpt-image-2.5' | 'gpt-image-2' | 'gpt-image-1', Partial<Record<DalleImageQualityGI, _GITokensBySize>>> = {
+  'gpt-image-2.5': { // flare and sunburst bill the same
+    low: _giTok(196, 158, 158),
+    medium: _giTok(439, 343, 343),
+    high: _giTok(1756, 1372, 1372),
+    xhigh: _giTok(3122, 2459, 2459),
+    max: _giTok(7024, 5488, 5488),
+  },
+  'gpt-image-2': {
+    low: _giTok(196, 158, 158),
+    medium: _giTok(1756, 1372, 1372),
+    high: _giTok(7024, 5488, 5488),
+  },
+  'gpt-image-1': { // https://platform.openai.com/docs/guides/image-generation?image-generation-model=gpt-image-1 - also 1.5 and mini
+    low: _giTok(272, 400, 408),
+    medium: _giTok(1056, 1568, 1584),
+    high: _giTok(4160, 6208, 6240),
+  },
+};
+
+/**
  * Return the pricing for the OpenAI image generation API.
  * TODO: update this when the OpenAI pricing changes.
  */
 export function openAIImageModelsPricing(modelId: DalleModelId, quality: DalleImageQuality, size: DalleSize): string {
-  if (getImageModelFamily(modelId) === 'gpt-image') {
+  if (isGPTImageModelId(modelId)) {
 
-    // gpt-image-1-mini does not support high quality
-    if (modelId === 'gpt-image-1-mini' && quality === 'high') quality = 'medium';
+    // per-model quality tiers (e.g. gpt-image-1-mini has no 'high', 'xhigh'/'max' are 2.5 only)
+    const qualityGI = clampGPTImageQuality(modelId, quality as DalleImageQualityGI);
 
-    // GPT-Image output tokens table (same for all models in family)
-    // https://platform.openai.com/docs/guides/image-generation?image-generation-model=gpt-image-1
     // NOTE: when size='auto', assume the largest size
-    let outTokens = 0;
-    if (quality === 'high') {
-      if (size === '1024x1024') outTokens = 4160;
-      else if (size === '1024x1536') outTokens = 6240;
-      else if (size === '1536x1024' /*|| size === 'auto'*/) outTokens = 6208;
-    } else if (quality === 'medium') {
-      if (size === '1024x1024') outTokens = 1056;
-      else if (size === '1024x1536') outTokens = 1584;
-      else if (size === '1536x1024' /*|| size === 'auto'*/) outTokens = 1568;
-    } else if (quality === 'low') {
-      if (size === '1024x1024') outTokens = 272;
-      else if (size === '1024x1536') outTokens = 408;
-      else if (size === '1536x1024' /*|| size === 'auto'*/) outTokens = 400;
-    }
+    const tokensTable = GPT_IMAGE_OUTPUT_TOKENS[isGPTImage25ModelId(modelId) ? 'gpt-image-2.5' : modelId === 'gpt-image-2' ? 'gpt-image-2' : 'gpt-image-1'];
+    const outTokens = tokensTable[qualityGI]?.[size as DalleSizeGI] ?? 0;
 
     // gpt-image-1-mini pricing does not declare tokens, but seems to be off by 30%
     const scale = modelId === 'gpt-image-1-mini' ? 1.25 : 1.0;
 
     if (!outTokens) {
-      console.log('[DEV] No GPT Image token mapping for', modelId, quality, size);
+      console.log('[DEV] No GPT Image token mapping for', modelId, qualityGI, size);
       return 'varies by size';
     }
     const price = openAIImageModelsPrice(modelId);
     if (!price || !price.outputImage) {
-      console.warn('[DEV] No GPT Image pricing found for', modelId, quality, size);
+      console.warn('[DEV] No GPT Image pricing found for', modelId, qualityGI, size);
       return 'varies by tokens';
     }
     const outputImageCost = scale * price.outputImage * outTokens / 1_000_000;

@@ -89,13 +89,13 @@ export interface DProfileOpenRouterImages {
 
 // OpenAI/DALL·E-protocol model and output types
 
-// Note: 'chatgpt-image-latest' also exists with same pricing as gpt-image-1.5
-type GPTImageModelId = 'gpt-image-2' | 'gpt-image-1.5' | 'gpt-image-1' | 'gpt-image-1-mini';
+// Note: 'chatgpt-image-latest' also exists (mirrors gpt-image-1.5 pricing, shutdown 2026-12-01)
+export type GPTImageModelId = 'gpt-image-2.5-flare' | 'gpt-image-2.5-sunburst' | 'gpt-image-2' | 'gpt-image-1.5' | 'gpt-image-1' | 'gpt-image-1-mini';
 export type DalleModelId = GPTImageModelId | 'dall-e-3' | 'dall-e-2';
 export type DalleModelSelection = DalleModelId | null; // null = auto-select latest
 
 export type DalleImageQuality = DalleImageQualityGI | DalleImageQualityD3;
-export type DalleImageQualityGI = 'high' | 'medium' | 'low'; // GPT Image family
+export type DalleImageQualityGI = 'max' | 'xhigh' | 'high' | 'medium' | 'low'; // GPT Image family - 'xhigh' and 'max' are gpt-image-2.5 only
 export type DalleImageQualityD3 = 'hd' | 'standard'; // DALL·E 3
 
 export type DalleImageStyleD3 = 'vivid' | 'natural';

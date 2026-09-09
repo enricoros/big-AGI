@@ -11,13 +11,15 @@ import { Link } from '~/common/components/Link';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import type { DalleImageSize, DalleModelSelection, DProfileDalle } from '../t2i.types';
-import { DALLE_DEFAULT_IMAGE_SIZE, getImageModelFamily, resolveDalleModelId } from '../t2i.config';
+import { DALLE_DEFAULT_IMAGE_SIZE, clampGPTImageQuality, getImageModelFamily, isGPTImage25ModelId, resolveDalleModelId } from '../t2i.config';
 import { openAIImageModelsPricing } from './openaiGenerateImages';
 
 
 const CONF = {
 
   MODEL_OPTS: [
+    { value: 'gpt-image-2.5-flare', label: 'GPT Image 2.5 Flare' },
+    { value: 'gpt-image-2.5-sunburst', label: 'GPT Image 2.5 Sunburst', description: 'Edit precision, slower' },
     { value: 'gpt-image-2', label: 'GPT Image 2' },
     { value: 'gpt-image-1.5', label: 'GPT Image 1.5' },
     { value: 'gpt-image-1', label: 'GPT Image 1' },
@@ -35,6 +37,13 @@ const CONF = {
     { value: 'low', label: 'Low' },
     { value: 'medium', label: 'Medium' },
     { value: 'high', label: 'High' },
+  ],
+  QUALITY_GI_25: [ // gpt-image-2.5 adds two tiers
+    { value: 'low', label: 'Low' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'high', label: 'High' },
+    { value: 'xhigh', label: 'XHigh' },
+    { value: 'max', label: 'Max' },
   ],
   BACKGROUND_GI: [
     // { value: 'opaque', label: 'Opaque' },
@@ -111,6 +120,8 @@ export function DallESettings(props: {
   const resolvedDalleModelId = resolveDalleModelId(dalleModelId);
   const family = getImageModelFamily(resolvedDalleModelId);
   const isGI = family === 'gpt-image';
+  const isGI25 = isGI && isGPTImage25ModelId(resolvedDalleModelId);
+  const effectiveQualityGI = isGI ? clampGPTImageQuality(resolvedDalleModelId, dalleQualityGI) : dalleQualityGI; // what the request will send
   const isD3 = family === 'dall-e-3';
   const isD2 = family === 'dall-e-2';
 
@@ -131,7 +142,7 @@ export function DallESettings(props: {
     && dalleOutputFormatGI !== 'webp';
 
   const costPerImage = openAIImageModelsPricing(resolvedDalleModelId,
-    isD3 ? dalleQualityD3 : isGI ? dalleQualityGI : 'standard',
+    isD3 ? dalleQualityD3 : isGI ? effectiveQualityGI : 'standard',
     currentResolution);
 
 
@@ -176,9 +187,9 @@ export function DallESettings(props: {
       <FormChipControl
         title='Quality'
         // color='primary'
-        description='Higher quality takes longer'
-        options={CONF.QUALITY_GI}
-        value={dalleQualityGI} onChange={value => onUpdateProfile({ dalleQualityGI: value })}
+        description={effectiveQualityGI !== dalleQualityGI ? `'${dalleQualityGI}' unsupported, using '${effectiveQualityGI}'` : 'Higher quality takes longer'}
+        options={isGI25 ? CONF.QUALITY_GI_25 : CONF.QUALITY_GI}
+        value={effectiveQualityGI} onChange={value => onUpdateProfile({ dalleQualityGI: value })}
       />
 
       <FormChipControl

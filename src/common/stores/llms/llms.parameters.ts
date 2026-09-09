@@ -453,7 +453,12 @@ export const DModelParameterRegistry = {
     label: 'Image Generation',
     type: 'enum',
     description: 'Image generation mode and quality',
-    values: ['mq', 'hq', 'hq_edit' /* precise input editing */, 'hq_png' /* uncompressed */], // our values, not upstream's
+    values: [
+      'mq', // medium
+      'hq', // high
+      'max' // gpt-image-2.5 'max'
+      // former values, now suppressed: 'hq_edit' /* precise input editing */, 'hq_png' /* uncompressed */
+    ], // our values, not upstream's; legacy 'hq_edit'/'hq_png' are mapped to 'hq' at request time
     // undefined means no image generation
   }),
 
@@ -637,11 +642,18 @@ export function applyModelParameterSpecsInitialValues(destValues: DModelParamete
 
 
 export function getAllModelParameterValues(initialParameters: undefined | DModelParameterValues, userParameters?: DModelParameterValues): DModelParameterValues {
-  return {
+  const values: DModelParameterValues = {
     ...LLMImplicitParametersRuntimeFallback,
     ...initialParameters,
     ...userParameters,
   };
+
+  // legacy persisted values - the stores never validate enum values against the registry, so migrate here (feeds both the UI and the AIX request)
+  const imageGeneration: unknown = values.llmVndOaiImageGeneration;
+  if (imageGeneration === true) values.llmVndOaiImageGeneration = 'mq'; // pre-enum boolean
+  else if (imageGeneration === 'hq_edit' || imageGeneration === 'hq_png') values.llmVndOaiImageGeneration = 'hq'; // dropped 2026-09-09: input_fidelity is rejected by gpt-image-2+, uncompressed PNG saving never landed
+
+  return values;
 }
 
 

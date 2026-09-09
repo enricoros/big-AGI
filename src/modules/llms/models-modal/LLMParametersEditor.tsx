@@ -182,8 +182,7 @@ const _imageGenerationOptions = [
   { value: _UNSPECIFIED, label: 'Off', description: 'Default (disabled)' },
   { value: 'mq', label: 'Standard', description: 'Quick gen' },
   { value: 'hq', label: 'High Quality', description: 'Best looks' },
-  { value: 'hq_edit', label: 'Precise Edits', description: 'Controlled' },
-  // { value: 'hq_png', label: 'HD PNG', description: 'Uncompressed' }, // TODO: re-enable when uncompressed PNG saving is implemented
+  { value: 'max', label: 'Max', description: 'Slowest, priciest' },
 ] as const;
 
 const _oaiCodeInterpreterOptions = [

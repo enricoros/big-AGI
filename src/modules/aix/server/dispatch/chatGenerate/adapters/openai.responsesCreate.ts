@@ -11,7 +11,7 @@ import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser,
 
 // configuration
 const OPENAI_RESPONSES_DEFAULT_TRUNCATION: TRequest['truncation'] = undefined;
-export const AIX_OAI_DEFAULT_IMAGE_GEN_MODEL: Exclude<Extract<TRequestTool, { type: 'image_generation' }>['model'], undefined> = 'gpt-image-2';
+export const AIX_OAI_DEFAULT_IMAGE_GEN_MODEL: Exclude<Extract<TRequestTool, { type: 'image_generation' }>['model'], undefined> = 'gpt-image-2.5-flare';
 
 
 type TRequest = OpenAIWire_API_Responses.Request;
@@ -297,15 +297,15 @@ export function aixToOpenAIResponses(
     if (!payload.tools?.length)
       payload.tools = [];
 
-    // Map enum values to tool configuration
+    // Map enum values to tool configuration. Quality is always explicit: omitting it means 'auto', which
+    // resolves to 'low' on simple prompts (verified 2026-09-09 on gpt-image-2 and 2.5). No input_fidelity: gpt-image-2+ reject it.
+    // gpt-image-2.5-flare @1024x1024 output tokens: medium 439, high 1756, max 7024 ($30/M).
     const imageMode = model.vndOaiImageGeneration;
     const imageGenerationTool: Extract<TRequestTool, { type: 'image_generation' }> = {
       type: 'image_generation',
       ...(AIX_OAI_DEFAULT_IMAGE_GEN_MODEL && { model: AIX_OAI_DEFAULT_IMAGE_GEN_MODEL }),
-      ...(imageMode === 'mq' ? { quality: 'medium' } : { /* quality: 'high' -- auto */ }),
-      // ...(imageMode === 'hq' ? ... auto ... ),
-      ...(imageMode === 'hq_edit' && { input_fidelity: 'high' }),
-      ...(imageMode !== 'hq_png' && !noWebPImageOutput && { output_format: 'webp' }),
+      quality: imageMode === 'max' ? 'max' : imageMode === 'mq' ? 'medium' : 'high', // 'hq' and the legacy 'hq_edit'/'hq_png' -> high
+      ...(!noWebPImageOutput && { output_format: 'webp' }),
       moderation: 'low',
     };
     payload.tools.push(imageGenerationTool);

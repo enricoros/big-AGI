@@ -1,9 +1,12 @@
-import type { DalleImageSize, DalleModelId, DalleModelSelection, DProfileDalle } from './t2i.types';
+import type { DalleImageQualityGI, DalleImageSize, DalleModelId, DalleModelSelection, DProfileDalle, GPTImageModelId } from './t2i.types';
+
+
+// configuration
+export const DALLE_DEFAULT_MODEL_ID: DalleModelId = 'gpt-image-2.5-flare'; // 'Auto' selection, and fallback when none is set
+export const DALLE_DEFAULT_IMAGE_SIZE: DalleImageSize = '1024x1024'; // this works in all
 
 
 // --- OpenAI/DALL·E-protocol model catalog helpers ---
-
-export const DALLE_DEFAULT_IMAGE_SIZE: DalleImageSize = '1024x1024'; // this works in all
 
 /**
  * Resolve the actual DALL-E model to use
@@ -11,11 +14,7 @@ export const DALLE_DEFAULT_IMAGE_SIZE: DalleImageSize = '1024x1024'; // this wor
  * @returns The concrete model ID to use
  */
 export function resolveDalleModelId(selection: DalleModelSelection): DalleModelId {
-  // Auto-select latest model when null
-  if (selection === null) {
-    return 'gpt-image-2'; // Current latest image drawing model
-  }
-  return selection;
+  return selection ?? DALLE_DEFAULT_MODEL_ID;
 }
 
 /**
@@ -31,11 +30,34 @@ export function resolveDalleModelId(selection: DalleModelSelection): DalleModelI
  * - Each family can have its own settings/pricing structure
  */
 export function getImageModelFamily(modelId: DalleModelId): 'gpt-image' | 'dall-e-3' | 'dall-e-2' {
-  if (modelId === 'gpt-image-2' || modelId === 'gpt-image-1.5' || modelId === 'gpt-image-1' || modelId === 'gpt-image-1-mini')
+  if (isGPTImageModelId(modelId))
     return 'gpt-image';
   if (modelId === 'dall-e-3')
     return 'dall-e-3';
   return 'dall-e-2';
+}
+
+const GPT_IMAGE_MODEL_IDS: readonly GPTImageModelId[] = ['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst', 'gpt-image-2', 'gpt-image-1.5', 'gpt-image-1', 'gpt-image-1-mini'];
+
+export function isGPTImageModelId(modelId: DalleModelId): modelId is GPTImageModelId {
+  return (GPT_IMAGE_MODEL_IDS as readonly string[]).includes(modelId);
+}
+
+/** gpt-image-2.5 (flare, sunburst): 'xhigh' and 'max' quality tiers, arbitrary sizes (not exposed yet) */
+export function isGPTImage25ModelId(modelId: DalleModelId): boolean {
+  return modelId === 'gpt-image-2.5-flare' || modelId === 'gpt-image-2.5-sunburst';
+}
+
+/**
+ * Clamp a GPT Image quality to what the model accepts - the API returns 400 otherwise.
+ * Verified 2026-09-09: 'xhigh'/'max' rejected by gpt-image-2 and older; gpt-image-1-mini has no 'high'.
+ */
+export function clampGPTImageQuality(modelId: DalleModelId, quality: DalleImageQualityGI): DalleImageQualityGI {
+  if ((quality === 'xhigh' || quality === 'max') && !isGPTImage25ModelId(modelId))
+    return 'high';
+  if (quality === 'high' && modelId === 'gpt-image-1-mini')
+    return 'medium';
+  return quality;
 }
 
 /** Default profile for the openai/azure/localai (DALL·E-protocol) vendors. */
