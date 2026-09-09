@@ -1,17 +1,16 @@
 import * as React from 'react';
 
-import { FormControl, Option, Select, Slider, Switch, Typography } from '@mui/joy';
+import { Box, FormControl, Link, Option, Select, Slider, Switch, Typography } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import { FormChipControl } from '~/common/components/forms/FormChipControl';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
-import { Link } from '~/common/components/Link';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import type { DalleImageSize, DalleModelSelection, DProfileDalle } from '../t2i.types';
-import { DALLE_DEFAULT_IMAGE_SIZE, clampGPTImageQuality, getImageModelFamily, isGPTImage25ModelId, resolveDalleModelId } from '../t2i.config';
+import { DALLE_DEFAULT_IMAGE_SIZE, clampGPTImageQuality, getImageModelFamily, isGPTImage25ModelId, resolveDalleModelId, t2iDefaultDalleProfile } from '../t2i.config';
 import { openAIImageModelsPricing } from './openaiGenerateImages';
 
 
@@ -144,6 +143,11 @@ export function DallESettings(props: {
   const costPerImage = openAIImageModelsPricing(resolvedDalleModelId,
     isD3 ? dalleQualityD3 : isGI ? effectiveQualityGI : 'standard',
     currentResolution);
+
+  // any parameter off its default - the footer offers a reset
+  const defaultProfile = t2iDefaultDalleProfile();
+  const hasUserParameters = (Object.keys(defaultProfile) as (keyof DProfileDalle)[]).some(key => profile[key] !== defaultProfile[key]);
+  const handleResetParameters = React.useCallback(() => onUpdateProfile(t2iDefaultDalleProfile()), [onUpdateProfile]);
 
 
   return <>
@@ -287,7 +291,32 @@ export function DallESettings(props: {
     </FormControl>}
 
 
-    <FormLabelStart title={advanced.on ? 'Hide Advanced' : 'Advanced'} onClick={advanced.toggle} />
+    {/* footer: 'Advanced...' toggle left, 'Reset to defaults' right when off-default - same chrome as the ASRx/Speex panels */}
+    <Box sx={_styles.bottomRow}>
+      <Typography level='body-xs' onClick={advanced.toggle} sx={_styles.advancedToggle}>
+        {advanced.on ? 'Hide Advanced' : 'Advanced...'}
+      </Typography>
+      {hasUserParameters && (
+        <Link component='button' color='neutral' level='body-xs' onClick={handleResetParameters}>
+          Reset to defaults ...
+        </Link>
+      )}
+    </Box>
 
   </>;
 }
+
+
+const _styles = {
+  bottomRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  advancedToggle: {
+    lineHeight: 2, // makes the whole line be 24px
+    textDecoration: 'underline',
+    cursor: 'pointer',
+    color: 'text.tertiary',
+  },
+} as const;
