@@ -406,6 +406,12 @@ export function getInstantAppChatPanesCount() {
   return useAppChatPanesStore.getState().chatPanes.length;
 }
 
+/** Chats shown in panes other than the focused one. Never recycle these, or two panes end up on the same chat. */
+export function getOtherPanesConversationIds(): DConversationId[] {
+  const { chatPanes, chatPaneFocusIndex } = useAppChatPanesStore.getState();
+  return chatPanes.flatMap((pane, idx) => (idx !== chatPaneFocusIndex && pane.conversationId) ? [pane.conversationId] : []);
+}
+
 
 // Reactive hooks
 

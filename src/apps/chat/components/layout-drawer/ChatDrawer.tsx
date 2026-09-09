@@ -128,9 +128,9 @@ function ChatDrawer(props: {
 
   // New/Activate/Delete Conversation
 
-  const isMultiPane = props.chatPanesConversationIds.length >= 2;
+  // const isMultiPane = props.chatPanesConversationIds.length >= 2;
   const disableNewButton = props.disableNewButton && filteredChatsIncludeActive;
-  const newButtonDontRecycle = isMultiPane || !filteredChatsIncludeActive;
+  const newButtonDontRecycle = /*isMultiPane ||*/ !filteredChatsIncludeActive;
 
   const handleButtonNew = React.useCallback((event: React.MouseEvent) => {
     // FIXME: undocumented: shift+click to force incognito mode
