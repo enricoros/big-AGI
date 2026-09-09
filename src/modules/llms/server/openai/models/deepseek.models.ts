@@ -10,6 +10,16 @@ export type LlmsDeepseekModelId = typeof _knownDeepseekChatModels[number]['idPre
 
 const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 
+// [DeepSeek, 2026-09-09] V4.1-Flash two-day beta: deepseek-v4.1-flash-expires-on-0910, live 09-08 to 09-10
+// - Group-chat announcement only: not on the news/updates/pricing pages, no HF repo, absent from /models. Off-DeepSeek
+//   only Novita relays the id; not on OpenRouter, Together, Fireworks, NIM, Baseten, DashScope, Chutes.
+// - Probed: fingerprint 6d641ab04c479a91a8f79fb96f1d69c0; native image input (thinking on/off), no audio parts;
+//   otherwise flash-identical (effort enum, 384K ceiling, /responses, Anthropic base, tool_choice-under-thinking 400),
+//   billed at the flash card, 20 concurrent/account, ~2x flash decode speed.
+// - Injected below (deepseekInjectVariants), as /models never lists it. The 'deepseek-v4.1-flash' entry pre-curates the
+//   presumed GA id; an in-place swap behind 'deepseek-v4-flash' would show as a fingerprint change instead.
+// - The three served models re-verified unchanged today.
+
 // [DeepSeek, 2026-08-31] Verification pass, all unchanged: /models now lists vision-exp too (three ids); release
 // notes end at 08-21; pricing card + MODEL VERSION rows (0731/0813) unchanged; all three system_fingerprints match
 // the baselines below (no in-place swaps); legacy aliases still answer.
@@ -121,6 +131,20 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
     chatPrice: { input: 0.44, output: 1.32, cache: { read: 0.014 } }, // peak card, same as flash; images billed as input tokens by dimensions
     // no benchmark: not on lmarena yet (released 2026-08-21)
   },
+  {
+    idPrefix: 'deepseek-v4.1-flash',
+    label: 'DeepSeek V4.1 Flash (beta)',
+    isPreview: true,
+    pubDate: '20260908',
+    description: 'Intermediate V4.1 release with a new model structure and native image input, 1M context, faster than V4 Flash. Two-day beta from DeepSeek, expires 2026-09-10. Supports extended thinking modes, JSON output, and function calling.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
+    ],
+    maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
+    chatPrice: { input: 0.44, output: 1.32, cache: { read: 0.014 } }, // peak flash card
+  },
   // Legacy aliases - API routes both to deepseek-v4-flash with thinking pre-set
   {
     idPrefix: 'deepseek-reasoner',
@@ -175,6 +199,16 @@ export function deepseekModelSort(a: ModelDescriptionSchema, b: ModelDescription
 }
 
 
-// [DeepSeek, 2025-12-15] V3.2-Speciale endpoint has expired and been removed
-// The temporary endpoint (v3.2_speciale_expires_on_20251215) was decommissioned on Dec 15, 2025 15:59 UTC
-// To re-enable variants, use createVariantInjector() from llm.server.variants.ts
+// [DeepSeek, 2026-09-09] V4.1-Flash beta, unlisted by /models: appended while live. Expiry assumed 2026-09-10 15:59 UTC
+// (Beijing midnight, the Speciale convention); remove this block once past, as V3.2-Speciale was on 2025-12-15.
+const DEEPSEEK_V41_BETA_ID = 'deepseek-v4.1-flash-expires-on-0910';
+const DEEPSEEK_V41_BETA_EXPIRY = Date.UTC(2026, 8, 10, 16);
+
+export function deepseekInjectVariants(models: ModelDescriptionSchema[]): ModelDescriptionSchema[] {
+  if (Date.now() >= DEEPSEEK_V41_BETA_EXPIRY)
+    return models;
+  if (models.some(m => m.id.startsWith('deepseek-v4.1'))) // /models lists a v4.1 id itself
+    return models;
+  // exact-resolve the curated entry, then send the beta id on the wire
+  return [...models, { ...deepseekModelToModelDescription('deepseek-v4.1-flash'), id: DEEPSEEK_V41_BETA_ID }];
+}
