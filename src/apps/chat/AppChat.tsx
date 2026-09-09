@@ -452,7 +452,9 @@ export function AppChat() {
     const nextConversationId = deleteConversations(conversationIds, /*focusedSystemPurposeId ??*/ undefined);
 
     // switch the focused pane to the new conversation - NOTE: this makes the assumption that deletion had impact on the focused pane
-    handleOpenConversationInFocusedPane(nextConversationId);
+    // unless another pane shows it (the panes store then re-targets to a distinct chat, or unsplits) - two panes must not share a chat
+    if (!getOtherPanesConversationIds().includes(nextConversationId))
+      handleOpenConversationInFocusedPane(nextConversationId);
 
     // run GC for dblobs in this conversation
     void gcChatImageAssets(); // fire/forget
