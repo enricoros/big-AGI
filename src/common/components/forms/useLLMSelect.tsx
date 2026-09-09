@@ -221,13 +221,14 @@ export function useLLMSelect(
         return acc;
 
       const serviceVendor = findModelVendor(llm.vId);
-      const isServiceCollapsed = hasMultipleServices && collapsedServices.has(llm.sId);
+      // starred-only bypasses collapse (display-only, the collapsed state is untouched)
+      const isServiceCollapsed = hasMultipleServices && !starredOnly && collapsedServices.has(llm.sId);
 
       // add collapsible service headers when changing services
       if (hasMultipleServices && llm.sId !== prevServiceId) {
         if (!optimizeToSingleVisibleId) {
           const serviceLabel = findModelsServiceOrNull(llm.sId)?.label || serviceVendor?.name || llm.sId;
-          acc.push(<ListItemGroupCollapser key={'SID-' + llm.sId} id={llm.sId} label={serviceLabel} isCollapsed={isServiceCollapsed} onToggleCollapse={toggleServiceCollapse} />);
+          acc.push(<ListItemGroupCollapser key={'SID-' + llm.sId} id={llm.sId} label={serviceLabel} isCollapsed={isServiceCollapsed} onToggleCollapse={toggleServiceCollapse} readOnly={starredOnly} />);
         }
         prevServiceId = llm.sId;
       }
