@@ -189,7 +189,7 @@ export function OpenRouterWebToolsConfig(props: {
 
     {showAdvanced && !!fetch && <Box sx={smaller ? _advancedSxSmaller : _advancedSx}>
 
-      {/* max_uses is accepted upstream but was not enforced when probed (aix.wiretypes.openrouter.ts) */}
+      {/* one more fetch than set gets through, as an error to the model (aix.wiretypes.openrouter.ts) */}
       <_OptionalSlider
         title={smaller ? 'Fetches/request' : 'Max Fetches per Request'} ariaLabel='OpenRouter Web Fetch Max Fetches per Request'
         value={advanced?.fetch?.maxUses} enableValue={10}
@@ -209,6 +209,18 @@ export function OpenRouterWebToolsConfig(props: {
       />
 
     </Box>}
+
+    {/* request-level step budget across search and fetch; one more call than set gets through (aix.wiretypes.openrouter.ts) */}
+    {showAdvanced && !!(search || fetch) && (
+      <_OptionalSlider
+        title={smaller ? 'Tool calls/request' : 'Max Tool Calls per Request'} ariaLabel='OpenRouter Max Tool Calls per Request'
+        value={advanced?.maxToolCalls} enableValue={10}
+        min={1} max={30} step={1}
+        format={value => `${value} calls`}
+        disabled={disabled} size={size}
+        onChange={value => setAdvanced({ maxToolCalls: value })}
+      />
+    )}
 
   </>;
 }

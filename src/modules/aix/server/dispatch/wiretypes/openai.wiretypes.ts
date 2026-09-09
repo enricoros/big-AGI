@@ -304,7 +304,7 @@ export namespace OpenAIWire_Tools {
         engine: z.enum(['auto', 'native', 'exa', 'parallel', 'firecrawl', 'perplexity']).optional(), // default 'auto': native where the provider has it, else Exa
         mode: z.string().optional(), // Exa: instant|fast|auto|deep-lite|deep|deep-reasoning, Parallel: turbo|fast|basic|advanced; not validated against the engine upstream
         max_results: z.number().int().min(1).max(25).optional(), // Perplexity: 1-20; ignored by native
-        max_uses: z.number().int().min(1).optional(), // accepted but not enforced when probed
+        max_uses: z.number().int().min(1).optional(), // enforced one above the number set (aix.wiretypes.openrouter.ts)
         max_total_results: z.number().int().min(1).optional(),
         search_context_size: z.enum(['low', 'medium', 'high']).optional(), // ignored by native and Firecrawl
         max_characters: z.number().int().min(1).max(100000).optional(), // wins over search_context_size; ignored by native and Firecrawl
@@ -314,7 +314,7 @@ export namespace OpenAIWire_Tools {
       type: z.literal('openrouter:web_fetch'),
       parameters: z.object({
         engine: z.enum(['auto', 'native', 'exa', 'openrouter', 'firecrawl', 'parallel']).optional(),
-        max_uses: z.number().int().min(1).optional(), // accepted but not enforced when probed
+        max_uses: z.number().int().min(1).optional(), // enforced one above the number set (aix.wiretypes.openrouter.ts)
         max_content_tokens: z.number().int().min(1).optional(),
       }).optional(),
     }),
@@ -462,7 +462,7 @@ export namespace OpenAIWire_API_Chat_Completions {
 
     // -- Vendor-specific extensions to the request --
 
-    // [OpenRouter, 2026-09-08] server-tool step budget, shared by every 'openrouter:*' tool; default and cap 30 upstream (accepted but not enforced when probed)
+    // [OpenRouter, 2026-09-08] server-tool step budget, shared by every 'openrouter:*' tool; default and cap 30 upstream, enforced one above the number set (aix.wiretypes.openrouter.ts)
     max_tool_calls: z.number().int().min(1).max(30).optional(),
 
     // [OpenRouter, 2025-10-22] OpenRouter-specific plugins parameter for web search and other hosted tools

@@ -13,7 +13,9 @@ import * as z from 'zod/v4';
  * - On Chat Completions we receive the final turn only: text plus url_citation annotations for search, text only for
  *   fetch, never a tool_calls entry for these; counts in usage.server_tool_use_details, engine fees in usage.cost.
  *   The Responses API does list the calls as output items (a future path to tool cards).
- * - Budgets (max_uses, max_tool_calls) were accepted but not enforced.
+ * - Budgets are enforced one above the number set (six-step chain, 2026-09-09): max_tool_calls N lets N+1 calls run and
+ *   0 means unlimited; a tool's max_uses N lets the N+1th call through as an error to the model, with no results;
+ *   max_total_results caps the results returned across the request.
  * - Tool-capable endpoints only: the others 404 ('No endpoints found that support tool use') and keep the legacy
  *   'web' plugin - prompt-side, always one search, no options (`via: 'plugin'` below).
  */
@@ -41,7 +43,7 @@ export const OrtWebFetchTool_schema = z.object({
   maxContentTokens: z.number().int().min(1).optional(), // approximate tokens per fetched page
 });
 
-/** Request-level budget of server-tool steps, shared by every server tool; OpenRouter defaults to and caps at 30 */
+/** Request-level budget of server-tool steps, shared by every server tool; OpenRouter defaults to and caps at 30 (0 = unlimited, so the floor is 1) */
 export const OrtMaxToolCalls_schema = z.number().int().min(1).max(30);
 
 export type OrtWebSearchEngine = z.infer<typeof _SearchEngine_schema>;
