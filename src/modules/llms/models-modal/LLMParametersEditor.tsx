@@ -16,6 +16,7 @@ import { InlineError } from '~/common/components/InlineError';
 import { webGeolocationRequest } from '~/common/util/webGeolocationUtils';
 
 import { AnthropicSkillsConfig } from './AnthropicSkillsConfig';
+import { OpenRouterWebToolsConfig } from './OpenRouterWebToolsConfig';
 
 
 const _UNSPECIFIED = '_UNSPECIFIED' as const;
@@ -173,11 +174,6 @@ const _antWebFetchOptions = [
 //   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
 // ] as const;
 
-const _ortWebSearchOptions = [
-  { value: 'auto', label: 'On', description: 'Enable web search (native for OpenAI/Anthropic, Exa for others)' },
-  { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
-] as const;
-
 const _imageGenerationOptions = [
   { value: _UNSPECIFIED, label: 'Off', description: 'Default (disabled)' },
   { value: 'mq', label: 'Standard', description: 'Quick gen' },
@@ -298,7 +294,9 @@ export function LLMParametersEditor(props: {
     llmVndOaiImageGeneration,
     llmVndOaiCodeInterpreter,
     llmVndOaiVerbosity,
+    llmVndOrtWebFetch,
     llmVndOrtWebSearch,
+    llmVndOrtWebToolsAdvanced,
     llmVndPerplexityDateFilter,
     llmVndPerplexitySearchMode,
     llmVndXaiCodeExecution,
@@ -948,16 +946,16 @@ export function LLMParametersEditor(props: {
     )}
 
 
-    {showParam('llmVndOrtWebSearch') && (
-      <FormSelectControl
-        title='Web Search'
-        tooltip='Enable OpenRouter web search plugin. Uses native search for OpenAI/Anthropic models, Exa for others. Adds web citations to responses.'
-        value={llmVndOrtWebSearch ?? _UNSPECIFIED}
-        onChange={(value) => {
-          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndOrtWebSearch');
-          else onChangeParameter({ llmVndOrtWebSearch: value });
-        }}
-        options={_ortWebSearchOptions}
+    {(showParam('llmVndOrtWebSearch') || showParam('llmVndOrtWebFetch')) && (
+      <OpenRouterWebToolsConfig
+        showAdvanced={showParam('llmVndOrtWebToolsAdvanced')}
+        searchSpec={showParam('llmVndOrtWebSearch') ? modelParamSpec['llmVndOrtWebSearch'] : undefined}
+        hasFetch={showParam('llmVndOrtWebFetch')}
+        llmVndOrtWebSearch={llmVndOrtWebSearch}
+        llmVndOrtWebFetch={llmVndOrtWebFetch}
+        llmVndOrtWebToolsAdvanced={llmVndOrtWebToolsAdvanced}
+        onChangeParameter={onChangeParameter}
+        onRemoveParameter={onRemoveParameter}
       />
     )}
 
