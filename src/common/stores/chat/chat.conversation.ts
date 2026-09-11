@@ -1,5 +1,6 @@
 import { defaultSystemPurposeId, SystemPurposeId } from '../../../data';
 
+import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { agiUuid } from '~/common/util/idUtils';
 
 import { DMessage, DMessageId, duplicateDMessage } from './chat.message';
@@ -25,6 +26,8 @@ export interface DConversation {
   // TODO: [x Head] - this should be the system purpose of current head of the conversation
   // there should be the concept of the audience of the current head
   systemPurposeId: SystemPurposeId;   // system purpose of this conversation
+
+  userLlmId?: DLLMId;                 // optional: model pinned to this conversation - absent = follow the 'primaryChat' domain default; broken pins degrade to the default at resolution time
 
   // when updated is null, we don't have messages yet (timestamps as Date.now())
   created: number;                    // creation timestamp
@@ -98,6 +101,7 @@ export function duplicateDConversation(conversation: DConversation, lastMessageI
     ...(conversation.isArchived !== undefined ? { isArchived: conversation.isArchived } : {}), // copy archival state if set
 
     systemPurposeId: conversation.systemPurposeId,
+    ...(conversation.userLlmId ? { userLlmId: conversation.userLlmId } : {}), // carry the pinned model into the branch
     tokenCount: conversation.tokenCount,
 
     created: conversation.created,

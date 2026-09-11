@@ -1,11 +1,11 @@
-import { getChatLLMId } from '~/common/stores/llms/store-llms';
+
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessage } from '~/common/stores/chat/chat.message';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
-import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
+import { getConversationChatLLMId, getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
 
 import type { ChatExecuteMode } from '../execute-mode/execute-mode.types';
 import { textToDrawCommand } from '../commands/CommandsDraw';
@@ -22,7 +22,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
   if (!conversationId)
     return 'err-no-conversation';
 
-  const chatLLMId = getChatLLMId();
+  const chatLLMId = getConversationChatLLMId(conversationId); // conversation-pinned model, or the 'primaryChat' domain default
   const cHandler = ConversationsManager.getHandler(conversationId);
   const initialHistory = cHandler.historyViewHeadOrThrow('handle-execute-' + executeCallerNameDebug) as Readonly<DMessage[]>;
 
