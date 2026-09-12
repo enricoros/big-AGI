@@ -129,7 +129,7 @@ export const EditorialDefaults = {
     { vendor: 'zai',        modelId: 'glm-5.2' },
     { vendor: 'zai',        modelId: 'glm-5' },
     { vendor: 'moonshot',   modelId: 'kimi-k2.6' },
-    { vendor: 'deepseek',   modelId: 'deepseek-v4-flash' },
+    { vendor: 'deepseek',   modelId: 'deepseek-flash' },
     // NVIDIA NIM: free trial catalog, tail picks (z-ai/glm-5.2 dropped: NVIDIA EOL 2026-08-24)
     { vendor: 'nvidianim',  modelId: 'nvidia/nemotron-3-super-120b-a12b' }, // agentic/tool-use tuned, 12B active
     { vendor: 'nvidianim',  modelId: 'deepseek-ai/deepseek-v4-flash-0731' }, // dated checkpoint: the undated id is 410 Gone on NVIDIA
@@ -155,7 +155,7 @@ export const EditorialDefaults = {
     { vendor: 'xai',        modelId: 'grok-4.3' },
     { vendor: 'zai',        modelId: 'glm-5.3-flash' }, // 2026-08-27: 18B active, $0.15/$0.5 - the actual Z.ai fast tier (5.2 was a pre-flash placeholder)
     { vendor: 'zai',        modelId: 'glm-5.2' },
-    { vendor: 'deepseek',   modelId: 'deepseek-v4-flash' },
+    { vendor: 'deepseek',   modelId: 'deepseek-flash' },
     // NVIDIA NIM: free trial catalog, tail picks (nemotron-3-nano-30b-a3b and nemotron-nano-9b-v2 dropped: NVIDIA EOL 2026-08-25)
     { vendor: 'nvidianim',  modelId: 'nvidia/nemotron-3.5-lightning-30b-a3b' }, // fastest Nemotron MoE, 3B active, 1M ctx
     { vendor: 'nvidianim',  modelId: 'openai/gpt-oss-20b' },
