@@ -122,6 +122,17 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     chatPrice: { input: 0.35, output: 1.50, cache: { read: 0.04 } },
   },
   {
+    idPrefix: 'accounts/fireworks/models/deepseek-v4p1-flash',
+    label: 'DeepSeek V4.1 Flash (Vision)',
+    pubDate: '20260910', // = deepseek.models.ts 'deepseek-flash' (upstream release; Fireworks listed it the same day)
+    description: 'DeepSeek multimodal MoE (552B, 8B active on input) with native image input and a 1M-token context; ahead of V4 Pro on agentic benchmarks at a fraction of the price.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION_REASON, // image input live-verified 2026-09-12
+    // 2026-09-12, one arm each: 'none' hard-off (0 reasoning tokens); low/high/max accepted - tiers per the native docs, not re-measured here
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
+    chatPrice: { input: 0.22, output: 0.66, cache: { read: 0.007 } }, // model page 2026-09-12 (same card as flash-0731)
+  },
+  {
     idPrefix: 'accounts/fireworks/models/deepseek-v4-flash-0731',
     label: 'DeepSeek V4 Flash 0731',
     pubDate: '20260731',

@@ -39,7 +39,7 @@ import { basetenHeuristic, basetenModelsToModelDescriptions } from './openai/mod
 import { cerebrasFetchModelDescriptions } from './openai/models/cerebras.models';
 import { chutesAIHeuristic, chutesAIModelsToModelDescriptions } from './openai/models/chutesai.models';
 import { cohereModelFilter, cohereModelSort, cohereModelToModelDescription } from './openai/models/cohere.models';
-import { deepseekInjectVariants, deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './openai/models/deepseek.models';
+import { deepseekModelFilter, deepseekModelSort, deepseekModelToModelDescription } from './openai/models/deepseek.models';
 import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models';
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './openai/models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription, groqValidateModelDefs_DEV } from './openai/models/groq.models';
@@ -473,11 +473,11 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
                 .sort(cohereModelSort);
 
             case 'deepseek':
-              return deepseekInjectVariants(maybeModels // appends the unlisted V4.1-Flash beta while live
+              return maybeModels
                 .filter(({ id }) => deepseekModelFilter(id))
                 .map(({ id }) => deepseekModelToModelDescription(id))
-                // .reduce(deepseekInjectVariants, [] as ModelDescriptionSchema[]) // was used to inject V3.2-Speciale
-              ).sort(deepseekModelSort);
+                // an inject step lived here twice (V3.2-Speciale, the V4.1-Flash beta) for ids /models never listed
+                .sort(deepseekModelSort);
 
             case 'groq':
               // [DEV] check for stale/unknown model definitions

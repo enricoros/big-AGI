@@ -194,8 +194,8 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   // [Z.ai] GLM thinking mode: 'none' -> disabled, else enabled - https://docs.z.ai/guides/capabilities/thinking-mode. reasoning_effort rides
   //   along: honored on GLM-5.2 (none|high|max) and GLM-5.3 (low|high|max, thinking compulsory - 'disabled' 400s), accepted-and-ignored on
   //   older GLM (live-probed 2026-08-17). Per-model levels are the catalog enumValues, not re-validated here.
-  // [DeepSeek, 2026-04-23] V4 thinking control https://api-docs.deepseek.com/guides/thinking_mode; 'low' keeps reasoning on but skips
-  //   the hidden agentic preamble - the cheap tier
+  // [DeepSeek, 2026-04-23] V4 thinking control https://api-docs.deepseek.com/guides/thinking_mode; low/high/max scale the trace
+  //   (on V4 'low' also skipped a hidden agentic preamble; gone on V4.1-Flash, probed 2026-09-12)
   if (reasoningEffort && (openAIDialect === 'deepseek' || openAIDialect === 'moonshot' || openAIDialect === 'zai')) {
     payload.thinking = { type: reasoningEffort !== 'none' ? 'enabled' : 'disabled' };
     if (reasoningEffort !== 'none') // effort takes effect only when thinking is enabled

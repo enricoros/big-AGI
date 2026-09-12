@@ -13,6 +13,7 @@
  */
 export const OLLAMA_BASE_MODELS: { [key: string]: { pulls: number, contextWindow?: number, hasTools?: true, hasVision?: true, isEmbeddings?: true, tags?: string[], added?: string } } = {
   // Sorted by "newest" from https://ollama.com/library?sort=newest
+  'deepseek-v4.1-flash': { pulls: 9700, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260912' }, // cloud-only tag (763B)
   'qwen3.8-flash-next': { pulls: 18000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260831' },
   'glm-5.3-flash': { pulls: 39000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260831' },
   'ornith-1.5': { pulls: 258000, tags: ['9b', '35b', '397b'], hasVision: true, added: '20260824' },

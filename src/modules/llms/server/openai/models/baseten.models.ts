@@ -46,6 +46,7 @@ const _PS_GlmEffort53: ModelDescriptionSchema['parameterSpecs'] = [{ paramId: 'l
 const _PS_OaiEffortFull: ModelDescriptionSchema['parameterSpecs'] = [{ paramId: 'llmVndOaiEffort' }];
 
 const _basetenCurated: Record<string, _BasetenCurated> = {
+  'deepseek-ai/DeepSeek-V4.1-Flash': { pubDate: '20260910', parameterSpecs: _PS_MiscEffortFull }, // = deepseek.models.ts 'deepseek-flash'; listing declares image input, live-verified 2026-09-12
   'deepseek-ai/DeepSeek-V4-Flash-0731': { pubDate: '20260731', parameterSpecs: _PS_MiscEffortFull },
   'deepseek-ai/DeepSeek-V4-Pro': { pubDate: '20260424', parameterSpecs: _PS_MiscEffortFull },
   'deepseek-ai/DeepSeek-V4-Pro-0813': { pubDate: '20260813', parameterSpecs: _PS_MiscEffortFull },

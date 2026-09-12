@@ -170,6 +170,7 @@ const _togetherEditorialPubDates: Record<string, string> = {
   'zai-org/GLM-5.3': '20260814', // = zai.models.ts 'glm-5.3' - pre-announced then delisted by 2026-08-27; relisted and serving as of 2026-08-31
   'zai-org/GLM-5.3-Flash': '20260825', // = zai.models.ts 'glm-5.3-flash' (HF weights 2026-08-25)
   'Qwen/Qwen3.8-Flash': '20260826', // no alibaba.models.ts id yet: OpenRouter listing date - true up if DashScope lands one
+  'deepseek-ai/DeepSeek-V4.1-Flash': '20260910', // = deepseek.models.ts 'deepseek-flash'; pre-seeded on the HF repo name, not listed by Together as of 2026-09-12
 };
 
 /** 'YYYYMMDD' -> Unix epoch seconds (UTC midnight), 0 when absent - for list placement only */

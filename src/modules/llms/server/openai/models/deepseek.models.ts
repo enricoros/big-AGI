@@ -10,19 +10,22 @@ export type LlmsDeepseekModelId = typeof _knownDeepseekChatModels[number]['idPre
 
 const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 
-// [DeepSeek, 2026-09-09] V4.1-Flash two-day beta: deepseek-v4.1-flash-expires-on-0910, live 09-08 to 09-10
-// - Group-chat announcement only: not on the news/updates/pricing pages, no HF repo, absent from /models. Off-DeepSeek
-//   only Novita relays the id; not on OpenRouter, Together, Fireworks, NIM, Baseten, DashScope, Chutes.
-// - Probed: fingerprint 6d641ab04c479a91a8f79fb96f1d69c0; native image input (thinking on/off), no audio parts;
-//   otherwise flash-identical (effort enum, 384K ceiling, /responses, Anthropic base, tool_choice-under-thinking 400),
-//   billed at the flash card, 20 concurrent/account, ~2x flash decode speed.
-// - Injected below (deepseekInjectVariants), as /models never lists it. The 'deepseek-v4.1-flash' entry pre-curates the
-//   presumed GA id; an in-place swap behind 'deepseek-v4-flash' would show as a fingerprint change instead.
-// - The three served models re-verified unchanged today.
-
-// [DeepSeek, 2026-08-31] Verification pass, all unchanged: /models now lists vision-exp too (three ids); release
-// notes end at 08-21; pricing card + MODEL VERSION rows (0731/0813) unchanged; all three system_fingerprints match
-// the baselines below (no in-place swaps); legacy aliases still answer.
+// [DeepSeek, 2026-09-10] V4.1-Flash GA behind a NEW undated id, 'deepseek-flash' - https://api-docs.deepseek.com/news/news260910
+// - 552B MoE, causal encoder-decoder: 8B active on prefill, 16B on decode; native image input; KV cache ~1/4 of V4-Flash.
+//   Open weights MIT on HF (deepseek-ai/DeepSeek-V4.1-Flash). DeepSeek's table puts it ahead of V4-Pro-0813 on the agentic
+//   set (DeepSWE 74.2 vs 62.7, Terminal-Bench 2.1 90.6 vs 87.9, CyberGym 88.1 vs 83.3); no lmarena row yet.
+// - /models lists deepseek-flash + deepseek-v4-pro only. V4-Flash and V4-Flash-Vision-Exp are retired: those ids,
+//   deepseek-chat/-reasoner and the expired 09-08 beta id all route to V4.1-Flash (one fingerprint for all five,
+//   aeb56401ca74e127821c4f9126dcb669) and bill at the new flash card. 'deepseek-v4.1-flash' 400s (not a valid id).
+// - Price cut, effective 2026-09-10 04:00 UTC: flash peak 0.006/0.3/1.2 (cache-hit/miss/output), off-peak half. Pro card
+//   and fingerprint unchanged. The news page announced pro routing to V4.1-Flash from 09-14 "until V4.1-Pro launches";
+//   the updates + pricing pages then reversed it ("continue providing API services for DeepSeek V4 Pro after September 14").
+// - Probed 2026-09-12: effort tiers are real (reasoning tokens low 2951 < high 4356 < max 5248 on one proof prompt); the
+//   hidden agentic preamble that made 'low' cheaper on V4 is gone (identical prompt_tokens at every effort, with and
+//   without tools). Enum still none|minimal|low|medium|high|xhigh|max; max_tokens [1, 393216]; image input with thinking
+//   on and off; forced tool_choice still 400s under thinking; /responses and the Anthropic base serve it.
+// - Off-DeepSeek on day 2: OpenRouter (deepseek/deepseek-v4.1-flash), Fireworks (deepseek-v4p1-flash), Novita, Baseten,
+//   Ollama cloud. Not yet on Together, NIM, DashScope, Chutes.
 
 // [DeepSeek, 2026-08-21] V4-Flash-Vision-Exp: first vision model - https://api-docs.deepseek.com/updates/
 // - Probed 2026-08-24: image input works, with and without thinking; otherwise flash-identical (effort enum + 'low'
@@ -80,6 +83,20 @@ const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 // - V3.2 endpoints no longer accessible via direct model ID (API returns only v4-flash/v4-pro)
 const _knownDeepseekChatModels = llmsDefineManualMappings([
   {
+    idPrefix: 'deepseek-flash',
+    label: 'DeepSeek V4.1 Flash', // house-added version: the API id is versionless, the pricing page MODEL VERSION row is the tell
+    pubDate: '20260910',
+    description: 'Multimodal MoE (552B, 8B active on input) with 1M context and native image input, released by DeepSeek on 2026-09-10; ahead of V4 Pro on agentic benchmarks at a fraction of the price. Supports extended thinking modes, JSON output, and function calling.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }, // documented low/high/max, live-ablated 2026-09-12
+    ],
+    maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
+    chatPrice: { input: 0.3, output: 1.2, cache: { read: 0.006 } }, // peak card; images billed as input tokens by dimensions
+    // no benchmark: not on lmarena yet (released 2026-09-10)
+  },
+  {
     idPrefix: 'deepseek-v4-pro',
     label: 'DeepSeek V4 Pro (0813)', // house-added tag: the API id is undated, so this is the only place the build shows
     // note: keeping the former pubdate even tho DeepSeek has rolled the model
@@ -97,75 +114,50 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
     chatPrice: { input: 1.32, output: 3.96, cache: { read: 0.044 } }, // peak card
     benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro (preview-era votes, 54k since 0424; the only 0813 row, -max-20260813, is AutoEval-only at 1465, unranked)
   },
+  // Retired ids, still accepted: all four route to deepseek-flash (V4.1) and bill at its card. Absent from /models, so
+  // these entries are documentation only, and may die without notice.
   {
     idPrefix: 'deepseek-v4-flash',
-    label: 'DeepSeek V4 Flash (0731)', // house-added tag: the API id is undated, so this is the only place the build shows
-    // note: keeping the former pubdate even tho DeepSeek has rolled the model
-    // - 0731 re-post-trained revision, swapped in place behind the same model id
-    // - 0424 initial launch and the time the benchmark scores were assessed
+    label: 'DeepSeek V4 Flash (legacy)',
     pubDate: '20260424',
-    description: 'Fast general-purpose model with 1M context, re-post-trained by DeepSeek on 2026-07-31 for agentic and coding tasks. Supports extended thinking modes, JSON output, and function calling.',
-    contextWindow: 1_048_576, // 1M
-    interfaces: [...IF_4, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [
-      // 'low' keeps reasoning on yet skips the hidden agentic preamble (5 vs 84 prompt tokens), so it is cheaper per request
-      { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
-    ],
-    maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
-    chatPrice: { input: 0.44, output: 1.32, cache: { read: 0.014 } }, // peak card
-    benchmark: { cbaElo: 1435 }, // lmarena: deepseek-v4-flash (distinct from the -high-preview entry, 1438)
+    description: 'Retired 2026-09-10: requests on this id are served by DeepSeek V4.1 Flash at its price.',
+    contextWindow: 1_048_576,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
+    maxCompletionTokens: 131072,
+    chatPrice: { input: 0.3, output: 1.2, cache: { read: 0.006 } }, // peak card
+    isLegacy: true,
   },
   {
     idPrefix: 'deepseek-v4-flash-vision-exp',
-    label: 'DeepSeek V4 Flash Vision (Exp)',
-    isPreview: true,
+    label: 'DeepSeek V4 Flash Vision (legacy)',
     pubDate: '20260821',
-    description: 'Experimental vision variant of V4 Flash with 1M context, released by DeepSeek on 2026-08-21. Adds image understanding while matching V4 Flash text capabilities. Supports extended thinking modes, JSON output, and function calling.',
-    contextWindow: 1_048_576, // 1M
+    description: 'Retired 2026-09-10: requests on this id are served by DeepSeek V4.1 Flash at its price.',
+    contextWindow: 1_048_576,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [
-      // 'low' keeps reasoning on yet skips the hidden agentic preamble (6 vs 85 prompt tokens), so it is cheaper per request
-      { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
-    ],
-    maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
-    chatPrice: { input: 0.44, output: 1.32, cache: { read: 0.014 } }, // peak card, same as flash; images billed as input tokens by dimensions
-    // no benchmark: not on lmarena yet (released 2026-08-21)
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
+    maxCompletionTokens: 131072,
+    chatPrice: { input: 0.3, output: 1.2, cache: { read: 0.006 } }, // peak card
+    isLegacy: true,
   },
-  {
-    idPrefix: 'deepseek-v4.1-flash',
-    label: 'DeepSeek V4.1 Flash (beta)',
-    isPreview: true,
-    pubDate: '20260908',
-    description: 'Intermediate V4.1 release with a new model structure and native image input, 1M context, faster than V4 Flash. Two-day beta from DeepSeek, expires 2026-09-10. Supports extended thinking modes, JSON output, and function calling.',
-    contextWindow: 1_048_576, // 1M
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
-    parameterSpecs: [
-      { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
-    ],
-    maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
-    chatPrice: { input: 0.44, output: 1.32, cache: { read: 0.014 } }, // peak flash card
-  },
-  // Legacy aliases - API routes both to deepseek-v4-flash with thinking pre-set
   {
     idPrefix: 'deepseek-reasoner',
     label: 'DeepSeek Reasoner (legacy)',
-    description: 'Legacy alias: routes to DeepSeek V4 Flash with thinking enabled. Past its announced 2026-07-24 retirement, still served.',
+    description: 'Legacy alias: routes to DeepSeek V4.1 Flash with thinking enabled. Past its announced 2026-07-24 retirement, still served.',
     contextWindow: 1_048_576,
     interfaces: [...IF_4, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 65536,
-    chatPrice: { input: 0.44, output: 1.32, cache: { read: 0.014 } }, // peak card
-    benchmark: { cbaElo: 1435 - 1 }, // lmarena: deepseek-v4-flash - 1 (yield)
+    chatPrice: { input: 0.3, output: 1.2, cache: { read: 0.006 } }, // peak card
     isLegacy: true,
   },
   {
     idPrefix: 'deepseek-chat',
     label: 'DeepSeek Chat (legacy)',
-    description: 'Legacy alias: routes to DeepSeek V4 Flash with thinking disabled. Past its announced 2026-07-24 retirement, still served.',
+    description: 'Legacy alias: routes to DeepSeek V4.1 Flash with thinking disabled. Past its announced 2026-07-24 retirement, still served.',
     contextWindow: 1_048_576,
     interfaces: IF_4,
     maxCompletionTokens: 65536,
-    chatPrice: { input: 0.44, output: 1.32, cache: { read: 0.014 } }, // peak card
-    benchmark: { cbaElo: 1435 - 2 }, // lmarena: deepseek-v4-flash - 2 (yield)
+    chatPrice: { input: 0.3, output: 1.2, cache: { read: 0.006 } }, // peak card
     isLegacy: true,
   },
 ]);
@@ -196,19 +188,4 @@ export function deepseekModelSort(a: ModelDescriptionSchema, b: ModelDescription
   if (aIndex !== -1 && bIndex !== -1)
     return aIndex - bIndex;
   return a.id.localeCompare(b.id);
-}
-
-
-// [DeepSeek, 2026-09-09] V4.1-Flash beta, unlisted by /models: appended while live. Expiry assumed 2026-09-10 15:59 UTC
-// (Beijing midnight, the Speciale convention); remove this block once past, as V3.2-Speciale was on 2025-12-15.
-const DEEPSEEK_V41_BETA_ID = 'deepseek-v4.1-flash-expires-on-0910';
-const DEEPSEEK_V41_BETA_EXPIRY = Date.UTC(2026, 8, 10, 16);
-
-export function deepseekInjectVariants(models: ModelDescriptionSchema[]): ModelDescriptionSchema[] {
-  if (Date.now() >= DEEPSEEK_V41_BETA_EXPIRY)
-    return models;
-  if (models.some(m => m.id.startsWith('deepseek-v4.1'))) // /models lists a v4.1 id itself
-    return models;
-  // exact-resolve the curated entry, then send the beta id on the wire
-  return [...models, { ...deepseekModelToModelDescription('deepseek-v4.1-flash'), id: DEEPSEEK_V41_BETA_ID }];
 }
