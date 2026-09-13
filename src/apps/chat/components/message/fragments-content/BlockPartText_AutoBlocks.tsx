@@ -9,6 +9,8 @@ import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 
+import { isSLMOutput, SLMOutputRenderer } from '~/modules/slm/SLMOutputRenderer';
+
 import { explainServiceErrors } from '../explainServiceErrors';
 
 /**
@@ -56,6 +58,10 @@ export function BlockPartText_AutoBlocks(props: {
     () => !messageText ? null : explainServiceErrors(messageText, fromAssistant),
     [fromAssistant, messageText],
   );
+
+  // SLM pipeline output: render with collapsible phase accordion UI
+  if (fromAssistant && isSLMOutput(messageText))
+    return <SLMOutputRenderer text={messageText} />;
 
   // if errored, render an Auto-Error message
   if (errorExplainer) {
