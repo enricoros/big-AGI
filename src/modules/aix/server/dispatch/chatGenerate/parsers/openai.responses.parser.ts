@@ -571,7 +571,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
 
           case 'code_interpreter_call':
             // -> CIC: process completed code interpreter call (xAI/OpenAI)
-            _forwardDoneCodeInterpreterCallItem(pt, doneItem);
+            _forwardDoneCodeInterpreterCallItem(pt, doneItem, rspVendor);
             break;
 
           case 'custom_tool_call':
@@ -1135,7 +1135,7 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
 
         case 'code_interpreter_call':
           // -> CIC: process completed code interpreter call (xAI/OpenAI)
-          _forwardDoneCodeInterpreterCallItem(pt, oItem);
+          _forwardDoneCodeInterpreterCallItem(pt, oItem, rspVendor);
           pt.endMessagePart();
           break;
 
@@ -1420,16 +1420,18 @@ function _forwardDoneWebSearchCallItem(pt: IParticleTransmitter, webSearchCall: 
  * - addCodeExecutionInvocation for the code being executed
  * - addCodeExecutionResponse for each output result
  */
-function _forwardDoneCodeInterpreterCallItem(pt: IParticleTransmitter, codeInterpreterCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'code_interpreter_call' }>): void {
+function _forwardDoneCodeInterpreterCallItem(pt: IParticleTransmitter, codeInterpreterCall: Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'code_interpreter_call' }>, rspVendor: AixWire_Vendors.RspVendor): void {
   _hostedToolWishlistHint('code_interpreter');
   const { id, code, outputs, status, container_id } = codeInterpreterCall;
 
   // -> Session container (message-scoped): promote for cross-turn reuse (round-trip + explicit pinning) and file downloads.
   // OpenAI omits a retention field, so we stamp now+20min (its inactivity TTL); the client's reuse walk gates on it.
+  // Vendor-scoped (#1200): the Responses parser is shared, and a foreign sandbox (with its foreign item ids)
+  // must never be adoptable by an OpenAI-targeted turn - same reason reasoning blobs carry the vendor namespace.
   if (container_id)
     pt.sendSetVendorState({
       p: 'svs',
-      vendor: 'openai-container',
+      vendor: rspVendor === 'xai' ? 'xai-container' : 'openai-container',
       state: { container: { id: container_id, expiresAt: new Date(Date.now() + OPENAI_DEFAULT_CONTAINER_TTL_MS).toISOString() } },
     });
 
