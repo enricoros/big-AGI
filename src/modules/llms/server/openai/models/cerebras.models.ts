@@ -29,37 +29,18 @@ const IF_CHAT_FN = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
  * Cerebras models - fast OpenAI-compatible inference (wafer-scale).
  * - models list: https://inference-docs.cerebras.ai/models/overview
  * - pricing: https://www.cerebras.ai/pricing (per-token rates from /public/v1/models)
- * - updated: 2026-08-17 (zai-glm-4.7 retired; gemma-4-31b out of Preview; prompt caching verified live)
+ * - updated: 2026-09-14 (gemma-4-31b off the public endpoints; qwen-3.8-27b curated - caps, effort ladder,
+ *   vision and prompt caching all live-probed)
  *
  * EDITORIAL OVERRIDES: the /public/v1/models catalog carries pricing/limits/capabilities, but its
  * metadata lags for new models (it used to report gemma-4-31b with all caps false and an 8K context -
  * since corrected). So the entries below WIN for known models; the catalog only fills in UNKNOWN/new
- * models (forward-compat). Everything else Cerebras serves (Qwen, GLM, Kimi, MiniMax, Mistral,
- * DeepSeek, Llama, StepFun) is Dedicated-Endpoints only and never appears on the public catalog.
+ * models (forward-compat). Everything else Cerebras serves (GLM, Kimi, MiniMax, Mistral, DeepSeek,
+ * Llama, StepFun, the other Qwen sizes) is Dedicated-Endpoints only and never appears on the public catalog.
  */
 type _CerebrasModelDef = (KnownModel & { pubDate?: string }) | KnownLink;
 
 const _knownCerebrasModels = llmsDefineModels<_CerebrasModelDef>()([
-  // Gemma 4 31B - Cerebras' first multimodal model (~1,850 tok/s). Out of Preview as of 2026-08-17:
-  // docs catalog, pricing table and public catalog (preview:false) all list it unqualified.
-  {
-    idPrefix: 'gemma-4-31b',
-    label: 'Gemma 4 31B',
-    pubDate: '20260402', // = gemini.models.ts 'gemma-4-31b-it' (Google's release; Cerebras onboarded it 2026-06-29)
-    description: 'Google Gemma 4 31B on Cerebras - first multimodal model on wafer-scale inference (~1,850 tok/s). Vision (base64 PNG/JPEG, max 10 images / 10MB), function calling, reasoning (off by default, enable via effort). 131K context (65K free tier), 40K max output.',
-    contextWindow: 131072,
-    maxCompletionTokens: 40960,
-    interfaces: [...IF_CHAT_FN, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: [
-      // reasoning off by default; docs state low/medium/high are "currently equivalent" - collapsed to Off/High (2026-08-17),
-      // restore the ladder if Cerebras ever differentiates them
-      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'high'] },
-    ],
-    // cache: no discount - cached input bills at the standard input rate (rate must still be declared, or cached tokens would price at 0)
-    chatPrice: { input: 0.99, output: 1.49, cache: { read: 0.99 } },
-    benchmark: { cbaElo: 1451 }, // lmarena: gemma-4-31b
-  },
-
   // OpenAI GPT-OSS 120B - flagship open-weight MoE (~3,000 tok/s). Production (GA).
   {
     idPrefix: 'gpt-oss-120b',
@@ -78,8 +59,29 @@ const _knownCerebrasModels = llmsDefineModels<_CerebrasModelDef>()([
     benchmark: { cbaElo: 1352 }, // lmarena: gpt-oss-120b
   },
 
+  // Qwen 3.8 27B - dense VL model, the public multimodal slot since 2026-09-03 (~1,850 tok/s). Production (GA).
+  {
+    idPrefix: 'qwen-3.8-27b',
+    label: 'Qwen 3.8 27B',
+    pubDate: '20260814', // = alibaba.models.ts 'qwen3.8-27b' (Qwen's open-weights release; Cerebras onboarded it 2026-09-03)
+    description: 'Alibaba Qwen 3.8 27B dense vision-language model on Cerebras (~1,850 tok/s). Vision (base64 PNG/JPEG, max 10 images), function calling, reasoning (on by default at high, off via effort). 131K context (65K free tier), 40K max output.',
+    contextWindow: 131072, // paid-tier window (docs); the catalog row still reports the 65,536 free-trial cap - 68,919 prompt tokens accepted live 2026-09-14
+    maxCompletionTokens: 40960,
+    interfaces: [...IF_CHAT_FN, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    parameterSpecs: [
+      // full ladder, all four distinct (hidden-preamble prompt-token fingerprint: none 13 / medium 11 / low 41 / high 53 = unset default)
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high'] },
+    ],
+    // cache: no discount - cached input bills at the standard input rate (rate must still be declared, or cached tokens would price at 0)
+    chatPrice: { input: 0.99, output: 1.49, cache: { read: 0.99 } },
+    // no benchmark: lmarena has no qwen3.8-27b entry we've captured (alibaba.models.ts carries none either)
+  },
+
   // 'zai-glm-4.7' (Preview, $2.25/$2.75, 131K/40K, effort none|low|medium|high) retired 2026-08-17 as scheduled and gone from
   // the public catalog - no replacement named, no serverless GLM 5.x on Cerebras (GLM-5.3 weights not public yet).
+  // 'gemma-4-31b' (multimodal, $0.99/$1.49, 131K/40K, effort none|high) off the public endpoints 2026-09-03 (docs
+  // /support/deprecation), Dedicated-Endpoints only now, docs page gone; the keyed /v1/models still lists it but
+  // generation 404s model_not_found (verified 2026-09-14). Cerebras points multimodal workloads at 'qwen-3.8-27b'.
 ]);
 
 

@@ -664,6 +664,23 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     benchmark: undefined, // video generation, not benchmarkable on standard tests
   },
 
+  // Antigravity Agent Preview (09-2026) - appeared on the list API 2026-09-14, UNDOCUMENTED: no changelog entry,
+  // no pricing line, and the Antigravity docs still describe only the 05-2026 agent. 1M in / 64K out; generateContent
+  // 400s ("This model only supports Interactions API."), same as its 05-2026 sibling, so it rides LLM_IF_GEM_Interactions.
+  // Verified live 2026-09-14: zero code changes needed - the adapter/parser `isAntigravity` gates match on 'antigravity-'
+  // and the run is contract-identical to 05-2026 (agent path, store:true, background:false, environment:'remote', native
+  // system_instruction) -> clean steps-schema stream (created -> status_update -> model_output step -> completed) with
+  // the modeled `usage` block. No supersession announced, so 05-2026 stays visible.
+  {
+    id: 'models/antigravity-preview-09-2026',
+    labelOverride: 'Antigravity Agent Preview (2026-09)',
+    pubDate: '20260914', // first seen on the list API; no announced release date
+    isPreview: true,
+    chatPrice: gemini38FlashPricing, // unpublished - same PAYG-on-underlying-tokens baseline as the 05-2026 agent
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_GEM_Interactions],
+    benchmark: undefined, // Agent harness, not benchmarkable on standard tests
+  },
+
   // Antigravity Agent Preview - Released May 19, 2026
   // General-purpose managed agent: powered by Gemini 3.8 Flash by default (docs 2026-09-02; default moved
   // 3.5 -> 3.6 on 2026-07-28, -> 3.7 on 2026-08-13, -> 3.8 on 2026-09-02; selectable via agent_config.model, which we don't send),

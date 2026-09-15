@@ -26,7 +26,7 @@ const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 //   on and off; forced tool_choice still 400s under thinking; /responses and the Anthropic base serve it.
 // - Off-DeepSeek on day 2: OpenRouter (deepseek/deepseek-v4.1-flash), Fireworks (deepseek-v4p1-flash), Novita, Baseten,
 //   Ollama cloud. Together followed on 2026-09-12 (deepseek-ai/DeepSeek-V4.1-Flash, same card) and DashScope by 2026-09-14
-//   ('deepseek-v4.1-flash', probed serving, still uncurated in alibaba.models.ts). Not yet on NIM or Chutes.
+//   ('deepseek-v4.1-flash', curated in alibaba.models.ts: same in/out card, Alibaba's own 10% cache-hit). Not yet on NIM or Chutes.
 // - Re-probed 2026-09-14 (the announced-then-reversed pro routing date): pro still answers on its own fingerprint
 //   a307abda487cd1b463329ccb945ce396 - the reversal held, nothing was routed; deepseek-flash, the four legacy ids and the
 //   expired beta id all serve aeb56401ca74e127821c4f9126dcb669; /models unchanged; the pricing page carries the same peak

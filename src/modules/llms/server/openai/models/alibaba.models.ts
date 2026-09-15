@@ -13,6 +13,9 @@ export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefi
 // - Per-model pages carry the authoritative caps + cache-hit price, e.g. https://www.alibabacloud.com/help/en/model-studio/qwen3-8-max
 // - Cache:   https://www.alibabacloud.com/help/en/model-studio/context-cache (implicit hit = 20% of input; explicit create 125% / hit 10%; deepseek-v4-pro and
 //            the qwen3.8 line excepted - their rates come off the model pages)
+// 2026-09-14 pass (DeepSeek only): deepseek-v4.1-flash curated visible - DashScope's only route to V4.1 (it lists no undated
+//   'deepseek-flash'), peak card 0.3/1.2 with Alibaba's own 0.03 implicit cache-hit (Intl price table + model page, updated
+//   09-14), 1M in / 384K out, vision and thinking-off live-probed. Qwen/GLM/Kimi rows untouched.
 // 2026-09-02 pass: qwen3.8-max-0902 curated visible (upgraded snapshot listed today; the base id still serves the 08-03 checkpoint per
 //   Alibaba's OpenRouter endpoint name, and the price table prints no 'Currently equivalent to' on qwen3.8-max). DeepSeek GA snapshots
 //   repriced: deepseek-v4-pro-0813 and -flash-0731 moved to peak/off-peak billing on 2026-08-17 (Intl table + model pages), we carry
@@ -436,7 +439,25 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   // Prices: the GA snapshots (-0813, -0731) moved to peak/off-peak billing on 2026-08-17 (Intl table + model pages; the windows are
   // in a Chinese-only notice, aliyun.com/notice/118555) at exactly DeepSeek-direct's card, off-peak = half. chatPrice carries the PEAK
   // card, as in deepseek.models.ts (no time dimension in the schema; off-peak requests are over-shown 2x). The undated ids keep their
-  // flat rate, which now sits above the pro snapshot and below the flash one.
+  // flat rate, which now sits above the pro snapshot and below the flash one; deepseek-v4.1-flash is peak/off-peak from its listing.
+  {
+    // V4.1-Flash on DashScope, listed by 2026-09-14 (DeepSeek GA 2026-09-10): 552B MoE, native image input, ahead of
+    // V4-Pro-0813 on the agentic set. Curated visible, not hidden like the -0731 revision: this version-suffixed id is not a
+    // snapshot beside an undated twin (DashScope lists no 'deepseek-flash'), so it is the only route to V4.1 and the best
+    // flash tier here. Live-probed 2026-09-14: images accepted with thinking on and off; enable_thinking:false works
+    // (preamble 49 -> 23 prompt tokens); reasoning_effort enum minimal|low|medium|high|xhigh|max|ultra - 'none' 400s, so Off
+    // rides on enable_thinking as the dialect already does; no per-tier preamble tell left, and max_tokens is not range-checked.
+    idPrefix: 'deepseek-v4.1-flash',
+    label: 'DeepSeek V4.1 Flash (Alibaba)',
+    parameterSpecs: _PS_DeepSeekEffort,
+    pubDate: '20260910', // = deepseek.models.ts 'deepseek-flash' (DeepSeek release, not the DashScope listing)
+    description: 'DeepSeek V4.1 Flash served via Alibaba Model Studio. Multimodal 552B MoE with 1M context, native image input, and thinking on by default.',
+    contextWindow: 1_000_000, // 1M (model page: 1,000,000 max input)
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
+    chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.03 } }, // peak card (Singapore: busy 0.3/1.2 hit 0.03, idle half); in/out match DeepSeek-direct, the cache-hit is Alibaba's own 10%
+    // no benchmark: not on lmarena yet (released 2026-09-10)
+  },
   {
     idPrefix: 'deepseek-v4-pro',
     label: 'DeepSeek V4 Pro (Alibaba)',
