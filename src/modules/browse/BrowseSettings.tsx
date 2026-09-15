@@ -5,9 +5,12 @@ import { Checkbox, FormControl, FormHelperText, FormLabel, Option, Select, Typog
 
 import { AlreadySet } from '~/common/components/AlreadySet';
 import { ExternalDocsLink } from '~/common/components/ExternalDocsLink';
+import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { platformAwareKeystrokes } from '~/common/components/KeyStroke';
+
+import { isValidJinaApiKey, useJinaStore } from '~/modules/jina/store-module-jina';
 
 import { useBrowseCapability, useBrowseStore } from './store-module-browsing';
 
@@ -34,6 +37,12 @@ export function BrowseSettings() {
     setEnableReactTool: state.setEnableReactTool,
     setEnablePersonaTool: state.setEnablePersonaTool,
   })));
+  const { jinaApiKey, setJinaApiKey } = useJinaStore(useShallow(state => ({
+    jinaApiKey: state.jinaApiKey,
+    setJinaApiKey: state.setJinaApiKey,
+  })));
+
+  const isJinaValid = isValidJinaApiKey(jinaApiKey);
 
   const handlePageTransformChange = (_event: any, value: typeof pageTransform | null) => value && setPageTransform(value);
 
@@ -44,11 +53,22 @@ export function BrowseSettings() {
       Download and process web pages for analysis. <ExternalDocsLink docPage='self-host-optional-services'>Learn more</ExternalDocsLink>.
     </Typography>
 
+    {/* Jina Reader: browser-free page loading - used when the WSS endpoint below is empty */}
+    <FormInputKey
+      autoCompleteId='jina-key' label='Jina API Key'
+      description={<>No browser needed - uses <ExternalLink href='https://jina.ai/reader'>Jina Reader</ExternalLink> (works without a key at low rate limits)</>}
+      value={jinaApiKey} onChange={setJinaApiKey}
+      rightLabel={<AlreadySet required={!isServerConfig && !wssEndpoint} />}
+      required={false} isError={!!jinaApiKey && !isJinaValid}
+      placeholder='jina_...'
+    />
+
     <FormInputKey
       autoCompleteId='browse-wss' label='Puppeteer Wss' noKey
+      description='Optional - full browser; takes priority over Jina when set'
       value={wssEndpoint} onChange={setWssEndpoint}
-      rightLabel={<AlreadySet required={!isServerConfig} />}
-      required={!isServerConfig} isError={!isClientValid && !isServerConfig}
+      rightLabel={<AlreadySet required={!isServerConfig && !isJinaValid} />}
+      required={!isServerConfig && !isJinaValid} isError={!isClientValid && !isServerConfig}
       placeholder='wss://...'
     />
 

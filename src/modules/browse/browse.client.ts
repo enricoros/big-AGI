@@ -1,4 +1,5 @@
 import { BrowsePageTransform, useBrowseStore } from '~/modules/browse/store-module-browsing';
+import { useJinaStore } from '~/modules/jina/store-module-jina';
 
 import { apiStreamNode } from '~/common/util/trpc.client';
 
@@ -26,12 +27,20 @@ export async function callBrowseFetchPageOrThrow(
     url = 'https://' + url;
 
   const { wssEndpoint, pageTransform } = useBrowseStore.getState();
+  const { jinaApiKey } = useJinaStore.getState();
+
+  // prefer the Puppeteer browser when configured; otherwise use the Jina Reader backend
+  // (also used when the server has JINA_API_KEY set - the router falls back to env)
+  const useJina = !wssEndpoint?.trim();
 
   // Connect to our service
   let streamingResponse: Awaited<ReturnType<typeof apiStreamNode.browse.fetchPagesStreaming.mutate>>;
   try {
     streamingResponse = await apiStreamNode.browse.fetchPagesStreaming.mutate({
-      access: {
+      access: useJina ? {
+        dialect: 'browse-jina',
+        ...(!!jinaApiKey?.trim() && { jinaApiKey: jinaApiKey.trim() }),
+      } : {
         dialect: 'browse-wss',
         ...(!!wssEndpoint && { wssEndpoint }),
       },

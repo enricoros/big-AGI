@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 
 import { CapabilityBrowsing } from '~/common/components/useCapabilities';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
+import { isValidJinaApiKey, useJinaStore } from '~/modules/jina/store-module-jina';
 
 
 export type BrowsePageTransform = 'html' | 'text' | 'markdown';
@@ -59,10 +60,13 @@ export function useBrowseCapability(): CapabilityBrowsing {
 
   // external client state
   const { wssEndpoint, enableComposerAttach, enableReactTool, enablePersonaTool } = useBrowseStore();
+  const { jinaApiKey } = useJinaStore();
 
   // derived state
-  const isClientConfig = !!wssEndpoint;
-  const isClientValid = (wssEndpoint?.startsWith('wss://') && wssEndpoint?.length > 10) || (wssEndpoint?.startsWith('ws://') && wssEndpoint?.length > 9);
+  const isWssValid = (wssEndpoint?.startsWith('wss://') && wssEndpoint?.length > 10) || (wssEndpoint?.startsWith('ws://') && wssEndpoint?.length > 9);
+  const isJinaValid = isValidJinaApiKey(jinaApiKey); // empty WSS + valid Jina key (or server-side JINA_API_KEY) enables browsing
+  const isClientConfig = !!wssEndpoint || !!jinaApiKey;
+  const isClientValid = isWssValid || isJinaValid;
   const mayWork = isServerConfig || (isClientConfig && isClientValid);
 
   return {
