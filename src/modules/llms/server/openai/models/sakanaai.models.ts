@@ -14,7 +14,7 @@ import { fromManualMapping, llmsDefineManualMappings, llmsLabelUncurated } from 
 export type LlmsSakanaAIModelId = typeof _sakanaKnownModels[number]['idPrefix'];
 
 
-// [Sakana.ai] Models List API schema - observed at https://api.sakana.ai/v1/models (re-verified 2026-08-17).
+// [Sakana.ai] Models List API schema - observed at https://api.sakana.ai/v1/models (re-verified 2026-09-14).
 // The list returns only id/object/created/owned_by - NO capabilities or pricing - so all caps/pricing
 // come from the manual mappings below; `description` (returned until ~2026-06) is kept as a tolerated
 // field and unknown-model fallback. (`created` now varies per model but does not track launch dates -
@@ -29,22 +29,33 @@ const _wireSakanaAIModelItemSchema = z.object({
 
 
 // [Sakana.ai] Fugu Ultra tiered PAYG pricing (USD per 1M tokens), boundary at 272K input tokens.
-// Source: https://console.sakana.ai/pricing (2026-06-23, unchanged as of 2026-08-17). A single rate applies
-// based on the top-tier model involved; orchestration/agent tokens are billed at the same input/output rates
-// (never stacked).
+// Source: https://console.sakana.ai/pricing (2026-06-23; re-read 2026-09-14: the card is now headed 'fugu-ultra-v2.0'
+// but still covers every Ultra version, and gained a $0.007 per web search/fetch call fee, = $7 per 1K calls). A single
+// rate applies based on the top-tier model involved; orchestration/agent tokens are billed at the same input/output
+// rates (never stacked).
 const _fuguUltraPrice: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 272000, price: 5 }, { upTo: null, price: 10 }],
   output: [{ upTo: 272000, price: 30 }, { upTo: null, price: 45 }],
   cache: { read: [{ upTo: 272000, price: 0.5 }, { upTo: null, price: 1 }] },
+  tools: { webSearch: 7 },
+};
+
+// [Sakana.ai] Fugu Max flat PAYG pricing (USD per 1M tokens) - no context-size tiers, unlike Ultra.
+// Source: https://console.sakana.ai/pricing (2026-09-14), listed as 'fugu-max-v1.0'; web search/fetch $0.007 per call.
+const _fuguMaxPrice: ModelDescriptionSchema['chatPrice'] = {
+  input: 2,
+  output: 6,
+  cache: { read: 0.25 },
+  tools: { webSearch: 7 },
 };
 
 // Fugu params (Responses API). Reasoning effort: validation enumerates 'high' / 'xhigh' / 'max' (re-verified
-// 2026-08-17 on fugu-ultra and fugu-cyber); console.sakana.ai/models documents 'max' as an alias of 'xhigh'
-// (defaults: 'xhigh' for fugu-ultra, 'high' for fugu), so it is not offered as a duplicate level. Web search
-// reuses the OpenAI Responses 'web_search' hosted tool - the only hosted tool the Fugu models take
-// ('web_search_preview' and 'code_interpreter' 400 with "Supported values are: 'function' and 'custom'"):
-// Sakana tolerates the context-size value (effect undocumented) but the responses adapter still emits the
-// bare `{ type: 'web_search' }` for the 'sakanaai' dialect.
+// 2026-09-14 on fugu-max, fugu-ultra-v2.0 and fugu-cyber, 'low' 400s); console.sakana.ai/models documents 'max' as an
+// alias of 'xhigh' (defaults: 'xhigh' for fugu-ultra, 'high' for fugu), so it is not offered as a duplicate level. Web
+// search reuses the OpenAI Responses 'web_search' hosted tool ('web_search_preview' and 'code_interpreter' 400 with
+// "Supported values are: 'function' and 'custom'"; a bare `{ type: 'web_fetch' }` is also accepted since the
+// 2026-09-11 models, priced like a search call, but not wired): Sakana tolerates the context-size value (effect
+// undocumented) but the responses adapter still emits the bare `{ type: 'web_search' }` for the 'sakanaai' dialect.
 const _fuguParamSpecs = [
   { paramId: 'llmVndOaiEffort' as const, enumValues: ['high', 'xhigh'] },
   // Reuse OpenAI's Responses web_search control, restricted to a single value so the UI shows On/Off (Sakana
@@ -59,21 +70,23 @@ const _fuguUltraInterfaces = [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_
 // Last published rates: https://console.sakana.ai/pricing (2026-07-20) - listed there as 'fugu-cyber-v1.0'.
 // As of 2026-08-17 that page no longer prints Cyber rates ("contact our sales team"), so these are kept as the
 // last public PAYG numbers. The API serves it as 'fugu-cyber' ONLY: console.sakana.ai/models documents a
-// 'fugu-cyber-v1.0' ID but requesting it still returns "Model not found" (re-probed 2026-08-17), unlike the
-// Ultra family where the versioned IDs are real. PAYG-only: not included in the subscription tiers.
+// 'fugu-cyber-v1.0' ID but requesting it still returns "Model not found" (re-probed 2026-09-14), unlike the
+// Ultra and Max families where the versioned IDs are real. PAYG-only: not included in the subscription tiers.
 const _fuguCyberPrice: ModelDescriptionSchema['chatPrice'] = {
   input: [{ upTo: 272000, price: 6 }, { upTo: null, price: 12 }],
   output: [{ upTo: 272000, price: 36 }, { upTo: null, price: 54 }],
   cache: { read: [{ upTo: 272000, price: 0.6 }, { upTo: null, price: 1.2 }] },
 };
 
-// [Sakana.ai] Sakana Namazu flat PAYG pricing (USD per 1M tokens) - no context-size tiers, unlike Fugu.
-// Source: https://console.sakana.ai/pricing (2026-08-04), listed as 'sakana-namazu-v1.0'. Thinking tokens
-// bill at the output rate; the built-in tools bill on top ($7 / 1K web searches, $0.12 / hour of code execution).
+// [Sakana.ai] Sakana Namazu flat PAYG pricing (USD per 1M tokens) - no context-size tiers, unlike Fugu Ultra.
+// Source: https://console.sakana.ai/pricing (2026-08-04, unchanged 2026-09-14), listed as 'sakana-namazu-v1.0'. Thinking
+// tokens bill at the output rate; the built-in tools bill on top: $7 / 1K web searches (carried in `tools`), and
+// $0.12 / hour of code execution (no schema slot, not carried).
 const _namazuPrice: ModelDescriptionSchema['chatPrice'] = {
   input: 0.95,
   output: 4,
   cache: { read: 0.15 },
+  tools: { webSearch: 7 },
 };
 
 // Namazu interfaces/params, all empirically verified 2026-08-04 on the Responses API (Chat Completions is also
@@ -89,16 +102,19 @@ const _namazuParamSpecs = [
   { paramId: 'llmVndOaiWebSearchContext' as const, enumValues: ['high'] },
 ];
 
-// Fugu Ultra versioning: Sakana switched to '-vX.Y' pinned IDs (API-registered 2026-07-23; sakana.ai/fugu:
-// "fugu-ultra-v1.0 (previously fugu-ultra-20260615)"). Cache-identity probes (2026-07-23, cross-model prompt-cache
-// hits/misses): 'fugu-ultra-v1.0' IS the 20260615 snapshot, and the floating 'fugu-ultra' IS 'v1.1' - since
-// stated outright at console.sakana.ai/models ("fugu-ultra ... defaults to fugu-ultra-v1.1", read 2026-08-17).
-// Both versions share the same pricing (console.sakana.ai/pricing lists them under one Fugu Ultra card).
+// Fugu versioning: '-vX.Y' pinned IDs plus a floating alias per family (since 2026-07-23; sakana.ai/fugu: "fugu-ultra-v1.0
+// (previously fugu-ultra-20260615)"). Cache-identity probes (cross-model prompt-cache hits/misses on one long prompt):
+// - 2026-09-14: 'fugu-ultra' IS 'fugu-ultra-v2.0' (10370/10372 cached tokens on the alias right after warming v2.0,
+//   0 on v1.1) - stated outright at console.sakana.ai/models ("fugu-ultra (defaults to v2.0)"); 'fugu-max' IS
+//   'fugu-max-v1.0' the same way (4070/6144 cached on the pin after warming the alias).
+// - 2026-07-23: 'fugu-ultra-v1.0' IS the 20260615 snapshot, and 'fugu-ultra' was 'v1.1' back then.
+// Every Ultra version shares one pricing card. The tokenizers differ per version (the same prompt counts 10372 tokens
+// on Ultra v2.0, 5515 on v1.1, 6144 on Max), so cross-version cache hits are impossible by construction.
 //
 // Array order = display order (matching is longest-prefix, so order is free): the v-pins are the
-// canonical visible entries; the floating alias and the legacy dated ID are hidden duplicates of the
-// pins; Cyber leads but stays hidden, since its approval is per key. When Sakana repoints the floating
-// 'fugu-ultra' (next vX.Y), re-verify with the cache-identity probe and move the symLink target.
+// canonical visible entries; the floating aliases and the legacy dated ID are hidden duplicates of the
+// pins; Cyber leads but stays hidden, since its approval is per key. When Sakana repoints a floating
+// alias (next vX.Y), re-verify with the cache-identity probe and move the symLink target.
 const _sakanaKnownModels = llmsDefineManualMappings([
   // Fugu Cyber - cybersecurity-specialized orchestrator, same interface set/params as Ultra. Access-gated per
   // key: console.sakana.ai/models still requires an approval form (and pay-as-you-go billing mode), and
@@ -116,11 +132,41 @@ const _sakanaKnownModels = llmsDefineManualMappings([
     pubDate: '20260721',
     hidden: true,
   },
-  // Fugu Ultra v1.1 - latest pinned version (registered 2026-07-22 PT; on the pricing page, not yet announced).
+  // Fugu Ultra v2.0 - latest pinned version, launched 2026-09-11 (JST) together with Fugu Max: API-registered 2026-09-08
+  // (list `created`), first seen by the app 2026-09-11, on OpenRouter as 'sakana/fugu-ultra-v2' (no '.0') from
+  // 2026-09-11. Deeper expert-agent pool than v1.x; training cutoff 2026-08-28 (console.sakana.ai/models). Probed
+  // 2026-09-14 on the Responses API: same effort enum as v1.x, image input 200, prompt caching live, 'low' 400s.
+  {
+    idPrefix: 'fugu-ultra-v2.0',
+    label: 'Sakana Fugu Ultra v2.0',
+    description: 'Multi-agent conductor system routing a deeper pool of expert agents for complex, multi-step reasoning - maximum answer quality on hard tasks. Latest pinned version (September 2026 update, training cutoff 2026-08-28). 1M context.',
+    contextWindow: 1000000,
+    interfaces: _fuguUltraInterfaces,
+    parameterSpecs: _fuguParamSpecs,
+    chatPrice: _fuguUltraPrice,
+    pubDate: '20260911',
+  },
+  // Fugu Max v1.0 - cost-optimized orchestrator over Sakana's largest model pool (open-weights and specialized models,
+  // plus the NVIDIA Nemotron family), launched 2026-09-11 alongside Ultra v2.0 (API-registered 2026-09-08). Flat pricing,
+  // no context tiers, included in the subscription tiers. Probed 2026-09-14 on the Responses API: effort enum
+  // high/xhigh/max (as Ultra; 'low' 400s), image input 200, hosted 'web_search' and 'web_fetch' accepted,
+  // 'code_interpreter' 400, prompt caching live (4070 cached of a 6144-token prompt). Context window: not stated by
+  // Sakana; 1M per the OpenRouter listing (max_output_tokens is not validated, so there is no ceiling tell to probe).
+  {
+    idPrefix: 'fugu-max-v1.0',
+    label: 'Sakana Fugu Max v1.0',
+    description: 'Cost-optimized multi-agent orchestrator over Sakana\'s largest model pool - open-weights and specialized models, including the NVIDIA Nemotron family - for strong results at a fraction of Fugu Ultra\'s price. Built-in web search. 1M context.',
+    contextWindow: 1000000,
+    interfaces: _fuguUltraInterfaces,
+    parameterSpecs: _fuguParamSpecs,
+    chatPrice: _fuguMaxPrice,
+    pubDate: '20260911',
+  },
+  // Fugu Ultra v1.1 - previous pinned version (registered 2026-07-22 PT), superseded by v2.0 on 2026-09-11; still served.
   {
     idPrefix: 'fugu-ultra-v1.1',
     label: 'Sakana Fugu Ultra v1.1',
-    description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning - maximum answer quality on hard tasks. Latest pinned version (July 2026 update). 1M context.',
+    description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning. Pinned version (July 2026 update), superseded by v2.0. 1M context.',
     contextWindow: 1000000,
     interfaces: _fuguUltraInterfaces,
     parameterSpecs: _fuguParamSpecs,
@@ -174,13 +220,20 @@ const _sakanaKnownModels = llmsDefineManualMappings([
     chatPrice: _namazuPrice,
     pubDate: '20260803',
   },
-  // Fugu Ultra - floating alias (currently = v1.1, cache-identity verified 2026-07-23): symlinked to the
+  // Fugu Ultra - floating alias (currently = v2.0, cache-identity verified 2026-09-14): symlinked to the
   // pin so the duplicate stays out of the picker but the alias relationship is visible in the models list.
   {
     idPrefix: 'fugu-ultra',
     label: 'Sakana Fugu Ultra',
-    symLink: 'fugu-ultra-v1.1',
-    description: 'Multi-agent conductor system routing 1-3 expert agents for complex, multi-step reasoning. Tracks the latest Fugu Ultra version. 1M context.',
+    symLink: 'fugu-ultra-v2.0',
+    description: 'Multi-agent conductor system routing expert agents for complex, multi-step reasoning. Tracks the latest Fugu Ultra version. 1M context.',
+  },
+  // Fugu Max - floating alias, currently = v1.0 (the only published version, cache-identity verified 2026-09-14).
+  {
+    idPrefix: 'fugu-max',
+    label: 'Sakana Fugu Max',
+    symLink: 'fugu-max-v1.0',
+    description: 'Cost-optimized multi-agent orchestrator over Sakana\'s largest model pool. Tracks the latest Fugu Max version. 1M context.',
   },
   // Sakana Namazu - floating alias, currently = v1.0 (the only published version): symlinked like 'fugu-ultra'.
   {
@@ -211,8 +264,9 @@ const _ORT_SAK_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
  */
 export function llmOrtSakLookup(orModelName: string): OrtVendorLookupResult | undefined {
 
-  // OR lists the floating aliases only: follow the symLink to the pin, which carries caps/params/pubDate
-  let entry = _sakanaKnownModels.find(m => m.idPrefix === orModelName);
+  // OR lists the floating aliases and drops the '.0' minor from pins ('sakana/fugu-ultra-v2' = 'fugu-ultra-v2.0',
+  // 2026-09-11): resolve exact, then '<id>.0', then follow the symLink to the pin, which carries caps/params/pubDate
+  let entry = _sakanaKnownModels.find(m => m.idPrefix === orModelName) ?? _sakanaKnownModels.find(m => m.idPrefix === `${orModelName}.0`);
   const symLink = entry && 'symLink' in entry ? entry.symLink : undefined;
   if (symLink) entry = _sakanaKnownModels.find(m => m.idPrefix === symLink);
   if (!entry?.interfaces) return undefined;

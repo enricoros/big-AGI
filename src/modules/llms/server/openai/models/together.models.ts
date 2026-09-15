@@ -41,6 +41,9 @@ const _togetherAIDenyList: string[] = [
 // Sweep 2026-08-31 (74 priced rows): all 53 entries below still dead (Kimi-K2.6 now errors 'all configured
 // deployments are stopped' instead of the non-serverless 400 - still dead); 21 alive, +Qwen3.8-Flash (new,
 // streaming-only like the other Qwen Plus/Max tiers) and +GLM-5.3 (relisted and serving, see pubDates below).
+// Sweep 2026-09-14 (74 priced rows): 22 alive = the 21 + DeepSeek-V4.1-Flash (listed 2026-09-12, matches the docs
+// table), all 52 listed ids still dead (same two odd errors: Kimi-K2.6 'deployments are stopped', GLM-4.5-Air-FP8 503);
+// deepseek-ai/DeepSeek-V4-Pro is gone from /v1/models altogether (entry kept, harmless).
 // Membership rotates fast in both directions ('created' gets re-stamped) - probe, never trust this list's age.
 // Accepted cost: a user with a dedicated endpoint for one of these ids no longer sees it.
 const _togetherAIRetiredIds = new Set<string>([
@@ -158,6 +161,7 @@ const _togetherEditorialPubDates: Record<string, string> = {
   'nvidia/nemotron-3-ultra-550b-a55b': '20260604', // = nvidianim.models.ts (NVIDIA HF card: 'Release Date: 06/04/2026 via Hugging Face')
   'moonshotai/Kimi-K2.7-Code': '20260612',
   'zai-org/GLM-5.2': '20260616', // = zai.models.ts 'glm-5.2'
+  'zai-org/GLM-5.2-FP8': '20260616', // dedicated-only quant of the above (0/0-priced, no serverless row)
   'Qwen/Qwen3.7-Max': '20260622', // = alibaba.models.ts 'qwen3.7-max'
   'Prism-ML/Ternary-Bonsai-27B': '20260714', // PrismML announcement (prismml.com/news/bonsai-27b)
   'thinkingmachines/Inkling': '20260714', // = fireworksai.models.ts 'inkling'
@@ -168,9 +172,10 @@ const _togetherEditorialPubDates: Record<string, string> = {
   'Qwen/Qwen3.8-2.4T-A95B': '20260812', // = alibaba.models.ts 'qwen3.8-2.4t-a95b'
   'deepseek-ai/DeepSeek-V4-Pro-0813': '20260813', // 0813 GA weights, unlike the undated id above
   'zai-org/GLM-5.3': '20260814', // = zai.models.ts 'glm-5.3' - pre-announced then delisted by 2026-08-27; relisted and serving as of 2026-08-31
+  'zai-org/GLM-5.3-FP8': '20260814', // dedicated-only quant of the above (0/0-priced, no serverless row)
   'zai-org/GLM-5.3-Flash': '20260825', // = zai.models.ts 'glm-5.3-flash' (HF weights 2026-08-25)
   'Qwen/Qwen3.8-Flash': '20260826', // no alibaba.models.ts id yet: OpenRouter listing date - true up if DashScope lands one
-  'deepseek-ai/DeepSeek-V4.1-Flash': '20260910', // = deepseek.models.ts 'deepseek-flash'; pre-seeded on the HF repo name, not listed by Together as of 2026-09-12
+  'deepseek-ai/DeepSeek-V4.1-Flash': '20260910', // = deepseek.models.ts 'deepseek-flash'; listed and serving since 2026-09-12 at DeepSeek's own peak card (0.3/1.2, cached 0.006)
 };
 
 /** 'YYYYMMDD' -> Unix epoch seconds (UTC midnight), 0 when absent - for list placement only */

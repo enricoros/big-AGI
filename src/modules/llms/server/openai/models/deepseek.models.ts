@@ -25,7 +25,13 @@ const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 //   without tools). Enum still none|minimal|low|medium|high|xhigh|max; max_tokens [1, 393216]; image input with thinking
 //   on and off; forced tool_choice still 400s under thinking; /responses and the Anthropic base serve it.
 // - Off-DeepSeek on day 2: OpenRouter (deepseek/deepseek-v4.1-flash), Fireworks (deepseek-v4p1-flash), Novita, Baseten,
-//   Ollama cloud. Not yet on Together, NIM, DashScope, Chutes.
+//   Ollama cloud. Together followed on 2026-09-12 (deepseek-ai/DeepSeek-V4.1-Flash, same card) and DashScope by 2026-09-14
+//   ('deepseek-v4.1-flash', probed serving, still uncurated in alibaba.models.ts). Not yet on NIM or Chutes.
+// - Re-probed 2026-09-14 (the announced-then-reversed pro routing date): pro still answers on its own fingerprint
+//   a307abda487cd1b463329ccb945ce396 - the reversal held, nothing was routed; deepseek-flash, the four legacy ids and the
+//   expired beta id all serve aeb56401ca74e127821c4f9126dcb669; /models unchanged; the pricing page carries the same peak
+//   card and now states 384K max output for both models and vision on flash only. Usage note: most traffic still runs on
+//   the retired 'deepseek-v4-flash' id (and some on the expired beta id) - both keep working, so the legacy entries stay.
 
 // [DeepSeek, 2026-08-21] V4-Flash-Vision-Exp: first vision model - https://api-docs.deepseek.com/updates/
 // - Probed 2026-08-24: image input works, with and without thinking; otherwise flash-identical (effort enum + 'low'

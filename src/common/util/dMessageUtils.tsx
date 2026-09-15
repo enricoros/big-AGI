@@ -566,7 +566,7 @@ export function prettyShortChatModelName(model: string | undefined): string {
       .split('-').map(s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s).join(' ')
       .trim();
   }
-  // [Sakana.ai] fugu, fugu-ultra, fugu-ultra-v1.1 / -20260615 (service prefix already stripped by the auto-label heuristic)
+  // [Sakana.ai] fugu, fugu-ultra, fugu-ultra-v2.0 / -20260615, fugu-max-v1.0 (service prefix already stripped by the auto-label heuristic)
   if (model === 'fugu' || model.startsWith('fugu-')) {
     return model
       .replace(/-20\d{6}$/, '') // strip dated snapshot suffix (e.g. -20260615)
