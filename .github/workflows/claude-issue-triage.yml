@@ -67,20 +67,23 @@ jobs:
                - Suggest workarounds for immediate relief if applicable
                - Use web search to find similar issues and solutions
                - Test selectively and even npm install and run build if needed to verify the solution
-            2. Label the issue with exactly one of 'target_MAIN' or 'target_DEV' (`gh issue edit <number> --add-label`), no other label
+            2. Label the issue with 'target_MAIN' and/or 'target_DEV' (`gh issue edit <number> --add-label`), no other label; unsure -> none
             3. Comment with:
                - Very brief thank you note, if applicable
                - Initial assessment
                - Next steps or clarification needed
                - Link duplicates if found
 
-            TARGET LABEL: `main` (public) is the open-source app people self-host; `dev` (private) is `main` plus the hosted
-            layer running big-agi.com Free/Pro. `main` flows into `dev`, so anything shared targets main.
-            Hosted-only, absent from the public checkout: accounts and sign-in, /me and /dashboard, Pro plan, billing, credits,
-            usage costs, cross-device sync, spaces, devices, tenants, admin, published links, notifications, spotlight search,
-            PWA install (code names: zync, xe, northbridge, ramble, variform, sigil, ukv, supabase, stripe, nextauth, cloud fabric).
-            Rules: self-deployed, Docker, local or Vercel -> target_MAIN, always. Otherwise, feature or error found in the
-            checkout -> target_MAIN; not found and hosted-only -> target_DEV. Unclear -> do not label.
+            TARGET LABEL: `main` (public) is the open-source app people self-host; `dev` (private) runs big-agi.com Free/Pro.
+            `main` flows into `dev`, but `dev` has also rewritten Beam, composer, chat list, personas, export/import and storage,
+            so a surface existing in your checkout does not mean the fix lands here. The default is no label.
+            target_MAIN: the reporter is self-deployed, Docker, local or Vercel; or the issue is vendor/model/AIX protocol level
+            (model lists, vendor params, streaming, wire tool calls, retries, env config), which is shared by construction.
+            target_DEV: hosted-only (accounts, /me, /dashboard, Pro, billing, credits, sync, spaces, devices, tenants, admin,
+            published links, notifications, spotlight, PWA; code names zync, xe, northbridge, ramble, variform, sigil, ukv,
+            supabase, stripe, nextauth, cloud fabric); or a big-agi.com reporter on a Beam, persona, composer or export surface.
+            Both: a shared data change that needs separate UI work on each branch.
+            None: already implemented; large features touching data models across components; anything else unclear.
 
             Remember: design values for this codebase: orthogonal features, features that generalize well, modularized and reusable code,
             type-discriminated data, optimized code, zero maintenance burden. Minimize future pain, etc.
