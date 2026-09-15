@@ -184,6 +184,21 @@ const _knownCohereModels = llmsDefineModels<_CohereModelDef>()([
     hidden: true,
   },
 
+  // North Small Translate - specialized translation (North platform, hidden by default). Docs name it
+  // 'north-small-translate-1-0', but only this dated id resolves on the API.
+  {
+    idPrefix: 'north-small-translate-09-2026',
+    label: 'North Small Translate',
+    pubDate: '20260910',
+    description: 'Translation MoE (218B total, 25B active, CC BY-NC 4.0) from Cohere\'s North platform, covering 50+ languages and locales. 32K context, 16K output. Text only, no tool use.',
+    contextWindow: 32768,
+    interfaces: _IF_Chat, // the API rejects tool use and image parts
+    maxCompletionTokens: 16384, // API-enforced ceiling
+    initialTemperature: 0, // Cohere sampling default
+    hidden: true,
+    // chatPrice: unset - free-tier Chat API for evaluation, commercial deployment via Model Vault
+  },
+
   // Aya Expanse 32B - multilingual research
   {
     idPrefix: 'c4ai-aya-expanse-32b',

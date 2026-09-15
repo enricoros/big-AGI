@@ -14,8 +14,7 @@ export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefi
 // - Cache:   https://www.alibabacloud.com/help/en/model-studio/context-cache (implicit hit = 20% of input; explicit create 125% / hit 10%; deepseek-v4-pro and
 //            the qwen3.8 line excepted - their rates come off the model pages)
 // 2026-09-14 pass (DeepSeek only): deepseek-v4.1-flash curated visible - DashScope's only route to V4.1 (it lists no undated
-//   'deepseek-flash'), peak card 0.3/1.2 with Alibaba's own 0.03 implicit cache-hit (Intl price table + model page, updated
-//   09-14), 1M in / 384K out, vision and thinking-off live-probed. Qwen/GLM/Kimi rows untouched.
+//   'deepseek-flash'), peak card 0.3/1.2 with Alibaba's own 0.03 implicit cache-hit (Intl price table + model page).
 // 2026-09-02 pass: qwen3.8-max-0902 curated visible (upgraded snapshot listed today; the base id still serves the 08-03 checkpoint per
 //   Alibaba's OpenRouter endpoint name, and the price table prints no 'Currently equivalent to' on qwen3.8-max). DeepSeek GA snapshots
 //   repriced: deepseek-v4-pro-0813 and -flash-0731 moved to peak/off-peak billing on 2026-08-17 (Intl table + model pages), we carry
@@ -441,12 +440,12 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   // card, as in deepseek.models.ts (no time dimension in the schema; off-peak requests are over-shown 2x). The undated ids keep their
   // flat rate, which now sits above the pro snapshot and below the flash one; deepseek-v4.1-flash is peak/off-peak from its listing.
   {
-    // V4.1-Flash on DashScope, listed by 2026-09-14 (DeepSeek GA 2026-09-10): 552B MoE, native image input, ahead of
-    // V4-Pro-0813 on the agentic set. Curated visible, not hidden like the -0731 revision: this version-suffixed id is not a
-    // snapshot beside an undated twin (DashScope lists no 'deepseek-flash'), so it is the only route to V4.1 and the best
-    // flash tier here. Live-probed 2026-09-14: images accepted with thinking on and off; enable_thinking:false works
-    // (preamble 49 -> 23 prompt tokens); reasoning_effort enum minimal|low|medium|high|xhigh|max|ultra - 'none' 400s, so Off
-    // rides on enable_thinking as the dialect already does; no per-tier preamble tell left, and max_tokens is not range-checked.
+    // V4.1-Flash on DashScope (DeepSeek GA 2026-09-10): 552B MoE, native image input, ahead of V4-Pro-0813 on the agentic
+    // set. Curated visible, not hidden like the -0731 revision: this version-suffixed id is not a snapshot beside an undated
+    // twin (DashScope lists no 'deepseek-flash'), so it is the only route to V4.1 and the best flash tier here. Images work
+    // with thinking on and off; enable_thinking:false works; reasoning_effort enum minimal|low|medium|high|xhigh|max|ultra -
+    // 'none' 400s, so Off rides on enable_thinking as the dialect already does; no per-tier preamble tell, and max_tokens
+    // is not range-checked.
     idPrefix: 'deepseek-v4.1-flash',
     label: 'DeepSeek V4.1 Flash (Alibaba)',
     parameterSpecs: _PS_DeepSeekEffort,

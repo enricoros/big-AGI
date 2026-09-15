@@ -44,7 +44,9 @@ type _PerplexityModelDef = ModelDescriptionSchema & { pubDate: string };
 // Migration map (https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/overview): sonar -> 'fast' preset,
 // sonar-pro -> 'low', sonar-reasoning-pro -> 'medium', sonar-deep-research -> 'high'.
 // Re-verified 2026-08-17 (live probes + https://docs.perplexity.ai/getting-started/pricing): ids, context windows and prices unchanged.
-// Re-verified 2026-08-31 (schema enum + PRICING.sonar + live probe): same 4 ids, prices and the 2026-09-27 sunset unchanged; all Aug-2026 changelog entries are Agent API/Router only.
+// Sunset 2026-09-27 is hard (community.perplexity.ai/t/sonar-is-moving-to-the-agent-api/5802): all 4 ids stop serving that day, with no successor on
+// /chat/completions. Sonar lives on as 'perplexity/sonar' on the Agent API (POST /v1/agent: preset + input -> typed output, not OpenAI-shaped); the
+// Router (/router/v1) is a separate open-weight product in limited preview. Neither is wired. On 2026-09-27: delete the 4 entries below.
 
 const _knownPerplexityChatModels = llmsDefineModels<_PerplexityModelDef>()([
 

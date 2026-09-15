@@ -41,8 +41,9 @@ const _PS_GlmEffort: ModelDescriptionSchema['parameterSpecs'] = [
 // with the 400 oracle, every model still echoes an nvidia/*-NVFP4 id, prices unchanged on
 // modular.com/pricing.
 // 2026-08-31 pass: google/gemma-4-26b-a4b-it delisted (404 on use, gone from the rate card) - entry removed.
-// zai-org/glm-5.3 landed (added below). MiniMaxAI/MiniMax-M3-MXFP8 is newly listed but 503s on use
-// (not serving yet) - left to the uncurated fallback until it stabilizes.
+// zai-org/glm-5.3 landed (added below; it echoes its own id, not an nvidia/*-NVFP4 one). MiniMaxAI/MiniMax-M3-MXFP8
+// was listed briefly (503 on use) and delisted again. The marketing page shows a 'GLM 5.3 Flash' that /v1/models does
+// not list - not added until it does.
 const _modularKnownModels = llmsDefineManualMappings([
   {
     idPrefix: 'minimax/minimax-m3',
@@ -64,9 +65,9 @@ const _modularKnownModels = llmsDefineManualMappings([
     maxCompletionTokens: 32768, // unverified
     // no Reasoning (the catalog claims it, but this deployment exposes no reasoning surface) and no Json
     // (json_object emits type-corrupted output here)
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_PromptCaching],
     benchmark: { cbaElo: 1451 }, // lmarena: gemma-4-31b
-    chatPrice: { input: 0.25, output: 0.65 },
+    chatPrice: { input: 0.25, output: 0.65, cache: { read: 0.08 } },
   },
   // REMOVED: google/gemma-4-26b-a4b-it (delisted + 404 on use + off the rate card, 2026-08-31)
   {
@@ -78,7 +79,7 @@ const _modularKnownModels = llmsDefineManualMappings([
     maxCompletionTokens: 131072, // unverified
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching],
     // no benchmark: no arena row for kimi-k2.7-code as of 2026-08-17
-    // chatPrice: not on the rate card as of 2026-08-17 (modular.com/pricing lists Kimi K2.5 0.60/3.00/0.12 and
+    // chatPrice: not on the rate card as of 2026-09-14 (modular.com/pricing lists Kimi K2.5 0.60/3.00/0.12 and
     // K2.6 0.85/3.50/0.16, no K2.7 row) - add when published
   },
   {
@@ -99,8 +100,8 @@ const _modularKnownModels = llmsDefineManualMappings([
     idPrefix: 'z-ai/glm-5.2',
     label: 'GLM 5.2',
     pubDate: '20260616', // = zai.models.ts 'glm-5.2'
-    description: 'Zhipu GLM-5.2 open-weights coding/agentic MoE (753B, ~40B active), reasoning on by default (effort control), text-only. Served as NVIDIA NVFP4 (4-bit) quantization with speculative decoding, 160K context on the shared endpoint (native: 1M).',
-    contextWindow: 163840, // enforced by the shared endpoint (400 'exceeds the configured maximum context length of 163840 tokens', probed 2026-08-16); the marketing page's 1M is the weights, not the deployment
+    description: 'Zhipu GLM-5.2 open-weights coding/agentic MoE (753B, ~40B active), reasoning on by default (effort control), text-only. Served as NVIDIA NVFP4 (4-bit) quantization with speculative decoding, full 1M context.',
+    contextWindow: 1048576, // enforced by the shared endpoint (400 'exceeds the configured maximum context length of 1048576 tokens'); was 163840 until Sep 2026
     maxCompletionTokens: 131072, // unverified
     // no Vision (image_url REJECTED 400: text-only deployment) and no Json (json_object is clean
     // but json_schema strict emits template-token garbage inside valid JSON - probed 2026-08-14)

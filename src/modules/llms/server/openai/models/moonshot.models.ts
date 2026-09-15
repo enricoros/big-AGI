@@ -39,7 +39,7 @@ const _PS_ReasoningEffort: ModelDescriptionSchema['parameterSpecs'] = [
  * - models list: https://platform.kimi.ai/docs/models (was platform.moonshot.ai - now 301 redirect)
  * - pricing: https://platform.kimi.ai/docs/pricing/chat is just an index; per-model pages are chat-k3, chat-k27-code, chat-k26, chat-k25, chat-v1
  * - API docs: https://platform.kimi.ai/docs/api/chat + https://platform.kimi.ai/docs/api/models-overview (per-model parameter matrix)
- * - updated: 2026-08-31
+ * - updated: 2026-09-14
  * - NOTE: K2 series (non-2.5/2.6) discontinued on 2026-05-25, removed from API; kept hidden for fallback.
  * - NOTE: kimi-k2.5 and the moonshot-v1 series retired on 2026-08-31 (removed from API, calls 404); kept hidden for fallback.
  * - NOTE: 'sk-kimi-' subscription keys list a separate 3-model catalog from api.kimi.com/coding (see the Kimi Code section below);
@@ -264,7 +264,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
 
   // Vision Models (same 2026-08-31 sunset as the rest of the V1 series)
   {
-    // hidden: false, not hidden - only non-hidden vision for now
+    // retired with the V1 series; K2.6/K2.7/K3 carry vision, so nothing to keep visible
     idPrefix: 'moonshot-v1-128k-vision-preview',
     label: 'V1 128K Vision (Preview)',
     pubDate: '20250115',
@@ -273,6 +273,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
     chatPrice: { input: 2.00, output: 5.00 },
     isPreview: true,
+    hidden: true,
   },
   {
     idPrefix: 'moonshot-v1-32k-vision-preview',

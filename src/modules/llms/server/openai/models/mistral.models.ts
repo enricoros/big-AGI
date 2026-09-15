@@ -12,7 +12,7 @@ const DEV_DEBUG_MISTRAL_MODELS = Release.IsNodeDevBuild; // not in staging to re
 
 
 // [Mistral]
-// Updated 2026-08-31
+// Updated 2026-09-14
 // - models on: https://docs.mistral.ai/models/overview (cards moved to /models/<slug>)
 // - pricing on: https://docs.mistral.ai/inference/pricing (now server-rendered; cards carry the same numbers)
 // - benchmark elo on CBA
@@ -59,8 +59,8 @@ const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
   'mistral-vibe-cli-with-tools': { pubDate: '20260428', chatPrice: { input: 1.5, output: 7.5, cache: { read: 0.15 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2604 (Vibe CLI alias)
   'magistral-medium-latest': { pubDate: '20260428', chatPrice: { input: 1.5, output: 7.5, cache: { read: 0.15 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2604 (the Magistral Medium line was folded into Medium 3.5)
 
-  // RETIRED 2026-08-31 (gone from the API, docs retired table -> Mistral Medium 3.5): devstral-2512 (Devstral 2) and its
-  // devstral-latest / devstral-medium-latest / mistral-code-agent-latest aliases; labs-devstral-small-2512 also unlisted
+  // RETIRED (gone from the API, docs retired table -> Mistral Medium 3.5): devstral-2512 (Devstral 2), retired 2026-07-31, and its
+  // devstral-latest / devstral-medium-latest / mistral-code-agent-latest aliases; labs-devstral-small-2512 retired 2026-03-31
 
   'codestral-2508': { pubDate: '20250730', chatPrice: { input: 0.3, output: 0.9, cache: { read: 0.03 } } }, // code generation (Codestral 25.08)
   'codestral-latest': { pubDate: '20250730', chatPrice: { input: 0.3, output: 0.9, cache: { read: 0.03 } }, hidden: true }, // symlink

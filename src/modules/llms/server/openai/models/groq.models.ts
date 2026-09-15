@@ -18,7 +18,7 @@ const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduc
  * - models list: https://console.groq.com/docs/models
  * - pricing: the per-model card PRICING block, e.g. https://console.groq.com/docs/model/openai/gpt-oss-120b (groq.com/pricing is JS-rendered, no table)
  * - deprecations (shutdown dates + replacements): https://console.groq.com/docs/deprecations
- * - updated: 2026-08-31
+ * - updated: 2026-09-14
  */
 type _GroqModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 

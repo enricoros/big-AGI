@@ -664,13 +664,11 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     benchmark: undefined, // video generation, not benchmarkable on standard tests
   },
 
-  // Antigravity Agent Preview (09-2026) - appeared on the list API 2026-09-14, UNDOCUMENTED: no changelog entry,
-  // no pricing line, and the Antigravity docs still describe only the 05-2026 agent. 1M in / 64K out; generateContent
-  // 400s ("This model only supports Interactions API."), same as its 05-2026 sibling, so it rides LLM_IF_GEM_Interactions.
-  // Verified live 2026-09-14: zero code changes needed - the adapter/parser `isAntigravity` gates match on 'antigravity-'
-  // and the run is contract-identical to 05-2026 (agent path, store:true, background:false, environment:'remote', native
-  // system_instruction) -> clean steps-schema stream (created -> status_update -> model_output step -> completed) with
-  // the modeled `usage` block. No supersession announced, so 05-2026 stays visible.
+  // Antigravity Agent Preview (09-2026) - UNDOCUMENTED by Google (no changelog entry, no pricing line; the Antigravity docs
+  // still describe only the 05-2026 agent). 1M in / 64K out; generateContent 400s ("This model only supports Interactions
+  // API."), same as its 05-2026 sibling, so it rides LLM_IF_GEM_Interactions with no code changes: the adapter/parser
+  // `isAntigravity` gates match on 'antigravity-' and the run is contract-identical to 05-2026. No supersession announced,
+  // so 05-2026 stays visible.
   {
     id: 'models/antigravity-preview-09-2026',
     labelOverride: 'Antigravity Agent Preview (2026-09)',

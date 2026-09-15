@@ -29,8 +29,7 @@ const IF_CHAT_FN = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
  * Cerebras models - fast OpenAI-compatible inference (wafer-scale).
  * - models list: https://inference-docs.cerebras.ai/models/overview
  * - pricing: https://www.cerebras.ai/pricing (per-token rates from /public/v1/models)
- * - updated: 2026-09-14 (gemma-4-31b off the public endpoints; qwen-3.8-27b curated - caps, effort ladder,
- *   vision and prompt caching all live-probed)
+ * - updated: 2026-09-14
  *
  * EDITORIAL OVERRIDES: the /public/v1/models catalog carries pricing/limits/capabilities, but its
  * metadata lags for new models (it used to report gemma-4-31b with all caps false and an 8K context -
@@ -65,7 +64,7 @@ const _knownCerebrasModels = llmsDefineModels<_CerebrasModelDef>()([
     label: 'Qwen 3.8 27B',
     pubDate: '20260814', // = alibaba.models.ts 'qwen3.8-27b' (Qwen's open-weights release; Cerebras onboarded it 2026-09-03)
     description: 'Alibaba Qwen 3.8 27B dense vision-language model on Cerebras (~1,850 tok/s). Vision (base64 PNG/JPEG, max 10 images), function calling, reasoning (on by default at high, off via effort). 131K context (65K free tier), 40K max output.',
-    contextWindow: 131072, // paid-tier window (docs); the catalog row still reports the 65,536 free-trial cap - 68,919 prompt tokens accepted live 2026-09-14
+    contextWindow: 131072, // paid-tier window (docs, and a 69K-token prompt is accepted); the catalog row reports the 65,536 free-trial cap
     maxCompletionTokens: 40960,
     interfaces: [...IF_CHAT_FN, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
     parameterSpecs: [
@@ -81,7 +80,7 @@ const _knownCerebrasModels = llmsDefineModels<_CerebrasModelDef>()([
   // the public catalog - no replacement named, no serverless GLM 5.x on Cerebras (GLM-5.3 weights not public yet).
   // 'gemma-4-31b' (multimodal, $0.99/$1.49, 131K/40K, effort none|high) off the public endpoints 2026-09-03 (docs
   // /support/deprecation), Dedicated-Endpoints only now, docs page gone; the keyed /v1/models still lists it but
-  // generation 404s model_not_found (verified 2026-09-14). Cerebras points multimodal workloads at 'qwen-3.8-27b'.
+  // generation 404s model_not_found. Cerebras points multimodal workloads at 'qwen-3.8-27b'.
 ]);
 
 

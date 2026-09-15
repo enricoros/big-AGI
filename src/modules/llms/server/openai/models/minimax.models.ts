@@ -19,7 +19,7 @@ export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
  * - Pricing: https://platform.minimax.io/docs/guides/pricing-paygo.md
  * - Text generation: https://platform.minimax.io/docs/guides/text-generation.md
  * - OpenAI-compatible reference (model enum, max_completion_tokens caps, thinking/service_tier): https://platform.minimax.io/docs/api-reference/text-chat-openai.md
- * - Updated: 2026-08-24
+ * - Updated: 2026-09-14
  */
 type _MiniMaxModelDef = ModelDescriptionSchema & { pubDate: string };
 

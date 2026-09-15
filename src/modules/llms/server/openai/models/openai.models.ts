@@ -1341,7 +1341,7 @@ const openAIModelsDenyList: string[] = [
   // STT models: /v1/audio/transcriptions, /v1/audio/translations - not chat models (supported by ASRx batch instead)
   'whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', 'gpt-4o-transcribe-diarize', 'gpt-transcribe',
   'gpt-live-transcribe', // STT via realtime transcription sessions only - no batch endpoint, not supported yet
-  'gpt-live-1', // full-duplex voice (speech-to-speech), served on /v1/live/sessions only - chat 404, responses 500 (verified 2026-09-14)
+  'gpt-live-1', // full-duplex voice (speech-to-speech), served on /v1/live/sessions only - chat 404, responses 500
 
   // Image-focused chat models (non-standard image output pricing)
   'gpt-5-image', 'gpt-5-image-mini',
@@ -1628,8 +1628,7 @@ export function llmOrtOaiLookup(orModelName: string): OrtVendorLookupResult | un
   // typemap to known models
   const ortOaiRefMap: Record<string, string | null> = {
     // renames
-    // [2026-09-14] 'gpt-6-astra-pro' is not an OpenAI id (404 model_not_found on /v1/responses): it's Astra with
-    // reasoning.mode=pro, priced identically - OR-probed: effort 'low' accepted, ~1.5K scaffold, answer arrives whole
+    // [2026-09-14] 'gpt-6-astra-pro' is not an OpenAI id (404 model_not_found): it's Astra with reasoning.mode=pro, priced identically
     'gpt-6-astra-pro': 'gpt-6-astra',
     // [2026-07-11] OR materializes GPT-5.6 Pro mode as standalone '-pro' ids - map to the tier entries (OR supplies label + pricing)
     'gpt-5.6-sol-pro': 'gpt-5.6-sol',

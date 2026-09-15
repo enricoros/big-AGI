@@ -54,6 +54,8 @@ const _sparkContributorPrice: ModelDescriptionSchema['chatPrice'] = {
 //   safety testing - re-probe). Omitted, the server defaults to 'high' - left as the vendor default (no initialValue).
 // - web search: the OpenAI-shaped hosted 'web_search' tool, with search_context_size low|medium|high and an approximate
 //   user_location (dev.meta.ai/docs/search-grounding); $2.50 / 1K queries on top of tokens. Responses API only.
+// - Docs (reasoning.md + the Responses schema) list a 'max' effort for muse-spark-1.3 Standard only (not Contributor,
+//   not 1.1/1.2); unconfirmed on the wire, so not in enumValues until probed.
 const _sparkParamSpecs: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndOaiEffort', enumValues: ['minimal', 'low', 'medium', 'high', 'xhigh'] },
   { paramId: 'llmVndOaiWebSearchContext' },

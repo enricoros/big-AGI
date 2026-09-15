@@ -47,7 +47,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
   // GLM-5.3 - 1M context flagship (post-train of the GLM-5.2 base; coding, cyber, agentic)
   // 1M context, 128K output (max_tokens ceiling live-verified 131072). Thinking compulsory, reasoning_effort low|high|max.
   // Released 2026-08-14 on the GLM Coding Plan; standard API GA since (pay-as-you-go key live-verified 2026-08-27, rate card published).
-  // Weights not public as of 2026-08-27 (no zai-org/GLM-5.3 on HF; GLM-5.3-Flash weights are out, see below).
+  // Weights: bespoke GLM-5.3 License, HF zai-org/GLM-5.3, 753B params (first weights commit 2026-08-27).
   {
     idPrefix: 'glm-5.3',
     label: 'GLM-5.3 (1M)',
@@ -75,7 +75,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 131072, // 128K
     parameterSpecs: _PS_Reasoning_Compulsory,
-    chatPrice: { input: 0.15, output: 0.5, cache: { read: 0.03 } }, // list price; 50% promo (0.075/0.25, cache 0.015) through 2026-09-09
+    chatPrice: { input: 0.15, output: 0.5, cache: { read: 0.03 } }, // list price (the 50% launch promo ended 2026-09-09)
     initialTemperature: 1.0, // HF generation_config
     // benchmark: not on lmarena as of 2026-08-27
   },

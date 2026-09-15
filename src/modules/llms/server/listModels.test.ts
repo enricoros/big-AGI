@@ -34,6 +34,7 @@
 //   ollama              ollama          (opt-in via             localhost:11434
 //                                        BIGAGI_TEST_OLLAMA_HOST)
 //   openai-compatible   alibaba         ALIBABA_API_KEY         dashscope-intl.aliyuncs.com
+//   openai-compatible   cohere          COHERE_API_KEY          api.cohere.ai/compatibility
 //   openai-compatible   deepseek        DEEPSEEK_API_KEY        api.deepseek.com
 //   openai-compatible   groq            GROQ_API_KEY            api.groq.com
 //   openai-compatible   lmstudio        (opt-in via             localhost:1234
@@ -230,6 +231,18 @@ describe('listModels enumeration', () => {
       { dialect: 'cerebras', ...openAIShape({ oaiKey: E.CEREBRAS_API_KEY || '' }) } as AixAPI_Access,
       1, 'cerebras/live',
     );
+  });
+
+  test('openai-compat/cohere: live listing', { skip: skipIfMissing('COHERE_API_KEY') }, async () => {
+    // the compat /v1/models list mixes chat with embed/rerank/transcribe/parse endpoints: those must be filtered out
+    const models = await expectOk(
+      { dialect: 'cohere', ...openAIShape({ oaiKey: E.COHERE_API_KEY || '' }) } as AixAPI_Access,
+      1, 'cohere/live',
+    );
+    ok(!models.some(m => /^(embed-|rerank-|cohere-transcribe|parse-)/.test(m.id)), 'cohere: non-chat endpoints are dropped');
+    ok(models.some(m => m.id.startsWith('command-a-')), 'cohere: Command A family present');
+    // curated entries always carry a measured context; 0-day '[?]' arrivals legitimately have null
+    ok(models.filter(m => !llmsIsLabelUncurated(m.label)).every(m => m.contextWindow !== null), 'cohere: all curated models carry a context window');
   });
 
   test('openai-compat/deepseek: live listing', { skip: skipIfMissing('DEEPSEEK_API_KEY') }, async () => {

@@ -49,6 +49,9 @@ const _PS_Thinking: ModelDescriptionSchema['parameterSpecs'] = [
 // not cold-path flicker): gpt-oss-20b (control-plane deprecationDate 2026-08-27, supportsServerless=false) and the
 // kimi-k2p7-code-fast / kimi-k2p6-turbo routers - all three also dropped from the docs pricing table. glm-5p3-flash
 // joined the pricing table. No price drift on the survivors.
+// Announced for 2026-09-25 serverless decommission (docs changelog, incl. Fast/US tiers) - kept until they actually go:
+// deepseek-v4-flash-0731, deepseek-v4-pro-0813, deepseek-v4-flash-vision-exp, glm-5p2 (+ -fast), muse-glimmer-30b,
+// kimi-k2p6, kimi-k2p7-code.
 const _fireworksKnownModels = llmsDefineManualMappings([
   {
     idPrefix: 'accounts/fireworks/models/glm-5p3-flash',
@@ -72,6 +75,17 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high', 'max'] }],
     benchmark: { cbaElo: 1487 }, // lmarena: glm-5.3-max
     chatPrice: { input: 1.40, output: 4.40, cache: { read: 0.26 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/routers/glm-5p3-fast',
+    label: 'GLM 5.3 Fast',
+    pubDate: '20260814', // = glm-5p3
+    description: 'Fast serving path for GLM 5.3: same model and quality, lower latency, higher per-token price.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_REASON,
+    // same ladder as glm-5p3 (the router echoes it): 'none' 400s "thinking-only model", medium = high, xhigh = max = default
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high', 'max'] }],
+    chatPrice: { input: 2.10, output: 6.60, cache: { read: 0.39 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/deepseek-v4-pro-0813',
@@ -120,6 +134,17 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high'] }],
     benchmark: { cbaElo: 1426 }, // lmarena: muse-glimmer
     chatPrice: { input: 0.35, output: 1.50, cache: { read: 0.04 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/deepseek-v4-flash-vision-exp',
+    label: 'DeepSeek V4 Flash Vision Exp (Vision)',
+    pubDate: '20260831', // Fireworks control-plane createTime (DeepSeek never shipped this on its own API)
+    description: 'Experimental multimodal member of the DeepSeek V4 family: V4 Flash plus visual modules and continued training, for stronger multimodal agent work at parity on text-only tasks.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    // 'none' is hard-off; 'low' is accepted but not honored (same template as default), medium = high, xhigh = max
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high', 'max'] }],
+    chatPrice: { input: 0.22, output: 0.66, cache: { read: 0.007 } }, // same card as v4p1-flash
   },
   {
     idPrefix: 'accounts/fireworks/models/deepseek-v4p1-flash',
@@ -232,17 +257,8 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     benchmark: { cbaElo: 1444 }, // lmarena: minimax-m3
     chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.06 } },
   },
-  {
-    idPrefix: 'accounts/fireworks/models/qwen3p7-plus',
-    label: 'Qwen3.7 Plus (Vision)',
-    pubDate: '20260601', // = alibaba.models.ts 'qwen3.7-plus' (upstream release, not the Fireworks listing)
-    description: 'Alibaba flagship closed model, available outside Alibaba infrastructure exclusively through Fireworks AI.',
-    contextWindow: null, // not published by Fireworks
-    interfaces: IF_CHAT_FN_VISION_REASON,
-    parameterSpecs: _PS_Thinking, // 'max'/'xhigh' are accepted but indistinguishable from 'high' (live-probed 2026-08-17), so the ladder stops at 'high'
-    benchmark: { cbaElo: 1458 }, // lmarena: qwen3.7-plus
-    chatPrice: { input: 0.40, output: 1.60, cache: { read: 0.08 } },
-  },
+  // 'accounts/fireworks/models/qwen3p7-plus': retired from serverless 2026-09-10 (supportsServerless=false, generation 404s) -
+  // still listed by /inference/v1/models, hence the id deny below
   {
     idPrefix: 'accounts/fireworks/models/nemotron-3-ultra-nvfp4',
     label: 'NVIDIA Nemotron 3 Ultra NVFP4',
@@ -254,17 +270,8 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     benchmark: { cbaElo: 1427 }, // lmarena: nvidia-nemotron-3-ultra-550b-a55b-nvfp4
     chatPrice: { input: 0.60, output: 2.40, cache: { read: 0.12 } },
   },
-  {
-    idPrefix: 'accounts/fireworks/models/deepseek-v4-pro',
-    label: 'DeepSeek V4 Pro',
-    pubDate: '20260424',
-    description: 'DeepSeek flagship open MoE (1.6T params) for frontier reasoning, coding, and long-context work up to 1M tokens. Hybrid attention keeps long contexts efficient.',
-    contextWindow: 1_048_576, // 1M
-    interfaces: IF_CHAT_FN_REASON,
-    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
-    benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro
-    chatPrice: { input: 1.74, output: 3.48, cache: { read: 0.145 } },
-  },
+  // 'accounts/fireworks/models/deepseek-v4-pro': the undated April checkpoint retired from serverless 2026-08-27 (deprecationDate,
+  // generation 404s) - superseded by the -0813 id above; still listed by /inference/v1/models, hence the id deny below
   // 'accounts/fireworks/models/deepseek-v4-flash': the undated April checkpoint retired from serverless (control-plane
   // deprecationDate 2026-08-14 + supportsServerless=false, absent from /inference/v1/models, generation 404s, 2026-08-17)
   // - superseded by the -0731 id above, which is what the pricing table now calls 'DeepSeek V4 Flash (0731)'
@@ -280,16 +287,8 @@ const _fireworksKnownModels = llmsDefineManualMappings([
   },
   // 'accounts/fireworks/routers/kimi-k2p6-turbo' (pricing-table name 'Kimi K2.6 Fast'): retired from serverless
   // (absent from /inference/v1/models, generation 404s, dropped from the docs pricing table, 2026-08-31)
-  {
-    idPrefix: 'accounts/fireworks/models/minimax-m2p7',
-    label: 'MiniMax M2.7',
-    pubDate: '20260318', // = minimax.models.ts 'MiniMax-M2.7' (upstream API launch; the open weights followed on 20260409)
-    description: 'MiniMax MoE built for complex agent harnesses and elaborate productivity tasks, leveraging Agent Teams, Skills, and dynamic tool search.',
-    contextWindow: 196_608, // 192K
-    interfaces: IF_CHAT_FN_REASON,
-    benchmark: { cbaElo: 1416 }, // lmarena: minimax-m2.7
-    chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.06 } },
-  },
+  // 'accounts/fireworks/models/minimax-m2p7': retired from serverless 2026-08-27 (deprecationDate, generation 404s) - still
+  // listed by /inference/v1/models, hence the id deny below
   // 'accounts/fireworks/models/glm-5p1': retired from serverless (absent from /inference/v1/models, control plane supportsServerless=false, 2026-08-15); pricing page still lists it
   {
     idPrefix: 'accounts/fireworks/models/gpt-oss-120b',
@@ -309,6 +308,14 @@ const _fireworksKnownModels = llmsDefineManualMappings([
 
 const _fireworksDenyListContains: string[] = [
   // 'kimi-k2p5', // deprecated 2026-06-16 (Fireworks control-plane deprecationDate); still listed serverless but retired, and absent from the pricing table
+];
+
+// Exact ids (not substrings: 'deepseek-v4-pro' is a prefix of the live 'deepseek-v4-pro-0813') that /inference/v1/models
+// still returns although serving is gone (control-plane supportsServerless=false, generation 404s).
+const _fireworksDenyListExact: string[] = [
+  'accounts/fireworks/models/deepseek-v4-pro', // deprecationDate 2026-08-27
+  'accounts/fireworks/models/minimax-m2p7', // deprecationDate 2026-08-27
+  'accounts/fireworks/models/qwen3p7-plus', // no deprecationDate, supportsServerless flipped false 2026-09-10
 ];
 
 
@@ -376,6 +383,9 @@ export function fireworksAIModelsToModelDescriptions(wireModels: unknown): Model
 
       // embedding/reranker models are listed with supports_chat=true (qwen3-embedding-8b, qwen3-reranker-8b): 'kind' is the reliable signal
       if (model.kind === 'EMBEDDING_MODEL')
+        return false;
+
+      if (_fireworksDenyListExact.includes(model.id))
         return false;
 
       return !_fireworksDenyListContains.some(contains => model.id.includes(contains));

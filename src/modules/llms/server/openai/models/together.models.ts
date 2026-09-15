@@ -41,9 +41,8 @@ const _togetherAIDenyList: string[] = [
 // Sweep 2026-08-31 (74 priced rows): all 53 entries below still dead (Kimi-K2.6 now errors 'all configured
 // deployments are stopped' instead of the non-serverless 400 - still dead); 21 alive, +Qwen3.8-Flash (new,
 // streaming-only like the other Qwen Plus/Max tiers) and +GLM-5.3 (relisted and serving, see pubDates below).
-// Sweep 2026-09-14 (74 priced rows): 22 alive = the 21 + DeepSeek-V4.1-Flash (listed 2026-09-12, matches the docs
-// table), all 52 listed ids still dead (same two odd errors: Kimi-K2.6 'deployments are stopped', GLM-4.5-Air-FP8 503);
-// deepseek-ai/DeepSeek-V4-Pro is gone from /v1/models altogether (entry kept, harmless).
+// Sweep 2026-09-14: unchanged (52 dead, 22 alive incl. the new DeepSeek-V4.1-Flash); deepseek-ai/DeepSeek-V4-Pro is gone
+// from /v1/models altogether (entry kept, harmless).
 // Membership rotates fast in both directions ('created' gets re-stamped) - probe, never trust this list's age.
 // Accepted cost: a user with a dedicated endpoint for one of these ids no longer sees it.
 const _togetherAIRetiredIds = new Set<string>([
@@ -175,7 +174,7 @@ const _togetherEditorialPubDates: Record<string, string> = {
   'zai-org/GLM-5.3-FP8': '20260814', // dedicated-only quant of the above (0/0-priced, no serverless row)
   'zai-org/GLM-5.3-Flash': '20260825', // = zai.models.ts 'glm-5.3-flash' (HF weights 2026-08-25)
   'Qwen/Qwen3.8-Flash': '20260826', // no alibaba.models.ts id yet: OpenRouter listing date - true up if DashScope lands one
-  'deepseek-ai/DeepSeek-V4.1-Flash': '20260910', // = deepseek.models.ts 'deepseek-flash'; listed and serving since 2026-09-12 at DeepSeek's own peak card (0.3/1.2, cached 0.006)
+  'deepseek-ai/DeepSeek-V4.1-Flash': '20260910', // = deepseek.models.ts 'deepseek-flash'
 };
 
 /** 'YYYYMMDD' -> Unix epoch seconds (UTC midnight), 0 when absent - for list placement only */

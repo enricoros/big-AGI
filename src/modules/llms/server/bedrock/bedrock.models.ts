@@ -26,7 +26,12 @@
 //   profiles are account-gated (401 access_denied, "contact AWS Sales"; re-checked 2026-08-25) - curated
 //   anyway via #1167 (author live-verified on an access-enabled account): the 401 is self-explanatory for
 //   accounts without the enablement.
-// - Model list: https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
+// - Docs-only findings awaiting a live re-check (no AWS creds here): AWS documents an Anthropic-native 'Messages' API on
+//   bedrock-mantle for the Claude 5 / Opus 4.7-4.8 / Haiku 4.5 family (not wired here); qwen.qwen3-235b-a22b-2507 now has a
+//   bedrock-runtime '-v1:0' id, so it (and maybe other KNOWN_MANTLE_ONLY qwen3/deepseek/kimi ids) may be FM-promoted like
+//   qwen3-coder-next was; the gpt-oss cards say 16K max output vs the live-probed out:128000 kept below; GLM 4.6 is off
+//   the Z.AI model-cards page (Legacy vs removed unclear).
+// - Model list: https://docs.aws.amazon.com/bedrock/latest/userguide/model-cards.html (models-supported.html is now a stub)
 
 import * as z from 'zod/v4';
 
@@ -49,16 +54,16 @@ const SKIP_MANTLE_TOOLS_IDS = ['writer.palmyra-vision-7b']; // 400s: '"auto" too
 // except the gpt-oss output cap, which is Bedrock's own (converse.maxTokensMaximum on openai.gpt-oss-*-1:0).
 // `api: 'responses'`: model only implements the OpenAI Responses API (on the '/openai/v1/responses' path) and rejects
 // Chat Completions with a 400 - see https://docs.aws.amazon.com/bedrock/latest/userguide/models-api-compatibility.html
-// GPT-5.x sizes follow the AWS model cards (272K ctx); the OpenAI vendor lists this family at 1M - Bedrock's real
-// cap is not probeable while account-gated, so the cards stand.
+// GPT-5.x ctx is 1M per the AWS model cards (272K is only the short/long pricing-tier boundary); out stays 128000 (cards say
+// "N/A"). deepseek.v3.1 out 8192 and kimi-k2-thinking out 16384 per their cards' "Max output tokens".
 const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: number; vision?: true; reasoning?: true; api?: 'responses' }> = {
-  'deepseek.v3.1': { label: 'DeepSeek V3.1', ctx: 131072, out: 16384 },
-  'moonshotai.kimi-k2-thinking': { label: 'Kimi K2 Thinking', ctx: 262144, out: 65536, reasoning: true },
-  'openai.gpt-5.4': { label: 'GPT-5.4', ctx: 272000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-5.5': { label: 'GPT-5.5', ctx: 272000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-5.6-luna': { label: 'GPT-5.6 Luna', ctx: 272000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-5.6-sol': { label: 'GPT-5.6 Sol', ctx: 272000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-5.6-terra': { label: 'GPT-5.6 Terra', ctx: 272000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'deepseek.v3.1': { label: 'DeepSeek V3.1', ctx: 131072, out: 8192 },
+  'moonshotai.kimi-k2-thinking': { label: 'Kimi K2 Thinking', ctx: 262144, out: 16384, reasoning: true },
+  'openai.gpt-5.4': { label: 'GPT-5.4', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-5.5': { label: 'GPT-5.5', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-5.6-luna': { label: 'GPT-5.6 Luna', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-5.6-sol': { label: 'GPT-5.6 Sol', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-5.6-terra': { label: 'GPT-5.6 Terra', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-oss-20b': { label: 'GPT-OSS 20B', ctx: 131072, out: 128000 },
   'openai.gpt-oss-120b': { label: 'GPT-OSS 120B', ctx: 131072, out: 128000 },
   'qwen.qwen3-32b': { label: 'Qwen3 32B', ctx: 131072, out: 16384 },
