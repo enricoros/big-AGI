@@ -272,9 +272,12 @@ export function fromManualMapping(mappings: ReadonlyArray<KnownModel | KnownLink
   let description = m.description || '';
   if (variant)
     label += ` [${variant}]`;
+  // an unknown variant of a curated base is shown as uncurated, while the base keeps its own `hidden`:
+  // never mutate `m`, it is the shared table entry (a `delete m.hidden` here un-hid the base for every later listing of the process)
+  let hidden = m.hidden;
   if (resolution === 'super') {
     label = llmsLabelUncurated(label);
-    delete m.hidden;
+    hidden = undefined;
   } else if (!disableSymlinkLooks && symlinkTarget) {
     // add a symlink icon to the label
     label = `🔗 ${label} -> ${symlinkTarget/*.replace(known.idPrefix, '')*/}`;
@@ -302,7 +305,7 @@ export function fromManualMapping(mappings: ReadonlyArray<KnownModel | KnownLink
   if (m.maxCompletionTokens) md.maxCompletionTokens = m.maxCompletionTokens;
   if (m.benchmark) md.benchmark = m.benchmark;
   if (m.chatPrice) md.chatPrice = m.chatPrice;
-  if (m.hidden) md.hidden = true;
+  if (hidden) md.hidden = true;
   if (m.initialTemperature !== undefined) md.initialTemperature = m.initialTemperature;
 
   return md;
