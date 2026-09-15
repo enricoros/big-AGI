@@ -100,8 +100,6 @@ export const LLMS_DEFS_EXTRA_BUCKETS = {
 
   // OpenAI-lookalike gateways, selected by host heuristics under the 'openai' dialect.
   // Custom-host OpenAI services (non api.openai.com) compare against this bucket.
-  // tlusapi is structure-detected across all OpenAI-compatible dialects but only ever
-  // triggers on custom gateways, so it lives here.
   // openai.models.ts is claimed too: proxies to OpenAI (LiteLLM, gateways) sit behind a
   // custom host but are parsed by the first-party parser, so its edits must reach them.
   // openrouter.models.ts is claimed for the Nous Research mapper reuse; its other
@@ -121,7 +119,6 @@ export const LLMS_DEFS_EXTRA_BUCKETS = {
       'openai/models/nvidianim.models.ts',
       'openai/models/openai.models.ts',
       'openai/models/openrouter.models.ts',
-      'openai/models/tlusapi.models.ts',
       'openai/wiretypes/baseten.wiretypes.ts',
       'openai/wiretypes/fireworksai.wiretypes.ts',
       'openai/wiretypes/llmapi.wiretypes.ts',

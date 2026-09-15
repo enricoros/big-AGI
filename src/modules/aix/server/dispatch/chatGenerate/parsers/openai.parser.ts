@@ -666,7 +666,7 @@ function _fromOpenAIFinishReason(finish_reason: string | null | undefined) {
     case 'end_turn': // [OpenRouter] Anthropic Claude 3.5 backend
     case 'COMPLETE': // [OpenRouter] Command R+
     case 'eos': // [OpenRouter] Phind: CodeLlama
-    case 'STOP': // [TLUS?]
+    case 'STOP': // some OpenAI-compatible gateways upper-case it
       return 'ok';
 
     // [OpenAI] finished due to requesting tool+ to be called

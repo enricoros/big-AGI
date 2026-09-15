@@ -1,5 +1,5 @@
 ---
-description: Update/validate dynamic vendor model parsers (OpenRouter, TogetherAI, Azure, Baseten, Novita, ChutesAI, FireworksAI, TLUS, LM Studio, LocalAI, FastAPI)
+description: Update/validate dynamic vendor model parsers (OpenRouter, TogetherAI, Azure, Baseten, Novita, ChutesAI, FireworksAI, LM Studio, LocalAI, FastAPI)
 ---
 
 Validate that the dynamic (API-fetched) vendor model parsers are up to date and not silently broken.
@@ -50,11 +50,6 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 - Type allow-list (`type: 'chat'`; 'language' = base LMs, correctly excluded), vision detection by id pattern - the API exposes no modality field, so cross-check families against OpenRouter/Fireworks. `config.chat_template` is not a substitute: GLM-5.2's template handles images but Together serves it text-only.
 - `created` is endpoint churn (0 for the newest arrivals) - pubDate comes only from `_togetherEditorialPubDates`.
 - Custom wire schema with pricing conversion.
-
-**TLUS** - `src/modules/llms/server/openai/models/tlusapi.models.ts`
-- Detected by response structure (`total_models`, `free_models`, `pro_models` fields).
-- Capability enum mapping (`text`, `vision`, `audio`, `tool-calling`, `reasoning`, `websearch`).
-- Tier-based pricing (`free` vs paid).
 
 ### Low Risk (local/generic - validate only if issues reported)
 

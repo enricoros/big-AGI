@@ -23,7 +23,7 @@ For the forward-looking pipeline (extraction script, snapshot, website consumpti
 
 - **Symlink entries** (`KnownLink`) - inherit the target's `pubDate` via the merge logic in `fromManualMapping`.
 - **Unknown variants resolved through `super`/`fallback`** in `fromManualMapping` for non-Anthropic/non-Gemini vendors - the field is left undefined rather than fabricated.
-- **Dynamic-only vendors** (OpenRouter, Novita, ChutesAI, FireworksAI, TLUS, Azure, LM Studio, LocalAI, FastAPI, ArceeAI, LLMAPI) - no editorial knob; pubDate flows in only when the underlying lookup or upstream API populates it.
+- **Dynamic-only vendors** (OpenRouter, Novita, ChutesAI, FireworksAI, Azure, LM Studio, LocalAI, FastAPI, ArceeAI, LLMAPI) - no editorial knob; pubDate flows in only when the underlying lookup or upstream API populates it.
 - **TogetherAI** graduated to an id-keyed editorial patch map (`_togetherEditorialPubDates`, 2026-07-12) after its `created` proved to be endpoint churn (re-stamped on redeploys: DeepSeek-V4-Pro, released 2026-04-24, carried created=2026-07-12; 28/269 endpoints report 0, including the newest arrivals). `created` never feeds pubDate there; it only drives list order, with the editorial date as placement fallback.
 
 The rationale: today's date is a defensible 0-day proxy only when we know we're seeing a brand-new model the vendor just announced (Anthropic and Gemini's "discovery via official model list" paths). For arbitrary dynamic vendors, fabricating today would mark old/well-known models as new - misleading. Better to omit.
@@ -91,7 +91,6 @@ Three categories:
 | FireworksAI | Dynamic | `openai/models/fireworksai.models.ts` | (parser) | -- | no |
 | Novita | Dynamic | `openai/models/novita.models.ts` | (parser) | -- | no |
 | ChutesAI | Dynamic | `openai/models/chutesai.models.ts` | (parser) | -- | no |
-| TLUS | Dynamic | `openai/models/tlusapi.models.ts` | (parser) | -- | no |
 | Azure | Dynamic | `openai/models/azure.models.ts` | (parser) | -- | no |
 | LM Studio | Dynamic | `openai/models/lmstudio.models.ts` | (parser) | -- | no |
 | LocalAI | Dynamic | `openai/models/localai.models.ts` | (parser) | -- | no |
@@ -122,6 +121,6 @@ Canonical symbols: `llmsLabelUncurated()` / `llmsIsLabelUncurated()` in `src/mod
 
 **Unmarked** (a type/modality filter proves chat): gemini, xai, together, novita, chutesai, cerebras - each carries an in-file "no '[?]' marker (evaluated 2026-08-14)" comment. Companion rule everywhere: never invent a context window - API value or `null`.
 
-**Exempt** (unknown is the norm; marking would blank whole services): OpenAI-compatible custom hosts (lenient bare `?` fallback, 128K/8K assumption), fastapi, tlusapi, lmstudio, localai, ollama.
+**Exempt** (unknown is the norm; marking would blank whole services): OpenAI-compatible custom hosts (lenient bare `?` fallback, 128K/8K assumption), fastapi, lmstudio, localai, ollama.
 
 **Legacy, not unified**: bedrock's ` [?]` label suffix (real context windows, so no publication effect; unifying would churn pushed specs).

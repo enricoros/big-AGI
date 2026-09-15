@@ -21,7 +21,7 @@
 // In particular, OPENAI_API_KEY is consumed ONLY when dialect='openai' AND the
 // request is targeting the default api.openai.com host (no access.oaiHost). It
 // is NEVER forwarded to third-party OpenAI-compatible hosts (Chutes, Fireworks,
-// MiniMax, Novita, Arcee, LLM API, FastChat, TLUS, etc.): those require their
+// MiniMax, Novita, Arcee, LLM API, FastChat, etc.): those require their
 // own upstream key passed via access.oaiKey from the UI/Models Setup.
 //
 //   Protocol            Dialect         Env var                 Endpoint
