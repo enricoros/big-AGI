@@ -1,6 +1,5 @@
 name: 🔥 Make AI Fix This
 description: Bug, question, or feedback - AI analyzes and changes Big-AGI appropriately
-labels: [ 'claude-triage' ]
 body:
   - type: markdown
     attributes:

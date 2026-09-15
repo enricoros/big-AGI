@@ -67,13 +67,21 @@ jobs:
                - Suggest workarounds for immediate relief if applicable
                - Use web search to find similar issues and solutions
                - Test selectively and even npm install and run build if needed to verify the solution
-            2. Always add the 'claude-triage' issue label to indicate this issue was triaged by Claude
+            2. Label the issue with exactly one of 'target_MAIN' or 'target_DEV' (`gh issue edit <number> --add-label`), no other label
             3. Comment with:
                - Very brief thank you note, if applicable
                - Initial assessment
                - Next steps or clarification needed
                - Link duplicates if found
-            
+
+            TARGET LABEL: `main` (public) is the open-source app people self-host; `dev` (private) is `main` plus the hosted
+            layer running big-agi.com Free/Pro. `main` flows into `dev`, so anything shared targets main.
+            Hosted-only, absent from the public checkout: accounts and sign-in, /me and /dashboard, Pro plan, billing, credits,
+            usage costs, cross-device sync, spaces, devices, tenants, admin, published links, notifications, spotlight search,
+            PWA install (code names: zync, xe, northbridge, ramble, variform, sigil, ukv, supabase, stripe, nextauth, cloud fabric).
+            Rules: self-deployed, Docker, local or Vercel -> target_MAIN, always. Otherwise, feature or error found in the
+            checkout -> target_MAIN; not found and hosted-only -> target_DEV. Unclear -> do not label.
+
             Remember: design values for this codebase: orthogonal features, features that generalize well, modularized and reusable code,
             type-discriminated data, optimized code, zero maintenance burden. Minimize future pain, etc.
 
