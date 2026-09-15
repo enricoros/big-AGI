@@ -1,43 +1,8 @@
 import { Release } from '~/common/app.release';
 
 
-/**
- * Abort an AbortController with a proper DOMException('AbortError') instead of a raw string,
- * so all downstream `error.name === 'AbortError'` checks work correctly.
- */
-export function abortWithReason(controller: AbortController | undefined | null, message: string): void {
-  controller?.abort(new DOMException(message, 'AbortError'));
-}
-
-/**
- * Detect cancellation errors that are expected when users stop generation,
- * navigate away, or an operation is intentionally torn down.
- */
-export function isAbortErrorLike(error: unknown): boolean {
-  if (!error) return false;
-
-  if (typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError')
-    return true;
-
-  if (error instanceof Error) {
-    if (error.name === 'AbortError')
-      return true;
-    if (error.cause)
-      return isAbortErrorLike(error.cause);
-  }
-
-  if (typeof error === 'object') {
-    const maybeError = error as { name?: unknown; message?: unknown; cause?: unknown; error?: unknown };
-    if (maybeError.name === 'AbortError')
-      return true;
-    if (maybeError.error)
-      return isAbortErrorLike(maybeError.error);
-    if (maybeError.cause)
-      return isAbortErrorLike(maybeError.cause);
-  }
-
-  return false;
-}
+// moved to abortUtils.ts - transition alias, remove once no importer uses this path (some Beam files, and dev-only files)
+export { abortWithReason, isAbortErrorLike } from './abortUtils';
 
 /**
  * React can throw these when browser extensions or translation tools mutate

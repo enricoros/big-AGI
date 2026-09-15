@@ -1,6 +1,6 @@
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
-import { abortWithReason } from '~/common/util/errorUtils';
+import { abortWithReason } from '~/common/util/abortUtils';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
 import { parseTextToChecklist, UserInputChecklistComponent } from './UserInputChecklistComponent';

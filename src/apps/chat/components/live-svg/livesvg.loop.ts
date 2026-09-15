@@ -17,6 +17,7 @@ import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wi
 import { LLM_IF_OAI_Vision, type DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMetricsChatGenerate_Md } from '~/common/stores/metrics/metrics.chatgenerate';
 import { llmsStoreState } from '~/common/stores/llms/store-llms';
+import { delayOrAbort } from '~/common/util/abortUtils';
 import { convert_Blob_To_Base64 } from '~/common/util/blobUtils';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { renderSVGToPNGBlob } from '~/common/util/imageUtils';
@@ -120,17 +121,6 @@ async function generateFrameText(llmId: DLLMId, baseReq: AixAPIChatGenerate_Requ
 }
 
 
-/** Resolves after `ms`, or immediately when aborted. */
-function abortableDelay(ms: number, abortSignal: AbortSignal): Promise<void> {
-  return new Promise<void>((resolve) => {
-    if (ms <= 0 || abortSignal.aborted) return resolve();
-    const onAbort = () => { clearTimeout(timer); resolve(); };
-    const timer = setTimeout(() => { abortSignal.removeEventListener('abort', onAbort); resolve(); }, ms);
-    abortSignal.addEventListener('abort', onAbort, { once: true });
-  });
-}
-
-
 /**
  * Run the live loop FOREVER - until the user stops it (status leaves 'running') or the signal aborts.
  * A single failed/empty/throwing iteration NEVER stops the loop: it is recorded as a transient error
@@ -150,7 +140,7 @@ export async function runLiveSvgLoop(llmId: DLLMId, abortSignal: AbortSignal): P
     liveSvgActions()._setError(message);
     liveSvgActions().pushLog('error', message);
     // backoff to avoid hammering on a persistent error (e.g. rate limit), capped at 5s; abortable
-    await abortableDelay(Math.min(5000, 500 * consecutiveFailures), abortSignal);
+    await delayOrAbort(Math.min(5000, 500 * consecutiveFailures), abortSignal);
   };
 
   liveSvgActions().pushLog('info', `▶ started · ${selLlm?.label ?? llmId}${attachImages ? '' : ' (text-only)'}`);
@@ -219,7 +209,7 @@ export async function runLiveSvgLoop(llmId: DLLMId, abortSignal: AbortSignal): P
       liveSvgActions().pushLog('info', `call · ${pushed} frame${pushed === 1 ? '' : 's'} · ${tokensOut} tok · ${tps.toFixed(0)} tok/s`);
 
       // pace generations (rate-friendly, user-adjustable); abortable so Stop stays responsive
-      await abortableDelay(liveSvgActions().frameDelayMs, abortSignal);
+      await delayOrAbort(liveSvgActions().frameDelayMs, abortSignal);
 
     } catch (e: any) {
       // never let a single iteration kill the loop - record and retry

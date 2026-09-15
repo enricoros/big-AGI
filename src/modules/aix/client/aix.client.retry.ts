@@ -1,3 +1,6 @@
+import { delayOrAbort } from '~/common/util/abortUtils';
+
+
 // configuration
 const RETRY_PROFILES = {
   network: { baseDelay: 500, maxDelay: 8000, jitter: 0.25 },    // Network interruptions
@@ -97,19 +100,11 @@ export class AixStreamRetry {
    */
   async delayedStep(delayMs: number, abortSignal: AbortSignal): Promise<StepResult> {
     if (abortSignal.aborted || delayMs <= 0) return delayMs === 0 ? 'completed' : 'aborted';
-    return await new Promise<StepResult>((resolve) => {
-      const onAbort = () => {
-        clearTimeout(timer);
-        resolve('aborted');
-      };
-      const timer = setTimeout(() => {
-        abortSignal.removeEventListener('abort', onAbort);
-        // record the attempt only after successful delay completion
-        this.mAttempts++;
-        resolve('completed');
-      }, delayMs);
-      abortSignal.addEventListener('abort', onAbort, { once: true });
-    });
+    if (await delayOrAbort(delayMs, abortSignal) === 'aborted')
+      return 'aborted';
+    // record the attempt only after successful delay completion
+    this.mAttempts++;
+    return 'completed';
   }
 
 }

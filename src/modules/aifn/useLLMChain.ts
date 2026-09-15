@@ -5,7 +5,7 @@ import type { AixChatGenerate_TextMessages } from '~/modules/aix/client/aix.clie
 import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import { abortWithReason } from '~/common/util/errorUtils';
+import { abortWithReason } from '~/common/util/abortUtils';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { getLLMContextTokens, getLLMMaxOutputTokens } from '~/common/stores/llms/llms.types';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';

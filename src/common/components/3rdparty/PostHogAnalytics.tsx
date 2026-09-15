@@ -1,7 +1,8 @@
 import * as React from 'react';
 import type { PostHog, Properties } from 'posthog-js';
 
-import { isAbortErrorLike, isBenignDomMutationError } from '~/common/util/errorUtils';
+import { isAbortErrorLike } from '~/common/util/abortUtils';
+import { isBenignDomMutationError } from '~/common/util/errorUtils';
 import { isBrowser } from '~/common/util/pwaUtils';
 import { Release } from '~/common/app.release';
 

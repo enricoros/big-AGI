@@ -1,4 +1,4 @@
-import { abortableDelay } from '~/server/wire';
+import { delayOrAbort } from '~/common/util/abortUtils';
 
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
@@ -105,7 +105,7 @@ export async function* executeChatGenerateWithOperationRetry(
 
       // If aborted during delay, let next attempt detect it and create proper terminating particle
       // (throwing here would bypass executor's particle-based messaging contract)
-      await abortableDelay(delayMs, abortSignal);
+      await delayOrAbort(delayMs, abortSignal);
 
       // -> loop continues for next attempt
     }

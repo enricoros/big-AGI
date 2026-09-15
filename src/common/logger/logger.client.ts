@@ -1,4 +1,5 @@
-import { isAbortErrorLike, maybeDebuggerBreak, serializeError } from '~/common/util/errorUtils';
+import { isAbortErrorLike } from '~/common/util/abortUtils';
+import { maybeDebuggerBreak, serializeError } from '~/common/util/errorUtils';
 import { posthogCaptureException } from '~/common/components/3rdparty/PostHogAnalytics';
 
 import type { ClientLogger, LogEntry, LogLevel, LogOptions, LogSource } from './logger.types';

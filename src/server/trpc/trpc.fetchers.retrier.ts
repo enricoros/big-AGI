@@ -1,5 +1,5 @@
 import { TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
-import { abortableDelay } from '~/server/wire';
+import { delayOrAbort } from '~/common/util/abortUtils';
 
 
 const AIX_DEBUG_SERVER_RETRY = true;
@@ -191,7 +191,7 @@ export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Pr
       });
 
       // abortable wait
-      if (await abortableDelay(delayMs, abortSignal))
+      if (await delayOrAbort(delayMs, abortSignal) === 'aborted')
         throw error;
 
       // -> loop continues for next attempt

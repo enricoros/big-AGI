@@ -180,30 +180,6 @@ export function createEmptyReadableStream<T = Uint8Array>(): ReadableStream<T> {
 
 
 /**
- * Used in retry logic to wait between attempts while respecting abort signals.
- * @returns True if aborted, false if completed normally
- */
-export function abortableDelay(delayMs: number, abortSignal: AbortSignal): Promise<boolean> {
-  return new Promise<boolean>((resolve) => {
-    // pre-check: already aborted or invalid delay
-    if (abortSignal.aborted || delayMs <= 0) {
-      resolve(abortSignal.aborted);
-      return;
-    }
-
-    const timer = setTimeout(() => resolve(false), delayMs);
-
-    const onAbort = () => {
-      clearTimeout(timer);
-      resolve(true);
-    };
-
-    abortSignal.addEventListener('abort', onAbort, { once: true });
-  });
-}
-
-
-/**
  * Debugging utility for logging network I/O with sequence tracking and timing.
  * Used for both server-side and client-side (via CSF) wire debugging.
  *

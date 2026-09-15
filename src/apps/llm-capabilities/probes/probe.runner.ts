@@ -2,6 +2,7 @@ import type { AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wi
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { aixCGR_FromSimpleText, aixCGR_SystemMessageText } from '~/modules/aix/client/aix.client.chatGenerateRequest';
 import { aixChatGenerateContent_DMessage_orThrow, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
+import { abortSignalReason } from '~/common/util/abortUtils';
 
 import { classifyOutcome, inspectFragments, sample } from './probe.inspector';
 import type { ProbeOutcome, ProbeResult, ProbeScenario } from './probe.types';
@@ -36,6 +37,33 @@ function _metricsFields(...ms: _Metrics[]) {
 
 
 /**
+ * A signal that aborts when `parent` aborts (with the parent's reason) or after `timeoutMs` (with
+ * `timeoutReason`), whichever comes first: AbortSignal.any + AbortSignal.timeout, which are below the
+ * browser floor. Call `dispose()` once the work is over, to release the timer and the parent listener;
+ * disposing does not abort. Would be in abortUtils if used more than once.
+ */
+function createAbortSignalWithTimeout(parent: AbortSignal | undefined, timeoutMs: number, timeoutReason: unknown): { signal: AbortSignal; dispose: () => void } {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(timeoutReason), timeoutMs);
+  const onParentAbort = () => {
+    clearTimeout(timer);
+    controller.abort(parent && abortSignalReason(parent));
+  };
+  if (parent?.aborted)
+    onParentAbort();
+  else
+    parent?.addEventListener('abort', onParentAbort, { once: true });
+  return {
+    signal: controller.signal,
+    dispose: () => {
+      clearTimeout(timer);
+      parent?.removeEventListener('abort', onParentAbort);
+    },
+  };
+}
+
+
+/**
  * Run a single probe against a single model.
  * - non-streaming (deterministic, simpler to classify)
  * - per-probe AbortController with timeout
@@ -57,13 +85,7 @@ export async function runProbe(
   };
 
   // per-probe abort: either outer signal or timeout aborts the inner call
-  const controller = new AbortController();
-  const timerId = setTimeout(() => controller.abort('timeout'), timeoutMs);
-  const onOuterAbort = () => controller.abort('outer-abort');
-  if (outerSignal) {
-    if (outerSignal.aborted) controller.abort('outer-abort');
-    else outerSignal.addEventListener('abort', onOuterAbort, { once: true });
-  }
+  const { signal: probeSignal, dispose: disposeProbeSignal } = createAbortSignalWithTimeout(outerSignal, timeoutMs, 'timeout');
 
   try {
     const aixChatGenerate: AixAPIChatGenerate_Request = {
@@ -77,7 +99,7 @@ export async function runProbe(
       aixChatGenerate,
       aixCreateChatGenerateContext('_DEV_', `llm_cap_probe_${scenario.id}`),
       false /* non-streaming */,
-      { abortSignal: controller.signal },
+      { abortSignal: probeSignal },
     );
 
     const m1 = generator.metrics as _Metrics;
@@ -89,7 +111,7 @@ export async function runProbe(
         durationMs: Date.now() - ts0,
         outcome: 'aborted',
         emittedSequence: inspected.emittedSequence,
-        errorMessage: controller.signal.reason === 'timeout' ? `timed out after ${timeoutMs}ms` : 'aborted',
+        errorMessage: probeSignal.reason === 'timeout' ? `timed out after ${timeoutMs}ms` : 'aborted',
         ..._metricsFields(m1),
       };
     }
@@ -146,7 +168,7 @@ export async function runProbe(
       turn2Request,
       aixCreateChatGenerateContext('_DEV_', `llm_cap_probe_${scenario.id}_t2`),
       false,
-      { abortSignal: controller.signal },
+      { abortSignal: probeSignal },
     );
 
     const m2 = turn2.generator.metrics as _Metrics;
@@ -157,7 +179,7 @@ export async function runProbe(
     let errorMessage: string | undefined;
     if (turn2.outcome === 'aborted') {
       t2Outcome = 'aborted';
-      errorMessage = controller.signal.reason === 'timeout' ? `turn 2 timed out after ${timeoutMs}ms` : 'aborted';
+      errorMessage = probeSignal.reason === 'timeout' ? `turn 2 timed out after ${timeoutMs}ms` : 'aborted';
     } else if (t2Inspected.firstFunctionCall) {
       t2Outcome = 'roundtrip_loop';
       errorMessage = `turn 2 re-emitted fn call: ${t2Inspected.firstFunctionCall.name}`;
@@ -194,13 +216,13 @@ export async function runProbe(
     // Pre-LL errors (missing service/access/model, assembly errors) surface as thrown exceptions here.
     const message = error?.message || String(error) || 'unknown error';
     // if we or the outer signal were aborted, classify as aborted rather than error
-    if (controller.signal.aborted || outerSignal?.aborted) {
+    if (probeSignal.aborted || outerSignal?.aborted) {
       return {
         ...base,
         durationMs: Date.now() - ts0,
         outcome: 'aborted',
         emittedSequence: [],
-        errorMessage: controller.signal.reason === 'timeout' ? `timed out after ${timeoutMs}ms` : message,
+        errorMessage: probeSignal.reason === 'timeout' ? `timed out after ${timeoutMs}ms` : message,
       };
     }
     // heuristic: classify "not found" / "no vendor" / "no access" as not_configured
@@ -213,8 +235,7 @@ export async function runProbe(
       errorMessage: message,
     };
   } finally {
-    clearTimeout(timerId);
-    if (outerSignal) outerSignal.removeEventListener('abort', onOuterAbort);
+    disposeProbeSignal();
   }
 }
 
