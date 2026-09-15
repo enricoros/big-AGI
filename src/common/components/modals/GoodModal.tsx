@@ -31,6 +31,7 @@ export const noBackdropSlotProps = {
 export function GoodModal(props: {
   title?: React.ReactNode,
   titleStartDecorator?: React.JSX.Element,
+  titleEndDecorator?: React.ReactNode, // rendered in the title bar's button cluster, before the fullscreen/close buttons
   strongerTitle?: boolean,
   noTitleBar?: boolean,
   dividers?: boolean,
@@ -154,8 +155,10 @@ export function GoodModal(props: {
             </Typography>
 
             {/* buttons */}
-            {(hasFullscreenButton || !!props.onClose) && (
+            {(hasFullscreenButton || !!props.onClose || !!props.titleEndDecorator) && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: -0.5 }}>
+                {/* optional caller controls */}
+                {props.titleEndDecorator}
                 {/* optional fullscreen button */}
                 {hasFullscreenButton && (
                   <IconButton aria-label={showFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'} size='sm' onClick={toggleFullscreen} sx={{ my: -1 }}>
