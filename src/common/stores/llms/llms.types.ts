@@ -19,7 +19,7 @@ export type DLLMId = string;
  * Large Language Model - description and configuration (data object, stored)
  */
 export interface DLLM {
-  id: DLLMId;
+  readonly id: DLLMId;
 
   // factory properties (overwritten on update)
   label: string;
@@ -41,8 +41,8 @@ export interface DLLM {
   initialParameters: DModelParameterValues;
 
   // references (const, never change)
-  sId: DModelsServiceId; // could be weak, but they're removed at the same time
-  vId: ModelVendorId; // known hardcoded value
+  readonly sId: DModelsServiceId; // could be weak, but they're removed at the same time
+  readonly vId: ModelVendorId; // known hardcoded value
 
   // user edited properties - if not undefined/missing, they override the others
   userLabel?: string;
