@@ -18,7 +18,7 @@ body:
       description: Describe the bug, feature request, or question. Be as detailed as you can.
       placeholder: |
         Bug example: "In Beam, Anthropic models seem to have search off..."
-        Model request: "Add Claude Opus 4.5 out today, see https://..."
+        Model request: "Add the latest Claude models out today, see https://..."
         Feature example: "Add the option to to save frequent prompt templates for reuse..."
     validations:
       required: true

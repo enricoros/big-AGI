@@ -1,7 +1,7 @@
 ---
 description: Increment the AIX monotonic version number
 allowed-tools: Bash(git add:*),Bash(git status:*),Bash(git commit:*),Edit,Write
-model: haiku
+model: sonnet
 disable-model-invocation: true
 ---
 
