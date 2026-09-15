@@ -10,11 +10,10 @@ import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import { ChatActions, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { ChatActions, getConversationChatLLMId, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
-import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
 import { getChatAutoAI, getChatThinkingPolicy } from '../../apps/chat/store-app-chat';
 
@@ -282,8 +281,9 @@ export class ConversationHandler {
         void autoConversationTitle(this.conversationId, false);
     };
 
-    beamOpen(viewHistory, getChatLLMId(), !!destReplaceMessageId, onBeamSuccess);
-    importMessages.length && beamImportRays(importMessages, getChatLLMId());
+    const beamSeedLlmId = getConversationChatLLMId(this.conversationId); // conversation-pinned model, or the 'primaryChat' domain default
+    beamOpen(viewHistory, beamSeedLlmId, !!destReplaceMessageId, onBeamSuccess);
+    importMessages.length && beamImportRays(importMessages, beamSeedLlmId);
   }
 
 

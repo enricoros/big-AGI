@@ -22,7 +22,7 @@ export function ChatBarChat(props: {
   // state
   const showNavigation = useChatShowToolbarNavigation();
   const { title } = useConversationTitle(props.conversationId);
-  const { chatLLMDropdown } = useChatLLMDropdown(props.llmDropdownRef);
+  const { chatLLMDropdown } = useChatLLMDropdown(props.llmDropdownRef, props.conversationId);
   const { personaDropdown } = usePersonaIdDropdown(props.conversationId, props.personaDropdownRef);
   const { folderDropdown } = useFolderDropdown(props.conversationId);
 

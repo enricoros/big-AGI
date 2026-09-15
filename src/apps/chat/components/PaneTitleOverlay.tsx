@@ -9,6 +9,8 @@ import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+import { getLLMLabel } from '~/common/stores/llms/llms.types';
+import { useConversationModelBinding } from '~/common/stores/chat/hooks/useConversationModelBinding';
 import { useConversationTitle } from '~/common/stores/chat/hooks/useConversationTitle';
 
 import { panesManagerActions } from './panes/store-panes-manager';
@@ -52,6 +54,34 @@ const _styles = {
     minWidth: '2.75rem',
     textAlign: 'center',
   } as const,
+  modelBadge: {
+    fontSize: 'xs',
+    fontWeight: 'md',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: '11rem',
+    px: 0.75,
+    borderRadius: 'sm',
+    cursor: 'default',
+    // following-default styling: dimmed, italic
+    fontStyle: 'italic',
+    opacity: 0.6,
+  } as const,
+  modelBadgePinned: {
+    fontSize: 'xs',
+    fontWeight: 'md',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: '11rem',
+    px: 0.75,
+    borderRadius: 'sm',
+    cursor: 'default',
+    // pinned styling: full-strength, outlined chip
+    border: '1px solid',
+    borderColor: 'currentColor',
+  } as const,
   toolButton: {
     '--IconButton-size': '1.5rem',
     backgroundColor: 'transparent',
@@ -81,6 +111,7 @@ export function PaneTitleOverlay(props: {
 
   // external state
   const { title, setUserTitle } = useConversationTitle(props.conversationId);
+  const { isPinned, boundLlm } = useConversationModelBinding(props.conversationId);
   // if (!title || title?.length < 3)
   //   return null;
 
@@ -172,6 +203,15 @@ export function PaneTitleOverlay(props: {
             <EditRoundedIcon sx={_styles.toolIcon} />
           </IconButton>
         </TooltipOutlined>}
+
+        {/* Per-pane model badge: which model this conversation runs on (pinned vs following the app default) */}
+        {!!boundLlm && (
+          <TooltipOutlined title={isPinned ? 'Model pinned to this chat' : 'Following the app default model'}>
+            <Box sx={isPinned ? _styles.modelBadgePinned : _styles.modelBadge}>
+              {isPinned ? '📌 ' : ''}{getLLMLabel(boundLlm)}
+            </Box>
+          </TooltipOutlined>
+        )}
       </>}
 
       {/* Delete This */}
