@@ -97,6 +97,11 @@ export function optimaOpenModels() {
   useLayoutOptimaStore.getState().openModels();
 }
 
+/** Opens the models dialog on the Updates screen (the refresh changelog) */
+export function optimaOpenModelsUpdates() {
+  useLayoutOptimaStore.getState().openModels('changelog');
+}
+
 export function optimaOpenPreferences(changeTab?: PreferencesTabId) {
   useLayoutOptimaStore.getState().openPreferences(changeTab);
 }
@@ -109,6 +114,7 @@ export function useOptimaModals() {
     showModelOptions: state.showModelOptions,
     showModelOptionsContext: state.showModelOptionsContext,
     showModels: state.showModels,
+    showModelsTab: state.showModelsTab,
     showPreferences: state.showPreferences,
     preferencesTab: state.preferencesTab,
   })));

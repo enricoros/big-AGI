@@ -50,6 +50,7 @@ export function ModelsConfiguratorModal(props: {
   modelsServices: DModelsService[],
   confServiceId: string | null,
   setConfServiceId: (serviceId: string | null) => void,
+  initialTab?: 'changelog', // open on the Updates screen (e.g. from a refresh status elsewhere in the app)
   // allowAutoTrigger: boolean,
 }) {
 

@@ -13,7 +13,7 @@ import { ModelsConfiguratorModal } from './ModelsConfiguratorModal';
 export function ModelsModals() {
 
   // external state
-  const { showModels, showModelOptions, showModelOptionsContext } = useOptimaModals();
+  const { showModels, showModelsTab, showModelOptions, showModelOptionsContext } = useOptimaModals();
   const { modelsServices, confServiceId, setConfServiceId } = useModelsServices();
 
 
@@ -25,6 +25,7 @@ export function ModelsModals() {
         modelsServices={modelsServices}
         confServiceId={confServiceId}
         setConfServiceId={setConfServiceId}
+        initialTab={showModelsTab ?? undefined}
       />
     )}
 

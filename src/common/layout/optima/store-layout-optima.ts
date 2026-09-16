@@ -36,6 +36,7 @@ interface OptimaState {
   showModelOptions: DLLMId | false;
   showModelOptionsContext: ModelOptionsContext;
   showModels: boolean;
+  showModelsTab: 'changelog' | null; // open the models dialog on a screen other than the setup
   showPreferences: boolean;
   preferencesTab: PreferencesTabId;
 
@@ -61,6 +62,7 @@ const modalsClosedState = {
   showModelOptions: false,
   showModelOptionsContext: 'full' as ModelOptionsContext,
   showModels: false,
+  showModelsTab: null,
   showPreferences: false,
 } as const;
 
@@ -114,7 +116,7 @@ export interface OptimaActions {
   openModelOptions: (id: DLLMId, context?: ModelOptionsContext) => void;
 
   closeModels: () => void;
-  openModels: () => void;
+  openModels: (initialTab?: 'changelog') => void;
 
   closePreferences: () => void;
   openPreferences: (changeTab?: PreferencesTabId) => void;
@@ -220,8 +222,8 @@ export const useLayoutOptimaStore = create<OptimaState & OptimaActions>((_set, _
   closeModelOptions: () => _set({ showModelOptions: false }),
   openModelOptions: (id: DLLMId, context?: ModelOptionsContext) => _set({ showModelOptions: id, showModelOptionsContext: context ?? 'full' }),
 
-  closeModels: () => _set({ showModels: false }),
-  openModels: () => _set({ showModels: true }),
+  closeModels: () => _set({ showModels: false, showModelsTab: null }),
+  openModels: (initialTab?: 'changelog') => _set({ showModels: true, showModelsTab: initialTab ?? null }),
 
   closePreferences: () => _set({ showPreferences: false }),
   openPreferences: (tab) => _set({ showPreferences: true, ...(tab !== undefined && { preferencesTab: tab }) }),
