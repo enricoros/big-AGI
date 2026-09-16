@@ -37,6 +37,12 @@ export function prettyTimeAgoEn(at: number, now: number = Date.now()): string {
   return `${years} year${years !== 1 ? 's' : ''} ago`;
 }
 
+/** Local-date 'YYYYMMDD' for an epoch-ms instant: compact, string-sortable, the pubDate / firstSeen basis of the models store */
+export function toLocalDateYYYYMMDD(ms: number): string {
+  const d = new Date(ms);
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export function prettyTimestampForFilenames(useSeconds: boolean = true) {
   const now = new Date();
   const year = now.getFullYear();
