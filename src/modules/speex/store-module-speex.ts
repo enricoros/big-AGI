@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { useShallow } from 'zustand/react/shallow';
 
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
-import { vendorHasBackendCap } from '~/modules/llms/vendors/vendor.helpers';
+import { vendorHasServerConf } from '~/modules/llms/vendors/vendor.helpers';
 
 import { agiUuidV4 } from '~/common/util/idUtils';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
@@ -368,7 +368,7 @@ export function speexAreCredentialsValid(credentials: DSpeexCredentialsAny): boo
       if (isClientSideConfigured) return true;
 
       // is vendor server-side configured? great
-      return vendorHasBackendCap(vendor);
+      return vendorHasServerConf(vendor);
 
     case 'none':
       return true;

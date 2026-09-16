@@ -5,7 +5,7 @@ import { FormControl, Input, Typography } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
 import SearchIcon from '@mui/icons-material/Search';
 
-import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
+import { hasServerConf } from '~/common/app.serverconf';
 
 import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -18,7 +18,7 @@ import { useGoogleSearchStore } from './store-module-google';
 export function GoogleSearchSettings() {
 
   // external state
-  const backendHasGoogle = getBackendCapabilities().hasGoogleCustomSearch;
+  const backendHasGoogle = hasServerConf('hasGoogleCustomSearch');
   const { googleCloudApiKey, setGoogleCloudApiKey, googleCSEId, setGoogleCSEId, restrictToDomain, setRestrictToDomain } = useGoogleSearchStore(useShallow(state => ({
     googleCloudApiKey: state.googleCloudApiKey, setGoogleCloudApiKey: state.setGoogleCloudApiKey,
     googleCSEId: state.googleCSEId, setGoogleCSEId: state.setGoogleCSEId,

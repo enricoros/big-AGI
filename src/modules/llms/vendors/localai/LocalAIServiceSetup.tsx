@@ -3,7 +3,7 @@ import * as z from 'zod/v4';
 
 import { Button, Chip, Typography } from '@mui/joy';
 
-import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
+import { hasServerConf } from '~/common/app.serverconf';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
@@ -36,7 +36,8 @@ export function LocalAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   const [adminOpen, setAdminOpen] = React.useState(false);
 
   // external state
-  const { hasLlmLocalAIHost: backendHasHost, hasLlmLocalAIKey: backendHasKey } = getBackendCapabilities();
+  const backendHasHost = hasServerConf('hasLlmLocalAIHost');
+  const backendHasKey = hasServerConf('hasLlmLocalAIKey');
   const { service, serviceAccess, serviceHasLLMs, updateSettings } =
     useServiceSetup(props.serviceId, ModelVendorLocalAI);
 

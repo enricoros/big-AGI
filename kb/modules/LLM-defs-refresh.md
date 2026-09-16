@@ -133,8 +133,7 @@ render; it refreshes once it is itself updated.
 
 ## Cloud branch (dev)
 
-Same code, one seam: `reconfigureBackendModels.ts` is `reconfigureTenantProvidedModels.ts`
-there and reads the `hasLlm*` flags from `getCloudFabricLegacy()` instead of
-`getBackendCapabilities()` (the pre-existing branch difference). Nothing else differs, since
-the feature has no server surface - a deliberate choice so that `dev` rebases carry it without
-touching the Cloud Fabric layer.
+The `hasLlm*` flags come through the `app.serverconf.ts` seam (same exports on both branches,
+per-branch body), so the boot refresh is the same file on both branches, `dev` adding `scratchChat`
+to the domain re-assignment list. Nothing else differs, since the feature has no server surface - a
+deliberate choice so that `dev` rebases carry it without touching the Cloud Fabric layer.

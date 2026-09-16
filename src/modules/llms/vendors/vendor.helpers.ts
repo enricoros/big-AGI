@@ -1,7 +1,6 @@
 import type { AixAPI_Access } from '~/modules/aix/server/api/aix.wiretypes';
 
-import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
-
+import { getServerConf, hasServerConf } from '~/common/app.serverconf';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 
@@ -27,8 +26,7 @@ export function findServiceAccessOrThrow<TServiceSettings extends object = {}, T
   };
 }
 
-export function vendorHasBackendCap<TServiceSettings extends Record<string, any> = {}, TAccess = AixAPI_Access>(vendor: IModelVendor<TServiceSettings, TAccess>) {
-  const backendCaps = getBackendCapabilities();
-  return vendor.hasServerConfigFn ? vendor.hasServerConfigFn(backendCaps)
-    : vendor.hasServerConfigKey ? !!backendCaps[vendor.hasServerConfigKey] : false;
+export function vendorHasServerConf<TServiceSettings extends Record<string, any> = {}, TAccess = AixAPI_Access>(vendor: IModelVendor<TServiceSettings, TAccess>) {
+  return vendor.hasServerConfigFn ? vendor.hasServerConfigFn(getServerConf())
+    : vendor.hasServerConfigKey ? hasServerConf(vendor.hasServerConfigKey) : false;
 }

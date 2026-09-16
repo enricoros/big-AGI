@@ -7,7 +7,7 @@ import { useShallowStabilizer } from '~/common/util/hooks/useShallowObject';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 import type { IModelVendor } from './IModelVendor';
-import { vendorHasBackendCap } from './vendor.helpers';
+import { vendorHasServerConf } from './vendor.helpers';
 
 
 const stableNoLlms: DLLM[] = [];
@@ -47,7 +47,7 @@ export function useServiceSetup<TServiceSettings extends object, TAccess>(servic
       service,
       serviceAccess,
 
-      serviceHasCloudTenantConfig: vendorHasBackendCap(vendor),
+      serviceHasCloudTenantConfig: vendorHasServerConf(vendor),
       serviceHasLLMs: !!serviceLLms.length,
       serviceSetupValid: serviceSetupValid,
 

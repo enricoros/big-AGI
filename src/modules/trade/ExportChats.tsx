@@ -4,7 +4,7 @@ import { Box, Button, Grid, Typography } from '@mui/joy';
 import DoneIcon from '@mui/icons-material/Done';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 
-import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
+import { hasServerConf } from '~/common/app.serverconf';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
@@ -37,7 +37,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
   const [downloadAllInfo, setDownloadAllInfo] = React.useState<string | null>(null);
 
   // external state
-  const enableSharing = getBackendCapabilities().hasDB;
+  const enableSharing = hasServerConf('hasDB');
 
   // derived state
   const { exportAll } = props.config;

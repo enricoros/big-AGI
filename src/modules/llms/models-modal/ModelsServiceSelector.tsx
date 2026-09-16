@@ -20,7 +20,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import type { IModelVendor } from '../vendors/IModelVendor';
 import { LLMVendorIconSprite } from '../components/LLMVendorIconSprite';
 import { findAllModelVendors, findModelVendor } from '../vendors/vendors.registry';
-import { vendorHasBackendCap } from '../vendors/vendor.helpers';
+import { vendorHasServerConf } from '../vendors/vendor.helpers';
 // import { MODELS_WIZARD_OPTION_ID } from '~/modules/llms/models-modal/ModelsModal';
 
 
@@ -97,7 +97,7 @@ const _styles = {
 
 
 /*function locationIcon(vendor?: IModelVendor | null) {
-  if (vendor && vendor.id === 'openai' && vendorHasBackendCap(...))
+  if (vendor && vendor.id === 'openai' && vendorHasServerConf(...))
     return <CloudDoneOutlinedIcon />;
   return !vendor ? null : vendor.location === 'local' ? <ComputerIcon /> : <CloudOutlinedIcon />;
 }*/
@@ -143,19 +143,19 @@ function _renderVendorItem({ vendor, canAdd, vendorInstancesCount }: VendorItemD
     >
       {/*<ListItemDecorator>*/}
       {/*  /!*<Box sx={{ display: 'flex', aspectRatio: 1, borderRadius: 'xl', backgroundColor: 'background.popup', boxShadow: 'none', width: '32px', m: -1, p: 0.75 }}>*!/*/}
-      {/*  {vendorIconWithMark(vendor, !vendorInstancesCount && vendorHasBackendCap(vendor))}*/}
+      {/*  {vendorIconWithMark(vendor, !vendorInstancesCount && vendorHasServerConf(vendor))}*/}
       {/*  /!*</Box>*!/*/}
       {/*</ListItemDecorator>*/}
 
       <Box sx={_styles.vendorItemIcon}>
         {/*<Box >*/}
-        {vendorInstancesCount ? <CheckRoundedIcon /> : vendorIconWithMark(vendor, !Release.IsNodeDevBuild && !vendorInstancesCount && vendorHasBackendCap(vendor))}
+        {vendorInstancesCount ? <CheckRoundedIcon /> : vendorIconWithMark(vendor, !Release.IsNodeDevBuild && !vendorInstancesCount && vendorHasServerConf(vendor))}
         {/*</Box>*/}
       </Box>
 
       {/*<Box sx={{ borderRadius: '1rem', backgroundColor: 'background.popup', boxShadow: 'none', height: '2rem', width: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>*/}
       {/*<Box >*/}
-      {/*{vendorIconWithMark(vendor, !vendorInstancesCount && vendorHasBackendCap(vendor))}*/}
+      {/*{vendorIconWithMark(vendor, !vendorInstancesCount && vendorHasServerConf(vendor))}*/}
       {/*</Box>*/}
       {/*</Box>*/}
 

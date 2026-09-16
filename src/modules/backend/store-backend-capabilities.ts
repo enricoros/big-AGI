@@ -6,7 +6,12 @@ import { useShallow } from 'zustand/react/shallow';
  NOTE: this file is also used in the BACKEND for type safety of the returned payload.
  */
 
-export interface BackendCapabilities {
+/**
+ * Legacy server conf: the flat flags a server reports about the keys and features it holds (env vars).
+ * The cloud branch calls this shape legacy too, superseded there by the tenant configuration; clients
+ * read it through the ServerConf seam (src/common/app.serverconf.ts), never directly.
+ */
+export interface LegacyServerConf {
   // llms
   hasLlmAlibaba: boolean;
   hasLlmAnthropic: boolean;
@@ -31,6 +36,10 @@ export interface BackendCapabilities {
   hasBrowsing: boolean;
   hasGoogleCustomSearch: boolean;
   hasVoiceElevenLabs: boolean;
+}
+
+/** The capabilities payload of the backend router: the legacy server conf, plus what the client boot gate needs. */
+export interface BackendCapabilities extends LegacyServerConf {
   // hashes - TODO(2026-11): remove, unread since LLM-Defs (per-vendor defsV), kept for pre-LLM-Defs clients
   hashLlmReconfig: string;
   // build data

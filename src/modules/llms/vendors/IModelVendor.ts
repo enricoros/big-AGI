@@ -1,6 +1,6 @@
 import type { AixAPI_Access } from '~/modules/aix/server/api/aix.wiretypes';
 
-import type { BackendCapabilities } from '~/modules/backend/store-backend-capabilities';
+import type { ServerConf, ServerConfFlag } from '~/common/app.serverconf';
 import type { DLLM } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../server/llm.server.types';
@@ -21,8 +21,8 @@ export interface IModelVendor<TServiceSettings extends ServiceSettingsBase = {},
   readonly brandColor?: string;
   readonly instanceLimit?: number;
   readonly hasFreeModels?: boolean;
-  readonly hasServerConfigFn?: (backendCapabilities: BackendCapabilities) => boolean; // used to show a 'green checkmark' in the list of vendors when adding services
-  readonly hasServerConfigKey?: keyof BackendCapabilities;
+  readonly hasServerConfigFn?: (serverConf: ServerConf) => boolean; // used to show a 'green checkmark' in the list of vendors when adding services
+  readonly hasServerConfigKey?: ServerConfFlag;
 
   /// client-side-fetch ///
   readonly csfAvailable?: (setup?: Partial<TServiceSettings>) => boolean; // undefined: not supported, false: conditions not met

@@ -11,7 +11,7 @@ import { reactQueryClientSingleton } from '~/common/app.queryclient';
 import { findModelVendor } from './vendors/vendors.registry';
 import { llmsDefsVersionFor } from './llm.client.defs';
 import { llmsListServiceModelsQueryKey, llmsUpdateModelsForServiceOrThrow } from './llm.client';
-import { vendorHasBackendCap } from './vendors/vendor.helpers';
+import { vendorHasServerConf } from './vendors/vendor.helpers';
 
 
 // configuration
@@ -61,7 +61,7 @@ function _llmsRefreshEligibleServiceIds(): DModelsServiceId[] {
       const vendor = findModelVendor(service.vId);
       if (!vendor) return false; // unknown vendor, e.g. data from a newer app version
       if (llms.some(llm => llm.sId === service.id)) return true;
-      if (vendorHasBackendCap(vendor)) return true;
+      if (vendorHasServerConf(vendor)) return true;
       return vendor.validateSetup?.(service.setup) !== false;
     })
     .map(service => service.id);
