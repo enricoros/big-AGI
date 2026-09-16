@@ -65,6 +65,7 @@ export const useUXLabsStore = create<UXLabsStore>()(
       // Migrations:
       // - 1: turn on the screen capture by default (subsequently removed)
       version: 1,
+      migrate: (state: any): UXLabsStore => state, // no shape change here: passthrough re-stamps older blobs, keeps unknown fields
 
     },
   ),
