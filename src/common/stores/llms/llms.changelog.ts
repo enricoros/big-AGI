@@ -2,8 +2,14 @@
 // WARNING: Everything here is data at rest. Know what you're doing.
 //
 
+import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
+
 import type { DLLM, DLLMId } from './llms.types';
 import type { DModelsServiceId } from './llms.service.types';
+
+
+// configuration
+const DEBUG_CHANGES = false; // [DEV] console.log the before/after of every changed field per model, to see what a vendor actually churns
 
 
 /**
@@ -64,6 +70,17 @@ const _MEANINGFUL_LETTER = /[^bhvo]/;
 
 /** Capability, context and price changes survive a capped `mod` map first */
 const _PRIORITY_LETTER = /[cip]/;
+
+/**
+ * Routers advertise the price, context and output limit of whichever provider they rank first at the
+ * moment (OpenRouter: 22 providers behind one DeepSeek model, prices 0.58 to 1.65 per M input, probed
+ * 2026-09-16), so those three letters are not tracked for them: a routing swing is not a model change.
+ */
+const _ROUTER_VENDORS: ReadonlyArray<ModelVendorId> = ['openrouter'];
+
+export function llmsChangelogIsRouter(vId: ModelVendorId): boolean {
+  return _ROUTER_VENDORS.includes(vId);
+}
 
 
 // caps and retention (enforced by llmsDiffServiceModels and llmsChangelogPruneEntries; the UI shows '+' at the cap)
@@ -131,17 +148,27 @@ export function llmsDiffServiceModels(sId: DModelsServiceId, previousServiceLLMs
 }
 
 function _changeLetters(before: DLLM, after: DLLM): string {
-  let letters = '';
-  if (before.label !== after.label) letters += 'l';
-  if (before.contextTokens !== after.contextTokens) letters += 'c';
-  if (before.maxOutputTokens !== after.maxOutputTokens) letters += 'o';
-  if (_sortedListKey(before.interfaces) !== _sortedListKey(after.interfaces)) letters += 'i';
-  if (_pricingKey(before.pricing) !== _pricingKey(after.pricing)) letters += 'p';
-  if (_specsKey(before.parameterSpecs) !== _specsKey(after.parameterSpecs)) letters += 's';
+  const changes: [letter: string, before: unknown, after: unknown][] = [];
+  const check = (letter: string, b: unknown, a: unknown) => {
+    if (b !== a) changes.push([letter, b, a]);
+  };
+  const routed = llmsChangelogIsRouter(after.vId); // price, context and output limit follow the routing: not tracked
+  check('l', before.label, after.label);
+  if (!routed) check('c', before.contextTokens, after.contextTokens);
+  if (!routed) check('o', before.maxOutputTokens, after.maxOutputTokens);
+  check('i', _sortedListKey(before.interfaces), _sortedListKey(after.interfaces));
+  if (!routed) check('p', _pricingKey(before.pricing), _pricingKey(after.pricing));
+  check('s', _specsKey(before.parameterSpecs), _specsKey(after.parameterSpecs));
   // noinspection PointlessBooleanExpressionJS
-  if (!!before.hidden !== !!after.hidden) letters += after.hidden ? 'h' : 'v';
-  if ((before.pubDate ?? '') !== (after.pubDate ?? '')) letters += 'r';
-  if (_canonicalJson(before.benchmark) !== _canonicalJson(after.benchmark)) letters += 'b';
+  if (!!before.hidden !== !!after.hidden) {
+    // noinspection PointlessBooleanExpressionJS
+    changes.push([after.hidden ? 'h' : 'v', !!before.hidden, !!after.hidden]);
+  }
+  check('r', before.pubDate ?? '', after.pubDate ?? '');
+  check('b', _canonicalJson(before.benchmark), _canonicalJson(after.benchmark));
+  const letters = changes.map(([letter]) => letter).join('');
+  if (DEBUG_CHANGES && letters)
+    console.log(`[changelog] ${after.id}: ${letters}`, Object.fromEntries(changes.map(([letter, b, a]) => [(_MODELS_CHANGELOG_LETTER_WORDS as Record<string, string>)[letter] ?? letter, { before: b, after: a }])));
   return letters;
 }
 

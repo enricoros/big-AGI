@@ -39,8 +39,11 @@ Rules that keep the diff honest:
   `description` (prose churn), initial parameters (derived from output limit and specs), the user's
   own overrides, and user clones (never reported as removed).
 - Noise letters `b h v o` are recorded and shown, but do not count as a "change": `b h v` are
-  editorial sweeps, `o` flaps on aggregators (OpenRouter reports the output limit of whichever
-  provider is on top, probed 2026-09-15). An entry with no diff and no error is "eventless".
+  editorial sweeps, `o` flaps on aggregators. An entry with no diff and no error is "eventless".
+- Routers (OpenRouter) advertise the price, context and output limit of whichever provider they
+  rank first at the moment (22 providers behind one DeepSeek model, input prices from 0.58 to 1.65
+  per million, probed 2026-09-16), so `c`, `o` and `p` are not recorded for them at all: a routing
+  swing is not a model change. The expanded row says so.
 - First listing: a service whose stored list was empty records `{ n }` only, no `add`. A creation
   is not N additions.
 - Caps: 32 refs per `add` / `rem` / `mod`; in a capped `mod`, context, capability and price changes

@@ -7,7 +7,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
-import { DModelsChangelogEntry, DModelsChangelogVia, llmsChangelogIsEventless, llmsChangelogIsMeaningful, llmsChangelogWords, MODELS_CHANGELOG_REF_CAP } from '~/common/stores/llms/llms.changelog';
+import { DModelsChangelogEntry, DModelsChangelogVia, llmsChangelogIsEventless, llmsChangelogIsMeaningful, llmsChangelogIsRouter, llmsChangelogWords, MODELS_CHANGELOG_REF_CAP } from '~/common/stores/llms/llms.changelog';
 import { prettyTimeAgoEn } from '~/common/util/timeUtils';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 import { useToggleableStringSet } from '~/common/util/hooks/useToggleableStringSet';
@@ -23,8 +23,13 @@ const HISTORY_ENTRIES = 5; // per expanded service, before 'show more'
 
 const styles = {
 
-  // edge-to-edge tinted band, as the ModelsList band in the setup tab (no overflow of its own: the dialog scrolls, so the sticky header works)
+  // edge-to-edge tinted band, as the ModelsList band in the setup tab: the scrolling region of the dialog (a flex child that
+  // shrinks below its content thanks to the explicit min height), so the selector and the status header stay put and the
+  // sticky table header sticks to the band
   band: {
+    minHeight: '10rem',
+    overflowY: 'auto',
+    // extend side to side
     mx: 'calc(-1 * var(--Card-padding, 1rem))',
     borderTop: '1px solid',
     borderBottom: '1px solid',
@@ -38,7 +43,13 @@ const styles = {
     '--Table-headerUnderlineThickness': '1px', // same line under the header as between rows (Joy defaults to 2px)
     '--TableCell-paddingY': '0.75rem', // 3rem rows (1.5rem icon slot + padding)
     '--TableRow-hoverBackground': 'var(--joy-palette-neutral-plainHoverBg)',
+    '& td': { verticalAlign: 'middle' }, // explicit (the browser default): cells center their content, and a block-level chevron centers with it
     '& th': { fontSize: 'xs', letterSpacing: '0.04em', textTransform: 'uppercase', color: 'text.tertiary' },
+    // sortable columns: a faint sort glyph, solid on the active column and on hover (the data-table convention, not a link)
+    '& th.sortable': { cursor: 'pointer', userSelect: 'none' },
+    '& th.sortable:hover, & th.sorted': { color: 'text.primary' },
+    '& th.sortable > svg': { opacity: 0.33, transition: 'opacity 0.1s' },
+    '& th.sortable:hover > svg, & th.sorted > svg': { opacity: 1 },
     '& th:first-of-type, & td:first-of-type': { pl: 'var(--Card-padding, 1rem)' },
     '& th:last-of-type, & td:last-of-type': { pr: 'var(--Card-padding, 1rem)' },
   },
@@ -60,8 +71,10 @@ const styles = {
     flexShrink: 0,
   },
 
+  // shrinkable (Joy chips are max-content): the label ellipsizes, the end decorator (change words) stays whole
   refChip: {
     fontFamily: 'code',
+    minWidth: 0,
   },
 
   errorText: {
@@ -109,9 +122,9 @@ function CountChips(props: { entry: DModelsChangelogEntry }) {
   const modCount = mod ? Object.keys(mod).length : 0;
   const capped = (n: number) => n + (n === MODELS_CHANGELOG_REF_CAP ? '+' : '');
   return <>
-    {!!add?.length && <Chip size='sm' variant='soft' color='success'>+{capped(add.length)}</Chip>}
-    {!!modCount && <Chip size='sm' variant='soft' color='neutral'>~{capped(modCount)}</Chip>}
-    {!!rem?.length && <Chip size='sm' variant='soft' color='neutral'>-{capped(rem.length)}</Chip>}
+    {!!add?.length && <Chip size='sm' variant='outlined' color='success' sx={{ backgroundColor: 'success.softBg' }}>+ {capped(add.length)}</Chip>}
+    {!!modCount && <Chip size='sm' variant='outlined' color='neutral'>~ {capped(modCount)}</Chip>}
+    {!!rem?.length && <Chip size='sm' variant='outlined' color='neutral' sx={{ backgroundColor: 'neutral.softBg' }}>- {capped(rem.length)}</Chip>}
   </>;
 }
 
@@ -130,6 +143,7 @@ export function ModelsChangelogPanel(props: {
 
   // state
   const { set: expanded, toggle: handleToggleExpanded } = useToggleableStringSet<DModelsServiceId>();
+  const [sortBy, setSortBy] = React.useState<'label' | 'change'>('label');
 
   // external state
   const changelog = useModelsStore(state => state.changelog);
@@ -145,9 +159,6 @@ export function ModelsChangelogPanel(props: {
 
   // derived state
 
-  // by label, as the service selector and the models list grouping
-  const sortedServices = React.useMemo(() => [...modelsServices].sort((a, b) => a.label.localeCompare(b.label)), [modelsServices]);
-
   // per service, newest first
   const entriesByService = React.useMemo(() => {
     const byService = new Map<DModelsServiceId, DModelsChangelogEntry[]>();
@@ -158,6 +169,21 @@ export function ModelsChangelogPanel(props: {
     }
     return byService;
   }, [changelog]);
+
+  // by label (as the service selector and the models list grouping), or by last change (newest first, then by label)
+  const sortedServices = React.useMemo(() => {
+    const byLabel = [...modelsServices].sort((a, b) => a.label.localeCompare(b.label));
+    if (sortBy === 'label') return byLabel;
+    const changeAt = (service: DModelsService) => entriesByService.get(service.id)?.find(llmsChangelogIsMeaningful)?.at ?? 0;
+    return byLabel.sort((a, b) => changeAt(b) - changeAt(a)); // stable: ties keep the label order
+  }, [entriesByService, modelsServices, sortBy]);
+
+  const sortHeader = (key: 'label' | 'change', label: string, style?: React.CSSProperties) => (
+    <th className={sortBy === key ? 'sortable sorted' : 'sortable'} aria-sort={sortBy !== key ? undefined : key === 'label' ? 'ascending' : 'descending'} style={style} onClick={() => setSortBy(key)}>
+      {label}
+      <KeyboardArrowRightIcon sx={{ fontSize: 'sm', verticalAlign: 'text-bottom', transform: 'rotate(90deg)' }} />
+    </th>
+  );
 
   const now = useNow(summary.at ?? 0);
   const sessionAt = summary.state !== 'idle' ? summary.at : null; // entries at or after the running/last session are 'fresh' (green), while the header shows it
@@ -204,13 +230,13 @@ export function ModelsChangelogPanel(props: {
     </Box>
 
     <Box sx={styles.band}>
-      <Table size={isMobile ? 'sm' : 'md'} variant='plain' borderAxis='xBetween' hoverRow sx={styles.table}>
+      <Table size={isMobile ? 'sm' : 'md'} variant='plain' borderAxis='xBetween' hoverRow stickyHeader sx={styles.table}>
         <thead>
         <tr>
-          <th style={{ width: isMobile ? '40%' : undefined }}>Service</th>
+          {sortHeader('label', 'Service', { width: isMobile ? '40%' : '14rem' })}
           {!isMobile && <th style={{ width: '4.5rem', textAlign: 'right' }}>Models</th>}
-          <th style={{ width: isMobile ? undefined : '7rem' }}>Updated</th>
-          <th>Last change</th>
+          <th style={{ width: isMobile ? '6rem' : '6.25rem' }}>Updated</th>
+          {sortHeader('change', isMobile ? 'Changed' : 'Last change')}
           <th style={{ width: '2rem' }} />
         </tr>
         </thead>
@@ -313,21 +339,23 @@ function ServiceChangelogRow(props: {
       {!isMobile && <td style={{ textAlign: 'right' }}><Typography level='body-sm' textColor={dimmed} noWrap>{props.modelCount}</Typography></td>}
       <td>{updatedNode}</td>
       <td>{lastChangeNode}</td>
-      <td>{canExpand && <KeyboardArrowRightIcon sx={{ fontSize: 'lg', color: 'text.tertiary', transition: 'transform 0.1s', transform: expanded ? 'rotate(90deg)' : 'none' }} />}</td>
+      <td>{canExpand && <KeyboardArrowRightIcon sx={{ display: 'block', fontSize: 'lg', color: 'text.tertiary', transition: 'transform 0.1s', transform: expanded ? 'rotate(90deg)' : 'none' }} />}</td>
     </tr>
 
     {expanded && !!entries?.length && (
       <tr style={styles.detailRow}>
         <td colSpan={isMobile ? 4 : 5}>
           {/* indented to the service name (icon slot + gap) */}
-          <Box sx={{ display: 'grid', gap: 1.5, pl: isMobile ? 0 : 4 }}>
+          {/* minmax(0, 1fr): an auto grid track has a min-content floor, so one long ref chip would widen the rows past the cell instead of ellipsizing */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 1.5, pl: isMobile ? 0 : 4 }}>
             {shownEntries?.map((entry, index) => (
               <Box key={`${entry.at}-${index}`} sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 0.5 : 2, alignItems: 'flex-start' }}>
                 <Box sx={{ width: isMobile ? undefined : '9rem', flexShrink: 0 }}>
-                  <Typography level='body-xs' textColor='text.secondary'>{_dateText(entry.at, true)}</Typography>
+                  {/* the entry behind the row's 'Last change' cell reads bold, so the two match up */}
+                  <Typography level='body-xs' textColor={entry === lastChange ? 'text.primary' : 'text.secondary'} fontWeight={entry === lastChange ? 'lg' : undefined}>{_dateText(entry.at, true)}</Typography>
                   {!!_viaLabels[entry.via] && <Typography level='body-xs' textColor='text.tertiary'>{_viaLabels[entry.via]}</Typography>}
                 </Box>
-                <Box sx={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                   {entry.err ? <Typography sx={styles.errorText}>{entry.err}</Typography>
                     : llmsChangelogIsEventless(entry) ? <Typography level='body-xs' textColor='text.tertiary'>no changes</Typography>
                       : <>
@@ -338,6 +366,11 @@ function ServiceChangelogRow(props: {
                 </Box>
               </Box>
             ))}
+            {llmsChangelogIsRouter(service.vId) && (
+              <Typography level='body-xs' textColor='text.tertiary'>
+                Pricing, context and output limits are not tracked for {service.label}: it advertises the values of whichever provider it routes to at the moment.
+              </Typography>
+            )}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, mr: -1 }}>
               {hiddenEntries > 0 && <Link component='button' level='body-xs' color='neutral' onClick={handleShowAllEntries}>Show {hiddenEntries} more</Link>}
               <Box sx={{ flex: 1 }} />
