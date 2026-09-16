@@ -1,8 +1,8 @@
 import { findAllModelVendors, findModelVendor } from '~/modules/llms/vendors/vendors.registry';
-import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 import { llmsDefsVersionFor } from '~/modules/llms/llm.client.defs';
 import { llmsRefreshServices } from '~/modules/llms/llm.client.refresh';
 
+import { hasServerConf } from '~/common/app.serverconf';
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 
@@ -28,14 +28,13 @@ export async function llmsRefreshStaleServicesOnBoot(remoteServices: boolean, ex
 
   // begin the boot refresh
   _bootRefreshRunning = true;
-  const backendCaps = getBackendCapabilities();
   const initiallyEmpty = !llmsStoreState().llms?.length;
 
   // add the backend services (idempotent)
   const createdServiceIds = new Set<DModelsServiceId>();
   if (remoteServices)
     findAllModelVendors()
-      .filter(vendor => vendor.hasServerConfigKey && backendCaps[vendor.hasServerConfigKey])
+      .filter(vendor => vendor.hasServerConfigKey && hasServerConf(vendor.hasServerConfigKey))
       .forEach(remoteVendor => {
 
         // create the first service for this vendor, if missing

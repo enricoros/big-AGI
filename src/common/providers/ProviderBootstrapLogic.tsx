@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 
 import { getChatTokenCountingMethod } from '../../apps/chat/store-app-chat';
 
-import { llmsRefreshStaleServicesOnBoot } from '~/common/logic/reconfigureBackendModels';
+import { llmsRefreshStaleServicesOnBoot } from '~/common/logic/llmsRefreshStaleServicesOnBoot';
 import { logger } from '~/common/logger/logger.client';
 import { markNewsAsSeen, shallRedirectToNews, sherpaStorageMaintenanceNoChats_delayed } from '~/common/logic/store-logic-sherpa';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';

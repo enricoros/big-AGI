@@ -14,7 +14,7 @@ Anthropic-backed services re-list on users' next boot.
 | `tools/develop/gen-llms-defs/generate-llms-defs.mjs` | The generator: semantic-hashes the claimed files, enforces integrity, writes the map. Run manually or let the npm pre-scripts do it. `--check` recomputes without writing. |
 | `src/modules/llms/server/gen/llms.defs.versions.ts` | Generated, committed map: one 12-hex version per bucket. A dirty file after a dev/build run is the signal to commit it. |
 | `src/modules/llms/llm.client.defs.ts` | `llmsDefsVersionFor(vendorId, setup)`: the effective version a service compares against (AIX monotonic folded in, custom-host OpenAI rule). Client-side; the generated map is plain data. |
-| `src/common/logic/reconfigureBackendModels.ts` | `llmsRefreshStaleServicesOnBoot`, the boot-time selective refresh: compares each service's stamp to its version and re-lists only mismatches. |
+| `src/common/logic/llmsRefreshStaleServicesOnBoot.ts` | `llmsRefreshStaleServicesOnBoot`, the boot-time selective refresh: compares each service's stamp to its version and re-lists only mismatches. |
 | `package.json` | `predev`/`predev-debug` chain the generator after gen-devtools-workspace; `prebuild` runs it before `next build`. Integrity failures fail the run. A `--check` step exists in `ci.yml`, commented out on purpose (GitHub-side quick edits can't run the generator; deploy builds regenerate anyway). |
 
 Per-service state: `DModelsService.defsV` (optional, data at rest) - the version the boot refresh
