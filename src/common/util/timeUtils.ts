@@ -17,6 +17,26 @@ export function prettyDuration(ms: number, decimalSeconds: boolean = false): str
   return remMinutes ? `${hours}h ${remMinutes}m` : `${hours}h`;
 }
 
+/**
+ * Relative past time: 'just now' (under 5s), '27 sec ago', '2 min ago', '3 hours ago', '12 days ago', '2 months ago', '1 year ago'.
+ * Pass one `now` to every call of a screen so neighbors round at the same instant (per-element timers drift by a second).
+ */
+export function prettyTimeAgoEn(at: number, now: number = Date.now()): string {
+  const seconds = Math.max(0, Math.round((now - at) / 1000));
+  if (seconds < 5) return 'just now';
+  if (seconds < 60) return `${seconds} sec ago`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+  const days = Math.round(hours / 24);
+  if (days < 30) return `${days} day${days !== 1 ? 's' : ''} ago`;
+  const months = Math.round(days / 30);
+  if (months < 12) return `${months} month${months !== 1 ? 's' : ''} ago`;
+  const years = Math.round(days / 365);
+  return `${years} year${years !== 1 ? 's' : ''} ago`;
+}
+
 export function prettyTimestampForFilenames(useSeconds: boolean = true) {
   const now = new Date();
   const year = now.getFullYear();
