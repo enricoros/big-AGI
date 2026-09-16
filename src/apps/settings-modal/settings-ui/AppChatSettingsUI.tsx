@@ -39,8 +39,8 @@ export function ModelsSetupButton(props: { isMissingModels?: boolean }) {
     startDecorator={<BuildCircleIcon />}
     sx={{
       '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
-      minWidth: 150,
-      boxShadow: props.isMissingModels ? 'lg' : undefined,
+      // minWidth: 150,
+      boxShadow: props.isMissingModels ? 'lg' : 'md',
     }}
   >
     {/*Admin Models*/}
