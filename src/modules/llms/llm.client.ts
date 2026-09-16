@@ -2,12 +2,15 @@ import { hasGoogleAnalytics, sendGAEvent } from '~/common/components/3rdparty/Go
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DLLM, DLLMId, DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn } from '~/common/stores/llms/llms.types';
+import { DModelsChangelogVia, llmsChangelogErrorText } from '~/common/stores/llms/llms.changelog';
+import { abortSignalReason } from '~/common/util/abortUtils';
 import { applyModelParameterSpecsInitialValues, DModelParameterSpecAny, LLMImplicitParametersRuntimeFallback } from '~/common/stores/llms/llms.parameters';
 import { isLLMChatPricingFree } from '~/common/stores/llms/llms.pricing';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 
 import type { ModelDescriptionSchema } from './server/llm.server.types';
 import { findServiceAccessOrThrow } from './vendors/vendor.helpers';
+import { llmsDefsVersionFor } from './llm.client.defs';
 
 
 // configuration
@@ -33,31 +36,61 @@ function _clientIdWithVariant(id: string, idVariant?: string): string {
 
 // LLM Model Updates Client Functions
 
-export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServiceId, keepUserEdits: true): Promise<{ models: ModelDescriptionSchema[] }> {
+/**
+ * react-query key of one service's model listing. Shared by the per-service hook (menu item,
+ * vendor setups) and the refresh session, so concurrent listings of a service dedupe into one request
+ * and `useIsFetching` reports either. A missing service maps to a sentinel, never to a prefix.
+ */
+export function llmsListServiceModelsQueryKey(serviceId: DModelsServiceId | null | undefined) {
+  return ['list-models', serviceId || 'missing-service'] as const;
+}
+
+/**
+ * Lists one service's models into the store, logging a changelog entry (a failure entry on error) and
+ * stamping the service's defs version on success. A `signal` aborted while the listing is in flight
+ * drops the result: nothing is written, nothing is logged.
+ */
+export async function llmsUpdateModelsForServiceOrThrow(
+  serviceId: DModelsServiceId,
+  changelog: { at: number; via: DModelsChangelogVia },
+  signal?: AbortSignal,
+): Promise<{ models: ModelDescriptionSchema[] }> {
 
   // get the access, assuming there's no client config and the server will do all
   const { service, vendor, transportAccess } = findServiceAccessOrThrow(serviceId);
 
-
-  // [CSF] Pre-load client-side executor if needed
-  let clientSideListModels: typeof import('./llm.client.direct-listModels').clientSideListModels | undefined;
-  if (!!transportAccess && typeof transportAccess === 'object' && (transportAccess as any).clientSideFetch)
-    try {
-      clientSideListModels = (await import('./llm.client.direct-listModels')).clientSideListModels;
-    } catch (error) {
-      throw new Error(`Direct model listing issue: ${(error as any)?.message || 'unknown loading error'}`, { cause: error });
-    }
-
   // fetch models
   let models: ModelDescriptionSchema[];
 
-  // LLMs [CSM] Direct Execution
-  if (clientSideListModels)
-    models = await clientSideListModels(transportAccess);
+  // a listing failure is logged as an entry, then rethrown verbatim (callers match the messages)
+  try {
 
-  // LLMs tRPC Execution
-  else
-    models = (await vendor.rpcUpdateModelsOrThrow(transportAccess)).models;
+    // [CSF] Pre-load client-side executor if needed
+    let clientSideListModels: typeof import('./llm.client.direct-listModels').clientSideListModels | undefined;
+    if (!!transportAccess && typeof transportAccess === 'object' && (transportAccess as any).clientSideFetch)
+      try {
+        clientSideListModels = (await import('./llm.client.direct-listModels')).clientSideListModels;
+      } catch (error) {
+        throw new Error(`Direct model listing issue: ${(error as any)?.message || 'unknown loading error'}`, { cause: error });
+      }
+
+    // LLMs [CSM] Direct Execution
+    if (clientSideListModels)
+      models = await clientSideListModels(transportAccess);
+
+    // LLMs tRPC Execution
+    else
+      models = (await vendor.rpcUpdateModelsOrThrow(transportAccess)).models;
+
+  } catch (error) {
+    if (!signal?.aborted)
+      llmsStoreActions().appendModelsChangelog({ at: changelog.at, sId: serviceId, via: changelog.via, err: llmsChangelogErrorText(error) });
+    throw error;
+  }
+
+  // stopped while in flight: drop the result
+  if (signal?.aborted)
+    throw abortSignalReason(signal);
 
 
   // update the global models store
@@ -67,15 +100,20 @@ export async function llmsUpdateModelsForServiceOrThrow(serviceId: DModelsServic
   llmsStoreActions().setServiceLLMs(
     service.id,
     factoryLLMs,
-    keepUserEdits,
+    true,
     false,
+    changelog,
   );
+
+  // the service is now listed with the current model definitions (see llm.client.defs.ts)
+  llmsStoreActions().stampServiceDefs(service.id, llmsDefsVersionFor(vendor.id, service.setup));
 
   // figure out which vendors are actually used and useful
   hasGoogleAnalytics && sendGAEvent('event', 'app_models_updated', {
     app_models_source_id: service.id,
     app_models_source_label: service.label,
     app_models_updated_count: models.length || 0,
+    app_models_update_via: changelog.via,
     app_models_vendor_id: vendor.id,
     app_models_vendor_label: vendor.name,
   });

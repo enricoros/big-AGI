@@ -1,35 +1,33 @@
 import { findAllModelVendors, findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import { getBackendCapabilities } from '~/modules/backend/store-backend-capabilities';
 import { llmsDefsVersionFor } from '~/modules/llms/llm.client.defs';
-import { llmsUpdateModelsForServiceOrThrow } from '~/modules/llms/llm.client';
+import { llmsRefreshServices } from '~/modules/llms/llm.client.refresh';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 
 
-// configuration
-const REFRESH_CONCURRENCY = 4; // services listed in parallel at boot
-
-
 // Note: this function is designed to be called once per session
-let _isConfiguring = false;
-let _isConfigurationDone = false;
+let _bootRefreshRunning = false;
+let _bootRefreshDone = false;
 
 
 /**
- * Selectively reload models because of:
- * - updated backend capabilities (e.g. new service added): idempotent service creation
- * - model definitions updated for a service's vendor (per-vendor defs versions, AIX rolls
- *   folded in - see kb/modules/LLM-defs-refresh.md): only the affected services re-list
+ * Boot-time refresh of the stale services only:
+ * - just created for a backend-configured vendor (new server-side key): first listing
+ * - stamped with a model definitions version other than the current one for their vendor
+ *   (per-vendor defs versions, AIX rolls folded in - see kb/modules/LLM-defs-refresh.md)
+ * Resolves to the session stamp (the `at` of its changelog entries) after the listings and the
+ * domain re-assignments, or null if nothing was refreshed - the hook for a 'models added' toast.
  */
-export async function reconfigureBackendModels(remoteServices: boolean, existingServices: boolean) {
+export async function llmsRefreshStaleServicesOnBoot(remoteServices: boolean, existingServices: boolean): Promise<number | null> {
 
   // Note: double-calling is only expected to happen in react strict mode
-  if (_isConfiguring || _isConfigurationDone)
-    return;
+  if (_bootRefreshRunning || _bootRefreshDone)
+    return null;
 
-  // begin configuration
-  _isConfiguring = true;
+  // begin the boot refresh
+  _bootRefreshRunning = true;
   const backendCaps = getBackendCapabilities();
   const initiallyEmpty = !llmsStoreState().llms?.length;
 
@@ -47,56 +45,40 @@ export async function reconfigureBackendModels(remoteServices: boolean, existing
 
       });
 
-  // reconfigure these: newly created, or stamped with a different defs version
+  // the stale services: newly created, or stamped with a different defs version
   // (unknown vendors, e.g. data from a newer app, are left alone)
-  const servicesToReconfigure = llmsStoreState().sources
-    .filter((service: DModelsService) => !!findModelVendor(service.vId))
-    .map(service => ({ service, defsV: llmsDefsVersionFor(service.vId, service.setup) }))
-    .filter(({ service, defsV }) => createdServiceIds.has(service.id) || (existingServices && service.defsV !== defsV));
+  const staleServiceIds = llmsStoreState().sources
+    .filter((service: DModelsService) => {
+      if (!findModelVendor(service.vId)) return false; // exclude unknown vendors: data from a newer app, left alone
+      if (createdServiceIds.has(service.id)) return true; // include just created: first listing
+      return existingServices && service.defsV !== llmsDefsVersionFor(service.vId, service.setup); // include when model definitions changed since its last listing
+    })
+    .map(service => service.id);
 
-  // re-configure, a few services at a time
-  if (servicesToReconfigure.length)
-    console.log(`[llms-refresh] updating ${servicesToReconfigure.length}/${llmsStoreState().sources.length} services: ${servicesToReconfigure.map(({ service }) => service.id).join(', ')}`);
-  const queue = [...servicesToReconfigure];
-  await Promise.all(Array.from({ length: Math.min(REFRESH_CONCURRENCY, queue.length) }, async () => {
-    for (let next = queue.shift(); next; next = queue.shift()) {
-      const { service, defsV } = next;
+  const at = Date.now();
+  if (staleServiceIds.length) {
 
-      // stamp before the attempt: a failing service is not retried on every boot, but at its next version (loop protection, as before)
-      llmsStoreActions().stampServiceDefs(service.id, defsV);
+    console.log(`[llms-refresh] updating ${staleServiceIds.length}/${llmsStoreState().sources.length} services: ${staleServiceIds.join(', ')}`);
 
-      // auto-configure this service - errors are logged and do not stop the others
-      try {
-        await llmsUpdateModelsForServiceOrThrow(service.id, true);
-      } catch (error) {
-        console.warn('Auto-configuration failed for service:', service.label, error);
-      }
+    // list through the shared refresh session (a few at a time, re-ranked after); the pre-stamp is the
+    // loop protection: a failing service is not retried on every boot, but at its next version (as before)
+    await llmsRefreshServices(staleServiceIds, { via: 'boot', at, preStampDefs: true }, 'boot-refresh-stale');
+
+    // Auto-assignment conditions
+    if (initiallyEmpty) {
+      // in case we refreshed all vendors, auto-assign the primary chat model, so it doesn't get locked to the first vendor
+      llmsStoreActions().assignDomainModelAuto('primaryChat');
+    } else {
+      // in case the chat model becomes unavailable/hidden, we'll auto-reassign it
+      llmsStoreActions().assignDomainModelAutoIfStale('primaryChat', true);
+      llmsStoreActions().assignDomainModelAutoIfStale('codeApply', false);
+      llmsStoreActions().assignDomainModelAutoIfStale('fastUtil', false);
     }
-  }));
 
-  // nothing to reconfigure: leave the models and assignments as they are
-  if (!servicesToReconfigure.length) {
-    _isConfiguring = false;
-    _isConfigurationDone = true;
-    return false;
   }
 
-  // Re-rank the LLMs to the services order (partial refreshes prepend, this restores stability)
-  llmsStoreActions().rerankLLMsByServices(llmsStoreState().sources.map(s => s.id));
-
-  // Auto-assignment conditions
-  if (initiallyEmpty) {
-    // in case we refreshed all vendors, auto-assign the primary chat model, so it doesn't get locked to the first vendor
-    llmsStoreActions().assignDomainModelAuto('primaryChat');
-  } else {
-    // in case the chat model becomes unavailable/hidden, we'll auto-reassign it
-    llmsStoreActions().assignDomainModelAutoIfStale('primaryChat', true);
-    llmsStoreActions().assignDomainModelAutoIfStale('codeApply', false);
-    llmsStoreActions().assignDomainModelAutoIfStale('fastUtil', false);
-  }
-
-  // end configuration
-  _isConfiguring = false;
-  _isConfigurationDone = true;
-  return true;
+  // end of the boot refresh
+  _bootRefreshRunning = false;
+  _bootRefreshDone = true;
+  return staleServiceIds.length ? at : null;
 }

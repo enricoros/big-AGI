@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Button, FormControl, Switch } from '@mui/joy';
+import { Box, Button, FormControl, Switch } from '@mui/joy';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import WidthNormalIcon from '@mui/icons-material/WidthNormal';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
+
+import { ModelsRefreshAlert, ModelsRefreshIconButton } from '~/modules/llms/components/ModelsRefreshAlert';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormRadioControl } from '~/common/components/forms/FormRadioControl';
@@ -81,8 +83,14 @@ export function AppChatSettingsUI() {
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='AI Models'
                       description='Configure' />
-      <ModelsSetupButton isMissingModels={isMissingModels} />
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        {!isMissingModels && <ModelsRefreshIconButton sx={{ boxShadow: 'xs' }} />}
+        <ModelsSetupButton isMissingModels={isMissingModels} />
+      </Box>
+
     </FormControl>
+    {/* refresh session status, while it runs and after: opens the Updates screen */}
+    <ModelsRefreshAlert />
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between' }}>
       <FormLabelStart title='Enter sends ⏎'

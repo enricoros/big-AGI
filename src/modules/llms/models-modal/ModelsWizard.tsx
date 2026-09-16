@@ -6,6 +6,7 @@ import { Avatar, Badge, Box, Button, Chip, CircularProgress, Sheet, Typography }
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { llmsStoreActions, llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
+import { reactQueryClientSingleton } from '~/common/app.queryclient';
 import { useShallowStabilizer } from '~/common/util/hooks/useShallowObject';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
@@ -17,7 +18,7 @@ import { ModelVendorLocalAI } from '../vendors/localai/localai.vendor';
 import { ModelVendorOllama } from '../vendors/ollama/ollama.vendor';
 import { ModelVendorOpenAI } from '../vendors/openai/openai.vendor';
 import { ModelVendorOpenRouter } from '../vendors/openrouter/openrouter.vendor';
-import { llmsUpdateModelsForServiceOrThrow } from '../llm.client';
+import { llmsListServiceModelsQueryKey, llmsUpdateModelsForServiceOrThrow } from '../llm.client';
 
 
 // configuration
@@ -176,7 +177,7 @@ function WizardProviderSetup(props: {
     // if the key is empty, remove the models
     if (!newKey) {
       setUpdateError(null);
-      setServiceLLMs(vendorServiceId, [], true, false);
+      setServiceLLMs(vendorServiceId, [], true, false, null /* no changelog for the wipe */);
       return;
     }
 
@@ -184,13 +185,18 @@ function WizardProviderSetup(props: {
     setUpdateError(null);
     setIsLoading(true);
     try {
-      await llmsUpdateModelsForServiceOrThrow(vendorService.id, true);
+      // on the shared per-service key, like every other listing: a concurrent session or setup fetch is joined, not duplicated
+      await reactQueryClientSingleton().query({
+        queryKey: llmsListServiceModelsQueryKey(vendorService.id),
+        queryFn: () => llmsUpdateModelsForServiceOrThrow(vendorService.id, { at: Date.now(), via: 'service' }),
+        staleTime: 0,
+      });
     } catch (error: any) {
       let errorText = error.message || `An error occurred. Please check your ${valueName}.`;
       if (errorText.includes('Incorrect API key'))
         errorText = '[OpenAI issue] Unauthorized: Incorrect API key.';
       setUpdateError(errorText);
-      setServiceLLMs(vendorServiceId, [], true, false);
+      setServiceLLMs(vendorServiceId, [], true, false, null /* no changelog for the wipe */);
     }
     setIsLoading(false);
 

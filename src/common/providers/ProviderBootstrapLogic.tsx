@@ -3,8 +3,9 @@ import { useRouter } from 'next/router';
 
 import { getChatTokenCountingMethod } from '../../apps/chat/store-app-chat';
 
+import { llmsRefreshStaleServicesOnBoot } from '~/common/logic/reconfigureBackendModels';
 import { logger } from '~/common/logger/logger.client';
-import { markNewsAsSeen, shallRedirectToNews, sherpaReconfigureBackendModels, sherpaStorageMaintenanceNoChats_delayed } from '~/common/logic/store-logic-sherpa';
+import { markNewsAsSeen, shallRedirectToNews, sherpaStorageMaintenanceNoChats_delayed } from '~/common/logic/store-logic-sherpa';
 import { navigateToNews, ROUTE_APP_CHAT } from '~/common/app.routes';
 import { preloadTiktokenLibrary } from '~/common/tokens/tokens.text';
 import { useClientLoggerInterception } from '~/common/logger/hooks/useClientLoggerInterception';
@@ -59,11 +60,11 @@ export function ProviderBootstrapLogic(props: { children: React.ReactNode }) {
 
   }, [launchPreload]);
 
-  // [autoconf] initiate the llm auto-configuration process if on the chat
+  // [autoconf] boot refresh of the stale models services (new server-side keys, changed model definitions) if on the chat
   React.useEffect(() => {
     if (!launchAutoConf) return;
 
-    void sherpaReconfigureBackendModels(); // fire/forget (background server-driven model reconfiguration)
+    void llmsRefreshStaleServicesOnBoot(true, true); // fire/forget (background)
 
   }, [launchAutoConf]);
 

@@ -7,8 +7,6 @@ import { estimatePersistentStorageOrThrow, requestPersistentStorageSafe } from '
 import { gcAttachmentDBlobs } from '~/common/attachment-drafts/attachment.dblobs';
 import { isBrowser } from '~/common/util/pwaUtils';
 
-import { reconfigureBackendModels } from './reconfigureBackendModels';
-
 
 // configuration
 const DEBUG_SUCCESS_STORAGE_STATS = false;
@@ -68,13 +66,6 @@ export function shallRedirectToNews() {
 
 export function markNewsAsSeen() {
   useLogicSherpaStore.setState({ lastSeenNewsVersion: Release.Monotonics.NewsVersion });
-}
-
-
-// Reconfigure Backend Models
-
-export async function sherpaReconfigureBackendModels() {
-  return reconfigureBackendModels(true, true);
 }
 
 

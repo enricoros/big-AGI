@@ -11,12 +11,15 @@ import { createDLLMUserClone, getDLLMCloneId } from '~/modules/llms/llm.client';
 import { findModelVendor, type ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import { hasKeys } from '~/common/util/objectUtils';
+import { toLocalDateYYYYMMDD } from '~/common/util/timeUtils';
 
 import type { DModelDomainId } from './model.domains.types';
 import type { DModelsService, DModelsServiceId } from './llms.service.types';
+import type { DModelsChangelogEntry, DModelsChangelogVia } from './llms.changelog';
 import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
 import { DModelParameterId, DModelParameterRegistry, DModelParameterValues, LLMImplicitParametersRuntimeFallback } from './llms.parameters';
 import { createLlmsAssignmentsSlice, LlmsAssignmentsActions, LlmsAssignmentsSlice, LlmsAssignmentsState, llmsAssignmentsPruneStale } from './store-llms-domains_slice';
+import { llmsDiffServiceModels, llmsChangelogPruneEntries } from './llms.changelog';
 import { getDomainModelConfiguration } from './hooks/useModelDomain';
 import { portModelPricingV2toV3 } from './llms.pricing';
 
@@ -29,13 +32,16 @@ export interface LlmsRootState {
 
   sources: DModelsService<any>[];
 
+  changelog: DModelsChangelogEntry[]; // newest first, bounded by llmsChangelogPruneEntries
+
   confServiceId: DModelsServiceId | null;
 
 }
 
 interface LlmsRootActions {
 
-  setServiceLLMs: (serviceId: DModelsServiceId, serviceLLMs: ReadonlyArray<DLLM>, keepUserEdits: true, keepMissingLLMs: false) => void;
+  setServiceLLMs: (serviceId: DModelsServiceId, serviceLLMs: ReadonlyArray<DLLM>, keepUserEdits: true, keepMissingLLMs: false, changelog: null | { at: number; via: DModelsChangelogVia }) => void;
+  appendModelsChangelog: (entry: DModelsChangelogEntry) => void;
   removeLLM: (id: DLLMId) => void;
   removeCustomModels: (serviceId: DModelsServiceId) => void;
   rerankLLMsByServices: (serviceIdOrder: DModelsServiceId[]) => void;
@@ -78,11 +84,12 @@ export const useModelsStore = create<LlmsStore>()(persist(
 
     llms: [],
     sources: [],
+    changelog: [],
     confServiceId: null,
 
     // actions
 
-    setServiceLLMs: (serviceId: DModelsServiceId, updatedServiceLLMs: ReadonlyArray<DLLM>, keepUserEdits: true, keepMissingLLMs: false) =>
+    setServiceLLMs: (serviceId: DModelsServiceId, updatedServiceLLMs: ReadonlyArray<DLLM>, keepUserEdits: true, keepMissingLLMs: false, changelog: null | { at: number; via: DModelsChangelogVia }) =>
       set(state => {
 
         // separate existing models
@@ -90,11 +97,14 @@ export const useModelsStore = create<LlmsStore>()(persist(
         const previousServiceLLMs = state.llms.filter(llm => llm.sId === serviceId);
         const consumedPreviousIds = new Set<DLLMId>();
 
+        // models appearing after the service's first listing are stamped with the day they were first seen
+        const stampFirstSeen = previousServiceLLMs.some(llm => !llm.isUserClone) ? toLocalDateYYYYMMDD(changelog?.at ?? Date.now()) : undefined;
+
         // process updated models, re-applying user customizations where applicable
         const mergedServiceLLMs: DLLM[] = updatedServiceLLMs.map((llm: DLLM): DLLM => {
           // new model: as-is
           const e = previousServiceLLMs.find(m => m.id === llm.id);
-          if (!e) return llm;
+          if (!e) return stampFirstSeen ? { ...llm, firstSeen: stampFirstSeen } : llm;
 
           // mark this previous model as matched (consumed)
           consumedPreviousIds.add(e.id);
@@ -103,6 +113,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
           if (!keepUserEdits) return llm;
           const result: DLLM = {
             ...llm,
+            ...(e.firstSeen !== undefined ? { firstSeen: e.firstSeen } : {}),
             ...(e.userLabel !== undefined ? { userLabel: e.userLabel } : {}),
             ...(e.userHidden !== undefined ? { userHidden: e.userHidden } : {}),
             ...(e.userStarred !== undefined ? { userStarred: e.userStarred } : {}),
@@ -165,10 +176,18 @@ export const useModelsStore = create<LlmsStore>()(persist(
 
         // Build the final list in priority order
         const newLlms = [...customModels, ...missingModels, ...mergedServiceLLMs, ...otherServiceLLMs];
+
         return {
           llms: newLlms,
           modelAssignments: llmsAssignmentsPruneStale(newLlms, state.modelAssignments),
+          // the outcome of this listing, when this call is an update operation (a service wipe is logless)
+          ...(changelog && { changelog: llmsChangelogPruneEntries([{ at: changelog.at, sId: serviceId, via: changelog.via, ...llmsDiffServiceModels(serviceId, previousServiceLLMs, updatedServiceLLMs) }, ...state.changelog]) }),
         };
+      }),
+
+    appendModelsChangelog: (entry: DModelsChangelogEntry) =>
+      set(state => !state.sources.some(s => s.id === entry.sId) ? state : {
+        changelog: llmsChangelogPruneEntries([entry, ...state.changelog]),
       }),
 
     removeLLM: (id: DLLMId) =>
@@ -399,6 +418,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
         return {
           llms,
           sources: state.sources.filter(s => s.id !== id),
+          changelog: state.changelog.filter(u => u.sId !== id),
           modelAssignments: llmsAssignmentsPruneStale(llms, state.modelAssignments),
         };
       }),
@@ -467,6 +487,7 @@ export const useModelsStore = create<LlmsStore>()(persist(
      *  4: migrate .options to .initialParameters/.userParameters
      *  4B: we changed from .chatLLMId/.fastLLMId to modelAssignments: {}, without explicit migration (done on rehydrate, and for no particular reason)
      *  5: global model assignments default to dynamic Auto, stored as missing assignments
+     *  -: `changelog` is an additive key (persist's default shallow merge keeps the initializer's [] for older payloads)
      */
     version: 5,
     migrate: (_state: any, fromVersion: number): LlmsStore => {
@@ -536,6 +557,13 @@ export const useModelsStore = create<LlmsStore>()(persist(
         // ensure the vId link exists and is valid (this was a pre-TF update)
         return llm.vId ? llm : { ...llm, vId: service.vId };
       }).filter(llm => !!llm) as DLLM[];
+
+      // [GC] drop malformed/orphaned changelog entries, and re-apply the retention bounds
+      try {
+        state.changelog = Array.isArray(state.changelog) ? llmsChangelogPruneEntries(state.changelog.filter(u => !!u && typeof u === 'object' && typeof u.sId === 'string' && Number.isFinite(u.at) && state.sources.some(s => s.id === u.sId))) : [];
+      } catch (error) {
+        console.error('Error pruning models changelog', error);
+      }
 
       // Prune stale assignments. Missing assignments mean dynamic Auto.
       try {

@@ -4,6 +4,8 @@
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
+import { toLocalDateYYYYMMDD } from '~/common/util/timeUtils';
+
 import type { DModelParameterSpecAny, DModelParameterValues } from './llms.parameters';
 import type { DModelPricing } from './llms.pricing';
 import type { DModelsServiceId } from './llms.service.types';
@@ -43,6 +45,8 @@ export interface DLLM {
   // references (const, never change)
   readonly sId: DModelsServiceId; // could be weak, but they're removed at the same time
   readonly vId: ModelVendorId; // known hardcoded value
+
+  readonly firstSeen?: string; // when model first appeared in listing, in 'YYYYMMDD' (absent: present before we began tracking)
 
   // user edited properties - if not undefined/missing, they override the others
   userLabel?: string;
@@ -171,13 +175,6 @@ function _llmPubKey(llm: DLLM | null | undefined): string {
   return p && /^\d{8}$/.test(p) ? p : '';
 }
 
-/** Format an epoch-ms instant as a local-time 'YYYYMMDD' string (same local-midnight basis as getLLMPubDate). */
-function _toPubDateStr(ms: number): string {
-  const d = new Date(ms);
-  const mm = d.getMonth() + 1, dd = d.getDate();
-  return `${d.getFullYear()}${mm < 10 ? '0' : ''}${mm}${dd < 10 ? '0' : ''}${dd}`;
-}
-
 /**
  * Newest accessible models grouped by vendor, ordered most-recent-first: the vendor whose freshest
  * surfaced model has the latest `pubDate` leads - fitting for a "what's new" surface.
@@ -198,7 +195,7 @@ export function getNewestModelsByVendor(llms: ReadonlyArray<DLLM>, options?: {
   onlyVisible?: boolean, // accessible (non-hidden) models only (default true)
 }) {
   const { maxNew = 5, maxFallback = 2, onlyVisible = true } = options ?? {};
-  const cutoff = _toPubDateStr(Date.now() - LLM_RECENTLY_PUBLISHED_DAYS * 24 * 60 * 60 * 1000); // 'YYYYMMDD' recency threshold, computed once
+  const cutoff = toLocalDateYYYYMMDD(Date.now() - LLM_RECENTLY_PUBLISHED_DAYS * 24 * 60 * 60 * 1000); // 'YYYYMMDD' recency threshold, computed once (same local-midnight basis as getLLMPubDate)
 
   // group accessible models by vendor (no clones, no symlink aliases), preserving the store's display order
   const byVendor = new Map<ModelVendorId, DLLM[]>();

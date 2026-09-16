@@ -14,7 +14,7 @@ Anthropic-backed services re-list on users' next boot.
 | `tools/develop/gen-llms-defs/generate-llms-defs.mjs` | The generator: semantic-hashes the claimed files, enforces integrity, writes the map. Run manually or let the npm pre-scripts do it. `--check` recomputes without writing. |
 | `src/modules/llms/server/gen/llms.defs.versions.ts` | Generated, committed map: one 12-hex version per bucket. A dirty file after a dev/build run is the signal to commit it. |
 | `src/modules/llms/llm.client.defs.ts` | `llmsDefsVersionFor(vendorId, setup)`: the effective version a service compares against (AIX monotonic folded in, custom-host OpenAI rule). Client-side; the generated map is plain data. |
-| `src/common/logic/reconfigureBackendModels.ts` | The boot-time selective refresh: compares each service's stamp to its version and re-lists only mismatches. |
+| `src/common/logic/reconfigureBackendModels.ts` | `llmsRefreshStaleServicesOnBoot`, the boot-time selective refresh: compares each service's stamp to its version and re-lists only mismatches. |
 | `package.json` | `predev`/`predev-debug` chain the generator after gen-devtools-workspace; `prebuild` runs it before `next build`. Integrity failures fail the run. A `--check` step exists in `ci.yml`, commented out on purpose (GitHub-side quick edits can't run the generator; deploy builds regenerate anyway). |
 
 Per-service state: `DModelsService.defsV` (optional, data at rest) - the version the boot refresh
@@ -58,7 +58,7 @@ buckets, following real value-import dependencies:
 - `_shared`: `models.mappings.ts`, `llm.server.variants.ts`, `llm.server.types.ts`,
   `listModels.dispatch.ts` - rolls every service.
 - `_openaiCompat`: the OpenAI-lookalike sub-parsers selected by host heuristics under the
-  `openai` dialect (Fireworks, Novita, ChutesAI, MiniMax, LLM API, Nous, Arcee, TLUS, FastAPI,
+  `openai` dialect (Fireworks, Novita, ChutesAI, MiniMax, LLM API, Nous, Arcee, FastAPI,
   plus the NVIDIA and OpenRouter parsers they reuse), and `openai.models.ts` itself: a proxy to
   OpenAI (LiteLLM, corporate gateways) sits behind a custom host but is parsed by the first-party
   parser, so first-party edits must reach it. Custom-host OpenAI services (non `api.openai.com`
@@ -76,7 +76,7 @@ regenerated. What TypeScript cannot see (files nothing imports) the generator ga
 
 ## Boot flow
 
-`ProviderBootstrapLogic` -> sherpa -> `reconfigureBackendModels`, once per session, after the
+`ProviderBootstrapLogic` -> `llmsRefreshStaleServicesOnBoot`, once per session, after the
 capabilities provider has gated on a matching server build:
 
 1. Idempotently create services for backend-configured vendors (`hasLlm*` capability flags).
@@ -91,6 +91,13 @@ capabilities provider has gated on a matching server build:
    old "store the hash upfront" loop protection, now per service.
 4. If anything refreshed: LLMs re-rank to the services order (partial refreshes prepend, this
    restores stability) and domain auto-assignment runs (unchanged semantics).
+5. The function resolves to the session stamp, or null when nothing was stale: the hook for a
+   future "models added" notice.
+
+Step 3 runs through the shared refresh session and records each service's outcome as a changelog
+entry (diff on success, error text on failure) - see [LLM-changelog.md](LLM-changelog.md). Every
+successful listing stamps `defsV`, whatever the trigger; boot additionally pre-stamps before each
+attempt as its loop protection. The session can be stopped from the Updates screen.
 
 Behavior deltas vs the old global hash: an API key rotation no longer triggers a refresh (the
 hash included env values; definitions did not change); refreshes are per-service instead of
