@@ -14,6 +14,7 @@ import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { FFactoryId, FUSION_FACTORIES } from './instructions/beam.gather.factories';
 import { BEAM_SHOW_REASONING_ICON, GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
+import { BeamModelUnavailable } from '../components/BeamModelUnavailable';
 import { useModuleBeamStore } from '../store-module-beam';
 
 
@@ -166,6 +167,7 @@ export function BeamGatherPane(props: {
       <Box sx={{ my: '-0.25rem', minWidth: 190, maxWidth: 300 }}>
         {gatherLlmComponent}
       </Box>
+      <BeamModelUnavailable llmId={currentGatherLlmId} resolved={!!llmOrNull} />
 
       {/* Add Fusion */}
       {/*<FusionAddButton*/}

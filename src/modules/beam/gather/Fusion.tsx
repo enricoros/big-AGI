@@ -21,6 +21,7 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
 import { BeamUpstreamResume } from '../BeamUpstreamResume';
+import { BeamModelUnavailable } from '../components/BeamModelUnavailable';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { FusionControlsMemo } from './FusionControls';
 import { FusionInstructionsEditor } from './FusionInstructionsEditor';
@@ -176,6 +177,9 @@ export function Fusion(props: {
           onStart={handleToggleFusionGather}
         />
       )}
+
+      {/* Selected model no longer exists (e.g. stale team) */}
+      <BeamModelUnavailable llmId={llmId} resolved={!!llmOrNull} />
 
       {/* Show issue, if any */}
       {isError && <InlineError error={fusion?.errorText || 'Merge Issue'} />}
