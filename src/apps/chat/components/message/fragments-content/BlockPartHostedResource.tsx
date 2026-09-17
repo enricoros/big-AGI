@@ -4,7 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 
 import { Box, Checkbox, CircularProgress, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Sheet, Typography } from '@mui/joy';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -21,6 +23,7 @@ import { geminiFileDelete, geminiFileDownloadBlob, geminiFileErrorIsGone, gemini
 
 import type { ContentScaling } from '~/common/app.theme';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { joyKeepPopup } from '~/common/components/CloseablePopup';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { apiAsync, apiQuery } from '~/common/util/trpc.client';
 import { convert_Base64_To_UInt8Array } from '~/common/util/blobUtils';
@@ -29,7 +32,7 @@ import { copyBlobPromiseToClipboard, copyToClipboard } from '~/common/util/clipb
 import { downloadBlob } from '~/common/util/downloadUtils';
 import { videoPlayObjectUrl } from '~/common/util/video/videoPlayManaged';
 import { humanReadableBytes } from '~/common/util/textUtils';
-import { mimeTypeIsPlainText, mimeTypeIsSupportedImage, reverseLookupMimeType } from '~/common/attachment-drafts/attachment.mimetypes';
+import { guessMimeTypeFromFilename, mimeTypeIsPlainText, mimeTypeIsSupportedImage } from '~/common/attachment-drafts/attachment.mimetypes';
 import { useAIPreferencesStore } from '~/common/stores/store-ai';
 import { useLlmServiceAccess } from '~/common/stores/llms/hooks/useLlmServiceAccess';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -45,24 +48,27 @@ function _enrichMetadataWithMimeFlags<T extends { mime_type: string }>(meta: T) 
   };
 }
 
-function _base64ResponseToBlob({ base64Data, mimeType }: { base64Data: string; mimeType: string }) {
-  const bytes = convert_Base64_To_UInt8Array(base64Data, 'hosted-resource-ant-file');
-  return {
-    blob: new Blob([bytes], { type: mimeType }),
-    httpMimeType: mimeType,
-    httpMimeIsText: mimeTypeIsPlainText(mimeType),
-    httpMimeIsImage: mimeTypeIsSupportedImage(mimeType),
-  };
+// The download routes pass the provider's content-type through, 'application/octet-stream' when absent. OpenAI's
+// container files endpoint sends no content-type at all (only a content-disposition with the filename), so a generic
+// header defers to the filename extension, while a specific header wins over it. Parameters ('; charset=utf-8') are
+// dropped: the lookup tables key on the bare type.
+function _resolveDownloadedMimeType(httpMimeType: string, filename: string): string {
+  const headerMimeType = httpMimeType.split(';')[0].trim().toLowerCase();
+  if (headerMimeType && headerMimeType !== 'application/octet-stream') return headerMimeType;
+  return guessMimeTypeFromFilename(filename) || 'application/octet-stream';
 }
 
-// OpenAI container files have no pre-download metadata, so we gate the chip's "Embed" on the citation filename's
-// extension: reverse-lookup the mime, then reuse mimeTypeIsPlainText (so binary like pdf/xlsx/png stays download-only).
-// The real downloaded content-type is checked again as a backstop in handleInline.
-function _filenameLooksTextual(filename: string): boolean {
-  const dot = filename.lastIndexOf('.');
-  if (dot < 0) return false;
-  const mimeType = reverseLookupMimeType(filename.slice(dot + 1).toLowerCase());
-  return !!mimeType && mimeTypeIsPlainText(mimeType);
+type TDownloadedFile = { base64Data: string; mimeType: string };
+
+function _base64ResponseToBlob({ base64Data, mimeType: httpMimeType }: TDownloadedFile, filename: string) {
+  const bytes = convert_Base64_To_UInt8Array(base64Data, 'hosted-resource-ant-file');
+  const mimeType = _resolveDownloadedMimeType(httpMimeType, filename);
+  return {
+    blob: new Blob([bytes], { type: mimeType }),
+    mimeType,
+    mimeIsText: mimeTypeIsPlainText(mimeType),
+    mimeIsImage: mimeTypeIsSupportedImage(mimeType),
+  };
 }
 
 
@@ -88,14 +94,15 @@ function AnthropicFileChip(props: {
     staleTime: Infinity,
     select: _enrichMetadataWithMimeFlags,
   });
+  const fileName = metadata?.filename || fileId;
+  const selectFileBlob = React.useCallback((response: TDownloadedFile) => _base64ResponseToBlob(response, fileName), [fileName]);
   const { data: fileContent, refetch: refetchFileContent } = apiQuery.llmAnthropic.fileApiDownload.useQuery({ access, fileId }, {
     enabled: false, // on-demand only
-    select: _base64ResponseToBlob,
+    select: selectFileBlob,
   });
 
 
   // derive display info from typed metadata
-  const fileName = metadata?.filename || fileId;
   const displayName = fileName.length > 40 ? fileName.slice(0, 20) + '...' + fileName.slice(-15) : fileName;
 
 
@@ -120,10 +127,12 @@ function AnthropicFileChip(props: {
     try {
       const data = fileContent || (await refetchFileContent({ cancelRefetch: false, throwOnError: true })).data;
       if (!data) return;
-      if (data.httpMimeIsText)
+      if (data.mimeIsText)
         copyToClipboard(await data.blob.text(), fileName);
+      else if (data.mimeIsImage)
+        await copyBlobPromiseToClipboard(data.mimeType, Promise.resolve(data.blob), fileName);
       else
-        copyBlobPromiseToClipboard(data.httpMimeType, Promise.resolve(data.blob), fileName);
+        setActionError('Cannot copy this file type');
     } catch (error: any) {
       setActionError(error?.message || 'Copy failed');
     } finally {
@@ -164,7 +173,7 @@ function AnthropicFileChip(props: {
       if (!data) return;
 
       // text: inline as fenced code block
-      if (data.httpMimeIsText) {
+      if (data.mimeIsText) {
         const text = await data.blob.text();
 
         // fence with adaptive depth (extra backticks if content contains ```)
@@ -174,7 +183,7 @@ function AnthropicFileChip(props: {
         onFragmentReplace(createTextContentFragment(`${fence}${fileName}\n${text}\n${fence}\n`));
       }
         // image: get dimensions, store in DBlob, and create a Zync asset reference
-        // else if (data.httpMimeIsImage) {
+        // else if (data.mimeIsImage) {
         //
         //   const { width, height } = await imageBlobGetDimensions(data.blob).catch(() => ({ width: 0, height: 0 }));
         //
@@ -190,7 +199,7 @@ function AnthropicFileChip(props: {
         //     'image',
         //     {
         //       pt: 'image_ref',
-        //       dataRef: createDMessageDataRefDBlob(dblobAssetId, data.httpMimeType, data.blob.size),
+        //       dataRef: createDMessageDataRefDBlob(dblobAssetId, data.mimeType, data.blob.size),
         //       ...(fileName ? { altText: fileName } : {}),
         //       ...(width ? { width } : {}),
         //       ...(height ? { height } : {}),
@@ -353,20 +362,25 @@ function OpenAIContainerFileChip(props: {
 }) {
 
   // state
-  const [busy, setBusy] = React.useState<false | 'download' | 'copy' | 'inline'>(false);
+  const [busy, setBusy] = React.useState<false | 'download' | 'copy' | 'delete' | 'inline'>(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const [deleteArmed, setDeleteArmed] = React.useState(false);
 
   // props
   const { access, containerId, fileId, filename, onFragmentDelete, onFragmentReplace } = props;
 
-  // external state - download on-demand (no metadata endpoint: filename comes from the citation annotation)
+  // no metadata endpoint: the citation filename is the only pre-download signal, and it names the downloaded blob's type
+  const fileName = filename || fileId;
+  const fileMimeType = guessMimeTypeFromFilename(fileName);
+
+  // external state - download on-demand
+  const selectFileBlob = React.useCallback((response: TDownloadedFile) => _base64ResponseToBlob(response, fileName), [fileName]);
   const { data: fileContent, refetch: refetchFileContent } = apiQuery.llmOpenAI.containerFileDownload.useQuery({ access, containerId, fileId }, {
     enabled: false, // on-demand only
-    select: _base64ResponseToBlob,
+    select: selectFileBlob,
   });
 
   // derive display info
-  const fileName = filename || fileId;
   const displayName = fileName.length > 40 ? fileName.slice(0, 20) + '...' + fileName.slice(-15) : fileName;
 
 
@@ -391,10 +405,12 @@ function OpenAIContainerFileChip(props: {
     try {
       const data = fileContent || (await refetchFileContent({ cancelRefetch: false, throwOnError: true })).data;
       if (!data) return;
-      if (data.httpMimeIsText)
+      if (data.mimeIsText)
         copyToClipboard(await data.blob.text(), fileName);
+      else if (data.mimeIsImage)
+        await copyBlobPromiseToClipboard(data.mimeType, Promise.resolve(data.blob), fileName);
       else
-        copyBlobPromiseToClipboard(data.httpMimeType, Promise.resolve(data.blob), fileName);
+        setActionError('Cannot copy this file type');
     } catch (error: any) {
       setActionError(error?.message || 'Copy failed');
     } finally {
@@ -410,7 +426,7 @@ function OpenAIContainerFileChip(props: {
       const data = fileContent || (await refetchFileContent({ cancelRefetch: false, throwOnError: true })).data;
       if (!data) return;
       // backstop the extension gate with the real downloaded content-type
-      if (!data.httpMimeIsText) {
+      if (!data.mimeIsText) {
         setActionError('Cannot embed this file type');
         return;
       }
@@ -427,9 +443,33 @@ function OpenAIContainerFileChip(props: {
   }, [fileContent, refetchFileContent, fileName, onFragmentReplace]);
 
 
+  // two-step deletion inside the menu: 'Delete' arms, then 'Confirm Deletion' acts (closing the menu disarms)
+  const handleMenuOpenChange = React.useCallback((_event: unknown, open: boolean) => {
+    if (!open) setDeleteArmed(false);
+  }, []);
+
+  const handleDeleteConfirmed = React.useCallback(async () => {
+    if (!onFragmentDelete || !deleteArmed) return;
+    setDeleteArmed(false);
+    setBusy('delete');
+    setActionError(null);
+    try {
+      // remote deletion (the route reports an expired container as already gone, which is the same outcome)
+      await apiAsync.llmOpenAI.containerFileDelete.mutate({ access, containerId, fileId });
+      // fragment removal
+      onFragmentDelete();
+    } catch (error: any) {
+      setActionError(error?.message || 'Delete failed');
+    } finally {
+      setBusy(false);
+    }
+  }, [access, containerId, deleteArmed, fileId, onFragmentDelete]);
+
+
   const isBusy = !!busy;
   const hasError = !!actionError;
-  const canInline = !!onFragmentReplace && _filenameLooksTextual(fileName);
+  const canCopy = !!fileMimeType && (mimeTypeIsPlainText(fileMimeType) || mimeTypeIsSupportedImage(fileMimeType));
+  const canInline = !!onFragmentReplace && !!fileMimeType && mimeTypeIsPlainText(fileMimeType);
 
   return (
     <Sheet
@@ -442,6 +482,8 @@ function OpenAIContainerFileChip(props: {
         mx: 1.5,
         px: 1.125,
         py: 0.5,
+        border: '1px solid',
+        borderColor: 'primary.outlinedBorder',
         borderRadius: 'sm',
         overflow: 'hidden',
         maxWidth: '100%',
@@ -450,7 +492,7 @@ function OpenAIContainerFileChip(props: {
     >
       <AttachFileRoundedIcon sx={{ fontSize: 'lg', opacity: 0.5 }} />
 
-      <Box sx={{ minWidth: 0, flex: 1 }}>
+      <Box sx={{ minWidth: 0, flex: 1, mr: 1 }}>
         <Box className='agi-ellipsize' sx={{ fontSize: 'sm', fontWeight: 'md', color: hasError ? 'var(--joy-palette-danger-plainColor)' : undefined }}>
           {hasError ? `${displayName} - ${actionError}` : displayName}
         </Box>
@@ -459,30 +501,51 @@ function OpenAIContainerFileChip(props: {
         </Box>
       </Box>
 
-      <GoodTooltip title='Copy to clipboard'>
-        <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleCopy} size='sm'>
-          {busy === 'copy' ? <CircularProgress size='sm' /> : <ContentCopyIcon sx={{ fontSize: 'lg' }} />}
-        </IconButton>
-      </GoodTooltip>
-      {canInline && (
-        <GoodTooltip title='Embed as text in the message'>
-          <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleInline} size='sm'>
-            {busy === 'inline' ? <CircularProgress size='sm' /> : <VerticalAlignBottomIcon sx={{ fontSize: 'lg' }} />}
+      {canCopy && (
+        <GoodTooltip title='Copy to clipboard'>
+          <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleCopy} size='sm'>
+            {busy === 'copy' ? <CircularProgress size='sm' /> : <ContentCopyIcon sx={{ fontSize: 'lg' }} />}
           </IconButton>
         </GoodTooltip>
       )}
-      <GoodTooltip title='Download file'>
-        <IconButton variant='soft' color='primary' disabled={isBusy} onClick={handleDownload} size='sm'>
-          {busy === 'download' ? <CircularProgress size='sm' /> : <DownloadIcon sx={{ fontSize: 'lg' }} />}
-        </IconButton>
-      </GoodTooltip>
-      {!!onFragmentDelete && (
-        <GoodTooltip title='Remove from message'>
-          <IconButton variant='plain' color='danger' disabled={isBusy} onClick={onFragmentDelete} size='sm'>
-            <DeleteOutlineIcon sx={{ fontSize: 'lg' }} />
-          </IconButton>
-        </GoodTooltip>
-      )}
+      <Dropdown onOpenChange={handleMenuOpenChange}>
+        <MenuButton slots={{ root: IconButton }} slotProps={{ root: { variant: 'soft', color: 'primary', size: 'sm', disabled: isBusy } }}>
+          {(busy === 'download' || busy === 'inline' || busy === 'delete') ? <CircularProgress size='sm' /> : <MoreVertIcon sx={{ fontSize: 'lg' }} />}
+        </MenuButton>
+        <Menu placement='bottom-end' sx={{ minWidth: 220 }}>
+          <MenuItem disabled={isBusy} onClick={handleDownload}>
+            <ListItemDecorator><DownloadIcon /></ListItemDecorator>
+            Download
+          </MenuItem>
+          {!!onFragmentReplace && (
+            <MenuItem disabled={!canInline || isBusy} onClick={handleInline}>
+              <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
+              <div>
+                Inline
+                {!canInline && <Typography level='body-xs' sx={{ opacity: 0.6 }}>
+                  File type not supported
+                </Typography>}
+              </div>
+            </MenuItem>
+          )}
+          {!!onFragmentDelete && <ListDivider />}
+          {!!onFragmentDelete && (!deleteArmed ? (
+            <MenuItem color='danger' disabled={isBusy} onClick={joyKeepPopup(() => setDeleteArmed(true)) /* keep open to show the confirm step */}>
+              <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
+              Delete
+            </MenuItem>
+          ) : <>
+            <MenuItem onClick={joyKeepPopup(() => setDeleteArmed(false))}>
+              <ListItemDecorator><CloseRoundedIcon /></ListItemDecorator>
+              Cancel
+            </MenuItem>
+            <MenuItem color='danger' disabled={isBusy} onClick={handleDeleteConfirmed}>
+              <ListItemDecorator><DeleteForeverIcon /></ListItemDecorator>
+              Confirm Deletion
+            </MenuItem>
+          </>)}
+        </Menu>
+      </Dropdown>
     </Sheet>
   );
 }

@@ -28,33 +28,30 @@ export function copyToClipboard(text: string, typeLabel: string) {
     });
 }
 
-export function copyBlobPromiseToClipboard(mimeType: string, blobPromise: Promise<Blob>, typeLabel: string) {
+/**
+ * Writes a Blob to the clipboard as a ClipboardItem. Browsers accept few types here (text/plain, text/html, image/png),
+ * so callers gate on the mime type and catch the rejection: this throws instead of alerting, so the failure can be
+ * shown where the action was taken.
+ */
+export async function copyBlobPromiseToClipboard(mimeType: string, blobPromise: Promise<Blob>, typeLabel: string): Promise<void> {
   if (!isBrowser)
     return;
-  if (!navigator.clipboard || !navigator.clipboard.write) {
-    alert('Clipboard access is blocked or not supported in this browser.');
-    return;
+  if (!navigator.clipboard || !navigator.clipboard.write)
+    throw new Error('Clipboard access is blocked or not supported in this browser.');
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ [mimeType]: blobPromise })]);
+  } catch (err: any) {
+    throw new Error(`Copy failed${err?.name ? ` (${err.name})` : ''}: ${err?.message || 'likely a permission issue'}`);
   }
-  // Create a ClipboardItem with the Blob
-  const clipboardItem = new ClipboardItem({ [mimeType]: blobPromise });
-
-  // Write the ClipboardItem to the clipboard
-  navigator.clipboard.write([clipboardItem])
-    .then(() => {
-      addSnackbar({
-        key: 'copy-blob-to-clipboard',
-        message: `${typeLabel} copied to clipboard`,
-        type: 'success',
-        closeButton: false,
-        overrides: {
-          autoHideDuration: 2000,
-        },
-      });
-    })
-    .catch((err) => {
-      const [media, type] = mimeType.split('/');
-      alert(`Failed to copy ${type?.toUpperCase()} ${media} to clipboard${err?.name ? ' (' + err.name + ')' : ''}.\n\n${err?.message || 'Unknown error, likely a permission issue.'}`);
-    });
+  addSnackbar({
+    key: 'copy-blob-to-clipboard',
+    message: `${typeLabel} copied to clipboard`,
+    type: 'success',
+    closeButton: false,
+    overrides: {
+      autoHideDuration: 2000,
+    },
+  });
 }
 
 export function supportsClipboardRead() {
