@@ -2,7 +2,7 @@ import * as React from 'react';
 import { stringify as csvStringify } from 'csv-stringify/browser/esm/sync';
 
 import type { Pluggable as UnifiedPluggable } from 'unified';
-import { Components as ReactMarkdownComponents, default as ReactMarkdown } from 'react-markdown';
+import { Components as ReactMarkdownComponents, default as ReactMarkdown, defaultUrlTransform, type UrlTransform } from 'react-markdown';
 import { default as rehypeKatex } from 'rehype-katex';
 import { default as remarkGfm } from 'remark-gfm';
 import { default as remarkMath } from 'remark-math';
@@ -209,6 +209,12 @@ const reactMarkdownComponents = {
   // math/inlineMath components are not needed, rehype-katex handles this automatically
 } as ReactMarkdownComponents;
 
+// Let model-sandbox hrefs ('sandbox:/mnt/data/...' from the OpenAI code interpreter) reach CustomARenderer: the default
+// transform passes only http(s)/irc(s)/mailto/xmpp and blanks every other scheme, and an <a href=''> resolves to the
+// app's own origin (#1208)
+const urlTransformKeepSandbox: UrlTransform = (url, key) =>
+  (key === 'href' && /^sandbox:/i.test(url)) ? url : defaultUrlTransform(url);
+
 const remarkPluginsStable: UnifiedPluggable[] = [
   remarkGfm, // GitHub Flavored Markdown
   remarkMark, // Mark-Highlight, for ==yellow==
@@ -288,6 +294,7 @@ export default function CustomMarkdownRenderer(props: { content: string, disable
       components={reactMarkdownComponents}
       remarkPlugins={remarkPlugins}
       rehypePlugins={rehypePluginsStable}
+      urlTransform={urlTransformKeepSandbox}
     >
       {props.disablePreprocessor ? props.content : preprocessMarkdown(props.content)}
     </ReactMarkdown>

@@ -112,6 +112,18 @@ function LinkPreview({ urlInfo }: { urlInfo: URLInfo }) {
 }
 
 
+// Inert link: the text of a link the browser must not navigate, with the reason on hover
+function InertLink({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <TooltipOutlined title={title}>
+      <Box component='span' sx={{ textDecoration: 'underline dotted', textUnderlineOffset: '2px', opacity: 0.7, cursor: 'help' }}>
+        {children}
+      </Box>
+    </TooltipOutlined>
+  );
+}
+
+
 export function CustomARenderer({ node, href, children, ...props }: {
   node?: any;
   href?: string;
@@ -121,15 +133,14 @@ export function CustomARenderer({ node, href, children, ...props }: {
   // Non-navigable model-sandbox links (e.g. OpenAI code-interpreter 'sandbox:/mnt/data/...'): the scheme can't be
   // opened by the browser, and this generic renderer has no message/container context to resolve a path -> file_id.
   // Render inert (not a broken target=_blank link); the real download is the container-file chip from the citation.
-  if (href && /^sandbox:/i.test(href)) {
-    return (
-      <TooltipOutlined title='File generated in the model sandbox - use the download above or below this message'>
-        <Box component='span' sx={{ textDecoration: 'underline dotted', textUnderlineOffset: '2px', opacity: 0.7, cursor: 'help' }}>
-          {children}
-        </Box>
-      </TooltipOutlined>
-    );
-  }
+  // NOTE: reaches here only because CustomMarkdownRenderer's urlTransform keeps the scheme (#1208).
+  if (href && /^sandbox:/i.test(href))
+    return <InertLink title='Generated in the sandbox. If it exists, it is attached to this message.'>{children}</InertLink>;
+
+  // Blank href: the markdown sanitizer stripped a scheme it does not pass (file:, javascript:, ...) - an <a href=''>
+  // would open the app's own origin in a new tab, so render inert instead
+  if (!href)
+    return <InertLink title='Link target not supported'>{children}</InertLink>;
 
   const isEmptyInlineLink = React.Children.count(children) === 0;
 
