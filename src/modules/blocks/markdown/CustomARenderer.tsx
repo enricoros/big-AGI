@@ -4,6 +4,8 @@ import { Avatar, Box, Chip, FormControl, Link } from '@mui/joy';
 
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
+import { useHostedLinkAction } from './HostedLinksContext';
+
 
 interface URLInfo {
   domain: string;
@@ -130,12 +132,17 @@ export function CustomARenderer({ node, href, children, ...props }: {
   children: React.ReactNode;
 }) {
 
-  // Non-navigable model-sandbox links (e.g. OpenAI code-interpreter 'sandbox:/mnt/data/...'): the scheme can't be
-  // opened by the browser, and this generic renderer has no message/container context to resolve a path -> file_id.
-  // Render inert (not a broken target=_blank link); the real download is the container-file chip from the citation.
+  // Model-sandbox links (e.g. OpenAI code-interpreter 'sandbox:/mnt/data/...'): the scheme can't be opened by the
+  // browser. When the message's hosted-file block for that file registered an action, the link triggers it (the block
+  // owns credentials, download and state); otherwise render inert, not a broken target=_blank link.
   // NOTE: reaches here only because CustomMarkdownRenderer's urlTransform keeps the scheme (#1208).
+  const hostedAction = useHostedLinkAction(href);
   if (href && /^sandbox:/i.test(href))
-    return <InertLink title='Generated in the sandbox. If it exists, it is attached to this message.'>{children}</InertLink>;
+    return hostedAction ? (
+      <TooltipOutlined title='Download the attached file'>
+        <Link component='button' level='inherit' onClick={hostedAction}>{children}</Link>
+      </TooltipOutlined>
+    ) : <InertLink title='Generated in the sandbox. If it exists, it is attached to this message.'>{children}</InertLink>;
 
   // Blank href: the markdown sanitizer stripped a scheme it does not pass (file:, javascript:, ...) - an <a href=''>
   // would open the app's own origin in a new tab, so render inert instead

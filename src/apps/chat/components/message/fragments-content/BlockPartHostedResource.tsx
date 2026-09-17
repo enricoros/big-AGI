@@ -30,6 +30,8 @@ import { useAIPreferencesStore } from '~/common/stores/store-ai';
 import { useLlmServiceAccess } from '~/common/stores/llms/hooks/useLlmServiceAccess';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
+import { useHostedLinkRegister } from '~/modules/blocks/markdown/HostedLinksContext';
+
 import { HostedFileChip, HostedFileChipBusy, HostedFileChipButton } from './HostedFileChip';
 
 
@@ -381,6 +383,14 @@ function OpenAIContainerFileChip(props: {
       setBusy(false);
     }
   }, [access, containerId, fileId, onFragmentDelete]);
+
+
+  // let the message's 'sandbox:/mnt/data/<filename>' links trigger this download, while the file is known by name and alive
+  const registerHostedLink = useHostedLinkRegister();
+  React.useEffect(() => {
+    if (!registerHostedLink || !filename || fileGone) return;
+    return registerHostedLink(filename, handleDownload);
+  }, [fileGone, filename, handleDownload, registerHostedLink]);
 
 
   const isBusy = !!busy;

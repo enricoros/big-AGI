@@ -2,6 +2,8 @@ import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button } from '@mui/joy';
+
+import { HostedLinksProvider } from '~/modules/blocks/markdown/HostedLinksContext';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
@@ -122,7 +124,7 @@ export function ContentFragments(props: {
   if (!props.showEmptyNotice && isEmpty)
     return null;
 
-  return <Box aria-label='message body' sx={(showDataStreamViz || isEditingText || (fromAssistant && props.blocksStretch)) ? _stretchLayoutSx : fromAssistant ? _startLayoutSx : _endLayoutSx}>
+  const body = <Box aria-label='message body' sx={(showDataStreamViz || isEditingText || (fromAssistant && props.blocksStretch)) ? _stretchLayoutSx : fromAssistant ? _startLayoutSx : _endLayoutSx}>
 
     {/* Empty Message Block - if empty */}
     {props.showEmptyNotice && (
@@ -404,4 +406,7 @@ export function ContentFragments(props: {
       }
     }).filter(Boolean)}
   </Box>;
+
+  // links in the text resolve to this message's hosted-file blocks; no provider when there are none, so text-only messages pay nothing
+  return props.contentFragments.some(f => f.part.pt === 'hosted_resource') ? <HostedLinksProvider>{body}</HostedLinksProvider> : body;
 }
