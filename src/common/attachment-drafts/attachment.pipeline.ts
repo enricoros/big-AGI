@@ -20,7 +20,7 @@ import type { AttachmentCreationOptions, AttachmentDraft, AttachmentDraftConvert
 import type { AttachmentsDraftsStore } from './store-attachment-drafts_slice';
 import { attachmentCloudConverterPrefix, attachmentCloudFetchFile, attachmentCloudGoogleWorkspaceExportMIME, CloudFetchError } from './attachment.cloud';
 import { attachmentGetLiveFileId, attachmentSourceSupportsLiveFile } from './attachment.livefile';
-import { guessInputContentTypeFromMime, heuristicMimeTypeFixup, mimeTypeIsDocX, mimeTypeIsPDF, mimeTypeIsPlainText, mimeTypeIsSupportedImage, reverseLookupMimeType } from './attachment.mimetypes';
+import { guessInputContentTypeFromMime, guessMimeTypeFromFilename, heuristicMimeTypeFixup, mimeTypeIsDocX, mimeTypeIsPDF, mimeTypeIsPlainText, mimeTypeIsSupportedImage } from './attachment.mimetypes';
 import { imageDataToImageAttachmentFragmentViaDBlob } from './attachment.dblobs';
 
 
@@ -163,8 +163,7 @@ export async function attachmentLoadInputAsync(source: Readonly<AttachmentDraftS
       const fileExtension = source.refPath.split('.').pop()?.toLowerCase() || undefined;
       if (!fileMime) {
         // see note on 'attachAppendDataTransfer'; this is a fallback for drag/drop missing Mimes sometimes
-        if (fileExtension)
-          fileMime = reverseLookupMimeType(fileExtension);
+        fileMime = guessMimeTypeFromFilename(source.refPath);
 
         // unknown extension or missing extension and mime: falling back to text/plain
         if (!fileMime) {
