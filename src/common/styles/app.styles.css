@@ -7,6 +7,91 @@
     --AGI-Mobile-Drawer-width: 320px;
     --AGI-Mobile-Panel-width: 320px;
     --AGI-overlay-start-opacity: 0;
+
+    /* Emil Kowalski & Apple Design Easing Tokens */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+    /* Apple Frosted Glass Tokens */
+    --apple-blur-nav: blur(20px) saturate(180%);
+    --apple-blur-modal: blur(24px) saturate(190%);
+}
+
+/* Optical typography & font rendering */
+html, body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* Headings optical tracking (Apple Design Principle 15) */
+h1, h2, h3, .JoyTypography-h1, .JoyTypography-h2, .JoyTypography-h3, .JoyTypography-title-lg {
+    letter-spacing: -0.02em !important;
+}
+
+/* Button & Interactive Press Feedback (Emil Kowalski & Apple Principle 1) */
+button,
+[role="button"],
+.JoyButton-root,
+.JoyIconButton-root,
+.JoyTab-root {
+    transition: transform 120ms var(--ease-out), background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease !important;
+}
+
+button:active,
+[role="button"]:active,
+.JoyButton-root:active,
+.JoyIconButton-root:active,
+.JoyTab-root:active {
+    transform: scale(0.97) !important;
+}
+
+/* Refined Apple Frosted Glass Materials (Apple Principle 12) */
+.apple-glass-surface {
+    backdrop-filter: var(--apple-blur-nav);
+    -webkit-backdrop-filter: var(--apple-blur-nav);
+}
+
+[data-joy-color-scheme="light"] .apple-glass-card {
+    background: rgba(255, 255, 255, 0.75) !important;
+    backdrop-filter: var(--apple-blur-modal);
+    -webkit-backdrop-filter: var(--apple-blur-modal);
+    box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-joy-color-scheme="dark"] .apple-glass-card {
+    background: rgba(23, 26, 28, 0.8) !important;
+    backdrop-filter: var(--apple-blur-modal);
+    -webkit-backdrop-filter: var(--apple-blur-modal);
+    box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+/* macOS-like slender floating scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(120, 120, 120, 0.25);
+    border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(120, 120, 120, 0.45);
+}
+
+/* Accessibility: Reduced motion support (Apple Principle 14 & Emil Kowalski) */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
 }
 
 .agi-ellipsize {
@@ -33,7 +118,6 @@
 body {
     overscroll-behavior-y: none;
 }
-
 
 /* Customize the Google Drive Picker background */
 
