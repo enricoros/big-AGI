@@ -360,7 +360,7 @@ function ServiceChangelogRow(props: {
                     : llmsChangelogIsEventless(entry) ? <Typography level='body-xs' textColor='text.tertiary'>no changes</Typography>
                       : <>
                         {entry.add?.map(ref => <Chip key={'+' + ref} size='sm' variant='outlined' color='success' title={ref} sx={styles.refChip}>+ {ref}</Chip>)}
-                        {Object.entries(entry.mod ?? {}).map(([ref, letters]) => <Chip key={'~' + ref} size='sm' variant='outlined' color='neutral' title={ref} sx={styles.refChip} endDecorator={<Box component='span' sx={{ fontFamily: 'body', color: 'text.tertiary', ml: 0.5 }}>{/*~ */}{llmsChangelogWords(letters)}</Box>}>{ref}</Chip>)}
+                        {Object.entries(entry.mod ?? {}).map(([ref, letters]) => <Chip key={'~' + ref} size='sm' variant='outlined' color='neutral' title={ref} sx={styles.refChip}>{ref} <Box component='span' sx={{ fontFamily: 'body', color: 'text.tertiary', ml: 0.5 }}>{/*~ */}{llmsChangelogWords(letters)}</Box></Chip>)}
                         {entry.rem?.map(ref => <Chip key={'-' + ref} size='sm' variant='outlined' color='danger' title={ref} sx={styles.refChip}>- {ref}</Chip>)}
                       </>}
                 </Box>
