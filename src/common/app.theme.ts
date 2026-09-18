@@ -190,6 +190,7 @@ export const themeBgApp = 'background.level1';
 export const themeBgAppDarker = 'background.level2';
 export const themeBgAppChatComposer = 'background.surface';
 
+export const themeMinWidthChatPane = '18rem'; // chat list + chat/beam wrapper floor (was the panel's minSize=20%); below it the message list overflows and the scroll box pans horizontally
 export const lineHeightChatTextMd = 1.75;
 export const lineHeightTextareaMd = 1.75;
 

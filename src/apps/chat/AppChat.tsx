@@ -25,6 +25,7 @@ import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomBu
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { WorkspaceIdProvider } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { addSnackbar, removeSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
+import { themeMinWidthChatPane } from '~/common/app.theme';
 import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
@@ -87,7 +88,7 @@ const chatMessageListSx: SxProps = {
 const chatBeamWrapperSx: SxProps = {
   flexGrow: 1,
   // we added these after removing the minSize={20} (%) from the containing panel.
-  minWidth: '18rem',
+  minWidth: themeMinWidthChatPane,
   // minHeight: 'calc(100vh - 69px - var(--AGI-Nav-width))',
 };
 

@@ -20,6 +20,7 @@ import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMess
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
+import { themeMinWidthChatPane } from '~/common/app.theme';
 import { useChatOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
@@ -383,7 +384,7 @@ export function ChatMessageList(props: {
     ...props.sx,
 
     // we added these after removing the minSize={20} (%) from the containing panel.
-    minWidth: '18rem',
+    minWidth: themeMinWidthChatPane,
     // minHeight: '180px', // not need for this, as it's already an overflow scrolling container, so one can reduce it to a pixel
 
     // fix for the double-border on the last message (one by the composer, one to the bottom of the message)
