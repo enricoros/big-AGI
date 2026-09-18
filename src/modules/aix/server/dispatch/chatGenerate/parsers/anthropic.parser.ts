@@ -725,7 +725,7 @@ function _emitContainerState(pt: IParticleTransmitter, container: { id: string; 
   });
 }
 
-/** [2026-09-01] Preserved thinking: relay the replayed thinking blocks the API dropped, one particle per vendor reason (normalized to an AIX cause). */
+/** [2026-09-01] Preserved thinking: relay the replayed thinking blocks the API dropped, as one void notice per vendor reason (normalized to an AIX cause). */
 function _sendInputTransforms(pt: IParticleTransmitter, transforms: NonNullable<AnthropicWire_API_Message_Create.Response['input_transformations']>): void {
   const pathsByReason = new Map<string, string[]>();
   for (const { type, path, reason } of transforms) {
@@ -735,8 +735,17 @@ function _sendInputTransforms(pt: IParticleTransmitter, transforms: NonNullable<
     }
     pathsByReason.set(reason, [...(pathsByReason.get(reason) ?? []), path]);
   }
-  for (const [reason, paths] of pathsByReason)
-    pt.sendCGControl({ cg: 'input-transform', itt: 'thinking-dropped', cause: reason === 'prefix_binding_mismatch' ? 'history-edited' : reason === 'model_binding_mismatch' ? 'model-switch' : reason, reason, paths });
+  for (const [reason, paths] of pathsByReason) {
+    const cause = reason === 'prefix_binding_mismatch' ? 'history-edited' : reason === 'model_binding_mismatch' ? 'model-switch' : reason;
+    const why = cause === 'history-edited' ? 'History edited' : cause === 'model-switch' ? 'Model changed' : cause;
+    const what = paths.length > 1 ? `ignored ${paths.length} reasoning blocks` : 'ignored 1 reasoning block';
+    const where = paths.map(p => p.replace(/^messages\.(\d+)\.content\.(\d+).*$/, '$1.$2')).join(', '); // wire positions: message.block
+    pt.appendVoidNotice({
+      p: 'vnt', nt: 'input-transform', itt: 'thinking-dropped', cause, reason, paths,
+      text: `${why}: ${what}`,
+      detail: `Harmless: the model rethinks from the messages as they are now.\nIgnored indices: ${where} (zero-based)`,
+    });
+  }
 }
 
 /** Compose a human-readable error string from Anthropic's stop_details. Returns undefined when nothing useful to surface. */

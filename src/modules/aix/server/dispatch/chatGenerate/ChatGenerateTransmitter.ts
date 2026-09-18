@@ -372,6 +372,12 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this.transmissionQueue.push(hres);
   }
 
+  /** Appends a void notice - inline between text fragments, display-only */
+  appendVoidNotice(vnt: Extract<AixWire_Particles.PartParticleOp, { p: 'vnt' }>) {
+    this.endMessagePart();
+    this.transmissionQueue.push(vnt);
+  }
+
 
   /**
    * Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead

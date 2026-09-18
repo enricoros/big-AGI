@@ -5,7 +5,7 @@ import { persist } from 'zustand/middleware';
 /// Global AI Preferences ///
 
 
-export type AIVndAntInlineFilesPolicy = 'off' | 'inline-file' | 'inline-file-and-delete';
+export type AIVndAntInlineFilesPolicy = 'off' | 'inline-file' | 'inline-file-and-delete' | 'discard';
 
 export type AIVndGeminiVertexLinksPolicy = 'as-is' | 'resolve';
 

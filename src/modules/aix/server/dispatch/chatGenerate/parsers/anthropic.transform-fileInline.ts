@@ -3,8 +3,12 @@ import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow, fetchTextOrTRPCThrow } 
 import { anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.access';
 import { convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
 
+import type { AixAPI_Model } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParticleTransformFunction } from '../chatGenerate.dispatch';
 import { FileMetadataResponse_schema } from '~/modules/llms/server/llm.server.types';
+
+
+type AnthropicFileInlinePolicy = NonNullable<AixAPI_Model['vndAntTransformInlineFiles']>;
 
 
 // configuration
@@ -84,8 +88,11 @@ function _isInlineableImageMimeType(mimeType: string): boolean {
  *    loses the explicit fragment boundary.
  *  - Image branch: the 'ii' particle creates a CLEAN, non-fusing fragment in the reassembler
  *    (it explicitly resets text accumulation), so images are atomic in the data model.
+ *  - Discard policy: no embed, awaited upstream delete, a void notice in place of the file
+ *    (#1201: drafts written to files then re-printed in the reply). A failed delete keeps the
+ *    hosted-resource particle, so the user still has the chip to act on.
  */
-export function createAnthropicFileInlineTransform(fileApiRequest: ReturnType<typeof anthropicAccess>, deleteAfterInline: boolean): ChatGenerateParticleTransformFunction {
+export function createAnthropicFileInlineTransform(fileApiRequest: ReturnType<typeof anthropicAccess>, policy: AnthropicFileInlinePolicy): ChatGenerateParticleTransformFunction {
 
   const transform: ChatGenerateParticleTransformFunction = async (particle) => {
     // pass-through any non-Anthropic-file particle
@@ -96,6 +103,19 @@ export function createAnthropicFileInlineTransform(fileApiRequest: ReturnType<ty
     const fileId = particle.fileId; // capture before particle is potentially reassigned to a replacement
     const fileUrl = `${fileApiRequest.url}/${fileId}`;
     const headers = fileApiRequest.headers;
+
+    // Discard: delete without fetching content; the filename is only for the note, so its lookup is best-effort
+    if (policy === 'discard') {
+      const filename = await fetchJsonOrTRPCThrow({ url: fileUrl, headers, name: 'Anthropic.fileInline.meta', throwWithoutName: true })
+        .then(json => FileMetadataResponse_schema.parse(json).filename)
+        .catch(() => undefined);
+      await fetchResponseOrTRPCThrow({ url: fileUrl, headers, method: 'DELETE', name: 'Anthropic.fileInline.delete', throwWithoutName: true });
+      return {
+        p: 'vnt', nt: 'hres-discarded', kind: 'vnd.ant.file', fileId, ...(filename ? { filename } : {}),
+        text: `Export discarded: ${filename || fileId}`,
+        detail: 'Deleted from the Anthropic Files API (Anthropic Files: Discard). The file stays in the code sandbox for the model while the container lives.',
+      };
+    }
 
     // 1. Fetch metadata to check MIME type and size
     //    Errors (connection, 4xx/5xx, JSON parse) throw; the executor's transform safety net falls back to the original particle.
@@ -149,7 +169,7 @@ export function createAnthropicFileInlineTransform(fileApiRequest: ReturnType<ty
     }
 
     // 4. Fire-and-forget delete if policy requires (raw fetch - we don't care about result/errors)
-    if (deleteAfterInline)
+    if (policy === 'inline-file-and-delete')
       fetchResponseOrTRPCThrow({ url: fileUrl, headers, method: 'DELETE', name: 'Anthropic.fileInline.delete', throwWithoutName: true })
         .catch(error => console.log(`[AnthropicFileInlineTransform] Failed to delete file ${fileId} after inlining:`, { error }));
 

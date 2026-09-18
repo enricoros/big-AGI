@@ -31,15 +31,6 @@ const VP_PERSISTENCE_DELAY = 500; // persistence of vision for voidPlaceholders
 /** Placeholders the reassembler manages (progress, follow-ups, controls) - 'notice' placeholders are user-dismissed: never auto-removed or recycled */
 const _isTransientPlaceholder = (f: Parameters<typeof isVoidPlaceholderFragment>[0]) => isVoidPlaceholderFragment(f) && f.part.pType !== 'notice';
 
-/** Short display text (+ hover detail) for a server-side input rewrite - pure UI, no semantics carried into the message */
-function _inputTransformNotice({ itt, cause, paths }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'input-transform' }>): { text: string, detail: string } {
-  const why = cause === 'history-edited' ? 'History edited' : cause === 'model-switch' ? 'Model changed' : cause;
-  const what = itt !== 'thinking-dropped' ? itt : paths.length > 1 ? `ignored ${paths.length} reasoning blocks` : 'ignored 1 reasoning block';
-  const where = paths.map(p => p.replace(/^messages\.(\d+)\.content\.(\d+).*$/, '$1.$2')).join(', '); // wire positions: message.block
-  return { text: `${why}: ${what}`, detail: `Harmless: the model rethinks from the messages as they are now.\nIgnored indices: ${where} (zero-based)` };
-}
-
-
 // Future: Reassembly Policies
 // type ReassemblyPolicyVoidPlaceholder =
 //   | 'ephemeral-log' // (default) when message content arrives (reasoning, text, tool calls, images, etc..), remove the last VP
@@ -354,7 +345,7 @@ export class ContentReassembler {
       // PartParticleOp
       case 'p' in op:
         // heuristics to remove the placeholder if real user-destined content arrives
-        if (op.p !== '❤' && op.p !== 'vp' && op.p !== 'urlc' && op.p !== 'hres' && op.p !== 'svs' && op.p !== 'tr_' && op.p !== 'trs')
+        if (op.p !== '❤' && op.p !== 'vp' && op.p !== 'vnt' && op.p !== 'urlc' && op.p !== 'hres' && op.p !== 'svs' && op.p !== 'tr_' && op.p !== 'trs')
           await this._removeLastVoidPlaceholderDelayed();
         switch (op.p) {
           case '❤':
@@ -398,6 +389,9 @@ export class ContentReassembler {
             break;
           case 'hres':
             this.onAppendHostedResource(op);
+            break;
+          case 'vnt':
+            this.onAddVoidNotice(op);
             break;
           case 'svs':
             this.onSetVendorState(op);
@@ -453,11 +447,6 @@ export class ContentReassembler {
           case 'set-upstream-handle':
             this.onResponseHandle(op);
             break;
-          case 'input-transform': { // pure display: a neutral, dismissible notice on this message
-            const { text, detail } = _inputTransformNotice(op);
-            this._pushFragment(createPlaceholderVoidFragment(text, 'notice', undefined, undefined, detail));
-            break;
-          }
           default:
             // noinspection JSUnusedLocalSymbols
             const _exhaustiveCheck: never = op;
@@ -806,6 +795,12 @@ export class ContentReassembler {
         console.warn('[ContentReassembler] onAppendHostedResource: unrecognized hosted resource kind', { op });
         break;
     }
+  }
+
+  private onAddVoidNotice({ text, detail }: Extract<AixWire_Particles.PartParticleOp, { p: 'vnt' }>): void {
+    // display-only notice at its stream position: close the open text fragment, so later text starts a new one after it
+    this.S._textFragmentIndex = null;
+    this._pushFragment(createPlaceholderVoidFragment(text, 'notice', undefined, undefined, detail));
   }
 
   private onAddUrlCitation(urlc: Extract<AixWire_Particles.PartParticleOp, { p: 'urlc' }>): void {

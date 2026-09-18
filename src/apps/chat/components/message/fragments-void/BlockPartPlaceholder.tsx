@@ -415,7 +415,7 @@ interface BlockPartPlaceholderProps {
   messagePendingIncomplete: boolean,
   showAsDataStreamViz?: boolean,
   zenMode?: boolean,
-  showNotices?: boolean, // dismissible notices: Extra visibility only
+  showNotices?: boolean, // show void dismissible notices
 
   // used for self deletion
   fragmentId: DMessageFragmentId,

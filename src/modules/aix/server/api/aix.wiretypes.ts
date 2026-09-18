@@ -558,7 +558,7 @@ export namespace AixWire_API {
     vndAntSkills: z.string().optional(),
     vndAntThinkingBudget: z.number().or(z.literal('adaptive')).nullable().optional(),
     vndAntToolSearch: z.enum(['regex', 'bm25']).optional(), // Tool Search Tool variant
-    vndAntTransformInlineFiles: z.enum(['inline-file', 'inline-file-and-delete']).optional(),
+    vndAntTransformInlineFiles: z.enum(['inline-file', 'inline-file-and-delete', 'discard']).optional(), // 'discard': delete upstream without embedding, a void notice in the chat
     vndAntWebDynamic: z.boolean().optional(),
     vndAntWebFetch: z.enum(['auto']).optional(),
     vndAntWebFetchMaxUses: z.number().int().min(1).max(50).optional(),
@@ -767,7 +767,6 @@ export namespace AixWire_Particles {
     | { cg: 'set-model', name: string }
     | { cg: 'set-provider-infra', label: string }
     | { cg: 'set-upstream-handle', handle: { uht: 'vnd.oai.responses' | 'vnd.gem.interactions', runId: string, createdAt: number | null, expiresAt: number | null } }
-    | { cg: 'input-transform', itt: 'thinking-dropped', cause: 'history-edited' | 'model-switch' | (string & {}), reason: string, paths: string[] } // the server rewrote our request: dropped replayed thinking blocks, one particle per vendor reason; `cause` normalizes `reason` (open set), `paths` are wire locations; client-side log for now
     | { cg: '_debugDispatchRequest', security: 'dev-env', dispatchRequest: { url: string, headers: string, body: string, bodySize: number } } // may generalize this in the future
     | { cg: '_debugProfiler', measurements: Record<string, number | string>[] };
 
@@ -855,6 +854,16 @@ export namespace AixWire_Particles {
      */
     | { p: /*'mo'*/ 'vp', opId: string, text: string, mot: 'search-web' | 'gen-image' | 'code-exec', state?: 'done' | 'error', parentOpId?: string, iTexts?: string[], oTexts?: string[] }
     | { p: 'urlc', title: string, url: string, num?: number, from?: number, to?: number, text?: string, pubTs?: number } // url citation - pubTs: publication timestamp
+    /**
+     * Void Notice - inline, display-only, dismissible, never sent upstream.
+     * - `text`/`detail` are the common rendering, composed by the sender
+     * - `nt` (notice type) carries the structured facts of each notice, so clients can later filter, log
+     *   or render a type specially without re-parsing text; add a variant per new notice, no catch-all
+     */
+    | { p: 'vnt', text: string, detail?: string } & (
+      | { nt: 'input-transform', itt: 'thinking-dropped', cause: 'history-edited' | 'model-switch' | (string & {}), reason: string, paths: string[] } // the server rewrote our request: dropped replayed thinking blocks, one particle per vendor reason; `cause` normalizes `reason` (open set), `paths` are wire locations; client-side log for now
+      | { nt: 'hres-discarded', kind: 'vnd.ant.file', fileId: string, filename?: string } // a provider-hosted file deleted by the Save policy without embedding; it may still exist in the model's sandbox
+      )
     | { p: 'hres' } & ( // hosted resource - provider-hosted resource
       | { kind: 'vnd.ant.file', fileId: string, containerId?: string }
       | { kind: 'vnd.gem.file', fileName: string, mimeType: string, isVideo?: boolean } // [Gemini Omni] Files-API artifact (e.g. delivery:uri video): re-fetchable by `files/{id}` name for ~48h via the key-proxied Gemini download route

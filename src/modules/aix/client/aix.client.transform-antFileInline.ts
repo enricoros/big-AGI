@@ -1,7 +1,7 @@
 import { apiAsync } from '~/common/util/trpc.client';
 import { convert_Base64_To_UInt8Array } from '~/common/util/blobUtils';
 
-import type { AixAPI_Access, AixWire_Particles } from '../server/api/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_Model, AixWire_Particles } from '../server/api/aix.wiretypes';
 
 import type { ReassemblerParticleTransforms } from './ContentReassembler';
 
@@ -48,7 +48,7 @@ function _isInlineableImageMimeType(mimeType: string): boolean {
  */
 export function createClientAnthropicFileInlineTransform(
   access: Extract<AixAPI_Access, { dialect: 'anthropic' }>,
-  deleteAfterInline: boolean,
+  policy: NonNullable<AixAPI_Model['vndAntTransformInlineFiles']>,
 ): ReassemblerParticleTransforms {
 
   return {
@@ -62,6 +62,17 @@ export function createClientAnthropicFileInlineTransform(
         return null; // type guard
 
       const { fileId } = particle;
+
+      // Discard: awaited delete, no embed; a failed delete throws, and the reassembler keeps the original particle (chip)
+      if (policy === 'discard') {
+        const filename = await apiAsync.llmAnthropic.fileApiGetMetadata.query({ access, fileId }).then(m => m.filename).catch(() => undefined);
+        await apiAsync.llmAnthropic.fileApiDelete.mutate({ access: access as any, fileId });
+        return {
+          p: 'vnt', nt: 'hres-discarded', kind: 'vnd.ant.file', fileId, ...(filename ? { filename } : {}),
+          text: `Export discarded: ${filename || fileId}`,
+          detail: 'Deleted from the Anthropic Files API (Anthropic Files: Discard). The file stays in the code sandbox for the model while the container lives.',
+        };
+      }
 
       // 1. Fetch metadata via tRPC (proxied through server - bypasses CORS)
       const { filename, mime_type: mimeType, size_bytes, downloadable } = await apiAsync.llmAnthropic.fileApiGetMetadata.query({ access, fileId });
@@ -110,7 +121,7 @@ export function createClientAnthropicFileInlineTransform(
       }
 
       // 3. Fire-and-forget delete if policy requires
-      if (deleteAfterInline)
+      if (policy === 'inline-file-and-delete')
         apiAsync.llmAnthropic.fileApiDelete.mutate({ access: access as any, fileId })
           .catch(error => console.log('[AIX] CSF file inline: failed to delete file after inlining:', { fileId, error }));
 

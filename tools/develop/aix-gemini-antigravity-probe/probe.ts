@@ -48,6 +48,7 @@ function createRecordingTransmitter(): { pt: IParticleTransmitter; log: LogEntry
     appendImageInline: rec('appendImageInline'),
     appendVideoInline: rec('appendVideoInline'),
     appendHostedResource: rec('appendHostedResource'),
+    appendVoidNotice: rec('appendVoidNotice'),
     startFunctionCallInvocation: rec('startFunctionCallInvocation'),
     appendFunctionCallInvocationArgs: rec('appendFunctionCallInvocationArgs'),
     addCodeExecutionInvocation: rec('addCodeExecutionInvocation'),

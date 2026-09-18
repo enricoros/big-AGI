@@ -510,6 +510,7 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
   appendImageInline(_mimeType: string, _base64Data: string, _label: string, _generator: string, _prompt: string): void { /* no-op */ }
   appendVideoInline(_mimeType: string, _base64Data: string, _label: string, _generator: string): void { /* no-op */ }
   appendHostedResource(_hres: any): void { /* no-op */ }
+  appendVoidNotice(_vnt: any): void { /* no-op */ }
   startFunctionCallInvocation(id: string | null, functionName: string, _expectedArgsFmt: 'incr_str' | 'json_object', args: string | object | null): void {
     this.fnInvocationCount++;
     if (this.firstFnName === null) {

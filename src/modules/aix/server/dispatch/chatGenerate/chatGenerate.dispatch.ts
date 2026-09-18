@@ -104,7 +104,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
         chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
         particleTransform: !model.vndAntTransformInlineFiles ? undefined : createAnthropicFileInlineTransform(
           anthropicAccess(access, ANTHROPIC_API_PATHS.files, hostedFeatures),
-          model.vndAntTransformInlineFiles === 'inline-file-and-delete',
+          model.vndAntTransformInlineFiles,
         ),
       };
     }

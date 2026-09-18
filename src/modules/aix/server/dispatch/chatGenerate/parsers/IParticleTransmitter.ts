@@ -51,6 +51,9 @@ export interface IParticleTransmitter {
   /** Appends a hosted resource (e.g. Anthropic container file) - inline content between text fragments */
   appendHostedResource(hres: Extract<AixWire_Particles.PartParticleOp, { p: 'hres' }>): void;
 
+  /** Appends a void notice - inline, display-only, dismissible, never sent upstream (e.g. replayed thinking dropped, file export discarded) */
+  appendVoidNotice(vnt: Extract<AixWire_Particles.PartParticleOp, { p: 'vnt' }>): void;
+
   /**
    * Creates a FC part, flushing the previous one if needed, and starts adding data to it
    * @param id if null [Gemini], a new id will be generated to keep it linked to future tool responses

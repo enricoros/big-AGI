@@ -934,7 +934,7 @@ async function _aixChatGenerateContent_LL_unlocked(
   // - in tRPC mode the server-side transforms handle everything elegantly - but we still add failsafes in case the server has a transform issue
   const particleTransforms: ReassemblerParticleTransforms[] = [];
   if (aixAccess.dialect === 'anthropic' && aixModel.vndAntTransformInlineFiles /* && clientSideChatGenerate */)
-    particleTransforms.push(createClientAnthropicFileInlineTransform(aixAccess, aixModel.vndAntTransformInlineFiles === 'inline-file-and-delete'));
+    particleTransforms.push(createClientAnthropicFileInlineTransform(aixAccess, aixModel.vndAntTransformInlineFiles));
 
 
   // Particles Reassembler - owns the accumulator, reused across Client-side retries

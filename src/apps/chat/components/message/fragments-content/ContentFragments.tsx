@@ -185,7 +185,7 @@ export function ContentFragments(props: {
                 messagePendingIncomplete={!!props.messagePendingIncomplete}
                 showAsDataStreamViz={showDataStreamViz}
                 zenMode={props.uiComplexityMode === 'minimal'}
-                showNotices={props.uiComplexityMode === 'extra'}
+                showNotices={props.uiComplexityMode !== 'minimal'}
                 onFragmentDelete={props.messagePendingIncomplete ? undefined : props.onFragmentDelete}
               />
             );
