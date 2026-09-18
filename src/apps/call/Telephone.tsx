@@ -1,25 +1,28 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Box, Card, ListDivider, ListItemDecorator, MenuItem, Switch, Typography } from '@mui/joy';
+import type { SxProps } from '@mui/joy/styles/types';
+import { Box, Card, Checkbox, Chip, ListItem, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CallEndIcon from '@mui/icons-material/CallEnd';
 import CallIcon from '@mui/icons-material/Call';
+import HeadphonesIcon from '@mui/icons-material/Headphones';
 import MicIcon from '@mui/icons-material/Mic';
-import MicNoneIcon from '@mui/icons-material/MicNone';
 
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { useChatLLMDropdown } from '../chat/components/layout-bar/useLLMDropdown';
+import { useChatMicTimeoutMsValue } from '../chat/store-app-chat';
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { aixChatGenerateContent_DMessage_FromConversation, AixChatGenerateContent_DMessageGuts } from '~/modules/aix/client/aix.client';
 import { speakText } from '~/modules/speex/speex.client';
 
+import type { FormRadioOption } from '~/common/components/forms/FormRadioControl';
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
-import { Link } from '~/common/components/Link';
+import { FormChipGroupControl } from '~/common/components/forms/FormChipGroupControl';
 import { OptimaPanelGroupedList } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
 import { OptimaPanelIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { SpeechResult, useSpeechRecognition } from '~/common/components/speechrecognition/useSpeechRecognition';
@@ -40,36 +43,125 @@ import { CallStatus } from './components/CallStatus';
 import { useAppCallStore } from './state/store-app-call';
 
 
+// end-of-turn pause, the 'custom' ladder; 'global' follows the chat Mic Timeout instead (#1188: a call must not inherit the 5s dictation default)
+const _sendAfterOptions: ReadonlyArray<FormRadioOption<string>> = [
+  { value: '1000', label: '1s', tooltip: 'Snappy back-and-forth' },
+  { value: '2000', label: '2s' },
+  { value: '5000', label: '5s' },
+  { value: '15000', label: '15s', tooltip: 'Room to think mid-sentence' },
+] as const;
+
+
+// how the mic opens: click per turn, or always listening between replies
+const _micModeOptions: ReadonlyArray<FormRadioOption<'ptt' | 'always'>> = [
+  { value: 'ptt', label: 'Push to talk', description: 'Click' },
+  { value: 'always', label: 'Always on', description: 'Mic stays on' },
+] as const;
+
+
+// notice under a row, same look as the Beam 'model unavailable' chip
+const _noticeChipSx: SxProps = {
+  borderRadius: 'sm',
+  border: '1px solid',
+  borderColor: 'warning.outlinedBorder',
+  fontSize: 'xs',
+  lineHeight: 'sm',
+  height: 'auto',
+  whiteSpace: 'normal',
+  px: 1,
+  py: 0.5,
+};
+
+
+// chip row in a panel group: same metrics as the chat panel's 'Read aloud' row
+const _chipRowSx: SxProps = {
+  '--ListItem-minHeight': '2.25rem',
+  pl: 1.25,
+  // narrow panels: the chips drop under the label, still right-aligned
+  '& .MuiFormControl-root': { flexWrap: 'wrap', rowGap: 0.5 },
+  '& .MuiButtonGroup-root': { ml: 'auto' },
+};
+
+// label-less chip row: the control does not fill the row, the chips align to the end (under the row above)
+const _chipRowEndSx: SxProps = {
+  ..._chipRowSx,
+  justifyContent: 'flex-end',
+  '& .MuiFormControl-root': { flexGrow: 0 },
+};
+
+
 function CallMenu(props: {
   pushToTalk: boolean,
   setPushToTalk: (pushToTalk: boolean) => void,
 }) {
 
   // external state
-  const { grayUI, toggleGrayUI } = useAppCallStore();
+  const { grayUI, toggleGrayUI, sendAfterMs, setSendAfterMs, sendAfterMode, setSendAfterMode } = useAppCallStore();
+  const chatMicTimeoutMs = useChatMicTimeoutMsValue();
 
-  const handlePushToTalkToggle = () => props.setPushToTalk(!props.pushToTalk);
+  // derived: the Settings chip shows the value it follows
+  const sendAfterModeOptions = React.useMemo((): ReadonlyArray<FormRadioOption<'global' | 'custom'>> => [
+    { value: 'global', label: 'Settings', description: `${chatMicTimeoutMs / 1000}s` },
+    { value: 'custom', label: 'Custom', description: 'Calls only' },
+  ], [chatMicTimeoutMs]);
 
-  return <OptimaPanelGroupedList title='Call'>
+  return <>
 
-    <MenuItem onClick={handlePushToTalkToggle}>
-      <ListItemDecorator>{props.pushToTalk ? <MicNoneIcon /> : <MicIcon />}</ListItemDecorator>
-      Push to talk
-      <Switch checked={props.pushToTalk} onChange={handlePushToTalkToggle} sx={{ ml: 'auto' }} />
-    </MenuItem>
+    <OptimaPanelGroupedList title='Window'>
+      <MenuItem onClick={toggleGrayUI}>
+        <ListItemDecorator><Checkbox size='md' color={grayUI ? 'primary' : 'neutral'} variant={grayUI ? 'plain' : 'outlined'} checked={grayUI} /></ListItemDecorator>
+        Grayed UI
+      </MenuItem>
+    </OptimaPanelGroupedList>
 
-    <ListDivider />
+    <OptimaPanelGroupedList title='Microphone'>
 
-    <MenuItem onClick={toggleGrayUI}>
-      Grayed UI
-      <Switch checked={grayUI} sx={{ ml: 'auto' }} />
-    </MenuItem>
+      <ListItem sx={_chipRowSx}>
+        <FormChipGroupControl
+          size='sm'
+          title='Start'
+          renderVariant='solid'
+          options={_micModeOptions}
+          value={props.pushToTalk ? 'ptt' : 'always'}
+          onChange={value => props.setPushToTalk(value === 'ptt')}
+        />
+      </ListItem>
 
-    <MenuItem component={Link} href='https://github.com/enricoros/big-agi/issues/175' target='_blank'>
-      Voice Calls Feedback
-    </MenuItem>
+      {!props.pushToTalk && (
+        <ListItem sx={{ pl: 1.25 }}>
+          <Chip color='warning' variant='soft' startDecorator={<HeadphonesIcon sx={{ fontSize: 'md' }} />} sx={_noticeChipSx}>
+            Headset advised: the mic may hear the reply. Push to talk avoids it.
+          </Chip>
+        </ListItem>
+      )}
 
-  </OptimaPanelGroupedList>;
+      <ListItem sx={_chipRowSx}>
+        <FormChipGroupControl
+          size='sm'
+          title='Send after'
+          renderVariant='solid'
+          options={sendAfterModeOptions}
+          value={sendAfterMode}
+          onChange={setSendAfterMode}
+        />
+      </ListItem>
+
+      {sendAfterMode === 'custom' && (
+        <ListItem sx={_chipRowEndSx}>
+          <FormChipGroupControl
+            size='sm'
+            title=''
+            renderVariant='solid'
+            options={_sendAfterOptions}
+            value={'' + sendAfterMs}
+            onChange={value => setSendAfterMs(parseInt(value))}
+          />
+        </ListItem>
+      )}
+
+    </OptimaPanelGroupedList>
+
+  </>;
 }
 
 
@@ -114,7 +206,9 @@ export function Telephone(props: {
         setCallMessages(messages => [...messages, createDMessageTextContent('user', userSpeechTranscribed)]); // [state] append user:speech
     }
   }, []);
-  const { recognitionState, startRecognition, stopRecognition, toggleRecognition } = useSpeechRecognition('webSpeechApi', onSpeechResultCallback, 1000);
+  const chatMicTimeoutMs = useChatMicTimeoutMsValue();
+  const { sendAfterMs, sendAfterMode } = useAppCallStore(useShallow(state => ({ sendAfterMs: state.sendAfterMs, sendAfterMode: state.sendAfterMode })));
+  const { recognitionState, startRecognition, stopRecognition, toggleRecognition } = useSpeechRecognition('webSpeechApi', onSpeechResultCallback, (sendAfterMode === 'global' ? chatMicTimeoutMs : sendAfterMs) || 2000);
 
   // derived state
   const isRinging = stage === 'ring';

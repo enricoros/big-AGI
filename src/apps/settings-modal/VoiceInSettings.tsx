@@ -11,7 +11,7 @@ import { LanguageSelect } from '~/common/components/LanguageSelect';
 
 
 const _minTimeouts: ReadonlyArray<FormRadioOption<string>> = [
-  { value: '600', label: '0.6s', description: 'Best for quick calls' },
+  { value: '600', label: '0.6s', description: 'Snappy' },
   { value: '2000', label: '2s', description: 'Standard' },
   { value: '5000', label: '5s', description: 'Breathe' },
   { value: '15000', label: '15s', description: 'Best for thinking' },
@@ -43,6 +43,7 @@ export function VoiceInSettings(props: { isMobile: boolean }) {
     {!props.isMobile && (
       <FormChipControl
         title='Mic Timeout'
+        tooltip='Silence that ends a dictation. Calls can follow it too: see Send after in the call panel.'
         // color='primary'
         options={_minTimeouts}
         value={chatTimeoutValue}

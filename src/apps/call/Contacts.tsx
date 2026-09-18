@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Avatar, Box, Card, CardContent, Chip, IconButton, Link as MuiLink, ListDivider, MenuItem, Sheet, Switch, Typography } from '@mui/joy';
+import { Avatar, Box, Card, CardContent, Checkbox, Chip, IconButton, Link as MuiLink, ListDivider, ListItemDecorator, MenuItem, Sheet, Typography } from '@mui/joy';
 import CallIcon from '@mui/icons-material/Call';
 
 import { GitHubProjectIssueCard } from '~/common/components/GitHubProjectIssueCard';
@@ -220,21 +220,21 @@ function ContactsMenuItems() {
   } = useAppCallStore();
 
   return (
-    <OptimaPanelGroupedList title='Contacts Settings'>
+    <OptimaPanelGroupedList title='Window'>
 
       <MenuItem onClick={toggleGrayUI}>
+        <ListItemDecorator><Checkbox size='md' color={grayUI ? 'primary' : 'neutral'} variant={grayUI ? 'plain' : 'outlined'} checked={grayUI} /></ListItemDecorator>
         Grayed UI
-        <Switch checked={grayUI} sx={{ ml: 'auto' }} />
       </MenuItem>
 
       <MenuItem onClick={toggleShowConversations}>
-        Conversations
-        <Switch checked={showConversations} sx={{ ml: 'auto' }} />
+        <ListItemDecorator><Checkbox size='md' color={showConversations ? 'primary' : 'neutral'} variant={showConversations ? 'plain' : 'outlined'} checked={showConversations} /></ListItemDecorator>
+        Recent calls
       </MenuItem>
 
       <MenuItem onClick={toggleShowSupport}>
-        Show Support
-        <Switch checked={showSupport} sx={{ ml: 'auto' }} />
+        <ListItemDecorator><Checkbox size='md' color={showSupport ? 'primary' : 'neutral'} variant={showSupport ? 'plain' : 'outlined'} checked={showSupport} /></ListItemDecorator>
+        Support card
       </MenuItem>
 
     </OptimaPanelGroupedList>
