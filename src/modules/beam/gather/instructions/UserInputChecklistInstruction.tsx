@@ -70,6 +70,10 @@ export async function executeUserInputChecklistInstruction(
     // Remove the placeholder message
     inputs.updateProgressComponent(null);
 
+    // awaiting the user, not a model: no pending timer, and no body (the checklist below is that text, parsed)
+    delete inputs.intermediateDMessage.pendingIncomplete;
+    inputs.publishIntermediateToOutput(true);
+
     // Update the instruction component to render the checklist
     inputs.updateInstructionComponent(
       <UserInputChecklistComponent

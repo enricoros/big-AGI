@@ -3,7 +3,7 @@ import { Typography } from '@mui/joy';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { abortWithReason } from '~/common/util/errorUtils';
-import { createDMessageEmpty, DMessage } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, DMessage, messageSetGeneratorNamed } from '~/common/stores/chat/chat.message';
 import { createPlaceholderVoidFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { BFusion, FusionUpdateOrFn } from '../beam.gather';
@@ -31,6 +31,8 @@ export interface ExecutionInputState {
   readonly updateInstructionComponent: (component: React.ReactNode) => void;
   // output1 -> input2
   readonly intermediateDMessage: DMessage;
+  // snapshot of the intermediate into BFusion.outputDMessage - the card header (timer, live metrics) and body follow the merge as they follow a ray
+  readonly publishIntermediateToOutput: (hideFragments?: boolean) => void;
 }
 
 export type Instruction = GatherInstruction | UserInputChecklistInstruction;
@@ -76,7 +78,14 @@ export function gatherStartFusion(
     updateInstructionComponent: (component: React.ReactNode) => onUpdateBFusion({ fusingInstructionComponent: component }),
     // output1 -> input2
     intermediateDMessage: createDMessageEmpty('assistant'), // [state] assistant:Fusion_pending
+    publishIntermediateToOutput: (hideFragments) => onUpdateBFusion({
+      outputDMessage: {
+        ...inputState.intermediateDMessage,
+        ...(hideFragments && { fragments: [] }),
+      },
+    }),
   };
+  messageSetGeneratorNamed(inputState.intermediateDMessage, 'Merge');
 
 
   // BFusion: startup full status reset
@@ -114,6 +123,7 @@ export function gatherStartFusion(
       inputState.intermediateDMessage.fragments = [createPlaceholderVoidFragment(GATHER_PLACEHOLDER)];
       inputState.intermediateDMessage.pendingIncomplete = true;
       inputState.intermediateDMessage.updated = null;
+      inputState.updateInstructionComponent(undefined); // every step starts with a clean instruction slot
 
       // return the promise from the instruction
       switch (instruction.type) {

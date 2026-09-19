@@ -191,7 +191,7 @@ export function Fusion(props: {
       {/* Output Message */}
       {(!!fusion?.outputDMessage?.fragments.length || fusion?.stage === 'fusing') && (
         <Box onCopy={clipboardInterceptCtrlCForCleanup} sx={beamCardMessageWrapperSx}>
-          {!!fusion.outputDMessage && (
+          {!!fusion.outputDMessage?.fragments.length && (
             <ChatMessageMemo
               message={fusion.outputDMessage}
               fitScreen={true}

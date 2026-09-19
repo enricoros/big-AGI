@@ -2,19 +2,14 @@ import * as React from 'react';
 
 import { Typography } from '@mui/joy';
 
-import { ChatMessage } from '../../../../apps/chat/components/message/ChatMessage';
-
 import { AixChatGenerateContent_DMessageGuts, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
-import { getIsMobile } from '~/common/components/useMatchMedia';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 import { isErrorContentFragment, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
-import { beamCardMessageScrollingSx, beamCardMessageSx } from '../../BeamCard';
-import { getBeamCardScrolling } from '../../store-module-beam';
 
 // NOTE: we are making Beam depend on AppChat with this?
 import { getChatThinkingPolicy } from '../../../../apps/chat/store-app-chat';
@@ -77,7 +72,10 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
     createDMessageTextContent('user', _mixChatGeneratePrompt(_i.userPrompt, inputs.rayMessages.length, prevStepOutput)),
   ];
 
-  // update the UI
+  // update the UI: the body streams through the fusion's outputDMessage (as a ray's through ray.message);
+  // 'mute' and 'character-count' keep the header live (timer, metrics) with a hidden body
+  const hideFragments = _i.display === 'mute' || _i.display === 'character-count';
+  inputs.publishIntermediateToOutput(hideFragments); // placeholder; the header timer runs from `created`, the merge start
   const onMessageUpdated = (messageOverwriteShallow: AixChatGenerateContent_DMessageGuts, completed: boolean) => {
     // fragments and generator are already immutable (new refs per update) - no deep clone needed
     const { fragments, ...rest } = messageOverwriteShallow;
@@ -89,33 +87,12 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
     if (completed)
       delete inputs.intermediateDMessage.pendingIncomplete;
 
-    switch (_i.display) {
-      case 'mute':
-        return;
-
-      case 'character-count':
-        inputs.updateInstructionComponent(
-          <Typography level='body-xs' sx={{ opacity: 0.5 }}>{messageFragmentsReduceText(fragments || []).length} characters</Typography>,
-        );
-        return;
-
-      case 'chat-message':
-      default:
-        const isMobile = getIsMobile(); // no need to react to this
-        // recreate the UI for this
-        inputs.updateInstructionComponent(
-          <ChatMessage /* Not Memo as this changes frequently */
-            message={inputs.intermediateDMessage}
-            fitScreen={isMobile}
-            isMobile={isMobile}
-            hideAvatar
-            blocksStretch
-            adjustContentScaling={-1}
-            sx={!getBeamCardScrolling() ? beamCardMessageSx : beamCardMessageScrollingSx}
-          />,
-        );
-        return;
-    }
+    if (!hideFragments || completed) // hidden bodies: no per-token store writes, just the completion
+      inputs.publishIntermediateToOutput(hideFragments);
+    if (_i.display === 'character-count')
+      inputs.updateInstructionComponent(
+        <Typography level='body-xs' sx={{ opacity: 0.5 }}>{messageFragmentsReduceText(fragments || []).length} characters</Typography>,
+      );
   };
 
   // stream the gathered message

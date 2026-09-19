@@ -242,7 +242,7 @@ export function useMessageAvatarLabel(
         label: prettyName,
         tooltip: (!created || complexity === 'minimal') ? null : (
           <Box sx={tooltipSx}>
-            <TimeAgo date={created} formatter={(value: number, unit: string, _suffix: string) => `Thinking for ${value} ${unit}${value > 1 ? 's' : ''}...`} />
+            <TimeAgo date={created} formatter={(value: number, unit: string, _suffix: string) => !value ? 'Thinking...' : `Thinking for ${value} ${unit}${value > 1 ? 's' : ''}...`} />
             {liveMetrics}
           </Box>
         ),

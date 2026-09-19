@@ -19,7 +19,7 @@ import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessa
 
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import type { DMessageId } from '~/common/stores/chat/chat.message';
-import { DLLMId, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
+import { DLLMId, getLLMLabel, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { animationEnterBelow } from '~/common/util/animUtils';
@@ -77,6 +77,7 @@ function RayControls(props: {
   isRemovable: boolean,
   isScattering: boolean,
   llmComponent: React.ReactNode,
+  llmLabel: string,
   llmShowReasoning?: boolean,
   llmVendorId: undefined | ModelVendorId,
   onIconClick: (event: React.MouseEvent) => void,
@@ -97,7 +98,7 @@ function RayControls(props: {
     )}
 
     {/* Letter / LLM Icon (default) */}
-    <TooltipOutlined asLargePane enableInteractive title={props.rayAvatarTooltip} placement='top-start'>
+    <TooltipOutlined asLargePane enableInteractive title={props.rayAvatarTooltip || props.llmLabel} placement='top-start'>
       <Box sx={{ display: 'flex', '--Icon-fontSize': 'var(--joy-fontSize-lg)' }} onClick={props.onIconClick}>
         {props.rayLetter ? (
           <Typography level='title-sm' color={SCATTER_COLOR !== 'neutral' ? SCATTER_COLOR : undefined}>
@@ -190,6 +191,7 @@ export function BeamRay(props: {
   });
 
   // more derived
+  const llmLabel = llmOrNull ? getLLMLabel(llmOrNull) : 'Model unknown';
   const llmShowReasoning = !BEAM_SHOW_REASONING_ICON ? false : llmOrNull?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;
 
 
@@ -269,6 +271,7 @@ export function BeamRay(props: {
         isRemovable={props.isRemovable}
         isScattering={isScattering}
         llmComponent={llmComponent}
+        llmLabel={llmLabel}
         llmShowReasoning={llmShowReasoning}
         llmVendorId={llmOrNull?.vId}
         onIconClick={handleDebugPrint}

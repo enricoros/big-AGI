@@ -5,7 +5,7 @@ import { AixChatGenerateContent_DMessageGuts, AixReattachMode, aixChatGenerateCo
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { abortWithReason } from '~/common/util/errorUtils';
 import { agiUuid } from '~/common/util/idUtils';
-import { createDMessageEmpty, DMessage, duplicateDMessage, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
+import { createDMessageEmpty, DMessage, duplicateDMessage, messageSetGeneratorNamed, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { createPlaceholderVoidFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
@@ -32,10 +32,12 @@ export interface BRay {
 
 
 export function createBRayEmpty(llmId: DLLMId | null): BRay {
+  const message = createDMessageEmpty('assistant');
+  messageSetGeneratorNamed(message, 'Beam');
   return {
     rayId: agiUuid('beam-ray'),
     status: 'empty',
-    message: createDMessageEmpty('assistant'), // [state] assistant:Ray_empty
+    message: message, // [state] assistant:Ray_empty
     rayLlmId: llmId,
     userSelected: false,
     imported: false,
