@@ -873,6 +873,7 @@ export namespace AixWire_Particles {
     | { p: 'svs' } & ( // set vendor state - vendor-specific opaque protocol state
       | { vendor: 'anthropic', state: { container: { id: string; expiresAt: string } } } // message-level - container reuse
       | { vendor: 'openai-container', state: { container: { id: string; expiresAt: string } } } // message-level - OpenAI Responses code-interpreter container reuse; 20min TTL stamped by parser
+      | { vendor: 'xai-container', state: { container: { id: string; expiresAt: string } } } // message-level - xAI Responses code-interpreter container; own namespace: the Responses parser is shared, and an OpenAI-targeted turn must not adopt (or replay the item ids of) a foreign sandbox (#1200)
       | { vendor: 'gemini-envid', state: { environment: { id: string; expiresAt: string | null } } } // message-level - Gemini Interactions sandbox handle (today: Antigravity); 7d TTL stamped by parser
       | { vendor: 'gemini', state: { thoughtSignature: string } } // fragment-level
       | { vendor: AixWire_Vendors.RspVendor, state: { reasoningItem?: { id?: string, encryptedContent?: string }, messagePhase?: 'commentary' | 'final_answer' } } // fragment-level, one namespace per Responses vendor (AixWire_Vendors.RSP_VENDORS): reasoningItem attaches to the last (ma) fragment; messagePhase breaks + tags the NEXT text fragment. Vendor-private (keys + server-side ids), never crosses namespaces

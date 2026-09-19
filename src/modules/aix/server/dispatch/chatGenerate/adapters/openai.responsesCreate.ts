@@ -433,6 +433,26 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
     return newMessage;
   }
 
+  /**
+   * Cross-provider code-execution round-trip safety (#1200): a foreign hosted invocation
+   * (e.g. xAI's 83-char `ci_...` item id) converted to the container-independent
+   * 'execute_code' function_call must not carry an id that breaks OpenAI's 64-char cap.
+   * Deterministically shorten over-long ids so the call and its paired output always agree
+   * (same input -> same id, which is what the anti-wedge pairing relies on); any id that
+   * already fits passes through untouched.
+   */
+  function safeExecuteCodeCallId(callId: string): string {
+    if (callId.length <= 64)
+      return callId;
+    // FNV-1a, base36 + a length suffix: short, deterministic, collision-safe for a one-shot converted call
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < callId.length; i++) {
+      hash ^= callId.charCodeAt(i);
+      hash = Math.imul(hash, 0x01000193);
+    }
+    return `call_${(hash >>> 0).toString(36)}_${callId.length.toString(36)}`;
+  }
+
   function newFunctionCallMessage(callId: string, functionName: string, functionArguments: string) {
     const newMessage: FunctionCallMessage = {
       type: 'function_call',
@@ -625,10 +645,11 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
                   // one when sessionContainerId is set. Without it - idle/expired, OR the prior execution was another
                   // vendor's container (e.g. Gemini, stored as 'vnd.gem.interactions') - fall back to the container-
                   // independent 'execute_code' function_call, which carries the code as context with no container dependency.
+                  // The call_id is length-sanitized: a foreign hosted id (e.g. xAI's 83-char 'ci_...') would 400 on its own.
                   if (sessionContainerId)
                     newCodeInterpreterCallMessage(modelPart.id, sessionContainerId, invocation.code || '');
                   else
-                    newFunctionCallMessage(modelPart.id, 'execute_code', invocation.code || '');
+                    newFunctionCallMessage(safeExecuteCodeCallId(modelPart.id), 'execute_code', invocation.code || '');
                   break;
                 default:
                   const _exhaustiveCheck: never = invocation;
@@ -660,10 +681,11 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
                 case 'code_execution':
                   // Mirror the invocation's representation (same sessionContainerId gate): merge outputs into the
                   // code_interpreter_call when live, else emit a plain function_call_output for the 'execute_code' fallback.
+                  // Same length-sanitized call_id as the invocation side, so the pair always matches (see safeExecuteCodeCallId).
                   if (sessionContainerId)
                     attachCodeInterpreterCallOutputs(modelPart.id, modelPart.response.result, !!modelPart.error);
                   else
-                    newFunctionCallOutputMessage(modelPart.id, modelPart.response.result);
+                    newFunctionCallOutputMessage(safeExecuteCodeCallId(modelPart.id), modelPart.response.result);
                   break;
                 default:
                   const _exhaustiveCheck: never = toolResponseType;
