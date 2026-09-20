@@ -35,6 +35,7 @@ const _styles = {
   // wrapper: lets the breadcrumb collapse/ellipsize gracefully inside the centered top bar.
   // Joy Breadcrumbs renders as `nav > ol > li`; keep it on one line and let the crumbs shrink rather than wrap.
   root: {
+    ml: 1,
     // same height as the rename editor (md Textarea, 2.25rem), so entering/leaving edit doesn't jump;
     // the bar center (OptimaBar) owns the rest of the rhythm: rowGap/py vertically, columnGap horizontally
     minHeight: '2.25rem',
@@ -45,20 +46,33 @@ const _styles = {
     '& nav': { overflow: 'hidden' },
     '& nav > ol': { flexWrap: 'nowrap' },
     '& nav > ol > li': { minWidth: 0 },
+    // fit the title to the row: the bar breaks lines as if the crumb were 260px (~ a selector's width),
+    // then the crumb grows into the row's free space, up to its own text - so the group stays centered
+    flex: '1 1 260px',
+    maxWidth: 'max-content',
   },
 
-  // the conversation crumb is capped to ~ a selector's width, so a long title never pushes the
-  // persona/model selectors off-center (the whole group stays centered in the bar)
+  // upper bound for a long title; mobile (< md): the bar wraps and the crumb may span its own row
   titleCap: {
-    maxWidth: { xs: 144, sm: 200, md: 260 },
+    maxWidth: { xs: '100%', md: 480 },
   } as const,
 
   titleEditable: {
-    maxWidth: { xs: 144, sm: 200, md: 260 },
     cursor: 'pointer', // was: 'text'
     borderRadius: 'xs',
     px: 0.25,
     '&:hover': { textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px' },
+  } as const,
+
+  // hover: the full title (the crumb may be ellipsized), with the rename affordance as a second line
+  tooltip: {
+    maxWidth: 'min(80dvw, 480px)',
+    overflowWrap: 'anywhere',
+  } as const,
+  tooltipHint: {
+    fontSize: 'xs',
+    opacity: 0.7,
+    mt: 0.5,
   } as const,
 
   // inline editor: shown in place of the breadcrumb while renaming (chat-view leaf only)
@@ -109,10 +123,17 @@ export function ChatBarBreadcrumbs(props: {
 
   // the conversation crumb: clickable *ancestor* (sub-context) or editable *leaf* (chat view)
   const conversationCrumb = isSubContext ? (
-    <Box className='agi-ellipsize' sx={_styles.titleCap}>{displayTitle}</Box>
+    <TooltipOutlined placement='bottom-start' slowEnter title={<Box sx={_styles.tooltip}>{displayTitle}</Box>}>
+      <Box className='agi-ellipsize' sx={_styles.titleCap}>{displayTitle}</Box>
+    </TooltipOutlined>
   ) : (
-    <TooltipOutlined placement='bottom-start' title='Rename Chat'>
-      <Box className='agi-ellipsize' sx={_styles.titleEditable} onClick={beginEdit}>
+    <TooltipOutlined placement='bottom-start' slowEnter title={
+      <Box sx={_styles.tooltip}>
+        {displayTitle}
+        <Box sx={_styles.tooltipHint}>Click to rename</Box>
+      </Box>
+    }>
+      <Box className='agi-ellipsize' sx={[_styles.titleCap, _styles.titleEditable]} onClick={beginEdit}>
         {displayTitle}
       </Box>
     </TooltipOutlined>
