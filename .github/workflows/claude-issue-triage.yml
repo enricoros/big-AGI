@@ -54,6 +54,14 @@ jobs:
 
             A user has reported an issue. Please help them by:
 
+            0. Campaign check, first and cheap. Run `gh search issues --author <login> --sort created --order desc --limit 40 --json repository,title,createdAt`.
+               A campaign is 5+ issues by the same account, in unrelated repositories, within days, all the same shape: a question-form
+               pitch for one product, service or URL, no bug, no repro, nothing specific to this codebase. A prolific reporter filing
+               real bugs and requests is not a campaign; the signal is the same pitch replicated across repos.
+               If it is a campaign: skip steps 1-3, do no research or code reading, add no label, post the CAMPAIGN REPLY below and
+               `gh issue close <number> --reason "not planned"`. If it reads as a pitch but the cross-repo evidence is missing, triage
+               normally and say in one line that it reads as a vendor pitch.
+
             1. Deep think about the issue:
                **Understand the problem**: Analyze the issue description and any error messages
                **Search for context**:
@@ -73,6 +81,13 @@ jobs:
                - Initial assessment
                - Next steps or clarification needed
                - Link duplicates if found
+
+            CAMPAIGN REPLY (fill the brackets, keep the rest; no analysis of the pitch, no code, no link to the product):
+              Closing as not planned. This is one of [N] near-identical issues opened by the same account across unrelated
+              repositories in [days] days, each pitching [product]. That is a marketing campaign, not an issue against big-AGI,
+              and it gets no engineering time. [One line on what already works for actual users, e.g. any OpenAI-compatible
+              endpoint runs through Models > OpenAI with a custom host; or the contribution bar, e.g. a dynamic-backend PR per
+              kb/modules/LLM-vendor-integration.md with a sample model-list response attached.] Reference: enricoros/big-AGI#1215.
 
             TARGET LABEL: `main` (public) is the open-source app people self-host; `dev` (private) runs big-agi.com Free/Pro.
             `main` flows into `dev`, but `dev` has also rewritten Beam, composer, chat list, personas, export/import and storage,
