@@ -78,6 +78,7 @@ export class ContentReassembler {
 
   // constructor
   private readonly debuggerFrameId: AixFrameId | null;
+  private readonly wallStartTs: number;
 
   // processing mechanics
   private readonly wireParticlesBacklog: AixWire_Particles.ChatGenerateOp[] = [];
@@ -104,6 +105,7 @@ export class ContentReassembler {
     private readonly onInlineVideo?: (video: { blob: Blob; mimeType: string; label: string }) => void,
     private readonly wireAbortSignal?: AbortSignal,
   ) {
+    this.wallStartTs = Date.now(); // constructed right before the first wire call, once across client-side retries
     this.initialState = {
       // AixChatGenerateContent_LL fields:
       fragments: [],
@@ -191,6 +193,9 @@ export class ContentReassembler {
 
 
     // Metrics
+    // dtWall: the vendor-measured dtAll only arrives with a vendor-terminated stream; a stopped or failed run gets the client wall clock instead
+    if (!this.S.cgMetricsLg && outcome !== 'completed') this.S.cgMetricsLg = {};
+    if (this.S.cgMetricsLg) this.S.cgMetricsLg.dtWall = Date.now() - this.wallStartTs;
     metricsFinishChatGenerateLg(this.S.cgMetricsLg, outcome !== 'completed');
 
     // [AI Inspector] Debugging, finalize the frame

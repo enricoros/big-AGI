@@ -14,7 +14,7 @@ const METRICS_APPROXIMATE_VT_TOKENS_THRESHOLD = 40; // tokens
 export type DMetricsChatGenerate_Md =
   Omit<MetricsChatGenerateTokens, 'T'> &
   MetricsChatGenerateCost_Md &
-  Pick<MetricsChatGenerateTime, 'dtAll' | 'dtStart' | 'vTOutInner'>; // 2025-02-27: added the inner velocity, which wasn't stored before
+  Pick<MetricsChatGenerateTime, 'dtAll' | 'dtStart' | 'vTOutInner' | 'dtWall'>; // 2025-02-27: added the inner velocity, which wasn't stored before
 
 /**
  * In particular this is used 'as' AixWire_Particles.CGSelectMetrics
@@ -50,6 +50,7 @@ type MetricsChatGenerateTime = {
   dtStart?: number,
   dtInner?: number,
   dtAll?: number,
+  dtWall?: number,     // client wall clock, first wire call (after any client-side wait) to the last particle or the abort, set on every outcome; never a velocity source
 
   // v = Tokens/s
   vTOutInner?: number,  // TOut / dtInner
@@ -134,7 +135,7 @@ export function metricsFinishChatGenerateLg(metrics: DMetricsChatGenerate_Lg | u
 const _MD_OPTIONAL_KEYS: readonly (keyof DMetricsChatGenerate_Md)[] = [
   '$c', '$cReported', '$cdCache', '$cIn', '$cCacheR', '$cCacheW', '$cOut', '$cTools', '$xPrice', '$code', // select costs
   'TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', 'nWebSearch', // select token and call counts
-  'dtAll', 'dtStart', 'vTOutInner', // select token timings/velocities
+  'dtAll', 'dtStart', 'vTOutInner', 'dtWall', // select token timings/velocities
   'TsR', // stop reason
 ];
 
@@ -188,9 +189,9 @@ function _computeCostsFromPricing(metrics: Readonly<DMetricsChatGenerate_Md>, pr
   const outTokens = metrics.TOut || 0;
   const webSearchCalls = metrics.nWebSearch || 0;
 
-  // usage: presence
+  // usage: presence - a stopped run with no usage yet is an incomplete message (a billed request happened), not a vendor omitting usage
   if (!sumInputTokens && !outTokens && !webSearchCalls)
-    return { $code: 'no-tokens' };
+    return { $code: metrics.TsR === 'aborted' ? 'partial-msg' : 'no-tokens' };
 
   // pricing: presence
   if (!pricing)

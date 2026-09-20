@@ -299,6 +299,8 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
   const showWaitingTime = metrics?.dtStart !== undefined && (uiComplexityMode === 'extra' || metrics.dtStart >= 10000);
   const showSpeedSection = uiComplexityMode !== 'minimal' && (showWaitingTime || metrics?.vTOutInner !== undefined);
   const showTimeSection = uiComplexityMode !== 'minimal' && !!metrics?.dtAll;
+  // stopped or failed: no vendor-terminated stream, so no dtAll; the client wall clock stands in, labeled
+  const showWallTime = !showTimeSection && uiComplexityMode !== 'minimal' && metrics?.TsR === 'aborted' && !!metrics?.dtWall;
 
   const costCode = metrics.$code ? _prettyCostCode(metrics.$code) : null;
 
@@ -366,7 +368,9 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
 
     {/* Time */}
     {showTimeSection && <div>Time:</div>}
+    {showWallTime && <div>Wall time:</div>}
     {showTimeSection && <div><b>{prettyDuration(metrics.dtAll!, true)}</b></div>}
+    {showWallTime && <div><b>{prettyDuration(metrics.dtWall!, true)}</b> <span style={{ opacity: 0.5 }}>until stop</span></div>}
   </Box>;
 }
 
