@@ -25,6 +25,7 @@ export function ExecuteModeMenu(props: {
   return (
     <CloseablePopup
       menu anchorEl={props.anchorEl} onClose={props.onClose}
+      darkenBackdrop={props.isMobile /* mobile: scrim signals a modal choice, like the '+' attach menu */}
       minWidth={320}
       placement='top-end'
     >
