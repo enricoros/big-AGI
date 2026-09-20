@@ -64,17 +64,6 @@ const _styles = {
     '&:hover': { textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px' },
   } as const,
 
-  // hover: the full title (the crumb may be ellipsized), with the rename affordance as a second line
-  tooltip: {
-    maxWidth: 'min(80dvw, 480px)',
-    overflowWrap: 'anywhere',
-  } as const,
-  tooltipHint: {
-    fontSize: 'xs',
-    opacity: 0.7,
-    mt: 0.5,
-  } as const,
-
   // inline editor: shown in place of the breadcrumb while renaming (chat-view leaf only)
   editor: {
     minWidth: 280,
@@ -123,16 +112,9 @@ export function ChatBarBreadcrumbs(props: {
 
   // the conversation crumb: clickable *ancestor* (sub-context) or editable *leaf* (chat view)
   const conversationCrumb = isSubContext ? (
-    <TooltipOutlined placement='bottom-start' slowEnter title={<Box sx={_styles.tooltip}>{displayTitle}</Box>}>
-      <Box className='agi-ellipsize' sx={_styles.titleCap}>{displayTitle}</Box>
-    </TooltipOutlined>
+    <Box className='agi-ellipsize' sx={_styles.titleCap}>{displayTitle}</Box>
   ) : (
-    <TooltipOutlined placement='bottom-start' slowEnter title={
-      <Box sx={_styles.tooltip}>
-        {displayTitle}
-        <Box sx={_styles.tooltipHint}>Click to rename</Box>
-      </Box>
-    }>
+    <TooltipOutlined placement='bottom-start' title='Rename Chat'>
       <Box className='agi-ellipsize' sx={[_styles.titleCap, _styles.titleEditable]} onClick={beginEdit}>
         {displayTitle}
       </Box>
