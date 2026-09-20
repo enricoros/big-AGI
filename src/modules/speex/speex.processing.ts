@@ -97,7 +97,16 @@ export function speex_splitTextIntoChunks(text: string, maxChunkLength: number =
       chunks.push(paragraph);
   }
 
-  return chunks;
+  // drop chunks with nothing to voice (emoji-only, punctuation-only, symbols): they cost credits for silence, and ElevenLabs v3 rejects them with a 400
+  return chunks.filter(speex_textHasSpeakableContent);
+}
+
+/**
+ * True when the text has at least one letter or digit, in any script.
+ * Mirrors the ElevenLabs v3 rule: inputs empty after removing emojis and audio tags are rejected.
+ */
+export function speex_textHasSpeakableContent(text: string): boolean {
+  return /[\p{L}\p{N}]/u.test(text);
 }
 
 function _splitParagraphIntoChunks(paragraph: string, fitWithinMaxLength: number): string[] {

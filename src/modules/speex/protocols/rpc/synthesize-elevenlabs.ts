@@ -42,6 +42,13 @@ export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLa
   const voiceId = voice.ttsVoiceId /*|| env.ELEVENLABS_VOICE_ID*/ || SPEEX_DEFAULTS.ELEVENLABS_VOICE;
   const model = voice.ttsModel || _selectModel(priority, languageCode);
 
+  // skip inputs with nothing to voice: v3 rejects them (400 'Input at position 0 has empty text' after removing emojis and [audio tags]), older models bill for silence
+  const voiceable = model.startsWith('eleven_v3') ? text.replace(/\[[^\]]*]/g, '') : text;
+  if (!/[\p{L}\p{N}]/u.test(voiceable)) {
+    yield { t: 'done', chars: text.length, audioBytes: 0 };
+    return;
+  }
+
   const path = `/v1/text-to-speech/${voiceId}${streaming ? '/stream' : ''}`;
   const { headers, url } = _elevenlabsAccess(access, path);
 
