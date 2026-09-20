@@ -11,7 +11,7 @@ import { AixWire_Particles } from '../../api/aix.wiretypes';
 
 import { AixDebugObject } from './chatGenerate.debug';
 import { AixDemuxers } from '../stream.demuxers';
-import { ChatGenerateDispatch, ChatGenerateDispatchRequest, ChatGenerateParseFunction } from './chatGenerate.dispatch';
+import { ChatGenerateDispatch, ChatGenerateDispatchRequest, ChatGenerateParseContext, ChatGenerateParseFunction } from './chatGenerate.dispatch';
 import { ChatGenerateTransmitter } from './ChatGenerateTransmitter';
 import { DispatchContinuationSignal } from './chatGenerate.continuation';
 import { OperationRetrySignal } from './chatGenerate.operation-retry';
@@ -43,7 +43,7 @@ export async function* executeChatGenerateDispatch(
   dispatchCreatorFn: () => Promise<ChatGenerateDispatch>,
   intakeAbortSignal: AbortSignal,
   _d: AixDebugObject,
-  parseContext?: { retriesAvailable: boolean },
+  parseContext?: ChatGenerateParseContext,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
   // AIX ChatGenerate Particles - Intake Transmitter
@@ -153,8 +153,7 @@ async function* _connectToDispatch(
       chatGenerateTx.sendCGControl({
         cg: 'aix-retry-reset', rScope: 'srv-dispatch',
         rClearStrategy: 'none', // clear nothing, because no content has been streamed while trying to connect
-        reason: 'Connect issue',
-        ...info, attempt: info.attempt - 1, maxAttempts: info.maxAttempts - 1,
+        ...info, // reason, attempt (2..) of maxAttempts: same notation as the operation retrier
       });
       singnaldrain.resolve('▼'); // -> breaks the heartbeat loop
     };
@@ -214,7 +213,7 @@ async function* _consumeDispatchUnified(
   dispatchParserNS: ChatGenerateParseFunction,
   chatGenerateTx: ChatGenerateTransmitter,
   _d: AixDebugObject,
-  parseContext?: { retriesAvailable: boolean },
+  parseContext?: ChatGenerateParseContext,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
   let dispatchBody: string | undefined = undefined;
   try {
@@ -264,7 +263,7 @@ async function* _consumeDispatchStream(
   dispatchParser: ChatGenerateParseFunction,
   chatGenerateTx: ChatGenerateTransmitter,
   _d: AixDebugObject,
-  parseContext?: { retriesAvailable: boolean },
+  parseContext?: ChatGenerateParseContext,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
   // Body reader with optional transform (e.g. AWS EventStream binary -> SSE text)

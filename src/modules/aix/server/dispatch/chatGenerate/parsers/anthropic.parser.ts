@@ -1,7 +1,7 @@
 import { safeErrorString } from '~/server/wire';
 
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
-import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
+import type { ChatGenerateParseContext, ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
@@ -101,7 +101,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
     return true;
   };
 
-  return function(pt: IParticleTransmitter, eventData: string, eventName?: string, context?: { retriesAvailable: boolean }): void {
+  return function(pt: IParticleTransmitter, eventData: string, eventName?: string, context?: ChatGenerateParseContext): void {
 
     // Time to first event
     if (timeToFirstEvent === undefined)
@@ -492,18 +492,18 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         // 500* - api_error (anthropic systems internal unexpected error)
         // 529* - overloaded_error: The API is temporarily overloaded.
         // *: retryable errors
-        const isRetryableError = ['overloaded_error', 'rate_limit_error', 'api_error'].includes(error.type);
+        // map error types to HTTP status codes: selects the retry class (429/529 capacity, 500 transient) and shows in diagnostics
+        const errorTypeToHttpStatus: Record<string, number> = {
+          'rate_limit_error': 429,
+          'api_error': 500,
+          'overloaded_error': 529,
+        };
+        const isRetryableError = error.type in errorTypeToHttpStatus;
 
-        // Throw retryable error to instruct the correct ancestor to restart (only if retries available
+        // Throw retryable error to instruct the correct ancestor to restart (only if retries available for this class)
         if (isRetryableError) {
-          if (context?.retriesAvailable) {
+          if (context?.hasRetriesForHttpStatus(errorTypeToHttpStatus[error.type])) {
             console.log(`[Aix.Anthropic] Can retry error '${errorText}'`);
-            // map error types to HTTP status codes for diagnostics
-            const errorTypeToHttpStatus: Record<string, number> = {
-              'rate_limit_error': 429,
-              'api_error': 500,
-              'overloaded_error': 529,
-            };
             // request a retry by unwinding to the retrier
             throw new OperationRetrySignal(`Anthropic: ${errorText}`, {
               causeHttp: errorTypeToHttpStatus[error.type],
@@ -538,7 +538,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     return true;
   };
 
-  return function(pt: IParticleTransmitter, fullData: string /*, eventName?: string, context?: { retriesAvailable: boolean } */): void {
+  return function(pt: IParticleTransmitter, fullData: string /*, eventName?: string, context?: ChatGenerateParseContext */): void {
 
     // parse with validation (e.g. type: 'message' && role: 'assistant')
     const {

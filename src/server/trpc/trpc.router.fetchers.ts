@@ -66,7 +66,7 @@ type _RequestConfig<TBody extends object | undefined | FormData> = {
  *    - httpStatus: HTTP status code (503, 429, 502, etc.) for upstream HTTP errors
  *
  * RETRY PATTERN MATCHING:
- * - HTTP 503/429/502 (category='http', httpStatus present) → Retry with server profile (1-30s)
+ * - HTTP 429 → rate-limited profile (~50s); 529 → overloaded (~30s); 503/502 → transient (~7s); see RETRY_PROFILES in trpc.fetchers.retrier.ts
  * - Connection errors (category='connection', connErrorName present) → Retry with network profile (0.5-8s)
  * - Abort/Parse (category='abort'/'parse') → Don't retry
  *

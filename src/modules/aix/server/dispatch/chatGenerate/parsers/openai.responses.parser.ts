@@ -4,7 +4,7 @@ import { hasKeys } from '~/common/util/objectUtils';
 import { usdToCents } from '~/common/util/costUtils';
 
 import type { AixWire_Particles, AixWire_Vendors } from '../../../api/aix.wiretypes';
-import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
+import type { ChatGenerateParseContext, ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
 import { AIX_OAI_DEFAULT_IMAGE_GEN_MODEL } from '../adapters/openai.responsesCreate';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
@@ -354,7 +354,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
   // [xAI] grok-4.6 leaks internal citation directives into web_search answer text - strip them (see xai.transform-citationsLeak.ts)
   const xaiCitationsFilter = rspVendor === 'xai' ? new XAIDefectiveCitationsFilter() : undefined;
 
-  return function(pt: IParticleTransmitter, eventData: string, _eventName?: string, context?: { retriesAvailable: boolean }) {
+  return function(pt: IParticleTransmitter, eventData: string, _eventName?: string, context?: ChatGenerateParseContext) {
 
     // throws on malformed event data
     const chunkData = JSON.parse(eventData);
@@ -463,7 +463,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
 
         // Genuine failure: retry if transient (the deferred mid-stream 'error' lands here when the message didn't complete), else surface the error
         const failedRetryHttpStatus = _transientErrorToHttpStatus(failedError);
-        if (failedRetryHttpStatus && context?.retriesAvailable)
+        if (failedRetryHttpStatus && context?.hasRetriesForHttpStatus(failedRetryHttpStatus))
           throw new OperationRetrySignal(failedText, { causeHttp: failedRetryHttpStatus, causeConn: failedError?.code });
 
         pt.setTokenStopReason('cg-issue');
@@ -858,7 +858,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
 
         // Transient and retries left: unwind to the operation retrier (#1210)
         const retryHttpStatus = _transientErrorToHttpStatus(event.error ?? event);
-        if (retryHttpStatus && context?.retriesAvailable)
+        if (retryHttpStatus && context?.hasRetriesForHttpStatus(retryHttpStatus))
           throw new OperationRetrySignal(errorText, { causeHttp: retryHttpStatus, causeConn: errorCode });
 
         // Nothing to salvage - fail now (and seal, so the trailing 'response.failed' echo doesn't re-report)
@@ -914,7 +914,7 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
 
   const parserCreationTimestamp = Date.now();
 
-  return function(pt: IParticleTransmitter, eventData: string, _eventName?: string, context?: { retriesAvailable: boolean }) {
+  return function(pt: IParticleTransmitter, eventData: string, _eventName?: string, context?: ChatGenerateParseContext) {
 
     // Throws on malformed event data
     const responseData = JSON.parse(eventData);
@@ -1286,7 +1286,7 @@ function _priceMultiplierFromServiceTier(serviceTier: string | null | undefined)
 /**
  * If there's an error in the pre-decoded message, push it down to the particle transmitter.
  */
-function _forwardResponseErrorNS(parsedData: any, pt: IParticleTransmitter, context?: { retriesAvailable: boolean }) {
+function _forwardResponseErrorNS(parsedData: any, pt: IParticleTransmitter, context?: ChatGenerateParseContext) {
 
   // operate on .error
   if (!parsedData || !parsedData.error) return false;
@@ -1308,7 +1308,7 @@ function _forwardResponseErrorNS(parsedData: any, pt: IParticleTransmitter, cont
 
   // Transient and retries left: unwind to the operation retrier (#1210)
   const retryHttpStatus = _transientErrorToHttpStatus(error);
-  if (retryHttpStatus && context?.retriesAvailable)
+  if (retryHttpStatus && context?.hasRetriesForHttpStatus(retryHttpStatus))
     throw new OperationRetrySignal(errorText, { causeHttp: retryHttpStatus, causeConn: typeof error.code === 'string' ? error.code : undefined });
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'

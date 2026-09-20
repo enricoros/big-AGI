@@ -57,7 +57,8 @@ export type ChatGenerateDispatchRequest =
   | { url: string, headers: HeadersInit, method: 'GET' };
 
 export type ChatGenerateParseContext = {
-  retriesAvailable: boolean;
+  // whether the operation retrier has attempts left for an error of this HTTP(-equivalent) class - parsers throw OperationRetrySignal only if true
+  hasRetriesForHttpStatus: (httpStatus?: number) => boolean;
 };
 
 export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, eventData: string, eventName?: string, context?: ChatGenerateParseContext) => void;

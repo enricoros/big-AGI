@@ -4,24 +4,74 @@ import { delayOrAbort } from '~/common/util/abortUtils';
 
 const AIX_DEBUG_SERVER_RETRY = true;
 
+/**
+ * Retry schedules, keyed by the class of the failure. One table for both retriers: the HTTP connect
+ * retrier below, and the in-band operation retrier (chatGenerate.operation-retry.ts) which classifies
+ * mid-stream provider errors to an HTTP-equivalent status and looks the class up here (upstreamRetryProfile).
+ *
+ * Budgets follow what each failure needs to clear, each retrier on its own: a blip clears in seconds, load shedding
+ * in tens of seconds, a rate limit when its per-minute window rolls. Fewer, longer waits on rate limits: failed
+ * requests can count against the limit. Both retriers heartbeat through the wait. `label` is what the user reads.
+ */
 const RETRY_PROFILES = {
   // network/DNS failures (never connected) -> fast retry
   network: {
+    label: 'Connection issue',
     baseDelayMs: 500,
     maxDelayMs: 8000,
     jitterFactor: 0.25,
     maxAttempts: 3,      // 3 attempts total: immediate, then retry at ~0.5s, ~1s
   },
-  // server overload (connected, but server busy) -> slower retry
-  server: {
+  // transient server faults (502, 503, in-band 5xx) -> a blip clears in seconds, or it's not clearing
+  transient: {
+    label: 'Temporary provider error',
     baseDelayMs: 1000,
     maxDelayMs: 10000,
     jitterFactor: 0.5,    // 50% randomization
-    maxAttempts: 4,      // 4 attempts total: immediate, then retry at ~1s, ~2s, ~4s
+    maxAttempts: 4,      // 4 attempts total: immediate, then retry at ~1s, ~2s, ~4s (~7s budget)
+  },
+  // overloaded (529, 503 "overloaded") -> the provider is shedding load, it clears in tens of seconds
+  overloaded: {
+    label: 'Provider is busy',
+    baseDelayMs: 1000,
+    maxDelayMs: 15000,
+    jitterFactor: 0.25,
+    maxAttempts: 6,      // 6 attempts total: immediate, then retry at ~1s, ~2s, ~4s, ~8s, ~15s (~30s budget)
+  },
+  // rate limited (429) -> per-minute windows: cover most of a minute, in few attempts (#1210, #1099)
+  rateLimited: {
+    label: 'Provider rate limit',
+    baseDelayMs: 2000,
+    maxDelayMs: 20000,
+    jitterFactor: 0.25,   // N Beam rays hit the same limit at once: spread them
+    maxAttempts: 6,      // 6 attempts total: immediate, then retry at ~2s, ~4s, ~8s, ~16s, ~20s (~50s budget)
   },
 } as const;
 
 type RetryProfile = typeof RETRY_PROFILES[keyof typeof RETRY_PROFILES];
+
+/**
+ * Class of a retryable failure from its HTTP(-equivalent) status. Used by the connect retrier (real
+ * status) and by the in-band operation retrier (status the parser assigned to a mid-stream error).
+ * The in-band callers already established the error is transient, hence the fallback.
+ */
+export function upstreamRetryProfile(httpStatus?: number): RetryProfile {
+  return httpStatus === 429 ? RETRY_PROFILES.rateLimited
+    : httpStatus === 529 ? RETRY_PROFILES.overloaded
+      : RETRY_PROFILES.transient;
+}
+
+/**
+ * Backoff for the wait before `attemptNumber + 1`: exponential from the profile base, capped, with symmetric jitter.
+ */
+export function upstreamRetryBackoffMs(profile: RetryProfile, attemptNumber: number): number {
+  let delayMs = Math.min(profile.baseDelayMs * Math.pow(2, attemptNumber - 1), profile.maxDelayMs);
+  if (profile.jitterFactor > 0) {
+    const jitterRange = delayMs * profile.jitterFactor;
+    delayMs = Math.round(delayMs + (Math.random() * 2 - 1) * jitterRange); // ±jitterRange
+  }
+  return Math.max(1, delayMs);
+}
 
 /**
  * 429 errors matching these patterns are NOT retried - they indicate permanent
@@ -65,16 +115,24 @@ function selectRetryProfile(error: TRPCFetcherError | unknown): RetryProfile | n
           console.log(`[fetchers.retrier] 429 not retryable: ${denyMatch.label}`);
         return null;
       }
-      return RETRY_PROFILES.server; // Retry temporary rate limits
+      return RETRY_PROFILES.rateLimited; // Retry temporary rate limits
     }
+
+    // 529 Overloaded (Anthropic)
+    if (error.httpStatus === 529)
+      return RETRY_PROFILES.overloaded;
 
     // retriable server errors
     const retryCodes = [
       503, // Service Unavailable <- main one to retry
       502, // Bad Gateway
     ];
-    if (retryCodes.includes(error.httpStatus))
-      return RETRY_PROFILES.server;
+    if (retryCodes.includes(error.httpStatus)) {
+      // [Gemini] 503 "The model is overloaded. Please try again later." is load shedding wearing a 503
+      if (error.httpStatus === 503 && /overloaded/i.test(error.message))
+        return RETRY_PROFILES.overloaded;
+      return RETRY_PROFILES.transient;
+    }
   }
 
   return null;
@@ -85,6 +143,7 @@ function selectRetryProfile(error: TRPCFetcherError | unknown): RetryProfile | n
  * Describes a retry attempt.
  */
 export type RetryAttempt = {
+  reason: string; // user-facing, from the retry profile
   attempt: number; // 2, 3, ...maxAttempts
   maxAttempts: number;
   delayMs: number;
@@ -152,7 +211,7 @@ export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Pr
           console.warn(`[fetchers.retrier] ⚠️ All ${rp.maxAttempts - 1} retry attempts exhausted ${errorInfo}`);
         }
         // gave up after `attemptNumber` total attempts (incl. the original); the `-1` is a magic constant to signal end of retries
-        onRetry?.({ attempt: attemptNumber, maxAttempts: attemptNumber, causeHttp: error instanceof TRPCFetcherError ? error.httpStatus : undefined, causeConn: 'ERR', delayMs: -1 });
+        onRetry?.({ reason: rp.label, attempt: attemptNumber, maxAttempts: attemptNumber, causeHttp: error instanceof TRPCFetcherError ? error.httpStatus : undefined, causeConn: 'ERR', delayMs: -1 });
         throw error;
       }
 
@@ -161,21 +220,11 @@ export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Pr
         const errorInfo = error instanceof TRPCFetcherError
           ? `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`
           : '';
-        const profileType = rp === RETRY_PROFILES.network ? 'network' : 'server';
-        console.log(`[fetchers.retrier] 🔄 Retryable error ${errorInfo} - using '${profileType}' profile`);
-        // console.log(`[fetchers.retrier] 🔄 Retryable error ${errorInfo} - using ${profileType} profile: ${error?.message || error}`);
+        console.log(`[fetchers.retrier] 🔄 Retryable error ${errorInfo} - ${rp.label}`);
       }
 
-      // calculate exponential backoff with jitter
-      const exponentialDelay = rp.baseDelayMs * Math.pow(2, attemptNumber - 1);
-      let delayMs = Math.min(exponentialDelay, rp.maxDelayMs);
-
-      // add jitter to prevent thundering herd
-      if (rp.jitterFactor > 0) {
-        const jitterRange = delayMs * rp.jitterFactor;
-        const randomJitter = (Math.random() * 2 - 1) * jitterRange; // ±jitterRange
-        delayMs = Math.max(1, Math.round(delayMs + randomJitter));
-      }
+      // exponential backoff with jitter
+      const delayMs = upstreamRetryBackoffMs(rp, attemptNumber);
 
       attemptNumber++;
       if (AIX_DEBUG_SERVER_RETRY)
@@ -183,6 +232,7 @@ export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Pr
 
       // let the caller know about the retry attempt
       onRetry?.({
+        reason: rp.label,
         attempt: attemptNumber,
         maxAttempts: rp.maxAttempts,
         delayMs,

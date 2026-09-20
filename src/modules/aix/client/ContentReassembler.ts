@@ -31,6 +31,10 @@ const VP_PERSISTENCE_DELAY = 500; // persistence of vision for voidPlaceholders
 /** Placeholders the reassembler manages (progress, follow-ups, controls) - 'notice' placeholders are user-dismissed: never auto-removed or recycled */
 const _isTransientPlaceholder = (f: Parameters<typeof isVoidPlaceholderFragment>[0]) => isVoidPlaceholderFragment(f) && f.part.pType !== 'notice';
 
+/** The status chip of a server retry, see onAixRetryReset */
+const _isRetryStatus = (f: Parameters<typeof isVoidPlaceholderFragment>[0]) => isVoidPlaceholderFragment(f) && f.part.aixControl?.ctl === 'ec-retry';
+const _RETRY_COUNTDOWN = 'Retrying in ';
+
 // Future: Reassembly Policies
 // type ReassemblyPolicyVoidPlaceholder =
 //   | 'ephemeral-log' // (default) when message content arrives (reasoning, text, tool calls, images, etc..), remove the last VP
@@ -178,6 +182,12 @@ export class ContentReassembler {
     // - mark active operations as errored on non-clean terminations
     if (outcome !== 'completed') {
       this.S.fragments = this.S.fragments.map(fragment => {
+        // a retry countdown left behind by a stop or by the final failure is no longer true: say what happened
+        if (isVoidPlaceholderFragment(fragment) && fragment.part.aixControl?.ctl === 'ec-retry' && fragment.part.pText.includes(_RETRY_COUNTDOWN)) {
+          const { pText, aixControl: { rAttempt = '-' } } = fragment.part;
+          const ending = outcome === 'aborted' ? `Stopped at attempt ${rAttempt}` : `Gave up after ${rAttempt} attempts`;
+          return { ...fragment, part: { ...fragment.part, pText: pText.slice(0, pText.indexOf(_RETRY_COUNTDOWN)) + ending } };
+        }
         if (!isVoidPlaceholderFragment(fragment) || !fragment.part.opLog?.length) return fragment;
         const updatedOpLog = fragment.part.opLog.map(entry => {
           const trimmedText = entry.text?.endsWith('...') ? entry.text.slice(0, -3) : entry.text;
@@ -1200,10 +1210,14 @@ export class ContentReassembler {
       }
     }
 
+    // one retry status at a time: connect retries clear nothing ('none'), so the previous status would stack
+    for (let idx; (idx = this.S.fragments.findLastIndex(_isRetryStatus)) >= 0;)
+      this._spliceFragment(idx);
+
     // -> ph: show retry status
     const retryMessage =  delayMs > 0
-      ? `${reason ? `${reason} - ` : ''}Retrying in ${Math.round(delayMs / 100) / 10}s - ${attempt}/${maxAttempts}`
-      : `Connection failed (${attempt} retries)`;
+      ? `${reason ? `${reason} - ` : ''}${_RETRY_COUNTDOWN}${Math.round(delayMs / 100) / 10}s - ${attempt}/${maxAttempts}`
+      : `Connection failed (${attempt} attempts)`;
     this._pushFragment(createPlaceholderVoidFragment(retryMessage, undefined, {
       ctl: 'ec-retry',
       rScope: rScope,

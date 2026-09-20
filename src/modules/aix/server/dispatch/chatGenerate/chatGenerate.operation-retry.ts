@@ -1,11 +1,13 @@
+import { upstreamRetryBackoffMs, upstreamRetryProfile } from '~/server/trpc/trpc.fetchers.retrier';
 import { delayOrAbort } from '~/common/util/abortUtils';
 
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
 
 import type { AixDebugObject } from './chatGenerate.debug';
-import type { ChatGenerateDispatch } from './chatGenerate.dispatch';
+import type { ChatGenerateDispatch, ChatGenerateParseContext } from './chatGenerate.dispatch';
 import { DispatchContinuationSignal } from './chatGenerate.continuation';
 import { executeChatGenerateDispatch } from './chatGenerate.executor';
+import { heartbeatsWhileAwaiting } from '../heartbeatsWhileAwaiting';
 
 
 // configuration
@@ -41,6 +43,10 @@ export class OperationRetrySignal extends Error {
 /**
  * Wraps executeChatGenerateDispatch with operation-level retry for mid-stream errors.
  * Retries entire operation when OperationRetrySignal is thrown (e.g., Anthropic overloaded_error).
+ *
+ * The attempt budget depends on the class of the error (see RETRY_PROFILES), which is only
+ * known when the parser classifies it: hence parsers ask `hasRetriesForHttpStatus(causeHttp)` before throwing, and otherwise
+ * surface the error themselves, with their own wording and log level.
  */
 export async function* executeChatGenerateWithOperationRetry(
   dispatchCreatorFn: () => Promise<ChatGenerateDispatch>,
@@ -48,15 +54,16 @@ export async function* executeChatGenerateWithOperationRetry(
   _d: AixDebugObject,
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
-  const maxAttempts = AIX_DISABLE_OPERATION_RETRY ? 1 : 4; // 1 = no retries (just immediate attempt), 4 = initial + 3 retries
   let attemptNumber = 1;
+  const maxAttemptsFor = (causeHttp?: number) => AIX_DISABLE_OPERATION_RETRY ? 1 : upstreamRetryProfile(causeHttp).maxAttempts;
+  const parseContext: ChatGenerateParseContext = {
+    hasRetriesForHttpStatus: (causeHttp) => attemptNumber < maxAttemptsFor(causeHttp),
+  };
 
   while (true) {
     try {
 
-      yield* executeChatGenerateDispatch(dispatchCreatorFn, abortSignal, _d, {
-        retriesAvailable: attemptNumber < maxAttempts,
-      });
+      yield* executeChatGenerateDispatch(dispatchCreatorFn, abortSignal, _d, parseContext);
 
       // success: log if we had retries before
       if (AIX_DEBUG_OPERATION_RETRY && attemptNumber > 1)
@@ -79,17 +86,19 @@ export async function* executeChatGenerateWithOperationRetry(
         throw error; // unexpected: executeChatGenerate shall convert exceptions to yielded particles
       }
 
-      // sanity: exhausted attempts - must be a Parser error - as it shall have not thrown in this case
+      // sanity: exhausted attempts - must be a Parser error - as it shall have not thrown in this case (hasRetriesForHttpStatus was false)
+      const profile = upstreamRetryProfile(error.causeHttp);
+      const maxAttempts = maxAttemptsFor(error.causeHttp);
       if (attemptNumber >= maxAttempts) {
         if (AIX_DEBUG_OPERATION_RETRY)
           console.warn(`[operation.retrier] ⚠️ Retry error on final attempt (parser bug?) - ${error?.message || error}`);
         throw error; // out of attempts
       }
 
-      // retry: backoff: 1s, 2s, 4s (capped at 10s)
-      const delayMs = Math.min(1000 * Math.pow(2, attemptNumber - 1), 10000);
+      // retry: backoff per profile, jittered (see RETRY_PROFILES)
+      const delayMs = upstreamRetryBackoffMs(profile, attemptNumber);
       if (AIX_DEBUG_OPERATION_RETRY)
-        console.log(`[operation.retrier] 🔄 Retrying after ${delayMs}ms (attempt ${attemptNumber}/${maxAttempts - 1}): ${error?.message || error}`);
+        console.log(`[operation.retrier] 🔄 Retrying after ${delayMs}ms (attempt ${attemptNumber}/${maxAttempts - 1}, http ${error.causeHttp ?? '-'}): ${error?.message || error}`);
 
       attemptNumber++;
 
@@ -97,7 +106,7 @@ export async function* executeChatGenerateWithOperationRetry(
       yield {
         cg: 'aix-retry-reset', rScope: 'srv-op',
         rClearStrategy: 'since-checkpoint', // clear current-attempt content while preserving prior continuation turns
-        reason: error.reason || error.message || 'retrying operation',
+        reason: profile.label, // calm and short for the user; the vendor text is in the server log above, and in the final error if retries run out
         attempt: attemptNumber, maxAttempts: maxAttempts, delayMs: delayMs,
         ...(error.causeHttp ? { causeHttp: error.causeHttp } : undefined),
         ...(error.causeConn ? { causeConn: error.causeConn } : undefined),
@@ -105,7 +114,8 @@ export async function* executeChatGenerateWithOperationRetry(
 
       // If aborted during delay, let next attempt detect it and create proper terminating particle
       // (throwing here would bypass executor's particle-based messaging contract)
-      await delayOrAbort(delayMs, abortSignal);
+      // Heartbeats keep the intake stream alive through the longer waits.
+      yield* heartbeatsWhileAwaiting(delayOrAbort(delayMs, abortSignal));
 
       // -> loop continues for next attempt
     }
