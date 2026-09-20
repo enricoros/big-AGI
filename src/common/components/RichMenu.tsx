@@ -182,7 +182,7 @@ export function RichMenu(props: {
 
   if (props.compact)
     return (
-      <Menu placement={props.placement} sx={{ ...richMenuCompactSx, ...(props.stagger && _richMenuStaggerSx), zIndex, ...props.sx }}>
+      <Menu variant={props.darkenBackdrop ? 'plain' : undefined /* under the scrim: no hairline, same as CloseablePopup */} placement={props.placement} sx={{ ...richMenuCompactSx, ...(props.stagger && _richMenuStaggerSx), zIndex, ...props.sx }}>
         {backdrop}
         {props.children}
       </Menu>
