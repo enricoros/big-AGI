@@ -3,7 +3,6 @@ import * as React from 'react';
 import { Box, IconButton, ListItemButton, ListItemDecorator } from '@mui/joy';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
-import SettingsIcon from '@mui/icons-material/Settings';
 
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 
@@ -13,6 +12,7 @@ import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { OptimaBarControlMethods, OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
+import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { sortLLMsByServiceLabel } from '~/common/stores/llms/components/llms.dropdown.utils';
@@ -127,17 +127,17 @@ function LLMDropdown(props: {
       </Box>
     }>
       <IconButton
-        variant='outlined' color='neutral'
+        size='sm'
         onClick={handleOpenLLMOptions}
         sx={{
           ml: 'auto',
           // mr: -0.5,
           my: '-0.25rem' /* absorb the menuItem padding */,
-          backgroundColor: 'background.surface',
+          backgroundColor: 'background.popup',
           boxShadow: 'xs',
         }}
       >
-        <SettingsIcon sx={{ fontSize: 'xl' }} />
+        <PhGearSixIcon />
       </IconButton>
     </GoodTooltip>
   ), [handleOpenLLMOptions]);
