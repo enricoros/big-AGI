@@ -297,10 +297,13 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
   if (!metrics) return null;
 
   const showWaitingTime = metrics?.dtStart !== undefined && (uiComplexityMode === 'extra' || metrics.dtStart >= 10000);
-  const showSpeedSection = uiComplexityMode !== 'minimal' && (showWaitingTime || metrics?.vTOutInner !== undefined);
-  const showTimeSection = uiComplexityMode !== 'minimal' && !!metrics?.dtAll;
+  // no first-token mark (non-streaming): the end-to-end rate stands in, labeled
+  const vTOutOverall = (metrics.vTOutInner === undefined && metrics.dtStart === undefined && metrics.TOut && metrics.dtAll)
+    ? metrics.TOut / (metrics.dtAll / 1000) : undefined;
+  const showSpeedSection = showWaitingTime || metrics?.vTOutInner !== undefined || vTOutOverall !== undefined;
+  const showTimeSection = !!metrics?.dtAll;
   // stopped or failed: no vendor-terminated stream, so no dtAll; the client wall clock stands in, labeled
-  const showWallTime = !showTimeSection && uiComplexityMode !== 'minimal' && metrics?.TsR === 'aborted' && !!metrics?.dtWall;
+  const showWallTime = !showTimeSection && metrics?.TsR === 'aborted' && !!metrics?.dtWall;
 
   const costCode = metrics.$code ? _prettyCostCode(metrics.$code) : null;
 
@@ -328,6 +331,8 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
     {showSpeedSection && <div>Speed:</div>}
     {showSpeedSection && <div>
       {!!metrics.vTOutInner && <>~<b>{(Math.round(metrics.vTOutInner * 10) / 10).toLocaleString() || ''}</b> tok/s</>}
+      {/* non-streaming: TOut / dtAll, mutually exclusive with vTOutInner and the wait */}
+      {vTOutOverall !== undefined && <>~<b>{(Math.round(vTOutOverall * 10) / 10).toLocaleString()}</b> tok/s <span style={{ opacity: 0.5 }}>overall</span></>}
       {showWaitingTime && (<span style={{ opacity: 0.5 }}>
         {metrics.vTOutInner !== undefined && ' · '}
         <span>{prettyDuration(metrics.dtStart!, true)}</span> wait
