@@ -97,8 +97,8 @@ export function ContentFragments(props: {
     // && props.noVoidFragments // not needed, we have all the interleaved fragments here
     && isVoidPlaceholderFragment(props.contentFragments[0]);
 
-  // notices are neutral infos: hidden (not removed) beside an error, where they'd read as its cause
-  const showNotices = props.uiComplexityMode !== 'minimal' && !props.contentFragments.some(isErrorContentFragment);
+  // input-transform notices are neutral infos: hidden (not removed) beside an error, where they'd read as its cause
+  const noticesYieldToError = props.contentFragments.some(isErrorContentFragment);
 
 
   // Content Fragments Edit Zero-State: button to create a new TextContentFragment
@@ -188,7 +188,10 @@ export function ContentFragments(props: {
                 messagePendingIncomplete={!!props.messagePendingIncomplete}
                 showAsDataStreamViz={showDataStreamViz}
                 zenMode={props.uiComplexityMode === 'minimal'}
-                showNotices={showNotices}
+                showNotices={
+                  props.uiComplexityMode !== 'minimal'
+                  && (!noticesYieldToError || part.pNoticeKind !== 'input-transform')
+                }
                 onFragmentDelete={props.messagePendingIncomplete ? undefined : props.onFragmentDelete}
               />
             );
