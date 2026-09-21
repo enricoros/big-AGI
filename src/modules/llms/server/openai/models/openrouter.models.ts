@@ -35,7 +35,7 @@ const orModelFamilyOrder = [
   // Other major providers
   'mistralai/', 'meta-llama/', 'amazon/', 'cohere/',
   // Specialized/AI companies
-  'perplexity/', 'inclusionai/', 'arcee-ai/', 'thinkingmachines/', 'sakana/', 'upstage/', 'nex-agi/',
+  'perplexity/', 'inclusionai/', 'inception/', 'arcee-ai/', 'thinkingmachines/', 'sakana/', 'upstage/', 'nex-agi/',
   // Chinese majors (surfaced on OpenRouter directly)
   'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'baidu/', 'stepfun/', 'meituan/', 'kwaipilot/',
   // Research/open models
@@ -115,13 +115,10 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   // [OpenRouter, 2026-08-17] listed but unusable - same rationale as ':batch': they'd list as chat models and fail on send
   // - google/lyria-3-*: music generation billed per song ($0.08) / clip ($0.04), with pricing.prompt '0' so they'd
   //   also carry the free tag; a chat completion returns 500 'Internal error encountered' (probed)
-  // - anthropic/claude-opus-4.7-fast: OR still lists the retired 6x tier at $30/$150, but Anthropic removed `speed`
-  //   from Opus 4.7 on 2026-07-24, so EVERY request 400s ("'claude-opus-4-7' does not support the `speed`
-  //   parameter", probed). Drop the gate if Anthropic restores fast mode there - 4.8-fast/opus-5-fast are fine.
-  if (model.id.startsWith('google/lyria-') || model.id === 'anthropic/claude-opus-4.7-fast')
+  if (model.id.startsWith('google/lyria-'))
     return null;
 
-  // the 12 '~vendor/model-latest' aliases are full members of their vendor family: resolve them to the
+  // the '~vendor/model-latest' aliases are full members of their vendor family: resolve them to the
   // model they point at (`alias_target`) everywhere (vendor inheritance, visibility), or they'd fall
   // through to the generic branch - dropping the '~' alone leaves refs like 'claude-opus-latest', which
   // no vendor index can look up (verified: all missed their native interfaces/params before this)
@@ -138,12 +135,12 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   const pricing = model.pricing;
 
   // [OpenRouter, 2026-08-06] `pricing.overrides` are long-context surcharge tiers, ascending by
-  // `min_prompt_tokens` (e.g. google/gemini-2.5-pro: 1.25/10 up to 200K, then 2.50/15 above it). 48 of the
-  // 388 listed models are tiered today (Qwen, GPT-5.x, Gemini Pro, Grok 4.x, ByteDance Seed, Claude Sonnet 4.x,
+  // `min_prompt_tokens` (e.g. google/gemini-2.5-pro: 1.25/10 up to 200K, then 2.50/15 above it). Roughly
+  // one in seven listed models is tiered (Qwen, GPT-5.x, Gemini Pro, Grok 4.x, ByteDance Seed, Claude Sonnet 4.x,
   // Sakana Fugu): without folding them in, long prompts would be costed at the cheapest tier.
   // [OpenRouter, 2026-08-16] time-of-day overrides (utc_start/utc_end and, since 2026-08-27, day-of-week utc_days,
   // no min_prompt_tokens) are a peak/off-peak schedule, not context tiers - separated here and folded as the peak
-  // below; 3 models today (deepseek-v4-pro-0813, deepseek-v4-flash-vision-exp, tencent/hy3).
+  // below; a handful of models, DeepSeek and tencent/hy3 so far.
   const contextTiers = pricing.overrides?.filter((tier): tier is typeof tier & { min_prompt_tokens: number } => typeof tier.min_prompt_tokens === 'number');
   const priceTiers = contextTiers?.length ? contextTiers : undefined;
   const clockTiers = pricing.overrides?.filter(tier => tier.min_prompt_tokens === undefined && (tier.utc_start !== undefined || tier.utc_end !== undefined || tier.utc_days !== undefined));
@@ -416,6 +413,14 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
           // empty list means "no information" -> binary fallback, never "no efforts". 'none' is safe: mandatory never gets here.
           enumValues: !derived.length ? ['none', 'high'] : ['none', ...derived],
         });
+      }
+      // 0-day, mandatory: with no native def to inherit and no on/off to offer, the model shipped with NO reasoning
+      // control at all (x-ai/grok-4.7, z-ai/glm-5.3-flashx at their debut). OR accepts its own advertised ladder on
+      // these (probed on both), so offer it as the generic branch below does - the native def wins once indexed.
+      else if (interfaces.includes(LLM_IF_OAI_Reasoning) && model.reasoning?.mandatory && !parameterSpecs.some(p => p.paramId === 'llmVndMiscEffort' || p.paramId === 'llmVndOaiEffort')) {
+        const orMandatoryLadder = _OAI_EFFORTS.filter(e => model.reasoning?.supported_efforts?.includes(e));
+        if (orMandatoryLadder.length >= 2)
+          parameterSpecs.push({ paramId: 'llmVndOaiEffort', enumValues: orMandatoryLadder });
       }
       break;
 

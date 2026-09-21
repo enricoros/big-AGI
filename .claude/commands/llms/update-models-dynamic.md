@@ -18,7 +18,7 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 - `reasoning.mandatory` models reject effort 'none' - never offer it, in any vendor branch.
 - OR outlives vendor shutdowns: Azure serves `openai/*` codex ids that are dead on OpenAI direct. Vendor-side defs must stay (hidden + deny-listed natively) for the `llmOrt*Lookup` inheritance to keep working - flag any OR id whose vendor lookup went dead.
 - Cache pricing detection (Anthropic-style vs OpenAI-style) - verify format still valid.
-- `pricing.overrides` = long-context surcharge tiers (ascending `min_prompt_tokens`, ~57/399 models) - must fold into our `{ upTo, price }[]` arrays, else long prompts are costed at the cheapest tier.
+- `pricing.overrides` = long-context surcharge tiers (ascending `min_prompt_tokens`, roughly one in seven models) - must fold into our `{ upTo, price }[]` arrays, else long prompts are costed at the cheapest tier.
 - Variant injection for Anthropic thinking/non-thinking - verify still correct.
 - Reference: https://openrouter.ai/docs/models ; live list: `GET https://openrouter.ai/api/v1/models`
 
