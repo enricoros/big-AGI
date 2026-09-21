@@ -21,7 +21,7 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
 import { BeamUpstreamResume } from '../BeamUpstreamResume';
-import { BeamModelUnavailable } from '../components/BeamModelUnavailable';
+import { BeamCardNotice, BeamModelUnavailable } from '../components/BeamCardNotice';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { FusionControlsMemo } from './FusionControls';
 import { FusionInstructionsEditor } from './FusionInstructionsEditor';
@@ -185,7 +185,7 @@ export function Fusion(props: {
 
       {/* Show issue, if any */}
       {isError && <InlineError error={fusion?.errorText || 'Merge Issue'} />}
-      {issueColor === 'warning' && <InlineError error='Out of tokens - response cut short.' />}
+      {issueColor === 'warning' && <BeamCardNotice color='warning' variant='solid' fullWidth>Out of tokens - response cut short.</BeamCardNotice>}
 
 
       {/* Dynamic: instruction-specific components */}

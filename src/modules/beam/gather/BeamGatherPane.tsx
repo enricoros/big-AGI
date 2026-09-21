@@ -14,7 +14,7 @@ import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { FFactoryId, FUSION_FACTORIES } from './instructions/beam.gather.factories';
 import { BEAM_SHOW_REASONING_ICON, GATHER_COLOR } from '../beam.config';
 import { beamPaneSx } from '../BeamCard';
-import { BeamModelUnavailable } from '../components/BeamModelUnavailable';
+import { BeamModelUnavailable } from '../components/BeamCardNotice';
 import { useModuleBeamStore } from '../store-module-beam';
 
 
