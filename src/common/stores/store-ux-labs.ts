@@ -10,8 +10,8 @@ import { persist } from 'zustand/middleware';
 //  - Chat Mode: Follow-Ups; moved to Chat Advanced UI
 interface UXLabsStore {
 
-  labsHighPerformance: boolean;
-  setLabsHighPerformance: (labsHighPerformance: boolean) => void;
+  labsUnlockRefresh: boolean; // ex 'labsHighPerformance' (Labs toggle, removed) - renamed to reset it; switch in the AI Inspector, commented out
+  setLabsUnlockRefresh: (labsUnlockRefresh: boolean) => void;
 
   labsAutoHideComposer: boolean;
   setLabsAutoHideComposer: (labsAutoHideComposer: boolean) => void;
@@ -37,8 +37,8 @@ export const useUXLabsStore = create<UXLabsStore>()(
   persist(
     (set) => ({
 
-      labsHighPerformance: false,
-      setLabsHighPerformance: (labsHighPerformance: boolean) => set({ labsHighPerformance }),
+      labsUnlockRefresh: false,
+      setLabsUnlockRefresh: (labsUnlockRefresh: boolean) => set({ labsUnlockRefresh }),
 
       labsAutoHideComposer: false,
       setLabsAutoHideComposer: (labsAutoHideComposer: boolean) => set({ labsAutoHideComposer }),
@@ -72,7 +72,7 @@ export const useUXLabsStore = create<UXLabsStore>()(
 );
 
 export function getLabsHighPerformance() {
-  return useUXLabsStore.getState().labsHighPerformance;
+  return useUXLabsStore.getState().labsUnlockRefresh;
 }
 
 export function getLabsLosslessImages() {

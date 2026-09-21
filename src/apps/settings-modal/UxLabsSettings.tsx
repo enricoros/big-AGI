@@ -6,7 +6,6 @@ import CodeIcon from '@mui/icons-material/Code';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
-import SpeedIcon from '@mui/icons-material/Speed';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
@@ -23,7 +22,6 @@ export function UxLabsSettings() {
   // external state
   const isMobile = useIsMobile();
   const {
-    labsHighPerformance, setLabsHighPerformance,
     labsLosslessImages, setLabsPreserveLosslessImages,
     labsAutoHideComposer, setLabsAutoHideComposer,
     labsShowShortcutBar, setLabsShowShortcutBar,
@@ -43,17 +41,6 @@ export function UxLabsSettings() {
         WARNING: PNG images can be very large (e.g. 10-20MB each in high quality modes in Gemini Nano Banana models). This will use significantly more storage.
       </>}
       checked={labsLosslessImages} onChange={setLabsPreserveLosslessImages}
-    />
-
-    <FormSwitchControl
-      title={<><SpeedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Unlock Refresh</>} description={labsHighPerformance ? 'Unlocked' : 'Default'}
-      tooltipWarning={labsHighPerformance}
-      tooltip={<>
-        Unlocks the maximum UI refresh rate for Chats and Beams, and will draw every single token as they come in.
-        <hr />
-        THIS MAY CAUSE HIGH CPU USAGE, BATTERY DRAIN, AND STUTTERING WITH FAST MODELS.
-      </>}
-      checked={labsHighPerformance} onChange={setLabsHighPerformance}
     />
 
     {!isMobile && <FormSwitchControl
