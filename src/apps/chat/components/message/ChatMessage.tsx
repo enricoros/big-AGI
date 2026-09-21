@@ -21,7 +21,7 @@ import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic
 import { vertexLinksCountInFragments, vertexLinksResolveFragments } from '~/modules/google/vertexai.client';
 
 import { CloseablePopup } from '~/common/components/CloseablePopup';
-import { DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag, messageWasOutOfTokens } from '~/common/stores/chat/chat.message';
 import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
 import { PhTreeStructure } from '~/common/components/icons/phosphor/PhTreeStructure';
 import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
@@ -192,6 +192,7 @@ export function ChatMessage(props: {
   const fromSystem = messageRole === 'system';
   const fromUser = messageRole === 'user';
   const messageHasBeenEdited = !!messageUpdated;
+  const msgGenOutOfTokens = messageWasOutOfTokens(messageGenerator);
 
   const isUserMessageSkipped = messageHasUserFlag(props.message, MESSAGE_FLAG_AIX_SKIP);
   const isUserStarred = messageHasUserFlag(props.message, MESSAGE_FLAG_STARRED);
@@ -616,7 +617,7 @@ export function ChatMessage(props: {
 
   // Options interceptor
 
-  const lookForOptions = onMessageContinue !== undefined && props.isBottom === true && messageGenerator?.tokenStopReason !== 'out-of-tokens' && fromAssistant && !messagePendingIncomplete && !isEditingText && uiComplexityMode !== 'minimal' && false;
+  const lookForOptions = onMessageContinue !== undefined && props.isBottom === true && !msgGenOutOfTokens && fromAssistant && !messagePendingIncomplete && !isEditingText && uiComplexityMode !== 'minimal' && false;
 
   const { fragments: renderInterleavedFragments, options: continuationOptions } = React.useMemo(() => {
     return optionsExtractFromFragments_dangerModifyFragment(lookForOptions, interleavedFragments);
@@ -624,7 +625,7 @@ export function ChatMessage(props: {
 
 
   // style
-  const backgroundColor = messageBackground(messageRole, userCommandApprox, messageHasBeenEdited, false /*isAssistantError && !errorMessage*/);
+  const backgroundColor = messageBackground(messageRole, userCommandApprox, messageHasBeenEdited, false /*isAssistantError && !errorMessage*/, msgGenOutOfTokens);
 
   const listItemSx: SxProps = React.useMemo(() => ({
     // vars
@@ -901,7 +902,7 @@ export function ChatMessage(props: {
           )}
 
           {/* Continue... */}
-          {props.isBottom && fromAssistant && messageGenerator?.tokenStopReason === 'out-of-tokens' && !!onMessageContinue && (
+          {props.isBottom && fromAssistant && msgGenOutOfTokens && !!onMessageContinue && (
             <BlockOpContinue
               contentScaling={adjContentScaling}
               messageRole={messageRole}

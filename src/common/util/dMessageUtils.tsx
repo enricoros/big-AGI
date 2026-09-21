@@ -88,19 +88,25 @@ export const tooltipMetricsGridSx: SxProps = {
 
 
 /** Whole message background color, based on the message role and state */
-export function messageBackground(messageRole: DMessageRole | string, userCommand: 'draw' | 'react' | false, wasEdited: boolean, isAssistantIssue: boolean): string {
+export function messageBackground(messageRole: DMessageRole | string, userCommand: 'draw' | 'react' | false, wasEdited: boolean, isAssistantIssue: boolean, isAssistantOutOfTokens: boolean): string {
   switch (messageRole) {
     case 'user':
       return userCommand === 'draw' ? 'warning.softActiveBg'
         : userCommand === 'react' ? 'success.softHoverBg'
           : 'primary.plainHoverBg'; // was .background.level1
     case 'assistant':
-      return isAssistantIssue ? 'danger.softBg' : 'background.surface';
+      const issueColor = messageIssueColor(isAssistantIssue, isAssistantOutOfTokens);
+      return issueColor ? `${issueColor}.softBg` : 'background.surface';
     case 'system':
       return wasEdited ? 'warning.softHoverBg' : 'neutral.softBg';
     default:
       return '#ff0000';
   }
+}
+
+/** Issue state -> Joy palette key: errors are danger, out-of-tokens is warning. Chat backgrounds, Beam cards and notices all color from this. */
+export function messageIssueColor(hasError: boolean, isOutOfTokens: boolean): 'danger' | 'warning' | undefined {
+  return hasError ? 'danger' : isOutOfTokens ? 'warning' : undefined;
 }
 
 

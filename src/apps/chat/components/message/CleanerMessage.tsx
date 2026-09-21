@@ -9,7 +9,7 @@ import TextFieldsIcon from '@mui/icons-material/TextFieldsRounded';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
-import { DMessage, MESSAGE_FLAG_AIX_SKIP, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { DMessage, MESSAGE_FLAG_AIX_SKIP, messageFragmentsReduceText, messageHasUserFlag, messageWasOutOfTokens } from '~/common/stores/chat/chat.message';
 import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isContentFragment, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { PhImageSquare } from '~/common/components/icons/phosphor/PhImageSquare';
 import { makeMessageAvatarIcon, messageBackground } from '~/common/util/dMessageUtils';
@@ -201,13 +201,14 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
   const isUserMessageSkipped = messageHasUserFlag(props.message, MESSAGE_FLAG_AIX_SKIP);
 
   const isAssistantError = fromAssistant && isErrorChatMessage(messageText);
+  const isAssistantOutOfTokens = messageWasOutOfTokens(messageGenerator);
 
   const userCommandApprox = messageRole !== 'user' ? false
     : messageText.startsWith('/draw ') ? 'draw'
       : messageText.startsWith('/react ') ? 'react'
         : false;
 
-  const backgroundColor = messageBackground(messageRole, userCommandApprox, !!messageUpdated, isAssistantError);
+  const backgroundColor = messageBackground(messageRole, userCommandApprox, !!messageUpdated, isAssistantError, isAssistantOutOfTokens);
 
   const avatarIconEl: React.JSX.Element | null = React.useMemo(() => {
     return makeMessageAvatarIcon('pro', messageRole, messageGeneratorName, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, false, false);

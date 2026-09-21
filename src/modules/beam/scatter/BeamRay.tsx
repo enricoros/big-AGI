@@ -24,7 +24,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { clipboardInterceptCtrlCForCleanup, copyToClipboard } from '~/common/util/clipboardUtils';
-import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { messageFragmentsReduceText, messageWasOutOfTokens } from '~/common/stores/chat/chat.message';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
@@ -35,7 +35,7 @@ import { BEAM_SHOW_REASONING_ICON, GATHER_COLOR, SCATTER_COLOR, SCATTER_RAY_SHOW
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.scatter';
 import { useBeamCardScrolling, useBeamScatterShowLettering } from '../store-module-beam';
-import { useMessageAvatarLabel } from '~/common/util/dMessageUtils';
+import { messageIssueColor, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 
 
 /*const letterSx: SxProps = {
@@ -176,6 +176,8 @@ export function BeamRay(props: {
   const showUseButtons = isSelectable && !isScattering;
   const { removeRay, rayToggleScattering, raySetLlmId } = props.beamStore.getState();
   const { tooltip: rayAvatarTooltip } = useMessageAvatarLabel(ray?.message, 'pro');
+  const isOutOfTokens = !isScattering && messageWasOutOfTokens(ray?.message.generator);
+  const issueColor = messageIssueColor(isError, isOutOfTokens);
 
   // This old code used the Gather LLM as Ray fallback - but now we use the last Scatter LLM as fallback
   // const isLlmLinked = !!props.linkedLlmId && !ray?.rayLlmId;
@@ -259,7 +261,7 @@ export function BeamRay(props: {
       tabIndex={-1}
       // onClick={isSelectable ? handleRayToggleSelect : undefined}
       className={
-        (isError ? beamCardClasses.errored : '')
+        (issueColor ? beamCardClasses.issue[issueColor] + ' ' : '')
         + (isSelectable ? beamCardClasses.selectable + ' ' : '')
       }
     >
@@ -288,6 +290,7 @@ export function BeamRay(props: {
 
       {/* Show issue, if any */}
       {!!ray?.scatterIssue && <InlineError error={ray.scatterIssue} />}
+      {issueColor === 'warning' && <InlineError error='Out of tokens - response cut short.' />}
 
       {/* Ray Message */}
       {(!!ray?.message?.fragments.length || ray?.status === 'scattering') && (

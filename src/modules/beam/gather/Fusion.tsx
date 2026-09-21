@@ -11,7 +11,7 @@ import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessa
 import { DLLMId, getLLMLabel } from '~/common/stores/llms/llms.types';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import type { DMessageId } from '~/common/stores/chat/chat.message';
-import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
+import { messageFragmentsReduceText, messageWasOutOfTokens } from '~/common/stores/chat/chat.message';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
@@ -29,7 +29,7 @@ import { GATHER_COLOR } from '../beam.config';
 import { findFusionFactory } from './instructions/beam.gather.factories';
 import { fusionIsEditable, fusionIsError, fusionIsFusing, fusionIsIdle, fusionIsStopped, fusionIsUsableOutput } from './beam.gather';
 import { useBeamCardScrolling } from '../store-module-beam';
-import { useMessageAvatarLabel } from '~/common/util/dMessageUtils';
+import { messageIssueColor, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 
 
 export function Fusion(props: {
@@ -54,6 +54,8 @@ export function Fusion(props: {
   const isUsable = fusionIsUsableOutput(fusion);
   const showUseButtons = isUsable && !isFusing;
   const { tooltip: fusionAvatarTooltip } = useMessageAvatarLabel(fusion?.outputDMessage, 'pro');
+  const isOutOfTokens = !isFusing && messageWasOutOfTokens(fusion?.outputDMessage?.generator);
+  const issueColor = messageIssueColor(isError, isOutOfTokens);
 
   const factory = findFusionFactory(fusion?.factoryId);
 
@@ -142,7 +144,7 @@ export function Fusion(props: {
       tabIndex={-1}
       className={
         // (isIdle ? beamCardClasses.fusionIdle : '')
-        (isError ? beamCardClasses.errored + ' ' : '')
+        (issueColor ? beamCardClasses.issue[issueColor] + ' ' : '')
         + ((isUsable || isFusing || isIdle) ? beamCardClasses.selectable + ' ' : '')
         + (isFusing ? beamCardClasses.attractive + ' ' : '')
         // + (beamCardClasses.smashTop + ' ')
@@ -183,6 +185,7 @@ export function Fusion(props: {
 
       {/* Show issue, if any */}
       {isError && <InlineError error={fusion?.errorText || 'Merge Issue'} />}
+      {issueColor === 'warning' && <InlineError error='Out of tokens - response cut short.' />}
 
 
       {/* Dynamic: instruction-specific components */}
