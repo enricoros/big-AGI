@@ -2,7 +2,7 @@ import { safeErrorString } from '~/server/wire';
 import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
-import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
+import type { ChatGenerateParseContext, ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 
@@ -11,6 +11,8 @@ import { convert_Base64_To_UInt8Array, convert_UInt8Array_To_Base64 } from '~/co
 import { OpenAIWire_API_Chat_Completions } from '../../wiretypes/openai.wiretypes';
 import { calculateDurationMs, createWAVFromPCM } from './gemini.audioutils';
 import { openAIUpstreamErrorLogLevel } from './openai.error-severity';
+
+import { OperationRetrySignal } from '../chatGenerate.operation-retry';
 
 
 /**
@@ -46,6 +48,8 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
   // [OpenRouter] Provider routing info - extracted from raw JSON before Zod strips it
   let openRouterProviderInfraSent = false;
+  // whether the user has been shown any output: from then on a whole-operation retry would wipe it and bill it twice
+  let hasStreamedOutput = false;
 
   // Supporting structure to accumulate the assistant message
   const accumulator: {
@@ -69,7 +73,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
     audio: null,
   };
 
-  return function(pt: IParticleTransmitter, eventData: string) {
+  return function(pt: IParticleTransmitter, eventData: string, _eventName?: string, context?: ChatGenerateParseContext) {
 
     // Time to first event
     if (timeToFirstEvent === undefined)
@@ -85,7 +89,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       return;
 
     // [OpenRouter/others] transmits upstream errors pre-parsing (object wouldn't be valid)
-    if (_forwardOpenRouterDataError(chunkData, pt))
+    if (_forwardOpenRouterDataError(chunkData, pt, hasStreamedOutput ? undefined : context))
       return;
 
     // [OpenAI] Obfuscation message with no data -> skip
@@ -222,6 +226,10 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       // handle missing content
       if (!delta)
         throw new Error(`server response missing content (finish_reason: ${finish_reason})`);
+
+      // any non-empty delta field besides the role is output (text, reasoning, tool calls, audio, images, ..)
+      if (!hasStreamedOutput && Object.entries(delta).some(([key, value]) => key !== 'role' && value !== null && value !== '' && !(Array.isArray(value) && !value.length)))
+        hasStreamedOutput = true;
 
       // delta: Reasoning Content [Deepseek, 2025-01-20]
       let deltaHasReasoning = false;
@@ -443,13 +451,13 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
   const parserCreationTimestamp = Date.now();
   let progressiveCitationNumber = 1;
 
-  return function(pt: IParticleTransmitter, eventData: string) {
+  return function(pt: IParticleTransmitter, eventData: string, _eventName?: string, context?: ChatGenerateParseContext) {
 
     // Throws on malformed event data
     const completeData = JSON.parse(eventData);
 
     // [OpenRouter/others] transmits upstream errors pre-parsing (object wouldn't be valid)
-    if (_forwardOpenRouterDataError(completeData, pt))
+    if (_forwardOpenRouterDataError(completeData, pt, context))
       return;
 
     // [OpenAI] we don't know yet if warning messages are sent in non-streaming - for now we log
@@ -779,9 +787,25 @@ function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usa
 }
 
 /**
- * If there's an error in the pre-decoded message, push it down to the particle transmitter.
+ * HTTP-equivalent status of a transient in-band error worth an operation retry, or undefined.
+ * [OpenRouter] after the 200, errors arrive as a chunk with a top-level `error` whose numeric `code` mirrors the HTTP status:
+ * 429 rate limited (platform or upstream provider), 502 model down or invalid upstream response. A provider dropping
+ * mid-stream carries code 'server_error'.
+ * Not retried: 503 is "no provider meets your routing requirements" (an outcome of the request, not a blip), 408 timed out
+ * (a retry repeats the wait), and the 4xx family (credits, moderation, bad request).
+ * https://openrouter.ai/docs/api-reference/errors - https://openrouter.ai/docs/api-reference/streaming
  */
-function _forwardOpenRouterDataError(parsedData: any, pt: IParticleTransmitter) {
+function _transientOpenRouterErrorToHttpStatus(code: unknown): 429 | 500 | 502 | undefined {
+  if (code === 'server_error') return 500;
+  const status = typeof code === 'number' ? code : typeof code === 'string' ? Number(code) : NaN;
+  return status === 429 ? 429 : status === 502 ? 502 : undefined;
+}
+
+/**
+ * If there's an error in the pre-decoded message, push it down to the particle transmitter.
+ * @param retryContext only when a whole-operation retry is harmless: nothing has been streamed to the user yet
+ */
+function _forwardOpenRouterDataError(parsedData: any, pt: IParticleTransmitter, retryContext: ChatGenerateParseContext | undefined) {
 
   // operate on .error
   if (!parsedData || !parsedData.error) return false;
@@ -796,8 +820,12 @@ function _forwardOpenRouterDataError(parsedData: any, pt: IParticleTransmitter) 
   // prepare the text message - safeErrorString unwraps the [OpenRouter] 'metadata' upstream cause
   const errorMessage = safeErrorString(error) || 'unknown.';
 
+  // Transient and retries left: unwind to the operation retrier
+  const retryHttpStatus = _transientOpenRouterErrorToHttpStatus(error.code);
+  if (retryHttpStatus && retryContext?.hasRetriesForHttpStatus(retryHttpStatus))
+    throw new OperationRetrySignal(errorMessage, { causeHttp: retryHttpStatus, causeConn: typeof error.code === 'string' ? error.code : undefined });
+
   // Transmit the error as text - note: throw if you want to transmit as 'error'
-  // FIXME: potential point for throwing OperationRetrySignal
   pt.setDialectTerminatingIssue(errorMessage, IssueSymbols.Generic, openAIUpstreamErrorLogLevel(error));
   return true;
 }
