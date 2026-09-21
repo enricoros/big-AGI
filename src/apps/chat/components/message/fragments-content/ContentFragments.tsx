@@ -9,7 +9,7 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import type { InterleavedFragment } from '~/common/stores/chat/hooks/useFragmentBuckets';
-import { DMessageContentFragment, DMessageFragmentId, isTextContentFragment, isTextPart, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
+import { DMessageContentFragment, DMessageFragmentId, isErrorContentFragment, isTextContentFragment, isTextPart, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
 import { Release } from '~/common/app.release';
 
 import type { ChatMessageTextPartEditState } from '../ChatMessage';
@@ -96,6 +96,9 @@ export function ContentFragments(props: {
     && props.contentFragments.length === 1
     // && props.noVoidFragments // not needed, we have all the interleaved fragments here
     && isVoidPlaceholderFragment(props.contentFragments[0]);
+
+  // notices are neutral infos: hidden (not removed) beside an error, where they'd read as its cause
+  const showNotices = props.uiComplexityMode !== 'minimal' && !props.contentFragments.some(isErrorContentFragment);
 
 
   // Content Fragments Edit Zero-State: button to create a new TextContentFragment
@@ -185,7 +188,7 @@ export function ContentFragments(props: {
                 messagePendingIncomplete={!!props.messagePendingIncomplete}
                 showAsDataStreamViz={showDataStreamViz}
                 zenMode={props.uiComplexityMode === 'minimal'}
-                showNotices={props.uiComplexityMode !== 'minimal'}
+                showNotices={showNotices}
                 onFragmentDelete={props.messagePendingIncomplete ? undefined : props.onFragmentDelete}
               />
             );

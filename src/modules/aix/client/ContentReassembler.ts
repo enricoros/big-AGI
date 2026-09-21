@@ -1104,7 +1104,7 @@ export class ContentReassembler {
         // emitted by: Gemini RECITATION/IMAGE_RECITATION (note: can be FP-prone on benign content like code/quotes)
         'filter-recitation': { outcome: 'failed', tsr: 'filter', errorMessage: 'Response blocked - potential copyrighted/recited content.' },
         // emitted by: Anthropic stop_reason=refusal, Gemini LANGUAGE (unsupported)
-        'filter-refusal': { outcome: 'failed', tsr: 'filter', errorMessage: 'Response refused by the provider\'s safety filter.' },
+        'filter-refusal': { outcome: 'failed', tsr: 'filter', errorMessage: 'Response refused by the provider\'s safety classifier.' },
       } as const;
       if (dialectTokenStopReason in classification)
         return classification[dialectTokenStopReason];
