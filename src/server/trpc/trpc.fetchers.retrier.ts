@@ -4,8 +4,10 @@ import { delayOrAbort } from '~/common/util/abortUtils';
 
 const AIX_DEBUG_SERVER_RETRY = true;
 
-// An upstream Retry-After is honored while the waits of one connect loop add up to this much; past it we give up at once
-const RETRY_AFTER_BUDGET_MS = 60_000;
+// An upstream Retry-After is honored while the waits of one connect loop add up to this much; past it we give up at once.
+// Two minutes: a per-minute window can ask for up to 60s, and N Beam rays sharing it often need a second round. Longer than
+// the blind backoff budgets because this wait is informed - the upstream said when the retry will work.
+const RETRY_AFTER_BUDGET_MS = 120_000;
 
 /**
  * Retry schedules, keyed by the class of the failure. One table for both retriers: the HTTP connect
