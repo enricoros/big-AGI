@@ -27,5 +27,6 @@ export const SpeexVendorInworld: ISpeexVendor<'inworld'> = {
     dialect: 'inworld',
     ttsModel: SPEEX_DEFAULTS.INWORLD_MODEL,
     ttsVoiceId: SPEEX_DEFAULTS.INWORLD_VOICE,
+    ttsSpeakingRate: 1.0,
   }),
 };

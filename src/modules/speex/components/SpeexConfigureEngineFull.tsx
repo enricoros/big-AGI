@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { Box, Button, FormControl, Typography } from '@mui/joy';
+import { Box, Button, FormControl, Link, Typography } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
 import LinkIcon from '@mui/icons-material/Link';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
@@ -22,6 +22,7 @@ import { SpeexVoiceAutocomplete } from './SpeexVoiceAutocomplete';
 import { SpeexVoiceSelect } from './SpeexVoiceSelect';
 import { speakText } from '../speex.client';
 import { speexAreCredentialsValid } from '../store-module-speex';
+import { speexFindVendor } from '../speex.vendors-registry';
 import { speexVendorTypeLabel } from './SpeexEngineSelect';
 
 
@@ -114,6 +115,7 @@ const _styles = {
   },
   bottomRow: {
     display: 'flex',
+    alignItems: 'center',
     justifyContent: 'flex-end',
   },
   advancedToggle: {
@@ -147,6 +149,21 @@ export function SpeexConfigureEngineFull(props: {
   const handleCredentialsUpdate = React.useCallback((credentials: DCredentialsApiKey) => {
     onUpdate({ credentials });
   }, [onUpdate]);
+
+  // Reset: only the fields the vendor declares a default for take part - the rest (e.g. instruction, backend, system voice) is data and stays
+  const voiceDefaults = React.useMemo(() => {
+    const defaults = speexFindVendor(engine.vendorType)?.getDefaultVoice();
+    return !defaults ? [] : Object.entries(defaults).filter(([_key, value]) => value !== undefined);
+  }, [engine.vendorType]);
+
+  // any of those fields set and off its default
+  const voiceValues = new Map<string, unknown>(Object.entries(engine.voice));
+  const hasUserParameters = voiceDefaults.some(([key, value]) => voiceValues.get(key) !== undefined && voiceValues.get(key) !== value);
+
+  const handleResetParameters = React.useCallback(() => {
+    // cast: voice and defaults come from the same vendor, a correlation the union type cannot express
+    onUpdate({ voice: { ...engine.voice, ...Object.fromEntries(voiceDefaults) } } as Partial<DSpeexEngineAny>);
+  }, [engine.voice, onUpdate, voiceDefaults]);
 
 
   // Service-access title reflects the engine's source + validity
@@ -190,8 +207,13 @@ export function SpeexConfigureEngineFull(props: {
             <Typography level='body-sm' color='warning'>Unknown engine type {(engine as any)?.vendorType}</Typography>
           )}
 
-          {/* Preview the configured voice */}
+          {/* 'Reset to defaults' left when off-default, Preview of the configured voice right */}
           <Box sx={_styles.bottomRow}>
+            {hasUserParameters && (
+              <Link component='button' color='neutral' level='body-xs' onClick={handleResetParameters}>
+                Reset to defaults ...
+              </Link>
+            )}
             <PreviewButton engineId={engine.engineId} />
           </Box>
 
