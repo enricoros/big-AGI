@@ -62,7 +62,7 @@ export function TogetherAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    {showAdvanced && <FormSwitchControl
+    {(showAdvanced || !!partialSettings?.togetherFreeTrial) && <FormSwitchControl
       title='Rate Limiter' on='Enabled' off='Disabled'
       description={partialSettings?.togetherFreeTrial ? 'Free trial: 2 requests/2s' : 'Disabled'}
       checked={partialSettings?.togetherFreeTrial ?? false}

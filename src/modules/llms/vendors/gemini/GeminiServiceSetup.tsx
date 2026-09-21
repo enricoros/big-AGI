@@ -70,7 +70,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='...'
     />
 
-    {showAdvanced && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+    {(showAdvanced || minSafetyLevel !== 'HARM_BLOCK_THRESHOLD_UNSPECIFIED') && <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Safety Settings'
                       description='Threshold' />
       <Select
@@ -98,7 +98,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       {/*of being unsafe.*/}
     </FormHelperText>}
 
-    {showAdvanced && <FormTextField
+    {(showAdvanced || !!geminiHost) && <FormTextField
       autoCompleteId='gemini-host'
       title='API Endpoint'
       placeholder={`https://generativelanguage.googleapis.com`}

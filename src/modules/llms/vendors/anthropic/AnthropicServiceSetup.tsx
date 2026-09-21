@@ -67,7 +67,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='sk-...'
     />
 
-    {showAdvanced && <FormSwitchControl
+    {(showAdvanced || !autoVndAntBreakpoints) && <FormSwitchControl
       title='Auto-Caching' on='Enabled' off='Disabled'
       tooltip='Auto-breakpoints: 3 breakpoints are always set on the System instruction and on the last 2 User messages. This leaves the user with 1 breakpoint of their choice. (max 4)'
       description={autoVndAntBreakpoints ? <>Last 2 user messages</> : 'Disabled'}
@@ -87,7 +87,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       </Typography>
     </FormControl>}
 
-    {showAdvanced && <FormTextField
+    {(showAdvanced || !!anthropicHost) && <FormTextField
       autoCompleteId='anthropic-host'
       title='API Host'
       description='Proxies, custom endpoints'

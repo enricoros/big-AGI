@@ -146,7 +146,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       }
     />}
 
-    {showAdvanced && <FormTextField
+    {(showAdvanced || !!oaiOrg) && <FormTextField
       autoCompleteId='openai-org'
       title='Organization ID'
       description={<Link level='body-sm' href={BaseProduct.OpenSourceRepo + '/issues/63'} target='_blank'>What is this</Link>}

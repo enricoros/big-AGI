@@ -75,7 +75,7 @@ export function AlibabaServiceSetup(props: { serviceId: DModelsServiceId }) {
     {/*  See the <ExternalLink href={ALIBABA_REG_LINK}>Alibaba Cloud Model Studio</ExternalLink> for more information.*/}
     {/*</Typography>*/}
 
-    {showAdvanced && <FormTextField
+    {(showAdvanced || !!alibabaOaiHost) && <FormTextField
       autoCompleteId='alibaba-host'
       title='API Endpoint'
       tooltip={`The API endpoint for the Alibaba Cloud OpenAI service, to be used instead of the default endpoint.`}
