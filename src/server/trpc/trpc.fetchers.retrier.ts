@@ -4,6 +4,9 @@ import { delayOrAbort } from '~/common/util/abortUtils';
 
 const AIX_DEBUG_SERVER_RETRY = true;
 
+// An upstream Retry-After is honored while the waits of one connect loop add up to this much; past it we give up at once
+const RETRY_AFTER_BUDGET_MS = 60_000;
+
 /**
  * Retry schedules, keyed by the class of the failure. One table for both retriers: the HTTP connect
  * retrier below, and the in-band operation retrier (chatGenerate.operation-retry.ts) which classifies
@@ -192,6 +195,7 @@ export type RetryAttempt = {
  */
 export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Promise<T>, abortSignal: AbortSignal, onRetry?: (retryInfo: RetryAttempt) => void): Promise<T> {
   let attemptNumber = 1;
+  let waitedMs = 0;
 
   while (true) {
     try {
@@ -245,8 +249,20 @@ export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Pr
         console.log(`[fetchers.retrier] 🔄 Retryable error ${errorInfo} - ${rp.label}`);
       }
 
-      // exponential backoff with jitter
-      const delayMs = upstreamRetryBackoffMs(rp, attemptNumber);
+      // The upstream's own wait (Retry-After) beats our schedule: a retry before it fails, and failed requests can count
+      // against the limit. Past this loop's budget it is not worth holding the user: the upstream message says when to come back.
+      const retryAfterMs = error instanceof TRPCFetcherError ? error.httpRetryAfterMs : undefined;
+      if (retryAfterMs !== undefined && waitedMs + retryAfterMs > RETRY_AFTER_BUDGET_MS) {
+        if (AIX_DEBUG_SERVER_RETRY)
+          console.log(`[fetchers.retrier] ❌ Not retrying: upstream asks to wait ${Math.round(retryAfterMs / 1000)}s (waited ${Math.round(waitedMs / 1000)}s so far)`);
+        throw error;
+      }
+
+      // exponential backoff with jitter; with a Retry-After: never earlier than asked (jitter upward only), never faster than our own schedule
+      const backoffMs = upstreamRetryBackoffMs(rp, attemptNumber);
+      const delayMs = retryAfterMs === undefined ? backoffMs
+        : Math.max(backoffMs, Math.round(retryAfterMs * (1 + Math.random() * rp.jitterFactor)));
+      waitedMs += delayMs;
 
       attemptNumber++;
       if (AIX_DEBUG_SERVER_RETRY)
