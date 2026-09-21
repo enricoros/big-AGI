@@ -99,10 +99,16 @@ function _isSalvageableFailedOutput(output: TResponse['output']): boolean {
  * HTTP-equivalent status of a transient in-band error worth an operation retry (like Anthropic's overloaded_error), or undefined.
  * #1210 shape: { type: 'invalid_request_error', code: 'rate_limit_exceeded', message: "We're currently processing too many requests - please try again later." }
  * No denylist: in-band errors on a 200 stream are past admission (auth, quota, size); HTTP-level ones are retried before the parser runs.
+ *
+ * The name of the failure sits in `code` or in `type` depending on the carrier: the 'response.failed' error object
+ * is { code, message } (code: 'server_error'), the 'error' event and the HTTP bodies also have a `type`.
  */
-function _transientErrorToHttpStatus(error: null | undefined | { type?: string | null, code?: string | number | null, message?: string | null }): 429 | 500 | undefined {
-  if (error?.code === 'rate_limit_exceeded' || /processing too many requests/i.test(error?.message || '')) return 429;
-  if (error?.type === 'server_error') return 500;
+function _transientErrorToHttpStatus(error: null | undefined | { type?: string | null, code?: string | number | null, message?: string | null }): 429 | 500 | 529 | undefined {
+  const names = [error?.code, error?.type];
+  if (names.includes('rate_limit_exceeded') || /processing too many requests/i.test(error?.message || '')) return 429;
+  // OpenAI's overload pair, documented as an HTTP 503: reported as 529, our status for the 'overloaded' retry class (a bare 503 reads as transient)
+  if (names.includes('server_is_overloaded') || names.includes('service_unavailable_error')) return 529;
+  if (names.includes('server_error')) return 500;
   return undefined;
 }
 
