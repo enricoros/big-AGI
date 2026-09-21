@@ -13,6 +13,15 @@ const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a
  *
  * ## Updates
  *
+ * ### 2026-09-21 - Doc sync: refusal category rename, prefix-mismatch attribution fix
+ * - StopDetails.category: 'military_weapons' (2026-06-30 sync) replaced by 'general_harms' in current docs - comment-only,
+ *   the `.or(z.string())` fallback already accepted any value.
+ * - Preserved thinking (`preserved-thinking` doc, read in full): confirmed the vendor's `reason: 'prefix_binding_mismatch'`
+ *   fires identically for an edited/deleted message, a changed tool list, or a changed system prompt - live-verified with
+ *   isolated probes (tool toggle alone, and a system-prompt-only change, both with zero message edits, both produced the
+ *   same reason). The parser's client-facing copy previously asserted 'History edited' unconditionally; renamed the cause
+ *   to 'prefix-changed' and reworded the notice to not claim a specific cause the vendor doesn't actually report.
+ *
  * ### 2026-09-01 - API Sync: Claude Fable 5.1 / Mythos 5.1 (launch-verified live)
  * - Request.thinking: added `block_binding.prefix_mismatch_behavior` ('error'|'drop_block'; beta thinking-binding-controls-2026-08-01).
  *   Preserved thinking: Fable 5.1 blocks replay only on Fable/Mythos 5.1+ (older models drop them, unbilled) and, for accounts
@@ -920,7 +929,9 @@ export namespace AnthropicWire_API_Message_Create {
    */
   const StopDetails_schema = z.object({
     type: z.enum(['refusal']).or(z.string()),
-    category: z.enum(['cyber', 'bio', 'reasoning_extraction', 'frontier_llm', 'military_weapons']).or(z.string()).nullish(),
+    // [2026-09-21] Docs now list 'general_harms' where 'military_weapons' stood on 2026-06-30 - renamed/replaced upstream, not additive.
+    // No functional impact (the `.or(z.string())` fallback already covers any category verbatim), comment-only sync.
+    category: z.enum(['cyber', 'bio', 'reasoning_extraction', 'frontier_llm', 'general_harms']).or(z.string()).nullish(),
     explanation: z.string().nullish(),
     /** [Anthropic, 2026-06-09] Model suggested for a direct retry when a server-side fallback could not run (e.g. fallback model rate-limited). Hint only, may be null. */
     recommended_model: z.string().nullish(),
