@@ -11,14 +11,14 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 - Docs' effort lists are incomplete: they omitted `xhigh` for grok-4.5 while the API accepts it. Always probe efforts rather than trusting the table.
 - Note: docs/press now brand the vendor "SpaceXAI" (post-merger); model ids and the `xai` `owned_by` are unchanged.
 
-**Known Issue:** `curl` on docs.x.ai returns 521; WebFetch works. x.ai/news/* still 403s - use fallbacks below for release dates.
+**Known Issue:** `curl` on docs.x.ai returns 521; WebFetch works. x.ai/news/* is intermittent (403s at times) - use fallbacks below for release dates when it fails.
 
 **Fallbacks if blocked:**
 - Search "xai grok latest pricing", "xai latest models", "xai api models", or search GitHub for latest model prices and context windows
 - Random sites? https://the-rogue-marketing.github.io/grok-api-latest-llms-pricing-october-2025/ (find a newer version), https://langdb.ai/app/providers/xai/ (browse by model, limited coverage)
 - As last resort: Use Chrome DevTools MCP to access docs.x.ai
 
-**Live endpoint (extra signal):** If `.env.api-keys` has `XAI_API_KEY`, scan the served model list as ground-truth for what's new/available and cross-check the docs above. Fetch BOTH, they are complementary: `/v1/models` is the only source of `context_length` (and lists the non-chat imagine models), `/v1/language-models` is the only source of `input_modalities`/`output_modalities`/`fingerprint` and is what the app actually calls; pricing/aliases/long-context tiers appear in both. `curl https://api.x.ai/v1/models -H "Authorization: Bearer $XAI_API_KEY"`. Never commit or echo the key.
+**Live endpoint (extra signal):** If `.env.api-keys` has `XAI_API_KEY`, scan the served model list as ground-truth for what's new/available and cross-check the docs above. Fetch BOTH, they are complementary: `/v1/models` is the only source of `context_length` (and lists the non-chat imagine models), `/v1/language-models` is the only source of `input_modalities`/`output_modalities`/`fingerprint` and is what the app actually calls; pricing/aliases/long-context tiers appear in both, as does `capabilities.reasoning_effort` (+ `default_reasoning_effort`) on effort-configurable models - the uncurated-model fallback reads it, so a new id lists with its effort control before it is curated. `curl https://api.x.ai/v1/models -H "Authorization: Bearer $XAI_API_KEY"`. Never commit or echo the key.
 
 **Important:**
 - Review the full model list for additions, removals, and price changes
