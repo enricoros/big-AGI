@@ -129,8 +129,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
       // the first end-1 packet will be skipped (when streaming)
       if (!skipComputingTotalsOnce) {
         metricsUpdate.dtAll = Date.now() - parserCreationTimestamp;
-        if (!isStreaming && metricsUpdate.dtAll > timeToFirstEvent)
-          metricsUpdate.dtInner = metricsUpdate.dtAll - timeToFirstEvent;
+        // non-streaming: no dtInner - the first event is the whole response, so (dtAll - timeToFirstEvent) is just our parse time
         if (isStreaming && metricsUpdate.TOut)
           metricsUpdate.vTOutInner = Math.round(100 * 1000 /*ms/s*/ * metricsUpdate.TOut / (metricsUpdate.dtInner || metricsUpdate.dtAll)) / 100;
       }
