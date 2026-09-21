@@ -36,6 +36,7 @@ const filterLyingModelNames: GeminiWire_API_Models_List.Model['name'][] = [
   'models/gemini-flash-latest',
   'models/gemini-flash-latest-high-res-exp', // same displayName as the plain alias, routes to gemini-3.8-flash (verified 2026-09-02); would surface as an uncurated duplicate
   'models/gemini-flash-lite-latest',
+  'models/antigravity-preview-latest', // Interactions-only (generateContent 400s); the dated agents are curated, uncurated this would surface as a broken chat model
 ];
 
 // Not-found guards: ids the list API no longer returns and that hard-404 on generateContent (verified
