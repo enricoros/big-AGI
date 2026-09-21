@@ -94,6 +94,21 @@ const _429_RETRY_DENYLIST: { test: string | RegExp; label: string }[] = [
 
 
 /**
+ * 429 upstream error codes that are NOT retried: spend caps and exhausted credits share the 429 status (and for
+ * Anthropic the error type too) with temporary rate limits, and their messages carry no common wording.
+ * Tested against TRPCFetcherError.httpErrorCode.
+ * - OpenAI: https://developers.openai.com/api/docs/guides/error-codes
+ * - Anthropic: https://platform.claude.com/docs/en/api/rate-limits (sent without a retry-after header)
+ */
+const _429_RETRY_DENY_CODES: readonly string[] = [
+  'credit_balance_exhausted',            // [OpenAI] no prepaid credits remaining
+  'organization_spend_limit_exceeded',   // [OpenAI] org monthly spend limit
+  'project_spend_limit_exceeded',        // [OpenAI] project monthly spend limit
+  'organization_usage_limit_exceeded',   // [OpenAI] OpenAI-assigned monthly usage limit
+  'enforced_spend_limit_reached',        // [Anthropic] usage tier monthly spend cap
+];
+
+/**
  * Determines if a dispatch error is retryable and which profile to use.
  */
 function selectRetryProfile(error: TRPCFetcherError | unknown): RetryProfile | null {
@@ -106,6 +121,13 @@ function selectRetryProfile(error: TRPCFetcherError | unknown): RetryProfile | n
   if (error.category === 'http' && error.httpStatus) {
     // 429 Too Many Requests: distinguish quota errors (don't retry) from rate limits (retry)
     if (error.httpStatus === 429) {
+      // Denylist by upstream code: permanent conditions the message wording does not reveal
+      if (error.httpErrorCode && _429_RETRY_DENY_CODES.includes(error.httpErrorCode)) {
+        if (AIX_DEBUG_SERVER_RETRY)
+          console.log(`[fetchers.retrier] 429 not retryable: ${error.httpErrorCode}`);
+        return null;
+      }
+
       // Denylist: 429 errors that should NOT be retried (user action required, or request won't change)
       const denyMatch = _429_RETRY_DENYLIST.find(({ test }) =>
         typeof test === 'string' ? error.message.includes(test) : test.test(error.message),

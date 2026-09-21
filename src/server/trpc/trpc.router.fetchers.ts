@@ -80,11 +80,13 @@ export class TRPCFetcherError extends TRPCError {
   readonly category: TRPCFetcherErrorCategory;
   readonly connErrorName?: string; // [category='connection'] System error code (ECONNREFUSED, ETIMEDOUT, ENOTFOUND, etc.)
   readonly httpStatus?: number;    // [category='http'] HTTP status code (503, 429, 502, etc.)
+  readonly httpErrorCode?: string; // [category='http'] machine-readable code from the upstream error body, when present (e.g. 'credit_balance_exhausted')
 
   constructor(opts: {
     category: TRPCFetcherErrorCategory,
     connErrorName?: string,
     httpStatus?: number,
+    httpErrorCode?: string,
     // -> TRPCError fields (code, cause)
     // code?: TRPCError['code'], // removed because we decide it based on category
     // cause?: unknown, // removed for security / anti-leakage reasons
@@ -100,6 +102,7 @@ export class TRPCFetcherError extends TRPCError {
     this.category = opts.category;
     this.connErrorName = opts.connErrorName;
     this.httpStatus = opts.httpStatus;
+    this.httpErrorCode = opts.httpErrorCode;
 
     // Maintains proper prototype chain for instanceof checks
     Object.setPrototypeOf(this, TRPCFetcherError.prototype);
@@ -285,9 +288,14 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
       console.log(`[${method}->${parserName}] [${moduleName} issue] (http ${s}, ${response.statusText}):`, { url, responseOk: response.ok, notOkayPayload: payloadString || notOkayPayload });
 
     // -> throw HTTP error: will be a 400 (BAD_REQUEST), with preserved status
+    // machine-readable upstream code: the message alone cannot tell a temporary 429 from a permanent one
+    // [Anthropic] error.details.error_code, [OpenAI and compatibles] error.code
+    const upstreamCode = notOkayPayload?.error?.details?.error_code ?? notOkayPayload?.error?.code;
+
     throw new TRPCFetcherError({
       category: 'http',
       httpStatus: s,
+      httpErrorCode: typeof upstreamCode === 'string' ? upstreamCode : undefined,
       message: (throwWithoutName ? '' : `[${moduleName} issue]: `)
         + `Upstream responded with HTTP ${s} ${response.statusText}`
         + (payloadString ? `: \n${payloadString}` : '')
