@@ -13,7 +13,7 @@ Native OpenAI models carry `LLM_IF_OAI_Responses` and go to `/v1/responses` (`op
 - `reasoning.effort`: Astra low..max; Sol and Luna none..max. `minimal` 400s on GPT-5.6 and GPT-6.
 - `temperature`, `top_p`, logprobs: only at effort `none`. The client lifts `LLM_IF_HOTFIX_NoTemperature` there (`aix.client.ts`).
 - `reasoning.mode: 'pro'`: every tier, every effort, every service tier. The answer arrives as one delta; each request adds ~1.4K input tokens of scaffold (~35K with web search).
-- `service_tier`: `flex` and `fast` echo as served; `priority` is served as `fast`; `auto` serves `default`.
+- `service_tier`: `flex` and `fast` echo as served; `priority` is served as `fast`; `auto` serves `default`. Fast is 2x on every model we expose it for except GPT-5.5 (2.5x); the parser applies that per served model, the parameter's price preview stays at 2x.
 - Caching is implicit with 24h retention forced: `prompt_cache_retention: 'in_memory'` 400s (AIX never sends it). Cold prompts report `input_tokens_details.cache_write_tokens`, warm ones `cached_tokens`.
 - Tools: `web_search`, `code_interpreter`, `image_generation`, functions (auto, required, round trip). Hosted loops stream strictly serial; output items are `reasoning`, `web_search_call`, `code_interpreter_call`, `function_call`, `message` (with `phase`).
 
@@ -35,7 +35,7 @@ The native definitions route GPT-5.x and GPT-6 over Responses. On Chat Completio
 
 - `openai/gpt-6-sol`, `-sol-pro`, `-luna`, `-luna-pro`. A `-pro` id is the base model in pro mode; `llmOrtOaiLookup` maps it to the base definition with the mode pinned.
 - Chat Completions on OpenRouter accepts every effort (including `minimal`) and `temperature` at any effort, normalizing upstream. Effort is honored (`max` spent 8x the reasoning tokens of `low` on Sol), `reasoning.mode: 'pro'` reroutes to the `-pro` id, and function tools work together with reasoning.
-- `service_tier: 'flex'` bills at half price; not wired (`llmVndOaiServiceTier` is not in `_ORT_OAI_PARAM_ALLOWLIST`).
+- `service_tier` routes to the `openai/flex` and `openai/fast` endpoints on every model that exposes `llmVndOaiServiceTier` natively (GPT-5.4 through GPT-6): `flex` bills 0.5x, `fast` and `priority` 2x (2.5x on GPT-5.5), echoed as `priority`. Wired through `_ORT_OAI_PARAM_ALLOWLIST`; the reported `cost` carries the tier.
 - Auto picks match the exact `llmRef` first: OpenRouter lists `-pro` ids before the base on same-day releases.
 
 ## Bedrock

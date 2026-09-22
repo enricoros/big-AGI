@@ -1676,6 +1676,7 @@ const _ORT_OAI_IF_ALLOWLIST: ReadonlySet<string> = new Set([
 const _ORT_OAI_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
   'llmVndOaiEffort', // OpenAI reasoning effort
   'llmVndOaiReasoningMode', // [2026-07-11] GPT-5.6+ reasoning mode - OR-documented `reasoning.mode`: 'pro' on a base id reroutes to the matching '*-pro' model
+  'llmVndOaiServiceTier', // [2026-09-22] `service_tier` flex|fast routes to the openai/flex|openai/fast endpoints; OR's reported cost carries the tier
   'llmVndOaiVerbosity', // verbosity
   // 'llmVndOaiImageGeneration', // OR does NOT support image gen with OAI yet (2026-02-06)
 ] as const satisfies DModelParameterId[]);
