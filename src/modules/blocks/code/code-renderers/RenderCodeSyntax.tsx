@@ -14,6 +14,9 @@ export function RenderCodeSyntax(props: {
 }) {
   return (
     <Box
+      // Perf: a new element per highlight, so React sets innerHTML before inserting it. Replacing the innerHTML of an
+      // element already in the page is quadratic in Firefox (100K chars of code: 733 ms vs 47 ms); matters while streaming
+      key={props.highlightedSyntaxAsHtml?.length ?? 0}
       component='span'
       aria-label='Code block'
       className='code-container'
