@@ -1199,7 +1199,7 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
 }
 
 
-function _fromResponseMetrics(response: Pick<OpenAIWire_API_Responses.Response, 'usage' | 'service_tier' | 'tool_usage'> | undefined, parserCreationTimestamp: number, timeToFirstEvent: number | undefined): AixWire_Particles.CGSelectMetrics {
+function _fromResponseMetrics(response: Pick<OpenAIWire_API_Responses.Response, 'model' | 'usage' | 'service_tier' | 'tool_usage'> | undefined, parserCreationTimestamp: number, timeToFirstEvent: number | undefined): AixWire_Particles.CGSelectMetrics {
   const usage = response?.usage;
 
   // Time Metrics - measured locally (parser-creation -> now), independent of the upstream `usage` block.
@@ -1268,14 +1268,14 @@ function _fromResponseMetrics(response: Pick<OpenAIWire_API_Responses.Response, 
     metricsUpdate.$cReported = usdToCents(usage.cost_in_usd_ticks / 1e10);
 
   // served tier -> confirmed multiplier; unknown tiers stay on the parameter side
-  const $xPrice = _priceMultiplierFromServiceTier(response?.service_tier);
+  const $xPrice = _priceMultiplierFromServiceTier(response?.service_tier, response?.model);
   if ($xPrice !== undefined)
     metricsUpdate.$xPrice = $xPrice;
 
   return metricsUpdate;
 }
 
-function _priceMultiplierFromServiceTier(serviceTier: string | null | undefined): number | undefined {
+function _priceMultiplierFromServiceTier(serviceTier: string | null | undefined, modelId: string | undefined): number | undefined {
   switch (serviceTier) {
     case 'default':
       return 1;
@@ -1283,7 +1283,8 @@ function _priceMultiplierFromServiceTier(serviceTier: string | null | undefined)
       return 0.5;
     case 'priority':
     case 'fast':
-      return 2;
+      // 2x on every model exposing llmVndOaiServiceTier, except GPT-5.5 at 2.5x (Fast $12.50/$75 vs Standard $5/$30)
+      return modelId?.startsWith('gpt-5.5') ? 2.5 : 2;
     default: // 'auto', 'ultrafast' (gated, unpublished price), absent
       return undefined;
   }

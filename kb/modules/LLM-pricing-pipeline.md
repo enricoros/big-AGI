@@ -34,7 +34,7 @@ Every parser fills the same particle (`AixWire_Particles.CGSelectMetrics`):
 | `TCacheWrite` | cache writes | `input_tokens_details.cache_write_tokens` | `cache_creation_input_tokens` | never | never |
 | `TOut`, `TOutR` | output, reasoning subset | `output_tokens`, `reasoning_tokens` | `output_tokens`, `thinking_tokens` | `candidatesTokenCount + thoughtsTokenCount` | as OpenAI |
 | `nWebSearch` | billed searches | `tool_usage.web_search.num_requests` | `server_tool_use.web_search_requests` | `groundingMetadata.webSearchQueries.length` | `server_side_tool_usage_details` web + X search |
-| `$xPrice` | served-tier multiplier | `service_tier`: default 1, flex 0.5, fast 2 (`priority` is served as `fast`) | batch 0.5 x geo-us 1.1; absent when `speed: fast` | `usageMetadata.serviceTier`: flex/batch 0.5, priority 1.8 | `service_tier` |
+| `$xPrice` | served-tier multiplier | `service_tier`: default 1, flex 0.5, fast 2 (2.5 on GPT-5.5; `priority` is served as `fast`) | batch 0.5 x geo-us 1.1; absent when `speed: fast` | `usageMetadata.serviceTier`: flex/batch 0.5, priority 1.8 | `service_tier` |
 | `$cReported` | exact charge, cents | - | - | - | `cost_in_usd_ticks` / 1e10 (OpenRouter `cost`, Perplexity `total_cost` on Chat Completions) |
 
 Streaming specifics: OpenAI usage sits only on the terminal event, the tier already on `response.created`. Anthropic's `message_delta` carries the authoritative input side (server tool result tokens land there, not in `message_start`). Gemini usage is cumulative on every chunk; the cache count only on the last. Chat Completions mirrors the Responses fields under `prompt_tokens_details` / `completion_tokens_details`.
