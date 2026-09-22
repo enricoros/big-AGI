@@ -55,6 +55,9 @@ export function AutoBlocksRenderer(props: {
   codeRenderVariant?: AutoBlocksCodeRenderVariant /* default: outlined */,
   textRenderVariant: 'markdown' | 'text',
 
+  /** disables the >8 lines user-text collapser - e.g. print/export trees must render in full */
+  disableTextCollapser?: boolean;
+
   /**
    * optimization: allow memo to all individual blocks except the last one
    * work in progress on that
@@ -85,7 +88,7 @@ export function AutoBlocksRenderer(props: {
   // state
   const isPureHTML = heuristicIsBlockPureHTML(props.text);
   const fixUserHtmlPaste = fromUser && isPureHTML;
-  const collapseUserText = fromUser && !fixUserHtmlPaste; // probably less important now that we have ERCs with collapse, may even get in the way
+  const collapseUserText = fromUser && !fixUserHtmlPaste && !props.disableTextCollapser; // probably less important now that we have ERCs with collapse, may even get in the way
   const { text, isTextCollapsed, forceTextExpanded, handleToggleExpansion } = useTextCollapser(props.text, collapseUserText);
   const autoBlocksStable = useAutoBlocksMemoSemiStable(
     text,
