@@ -78,7 +78,7 @@ export const DocAttachmentFragmentPane = React.memo(function DocAttachmentFragme
   const { skipNextAutoScroll } = useScrollToBottom();
 
   // derived state
-  const { editedText, fragment, onFragmentDelete, onFragmentReplace } = props;
+  const { editedText, fragment, onFragmentDelete, onFragmentReplace, setEditedText } = props;
 
 
   const fragmentId = fragment.fId;
@@ -201,6 +201,21 @@ export const DocAttachmentFragmentPane = React.memo(function DocAttachmentFragme
     }
     setIsEditing(on => !on);
   }, [isEditing, skipNextAutoScroll]);
+
+
+  // replace fragment with the blocks text - e.g. clicking on a checkbox
+
+  const handleSetTextFromBlocks = React.useCallback((newText: string) => {
+    // sync the edit state to this text (for future edits)
+    setEditedText(fragmentId, newText);
+
+    // stops any editing operation
+    setIsEditing(false);
+    setIsEditingTitle(false); // just in case
+
+    // replace the fragment content
+    handleReplaceDocFragmentText(newText);
+  }, [fragmentId, handleReplaceDocFragmentText, setEditedText]);
 
 
   // view as code
@@ -393,6 +408,7 @@ export const DocAttachmentFragmentPane = React.memo(function DocAttachmentFragme
             inputAsWordsDiff={undefined}
             codeRenderVariant='embedded-plain' // for embedding in this pane
             textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
+            setText={!props.onFragmentReplace ? undefined : handleSetTextFromBlocks}
           />
         </Box>
       )}
