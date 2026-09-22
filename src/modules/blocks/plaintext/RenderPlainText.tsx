@@ -19,9 +19,9 @@ const _style = {
  * Renders a text block with chat commands.
  * NOTE: should remove the commands parsing dependency.
  */
-export const RenderPlainText = (props: { content: string; sx?: SxProps; }) => {
+export const RenderPlainText = (props: { content: string; renderHighlightCommands?: boolean, sx?: SxProps; }) => {
 
-  const elements = extractChatCommand(props.content);
+  const elements: ReturnType<typeof extractChatCommand> = !props.renderHighlightCommands ? [{ type: 'nocmd', value: props.content }] : extractChatCommand(props.content);
 
   const memoSx = React.useMemo(() => ({ ..._style, ...props.sx }), [props.sx]);
 

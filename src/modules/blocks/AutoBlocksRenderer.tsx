@@ -83,7 +83,7 @@ export function AutoBlocksRenderer(props: {
   const fromAssistant = props.fromRole === 'assistant';
   const fromSystem = props.fromRole === 'system';
   const fromUser = props.fromRole === 'user';
-  const isUserCommand = fromUser && props.text.startsWith('/');
+  // const isUserCommand = fromUser && props.text.startsWith('/'); // disabled, the heuristic is so poor
 
   // state
   const isPureHTML = heuristicIsBlockPureHTML(props.text);
@@ -154,11 +154,12 @@ export function AutoBlocksRenderer(props: {
               if (lastNewline >= 0 && bkInput.content.length - lastNewline - 1 < STREAMING_TAIL_MAX_HIDDEN_CHARS)
                 mdContent = bkInput.content.slice(0, lastNewline + 1);
             }
-            return (props.textRenderVariant === 'text' || fromSystem || isUserCommand) ? (
+            return (props.textRenderVariant === 'text' || fromSystem /*|| isUserCommand*/) ? (
               // Keep in sync with ScaledPlainTextRenderer
               <RenderPlainText
                 key={'txt-bk-' + index}
                 content={bkInput.content}
+                renderHighlightCommands={index === 0}
                 sx={scaledTypographySx}
               />
             ) : (
