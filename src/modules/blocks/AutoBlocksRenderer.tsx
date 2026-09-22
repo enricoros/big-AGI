@@ -67,7 +67,6 @@ export function AutoBlocksRenderer(props: {
    */
   optiStreamingLastFragment?: boolean;
 
-  onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
 
   /**
@@ -127,7 +126,6 @@ export function AutoBlocksRenderer(props: {
     <BlocksContainer
       // ref={ref /* this will assign the ref, now not needed anymore */}
       // data-edit-intent={props.onDoubleClick ? true : undefined /* Future: Mac Force Touch */}
-      onContextMenu={props.onContextMenu}
       onDoubleClick={props.onDoubleClick}
     >
 

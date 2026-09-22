@@ -76,7 +76,6 @@ export function ContentFragments(props: {
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
   onMessageDelete?: () => void,
 
-  onContextMenu?: (event: React.MouseEvent) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
 
 }) {
@@ -355,7 +354,6 @@ export function ContentFragments(props: {
               showUnsafeHtmlCode={props.showUnsafeHtmlCode}
               optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
               optiStreamingLastFragment={!!props.optiAllowSubBlocksMemo && isLastFragment && props.uiComplexityMode === 'minimal'}
-              onContextMenu={props.onContextMenu}
               onDoubleClick={props.onDoubleClick}
             />
           );
