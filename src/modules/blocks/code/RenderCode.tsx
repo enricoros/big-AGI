@@ -34,6 +34,9 @@ import './RenderCode.css';
 
 // configuration
 const ALWAYS_SHOW_OVERLAY = true;
+export const BLOCK_CODE_MERMAID_TITLE = 'mermaid';
+export const BLOCK_CODE_PLANTUML_TITLE = 'plantuml';
+export const BLOCK_CODE_SVG_TITLE = 'svg';
 
 // Perf: while streaming a large code block, throttle Prism re-highlighting (decimator ~15Hz -> capped here to ~7Hz).
 // Set BYTES to 0 to disable the optimization entirely (zero runtime cost when disabled).
@@ -211,7 +214,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const isMdCode = !blockIsPartial && (lcBlockTitle === 'md' || lcBlockTitle === 'markdown' || lcBlockTitle.endsWith('.md'));
   const renderMarkdown = isMdCode && showMarkdown;
 
-  const isMermaidCode = lcBlockTitle === 'mermaid' && !blockIsPartial;
+  const isMermaidCode = lcBlockTitle === BLOCK_CODE_MERMAID_TITLE && !blockIsPartial;
   const renderMermaid = isMermaidCode && showMermaid;
 
   const isPlantUMLCode = heuristicIsCodePlantUML(_tCode);

@@ -3,6 +3,7 @@ import * as React from 'react';
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 
+import { BLOCK_CODE_MERMAID_TITLE, BLOCK_CODE_PLANTUML_TITLE, BLOCK_CODE_SVG_TITLE, renderCodeMemoOrNot } from './code/RenderCode';
 import { BlocksContainer } from './BlocksContainers';
 import { EnhancedRenderCode } from './enhanced-code/EnhancedRenderCode';
 import { RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
@@ -11,7 +12,6 @@ import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderPlainText } from './plaintext/RenderPlainText';
 import { RenderWordsDiff, WordsDiff } from './wordsdiff/RenderWordsDiff';
 import { ToggleExpansionButton } from './ToggleExpansionButton';
-import { renderCodeMemoOrNot } from './code/RenderCode';
 import { useAutoBlocksMemoSemiStable, useTextCollapser } from './blocks.hooks';
 import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpansionButtonSx } from './blocks.styles';
 
@@ -179,16 +179,36 @@ export function AutoBlocksRenderer(props: {
             let disableEnhancedRender = disableBecauseInProgress || disableBecauseTooShort;
             let enhancedStartCollapsed = false;
 
+            // Pre-collapsing of special blocks
+            let lowerCaseTitle = bkInput.title.toLowerCase();
+            switch (lowerCaseTitle) {
+
+              // start as a collapsed ERC, then remove the border and go normal
+              case BLOCK_CODE_MERMAID_TITLE:
+              case BLOCK_CODE_PLANTUML_TITLE:
+                disableEnhancedRender = !bkInput.isPartial;
+                // NOTE: at the moment, we use the 'unwanted' refresh at the end of the message to start (that block) without collapse
+                enhancedStartCollapsed = bkInput.isPartial;
+                break;
+
+              // do never ERC
+              case BLOCK_CODE_SVG_TITLE:
+                disableEnhancedRender = true;
+                break;
+            }
+
             return (props.codeRenderVariant === 'enhanced' && !disableEnhancedRender) ? (
               <EnhancedRenderCode
+                // EnhancedRenderCode props
+                contentScaling={props.contentScaling}
+                initialIsCollapsed={enhancedStartCollapsed}
+                isMobile={props.isMobile}
+                // RenderCode pass through
                 key={'code-bk-' + index}
                 semiStableId={bkInput.bkId}
                 code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial || isTextCollapsed}
-                contentScaling={props.contentScaling}
                 fitScreen={props.fitScreen}
-                isMobile={props.isMobile}
                 initialShowHTML={props.showUnsafeHtmlCode}
-                initialIsCollapsed={enhancedStartCollapsed}
                 noCopyButton={props.blocksProcessor === 'diagram' || isTextCollapsed}
                 optimizeLightweight={optimizeLightweightLastBlock}
                 onReplaceInCode={(!setText || isTextCollapsed) ? undefined : handleReplaceCode}
