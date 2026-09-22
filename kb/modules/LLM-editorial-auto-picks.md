@@ -60,6 +60,8 @@ export const EditorialDefaults = {
 
 ### Matching logic
 
+`llmsEditorialPickForDomain` first looks for an exact `llmRef` match among the candidates, then falls back to `_editorialMatch`. Without the exact pass the prefix rule takes OpenRouter's `openai/gpt-6-luna-pro` (listed before the base on same-day releases) for the pick `openai/gpt-6-luna`.
+
 `_editorialMatch(llm, editorialId)` uses tolerant matching to handle dated suffixes and OpenRouter's dotted ids:
 
 1. Exact match on `llm.initialParameters.llmRef`

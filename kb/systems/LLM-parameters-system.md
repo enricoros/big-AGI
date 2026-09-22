@@ -63,9 +63,9 @@ The AIX client transforms DLLM parameters to wire protocol format. This layer ha
 
 Server-side adapters translate AIX parameters to vendor APIs. Each vendor may interpret parameters differently:
 
-- **OpenAI**: `vndEffort` -> `reasoning_effort`
+- **OpenAI Chat Completions**: `reasoningEffort` -> `reasoning_effort`. GPT-6 there: `max` 400s, and function tools need effort `none` (Sol, Luna) or fail at any effort (Astra)
 - **Perplexity**: Reuses OpenAI parameter format
-- **OpenAI Responses API**: Maps to structured reasoning config with additional logic
+- **OpenAI Responses API**: Maps to structured reasoning config with additional logic (`reasoning.effort`, `summary`, `context: 'all_turns'` on gpt-5.4+, `mode`, `service_tier`; see `kb/modules/LLM-openai-responses.md`)
 
 ## Parameter Initialization Process
 
@@ -88,7 +88,7 @@ When a model is loaded:
 
 **Range Overrides**: Models can override parameter ranges (e.g., different Gemini models support different thinking budget ranges).
 
-**Parameter Interactions**: The UI implements business logic like disabling web search when reasoning effort is 'minimal'.
+**Parameter Interactions**: The UI implements business logic like disabling web search when reasoning effort is 'minimal' (GPT-5.0 and earlier; GPT-5.6 and GPT-6 reject 'minimal'), and unlocking temperature on OpenAI reasoning models at effort 'none'.
 
 ## Type Safety Mechanisms
 

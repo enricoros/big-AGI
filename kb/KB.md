@@ -27,6 +27,7 @@ Architecture and system documentation is available in the `/kb/` knowledge base,
 - **[LLM-pricing-direction.md](modules/LLM-pricing-direction.md)** - 🧭 target rate card and usage record (disjoint classes, one tier switch, unit-named fees, cost lines, sub-usage), dedupe contract, incremental path
 
 #### LLM - Vendor APIs
+- **[LLM-openai-responses.md](modules/LLM-openai-responses.md)** - OpenAI direct over Responses: GPT-6 and GPT-5.6 tiers, request contract (effort, pro mode, temperature, tiers, 24h caching), reasoning continuity (what we capture and replay, the silent same-family rule, confabulation after a family switch), Chat Completions limits, OpenRouter and Bedrock notes, shipped-not-adopted features
 - **[LLM-gemini-interactions.md](modules/LLM-gemini-interactions.md)** - Gemini Interactions API (Deep Research): endpoints, status taxonomy, two retrieval paths (SSE replay vs JSON GET), known failure modes (10-min cuts, zombies), UI surface
 - **[LLM-metaai-responses.md](modules/LLM-metaai-responses.md)** - Meta AI (Muse, the Meta Model API) over the Responses dialect: catalog and tiers, request contract (strict params, `tool_choice` auto-only, effort ladder, stateless reasoning replay), stream quirks, errors and CORS, what is deliberately not wired
 - **[LLM-openrouter-responses.md](modules/LLM-openrouter-responses.md)** - 🧭 OpenRouter over the Responses dialect: measured parity matrix vs every Chat Completions customization, reasoning item shapes per vendor, cache marker shapes, losses, port list

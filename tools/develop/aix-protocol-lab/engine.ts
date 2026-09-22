@@ -186,7 +186,7 @@ export async function oracleRun(source: LabRun, timeoutMs?: number, echoConsole?
 
   const handleParticle = source.finalParticles.find(p => 'cg' in p && p.cg === 'set-upstream-handle') as Extract<AixWire_Particles.ChatControlOp, { cg: 'set-upstream-handle' }> | undefined;
   if (!handleParticle)
-    throw new Error('Oracle needs an upstream handle: capture with --resumable on a stored-response flavor (openai-responses, gemini-interactions).');
+    throw new Error('Oracle needs an upstream handle: capture with --oracle on a stored-response flavor (openai-responses, gemini-interactions).');
 
   const { access } = accessForFlavor(source.meta.flavor);
   const recorder = new TraceRecorder({

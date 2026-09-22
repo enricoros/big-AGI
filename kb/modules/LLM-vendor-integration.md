@@ -73,7 +73,8 @@ fallthrough groups, `tools/data/llms/llm-registry-sync.ts` switch. Silent surfac
 A vendor served over the OpenAI Responses API additionally gets: a row in `_RSP_DIALECT_QUIRKS` (`openai.responsesCreate.ts`,
 validator deviations) and, when its reasoning blobs are vendor-private, its own namespace in `AixWire_Vendors.RSP_VENDORS`
 (`aix.wiretypes.ts` + the mirrored key in `chat.fragments.ts`), plus `RESPONSES_ONLY_DIALECTS` in `chatGenerate.dispatch.ts`
-when every model of the vendor is Responses-only.
+when every model of the vendor is Responses-only. A namespace separates vendors, not model families: within `openai` the
+adapter replays every handle and the API itself drops other families' reasoning (`LLM-openai-responses.md`).
 
 **When to use this path**: Only when the provider has a meaningfully different API protocol
 (not OpenAI-compatible), or when there is significant user demand AND the provider offers

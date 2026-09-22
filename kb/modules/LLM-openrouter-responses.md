@@ -30,11 +30,11 @@ Status: ok = same shape works; remap = works with a different shape; port = our 
 | Fable `enabled: false` rejection | Same 400 "Reasoning is mandatory for this endpoint" (also Kimi K2.7). Sonnet 5 disables cleanly (`thinking: { type: 'disabled' }`) | ok |
 | Gemini `reasoning: { enabled: true, max_tokens }` | Same; upstream `thinkingBudget`. Quirk: `max_tokens` WITHOUT `enabled` becomes `thinkingBudget: 0` on 2.5 Flash and 400 "mandatory" on 2.5 Pro and 3.x (Chat Completions maps it correctly). Always send `enabled: true` | ok |
 | Gemini effort level | `thinkingLevel` on 3.x; `thinkingBudget: 24576` for `high` on 2.5 | ok |
-| OpenAI-compatible `reasoning: { enabled, effort }` | Same. `none` passes; `minimal` becomes `low` on GPT-5.5; `max` passes on GPT-5.6; DeepSeek receives `reasoning_effort` | ok |
-| `reasoning.mode: 'pro'` | Same; response `model` reports the `-pro` id | ok |
+| OpenAI-compatible `reasoning: { enabled, effort }` | Same. `none` passes; `minimal` becomes `low` on GPT-5.5; `max` passes on GPT-5.6 and GPT-6 (and is honored: 8x the reasoning tokens of `low` on GPT-6 Sol); DeepSeek receives `reasoning_effort` | ok |
+| `reasoning.mode: 'pro'` | Same; response `model` reports the `-pro` id (`openai/gpt-6-sol-pro`, `-luna-pro` exist as listed ids) | ok |
 | `reasoning_effort` dedupe | Not needed, only `reasoning` exists | ok |
 | `reasoning_details[]` parsing | Reasoning items (see Reasoning items). Our parser drops `response.reasoning_text.delta` | port |
-| Reasoning replay | Chat Completions never replayed `reasoning_details`. Responses accepts whole items back, translates across vendors, tolerates stripped history | port, gain |
+| Reasoning replay | Chat Completions never replayed `reasoning_details`. Responses accepts whole items back, translates across vendors, tolerates stripped history. Accepted is not consumed: OpenAI renders only same-family items (see Reasoning items) | port, gain |
 | `cache_control` on content parts | Block-level `cache_control` is accepted and INERT (0 cache writes on a 4.7k prompt, every placement). Working shapes: `prompt_cache_breakpoint: { mode: 'explicit' }` on `input_text` blocks of system, developer and user messages (4706 written, 4687 read); top-level `cache_control: { type: 'ephemeral' }` auto-marks the last cacheable block (4697 written, read on repeat). Markers on assistant `output_text` are ignored | remap |
 | System prompt breakpoint | `instructions` cannot carry a marker. Send the system prompt as a system-role message item (OpenRouter maps it to Anthropic `system`), or rely on the top-level marker | remap |
 | Max-4 breakpoint trim | Still required: 5 markers return Anthropic's "A maximum of 4 blocks with cache_control" 400 | ok |
@@ -55,7 +55,7 @@ Status: ok = same shape works; remap = works with a different shape; port = our 
 | Resume and delete handles | Cannot exist (stateless); nothing lost, Chat Completions had none | ok |
 | `openrouter.models.ts`, vendor file, image endpoint | Untouched. `/models` has no per-model Responses flag; `supported_parameters` keeps Chat Completions names. Every listed model tested works, including `openrouter/auto`, `openrouter/free`, `:free` ids and `~` aliases | ok |
 
-Also verified: `configuration_update` input item (Fable 5.1), `parallel_tool_calls: false`, `tool_choice: 'none'`, `strict` tools, `text.format` json_schema and json_object (Claude ignores json_object), `reasoning.summary` on GPT (summary parts only when the prompt warrants thinking), `models` fallback array, `service_tier`. Not honored: `reasoning.exclude` (content still returned), `stop` (dropped for Llama, provider 400 on DeepSeek). We send neither.
+Also verified: `configuration_update` input item (Fable 5.1), `parallel_tool_calls: false`, `tool_choice: 'none'`, `strict` tools, `text.format` json_schema and json_object (Claude ignores json_object), `reasoning.summary` on GPT (summary parts only when the prompt warrants thinking), `models` fallback array, `service_tier` (`flex` bills GPT-6 at half price on Chat Completions too). Not honored: `reasoning.exclude` (content still returned), `stop` (dropped for Llama, provider 400 on DeepSeek). We send neither.
 
 ## Reasoning items
 
@@ -71,7 +71,8 @@ Item: `{ type: 'reasoning', id, status, format, summary[], content[]?, encrypted
 
 - Adaptive-thinking Claude (4.6+, Sonnet 5, Fable) emits no reasoning item on trivial prompts at any effort; that is the model, not the endpoint. A non-trivial prompt reasons at every effort.
 - Gemini emits `message` before `reasoning` in `output[]` order.
-- Replay: echo items unchanged, whole. Same-model round trips (6 vendors), cross-vendor (9 pairs, e.g. Claude item into GPT history, GPT into Claude) and reasoning-stripped history all complete. `include: ['reasoning.encrypted_content']` is harmless everywhere. `reasoning.context` is GPT-5.6+ only (400 upstream below).
+- Replay: echo items unchanged, whole. Same-model round trips (6 vendors), cross-vendor (9 pairs, e.g. Claude item into GPT history, GPT into Claude) and reasoning-stripped history all complete. `include: ['reasoning.encrypted_content']` is harmless everywhere. `reasoning.context: 'all_turns'` is accepted from GPT-5.4 up (2026-09-22).
+- Completing is not consuming: OpenAI renders reasoning only within a model family (GPT-6 tiers share, GPT-5.6 tiers share). A GPT-6 Sol item replayed to GPT-6 Luna is read (83 input tokens); to GPT-5.6 Sol it is dropped silently (56, the stripped-history count), no error. See `LLM-openai-responses.md`.
 
 ## Port list
 
@@ -83,4 +84,4 @@ Item: `{ type: 'reasoning', id, status, format, summary[], content[]?, encrypted
 
 ## Verdict
 
-Parity holds for ~30 customizations: 24 one-to-one or remapped, 5 parser ports, 2 losses (audio output on four models; provider label under CSF). Reasoning gets stronger (uniform items, cross-vendor replay, `configuration_update`), caching and search survive with new shapes. The switch is sound once the parser work lands.
+Parity holds for ~30 customizations: 24 one-to-one or remapped, 5 parser ports, 2 losses (audio output on four models; provider label under CSF). Reasoning gets stronger (uniform items, cross-vendor replay, `configuration_update`; OpenAI consumes only same-family reasoning), caching and search survive with new shapes. The switch is sound once the parser work lands.
