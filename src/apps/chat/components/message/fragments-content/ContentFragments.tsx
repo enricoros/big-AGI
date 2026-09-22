@@ -171,6 +171,8 @@ export function ContentFragments(props: {
                 messagePendingIncomplete={!!props.messagePendingIncomplete}
                 zenMode={props.uiComplexityMode === 'minimal'}
                 contentScaling={props.contentScaling}
+                fitScreen={props.fitScreen}
+                isMobile={props.isMobile}
                 isLastFragment={isLastFragment}
                 onFragmentDelete={props.onFragmentDelete}
                 onFragmentReplace={props.onFragmentReplace}

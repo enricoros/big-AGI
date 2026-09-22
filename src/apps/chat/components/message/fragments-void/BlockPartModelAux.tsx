@@ -1,12 +1,12 @@
 import * as React from 'react';
 
 import type { ColorPaletteProp, SxProps } from '@mui/joy/styles/types';
-import { Box, Chip, Typography } from '@mui/joy';
+import { Box, Chip } from '@mui/joy';
 import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
 
-import { RenderMarkdown } from '~/modules/blocks/markdown/RenderMarkdown';
+import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 import { useScaledTypographySx } from '~/modules/blocks/blocks.styles';
 
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
@@ -69,21 +69,12 @@ const _styles = {
     backgroundColor: `rgb(var(--joy-palette-${REASONING_COLOR}-lightChannel) / 15%)`, // similar to success.50
     // boxShadow: 'inset 1px 1px 3px -3px var(--joy-palette-neutral-solidBg)',
     mt: 1,
-    p: 1,
-
-    // plain text style
-    overflowWrap: 'anywhere',
-    whiteSpace: 'break-spaces',
+    py: 1,
+    // px: 0.5, // the blocks carry their own inline margin (text 1.5, code 0), as in messages
 
     // layout
     display: 'flex',
     flexDirection: 'column',
-  },
-
-  textUndoWhitespace: {
-    // for markdown content, we want to allow it to control the whitespace and line breaks, so we undo the plain text styles that break on whitespace
-    overflowWrap: 'normal',
-    whiteSpace: 'normal',
   },
 
   buttonInline: {
@@ -116,6 +107,8 @@ export function BlockPartModelAux(props: {
   messagePendingIncomplete: boolean,
   zenMode: boolean,
   contentScaling: ContentScaling,
+  fitScreen: boolean,
+  isMobile: boolean,
   isLastFragment: boolean,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
@@ -133,8 +126,13 @@ export function BlockPartModelAux(props: {
   const contentScaling = adjustContentScaling(props.contentScaling, -1);
   const typeText = props.auxType === 'reasoning' ? 'Reasoning' : 'Auxiliary';
 
+  // collapsed content stays mounted (the expander only animates its height): freeze its text so it does not re-render while hidden
+  const shownTextRef = React.useRef(props.auxText);
+  if (expanded) shownTextRef.current = props.auxText;
+  const shownText = shownTextRef.current;
+
   // memo
-  const maybeMarkdown = React.useMemo(() => !ENABLE_MARKDOWN_DETECTION || neverExpanded ? false : _maybeMarkdownReasoning(props.auxText), [neverExpanded, props.auxText]);
+  const maybeMarkdown = React.useMemo(() => !ENABLE_MARKDOWN_DETECTION || neverExpanded ? false : _maybeMarkdownReasoning(shownText), [neverExpanded, shownText]);
 
   // memo style
   const chipSx: SxProps = React.useMemo(() => ({
@@ -147,8 +145,22 @@ export function BlockPartModelAux(props: {
   const textSx = React.useMemo(() => ({
     ..._styles.text,
     ...scaledTypographySx,
-    ...(maybeMarkdown ? _styles.textUndoWhitespace : {}),
-  }), [maybeMarkdown, scaledTypographySx]);
+  }), [scaledTypographySx]);
+
+  // same renderer as the message text: blocks, sub-block memo while streaming, streaming clip in minimal mode
+  const { fitScreen, isMobile, zenMode } = props;
+  const renderedBlocks = React.useMemo(() => neverExpanded ? null : (
+    <AutoBlocksRenderer
+      text={shownText}
+      fromRole='assistant'
+      contentScaling={contentScaling}
+      fitScreen={fitScreen}
+      isMobile={isMobile}
+      textRenderVariant={maybeMarkdown ? 'markdown' : 'text'}
+      optiAllowSubBlocksMemo={isActive}
+      optiStreamingLastFragment={isActive && zenMode}
+    />
+  ), [contentScaling, fitScreen, isActive, isMobile, maybeMarkdown, neverExpanded, shownText, zenMode]);
 
 
   // handlers
@@ -258,22 +270,13 @@ export function BlockPartModelAux(props: {
     </Box>
 
     {/* Controlled Box */}
-    <ExpanderControlledBox expanded={expanded}>
+    <ExpanderControlledBox noContain={true /* Important, allow fixed positioning on the code blocks' OverlayButtons */} expanded={expanded}>
 
-      {!neverExpanded && (
-        (ENABLE_MARKDOWN_DETECTION && maybeMarkdown) ? (
-          <Box sx={textSx}>
-            <RenderMarkdown content={props.auxText} sx={{ ...scaledTypographySx, marginInline: '0!important' /* to override what's default in this component */ }} />
-            {!!props.auxRedactedDataCount && <Box component='span' sx={{ color: 'text.disabled' }}> {ANTHROPIC_REDACTED_EXPLAINER}{'.'.repeat(props.auxRedactedDataCount % 5)}</Box>}
-          </Box>
-        ) : (
-          <Typography sx={textSx}>
-            <span>
-              {props.auxText}
-              {!!props.auxRedactedDataCount && <Box component='span' sx={{ color: 'text.disabled' }}> {ANTHROPIC_REDACTED_EXPLAINER}{'.'.repeat(props.auxRedactedDataCount % 5)}</Box>}
-            </span>
-          </Typography>
-        )
+      {renderedBlocks && (
+        <Box sx={textSx}>
+          {renderedBlocks}
+          {!!props.auxRedactedDataCount && <Box component='span' sx={{ color: 'text.disabled', mx: 1.5 }}>{ANTHROPIC_REDACTED_EXPLAINER}{'.'.repeat(props.auxRedactedDataCount % 5)}</Box>}
+        </Box>
       )}
 
     </ExpanderControlledBox>
