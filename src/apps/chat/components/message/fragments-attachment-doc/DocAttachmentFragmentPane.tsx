@@ -384,12 +384,14 @@ export const DocAttachmentFragmentPane = React.memo(function DocAttachmentFragme
           <AutoBlocksRenderer
             // text={marshallWrapText(fragmentDocPart.data.text, /*part.meta?.srcFileName || part.ref*/ undefined, 'markdown-code')}
             text={fragmentDocPart.data.text}
-            renderAsCodeWithTitle={viewAsCode ? (fragmentDocPart.data?.mimeType || fragmentDocPart.ref || fragmentTitle) : undefined}
             fromRole={props.messageRole}
             contentScaling={props.contentScaling}
             fitScreen={props.isMobile}
             isMobile={props.isMobile}
-            codeRenderVariant='plain'
+            blocksProcessor={undefined}
+            inputAsCodeWithTitle={viewAsCode ? (fragmentDocPart.data?.mimeType || fragmentDocPart.ref || fragmentTitle) : undefined}
+            inputAsWordsDiff={undefined}
+            codeRenderVariant='embedded-plain' // for embedding in this pane
             textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
           />
         </Box>

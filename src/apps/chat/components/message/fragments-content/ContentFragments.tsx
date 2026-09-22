@@ -344,14 +344,14 @@ export function ContentFragments(props: {
               key={fId}
               // ref={blocksRendererRef}
               textPartText={part.text}
-              setEditedText={props.setEditedText}
-              fragmentId={fId}
               messageRole={props.messageRole}
+              fragmentId={fId}
+              setEditedText={props.setEditedText}
               contentScaling={props.contentScaling}
               fitScreen={props.fitScreen}
               isMobile={props.isMobile}
+              inputAsWordsDiff={undefined}
               disableMarkdownText={props.disableMarkdownText}
-              // renderWordsDiff={wordsDiff || undefined}
               showUnsafeHtmlCode={props.showUnsafeHtmlCode}
               optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
               optiStreamingLastFragment={!!props.optiAllowSubBlocksMemo && isLastFragment && props.uiComplexityMode === 'minimal'}

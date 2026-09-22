@@ -26,13 +26,14 @@ const STREAMING_TAIL_MAX_HIDDEN_CHARS = 280; // safety: stop hiding the post-new
 // export const AutoBlocksRenderer = React.forwardRef<HTMLDivElement, BlocksRendererProps>((props, ref) => {
 // AutoBlocksRenderer.displayName = 'AutoBlocksRenderer';
 
-export type AutoBlocksCodeRenderVariant = 'outlined' | 'plain' | 'enhanced';
+export type AutoBlocksCodeRenderVariant = 'outlined' | 'embedded-plain' | 'enhanced';
 
 /**
- * Features: collpase/expand, auto-detects HTML, SVG, Code, etc..
+ * Features: collapse/expand, auto-detects HTML, SVG, Code, etc..
  * Used by (and more):
- * - DocAttachmentFragmentEditor
- * - ContentPartPlaceholder
+ * - BlockPartText_AutoBlocks - the main text blocks in ChatMessage > ContentFragments > *
+ * - DocAttachmentFragmentPane - when not editing and with a switch to show text/fenced (which could be rendered)
+ * - DiagramsModal - for the diagram blocks
  */
 export function AutoBlocksRenderer(props: {
   // required
@@ -47,10 +48,10 @@ export function AutoBlocksRenderer(props: {
   showAsItalic?: boolean;
   showUnsafeHtmlCode?: boolean;
 
-  renderAsCodeWithTitle?: string;
-  renderAsWordsDiff?: WordsDiff;
-
   blocksProcessor?: 'diagram',
+  inputAsCodeWithTitle?: string;
+  inputAsWordsDiff?: WordsDiff;
+
   codeRenderVariant?: AutoBlocksCodeRenderVariant /* default: outlined */,
   textRenderVariant: 'markdown' | 'text',
 
@@ -88,9 +89,9 @@ export function AutoBlocksRenderer(props: {
     useTextCollapser(props.text, fromUser);
   const autoBlocksStable = useAutoBlocksMemoSemiStable(
     text,
-    props.renderAsCodeWithTitle,
+    props.inputAsCodeWithTitle,
     fromSystem,
-    props.renderAsWordsDiff,
+    props.inputAsWordsDiff,
     props.blocksProcessor === 'diagram',
   );
 
@@ -243,7 +244,7 @@ export function AutoBlocksRenderer(props: {
 
       {(isTextCollapsed || forceTextExpanded) && (
         <ToggleExpansionButton
-          color={props.codeRenderVariant === 'plain' ? 'neutral' : undefined}
+          color={props.codeRenderVariant === 'embedded-plain' ? 'neutral' : undefined}
           isCollapsed={isTextCollapsed}
           onToggle={handleToggleExpansion}
           sx={toggleExpansionButtonSx}

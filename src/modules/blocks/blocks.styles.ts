@@ -9,19 +9,19 @@ import type { AutoBlocksCodeRenderVariant } from './AutoBlocksRenderer';
 
 // Styles for the various block components
 
-export function useScaledCodeSx(fromAssistant: boolean, contentScaling: ContentScaling, codeRenderVariant: AutoBlocksCodeRenderVariant): SxProps {
+export function useScaledCodeSx(fromAssistant: boolean, contentScaling: ContentScaling, codeRenderVariant: AutoBlocksCodeRenderVariant) {
   return React.useMemo(() => ({
     // Note: we don't handle 'enhanced' here, as we'll do it when the EnhancedRenderCode
     //       kicks in for real, and in what instance we patch this object.
     my:
-      codeRenderVariant === 'plain' ? 0
+      codeRenderVariant === 'embedded-plain' ? 0
         : themeScalingMap[contentScaling]?.blockCodeMarginY ?? 0,
     backgroundColor:
-      codeRenderVariant === 'plain' ? 'background.surface'
+      codeRenderVariant === 'embedded-plain' ? 'background.surface'
         : fromAssistant ? 'background.level1' // was 'neutral.plainHoverBg', turned to background.level1 to improve the dark mode contrast while keeping light the same
           : 'primary.plainActiveBg', // could use plainActiveBg to increase the background contrast in dark mode (#631), but it's really too bright in that case
     boxShadow:
-      codeRenderVariant === 'plain' ? undefined
+      codeRenderVariant === 'embedded-plain' ? undefined
         : 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)', // was 'xs'
     borderRadius: 'sm',
     fontFamily: 'code',
@@ -57,7 +57,7 @@ export function useToggleExpansionButtonSx(contentScaling: ContentScaling, codeR
     fontSize: themeScalingMap[contentScaling]?.fragmentButtonFontSize ?? undefined,
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
-    ...(codeRenderVariant === 'plain' ? {
+    ...(codeRenderVariant === 'embedded-plain' ? {
       // Style when inside the <DocumentFragmentEditor />
       backgroundColor: 'background.surface',
       // marginTop: -0.5,

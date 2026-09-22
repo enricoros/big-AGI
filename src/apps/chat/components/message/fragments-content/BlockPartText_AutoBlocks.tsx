@@ -18,18 +18,20 @@ import { explainServiceErrors } from '../explainServiceErrors';
 export function BlockPartText_AutoBlocks(props: {
   // current value
   textPartText: string,
-  setEditedText?: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
-
-  fragmentId: DMessageFragmentId,
   messageRole: DMessageRole,
 
-  contentScaling: ContentScaling,
-  isMobile: boolean,
-  fitScreen: boolean,
-  disableMarkdownText: boolean,
-  renderAsWordsDiff?: WordsDiff,
+  fragmentId: DMessageFragmentId,
+  setEditedText?: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
 
+  contentScaling: ContentScaling,
+  fitScreen: boolean,
+  isMobile: boolean,
+
+  inputAsWordsDiff?: WordsDiff,
+
+  disableMarkdownText: boolean,
   showUnsafeHtmlCode?: boolean,
+
   optiAllowSubBlocksMemo: boolean,
   optiStreamingLastFragment?: boolean,
 
@@ -73,9 +75,11 @@ export function BlockPartText_AutoBlocks(props: {
       contentScaling={props.contentScaling}
       fitScreen={props.fitScreen}
       isMobile={props.isMobile}
+      blocksProcessor={undefined}
+      inputAsCodeWithTitle={undefined}
+      inputAsWordsDiff={props.inputAsWordsDiff}
+      codeRenderVariant='enhanced' // can still be downgraded to 'outlined', e.g. for small snippets or given vnd types
       showUnsafeHtmlCode={props.showUnsafeHtmlCode}
-      renderAsWordsDiff={props.renderAsWordsDiff}
-      codeRenderVariant='enhanced' // was: { props.enhanceCodeBlocks ? 'enhanced' : 'outlined' }
       textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
       optiStreamingLastFragment={props.optiStreamingLastFragment}
