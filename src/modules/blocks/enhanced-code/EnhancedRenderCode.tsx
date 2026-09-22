@@ -25,6 +25,7 @@ export function EnhancedRenderCode(props: {
 
   fitScreen: boolean,
   isMobile: boolean,
+  noApplyButton?: boolean,
   initialShowHTML?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean,
@@ -47,7 +48,7 @@ export function EnhancedRenderCode(props: {
   // LiveFile - patch state
   const { button: liveFileButton, actionBar: liveFileActionBar } = useLiveFilePatch(
     props.title, props.code, props.isPartial,
-    props.isMobile,
+    props.isMobile, !!props.noApplyButton,
   );
 
 

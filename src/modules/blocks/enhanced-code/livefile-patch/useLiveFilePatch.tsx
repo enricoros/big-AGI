@@ -16,7 +16,7 @@ import { usePatchingWorkflow } from '~/modules/blocks/enhanced-code/livefile-pat
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 
 
-export function useLiveFilePatch(title: string, code: string, isPartial: boolean, isMobile: boolean) {
+export function useLiveFilePatch(title: string, code: string, isPartial: boolean, isMobile: boolean, disable: boolean) {
 
   /**
    * state - Warning: very local.
@@ -25,7 +25,7 @@ export function useLiveFilePatch(title: string, code: string, isPartial: boolean
   const [liveFileId, setLiveFileId] = React.useState<LiveFileId | null>(null);
 
   // external state
-  const isEnabled = isLiveFileSupported();
+  const isEnabled = !disable && isLiveFileSupported();
 
 
   const { status, patchState, targetOverwriteWithPatch } = usePatchingWorkflow(liveFileId, code);

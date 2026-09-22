@@ -6,12 +6,12 @@ import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { BLOCK_CODE_MERMAID_TITLE, BLOCK_CODE_PLANTUML_TITLE, BLOCK_CODE_SVG_TITLE, renderCodeMemoOrNot } from './code/RenderCode';
 import { BlocksContainer } from './BlocksContainers';
 import { EnhancedRenderCode } from './enhanced-code/EnhancedRenderCode';
-import { RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
 import { RenderImageURL } from './image/RenderImageURL';
 import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderPlainText } from './plaintext/RenderPlainText';
 import { RenderWordsDiff, WordsDiff } from './wordsdiff/RenderWordsDiff';
 import { ToggleExpansionButton } from './ToggleExpansionButton';
+import { heuristicIsBlockPureHTML, RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
 import { useAutoBlocksMemoSemiStable, useTextCollapser } from './blocks.hooks';
 import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpansionButtonSx } from './blocks.styles';
 
@@ -83,11 +83,13 @@ export function AutoBlocksRenderer(props: {
   const isUserCommand = fromUser && props.text.startsWith('/');
 
   // state
-  const { text, isTextCollapsed, forceTextExpanded, handleToggleExpansion } =
-    useTextCollapser(props.text, fromUser);
+  const isPureHTML = heuristicIsBlockPureHTML(props.text);
+  const fixUserHtmlPaste = fromUser && isPureHTML;
+  const collapseUserText = fromUser && !fixUserHtmlPaste; // probably less important now that we have ERCs with collapse, may even get in the way
+  const { text, isTextCollapsed, forceTextExpanded, handleToggleExpansion } = useTextCollapser(props.text, collapseUserText);
   const autoBlocksStable = useAutoBlocksMemoSemiStable(
     text,
-    props.inputAsCodeWithTitle,
+    props.inputAsCodeWithTitle || (fixUserHtmlPaste ? 'HTML' : undefined),
     fromSystem,
     props.inputAsWordsDiff,
     props.blocksProcessor === 'diagram',
@@ -197,12 +199,19 @@ export function AutoBlocksRenderer(props: {
                 break;
             }
 
+            // Pre-collapsing of user pasted HTML
+            if (fixUserHtmlPaste) {
+              // disableEnhancedRender = false;
+              enhancedStartCollapsed = true;
+            }
+
             return (props.codeRenderVariant === 'enhanced' && !disableEnhancedRender) ? (
               <EnhancedRenderCode
                 // EnhancedRenderCode props
                 contentScaling={props.contentScaling}
                 initialIsCollapsed={enhancedStartCollapsed}
                 isMobile={props.isMobile}
+                noApplyButton={props.blocksProcessor === 'diagram' || fromUser}
                 // RenderCode pass through
                 key={'code-bk-' + index}
                 semiStableId={bkInput.bkId}
