@@ -36,7 +36,7 @@ export const LAB_DEFAULT_MODELS: Record<LabFlavor, string> = {
   'metaai-responses': 'muse-spark-1.3',
   'openai-chat': 'gpt-4.1-mini',
   'gemini-generate': 'models/gemini-3-flash-preview',
-  'gemini-interactions': 'models/antigravity-preview-05-2026',
+  'gemini-interactions': 'models/antigravity-preview-09-2026',
 };
 
 

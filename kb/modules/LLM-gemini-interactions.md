@@ -2,7 +2,7 @@
 
 The Interactions API powers Gemini's managed-agent runs. Currently wired:
 - **Deep Research** (`deep-research-*-preview-*`) — research/synthesis agent. Requires `background=true`; rejects top-level `system_instruction` (we prepend to input). Configurable via `agent_config` (`thinking_summaries`, `visualization`).
-- **Antigravity Agent** (`antigravity-preview-05-2026`, released 2026-05-19) — general-purpose Gemini-3.5-Flash-powered agent inside a Google-hosted Linux sandbox with code_execution / google_search / url_context / filesystem tools. We send `background:false` (see the note below); accepts native `system_instruction`; `environment` is auto-reused across turns via the history walk (see "Session reuse" below). [Docs](https://ai.google.dev/gemini-api/docs/antigravity-agent). A second, UNDOCUMENTED agent id `antigravity-preview-09-2026` (Sep 2026, 1M/64K, no changelog or pricing line) is contract-identical - the `isAntigravity` gates match both, so it needed only a model def.
+- **Antigravity Agent** (`antigravity-preview-09-2026`, released 2026-09-17; replaces `antigravity-preview-05-2026`, shutdown 2026-10-05) — general-purpose agent (Gemini 3.8 Flash by default) inside a Google-hosted Linux sandbox with code_execution / google_search / url_context / filesystem tools. We send `background:false` (see the note below); accepts native `system_instruction`; `environment` is auto-reused across turns via the history walk (see "Session reuse" below). [Docs](https://ai.google.dev/gemini-api/docs/antigravity-agent). 09-2026 renamed the file tools and moved their params to PascalCase; the `isAntigravity` gates match both ids.
   - `background=true` is no longer rejected (Sep 2026): both agent ids return `200 in_progress` when `environment` is also sent (without it: `400 Missing required field 'environment'`). We keep sending `background:false` - it works and is what the non-resumable parser path assumes.
   - `environment_id` is now a 32-char opaque string on both ids, no longer the bare UUID observed in May 2026. The parser forwards it verbatim, so reuse is format-agnostic.
 - **Transcription** (`gemini-3.5-transcribe`, 2026-08) — batch speech-to-text for ASRx, wired in `src/modules/asrx/protocols/batch/transcribe-gemini.ts` (client-side CSF adapter, NOT the AIX dispatch: plain sync POST, no stream/background, `store:false`). The Interactions API is the model's only working surface (`generateContent` returns an empty part) and the transcript lives only in `steps[]` (`output_text` stays empty). Wire shapes, CORS verification, and limits are documented in the adapter header.
@@ -30,12 +30,13 @@ Google replaced the legacy flat `outputs[]` response with a typed `steps[]` time
 
 **Deep Research - VERIFIED empirically (2026-06-02, steps schema):** a live `deep-research-preview-04-2026` stream emits `interaction.created` -> `interaction.status_update` (status `in_progress`) -> `step.start {type:'thought'}` -> repeated `step.delta {type:'thought_summary', content:{type:'text', text}}` (the research-plan / synthesis narration, routed to `appendReasoningText`) interleaved with `step.delta {type:'thought_signature', signature:''}` (empty signature, skipped). Final report text arrives as `model_output` step content, then `interaction.completed`. DR's event set is a strict subset of Antigravity's, so the zero-warning Antigravity replay covers DR's `model_output` + completion paths too.
 
-**Antigravity tool surfacing - VERIFIED empirically (2026-06-02, steps schema):** sandbox tools (function/code_execution/google_search/url_context call+result) moved from `content.delta` payloads to typed STEPS. A live `mixed` probe run (bash + search + curl + filesystem) replayed through `createGeminiInteractionsParserSSE` with **zero `unknown step.delta` / `unknown SSE event` warnings**. Confirmed wire shapes:
+**Antigravity tool surfacing - VERIFIED empirically (2026-09-22, `09-2026`):** sandbox tools (function/code_execution/google_search/url_context call+result) are typed STEPS, each complete on its `step.start`; no tool `step.delta` was observed (only `text` and `thought_summary`). Two live probe runs (all six file tools; bash + search + curl + file write) replayed through `createGeminiInteractionsParserSSE` with **zero parser warnings**. Confirmed wire shapes:
 - The real status event is `interaction.status_update` (NOT the migration-guide's `interaction.in_progress`); the run still ends with a `done` `[DONE]` terminator after `interaction.completed`. We handle all variants defensively.
-- `function_call` step.start carries `{id, name, arguments:{}}` (**empty args**); the args stream as a JSON string via `arguments_delta`, which `_emitAntigravityToolOp` accumulates (`state.argsAccum`) and finalizes at `step.stop` (e.g. chip `write_file` -> `write_file /tmp/notes.txt`).
-- `code_execution_call` step.start carries only `{id}`; the `{code}` arrives via the typed `code_execution_call` step.delta (chip `execute` -> `$ uname -a`).
-- `function_result` / `code_execution_result` arrive as their own step (step.start `{call_id, type}`) plus a typed result step.delta; `call_id` equals the call's `id`, so the result chip merges onto the call chip by opId.
+- `function_call` step.start carries `{id, name, arguments}` with args inline: PascalCase params plus model-written `toolAction` / `toolSummary` strings. `_summarizeFunctionArgs` picks the target param for the chip (`write_to_file /tmp/notes.txt`, `find_by_name *.txt`). 05-2026 sent empty args and streamed them via `arguments_delta`; the parser still accumulates that path (`state.argsAccum`, finalized at `step.stop`).
+- `code_execution_call` step.start carries `{id, arguments: {language, code}}` (chip `$ uname -a`).
+- `function_result` / `code_execution_result` step.start carries `{call_id, result, is_error}` (plus `exit_code` on code execution); `call_id` equals the call's `id`, so the result chip merges onto the call chip by opId. `is_error` is not surfaced: a failed call renders done, with the error text in oTexts.
 - `usage` shape is exactly as modeled (`total_input/output/cached/thought/tool_use_tokens` + `*_by_modality`).
+- `grep_search` failed on every path tried in the remote sandbox (`not a local path; got path ... with scheme prefix file://`, 8 attempts in one run) - an upstream bug; the agent retries and burns steps.
 Re-run `tools/develop/aix-gemini-antigravity-probe/examples.sh all` if Google revises the schema again. `url_context_*` was NOT exercised (Antigravity prefers bash `curl`); its defensive handler is retained.
 
 This doc is the source of truth for protocol shape, failure modes, and the recovery model — code comments link here instead of repeating the rationale.
@@ -130,9 +131,9 @@ The Recover gate is an inline `uht === 'vnd.gem.interactions'` check in `BlockOp
 
 Deep Research accepts `agent_config.visualization: 'auto' | 'off'`. Exposed as `llmVndGeminiAgentViz` (label "Visualizations"). Forwarded only when explicitly `'off'` so the upstream `'auto'` default stays untouched. Useful when merging multiple reports - image fragments break Beam fusion.
 
-## Antigravity Agent surface (empirical, 2026-05-19)
+## Antigravity Agent surface (empirical)
 
-`antigravity-preview-05-2026` runs on the same Interactions API path but with materially different contracts from Deep Research. The notes below are pinned to observed behavior across an 8-prompt sweep (see probe tool below) and are the source of truth for the agent-variant branches in `gemini.interactionsCreate.ts` and `gemini.interactions.parser.ts`.
+Antigravity runs on the same Interactions API path but with materially different contracts from Deep Research. The notes below are pinned to observed behavior (see probe tool below) and are the source of truth for the agent-variant branches in `gemini.interactionsCreate.ts` and `gemini.interactions.parser.ts`.
 
 ### Request contracts (differ from DR)
 
@@ -150,14 +151,14 @@ With `background=false` the resource is bound to the connection. Probed empirica
 
 ### Tool delta surface (observed)
 
-Antigravity surfaces sandbox tools as typed tool STEPS (`step.start` carries the call/result step object; `step.delta` may stream incremental args/results) - legacy schema delivered them as `content.delta` payloads. Surfaced by `_emitAntigravityToolOp` (in `gemini.interactions.parser.ts`) as nested op-state placeholders under the run chip. The shapes below were observed on the LEGACY schema (2026-05-19); re-verify on the steps schema with the probe tool (see "Schema: steps" section):
+Antigravity surfaces sandbox tools as typed tool STEPS (`step.start` carries the call/result step object; `step.delta` may stream incremental args/results). Surfaced by `_emitAntigravityToolOp` (in `gemini.interactions.parser.ts`) as nested op-state placeholders under the run chip. Shapes as observed on `09-2026` (see "Antigravity tool surfacing" above):
 
-| Delta type pair | Use | Payload shape | Chip rendering |
+| Step type pair | Use | Payload shape | Chip rendering |
 |---|---|---|---|
-| `function_call` / `function_result` | filesystem (`list_files`, `read_file`, `write_file`, `edit_file`, `search_files`) | call: `{ id, name, arguments: {path, ...} }`; result: `{ call_id, name, result: [{type:'text', text}] }` | `list_files /tmp` -> done + result text in oTexts |
-| `code_execution_call` / `code_execution_result` | bash / python in the sandbox | call: `{ id, arguments: { code: string } }`; result: `{ call_id, result: string (stdout+stderr) }` | `$ <first line>` + full code in iTexts -> done + stdout/stderr in oTexts |
-| `google_search_call` / `google_search_result` | web search | call: `{ id, arguments: { queries: string[] } }`; result: `{ call_id, result: [{ search_suggestions: <html> }, ...] }` | `search: <first query>` -> done (no oTexts: search_suggestions are HTML widgets, not useful as detail) |
-| `url_context_call` / `url_context_result` | URL fetch | shape inferred (NEVER OBSERVED in 8 probe runs) | defensive handler kept for forward-compat; Antigravity prefers bash `curl` |
+| `function_call` / `function_result` | filesystem (`write_to_file`, `replace_file_content`, `view_file`, `list_dir`, `find_by_name`, `grep_search`) | call: `{ id, name, arguments: {TargetFile\|AbsolutePath\|DirectoryPath\|Pattern\|Query, ..., toolAction, toolSummary} }`; result: `{ call_id, name, result: string, is_error }` | `list_dir /tmp/p` -> done + result text in oTexts |
+| `code_execution_call` / `code_execution_result` | bash / python in the sandbox | call: `{ id, arguments: { language, code } }`; result: `{ call_id, result: string ([STDOUT]/[STDERR]), is_error, exit_code }` | `$ <first line>` + full code in iTexts -> done + stdout/stderr in oTexts |
+| `google_search_call` / `google_search_result` | web search | call: `{ id, arguments: { queries: string[] }, search_type }`; result: `{ call_id, result: [{ search_suggestions: <html> }, ...] }` | `search: <first query>` -> done (no oTexts: search_suggestions are HTML widgets, not useful as detail) |
+| `url_context_call` / `url_context_result` | URL fetch | shape inferred (never observed) | defensive handler kept for forward-compat; Antigravity prefers bash `curl` |
 
 `thought_summary` fires on its own (no `agent_config` toggle needed). Routed to `appendReasoningText`.
 
@@ -168,19 +169,7 @@ Run chip lifecycle:
 
 ### Verified: no protocol gaps
 
-Sweep on 2026-05-19 across 8 prompts (filesystem / clone / build / search / fetch / research / report / mixed) produced **zero `unknown content.delta shape` warnings**. The aggregate delta histogram:
-
-```
-   text: 80   function_call: 18   function_result: 18
-   thought_summary: 16
-   code_execution_call: 12   code_execution_result: 12
-   google_search_call: 3     google_search_result: 3
-   url_context_*: 0
-```
-
-All eight runs terminated cleanly (`setTokenStopReason('ok')` + `setDialectEnded('done-dialect')`).
-
-**Steps-schema re-sweep (2026-06-02):** after the 2026-05-26 default flip, a `mixed` probe run replayed clean (zero warnings). Steps-schema delta histogram: `text: 35, code_execution_call/result: 2/2, function_result: 2, arguments_delta: 2, google_search_call/result: 1/1, thought_summary: 1`. Note the shape shift from the legacy schema: filesystem `function_call` args now stream via `arguments_delta` (legacy carried them inline on the call), and `function_result` rides a typed result step.delta. See "Schema: steps" above for the verified contract.
+Two `09-2026` probe runs on 2026-09-22 (all six file tools; `mixed`) replayed with **zero parser warnings** and terminated cleanly (`setTokenStopReason('ok')` + `setDialectEnded('done-dialect')`). Tool steps seen: `function_call/result` 16/16, `code_execution_call/result` 2/2, `google_search_call/result` 1/1, `url_context_*` 0; `step.delta` carried only `text` and `thought_summary`.
 
 ### Session reuse (cross-turn `environment_id` forward-carry)
 

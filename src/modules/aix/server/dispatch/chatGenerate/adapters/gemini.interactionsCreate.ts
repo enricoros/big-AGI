@@ -32,7 +32,7 @@ type TInputPart = z.infer<typeof GeminiInteractionsWire_API_Interactions.InputCo
  *  - Per-agent runtime flags:
  *    - deep-research: `background: true` (REQUIRED per DR guide), plus `agent_config` with
  *      thinking_summaries / visualization.
- *    - antigravity (antigravity-preview-05-2026): `background` MUST NOT be true (upstream rejects
+ *    - antigravity (antigravity-preview-*): `background` MUST NOT be true (upstream rejects
  *      it: 'Agent does not support using background=True and requires store=True'), so we omit it
  *      and let the API default to false (sync streaming). `environment: "remote"` selects a fresh
  *      Google-hosted Linux sandbox; default tool set (code_execution, google_search, url_context,

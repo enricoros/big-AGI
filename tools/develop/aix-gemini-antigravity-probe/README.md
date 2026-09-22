@@ -1,6 +1,6 @@
 # aix-gemini-antigravity-probe
 
-Captures live SSE from Google's Antigravity Agent (`antigravity-preview-05-2026`) and replays it
+Captures live SSE from Google's Antigravity Agent (`antigravity-preview-09-2026`) and replays it
 through our parser (`createGeminiInteractionsParserSSE`) so we can see exactly what the parser does
 with each delta variant - no guessing from docs.
 

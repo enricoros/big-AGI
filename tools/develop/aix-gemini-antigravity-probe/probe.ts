@@ -94,7 +94,7 @@ async function captureToFile(prompt: string, outPath: string): Promise<void> {
   const url = 'https://generativelanguage.googleapis.com/v1beta/interactions';
   // Agent override via PROBE_AGENT (default Antigravity). Deep Research agents use a different request
   // shape: background:true + agent_config (no sandbox environment). Mirrors gemini.interactionsCreate.ts.
-  const agent = process.env.PROBE_AGENT || 'antigravity-preview-05-2026';
+  const agent = process.env.PROBE_AGENT || 'antigravity-preview-09-2026';
   const isDeepResearch = agent.includes('deep-research');
   const body: Record<string, unknown> = {
     agent,
@@ -171,7 +171,7 @@ function replayFromFile(filePath: string, opts: ReplayOptions = {}): void {
     }
   } catch { /* not JSON */ }
 
-  const modelName = opts.modelName ?? agentFromMeta ?? 'antigravity-preview-05-2026';
+  const modelName = opts.modelName ?? agentFromMeta ?? 'antigravity-preview-09-2026';
   console.log('[replay]', filePath, '(model:', modelName, ')');
 
   const { pt, log } = createRecordingTransmitter();
@@ -252,7 +252,7 @@ function printParticleSummary(prefix: string, log: LogEntry[], warnings: { msg: 
 async function fetchInteractionJson(id: string, outPath: string): Promise<void> {
   const API_KEY = process.env.GEMINI_API_KEY;
   if (!API_KEY) throw new Error('GEMINI_API_KEY not set');
-  const agent = process.env.PROBE_AGENT || 'antigravity-preview-05-2026';
+  const agent = process.env.PROBE_AGENT || 'antigravity-preview-09-2026';
   // No ?stream - returns the full Interaction JSON resource (the "Recover" path: GET /v1beta/interactions/{id})
   const url = `https://generativelanguage.googleapis.com/v1beta/interactions/${encodeURIComponent(id)}`;
   console.log('[get] GET', url);
@@ -280,7 +280,7 @@ function replayNSFromFile(filePath: string, opts: ReplayOptions = {}): void {
   } catch { /* the whole file is the resource */ }
   const jsonText = lines.slice(bodyStart).join('\n');
 
-  const modelName = opts.modelName ?? agentFromMeta ?? 'antigravity-preview-05-2026';
+  const modelName = opts.modelName ?? agentFromMeta ?? 'antigravity-preview-09-2026';
   console.log('[replay-ns]', filePath, '(NS/recovery parser, model:', modelName, ')');
 
   const { pt, log } = createRecordingTransmitter();

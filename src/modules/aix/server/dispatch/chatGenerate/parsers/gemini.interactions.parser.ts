@@ -662,14 +662,15 @@ function _emitUrlCitations(pt: IParticleTransmitter, annotations: Array<{ type: 
 //
 // `_emitAntigravityToolOp` takes a typed `SurfacedToolStep` (the callers safeParse the loose step, or a
 // {type,id/call_id,...} synthesized from a typed step.delta, into the union first), so field access is
-// type-checked per variant. Wire shapes VERIFIED on the steps schema (live probe 2026-06-02, zero warnings):
-//   function_call       step.start { id, type:'function_call', name, arguments:{} (EMPTY) }; args stream as
-//                       a JSON string via `arguments_delta` deltas (accumulated -> finalized at step.stop)
-//   function_result     step.start { call_id, type:'function_result' } + typed result step.delta; call_id === call.id
-//   code_execution_call step.start { id, type:'code_execution_call' }; `{code}` arrives via typed code_execution_call step.delta
-//   code_execution_result typed step.delta { result: string (stdout+stderr) }; call_id === call.id
-//   google_search_call  step.start { id, type:'google_search_call' }; `{queries|query}` via typed step.delta
-//   google_search_result typed step.delta { result: { search_suggestions } }
+// type-checked per variant. Wire shapes VERIFIED on antigravity-preview-09-2026 (live probe 2026-09-22, zero warnings):
+// every tool step arrives complete on step.start; no tool step.delta was observed.
+//   function_call       step.start { id, type:'function_call', name, arguments:{ PascalCase params, toolAction, toolSummary } }
+//                       (05-2026 streamed args via `arguments_delta` instead; still accumulated -> finalized at step.stop)
+//   function_result     step.start { call_id, type:'function_result', name, result: string, is_error }; call_id === call.id
+//   code_execution_call step.start { id, type:'code_execution_call', arguments:{ language, code } }
+//   code_execution_result step.start { call_id, result: string ([STDOUT]/[STDERR]), is_error, exit_code }
+//   google_search_call  step.start { id, type:'google_search_call', arguments:{ queries }, search_type }
+//   google_search_result step.start { call_id, result: [{ search_suggestions }] }
 //   url_context_*        NOT observed (Antigravity prefers bash curl); defensive handler retained
 
 const _TOOL_TEXT_MAX = 80;   // chip-line cap (single-line summary)
@@ -682,8 +683,8 @@ function _truncate(s: string, max: number): string {
 function _summarizeFunctionArgs(name: string, args: unknown): string {
   if (typeof args !== 'object' || args === null) return name;
   const a = args as Record<string, unknown>;
-  // Prefer the first stringy field that typically identifies the target of the call.
-  for (const key of ['path', 'query', 'url', 'command', 'pattern']) {
+  // Prefer the first stringy field that typically identifies the target of the call (09-2026 file tools use PascalCase params).
+  for (const key of ['path', 'TargetFile', 'AbsolutePath', 'DirectoryPath', 'query', 'Query', 'url', 'command', 'pattern', 'Pattern']) {
     const v = a[key];
     if (typeof v === 'string' && v.length > 0) return _truncate(`${name} ${v}`, _TOOL_TEXT_MAX);
   }
@@ -705,7 +706,7 @@ function _snippetFromArrayOfText(result: unknown): string | undefined {
 function _emitAntigravityToolOp(pt: IParticleTransmitter, step: TToolStep, parentOpId: string): void {
   switch (step.type) {
 
-    // --- filesystem tools (list_files, read_file, write_file, edit_file, search_files, ...) ---
+    // --- filesystem tools (write_to_file, replace_file_content, view_file, list_dir, find_by_name, grep_search, ...) ---
     case 'function_call':
       pt.sendOperationState('code-exec', _summarizeFunctionArgs(step.name || 'tool', step.arguments), { opId: step.id, parentOpId });
       return;

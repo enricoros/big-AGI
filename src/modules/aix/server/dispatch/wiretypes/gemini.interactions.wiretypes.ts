@@ -96,7 +96,7 @@ export namespace GeminiInteractionsWire_API_Interactions {
   //  - DeepResearchAgentConfig  { type: 'deep-research', ... }
   //    See ./_upstream/gemini.deep-research.guide.md#agent-configuration for defaults and semantics.
   //
-  // Note: the Antigravity Agent (antigravity-preview-05-2026, released 2026-05-19) does NOT use
+  // Note: the Antigravity Agent (antigravity-preview-*) does NOT use
   // `agent_config` - it is configured via the top-level `environment` and `tools` fields instead.
 
   const _DynamicAgentConfig_schema = z.object({
