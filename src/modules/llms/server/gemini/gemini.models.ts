@@ -828,6 +828,35 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
   // - models/gemini-2.5-flash-preview-04-17-thinking (Cursor variant, superseded)
 
 
+  // 3.8 Flash TTS / 3.8 Flash Lite TTS - SPECULATIVE: listed by the API for ~2h on 2026-09-22, then pulled (404 by id); no
+  // announcement or pricing. Defined ahead so a re-listing is usable at once instead of surfacing with the default chat
+  // interfaces (streaming + system prompt, which TTS rejects). Interfaces mirror 3.1 Flash TTS, verified end-to-end on
+  // 3.1 only (2026-09-22: audio-only request, no system instruction, PCM -> WAV). TODO(2026-11): drop if still unreleased.
+  {
+    id: 'models/gemini-3.8-flash-tts',
+    labelOverride: 'Gemini 3.8 Flash TTS',
+    pubDate: '20260922', // first seen on the list API
+    interfaces: [
+      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision,
+      LLM_IF_Outputs_Audio, LLM_IF_Outputs_NoText,
+      LLM_IF_HOTFIX_StripSys0, // TTS: no system instruction
+      LLM_IF_HOTFIX_NoStream, // TTS: no streaming - use generateContent instead
+    ],
+    benchmark: undefined, // TTS models are not benchmarkable
+  },
+  {
+    id: 'models/gemini-3.8-flash-lite-tts',
+    labelOverride: 'Gemini 3.8 Flash Lite TTS',
+    pubDate: '20260922', // first seen on the list API
+    interfaces: [
+      LLM_IF_OAI_Chat, LLM_IF_OAI_Vision,
+      LLM_IF_Outputs_Audio, LLM_IF_Outputs_NoText,
+      LLM_IF_HOTFIX_StripSys0, // TTS: no system instruction
+      LLM_IF_HOTFIX_NoStream, // TTS: no streaming - use generateContent instead
+    ],
+    benchmark: undefined, // TTS models are not benchmarkable
+  },
+
   // 3.1 Flash TTS Preview - Released April 15, 2026
   // Cost-efficient, expressive, and steerable text-to-speech model
   {
