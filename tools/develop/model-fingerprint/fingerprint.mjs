@@ -30,7 +30,7 @@ function apiKey() {
 
 // ---- reference flagships: one per lab, keep current (edit freely)
 const DEFAULT_REFS = [
-  'openai/gpt-5.5',
+  'openai/gpt-6-sol', // current generation at 1/5 of Astra's price
   'anthropic/claude-opus-5',
   'google/gemini-3.7-flash',
   'x-ai/grok-4.6',
