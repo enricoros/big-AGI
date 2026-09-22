@@ -9,7 +9,9 @@ import { remarkMark } from 'remark-mark-highlight';
 
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
+import type { RenderMarkdownRendererProps } from './RenderMarkdown';
 import { CustomARenderer } from './CustomARenderer';
+import { CustomInputRenderer, rehypeTaskListRenumber, useMarkdownTaskListToggler } from './CustomTaskListRenderer';
 import { CustomTableRenderer } from './CustomTableRenderer';
 import { remarkTableCellBreaks } from './tableBreaks.remark';
 import { wrapWithMarkdownSyntax } from './markdown.wrapper';
@@ -35,6 +37,7 @@ const MAX_PREPROCESSOR_LENGTH = 50_000; // 50kB, this is the max length of the t
 
 const reactMarkdownComponents = {
   a: CustomARenderer, // override the link renderer to add target="_blank"
+  input: CustomInputRenderer, // renders <input type="checkbox"> in a custom manner
   del: DelRenderer, // renders the <del> tag (~~strikethrough~~)
   mark: MarkRenderer, // renders the <mark> tag (==highlight==)
   table: CustomTableRenderer, // override the table renderer to show the download CSV links and Copy Markdown button
@@ -47,7 +50,7 @@ const reactMarkdownComponents = {
 const urlTransformKeepSandbox: UrlTransform = (url, key) =>
   (key === 'href' && /^sandbox:/i.test(url)) ? url : defaultUrlTransform(url);
 
-const remarkPluginsStable: UnifiedPluggable[] = [
+const remarkPlugins: UnifiedPluggable[] = [
   remarkGfm, // GitHub Flavored Markdown
   remarkMark, // Mark-Highlight, for ==yellow==
   remarkTableCellBreaks, // Convert <br> HTML tags inside tables to break nodes (for line breaks in table cells)
@@ -56,9 +59,7 @@ const remarkPluginsStable: UnifiedPluggable[] = [
   // it (https://docs.mathjax.org/en/latest/input/tex/delimiters.html), as it clashes with currency ($10) and tickers.
 ];
 
-const rehypePluginsStable: UnifiedPluggable[] = [
-  rehypeKatex, // KaTeX
-];
+// NOTE: rehypePluginsStable: UnifiedPluggable[] is generated dynamically
 
 
 let warnedAboutLength = false;
@@ -109,26 +110,41 @@ function preprocessMarkdown(markdownText: string) {
   }
 }
 
-export default function CustomMarkdownRenderer(props: { content: string, disablePreprocessor?: boolean }) {
+
+export default function CustomMarkdownRenderer(props: RenderMarkdownRendererProps) {
+
+  const enableCustomTaskList = props.replaceContent !== undefined;
 
   // external state
   const singleDollarLatex = useUXLabsStore((s) => s.labsSingleDollarLatex);
+  const taskListContainerRef = useMarkdownTaskListToggler(props.content, props.replaceContent);
+
 
   // memo plugins
-  const remarkPlugins = React.useMemo<UnifiedPluggable[]>(() => [
-    ...remarkPluginsStable,
+
+  const remarkPluginsStable = React.useMemo<UnifiedPluggable[]>(() => [
+    ...remarkPlugins,
     [remarkMath, { singleDollarTextMath: singleDollarLatex }],
   ], [singleDollarLatex]);
+  const rehypePluginsStable: UnifiedPluggable[] = React.useMemo(() => [
+    rehypeKatex, // KaTeX
+    ...(enableCustomTaskList ? [rehypeTaskListRenumber] : []), // supports numbering of checkboxes
+  ], [enableCustomTaskList]);
 
 
   return (
-    <ReactMarkdown
-      components={reactMarkdownComponents}
-      remarkPlugins={remarkPlugins}
-      rehypePlugins={rehypePluginsStable}
-      urlTransform={urlTransformKeepSandbox}
+    <div
+      ref={taskListContainerRef}
+      className='markdown-body' // moved this here (formerly in RenderMarkdown.tsx) to avoid changing CSS rules for depth of matching
     >
-      {props.disablePreprocessor ? props.content : preprocessMarkdown(props.content)}
-    </ReactMarkdown>
+      <ReactMarkdown
+        components={reactMarkdownComponents}
+        remarkPlugins={remarkPluginsStable}
+        rehypePlugins={rehypePluginsStable}
+        urlTransform={urlTransformKeepSandbox}
+      >
+        {props.disablePreprocessor ? props.content : preprocessMarkdown(props.content)}
+      </ReactMarkdown>
+    </div>
   );
 }

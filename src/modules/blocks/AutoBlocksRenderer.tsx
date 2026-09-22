@@ -70,8 +70,7 @@ export function AutoBlocksRenderer(props: {
   onDoubleClick?: (event: React.MouseEvent) => void;
 
   /**
-   * If defined, this is a function that will replace the first occurrence of
-   * the search string with the replace string.
+   * If defined, this will replace the Fragment text with the new one.
    */
   setText?: (newText: string) => void;
 
@@ -163,6 +162,7 @@ export function AutoBlocksRenderer(props: {
                 key={'md-bk-' + index}
                 content={mdContent}
                 disablePreprocessor={optimizeDisableProcessorsOnLast}
+                replaceContent={(!setText || isTextCollapsed /* IMPORTANT: do not allow replacing text if collapsed - will chop! */) ? undefined : handleReplaceCode}
                 sx={scaledTypographySx}
               />
             );

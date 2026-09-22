@@ -6,6 +6,28 @@ import { Box, styled } from '@mui/joy';
 import { lineHeightChatTextMd } from '~/common/app.theme';
 
 
+export interface RenderMarkdownRendererProps {
+  content: string;
+
+  /**
+   * Optional flag to disable the markdown preprocessor. Useful for progressive
+   * messages that are being rendered.
+   *
+   * OK: Very safe for Highlight/Strikeout.
+   * MEH: A little loss for progressive rendering of inline formulas, but those regex are
+   * extremely expensive and it's not worth to keep re-running them at every new input token.
+   */
+  disablePreprocessor?: boolean;
+
+  /**
+   * Optionals function to enable interactive rendering of the markdown.
+   * @param currentContent shall be equal to content
+   * @param newContent the new markdown to put in place of the current content
+   */
+  replaceContent?: (currentContent: string, newContent: string) => void;
+}
+
+
 /*
  * For performance reasons, we style this component here and copy the equivalent of 'props.sx' (the lineHeight) locally.
  */
@@ -21,16 +43,20 @@ const RenderMarkdownBox = styled(Box)({
   '& table': { width: 'inherit !important' },           // un-break auto-width (tables have 'max-content', which overflows)
 });
 
+
 const DynamicMarkdownRenderer = React.lazy(() => import('./CustomMarkdownRenderer'));
 
-export function RenderMarkdown(props: { content: string; disablePreprocessor?: boolean, sx?: SxProps; }) {
+export function RenderMarkdown(props: RenderMarkdownRendererProps & { sx?: SxProps }) {
+  const { sx, ...rendererProps } = props;
   return (
     <RenderMarkdownBox
-      className='markdown-body' /* NOTE: see GithubMarkdown.css for the dark/light switch, synced with Joy's */
+      // NOTE: we moved the `className='markdown-body'` to the CustomMarkdownRenderer, as we have an extra div,
+      // which would require to change CSS rules
+      // className='markdown-body' /* NOTE: see GithubMarkdown.css for the dark/light switch, synced with Joy's */
       sx={props.sx}
     >
       <React.Suspense fallback={<div>Loading...</div>}>
-        <DynamicMarkdownRenderer content={props.content} disablePreprocessor={props.disablePreprocessor} />
+        <DynamicMarkdownRenderer {...rendererProps} />
       </React.Suspense>
     </RenderMarkdownBox>
   );
