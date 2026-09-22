@@ -419,7 +419,7 @@ export function prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason
 }
 
 
-const oaiORegex = /gpt-[345](?:o|\.\d+)?-|o[1345]-|osb-|chatgpt-[45]o?|gpt-5-chat|computer-use-/;
+const oaiORegex = /gpt-[3-6](?:o|\.\d+)?-|o[1345]-|osb-|chatgpt-[45]o?|gpt-5-chat|computer-use-/;
 const geminiRegex = /gemini-|gemma-|learnlm-|deep-research-|antigravity-|nano-banana-/;
 
 
@@ -467,6 +467,7 @@ export function prettyShortChatModelName(model: string | undefined): string {
       .replace('-pro', ' Pro')
       .replace('-preview', ' (preview)')
       // GPT-5.6+ capability tiers
+      .replace('-astra', ' Astra')
       .replace('-sol', ' Sol')
       .replace('-terra', ' Terra')
       .replace('-luna', ' Luna')
@@ -539,7 +540,7 @@ export function prettyShortChatModelName(model: string | undefined): string {
     if (model.includes('grok-beta')) return 'Grok Beta';
     if (model.includes('grok-vision-beta')) return 'Grok Vision Beta';
   }
-  // [OpenAI OSS] gpt-oss family (shared across Cerebras/Groq/etc.) - the OpenAI regex above only matches gpt-[345]
+  // [OpenAI OSS] gpt-oss family (shared across Cerebras/Groq/etc.) - the OpenAI regex above only matches gpt-[3-6]
   if (model.includes('gpt-oss')) {
     return model.slice(model.indexOf('gpt-oss'))
       .replace('gpt-oss', 'GPT OSS')

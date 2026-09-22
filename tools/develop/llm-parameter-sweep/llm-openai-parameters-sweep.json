@@ -2,6 +2,26 @@
   "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
   "_evaluated": "Evaluated: fn, oai-image-generation, oai-reasoning-effort, oai-reasoning-mode, oai-temperature-think-high, oai-temperature-think-none, oai-verbosity, oai-web-search, temperature. If missing, the parameter is not supported by that model.",
   "_modelFilter": "gpt-5, gpt-6, o",
+  "gpt-6-sol": {
+    "fn": ["auto","required","roundtrip"],
+    "oai-reasoning-effort": ["none","low","medium","high","xhigh","max"],
+    "oai-reasoning-mode": ["standard","pro"],
+    "oai-temperature-think-high": [1],
+    "oai-temperature-think-none-range": [0,2],
+    "oai-verbosity": ["low","medium","high"],
+    "temperature": [1],
+    "tools": ["oai-image-generation","oai-web-search"]
+  },
+  "gpt-6-luna": {
+    "fn": ["auto","required","roundtrip"],
+    "oai-reasoning-effort": ["none","low","medium","high","xhigh","max"],
+    "oai-reasoning-mode": ["standard","pro"],
+    "oai-temperature-think-high": [1],
+    "oai-temperature-think-none-range": [0,2],
+    "oai-verbosity": ["low","medium","high"],
+    "temperature": [1],
+    "tools": ["oai-image-generation","oai-web-search"]
+  },
   "gpt-6-astra": {
     "fn": ["auto","required","roundtrip"],
     "oai-reasoning-effort": ["low","medium","high","xhigh","max"],

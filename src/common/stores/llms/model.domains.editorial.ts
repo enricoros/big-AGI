@@ -86,6 +86,8 @@ export const EditorialDefaults = {
     { vendor: 'openrouter', modelId: 'anthropic/claude-opus-4-7' },
     { vendor: 'openai',     modelId: 'gpt-6-astra' }, // 2026-09-03 - new flagship; $10/$50 (2.5x Sol per token, OpenAI claims lower cost per task)
     { vendor: 'openrouter', modelId: 'openai/gpt-6-astra' },
+    { vendor: 'openai',     modelId: 'gpt-6-sol' }, // 2026-09-22 - succeeds 5.6 Sol at half the price ($2/$10), ~1.5x its streaming speed
+    { vendor: 'openrouter', modelId: 'openai/gpt-6-sol' },
     { vendor: 'openai',     modelId: 'gpt-5.6-sol' }, // 2026-07-09 GA - flagship tier, same price as 5.5
     { vendor: 'openrouter', modelId: 'openai/gpt-5.6-sol' },
     { vendor: 'openai',     modelId: 'gpt-5.5' },
@@ -119,6 +121,7 @@ export const EditorialDefaults = {
     { vendor: 'openrouter', modelId: 'google/gemini-3.5-flash' },
     { vendor: 'openai',     modelId: 'gpt-5.3-codex' },
     { vendor: 'openrouter', modelId: 'openai/gpt-5.3-codex' },
+    { vendor: 'openai',     modelId: 'gpt-6-sol' }, // 2026-09-22 - "built for complex coding and agentic workflows"
     { vendor: 'openai',     modelId: 'gpt-5.6-sol' }, // 2026-07-09 GA - "strongest yet for agentic coding"; codex still preferred for apply
     { vendor: 'openai',     modelId: 'gpt-5.5' },
     { vendor: 'anthropic',  modelId: 'claude-sonnet-4-6' },
@@ -144,6 +147,8 @@ export const EditorialDefaults = {
   ],
 
   fastUtil: [
+    { vendor: 'openai',     modelId: 'gpt-6-luna' }, // 2026-09-22 - half 5.6 Luna's price ($0.10/$0.50), streamed faster side by side (~117 vs ~92 tok/s)
+    { vendor: 'openrouter', modelId: 'openai/gpt-6-luna' },
     { vendor: 'openai',     modelId: 'gpt-5.6-luna' }, // 2026-07-09 GA - measured ~160 tok/s (faster than 5.4-mini), 1M ctx, $0.20/$1.20
     { vendor: 'openrouter', modelId: 'openai/gpt-5.6-luna' },
     { vendor: 'openai',     modelId: 'gpt-5.4-mini' },
@@ -182,6 +187,8 @@ export const EditorialDefaults = {
     { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-7' },
     { vendor: 'openrouter', modelId: 'anthropic/claude-sonnet-4-6' },
+    { vendor: 'openai',     modelId: 'gpt-6-luna' }, // 2026-09-22 - vision
+    { vendor: 'openrouter', modelId: 'openai/gpt-6-luna' },
     { vendor: 'openai',     modelId: 'gpt-5.6-luna' }, // 2026-07-09 GA - vision, faster and a generation newer than 5.4-mini
     { vendor: 'openrouter', modelId: 'openai/gpt-5.6-luna' },
     { vendor: 'openai',     modelId: 'gpt-5.4-mini' },
@@ -213,7 +220,9 @@ export function llmsEditorialPickForDomain(
       : undefined;
   if (!entries) return undefined;
   for (const { vendor, modelId } of entries) {
-    const hit = filteredLlms.find(llm => llm.vId === vendor && _editorialMatch(llm, modelId));
+    // exact first: the prefix rule would otherwise take OpenRouter's 'openai/gpt-6-luna-pro' (listed first) for 'openai/gpt-6-luna'
+    const hit = filteredLlms.find(llm => llm.vId === vendor && llm.initialParameters?.llmRef === modelId)
+      ?? filteredLlms.find(llm => llm.vId === vendor && _editorialMatch(llm, modelId));
     if (hit) return hit.id;
   }
   return undefined;
