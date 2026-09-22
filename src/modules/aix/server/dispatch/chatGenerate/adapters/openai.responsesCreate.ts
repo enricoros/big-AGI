@@ -198,8 +198,10 @@ export function aixToOpenAIResponses(
       payload.reasoning.summary = 'detailed';
 
     // [2026-02-24, OpenAI] Retained reasoning: 'all_turns' makes gpt-5.4+ consume the reasoning items we
-    // replay ('auto' is provider discretion). The user lever is what we send (chat 'Reasoning traces'
-    // policy); the API only bills consumed items, so this is free when little/nothing is sent.
+    // replay ('auto' is the model default: current_turn up to 5.5, all_turns on 5.6+ and 6). The user lever is
+    // what we send (chat 'Reasoning traces' policy); the API only bills consumed items, so this is free when
+    // little/nothing is sent. Only same-family items are consumed (GPT-6 tiers share, 5.6 tiers share): another
+    // family's items are omitted silently - no error, the echo still says 'all_turns', only input_tokens shows it.
     // Gate: gpt-5.4+ (older models 400 on 'all_turns'), not Azure (may lag), not effort 'none'.
     const gptGen = /^gpt-(\d+)(?:\.(\d+))?/.exec(model.id);
     const supportsAllTurns = !!gptGen && (+gptGen[1] > 5 || (+gptGen[1] === 5 && +(gptGen[2] || 0) >= 4));

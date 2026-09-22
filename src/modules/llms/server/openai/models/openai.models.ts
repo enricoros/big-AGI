@@ -71,9 +71,8 @@ export const hardcodedOpenAIVariants: ModelVariantMap = {
     },
   ],
 
-  // NOTE: variants go to each generation's flagship only (5.2/5.4/5.5 minis never got one). Lower tiers take Pro mode from
-  // their llmVndOaiReasoningMode parameter, and go without temperature: the API takes it at effort 'none', but only a
-  // No-thinking variant lifts LLM_IF_HOTFIX_NoTemperature.
+  // NOTE: variants go to each generation's flagship only (5.2/5.4/5.5 minis never got one). Lower tiers reach Pro mode
+  // through llmVndOaiReasoningMode, and temperature through effort 'none' (the client lifts the NoTemperature hotfix there).
 
   // GPT-5.5 with reasoning disabled (non-thinking) - supports temperature control
   'gpt-5.5-2026-04-23': {
@@ -298,7 +297,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   // ADOPTED 2026-07-30: retained reasoning - the adapter hardwires reasoning.context 'all_turns' on gpt-5.4+
   // (no user parameter; the lever is the chat 'Reasoning traces' policy). API-verified: 5.4+ incl. mini/nano/pro
   // accept it, 5.3-codex and older 400 on it; only consumed reasoning items are billed, and old items or another
-  // family's (5.6 vs 6) are omitted for free, so replaying full reasoning history is always safe. Also adopted: assistant message
+  // family's (5.6 vs 6) are omitted for free, so replaying full reasoning history never errors. Also adopted: assistant message
   // 'phase' (commentary|final_answer), captured/replayed via _vnd.openai.phase on text fragments.
   // NOT yet adopted (shipped Jul 9 alongside 5.6, per API changelog): programmatic tool calling, explicit
   // prompt-cache controls, image detail 'original'.

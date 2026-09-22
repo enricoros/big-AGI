@@ -13,7 +13,7 @@ import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser,
 //
 // - only supports N=1, mainly because the whole ecosystem downstream only supports N=1
 // - not implemented: top_p, parallel_tool_calls, seed (deprecated), stop, user (deprecated -> safety_identifier, prompt_cache_key)
-// - fully ignored at the moment: frequency_penalty, presence_penalty, logit_bias, logprobs, top_logprobs, service_tier
+// - fully ignored at the moment: frequency_penalty, presence_penalty, logit_bias, logprobs, top_logprobs
 // - impedence mismatch: see the notes in the message conversion function for additional decisions, including:
 //   - doc parts embedded as markdown text
 //   - image parts embedded as base64 data URLs
@@ -52,7 +52,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   // [OpenAI] max_tokens is now fully deprecated in favor of max_completion_tokens for all OpenAI models
   const hotFixUseMaxCompletionTokens = openAIDialect === 'openai' || openAIDialect === 'azure';
 
-  // [OpenAI] - o-family and reasoning models: don't support temperature/top_p, use developer role instead of system
+  // [OpenAI] - o-family and reasoning models: strip temperature/top_p (5.2+ take them only at effort 'none'), use developer role instead of system
   const hotFixOpenAIOFamily = (openAIDialect === 'openai' || openAIDialect === 'azure')
     && ['gpt-6', 'gpt-5', 'o4', 'o3', 'o1'].some(_id => model.id === _id || model.id.startsWith(_id + '-') || model.id.startsWith(_id + '.'));
 
@@ -187,6 +187,8 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     && openAIDialect !== 'perplexity' // Perplexity has its own block below with stricter validation
   ) {
     // for: 'azure' | 'cerebras' | 'cohere' | 'groq' | 'lmstudio' | 'localai' | 'metaai' | 'mistral' | 'modular' | 'openai' | 'sakanaai' | 'togetherai' | 'xai'
+    // [2026-09-22, OpenAI] GPT-6 here: 'max' 400s, and function tools 400 unless effort is 'none' (Sol, Luna) or always (Astra);
+    // the native defs route GPT-6 over Responses, so only compatible hosts land on this path
     payload.reasoning_effort = reasoningEffort;
   }
 
