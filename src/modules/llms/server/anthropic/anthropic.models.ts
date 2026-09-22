@@ -56,6 +56,7 @@ const IF_47_R = [...IF_4_R, LLM_IF_HOTFIX_NoTemperature];
 //                              effort 'high' or below (xhigh/max + disabled -> 400); budget_tokens -> 400. Shipped as a
 //                              SINGLE always-thinking entry (like Fable 5) - see the model entry for the probe rationale.
 //                              Fable/Mythos 5.1 (2026-09-01): as Fable 5; preserved thinking is handled in the AIX adapter.
+//                              Opus 5.5 (2026-09-22): as Fable 5.1 ('disabled' and budget_tokens 400 at every effort); default effort 'medium'.
 // - llmVndAntWebFetch/Search   seem an API feature available on all models
 
 const ANT_TOOLS: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = [
@@ -279,6 +280,29 @@ type _AnthropicModelDef = ModelDescriptionSchema & {
 
 export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
 
+  // Claude Opus 5.5 - SINGLE always-thinking entry: unlike Opus 5, thinking cannot be disabled at all
+  {
+    id: 'claude-opus-5-5', // Active - 2026-09-22
+    label: 'Claude Opus 5.5',
+    pubDate: '20260922',
+    description: 'For long-running agentic coding and knowledge work',
+    contextWindow: 1_000_000, // 1M default and max, flat pricing
+    maxCompletionTokens: 128000,
+    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch], // reasoning on the base model: thinking is always on
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - the only mode; 'disabled' and budget_tokens return 400 */ },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }, // default 'medium' (Opus 5: 'high'), probe-verified
+      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // fast mode: research preview, API only, waitlist-gated; $8/$40 2x tier
+      ...ANT_TOOLS_DYNAMIC,
+    ],
+    // Opus 5.5 (launch-verified 2026-09-22, probed live): Fable 5.1's API surface at Opus pricing - adaptive-only, forced
+    // tool_choice 'any'/'tool' 400 (AIX downgrades to 'auto' + system hint), temperature only at 1 / top_p / top_k / prefill 400,
+    // computer_20251124 400 (toolset only). Preserved thinking: blocks replay onto Opus 5.5 and Fable/Mythos 5.1 only.
+    // Same tokenizer as Opus 4.8/5, 512-token min cacheable prompt, cache reads 0.05x, knowledge cutoff Jun 2026.
+    chatPrice: { input: 4, output: 20, cache: { read: 0.20, write: 5, duration: 300 }, tools: ANT_PRICE_TOOLS },
+    benchmark: { cbaElo: 1493 + 4 }, // (no arena data yet - launched 2026-09-22) assuming: claude-opus-5-high + 4
+  },
+
   // Claude 5.1 models (Fable/Mythos) - NOTE: no thinking variants, adaptive thinking is always on (as Fable 5)
   {
     id: 'claude-fable-5-1', // Active - 2026-09-01
@@ -368,7 +392,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     id: 'claude-opus-5', // Active - 2026-07-24
     label: 'Claude Opus 5',
     pubDate: '20260724',
-    description: 'Step-change improvement over Opus 4.8 for complex agentic coding and enterprise work',
+    description: 'Previous Opus model, a step-change improvement over Opus 4.8 for complex agentic coding and enterprise work',
     contextWindow: 1_000_000, // 1M is both default and max, no smaller variant (API-confirmed max_input_tokens)
     maxCompletionTokens: 128000,
     interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch], // reasoning on the base model: thinking on by default
@@ -997,14 +1021,15 @@ const _ORT_ANT_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
  */
 export function llmOrtAntLookup_ThinkingVariants(orModelName: string): OrtVendorLookupResult | undefined {
 
-  // tokenize the OR name into a set of tokens ['claude', '3', '7', 'sonnet'], ignoring order, dots vs dashes, date suffixes, and OR-specific tags (e.g. ':beta')
-  const orTokens = new Set(orModelName.replace(/:.*$/, '').replace(/\./g, '-').replace(/-\d{8}$/, '').split('-'));
+  // tokenize the OR name into sorted tokens ['3', '7', 'claude', 'sonnet'], ignoring order, dots vs dashes, date suffixes, and OR-specific tags (e.g. ':beta')
+  // sorted lists, not sets: repeated tokens must count, or 'claude-opus-5.5' would collapse onto 'claude-opus-5'
+  const orTokens = orModelName.replace(/:.*$/, '').replace(/\./g, '-').replace(/-\d{8}$/, '').split('-').sort().join(' ');
 
   // find a known model by matching all tokens
   const _knownModel = hardcodedAnthropicModels.find((m) => {
     // tokenize known model name, removing the '...-date' suffix
-    const antTokens = new Set(m.id.replace(/-\d{8}$/, '').split('-'));
-    return antTokens.size === orTokens.size && [...antTokens].every((t) => orTokens.has(t));
+    const antTokens = m.id.replace(/-\d{8}$/, '').split('-').sort().join(' ');
+    return antTokens === orTokens;
   });
   if (!_knownModel) return undefined;
 

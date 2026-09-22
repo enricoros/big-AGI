@@ -13,6 +13,13 @@ const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a
  *
  * ## Updates
  *
+ * ### 2026-09-22 - API Sync: Claude Opus 5.5 (launch-verified live)
+ * - Models: claude-opus-5-5 - Fable 5.1's surface at $4/$20: thinking.disabled/enabled 400 (at every effort, unlike Opus 5), forced
+ *   tool_choice 400 (same wording as Fable 5.1; both adapters' downgrades now cover it), computer_20251124 400 (toolset only).
+ *   No wire changes: usage.output_tokens_details, input_transformations (incl. 'thinking_mismatch_allowed', same fields) already parsed.
+ * - Preserved thinking (probed): Opus 5.5 blocks replay on Opus 5.5 and Fable 5.1, dropped with 'model_binding_mismatch' elsewhere.
+ * - NOT adopted (beta): tools defined inside mid-conversation system messages (inline-tools-2026-09-15, mcp-client-2026-09-15).
+ *
  * ### 2026-09-21 - Doc sync: refusal category rename, prefix-mismatch attribution fix
  * - StopDetails.category: 'military_weapons' (2026-06-30 sync) replaced by 'general_harms' in current docs - comment-only,
  *   the `.or(z.string())` fallback already accepted any value.

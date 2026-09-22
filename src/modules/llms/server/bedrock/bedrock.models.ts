@@ -475,6 +475,7 @@ function _bedrockModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema)
 
   // --- Anthropic: family > class > variant > region ---
   const familyPrecedence: string[][] = [
+    ['-fable-5-5', '-mythos-5-5', '-opus-5-5', '-sonnet-5-5', '-haiku-5-5'], // Claude 5.5 gen
     ['-fable-5-1', '-mythos-5-1', '-opus-5-1', '-sonnet-5-1', '-haiku-5-1'], // Claude 5.1 gen
     ['-fable-5', '-mythos-5', '-opus-5', '-sonnet-5', '-haiku-5'], // Claude 5 gen
     ['-4-8'], ['-4-7'], ['-4-6'], ['-4-5-'], ['-4-1-'], ['-4-'], ['-3-7-'], ['-3-5-'], ['-3-'],

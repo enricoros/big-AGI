@@ -1001,9 +1001,13 @@ function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsP
 }
 
 
-/** OpenRouter ids of Anthropic models that reject forced tool_choice upstream: Fable/Mythos 5 and 5.x, and the '~' router alias that resolves to the latest Fable. */
+/**
+ * OpenRouter ids of Anthropic models that reject forced tool_choice upstream: Fable/Mythos 5 and 5.x, Opus 5.5, and the '~' router
+ * aliases resolving to them. '~anthropic/claude-opus-latest' (-> Opus 5.5 since 2026-09-22) silently falls back to Opus 5 on a forced
+ * call (probed), so it's degraded too, to stay on the aliased model.
+ */
 function _isOrtForcedToolRejectingAnt(modelId: string): boolean {
-  return /^~?anthropic\/claude-(fable|mythos)-(5|latest)/.test(modelId);
+  return /^~?anthropic\/claude-((fable|mythos)-(5|latest)|opus-(5\.5|latest))/.test(modelId);
 }
 
 

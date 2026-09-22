@@ -220,6 +220,7 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
   // [2026-07-24] Opus 5 launch-verified: adaptive-only too ('enabled'/budget_tokens return 400), so 'opus' stays in this regex.
   // (Opus 5 nuance: 'disabled' is legal at effort <= high, but we coerce to adaptive anyway - single always-thinking entry.)
   // [2026-09-01] Fable/Mythos 5.1: unchanged (launch-verified) - the regex covers '-5-1'.
+  // [2026-09-22] Opus 5.5: 'disabled' 400s at every effort (stricter than Opus 5) - covered by 'opus-5'.
   const hotFixAdaptiveThinkingOnlyModel = /claude-(fable|mythos|opus)-5/.test(model.id);
 
   // HOTFIX: Fable/Mythos 5 ONLY reject forced tool use: 400 'tool_choice forces tool use is not compatible with this model.'
@@ -228,7 +229,8 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
   // [2026-07-24] Opus 5 EXCLUDED (launch probes): tool_choice 'any'/'tool' return 200 with thinking left to its
   // adaptive-on default, so requests pass through unchanged (thinking is skipped below when tools are forced).
   // [2026-09-01] Fable/Mythos 5.1: same 400, reworded 'tool_choice: type "tool" and "any" are not supported for this model.'
-  const hotFixNoForcedToolUse = /claude-(fable|mythos)-5/.test(model.id);
+  // [2026-09-22] Opus 5.5: same 400 as Fable 5.1 (launch probes), unlike Opus 5.
+  const hotFixNoForcedToolUse = /claude-(fable|mythos)-5|claude-opus-5-5/.test(model.id);
   if (hotFixNoForcedToolUse && payload.tool_choice && (payload.tool_choice.type === 'any' || payload.tool_choice.type === 'tool')) {
     const mustUseHint = payload.tool_choice.type === 'tool'
       ? `IMPORTANT: You MUST respond by calling the \`${payload.tool_choice.name}\` tool. Do not respond with text.`

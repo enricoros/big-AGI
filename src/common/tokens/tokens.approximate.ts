@@ -21,7 +21,7 @@ const TOKEN_RATIOS = {
   'gpt': 3.85,     // GPT-3.5/4 refined ratio
   'o1': 3.9,       // O1 models slightly different
   'claude': 3.7,   // Claude models more efficient
-  'claude-47': 2.85, // Opus 4.7+ tokenizer (4.7/4.8, Fable/Mythos 5): ~30-35% more tokens for the same text
+  'claude-47': 2.85, // Opus 4.7+ tokenizer (4.7/4.8, Opus/Sonnet 5, Opus 5.5, Fable/Mythos 5): ~30-35% more tokens for the same text
   'gemini': 4.1,   // Google models
   'llama': 4.0,    // Meta models
   'mistral': 3.95, // Mistral models
@@ -117,8 +117,9 @@ function detectContentType(text: string): keyof typeof LANGUAGE_MULTIPLIERS {
   return 'default';
 }
 
-// Models on the Opus 4.7+ tokenizer: opus-4-7/8/9, Fable 5/5.1, Mythos 5/5.1/Preview - in both Anthropic ('claude-opus-4-7') and OpenRouter ('claude-4.7-opus') id shapes
-const _CLAUDE_NEW_TOKENIZER_RE = /(opus[-.]4[-.][789]|4[-.][789][-.]opus|fable|mythos)/;
+// Models on the Opus 4.7+ tokenizer: opus-4-7/8/9, Opus 5/5.5, Sonnet 5, Fable 5/5.1, Mythos 5/5.1/Preview - in both Anthropic ('claude-opus-4-7') and OpenRouter ('claude-4.7-opus') id shapes
+// (count_tokens 2026-09-22: opus-4-8, opus-5, opus-5-5, sonnet-5, fable-5-1 within 0.1% of each other, 1.37-1.51x opus-4-6)
+const _CLAUDE_NEW_TOKENIZER_RE = /(opus[-.]4[-.][789]|4[-.][789][-.]opus|(opus|sonnet)[-.]5|fable|mythos)/;
 
 /**
  * Optimized model family detection with early exits

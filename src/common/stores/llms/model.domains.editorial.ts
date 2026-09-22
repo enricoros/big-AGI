@@ -58,6 +58,11 @@ type _EditorialDefaultsTable = {
 export const EditorialDefaults = {
 
   primaryChat: [
+    // LAUNCHED 2026-09-22: claude-opus-5-5 is the top pick, ahead of Fable 5.1 ($4/$20 vs $10/$50, 1M ctx, always-on thinking, default effort medium)
+    { vendor: 'anthropic',  modelId: 'claude-opus-5-5' },
+    { vendor: 'bedrock',    modelId: 'us.anthropic.claude-opus-5-5' },
+    { vendor: 'bedrock',    modelId: 'global.anthropic.claude-opus-5-5' },
+    { vendor: 'openrouter', modelId: 'anthropic/claude-opus-5-5' },
     // Fable tier (hold lifted 2026-09-01; the 06-16 hold was the export-control suspension): 5.1 on the API, Bedrock stays
     // on 5 (5.1 account-gated there), OpenRouter both. Single always-adaptive entries, so no '-thinking' suffix.
     { vendor: 'anthropic',  modelId: 'claude-fable-5-1' },
@@ -120,6 +125,7 @@ export const EditorialDefaults = {
     { vendor: 'bedrock',    modelId: 'us.anthropic.claude-sonnet-4-6' },
     { vendor: 'bedrock',    modelId: 'global.anthropic.claude-sonnet-4-6' },
     { vendor: 'openrouter', modelId: 'anthropic/claude-sonnet-4-6' },
+    { vendor: 'anthropic',  modelId: 'claude-opus-5-5' }, // launched 2026-09-22
     { vendor: 'anthropic',  modelId: 'claude-opus-5' }, // launched 2026-07-24
     { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-7' },
@@ -171,6 +177,7 @@ export const EditorialDefaults = {
     { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash' },
     { vendor: 'openrouter', modelId: 'google/gemini-3.5-flash' },
     { vendor: 'anthropic',  modelId: 'claude-sonnet-4-6' },
+    { vendor: 'anthropic',  modelId: 'claude-opus-5-5' }, // launched 2026-09-22
     { vendor: 'anthropic',  modelId: 'claude-opus-5' }, // launched 2026-07-24
     { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-7' },
