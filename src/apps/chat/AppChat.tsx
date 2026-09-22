@@ -20,6 +20,7 @@ import { getLLMContextTokens, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Vision } from
 import { OptimaDrawerIn, OptimaPanelIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { PanelResizeInset } from '~/common/components/PanelResizeInset';
 import { Release } from '~/common/app.release';
+import { RenderDecayZone } from '~/common/render-decay/RenderDecayZone';
 import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
 import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
@@ -710,7 +711,7 @@ export function AppChat() {
               sx={scrollToBottomSx}
             >
 
-              {!_paneBeamIsOpen && (
+              {!_paneBeamIsOpen && (<RenderDecayZone>
                 <ChatMessageList
                   conversationId={_paneConversationId}
                   conversationHandler={_paneChatHandler}
@@ -729,7 +730,7 @@ export function AppChat() {
                   onTextImagine={handleImagineFromText}
                   sx={chatMessageListSx}
                 />
-              )}
+              </RenderDecayZone>)}
 
               {_paneBeamIsOpen && (
                 <ChatBeamWrapper

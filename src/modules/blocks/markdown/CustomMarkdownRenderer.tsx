@@ -111,13 +111,13 @@ function preprocessMarkdown(markdownText: string) {
 }
 
 
-export default function CustomMarkdownRenderer(props: RenderMarkdownRendererProps) {
+export default function CustomMarkdownRenderer({ content, disablePreprocessor, onParseCost, replaceContent }: RenderMarkdownRendererProps) {
 
-  const enableCustomTaskList = props.replaceContent !== undefined;
+  const enableCustomTaskList = replaceContent !== undefined;
 
   // external state
   const singleDollarLatex = useUXLabsStore((s) => s.labsSingleDollarLatex);
-  const taskListContainerRef = useMarkdownTaskListToggler(props.content, props.replaceContent);
+  const taskListContainerRef = useMarkdownTaskListToggler(content, replaceContent);
 
 
   // memo plugins
@@ -132,19 +132,37 @@ export default function CustomMarkdownRenderer(props: RenderMarkdownRendererProp
   ], [enableCustomTaskList]);
 
 
+  // -- Measure Parse Time --
+
+  // parse here, called directly - `Markdown` is a plain function (the hooks live in `MarkdownHooks`) - so an in-flux block
+  // measured by a render decay zone can time it; reported after the commit, as the zone's update re-renders other components
+  const parseMsRef = React.useRef(0);
+  const tStart = onParseCost ? performance.now() : 0;
+  const markdown = ReactMarkdown({
+    components: reactMarkdownComponents,
+    remarkPlugins: remarkPluginsStable,
+    rehypePlugins: rehypePluginsStable,
+    urlTransform: urlTransformKeepSandbox,
+    children: disablePreprocessor ? content : preprocessMarkdown(content),
+  });
+  if (onParseCost) parseMsRef.current = performance.now() - tStart;
+
+  // -- Report Parse Time (outside the Render function) --
+
+  // report after commit, once per committed parse: streaming renders are SyncLane, so this runs in the same task
+  React.useEffect(() => {
+    if (!onParseCost || !parseMsRef.current) return;
+    onParseCost(parseMsRef.current);
+    parseMsRef.current = 0;
+  });
+
+
   return (
     <div
       ref={taskListContainerRef}
       className='markdown-body' // moved this here (formerly in RenderMarkdown.tsx) to avoid changing CSS rules for depth of matching
     >
-      <ReactMarkdown
-        components={reactMarkdownComponents}
-        remarkPlugins={remarkPluginsStable}
-        rehypePlugins={rehypePluginsStable}
-        urlTransform={urlTransformKeepSandbox}
-      >
-        {props.disablePreprocessor ? props.content : preprocessMarkdown(props.content)}
-      </ReactMarkdown>
+      {markdown}
     </div>
   );
 }

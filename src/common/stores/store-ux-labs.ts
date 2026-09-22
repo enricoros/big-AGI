@@ -10,6 +10,9 @@ import { persist } from 'zustand/middleware';
 //  - Chat Mode: Follow-Ups; moved to Chat Advanced UI
 interface UXLabsStore {
 
+  labsAdaptiveRendering: 'auto' | 'on' | 'off' | 'debug'; // lighter rendering of streaming blocks: when heavy, always, never, as auto + highlight + log
+  setLabsAdaptiveRendering: (labsAdaptiveRendering: 'auto' | 'on' | 'off' | 'debug') => void;
+
   labsUnlockRefresh: boolean; // ex 'labsHighPerformance' (Labs toggle, removed) - renamed to reset it; switch in the AI Inspector, commented out
   setLabsUnlockRefresh: (labsUnlockRefresh: boolean) => void;
 
@@ -36,6 +39,9 @@ interface UXLabsStore {
 export const useUXLabsStore = create<UXLabsStore>()(
   persist(
     (set) => ({
+
+      labsAdaptiveRendering: 'off', // opt-in while in Labs
+      setLabsAdaptiveRendering: (labsAdaptiveRendering: 'auto' | 'on' | 'off' | 'debug') => set({ labsAdaptiveRendering }),
 
       labsUnlockRefresh: false,
       setLabsUnlockRefresh: (labsUnlockRefresh: boolean) => set({ labsUnlockRefresh }),
@@ -81,4 +87,8 @@ export function getLabsLosslessImages() {
 
 export function getLabsScreenWakeLock() {
   return useUXLabsStore.getState().labsScreenWakeLock;
+}
+
+export function useLabsAdaptiveRendering() {
+  return useUXLabsStore((s) => s.labsAdaptiveRendering);
 }

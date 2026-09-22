@@ -6,15 +6,25 @@ import CodeIcon from '@mui/icons-material/Code';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
+import SpeedIcon from '@mui/icons-material/Speed';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { FormSelectControl, FormSelectOption } from '~/common/components/forms/FormSelectControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { Link } from '~/common/components/Link';
 import { PhImageSquare } from '~/common/components/icons/phosphor/PhImageSquare';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
+
+
+const _adaptiveRenderingOptions: FormSelectOption<'auto' | 'on' | 'off' | 'debug'>[] = [
+  { value: 'auto', label: 'Auto', description: 'When heavy' },
+  { value: 'on', label: 'On', description: 'Always' },
+  { value: 'off', label: 'Off', description: 'Never' },
+  { value: 'debug', label: 'Auto (Debug)', description: 'Highlight' },
+];
 
 
 export function UxLabsSettings() {
@@ -27,10 +37,19 @@ export function UxLabsSettings() {
     labsShowShortcutBar, setLabsShowShortcutBar,
     labsComposerAttachmentsInline, setLabsComposerAttachmentsInline,
     labsSingleDollarLatex, setLabsSingleDollarLatex,
+    labsAdaptiveRendering, setLabsAdaptiveRendering,
   } = useUXLabsStore();
   const [messageFullWidth, setMessageFullWidth] = useUIPreferencesStore(useShallow(state => [state.messageFullWidth, state.setMessageFullWidth]));
 
   return <>
+
+    <FormSelectControl
+      title={<><SpeedIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Adaptive Rendering</>}
+      tooltip='Keeps long replies smooth: the part still being written may show simpler formatting until the reply finishes.'
+      options={_adaptiveRenderingOptions}
+      value={labsAdaptiveRendering}
+      onChange={setLabsAdaptiveRendering}
+    />
 
     <FormSwitchControl
       title={<><PhImageSquare sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Lossless Images</>} description={labsLosslessImages ? 'Large storage use' : 'Compress'}

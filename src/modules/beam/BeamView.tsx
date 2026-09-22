@@ -16,6 +16,7 @@ import { BeamExplainer } from './BeamExplainer';
 import { BeamFusionGrid } from './gather/BeamFusionGrid';
 import { BeamGatherPane } from './gather/BeamGatherPane';
 import { BeamRayGrid } from './scatter/BeamRayGrid';
+import { RenderDecayZone } from '~/common/render-decay/RenderDecayZone';
 import { BeamScatterInput } from './scatter/BeamScatterInput';
 import { BeamScatterPane } from './scatter/BeamScatterPane';
 import { BeamStoreApi, useBeamStore } from './store-beam.hooks';
@@ -200,8 +201,8 @@ export function BeamView(props: {
       />
 
 
-      {/* Rays Grid - BeamRay[] > <ChatMessage /> */}
-      <BeamRayGrid
+      {/* Rays Grid - BeamRay[] > <ChatMessage /> - one render decay zone */}
+      <RenderDecayZone><BeamRayGrid
         beamStore={props.beamStore}
         isMobile={props.isMobile}
         rayIds={rayIds}
@@ -209,7 +210,7 @@ export function BeamView(props: {
         hadImportedRays={hadImportedRays}
         onIncreaseRayCount={handleRayIncreaseCount}
         // linkedLlmId={currentGatherLlmId}
-      />
+      /></RenderDecayZone>
 
       {/* Rays Action Bar (2+ ready beams) - sibling of the grid (NOT a grid child); an in-grid spanning element with gridColumn:'1/-1' pins all auto-fit tracks open and leaves dead whitespace when raysCount < tracksCount. Fixes #1073. */}
       {(!isScattering && raysReady >= 2) && (
@@ -244,15 +245,15 @@ export function BeamView(props: {
         raysReady={raysReady}
       />
 
-      {/* Fusion Grid - Fusion[] > <ChatMessage /> */}
-      <BeamFusionGrid
+      {/* Fusion Grid - Fusion[] > <ChatMessage /> - one render decay zone for the merges */}
+      <RenderDecayZone><BeamFusionGrid
         beamStore={props.beamStore}
         canGather={canGather}
         fusionIds={fusionIds}
         isMobile={props.isMobile}
         onAddFusion={handleCreateFusion}
         raysCount={raysCount}
-      />
+      /></RenderDecayZone>
 
     </Box>
 

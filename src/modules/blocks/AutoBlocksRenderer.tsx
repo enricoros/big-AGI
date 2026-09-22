@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
+import { useRenderDecay } from '~/common/render-decay/RenderDecayZone';
 
 import { BLOCK_CODE_MERMAID_TITLE, BLOCK_CODE_PLANTUML_TITLE, BLOCK_CODE_SVG_TITLE, renderCodeMemoOrNot } from './code/RenderCode';
 import { BlocksContainer } from './BlocksContainers';
@@ -100,6 +101,10 @@ export function AutoBlocksRenderer(props: {
     props.blocksProcessor === 'diagram',
   );
 
+  // render decay: while in flux this is a live stream of the enclosing zone; the in-flux block reports its parse cost,
+  // and renders lighter once the zone is over budget
+  const { active: decayActive, onParseCost: decayOnParseCost } = useRenderDecay(props.optiAllowSubBlocksMemo === true);
+
   // handlers
   const { setText } = props;
 
@@ -170,6 +175,8 @@ export function AutoBlocksRenderer(props: {
                 key={'md-bk-' + index}
                 content={mdContent}
                 disablePreprocessor={optimizeDisableProcessorsOnLast}
+                lite={optimizeLightweightLastBlock && decayActive}
+                onParseCost={optimizeLightweightLastBlock ? decayOnParseCost : undefined}
                 replaceContent={(!setText || isTextCollapsed /* IMPORTANT: do not allow replacing text if collapsed - will chop! */) ? undefined : handleReplaceCode}
                 sx={scaledTypographySx}
               />

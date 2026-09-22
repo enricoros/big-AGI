@@ -5,6 +5,11 @@ import { Box, styled } from '@mui/joy';
 
 import { lineHeightChatTextMd } from '~/common/app.theme';
 
+import { RenderMarkdownLite } from './RenderMarkdownLite';
+
+
+const _liteDebugStyle: React.CSSProperties = { backgroundColor: 'red' }; // lite 'debug', when labsAdaptiveRendering is 'debug'
+
 
 export interface RenderMarkdownRendererProps {
   content: string;
@@ -25,6 +30,11 @@ export interface RenderMarkdownRendererProps {
    * @param newContent the new markdown to put in place of the current content
    */
   replaceContent?: (currentContent: string, newContent: string) => void;
+
+  /**
+   * In-flux block measured by a render decay zone: receives the time spent parsing each render.
+   */
+  onParseCost?: (parseMs: number) => void;
 }
 
 
@@ -46,18 +56,24 @@ const RenderMarkdownBox = styled(Box)({
 
 const DynamicMarkdownRenderer = React.lazy(() => import('./CustomMarkdownRenderer'));
 
-export function RenderMarkdown(props: RenderMarkdownRendererProps & { sx?: SxProps }) {
-  const { sx, ...rendererProps } = props;
+export function RenderMarkdown(props: RenderMarkdownRendererProps & { lite?: boolean | 'debug', sx?: SxProps }) {
+  const { lite, sx, ...rendererProps } = props;
   return (
     <RenderMarkdownBox
       // NOTE: we moved the `className='markdown-body'` to the CustomMarkdownRenderer, as we have an extra div,
       // which would require to change CSS rules
       // className='markdown-body' /* NOTE: see GithubMarkdown.css for the dark/light switch, synced with Joy's */
       sx={props.sx}
+      style={lite === 'debug' ? _liteDebugStyle : undefined}
     >
-      <React.Suspense fallback={<div>Loading...</div>}>
-        <DynamicMarkdownRenderer {...rendererProps} />
-      </React.Suspense>
+      {lite ? (
+        // in flux in a decayed render zone: skip the markdown parse
+        <RenderMarkdownLite content={props.content} />
+      ) : (
+        <React.Suspense fallback={<div>Loading...</div>}>
+          <DynamicMarkdownRenderer {...rendererProps} />
+        </React.Suspense>
+      )}
     </RenderMarkdownBox>
   );
 }
