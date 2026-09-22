@@ -3,6 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button } from '@mui/joy';
 
+import type { AutoBlocksHtmlRenderVariant } from '~/modules/blocks/AutoBlocksRenderer';
 import { HostedLinksProvider } from '~/modules/blocks/markdown/HostedLinksContext';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
@@ -64,7 +65,7 @@ export function ContentFragments(props: {
   messageGeneratorLlmId?: string | null,
   optiAllowSubBlocksMemo?: boolean,
   disableMarkdownText: boolean,
-  showUnsafeHtmlCode?: boolean,
+  htmlRenderVariant?: AutoBlocksHtmlRenderVariant,
 
   textEditsState: ChatMessageTextPartEditState | null,
   setEditedText?: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
@@ -353,7 +354,7 @@ export function ContentFragments(props: {
               isMobile={props.isMobile}
               inputAsWordsDiff={undefined}
               disableMarkdownText={props.disableMarkdownText}
-              showUnsafeHtmlCode={props.showUnsafeHtmlCode}
+              htmlRenderVariant={props.htmlRenderVariant}
               optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
               optiStreamingLastFragment={!!props.optiAllowSubBlocksMemo && isLastFragment && props.uiComplexityMode === 'minimal'}
               onDoubleClick={props.onDoubleClick}

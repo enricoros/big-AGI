@@ -39,6 +39,9 @@ interface UIPreferencesStore {
   messageFullWidth: boolean; // stretch assistant messages to the full row
   setMessageFullWidth: (messageFullWidth: boolean) => void;
 
+  renderHTMLInitial: boolean;
+  setRenderHTMLInitial: (renderHTMLInitial: boolean) => void;
+
   renderCodeLineNumbers: boolean;
   setRenderCodeLineNumbers: (renderCodeLineNumbers: boolean) => void;
 
@@ -118,6 +121,9 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       messageFullWidth: false,
       setMessageFullWidth: (messageFullWidth: boolean) => set({ messageFullWidth }),
+
+      renderHTMLInitial: true,
+      setRenderHTMLInitial: (renderHTMLInitial: boolean) => set({ renderHTMLInitial }),
 
       renderCodeLineNumbers: false,
       setRenderCodeLineNumbers: (renderCodeLineNumbers: boolean) => set({ renderCodeLineNumbers }),
@@ -236,6 +242,11 @@ export function getUIEnterIsNewline(): boolean {
 
 export function getAixInspectorEnabled(): boolean {
   return useUIPreferencesStore.getState().aixInspector;
+}
+
+
+export function getRenderHTMLInitial(): boolean {
+  return useUIPreferencesStore.getState().renderHTMLInitial;
 }
 
 

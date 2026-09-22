@@ -17,28 +17,23 @@ import { useLiveFilePatch } from './livefile-patch/useLiveFilePatch';
 
 
 export function EnhancedRenderCode(props: {
+  // same as RenderCode
   semiStableId: string | undefined,
-
   title: string,
   code: string,
   isPartial: boolean,
-
   fitScreen: boolean,
-  isMobile: boolean,
-  noApplyButton?: boolean,
-  initialShowHTML?: boolean,
+  initialRenderHTML?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean,
-
+  onReplaceInCode?: (search: string, replace: string) => boolean;
   codeSx?: SxProps,
-
-  language?: string,
+  // enhanced props
   color?: ColorPaletteProp;
   contentScaling: ContentScaling;
   initialIsCollapsed: boolean;
-
-  // onLiveFileCreate?: () => void,
-  onReplaceInCode?: (search: string, replace: string) => boolean;
+  isMobile: boolean,
+  noApplyButton?: boolean,
 }) {
 
   // state
@@ -178,7 +173,7 @@ export function EnhancedRenderCode(props: {
 
   // styles
 
-  const patchCodeSx = React.useMemo(() => ({
+  const patchedCodeSx = React.useMemo(() => ({
     ...props.codeSx,
     my: 0,
     borderTop: '1px solid',
@@ -206,12 +201,12 @@ export function EnhancedRenderCode(props: {
           semiStableId={props.semiStableId}
           code={props.code} title={props.title} isPartial={props.isPartial}
           fitScreen={props.fitScreen}
-          initialShowHTML={props.initialShowHTML}
+          initialRenderHTML={props.initialRenderHTML}
           noCopyButton={props.noCopyButton}
           optimizeLightweight={props.optimizeLightweight}
           onReplaceInCode={props.onReplaceInCode}
           renderHideTitle={true /* because we show it already, outside */}
-          sx={patchCodeSx}
+          sx={patchedCodeSx}
         />
       </ExpanderControlledBox>
 

@@ -407,6 +407,7 @@ export const DocAttachmentFragmentPane = React.memo(function DocAttachmentFragme
             inputAsCodeWithTitle={viewAsCode ? (fragmentDocPart.data?.mimeType || fragmentDocPart.ref || fragmentTitle) : undefined}
             inputAsWordsDiff={undefined}
             codeRenderVariant='embedded-plain' // for embedding in this pane
+            htmlRenderVariant='show-code'
             textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
             setText={!props.onFragmentReplace ? undefined : handleSetTextFromBlocks}
           />

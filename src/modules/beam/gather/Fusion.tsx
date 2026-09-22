@@ -201,7 +201,7 @@ export function Fusion(props: {
               isMobile={props.isMobile}
               hideAvatar
               blocksStretch
-              showUnsafeHtmlCode={true}
+              htmlRenderVariant='render'
               adjustContentScaling={-1}
               onMessageFragmentDelete={handleFragmentDelete}
               onMessageFragmentReplace={handleFragmentReplace}

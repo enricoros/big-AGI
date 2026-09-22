@@ -28,6 +28,8 @@ const STREAMING_TAIL_MAX_HIDDEN_CHARS = 280; // safety: stop hiding the post-new
 
 export type AutoBlocksCodeRenderVariant = 'outlined' | 'embedded-plain' | 'enhanced';
 
+export type AutoBlocksHtmlRenderVariant = 'show-code' | 'render-at-end' | 'render';
+
 /**
  * Features: collapse/expand, auto-detects HTML, SVG, Code, etc..
  * Used by (and more):
@@ -46,13 +48,13 @@ export function AutoBlocksRenderer(props: {
 
   showAsDanger?: boolean;
   showAsItalic?: boolean;
-  showUnsafeHtmlCode?: boolean;
 
   blocksProcessor?: 'diagram',
   inputAsCodeWithTitle?: string;
   inputAsWordsDiff?: WordsDiff;
 
   codeRenderVariant?: AutoBlocksCodeRenderVariant /* default: outlined */,
+  htmlRenderVariant?: AutoBlocksHtmlRenderVariant /* default: show-code */,
   textRenderVariant: 'markdown' | 'text',
 
   /** disables the >8 lines user-text collapser - e.g. print/export trees must render in full */
@@ -221,7 +223,7 @@ export function AutoBlocksRenderer(props: {
                 semiStableId={bkInput.bkId}
                 code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial || isTextCollapsed}
                 fitScreen={props.fitScreen}
-                initialShowHTML={props.showUnsafeHtmlCode}
+                initialRenderHTML={props.htmlRenderVariant === 'render' || (props.htmlRenderVariant === 'render-at-end' && !bkInput.isPartial)}
                 noCopyButton={props.blocksProcessor === 'diagram' || isTextCollapsed}
                 optimizeLightweight={optimizeLightweightLastBlock}
                 onReplaceInCode={(!setText || isTextCollapsed) ? undefined : handleReplaceCode}
@@ -233,7 +235,7 @@ export function AutoBlocksRenderer(props: {
                 semiStableId={bkInput.bkId}
                 code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial || isTextCollapsed}
                 fitScreen={props.fitScreen}
-                initialShowHTML={props.showUnsafeHtmlCode /* && !bkInput.isPartial NOTE: with this, it would be only auto-rendered at the end, preventing broken renders */}
+                initialRenderHTML={props.htmlRenderVariant === 'render' || (props.htmlRenderVariant === 'render-at-end' && !bkInput.isPartial)}
                 noCopyButton={props.blocksProcessor === 'diagram' || isTextCollapsed}
                 optimizeLightweight={optimizeLightweightLastBlock}
                 onReplaceInCode={(!setText || isTextCollapsed) ? undefined : handleReplaceCode}

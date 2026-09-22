@@ -249,9 +249,6 @@ export const getChatAutoAI = (): {
   autoVndAntBreakpoints: boolean,
 } => useAppChatStore.getState();
 
-export const useChatAutoSuggestHTMLUI = (): boolean =>
-  useAppChatStore(state => state.autoSuggestHTMLUI);
-
 export const useChatAutoSuggestAttachmentPrompts = (): boolean =>
   useAppChatStore(state => state.autoSuggestAttachmentPrompts);
 

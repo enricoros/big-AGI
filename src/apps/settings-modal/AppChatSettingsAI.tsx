@@ -222,7 +222,7 @@ export function AppChatSettingsAI() {
         title='Generative UIs'
         description={autoSuggestHTMLUI ? 'Add HTML' : 'Off'}
         tooltipWarning={autoSuggestHTMLUI}
-        tooltip={<>
+        tooltip={!autoSuggestHTMLUI ? undefined : <>
           [Coding model] Creates interactive UI components within chat responses when appropriate.
           <hr />
           SECURITY WARNING: THIS TURNS ON JS/HTML CODE EXECUTION WITHIN CHAT MESSAGES

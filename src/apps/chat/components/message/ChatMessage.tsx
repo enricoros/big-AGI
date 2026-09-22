@@ -17,6 +17,7 @@ import ReplyRoundedIcon from '@mui/icons-material/ReplyRounded';
 import StrikethroughSIcon from '@mui/icons-material/StrikethroughS';
 
 import type { AixReattachMode } from '~/modules/aix/client/aix.client';
+import type { AutoBlocksHtmlRenderVariant } from '~/modules/blocks/AutoBlocksRenderer';
 import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic.vendor';
 import { vertexLinksCountInFragments, vertexLinksResolveFragments } from '~/modules/google/vertexai.client';
 
@@ -128,7 +129,7 @@ export function ChatMessage(props: {
   blocksStretch?: boolean, // overrides 'messageFullWidth'
   showAntPromptCaching?: boolean,
   showBlocksDate?: boolean,
-  showUnsafeHtmlCode?: boolean,
+  htmlRenderVariant?: AutoBlocksHtmlRenderVariant,
   adjustContentScaling?: number,
   topDecorator?: React.ReactNode,
   onAddInReferenceTo?: (item: DMetaReferenceItem) => void,
@@ -782,7 +783,7 @@ export function ChatMessage(props: {
             messagePendingIncomplete={messagePendingIncomplete}
             optiAllowSubBlocksMemo={!!messagePendingIncomplete}
             disableMarkdownText={disableMarkdown || fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
-            showUnsafeHtmlCode={props.showUnsafeHtmlCode}
+            htmlRenderVariant={props.htmlRenderVariant}
 
             textEditsState={textContentEditState}
             setEditedText={(!onMessageFragmentReplace || messagePendingIncomplete) ? undefined : handleEditSetText}

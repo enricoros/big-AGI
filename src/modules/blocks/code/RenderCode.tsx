@@ -56,7 +56,7 @@ interface RenderCodeBaseProps {
   code: string,
   isPartial: boolean,
   fitScreen?: boolean,
-  initialShowHTML?: boolean,
+  initialRenderHTML?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean, // set when non-memoed and partial
   onReplaceInCode?: (search: string, replace: string) => boolean;
@@ -156,7 +156,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   // const [isHovering, setIsHovering] = React.useState(false);
   const [fitScreen, setFitScreen] = React.useState(!!props.fitScreen);
   const [htmlReloadKey, setHtmlReloadKey] = React.useState(0);
-  const [showHTML, setShowHTML] = React.useState(props.initialShowHTML === true);
+  const [showHTML, setShowHTML] = React.useState(props.initialRenderHTML === true);
   const [showMarkdown, setShowMarkdown] = React.useState(true);
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
@@ -168,10 +168,11 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const { overlayRef, overlayBoundaryRef } = useStickyCodeOverlay({ disabled: props.optimizeLightweight || isFullscreen });
 
   // sticky overlay positioning
-  const { uiComplexityMode, showLineNumbers, showSoftWrap, setShowLineNumbers, setShowSoftWrap } = useUIPreferencesStore(useShallow(state => ({
+  const { uiComplexityMode, showLineNumbers, showSoftWrap, setRenderHTMLInitial, setShowLineNumbers, setShowSoftWrap } = useUIPreferencesStore(useShallow(state => ({
     uiComplexityMode: state.complexityMode,
     showLineNumbers: state.renderCodeLineNumbers,
     showSoftWrap: state.renderCodeSoftWrap,
+    setRenderHTMLInitial: state.setRenderHTMLInitial,
     setShowLineNumbers: state.setRenderCodeLineNumbers,
     setShowSoftWrap: state.setRenderCodeSoftWrap,
   })));
@@ -201,6 +202,13 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     e.stopPropagation();
     copyToClipboard(codeRef.current, 'Code');
   }, []);
+
+  const handleHtmlRenderToggle = React.useCallback(() => {
+    // persistently save this change, to be used as next initial values
+    const nextState = !showHTML;
+    setRenderHTMLInitial(nextState);
+    setShowHTML(nextState);
+  }, [setRenderHTMLInitial, showHTML]);
 
 
   // heuristics for specialized rendering
@@ -356,7 +364,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
             {/* Show HTML + Reload */}
             {isHTMLCode && (
               <ButtonGroup aria-label='HTML options' sx={overlayGroupWithShadowSx}>
-                <OverlayButton tooltip={noTooltips ? null : renderHTML ? 'Show Code' : 'Show Web Page'} variant={renderHTML ? 'solid' : 'outlined'} color='danger' onClick={() => setShowHTML(!showHTML)}>
+                <OverlayButton tooltip={noTooltips ? null : renderHTML ? 'Show Code' : 'Show Web Page'} variant={renderHTML ? 'solid' : 'outlined'} color='danger' onClick={handleHtmlRenderToggle}>
                   <HtmlIcon sx={{ fontSize: 'xl2' }} />
                 </OverlayButton>
                 {renderHTML && (

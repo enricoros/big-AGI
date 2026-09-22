@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { WordsDiff } from '~/modules/blocks/wordsdiff/RenderWordsDiff';
-import { AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
+import { AutoBlocksHtmlRenderVariant, AutoBlocksRenderer } from '~/modules/blocks/AutoBlocksRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
@@ -30,7 +30,7 @@ export function BlockPartText_AutoBlocks(props: {
   inputAsWordsDiff?: WordsDiff,
 
   disableMarkdownText: boolean,
-  showUnsafeHtmlCode?: boolean,
+  htmlRenderVariant?: AutoBlocksHtmlRenderVariant,
 
   optiAllowSubBlocksMemo: boolean,
   optiStreamingLastFragment?: boolean,
@@ -78,7 +78,7 @@ export function BlockPartText_AutoBlocks(props: {
       inputAsCodeWithTitle={undefined}
       inputAsWordsDiff={props.inputAsWordsDiff}
       codeRenderVariant='enhanced' // can still be downgraded to 'outlined', e.g. for small snippets or given vnd types
-      showUnsafeHtmlCode={props.showUnsafeHtmlCode}
+      htmlRenderVariant={props.htmlRenderVariant}
       textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
       optiStreamingLastFragment={props.optiStreamingLastFragment}

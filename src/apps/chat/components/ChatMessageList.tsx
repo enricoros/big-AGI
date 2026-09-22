@@ -18,6 +18,7 @@ import { clipboardInterceptCtrlCForCleanup } from '~/common/util/clipboardUtils'
 import { convertFilesToDAttachmentFragments } from '~/common/attachment-drafts/attachment.pipeline';
 import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { getRenderHTMLInitial } from '~/common/stores/store-ui';
 import { openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { themeMinWidthChatPane } from '~/common/app.theme';
@@ -30,7 +31,7 @@ import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
-import { useChatAutoSuggestHTMLUI, useChatShowSystemMessages } from '../store-app-chat';
+import { useChatShowSystemMessages } from '../store-app-chat';
 
 
 const stableNoMessages: DMessage[] = [];
@@ -64,7 +65,6 @@ export function ChatMessageList(props: {
 
   // external state
   const { notifyBooting } = useScrollToBottom();
-  const danger_experimentalHtmlWebUi = useChatAutoSuggestHTMLUI();
   const [showSystemMessages] = useChatShowSystemMessages();
   const { conversationMessages, historyTokenCount } = useChatStore(useShallow(({ conversations }) => {
     const conversation = conversations.find(conversation => conversation.id === props.conversationId);
@@ -81,7 +81,7 @@ export function ChatMessageList(props: {
   // derived state
   const { conversationHandler, conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine } = props;
   const composerCanAddInReferenceTo = _composerInReferenceToCount < 5;
-  const composerHasInReferenceto = _composerInReferenceToCount > 0;
+  const composerHasInReferenceTo = _composerInReferenceToCount > 0;
 
   // text actions
 
@@ -453,13 +453,13 @@ export function ChatMessageList(props: {
               message={message}
               // diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
               fitScreen={props.fitScreen}
-              hasInReferenceTo={composerHasInReferenceto}
+              hasInReferenceTo={composerHasInReferenceTo}
               isMobile={props.isMobile}
               isBottom={idx === filteredMessages.length - 1}
               isImagining={isImagining}
               isSpeaking={isSpeaking}
               showAntPromptCaching={props.chatLLMAntPromptCaching}
-              showUnsafeHtmlCode={danger_experimentalHtmlWebUi}
+              htmlRenderVariant={getRenderHTMLInitial() ? 'render-at-end' : 'show-code'}
               onAddInReferenceTo={!composerCanAddInReferenceTo ? undefined : handleAddInReferenceTo}
               onMessageAssistantFrom={handleMessageAssistantFrom}
               onMessageBeam={handleMessageBeam}
