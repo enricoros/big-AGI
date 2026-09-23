@@ -24,10 +24,11 @@ import { BeamUpstreamResume } from '../BeamUpstreamResume';
 import { BeamCardNotice, BeamModelUnavailable } from '../components/BeamCardNotice';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { FusionControlsMemo } from './FusionControls';
+import { FusionInputsWait } from './FusionInputsWait';
 import { FusionInstructionsEditor } from './FusionInstructionsEditor';
 import { GATHER_COLOR } from '../beam.config';
 import { findFusionFactory } from './instructions/beam.gather.factories';
-import { fusionIsEditable, fusionIsError, fusionIsFusing, fusionIsIdle, fusionIsStopped, fusionIsUsableOutput } from './beam.gather';
+import { fusionIsEditable, fusionIsError, fusionIsFusing, fusionIsIdle, fusionIsStopped, fusionIsUsableOutput, fusionIsWaiting } from './beam.gather';
 import { useBeamCardScrolling } from '../store-module-beam';
 import { messageIssueColor, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 
@@ -50,6 +51,7 @@ export function Fusion(props: {
   const isIdle = fusionIsIdle(fusion);
   const isError = fusionIsError(fusion);
   const isFusing = fusionIsFusing(fusion);
+  const isWaiting = fusionIsWaiting(fusion);
   const isStopped = fusionIsStopped(fusion);
   const isUsable = fusionIsUsableOutput(fusion);
   const showUseButtons = isUsable && !isFusing;
@@ -156,6 +158,7 @@ export function Fusion(props: {
         fusion={fusion}
         factory={factory}
         isFusing={isFusing}
+        isWaiting={isWaiting}
         isInterrupted={isStopped}
         isMobile={props.isMobile}
         isUsable={isUsable}
@@ -188,6 +191,9 @@ export function Fusion(props: {
       {issueColor === 'warning' && <BeamCardNotice color='warning' variant='solid' fullWidth>Out of tokens - response cut short.</BeamCardNotice>}
 
 
+      {/* Start requested, waiting for the replies still generating */}
+      {!!fusion.inputsWait && <FusionInputsWait beamStore={props.beamStore} inputsWait={fusion.inputsWait} />}
+
       {/* Dynamic: instruction-specific components */}
       {!!fusion?.fusingInstructionComponent && fusion.fusingInstructionComponent}
 
@@ -215,7 +221,7 @@ export function Fusion(props: {
       <BeamUpstreamResume
         llmId={fusion?.llmId ?? null}
         generator={fusion?.outputDMessage?.generator}
-        isPending={isFusing}
+        isPending={isFusing || isWaiting}
         onReattach={handleFusionReattach}
         onClearHandle={handleFusionClearUpstreamHandle}
       />

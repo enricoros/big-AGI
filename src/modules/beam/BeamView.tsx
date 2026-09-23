@@ -1,11 +1,10 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import { Alert, Box, Button, CircularProgress } from '@mui/joy';
+import { Alert, Box, Button } from '@mui/joy';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
-import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { animationEnterScaleUp } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
@@ -32,7 +31,6 @@ export function BeamView(props: {
 
   // state
   const [hasAutoMerged, setHasAutoMerged] = React.useState(false);
-  const [warnIsScattering, setWarnIsScattering] = React.useState(false);
 
   // external state
   const { novel: explainerUnseen, touch: explainerCompleted, forget: explainerShow } = useUICounter('beam-wizard');
@@ -95,24 +93,16 @@ export function BeamView(props: {
     startScatteringAll(restart);
   }, [startScatteringAll]);
 
+  const handleScatterStop = React.useCallback(() => {
+    setHasAutoMerged(true); // a manual stop never starts a merge
+    stopScatteringAll();
+  }, [stopScatteringAll]);
+
 
   const handleCreateFusion = React.useCallback(() => {
-    // if scatter is busy, ask for confirmation
-    if (isScattering) {
-      setWarnIsScattering(true);
-      return;
-    }
+    // while replies are still generating, a started merge waits for them on its own card
     props.beamStore.getState().createFusion();
-  }, [isScattering, props.beamStore]);
-
-
-  const handleStartMergeConfirmation = React.useCallback(() => {
-    setWarnIsScattering(false);
-    stopScatteringAll();
-    handleCreateFusion();
-  }, [handleCreateFusion, stopScatteringAll]);
-
-  const handleStartMergeDenial = React.useCallback(() => setWarnIsScattering(false), []);
+  }, [props.beamStore]);
 
 
   // auto-merge
@@ -120,17 +110,9 @@ export function BeamView(props: {
   React.useEffect(() => {
     if (shallAutoMerge) {
       setHasAutoMerged(true);
-      handleStartMergeConfirmation();
+      handleCreateFusion();
     }
-  }, [handleStartMergeConfirmation, shallAutoMerge]);
-
-  // (great ux) scatter finished while the "start merge" (warning) dialog is up: dismiss dialog and proceed
-  // here we assume that 'warnIsScattering' shows the intention of the user to proceed with a merge asap
-  const shallResumeMerge = warnIsScattering && !isScattering && !gatherAutoStartAfterScatter;
-  React.useEffect(() => {
-    if (shallResumeMerge)
-      handleStartMergeConfirmation();
-  }, [handleStartMergeConfirmation, shallResumeMerge]);
+  }, [handleCreateFusion, shallAutoMerge]);
 
 
   // runnning
@@ -145,8 +127,8 @@ export function BeamView(props: {
   // intercept ctrl+enter and esc
   useGlobalShortcuts('BeamView', React.useMemo(() => [
     { key: ShortcutKey.Enter, ctrl: true, action: () => handleScatterStart(false), disabled: isScattering, level: 1 },
-    ...(isScattering ? [{ key: ShortcutKey.Esc, action: stopScatteringAll, level: 10 + 1 /* becasuse > ChatBarAltBeam */ }] : []),
-  ], [handleScatterStart, isScattering, stopScatteringAll]));
+    ...(isScattering ? [{ key: ShortcutKey.Esc, action: handleScatterStop, level: 10 + 1 /* becasuse > ChatBarAltBeam */ }] : []),
+  ], [handleScatterStart, handleScatterStop, isScattering]));
 
 
   // Explainer, if unseen
@@ -196,7 +178,7 @@ export function BeamView(props: {
         startBusy={isScattering}
         startRestart={!props.isMobile && raysReady >= 1 && raysReady < raysCount && !isScattering}
         onStart={handleScatterStart}
-        onStop={stopScatteringAll}
+        onStop={handleScatterStop}
         onExplainerShow={explainerShow}
       />
 
@@ -257,23 +239,6 @@ export function BeamView(props: {
 
     </Box>
 
-
-    {/* Confirm Stop Scattering */}
-    {warnIsScattering && (
-      <ConfirmationModal
-        open
-        onClose={handleStartMergeDenial}
-        onPositive={handleStartMergeConfirmation}
-        // lowStakes
-        noTitleBar
-        confirmationText={'Some replies are still generating. Merge what\'s ready?'}
-        positiveActionText='Merge now'
-        negativeActionText='Waiting for all...'
-        negativeActionStartDecorator={
-          <CircularProgress color='neutral' sx={{ '--CircularProgress-size': '24px', '--CircularProgress-trackThickness': '1px' }} />
-        }
-      />
-    )}
 
   </>;
 }

@@ -25,6 +25,7 @@ function FusionControls(props: {
   fusion: BFusion,
   factory: FusionFactorySpec,
   isFusing: boolean,
+  isWaiting: boolean,
   isInterrupted: boolean,
   isMobile: boolean,
   isUsable: boolean,
@@ -108,8 +109,8 @@ function FusionControls(props: {
         </Sheet>
       )}
 
-      {/* Generate / Stop Button */}
-      {!props.isFusing ? (
+      {/* Generate / Stop Button - Stop also gives up a start that is waiting for replies */}
+      {!(props.isFusing || props.isWaiting) ? (
         <GoodTooltip title={!props.isUsable ? 'Start Merge' : 'Retry'}>
           <IconButton size='sm' variant='plain' color='success' onClick={props.onToggleGenerate}>
             {!props.isUsable ? <PlayArrowRoundedIcon sx={{ fontSize: 'xl2' }} /> : <ReplayRoundedIcon />}

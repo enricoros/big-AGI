@@ -173,10 +173,12 @@ export function gatherStartFusion(
 
 
 export function gatherStopFusion(fusion: BFusion): BFusion {
+  fusion.inputsWait?.cancel(); // not started yet: the stage is untouched
   abortWithReason(fusion.fusingAbortController, 'Merge Stopped');
   return {
     ...fusion,
     ...(fusion.stage === 'fusing' ? { stage: 'stopped' /* optimistic as the abort shall do the same */ } : {}),
+    inputsWait: undefined,
     fusingAbortController: undefined,
   };
 }

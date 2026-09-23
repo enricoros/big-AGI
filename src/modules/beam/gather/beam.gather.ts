@@ -13,6 +13,7 @@ import { RootStoreSlice } from '../store-beam_vanilla';
 import { ScatterStoreSlice } from '../scatter/beam.scatter';
 import { beamMergeStreamedGuts, beamReattachStream } from '../beam.reattach';
 import { gatherStartFusion, gatherStopFusion, Instruction } from './instructions/beam.gather.execution';
+import { GatherInputsWait, gatherInputsFromRays, gatherInputsWait } from './beam.gather.inputs';
 import { updateBeamLastConfig } from '../store-module-beam';
 
 
@@ -43,6 +44,7 @@ export interface BFusion {
   outputDMessage?: DMessage;
 
   // execution state to sync Instruction I/O with the UI
+  inputsWait?: GatherInputsWait; // a requested start, waiting for the rays still generating
   fusingAbortController?: AbortController; // of the full chain
   fusingProgressComponent?: React.ReactNode;
   fusingInstructionComponent?: React.ReactNode;
@@ -63,6 +65,7 @@ const createBFusion = (factoryId: FFactoryId, instructions: Instruction[], llmId
   outputDMessage: undefined,
 
   // execution progress
+  inputsWait: undefined,
   fusingAbortController: undefined,
   fusingProgressComponent: undefined,
   fusingInstructionComponent: undefined,
@@ -75,6 +78,10 @@ export function fusionIsEditable(fusion: BFusion | null): boolean {
 
 export function fusionIsIdle(fusion: BFusion | null): boolean {
   return fusion?.stage === 'idle';
+}
+
+export function fusionIsWaiting(fusion: BFusion | null): boolean {
+  return !!fusion?.inputsWait;
 }
 
 export function fusionIsFusing(fusion: BFusion | null): boolean {
@@ -141,12 +148,14 @@ export interface GatherStoreSlice extends GatherStateSlice {
   createFusion: () => void;
   removeFusion: (fusionId: BFusionId) => void;
   toggleFusionGathering: (fusionId: BFusionId) => void;
+  _fusionStartNow: (fusionId: BFusionId) => void;
+  stopGatheringAllWaiting: () => void;
   fusionReattach: (fusionId: BFusionId, mode: AixReattachMode) => void;
   fusionClearUpstreamHandle: (fusionId: BFusionId) => void;
 
 }
 
-export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice & GatherStoreSlice, [], [], GatherStoreSlice> = (_set, _get) => ({
+export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice & GatherStoreSlice, [], [], GatherStoreSlice> = (_set, _get, _store) => ({
 
   // initial state
   ...reInitGatherStateSlice([], null),
@@ -305,23 +314,45 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
 
   toggleFusionGathering: (fusionId: BFusionId) => {
     // this will start/stop the fusion
-    const fusion = _get().fusions.find(fusion => fusion.fusionId === fusionId);
+    const { fusions, rays, _fusionStartNow, _fusionUpdate } = _get();
+    const fusion = fusions.find(fusion => fusion.fusionId === fusionId);
     if (!fusion) return;
 
-    // stop if fusing
-    if (fusion?.stage === 'fusing')
+    // stop if fusing, or waiting to
+    if (fusion.stage === 'fusing' || fusion.inputsWait)
       return gatherStopFusion(fusion);
 
     // start: update the model (NOTE: keep the same per-fusion)
     // _fusionUpdate(fusion.fusionId, { llmId: currentGatherLlmId });
 
-    // start the fusion
-    const { inputHistory, rays, _fusionUpdate } = _get();
-    const chatMessages = inputHistory ? [...inputHistory] : [];
-    const rayMessages = rays.map(ray => ray.message).filter(message => !!message.fragments.length);
-    const onUpdate = (update: FusionUpdateOrFn) => _fusionUpdate(fusion.fusionId, update);
-    gatherStartFusion(fusion, chatMessages, rayMessages, onUpdate);
+    // start now, if no reply is still generating
+    if (!gatherInputsFromRays(rays).pendingCount)
+      return _fusionStartNow(fusionId);
+
+    // or wait for the replies - see beam.gather.inputs.ts for what settles the wait
+    const inputsWait = gatherInputsWait(_store);
+    _fusionUpdate(fusionId, { inputsWait });
+    void inputsWait.outcome.then((outcome) => {
+      _fusionUpdate(fusionId, (fusion) => fusion.inputsWait === inputsWait ? { inputsWait: undefined } : null);
+      if (outcome !== 'cancelled')
+        _fusionStartNow(fusionId);
+    });
   },
+
+  _fusionStartNow: (fusionId: BFusionId) => {
+    // reads everything live: the fusion may have been edited while waiting
+    const { inputHistory, fusions, rays, _fusionUpdate } = _get();
+    const fusion = fusions.find(fusion => fusion.fusionId === fusionId);
+    if (!fusion) return;
+
+    // start the fusion
+    const chatMessages = inputHistory ? [...inputHistory] : [];
+    const onUpdate = (update: FusionUpdateOrFn) => _fusionUpdate(fusion.fusionId, update);
+    gatherStartFusion(fusion, chatMessages, gatherInputsFromRays(rays).messages, onUpdate);
+  },
+
+  stopGatheringAllWaiting: () =>
+    _get().fusions.forEach(fusion => fusion.inputsWait?.cancel()),
 
   // Gemini Interactions (Deep Research) resume for a merge: re-stream (replay) or one-shot fetch (snapshot)
   // the upstream-stored run into the fusion output. Enters 'fusing' so the header Stop aborts it (= detach,

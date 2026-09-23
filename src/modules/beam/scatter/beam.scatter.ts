@@ -11,6 +11,7 @@ import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
 
+import type { GatherStoreSlice } from '../gather/beam.gather';
 import type { RootStoreSlice } from '../store-beam_vanilla';
 import { SCATTER_DEBUG_STATE, SCATTER_PLACEHOLDER } from '../beam.config';
 import { beamMergeStreamedGuts, beamReattachStream } from '../beam.reattach';
@@ -208,7 +209,7 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
 }
 
 
-export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice, [], [], ScatterStoreSlice> = (_set, _get) => ({
+export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice & Pick<GatherStoreSlice, 'stopGatheringAllWaiting'>, [], [], ScatterStoreSlice> = (_set, _get) => ({
 
   // init state
   ...reInitScatterStateSlice([]),
@@ -330,12 +331,15 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
     _get()._syncRaysStateToScatter();
   },
 
-  stopScatteringAll: () =>
+  stopScatteringAll: () => {
+    // release the merges waiting on these rays first, or this stop would start them, on truncated replies
+    _get().stopGatheringAllWaiting();
     _set(state => ({
       isScattering: false,
       // Terminate all rays
       rays: state.rays.map(rayScatterStop),
-    })),
+    }));
+  },
 
   rayToggleScattering: (rayId: BRayId) => {
     const { inputHistory, _rayUpdate, _syncRaysStateToScatter } = _get();
