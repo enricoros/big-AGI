@@ -216,13 +216,6 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
     delete payload.temperature;
   }
 
-  // [Anthropic, 2026-06-09] Fable 5 / Mythos 5: adaptive is the only thinking mode - 'enabled' (budget_tokens) and 'disabled' return 400
-  // [2026-07-24] Opus 5 launch-verified: adaptive-only too ('enabled'/budget_tokens return 400), so 'opus' stays in this regex.
-  // (Opus 5 nuance: 'disabled' is legal at effort <= high, but we coerce to adaptive anyway - single always-thinking entry.)
-  // [2026-09-01] Fable/Mythos 5.1: unchanged (launch-verified) - the regex covers '-5-1'.
-  // [2026-09-22] Opus 5.5: 'disabled' 400s at every effort (stricter than Opus 5) - covered by 'opus-5'.
-  const hotFixAdaptiveThinkingOnlyModel = /claude-(fable|mythos|opus)-5/.test(model.id);
-
   // HOTFIX: Fable/Mythos 5 ONLY reject forced tool use: 400 'tool_choice forces tool use is not compatible with this model.'
   // (model-level, regardless of thinking config). Downgrade to 'auto' + a system hint - empirically the model
   // reliably calls the tool when instructed. Forced tool use is deprecated AIX-wide, see ToolsPolicy_schema.
@@ -248,7 +241,7 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
   const areToolCallsRequired = payload.tool_choice && typeof payload.tool_choice === 'object' && (payload.tool_choice.type === 'any' || payload.tool_choice.type === 'tool');
   const canUseThinking = !areToolCallsRequired || !hotFixDisableThinkingWhenToolsForced;
   if (model.vndAntThinkingBudget !== undefined && canUseThinking) {
-    if (model.vndAntThinkingBudget === 'adaptive' || hotFixAdaptiveThinkingOnlyModel) {
+    if (model.vndAntThinkingBudget === 'adaptive') {
       if (model.vndAntThinkingBudget !== 'adaptive')
         console.log(`[Anthropic] ${model.id}: coercing thinking '${model.vndAntThinkingBudget}' -> 'adaptive' (adaptive-only model)`);
       payload.thinking = {

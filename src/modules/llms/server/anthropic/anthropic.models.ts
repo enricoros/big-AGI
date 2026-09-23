@@ -100,6 +100,21 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     benchmark: { cbaElo: 1462 + 1 }, // 1 (thinking) + claude-sonnet-5-high
   },
 
+  // Claude 5 models with thinking variants (adaptive-only, manual budgets removed)
+  'claude-opus-5': {
+    idVariant: 'thinking',
+    label: 'Claude Opus 5 (Adaptive)',
+    description: 'Previous Opus model, a step-change improvement over Opus 4.8 for complex agentic coding and enterprise work',
+    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive */ },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
+      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // 2x tier on 4.8 (vs 4.7/4.6's 6x)
+      ...ANT_TOOLS_DYNAMIC,
+    ],
+    benchmark: { cbaElo: 1493 }, // claude-opus-4-8-high
+  },
+
   // Claude 4.8 models with thinking variants (adaptive-only, manual budgets removed)
   'claude-opus-4-8': {
     idVariant: 'thinking',
@@ -382,12 +397,8 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     benchmark: { cbaElo: 1506 + 1 }, // (no arena data yet) assuming: claude-fable-5 + 1
   },
 
-  // Claude Opus 5 - SINGLE always-thinking entry (like Fable 5), NOT a base + '(Adaptive)' split.
-  // Rationale (2026-07-24 live param-space probe): thinking is ON by default and adaptive spends 0 thinking
-  // tokens on trivial turns (probed: effort max on a trivial prompt -> thinking_toks=0), so a non-thinking
-  // entry buys nothing; `thinking:{type:'disabled'}` does exist BUT is capped at effort 'high' or below
-  // (xhigh/max + disabled -> 400) and docs warn it can emit tool calls as plain text - a degraded niche we
-  // deliberately don't surface. Effort is the one control Anthropic intends; revisit if users ask for disabled.
+  // Claude Opus 5 - Thinking mode can be disabled up until effort level high, and is always on beyond that
+  // Docs do warn it can emit tool calls as plain text, but testing hasn't revealed this as common
   {
     id: 'claude-opus-5', // Active - 2026-07-24
     label: 'Claude Opus 5',
@@ -395,10 +406,10 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     description: 'Previous Opus model, a step-change improvement over Opus 4.8 for complex agentic coding and enterprise work',
     contextWindow: 1_000_000, // 1M is both default and max, no smaller variant (API-confirmed max_input_tokens)
     maxCompletionTokens: 128000,
-    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch], // reasoning on the base model: thinking on by default
+    interfaces: [...IF_47, LLM_IF_ANT_ToolsSearch], // reasoning on the base model: thinking on by default
     parameterSpecs: [
-      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - explicit `adaptive` equals the default; budget_tokens returns 400 */ },
-      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }, // full ladder (API-confirmed); default 'high'; docs: set large max_tokens at xhigh/max
+      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: null },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high'] }, // non-thinking max effort level high, full ladder (API-confirmed); default 'high'; docs: set large max_tokens at xhigh/max
       { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // fast mode: research preview, API only, waitlist-gated; $10/$50 2x tier (same as 4.8)
       ...ANT_TOOLS_DYNAMIC,
     ],
