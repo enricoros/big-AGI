@@ -195,28 +195,22 @@ export const animationOpacityFadeIn = keyframes`
 export const animationEnterBelow = keyframes`
     from {
         opacity: 0;
-        transform: translateY(8px)
+        transform: translateY(6px) scale(0.98);
     }
     to {
         opacity: 1;
-        transform: translateY(0)
+        transform: translateY(0) scale(1);
     }
 `;
 
 export const animationEnterModal = keyframes`
-    from, 50%, to {
-        animation-timing-function: cubic-bezier(.215, .61, .355, 1) // ease-out
-    }
     0% {
-        opacity: .91;
-        transform: scale3d(.98, .98, .98)
+        opacity: 0;
+        transform: scale(0.95);
     }
-    70% {
+    100% {
         opacity: 1;
-        transform: scale3d(1.04, 1.04, 1.04)
-    }
-    to {
-        transform: none;
+        transform: scale(1);
     }
 `;
 

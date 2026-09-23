@@ -47,6 +47,26 @@ export const aixRouter = createTRPCRouter({
       const _clearWatchdog = _armSlowRequestWatchdog(`model=${input.model.id} dialect=${input.access.dialect} context=${input.context.name}/${input.context.ref}`);
       try {
         const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
+        
+        // --- MCP Tool Injection ---
+        try {
+          const { McpClientManager } = await import('~/modules/mcp/mcp.client');
+          const { mcpToolToAixTool } = await import('~/modules/mcp/mcp.tools');
+          
+          const mcpClient = await McpClientManager.getInstance().connectSSEServer('http://127.0.0.1:8000/sse', 'default-mcp');
+          const toolsResult = await mcpClient.listTools();
+          if (toolsResult?.tools?.length) {
+            const existingNames = new Set((input.chatGenerate.tools || []).map(t => t.type === 'function_call' ? t.function_call.name : ''));
+            const newMappedTools = toolsResult.tools.map(mcpToolToAixTool).filter(t => !existingNames.has(t.function_call.name));
+            if (newMappedTools.length) {
+              input.chatGenerate.tools = [...(input.chatGenerate.tools || []), ...newMappedTools];
+            }
+          }
+        } catch (mcpError) {
+          console.warn('[AIX] Failed to inject MCP tools:', mcpError);
+        }
+        // --------------------------
+
         const dispatchCreator = () => createChatGenerateDispatch(input.access, input.model, input.chatGenerate, input.streaming, input.context.ref, !!input.connectionOptions?.enableResumability);
 
         yield* executeChatGenerateWithContinuation(dispatchCreator, ctx.reqSignal, _d);

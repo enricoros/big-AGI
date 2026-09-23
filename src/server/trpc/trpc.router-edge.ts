@@ -9,6 +9,7 @@ import { llmBedrockRouter } from '~/modules/llms/server/bedrock/bedrock.router';
 import { llmGeminiRouter } from '~/modules/llms/server/gemini/gemini.router';
 import { llmOllamaRouter } from '~/modules/llms/server/ollama/ollama.router';
 import { llmOpenAIRouter } from '~/modules/llms/server/openai/openai.router';
+import { mcpRouter } from '~/modules/mcp/mcp.router';
 import { speexRouter } from '~/modules/speex/protocols/rpc/rpc.router';
 import { youtubeRouter } from '~/modules/youtube/youtube.router';
 
@@ -24,6 +25,7 @@ export const appRouterEdge = createTRPCRouter({
   llmGemini: llmGeminiRouter,
   llmOllama: llmOllamaRouter,
   llmOpenAI: llmOpenAIRouter,
+  mcp: mcpRouter,
   speex: speexRouter, // synthesize, listVoices (multi-provider TTS)
   youtube: youtubeRouter,
 });
