@@ -6,7 +6,7 @@ import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { abortWithReason } from '~/common/util/errorUtils';
 import { agiUuid } from '~/common/util/idUtils';
 import { createDMessageEmpty, DMessage, duplicateDMessage, messageSetGeneratorNamed, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
-import { createPlaceholderVoidFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { createPlaceholderVoidFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
@@ -148,6 +148,15 @@ export function rayIsSelectable(ray: BRay | null): boolean {
   // any ray is selectable once it's 'updated' (message started flowing in)
   // return !!ray?.message?.updated /*&& !ray.message.pendingIncomplete*/;
   return !!ray?.message.fragments.length;
+}
+
+export function rayIsMessageErrorOnly(ray: BRay | null): boolean {
+  if (ray?.message.fragments.length === 1) {
+    const onlyFragment = ray.message.fragments[0];
+    if (isContentFragment(onlyFragment) && isErrorPart(onlyFragment.part))
+      return true;
+  }
+  return false;
 }
 
 export function rayIsUserSelected(ray: BRay | null): boolean {
