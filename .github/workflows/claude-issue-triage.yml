@@ -35,7 +35,7 @@ jobs:
       - name: Analyze issue and provide help
         uses: anthropics/claude-code-action@v1
         env:
-          CLAUDE_CODE_SUBAGENT_MODEL: claude-opus-5 # brains on Fable (--model below), delegated subagents on the latest Opus
+          CLAUDE_CODE_SUBAGENT_MODEL: claude-opus-5-5 # brains on Fable (--model below), delegated subagents on the latest Opus
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Security: Allow any user to trigger triage (automated issue help is safe)
