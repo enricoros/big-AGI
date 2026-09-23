@@ -124,7 +124,7 @@ export function BeamGatherPane(props: {
         </Typography>
         <Typography level='body-sm' sx={{ whiteSpace: 'nowrap' }}>
           {/* may merge or not (hasInputs) N replies.. put this in pretty messages */}
-          {props.canGather ? `Combine the ${props.raysReady} replies` : /*'Fuse all replies'*/ ''}
+          {props.canGather ? `Combine the ${props.raysReady} responses` : ''}
         </Typography>
       </Box>
 

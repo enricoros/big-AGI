@@ -29,7 +29,7 @@ export function FusionInputsWait(props: {
     <Alert variant='outlined' sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
       {/*<CircularProgress size='sm' sx={{ '--CircularProgress-size': '16px', '--CircularProgress-trackThickness': '2px' }} />*/}
       <Typography level='body-sm' sx={{ flex: 1 }}>
-        Waiting for {pendingCount === 1 ? '1 more reply' : `${pendingCount} replies`} ...
+        Waiting for {pendingCount === 1 ? '1 more response' : `${pendingCount} responses`} ...
       </Typography>
       <Box sx={{ display: 'grid', gap: 0.5 }}>
         <Button color={GATHER_COLOR} disabled={!canMergeNow} onClick={props.inputsWait.mergeNow}>

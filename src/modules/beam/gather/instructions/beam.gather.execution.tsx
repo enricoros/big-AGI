@@ -60,7 +60,7 @@ export function gatherStartFusion(
   if (chatMessages.length < 1)
     return onError('No conversation history available');
   if (rayMessages.length <= 1)
-    return onError('Needs two Beams at least');
+    return onError('Needs two responses at least');
   if (!initialFusion.llmId)
     return onError('No Merge model selected');
 
@@ -92,6 +92,7 @@ export function gatherStartFusion(
   onUpdateBFusion({
     // status
     stage: 'fusing',
+    fusedInputsCount: rayMessages.length,
     errorText: undefined,
     outputDMessage: undefined,
 

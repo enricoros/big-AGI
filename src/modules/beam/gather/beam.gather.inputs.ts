@@ -34,6 +34,12 @@ export function gatherInputsFromRays(rays: BRay[]): { messages: DMessage[], pend
   };
 }
 
+/** Store selector: how many replies the next run would merge - the ready ones, plus the generating ones it waits for. */
+export function beamStoreGatherInputsNextCount({ rays }: { rays: BRay[] }): number {
+  const { messages, pendingCount } = gatherInputsFromRays(rays);
+  return messages.length + pendingCount;
+}
+
 
 /// Wait ///
 

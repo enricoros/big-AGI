@@ -15,6 +15,8 @@ export interface FusionFactorySpec {
   shortLabel: string; // used in the button group selector
   addLabel: string;   // used in the add card
   cardTitle: string;   // used as the title
+  cardTitleNext?: string; // counted title while there is something to merge, '{n}' = the replies the next run merges; omit to keep cardTitle
+  cardTitleDone?: string; // counted title after a run, '{n}' = the replies it merged
   Icon?: typeof SvgIcon;
   description: string;
   createInstructions: () => Instruction[];
@@ -25,6 +27,19 @@ export function findFusionFactory(factoryId?: FFactoryId | null): FusionFactoryS
   return FUSION_FACTORIES.find(f => f.factoryId === factoryId) ?? null;
 }
 
+/**
+ * The card title: the factory's, or its counted form - the next run's while there is something to merge
+ * ('Combine 4 Responses'), the last run's once it ran ('Combined 3 Responses'). Factories without counted
+ * forms keep their title.
+ */
+export function fusionCardTitle(factory: FusionFactorySpec, nextCount: number, doneCount: number | undefined): string {
+  if (doneCount !== undefined)
+    return factory.cardTitleDone?.replace('{n}', String(doneCount)) ?? factory.cardTitle;
+  if (nextCount >= 2)
+    return factory.cardTitleNext?.replace('{n}', String(nextCount)) ?? factory.cardTitle;
+  return factory.cardTitle;
+}
+
 export const FUSION_FACTORY_DEFAULT = 'fuse';
 
 export const FUSION_FACTORIES: FusionFactorySpec[] = [
@@ -33,6 +48,8 @@ export const FUSION_FACTORIES: FusionFactorySpec[] = [
     shortLabel: 'Fuse',
     addLabel: 'Add Fusion',
     cardTitle: 'Combined Response',
+    cardTitleNext: 'Fuse {n} Responses',
+    cardTitleDone: 'Fused {n} Responses',
     Icon: MediationOutlinedIcon as typeof SvgIcon,
     description: 'AI combines conversation details and ideas into one clear answer.',
     createInstructions: () => [
@@ -59,6 +76,8 @@ Synthesize the perfect coherent response to my last message that merges the coll
     shortLabel: 'Guided',
     addLabel: 'Add Checklist',
     cardTitle: 'Guided Response',
+    cardTitleNext: 'Guide {n} Responses',
+    cardTitleDone: 'Guided {n} Responses',
     Icon: CheckBoxOutlinedIcon as typeof SvgIcon,
     description: 'Choose between options extracted by AI from the replies, and the model will combine your selections into a single answer.',
     // description: 'This approach employs a two-stage, interactive process where an AI first generates a checklist of insights from a conversation for user selection, then synthesizes those selections into a tailored, comprehensive response, integrating user preferences with AI analysis and creativity.',
@@ -121,6 +140,8 @@ The final output should reflect a deep understanding of the user's preferences a
     shortLabel: 'Compare',
     addLabel: 'Add Breakdown',
     cardTitle: 'Evaluation Table',
+    cardTitleNext: 'Compare {n} Responses',
+    cardTitleDone: 'Compared {n} Responses',
     Icon: TableViewRoundedIcon as typeof SvgIcon,
     description: 'Analyzes and compares replies, with a structured framework to support your choice.',
     createInstructions: () => [
@@ -168,6 +189,8 @@ Only work with the provided {{N}} responses. Begin with listing the criteria.`.t
     shortLabel: 'Custom',
     addLabel: 'Add Custom',
     cardTitle: 'User Defined',
+    cardTitleNext: 'Merge {n} Responses',
+    cardTitleDone: 'Merged {n} Responses',
     Icon: BuildRoundedIcon as typeof SvgIcon,
     description: 'Define your own fusion prompt.',
     createInstructions: () => [

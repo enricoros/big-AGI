@@ -40,6 +40,7 @@ export interface BFusion {
 
   // status
   stage: BFusionStage;
+  fusedInputsCount?: number; // replies merged by the last run, recorded at its start when stage=fusing
   errorText?: string;
   outputDMessage?: DMessage;
 
@@ -61,6 +62,7 @@ const createBFusion = (factoryId: FFactoryId, instructions: Instruction[], llmId
 
   // status
   stage: 'idle',
+  fusedInputsCount: undefined, // dynamic, when really started, post input-wait
   errorText: undefined,
   outputDMessage: undefined,
 
