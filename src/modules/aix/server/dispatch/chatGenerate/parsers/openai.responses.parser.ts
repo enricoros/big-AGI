@@ -478,7 +478,6 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
       }
 
       case 'response.incomplete':
-        // TODO: We haven't seen one of those events yet; we need to see what happens and parse it!
         R.setResponse(eventType, event.response);
         R.markResponseSealed();
 

@@ -411,7 +411,7 @@ export function prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason
     case 'issue':
       return complexity === 'extra' ? 'Error' : '';
     case 'out-of-tokens':
-      return 'Out of Tokens';
+      return 'Out of tokens';
     default:
       const _exhaustiveCheck: never = reason;
       return null;
