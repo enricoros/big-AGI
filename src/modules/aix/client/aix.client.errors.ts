@@ -59,16 +59,18 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
   // httpBatchStreamLink async-iterable). tRPC has thrown a DIFFERENT shape for this SAME event in each era (upstream #6989):
   //   <= 11.5.1:    Error('Stream closed')
   //   11.6 - 11.7:  bare `undefined`                  (the #6989 regression, PR #6960 - avoided: we ship >= 11.18)
-  //   >= 11.14:     TypeError from destructuring the `done` read (PR #7233 restored a real Error; message is engine/bundle-dependent):
+  //   11.14-11.19.0: TypeError from destructuring the `done` read (PR #7233 restored a real Error; message is engine/bundle-dependent):
   //                   V8 '... is not iterable', SpiderMonkey "can't access property Symbol.iterator, ... is undefined",
-  //                   JSC "undefined is not an object (evaluating '[...]')"
+  //                   JSC "undefined is not an object (evaluating '...reader.read())')"
+  //   > 11.19.0:    Error('Stream closed unexpectedly')  (PR #7604 checks `done`; drop the TypeError match once we ship it)
+  // tRPC transport only: CSF has no JSONL layer, and its executor turns read failures into in-band '[Streaming Issue]' errors.
   // We match the Error-typed shapes structurally. We deliberately do NOT match the bare `undefined` case: it is too broad
   // a signal (an undefined can originate anywhere) and 11.18+ no longer throws it. Re-enable the commented line below
   // only if a future tRPC version regresses to throwing `undefined` for a mid-stream cut.
   const isMidStreamTeardown =
     // (hasFragments && error === undefined) ||  // intentionally disabled - too broad; see note above (#6989)
-    (error instanceof Error && error.message === 'Stream closed')
-    || (error instanceof TypeError && /is not iterable|can't access property Symbol\.iterator|is not an object \(evaluating '\[/i.test(error.message));
+    (error instanceof Error && (error.message === 'Stream closed' || error.message === 'Stream closed unexpectedly'))
+    || (error instanceof TypeError && /is not iterable|can't access property Symbol\.iterator|is not an object \(evaluating '[^']*\.read\(\)/i.test(error.message));
   if (isMidStreamTeardown)
     return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **connection terminated**.' /* DO NOT CHANGE '**connection terminated**' - usually server (Vercel) side broken */ };
 
