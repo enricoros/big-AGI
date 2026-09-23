@@ -216,21 +216,20 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
     delete payload.temperature;
   }
 
-  // [Anthropic, 2026-06-09] Fable 5 / Mythos 5: adaptive is the only thinking mode - 'enabled' (budget_tokens) and 'disabled' return 400
-  // [2026-07-24] Opus 5 launch-verified: adaptive-only too ('enabled'/budget_tokens return 400), so 'opus' stays in this regex.
-  // (Opus 5 nuance: 'disabled' is legal at effort <= high, but we coerce to adaptive anyway - single always-thinking entry.)
-  // [2026-09-01] Fable/Mythos 5.1: unchanged (launch-verified) - the regex covers '-5-1'.
-  // [2026-09-22] Opus 5.5: 'disabled' 400s at every effort (stricter than Opus 5) - covered by 'opus-5'.
-  const hotFixAdaptiveThinkingOnlyModel = /claude-(fable|mythos|opus)-5/.test(model.id);
+  // [Anthropic] Thinking and tool-choice constraints by family, newest first (all probed live):
+  //   Fable/Mythos 5.x, Opus 5.5        adaptive only, always on: 'disabled' 400; forced tool_choice ('any'/'tool') 400
+  //   Opus 5                            adaptive only; on by default; 'disabled' OK at effort <= high only (xhigh/max 400, clamped below) - the Thinking switch
+  //   Sonnet 5, Opus 4.8 / 4.7          adaptive only (budget_tokens 400); 'disabled' OK at every effort; on by default on Sonnet 5, off on 4.x
+  //   4.6                               adaptive + deprecated budgets; off by default; 'disabled' OK
+  //   4.5 and earlier                   extended thinking only (budget_tokens); 'adaptive' 400
+  // From 4.7 up, temperature != 1, top_p, top_k and assistant prefill are 400 in any thinking mode.
+  // Forward-compatible: every Fable/Mythos/Opus 5.x is assumed always-on, with Opus 5 itself carved out (bare id, or dated / Bedrock '-vN:M' suffixed).
+  const isOpus5Base = /claude-opus-5(?:-\d{8})?(?:-v\d+(?::\d+)?)?$/.test(model.id);
+  const hotFixAdaptiveThinkingOnlyModel = !isOpus5Base && /claude-(fable|mythos|opus)-5/.test(model.id); // 'disabled' and budgets both coerced to adaptive
+  const hotFixNoBudgetTokensModel = /claude-(fable|mythos|opus|sonnet)-5|claude-(opus|sonnet)-4-[78]/.test(model.id); // budgets coerced to adaptive
+  const hotFixNoForcedToolUse = hotFixAdaptiveThinkingOnlyModel; // the same family set today; a separate name for when it diverges
 
-  // HOTFIX: Fable/Mythos 5 ONLY reject forced tool use: 400 'tool_choice forces tool use is not compatible with this model.'
-  // (model-level, regardless of thinking config). Downgrade to 'auto' + a system hint - empirically the model
-  // reliably calls the tool when instructed. Forced tool use is deprecated AIX-wide, see ToolsPolicy_schema.
-  // [2026-07-24] Opus 5 EXCLUDED (launch probes): tool_choice 'any'/'tool' return 200 with thinking left to its
-  // adaptive-on default, so requests pass through unchanged (thinking is skipped below when tools are forced).
-  // [2026-09-01] Fable/Mythos 5.1: same 400, reworded 'tool_choice: type "tool" and "any" are not supported for this model.'
-  // [2026-09-22] Opus 5.5: same 400 as Fable 5.1 (launch probes), unlike Opus 5.
-  const hotFixNoForcedToolUse = /claude-(fable|mythos)-5|claude-opus-5-5/.test(model.id);
+  // Forced tool use -> 'auto' + a system hint: empirically the model still calls the tool. Forced tool use is deprecated AIX-wide, see ToolsPolicy_schema.
   if (hotFixNoForcedToolUse && payload.tool_choice && (payload.tool_choice.type === 'any' || payload.tool_choice.type === 'tool')) {
     const mustUseHint = payload.tool_choice.type === 'tool'
       ? `IMPORTANT: You MUST respond by calling the \`${payload.tool_choice.name}\` tool. Do not respond with text.`
@@ -244,13 +243,14 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
       payload.output_config = { effort: 'low' };
   }
 
-  // [Anthropic] Thinking: adaptive (4.6+), enabled with budget (≤4.5), or disabled
+  // [Anthropic] Thinking: adaptive (4.6+), enabled with budget (4.5 and earlier), or disabled. An explicit 'disabled' (null) always
+  // goes through, even with forced tools (legal pairing; omitting it would let an on-by-default model think despite the user's switch).
+  // A numeric budget on a no-budget family (legacy persisted value, or the Max override pushing the range max) means "thinking on" -> adaptive.
   const areToolCallsRequired = payload.tool_choice && typeof payload.tool_choice === 'object' && (payload.tool_choice.type === 'any' || payload.tool_choice.type === 'tool');
-  const canUseThinking = !areToolCallsRequired || !hotFixDisableThinkingWhenToolsForced;
+  const canUseThinking = !areToolCallsRequired || !hotFixDisableThinkingWhenToolsForced || model.vndAntThinkingBudget === null;
   if (model.vndAntThinkingBudget !== undefined && canUseThinking) {
-    if (model.vndAntThinkingBudget === 'adaptive' || hotFixAdaptiveThinkingOnlyModel) {
-      if (model.vndAntThinkingBudget !== 'adaptive')
-        console.log(`[Anthropic] ${model.id}: coercing thinking '${model.vndAntThinkingBudget}' -> 'adaptive' (adaptive-only model)`);
+    if (model.vndAntThinkingBudget === 'adaptive' || hotFixAdaptiveThinkingOnlyModel || (typeof model.vndAntThinkingBudget === 'number' && hotFixNoBudgetTokensModel)) {
+      // a number or null on these families is silently coerced to adaptive (a Max-override budget lands here on every request)
       payload.thinking = {
         type: 'adaptive',
         display: 'summarized', // Opus 4.7+ and Fable/Mythos 5 default to 'omitted' - explicit 'summarized' preserves 4.6-era UX (slight latency cost)
@@ -282,8 +282,10 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
   const reasoningEffort = model.reasoningEffort; // ?? model.vndAntEffort;
   if (reasoningEffort) {
     if (reasoningEffort === 'none' || reasoningEffort === 'minimal') throw new Error(`Anthropic API does not support '${reasoningEffort}' effort level`);
+    // Opus 5 accepts 'disabled' only at effort <= 'high' (Sonnet 5 and 4.x at every effort, see the family table) - silently clamp rather than fail the turn
+    const clampToHigh = isOpus5Base && payload.thinking?.type === 'disabled' && ['xhigh', 'max'].includes(reasoningEffort);
     payload.output_config = {
-      effort: reasoningEffort,
+      effort: clampToHigh ? 'high' : reasoningEffort,
     };
   }
 

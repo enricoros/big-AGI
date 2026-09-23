@@ -220,23 +220,37 @@ export const DModelParameterRegistry = {
   },
 
   /**
-   * NOTE: this is being phased out with Opus 4.6 in favor of llmVndAntEffort, while this is implicitly
-   *       adaptive if missing (as-if we had our custom sentinel value of -1).
+   * Anthropic thinking mode, one integer parameter whose value has four meanings:
    *
-   * Important: when this is set to anything other than nullish, it enables Adaptive(-1)/Extended(int > 1024) thinking,
-   * and as a side effect **disables the temperature** in the requests (even when tunneled through OpenRouter). So this
-   * control must disable the UI controls for temperature in both the side panel and the model configuration dialog.
+   * - `undefined`: no preference, the `thinking` field is omitted and the model's own default applies
+   *   (off on 4.x, on for every Claude 5).
+   *
+   * - `-1`: adaptive thinking (4.6+), sent as `thinking: {type: 'adaptive'}` - the model decides when and how much to reason,
+   *         `llmVndAntEffort` sets the depth. Deliberately outside `range` so no slider can produce it:
+   *         it is the `initialValue` on every adaptive model's spec, hidden on most, VISIBLE on Opus 5 where the editors
+   *         render it as a Thinking switch (on = -1, off = null).
+   *
+   * - `null`: thinking off, sent as `thinking: {type: 'disabled'}`. Legal on 4.x, Sonnet 5, and Opus 5 (at effort <= high, the adapter clamps);
+   *           rejected by Fable/Mythos 5 and 5.1 and Opus 5.5, where the adapter coerces it to adaptive.
+   *
+   * - `1024..65536`: a manual budget, sent as `thinking: {type: 'enabled', budget_tokens}` - 4.5 and earlier only.
+   *                  4.7+ and every Claude 5 reject budgets, so the adapter coerces a number to adaptive there (a legacy
+   *                  persisted value, or the Max override pushing the range top).
+   *
+   * - `writeFactoryValue` (16384): what a UI writes when the user turns manual thinking on without picking a budget.
+   *
+   * Side effect: any non-nullish value disables temperature (adaptive/extended thinking rejects it, also via OpenRouter),
+   * so both parameter editors lock the temperature control while thinking is on.
    */
   llmVndAntThinkingBudget: {
     label: 'Thinking Budget',
     type: 'integer',
     description: 'Budget for extended thinking',
     range: [1024, 65536],
-    writeFactoryValue: 16384, // special: '-1' is an out-of-range sentinel for 'adaptive' thinking (hidden, used for 4.6+)
-    nullable: { // null means to not turn on thinking at all, and it's the user-overridden equivalent to the param missing
+    writeFactoryValue: 16384,
+    nullable: {
       meaning: 'Disable extended thinking',
     },
-    // undefined means model default
   },
 
   llmVndAntWebDynamic: { // applies to both web search and web fetch when enabled

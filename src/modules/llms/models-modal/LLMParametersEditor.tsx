@@ -341,6 +341,7 @@ export function LLMParametersEditor(props: {
   const antThinkingEnabled = _antThinkingDefined && !!llmVndAntThinkingBudget; // both mullish mean "off"
   const antThinkingEnabled_Adaptive = antThinkingEnabled && llmVndAntThinkingBudget === -1;
   const antThinkingShown = _antThinkingDefined && !modelParamSpec['llmVndAntThinkingBudget']?.hidden;
+  const antThinkingAdaptiveOnly = modelParamSpec['llmVndAntThinkingBudget']?.initialValue === -1; // 4.6+ adaptive sentinel: a Thinking switch, not a budget slider
   const antInfSpeedTier = modelParamSpec['llmVndAntInfSpeed']?.enumValues?.[0];
   const antInfSpeedMult = antInfSpeedTier && DModelParameterRegistry['llmVndAntInfSpeed'].enumPriceMultiplier?.[antInfSpeedTier];
 
@@ -411,8 +412,22 @@ export function LLMParametersEditor(props: {
     )}
 
 
-    {/* pre-Effort: Anthropic [thinking budget, effort, ...] */}
-    {antThinkingShown && (
+    {/* pre-Effort: Anthropic [thinking switch (adaptive-only models, e.g. Opus 5) | thinking budget, effort, ...] */}
+    {antThinkingShown && antThinkingAdaptiveOnly ? (
+      <FormSwitchControl
+        title='Thinking'
+        description={antThinkingEnabled ? 'Adaptive (model decides)' : 'Off'}
+        tooltip='Adaptive: the model decides when and how much to reason. Off: no reasoning, faster first token, effort capped at High.'
+        checked={antThinkingEnabled}
+        onChange={on => {
+          if (on) onRemoveParameter('llmVndAntThinkingBudget'); // back to the model's initial value (-1, adaptive)
+          else {
+            onChangeParameter({ llmVndAntThinkingBudget: null });
+            if (llmVndAntEffort === 'xhigh' || llmVndAntEffort === 'max') onRemoveParameter('llmVndAntEffort'); // not legal with thinking off
+          }
+        }}
+      />
+    ) : antThinkingShown && (
       <FormSliderControl
         title={antThinkingEnabled ? 'Thinking Budget' : 'Disabled'} ariaLabel='Anthropic Extended Thinking Token Budget'
         description='Tokens'
@@ -449,7 +464,7 @@ export function LLMParametersEditor(props: {
           if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndAntEffort');
           else onChangeParameter({ llmVndAntEffort: value });
         }}
-        options={antEffortOptions}
+        options={antThinkingAdaptiveOnly && !antThinkingEnabled ? antEffortOptions.filter(o => o.value !== 'xhigh' && o.value !== 'max') : antEffortOptions} // xhigh/max need thinking on
       />
     )}
     {/* Gemini Thinking Level */}

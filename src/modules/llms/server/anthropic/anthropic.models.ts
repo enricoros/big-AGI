@@ -53,8 +53,9 @@ const IF_47_R = [...IF_4_R, LLM_IF_HOTFIX_NoTemperature];
 //                              Sonnet 5 (2026-06-29): adaptive-only too, BUT `thinking: {type: 'disabled'}` is allowed (200),
 //                              so it keeps the base + thinking-variant split (like Opus 4.7/4.8); only budget_tokens returns 400.
 //                              Opus 5 (2026-07-24): adaptive-only, thinking ON by default; 'disabled' allowed ONLY at
-//                              effort 'high' or below (xhigh/max + disabled -> 400); budget_tokens -> 400. Shipped as a
-//                              SINGLE always-thinking entry (like Fable 5) - see the model entry for the probe rationale.
+//                              effort 'high' or below (xhigh/max + disabled -> 400); budget_tokens -> 400. Single entry
+//                              with the param VISIBLE as a Thinking switch (-1 adaptive / null off); the adapter clamps
+//                              effort to 'high' when off.
 //                              Fable/Mythos 5.1 (2026-09-01): as Fable 5; preserved thinking is handled in the AIX adapter.
 //                              Opus 5.5 (2026-09-22): as Fable 5.1 ('disabled' and budget_tokens 400 at every effort); default effort 'medium'.
 // - llmVndAntWebFetch/Search   seem an API feature available on all models
@@ -84,7 +85,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
 
   // NOTE: what's not redefined below is inherited from the underlying model definition
 
-  // NOTE: no 'claude-opus-5' variant here - Opus 5 ships as a SINGLE always-thinking entry (like Fable 5), see below
+  // NOTE: no 'claude-opus-5' variant here - Opus 5 is a single entry whose Thinking switch is user-facing (see the entry)
 
   // Claude Sonnet 5 thinking variant (Claude 5 gen, adaptive-only; base allows disabling thinking)
   'claude-sonnet-5': {
@@ -382,12 +383,12 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     benchmark: { cbaElo: 1506 + 1 }, // (no arena data yet) assuming: claude-fable-5 + 1
   },
 
-  // Claude Opus 5 - SINGLE always-thinking entry (like Fable 5), NOT a base + '(Adaptive)' split.
-  // Rationale (2026-07-24 live param-space probe): thinking is ON by default and adaptive spends 0 thinking
-  // tokens on trivial turns (probed: effort max on a trivial prompt -> thinking_toks=0), so a non-thinking
-  // entry buys nothing; `thinking:{type:'disabled'}` does exist BUT is capped at effort 'high' or below
-  // (xhigh/max + disabled -> 400) and docs warn it can emit tool calls as plain text - a degraded niche we
-  // deliberately don't surface. Effort is the one control Anthropic intends; revisit if users ask for disabled.
+  // Claude Opus 5 - single entry with a user-facing Thinking switch (no base + '(Adaptive)' split): thinking is ON by
+  // default, and Opus 5 is the only Claude 5 Opus that accepts `thinking:{type:'disabled'}` (5.5 rejects it at every
+  // effort). Off is legal at effort 'high' or below only (xhigh/max -> 400; the AIX adapter clamps), sampling params stay
+  // rejected, and docs warn of tool calls leaking as text on tool-heavy loads. Probed 2026-09-23: adaptive at low..high
+  // thinks on most non-trivial short prompts but only ~10-35 tokens; off buys ~1.3s of time-to-first-token, not cost.
+  // Users wanting an always-instant model duplicate the model and flip the switch (asked in PR #1223).
   {
     id: 'claude-opus-5', // Active - 2026-07-24
     label: 'Claude Opus 5',
@@ -397,8 +398,8 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     maxCompletionTokens: 128000,
     interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch], // reasoning on the base model: thinking on by default
     parameterSpecs: [
-      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - explicit `adaptive` equals the default; budget_tokens returns 400 */ },
-      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }, // full ladder (API-confirmed); default 'high'; docs: set large max_tokens at xhigh/max
+      { paramId: 'llmVndAntThinkingBudget', initialValue: -1 /* VISIBLE Thinking switch: -1 adaptive (the API default), null off; budget_tokens returns 400 */ },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }, // full ladder (API-confirmed); default 'high'; docs: set large max_tokens at xhigh/max; xhigh/max need thinking on (editor hides them, adapter clamps)
       { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // fast mode: research preview, API only, waitlist-gated; $10/$50 2x tier (same as 4.8)
       ...ANT_TOOLS_DYNAMIC,
     ],

@@ -365,10 +365,14 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     if (isTunneledAnt) {
       // Effort -> OpenRouter verbosity -> Anthropic upstream output_config.effort
       // OR verbosity supports low/medium/high/xhigh/max (2026-04-16). 'none'/'minimal' are OpenAI-only.
-      const antEffort = model.reasoningEffort; // ?? model.vndAntEffort;
+      const antThinkingOff = model.vndAntThinkingBudget === null;
+      let antEffort = model.reasoningEffort; // ?? model.vndAntEffort;
       if (antEffort) {
         if (antEffort === 'none' || antEffort === 'minimal') // domain validation
           throw new Error(`OpenRouter->Anthropic API does not support '${antEffort}' reasoning effort`);
+        // [2026-09-23, probed via OR] Opus 5 with thinking off accepts effort <= 'high' only (xhigh/max -> upstream 400) - clamp
+        if (antThinkingOff && (antEffort === 'xhigh' || antEffort === 'max'))
+          antEffort = 'high';
         payload.verbosity = antEffort;
       }
 
@@ -376,14 +380,16 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       // vndAntThinkingBudget's presence indicates a user preference:
       // - 'adaptive': adaptive thinking (4.6+) - reasoning enabled, no explicit budget
       // - a number: explicit token budget (1024-32000)
-      // - null: disable thinking (don't set reasoning field)
+      // - null: thinking off - explicit `enabled: false`; omitting the field lets on-by-default models (Opus 5) think (probed 2026-09-23)
+      // - undefined: no preference (field omitted, the model's default)
       if (model.vndAntThinkingBudget === 'adaptive') {
         payload.reasoning = { enabled: true };
         delete payload.temperature;
       } else if (typeof model.vndAntThinkingBudget === 'number') {
         payload.reasoning = { enabled: true, max_tokens: model.vndAntThinkingBudget };
         delete payload.temperature;
-      } else /* null or undefined */ {
+      } else if (antThinkingOff) {
+        payload.reasoning = { enabled: false };
         // NOTE: with thinking disabled (null), we can still use temperature, so we don't delete it
         //       see the note on llms.parameters.ts: 'llmVndAntThinkingBudget'
       }
