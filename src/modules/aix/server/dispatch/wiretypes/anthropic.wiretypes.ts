@@ -332,7 +332,7 @@ export namespace AnthropicWire_Blocks {
     ]),
     input: z.union([
       z.object({ query: z.string() }), // web_search
-      z.object({ url: z.string() }), // web_fetch
+      z.object({ url: z.string(), use_cache: z.boolean().optional() }), // web_fetch (use_cache: the model's per-call cache bypass, seen 2026-09-24 on the _20260318 tool)
       z.object({ code: z.string() }), // code_execution
       z.object({ command: z.string() }), // bash_code_execution
       z.object({ command: z.string(), path: z.string() }), // text_editor_code_execution (+ file_text, old_str, new_str, view_range, etc.)
