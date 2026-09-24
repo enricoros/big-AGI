@@ -18,7 +18,7 @@ import { WireOpenRouterCreateImagesRequest, wireOpenRouterCreateImagesResponseSc
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
-import { openAIAccess, OpenAIAccessSchema, openAIAccessSchema, OPENAI_API_PATHS, OPENROUTER_API_PATHS } from './openai.access';
+import { OPENAI_API_PATHS, openAIAccess, openAIAccessSchema, OpenAIAccessSchema, OPENROUTER_API_PATHS } from './openai.access';
 
 
 // Router Input/Output Schemas
@@ -351,6 +351,9 @@ export const llmOpenAIRouter = createTRPCRouter({
             model: config.model,
             prompt: config.prompt,
             ...(config.count > 1 && { n: config.count }), // note: the current client fans out count=1 requests instead, as most models cap n at 1
+            // least-strict content filters: BFL safety_tolerance 0-5 (default 2; >5 needs BFL authorization), OpenAI as the direct GPT Image default
+            ...(config.model.startsWith('black-forest-labs/') && { provider: { options: { 'black-forest-labs': { safety_tolerance: 5 } } } }),
+            ...(config.model.startsWith('openai/') && { provider: { options: { 'openai': { moderation: 'low' } } } }),
           },
           OPENROUTER_API_PATHS.images,
           signal,

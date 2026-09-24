@@ -139,6 +139,10 @@ export const wireOpenRouterCreateImagesRequestSchema = z.object({
   model: z.string(),
   prompt: z.string(),
   n: z.number().min(1).max(10).optional(),
+  // passthrough params keyed by provider slug; accepted keys per endpoint: GET /api/v1/images/models/{id}/endpoints -> allowed_passthrough_parameters
+  provider: z.object({
+    options: z.record(z.string(), z.record(z.string(), z.unknown())),
+  }).optional(),
 });
 
 export type WireOpenRouterCreateImagesResponse = z.infer<typeof wireOpenRouterCreateImagesResponseSchema>;
