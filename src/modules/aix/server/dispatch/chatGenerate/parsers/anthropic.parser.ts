@@ -162,7 +162,15 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         if (!responseMessage)
           throw new Error('Unexpected content_block_start');
 
-        const { index: requestedIndex, content_block: contentBlock } = AnthropicWire_API_Message_Create.event_ContentBlockStart_schema.parse(JSON.parse(eventData));
+        const rawEvent = JSON.parse(eventData);
+        const { index: requestedIndex, content_block: contentBlock } = AnthropicWire_API_Message_Create.event_ContentBlockStart_schema.parse(rawEvent);
+
+        // Echo fidelity: the parse strips fields the schema doesn't declare, but this block is echoed verbatim on a
+        // pause_turn continuation, where preserved thinking binds every later thinking block to the turn's content
+        // as generated - restore the raw fields so the echo is the server's block (deltas still accumulate below).
+        // The stripped fields are also reported (throws in dev, warns in prod) so schema drift is seen, not hidden.
+        _reportStrippedBlockFields(rawEvent.content_block, contentBlock);
+        Object.assign(contentBlock, rawEvent.content_block);
 
         // [Anthropic, 2026-01-12] Block Start Index issue
         let index = requestedIndex;
@@ -361,6 +369,11 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             // Citations arrive incrementally during streaming - add to current text block
             if (contentBlock.type === 'text') {
               const citation = delta.citation;
+              // Keep the citation on the accumulated block: a pause_turn continuation echoes this block, and the
+              // preserved-thinking check binds every later thinking block to the turn's content as generated -
+              // a cited text block replayed without its citations reads as an edit and drops all thinking after it
+              // (verified 2026-09-23: 'prefix_binding_mismatch' on the next thinking block; clean with citations kept)
+              (contentBlock.citations ??= []).push(citation);
               if (citation.type === 'web_search_result_location') {
                 // Web search citation from server-side search
                 pt.appendUrlCitation(
@@ -541,6 +554,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
   return function(pt: IParticleTransmitter, fullData: string /*, eventName?: string, context?: ChatGenerateParseContext */): void {
 
     // parse with validation (e.g. type: 'message' && role: 'assistant')
+    const rawResponse = JSON.parse(fullData);
     const {
       model,
       content,
@@ -549,7 +563,13 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
       stop_details,
       usage,
       input_transformations,
-    } = AnthropicWire_API_Message_Create.Response_schema.parse(JSON.parse(fullData));
+    } = AnthropicWire_API_Message_Create.Response_schema.parse(rawResponse);
+
+    // Echo fidelity (see the streaming parser): the blocks are echoed verbatim on a pause_turn continuation
+    content.forEach((block, i) => {
+      _reportStrippedBlockFields(rawResponse.content[i], block);
+      Object.assign(block, rawResponse.content[i]);
+    });
 
     // -> Model
     if (model)
@@ -723,6 +743,36 @@ function _emitContainerState(pt: IParticleTransmitter, container: { id: string; 
     vendor: 'anthropic',
     state: { container: { id: container.id, expiresAt: container.expires_at } },
   });
+}
+
+/**
+ * Schema drift detector: fields the response carried (non-null) that the wire schema stripped. The echo restores
+ * them regardless; this makes the drift visible through the resilience channel (throws in dev, warns in prod).
+ */
+function _reportStrippedBlockFields(rawBlock: unknown, parsedBlock: { type: string }): void {
+  const stripped = _collectStrippedPaths(rawBlock, parsedBlock, '', []);
+  if (stripped.length)
+    aixResilientUnknownValue('Anthropic', 'contentBlockFields', { type: parsedBlock.type, stripped });
+}
+
+function _collectStrippedPaths(raw: unknown, parsed: unknown, path: string, out: string[]): string[] {
+  if (Array.isArray(raw)) {
+    if (Array.isArray(parsed))
+      raw.forEach((item, i) => _collectStrippedPaths(item, parsed[i], `${path}[${i}]`, out));
+    return out;
+  }
+  if (raw && typeof raw === 'object') {
+    const parsedObject: Record<string, unknown> = (parsed && typeof parsed === 'object') ? parsed as Record<string, unknown> : {};
+    for (const [key, value] of Object.entries(raw)) {
+      if (value === null || value === undefined) continue; // a stripped null carries nothing (verified: not an edit for the API either)
+      const keyPath = path ? `${path}.${key}` : key;
+      if (!(key in parsedObject))
+        out.push(keyPath);
+      else
+        _collectStrippedPaths(value, parsedObject[key], keyPath, out);
+    }
+  }
+  return out;
 }
 
 /** [2026-09-01] Preserved thinking: relay the replayed thinking blocks the API dropped, as one void notice per vendor reason (normalized to an AIX cause). */
@@ -1105,7 +1155,7 @@ function _handleCBS_ToolSearchToolResult(pt: IParticleTransmitter, block: Extrac
 function _createAnthropicPauseTurnContinuation(
   accumulatedContent: AnthropicWire_API_Message_Create.Response['content'],
   containerId: string | undefined,
-): { reason: string; mutateBody: (body: Record<string, unknown>) => Record<string, unknown> } {
+): DispatchContinuationSignal['continuation'] {
   return {
     reason: 'pause_turn',
     mutateBody(body: Record<string, unknown>): Record<string, unknown> {
