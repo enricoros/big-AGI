@@ -33,7 +33,7 @@ import { BeamCardNotice, BeamModelUnavailable } from '../components/BeamCardNoti
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { BEAM_SHOW_REASONING_ICON, GATHER_COLOR, SCATTER_COLOR, SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.scatter';
+import { rayHasMergeableContent, rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.scatter';
 import { useBeamCardScrolling, useBeamScatterShowLettering } from '../store-module-beam';
 import { messageIssueColor, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 
@@ -173,7 +173,7 @@ export function BeamRay(props: {
   const isSelectable = rayIsSelectable(ray);
   const isSelected = rayIsUserSelected(ray);
   const isImported = rayIsImported(ray);
-  const showUseButtons = isSelectable && !isScattering;
+  const showUseButtons = !isScattering && rayHasMergeableContent(ray); // nothing to copy or use in an empty or error-only reply
   const { removeRay, rayToggleScattering, raySetLlmId } = props.beamStore.getState();
   const { tooltip: rayAvatarTooltip } = useMessageAvatarLabel(ray?.message, 'pro');
   const isOutOfTokens = !isScattering && messageWasOutOfTokens(ray?.message.generator);
