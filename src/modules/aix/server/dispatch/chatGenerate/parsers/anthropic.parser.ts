@@ -1212,7 +1212,7 @@ function _describePausedTurn(content: AnthropicWire_API_Message_Create.Response[
   const calls = new Map<string, { direct: number, nested: number }>();
   let reasoning = 0;
   for (const block of content) {
-    if (!block) continue; // sparse slot
+    if (!block || !AnthropicWire_Messages.isKnownContentBlockOutput(block)) continue; // sparse slot, or a future block type
     if (block.type === 'thinking' || block.type === 'redacted_thinking')
       reasoning++;
     else if (block.type === 'server_tool_use') {
