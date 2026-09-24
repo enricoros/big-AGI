@@ -2,7 +2,7 @@ import type { StoreApi } from 'zustand';
 
 import type { DMessage } from '~/common/stores/chat/chat.message';
 
-import { BRay, rayIsMessageErrorOnly, rayIsScattering, rayIsSelectable } from '../scatter/beam.scatter';
+import { BRay, rayHasMergeableContent, rayIsScattering } from '../scatter/beam.scatter';
 
 
 /**
@@ -27,8 +27,8 @@ import { BRay, rayIsMessageErrorOnly, rayIsScattering, rayIsSelectable } from '.
 
 export function gatherInputsFromRays(rays: BRay[]): { messages: DMessage[], pendingCount: number } {
   return {
-    // the replies to merge: settled, with content, not just an error
-    messages: rays.filter(ray => !rayIsScattering(ray) && rayIsSelectable(ray) && !rayIsMessageErrorOnly(ray)).map(ray => ray.message),
+    // the replies to merge: settled, with content (not empty, not just an error)
+    messages: rays.filter(ray => !rayIsScattering(ray) && rayHasMergeableContent(ray)).map(ray => ray.message),
     // the replies still generating
     pendingCount: rays.filter(rayIsScattering).length,
   };

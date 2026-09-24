@@ -150,14 +150,19 @@ export function rayIsSelectable(ray: BRay | null): boolean {
   return !!ray?.message.fragments.length;
 }
 
-export function rayIsMessageErrorOnly(ray: BRay | null): boolean {
-  if (ray?.message.fragments.length === 1) {
-    const onlyFragment = ray.message.fragments[0];
-    if (isContentFragment(onlyFragment) && isErrorPart(onlyFragment.part))
-      return true;
-  }
-  return false;
+export function rayHasMergeableContent(ray: BRay | null): boolean {
+  // a reply with something to merge: a content fragment that is not an error and not blank text; a void placeholder is not content
+  return !!ray?.message.fragments.some(f => isContentFragment(f) && !isErrorPart(f.part) && !(f.part.pt === 'text' && !f.part.text.trim()));
 }
+
+// export function rayIsMessageErrorOnly(ray: BRay | null): boolean {
+//   if (ray?.message.fragments.length === 1) {
+//     const onlyFragment = ray.message.fragments[0];
+//     if (isContentFragment(onlyFragment) && isErrorPart(onlyFragment.part))
+//       return true;
+//   }
+//   return false;
+// }
 
 export function rayIsUserSelected(ray: BRay | null): boolean {
   return !!ray?.userSelected;
@@ -471,7 +476,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
     // Check if all rays have finished generating
     const hasRays = rays.length > 0;
     const allDone = !rays.some(rayIsScattering);
-    const raysReady = rays.filter(rayIsSelectable).length;
+    const raysReady = rays.filter(ray => rayIsScattering(ray) || rayHasMergeableContent(ray)).length; // what the next merge would have: settled replies with content, plus the ones still generating
 
     // [debug]
     if (SCATTER_DEBUG_STATE)
