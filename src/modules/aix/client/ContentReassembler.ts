@@ -816,10 +816,10 @@ export class ContentReassembler {
     }
   }
 
-  private onAddVoidNotice({ nt, text, detail }: Extract<AixWire_Particles.PartParticleOp, { p: 'vnt' }>): void {
+  private onAddVoidNotice({ nt, text, detail, level }: Extract<AixWire_Particles.PartParticleOp, { p: 'vnt' }>): void {
     // display-only notice at its stream position: close the open text fragment, so later text starts a new one after it
     this.S._textFragmentIndex = null;
-    this._pushFragment(createPlaceholderVoidFragment(text, 'notice', undefined, undefined, detail, nt));
+    this._pushFragment(createPlaceholderVoidFragment(text, 'notice', undefined, undefined, detail, nt, level));
   }
 
   private onAddUrlCitation(urlc: Extract<AixWire_Particles.PartParticleOp, { p: 'urlc' }>): void {

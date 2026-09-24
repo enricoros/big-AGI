@@ -141,6 +141,19 @@ export async function* executeChatGenerateWithContinuation(
             continue;
           }
         }
+        // A dropped-reasoning notice on a continuation turn means the paused turn we sent back was not accepted
+        // as unchanged: the one case this loop must never produce. Mark it so the client renders a warning
+        // instead of the harmless informational chip, with copy asking for a report.
+        if (metricsBase && 'p' in particle && particle.p === 'vnt' && particle.nt === 'input-transform') {
+          const indices = particle.detail?.split('\n').pop();
+          yield {
+            ...particle,
+            level: 'warn',
+            text: `Unexpected ${particle.text.charAt(0).toLowerCase()}${particle.text.slice(1)}`,
+            detail: `The paused turn was sent back for continuation and the API found it changed, so it dropped these reasoning blocks. This should not happen after a pause - please report it with the indices below.${indices ? `\n${indices}` : ''}`,
+          };
+          continue;
+        }
         yield particle;
       }
       return; // normal completion
@@ -177,7 +190,7 @@ export async function* executeChatGenerateWithContinuation(
       if (continuation.notice)
         yield {
           p: 'vnt', nt: 'flow-cont', kind: continuation.notice.kind, turn: turn + 1, text: continuation.notice.text,
-          detail: [continuation.notice.detail, `Continuation ${turn + 1} of up to ${MAX_CONTINUATION_TURNS}.`].filter(Boolean).join('\n'),
+          detail: [continuation.notice.detail, `Continuation ${turn + 1} of up to ${MAX_CONTINUATION_TURNS}.`].filter(Boolean).join('\n\n'),
         };
 
       // Continuation checkpoint - client snapshots accumulator state and shows info placeholder

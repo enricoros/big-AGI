@@ -9,6 +9,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CodeIcon from '@mui/icons-material/Code';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import PauseRoundedIcon from '@mui/icons-material/PauseRounded';
 import RepeatIcon from '@mui/icons-material/Repeat';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
@@ -64,6 +65,15 @@ const _styles = {
     minHeight: '1.5rem', // similar parts, modelOps and paired tools, are 1.75rem
     gap: 1,
     color: 'text.tertiary',
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
+  },
+  noticeChipWarn: {
+    my: '1px',
+    pl: 1.5,
+    pr: 1.75,
+    minHeight: '1.5rem',
+    gap: 1,
     whiteSpace: 'normal',
     wordBreak: 'break-word',
   },
@@ -154,18 +164,21 @@ function RenderChipFollowUp(props: {
 
 // --- Render Notice ---
 
-function RenderChipNotice({ text, detail, fragmentId, onFragmentDelete }: {
+function RenderChipNotice({ text, detail, warn, fragmentId, onFragmentDelete }: {
   text: string,
   detail?: string, // shown on hover
+  warn?: boolean, // the sender judged the notice unexpected: warning color and icon
   fragmentId: DMessageFragmentId,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
 }) {
   const chip = (
     <Chip
       size='sm'
-      startDecorator={<InfoOutlinedIcon />}
+      color={warn ? 'warning' : undefined}
+      variant={warn ? 'soft' : undefined}
+      startDecorator={warn ? <WarningRoundedIcon /> : <InfoOutlinedIcon />}
       endDecorator={!onFragmentDelete ? undefined : <ChipDelete onDelete={() => onFragmentDelete(fragmentId)} />}
-      sx={_styles.noticeChip}
+      sx={warn ? _styles.noticeChipWarn : _styles.noticeChip}
     >
       {text}
     </Chip>
@@ -505,7 +518,7 @@ export function BlockPartPlaceholder({ placeholderPart, contentScaling, messageP
   if (pType === 'notice') return !showNotices ? null : placeholderPart.pNoticeKind === 'flow-cont' ? (
     <RenderDividerNotice text={pText} detail={pDetail} />
   ) : (
-    <RenderChipNotice text={pText} detail={pDetail} fragmentId={fragmentId} onFragmentDelete={onFragmentDelete} />
+    <RenderChipNotice text={pText} detail={pDetail} warn={placeholderPart.pNoticeLevel === 'warn'} fragmentId={fragmentId} onFragmentDelete={onFragmentDelete} />
   );
 
   // 3. Model operation render - stacked list when multiple operations, single chip otherwise

@@ -860,7 +860,7 @@ export namespace AixWire_Particles {
      * - `nt` (notice type) carries the structured facts of each notice, so clients can later filter, log
      *   or render a type specially without re-parsing text; add a variant per new notice, no catch-all
      */
-    | { p: 'vnt', text: string, detail?: string } & (
+    | { p: 'vnt', text: string, detail?: string, level?: 'warn' } & ( // `level` 'warn': the sender judged this notice unexpected (e.g. a reasoning reset inside a paused turn); default is informational
       | { nt: 'input-transform', itt: 'thinking-dropped', cause: 'prefix-changed' | 'model-switch' | (string & {}), reason: string, paths: string[] } // the server rewrote our request: dropped replayed thinking blocks, one particle per vendor reason; `cause` normalizes `reason` (open set), `paths` are wire locations. 'prefix-changed' is deliberately unspecific: the vendor's 'prefix_binding_mismatch' covers system/tools/message edits alike and doesn't say which - don't narrow it to "history edited" in copy, that's provably wrong for tool/system changes. client-side log for now
       | { nt: 'hres-discarded', kind: 'vnd.ant.file', fileId: string, filename?: string } // a provider-hosted file deleted by the Save policy without embedding; it may still exist in the model's sandbox
       | { nt: 'flow-cont', kind: 'vnd.ant.pause_turn', turn: number } // the generation continued in a new upstream request at this point (hosted-tool loop paused itself); rendered as a divider, `turn` is the 1-based continuation count
