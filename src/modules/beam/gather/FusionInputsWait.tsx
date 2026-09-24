@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { Alert, Box, Button, CircularProgress, Typography } from '@mui/joy';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { GATHER_COLOR } from '../beam.config';
@@ -32,8 +33,8 @@ export function FusionInputsWait(props: {
         Waiting for {pendingCount === 1 ? '1 more response' : `${pendingCount} responses`} ...
       </Typography>
       <Box sx={{ display: 'grid', gap: 0.5 }}>
-        <Button color={GATHER_COLOR} disabled={!canMergeNow} onClick={props.inputsWait.mergeNow}>
-          {canMergeNow ? `Proceed with ${readyCount} now` : 'Proceed now'}
+        <Button color={GATHER_COLOR} disabled={!canMergeNow} onClick={props.inputsWait.mergeNow} endDecorator={<PlayArrowRoundedIcon />}>
+          Proceed with just {readyCount}
         </Button>
         {!canMergeNow && <Typography level='body-xs' sx={{ textAlign: 'center' }}>
           (need at least 2)
