@@ -757,10 +757,10 @@ function _emitContainerState(pt: IParticleTransmitter, container: { id: string; 
  * Schema drift detector: fields the response carried (non-null) that the wire schema stripped. The echo restores
  * them regardless; this makes the drift visible through the resilience channel (throws in dev, warns in prod).
  */
-function _reportStrippedBlockFields(rawBlock: unknown, parsedBlock: { type: string }): void {
+function _reportStrippedBlockFields(rawBlock: unknown, parsedBlock: { type: string, name?: string }): void {
   const stripped = _collectStrippedPaths(rawBlock, parsedBlock, '', []);
   if (stripped.length)
-    aixResilientUnknownValue('Anthropic', 'contentBlockFields', { type: parsedBlock.type, stripped });
+    aixResilientUnknownValue('Anthropic', 'contentBlockFields', { type: parsedBlock.type, ...(parsedBlock.name ? { name: parsedBlock.name } : {}), stripped });
 }
 
 function _collectStrippedPaths(raw: unknown, parsed: unknown, path: string, out: string[]): string[] {
@@ -787,6 +787,10 @@ function _collectStrippedPaths(raw: unknown, parsed: unknown, path: string, out:
 function _sendInputTransforms(pt: IParticleTransmitter, transforms: NonNullable<AnthropicWire_API_Message_Create.Response['input_transformations']>): void {
   const pathsByReason = new Map<string, string[]>();
   for (const { type, path, reason } of transforms) {
+    // 'thinking_mismatch_allowed' (observed 2026-09-24): the block failed the binding check but was kept, because the
+    // request set no block_binding (thinking left to the model's default) - informational, nothing was dropped
+    if (type === 'thinking_mismatch_allowed')
+      continue;
     if (type !== 'thinking_dropped') {
       aixResilientUnknownValue('Anthropic', 'inputTransformationType', type);
       continue;
