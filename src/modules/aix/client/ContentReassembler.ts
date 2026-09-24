@@ -30,6 +30,7 @@ const VP_PERSISTENCE_DELAY = 500; // persistence of vision for voidPlaceholders
 
 /** Placeholders the reassembler manages (progress, follow-ups, controls) - 'notice' placeholders are user-dismissed: never auto-removed or recycled */
 const _isTransientPlaceholder = (f: Parameters<typeof isVoidPlaceholderFragment>[0]) => isVoidPlaceholderFragment(f) && f.part.pType !== 'notice';
+const _isPauseDivider = (f: Parameters<typeof isVoidPlaceholderFragment>[0]) => isVoidPlaceholderFragment(f) && f.part.pNoticeKind === 'flow-cont';
 
 /** The status chip of a server retry, see onAixRetryReset */
 const _isRetryStatus = (f: Parameters<typeof isVoidPlaceholderFragment>[0]) => isVoidPlaceholderFragment(f) && f.part.aixControl?.ctl === 'ec-retry';
@@ -905,7 +906,7 @@ export class ContentReassembler {
     // A pause divider ('flow-cont' notice) closes the placeholder before it: an op that started before the pause
     // completes where it started (its result arrives in the continuation), a new op after the divider starts a
     // new placeholder below it - otherwise the continuation's ops would stack above the divider
-    const dividerIdx = this.S.fragments.findLastIndex(f => isVoidPlaceholderFragment(f) && f.part.pNoticeKind === 'flow-cont');
+    const dividerIdx = this.S.fragments.findLastIndex(_isPauseDivider);
     if (phIdx >= 0 && phIdx < dividerIdx) {
       const ph = this.S.fragments[phIdx];
       if (!isVoidPlaceholderFragment(ph) || !ph.part.opLog?.some(e => e.opId === opId))
@@ -1052,17 +1053,27 @@ export class ContentReassembler {
     //   return isVoidPlaceholderFragment(f) && !f.part.opLog?.length;
     // }
     // skip if none
-    if (this.S.fragments.findLastIndex(_isTransientPlaceholder) < 0) return false;
+    if (this._lastRemovableTransientPlaceholderIdx() < 0) return false;
 
     // delay before removal
     await new Promise(resolve => setTimeout(resolve, VP_PERSISTENCE_DELAY));
 
     // for stability, search the fragment Index again - this must not have changed, as any mutation would be queued to
     // this awaited function, but better safe than sorry
-    const idx = this.S.fragments.findLastIndex(_isTransientPlaceholder);
+    const idx = this._lastRemovableTransientPlaceholderIdx();
     if (idx < 0) return true; // already removed during the delay
     this._spliceFragment(idx);
     return true;
+  }
+
+  /**
+   * The last transient placeholder, unless a pause divider sits after it: the divider closes the placeholders before
+   * it (they stay until finalization, like onSetOperationState leaves them). Without this bound, every text particle
+   * of the continuation removes one more placeholder walking up the message, and the pre-pause ops list disappears.
+   */
+  private _lastRemovableTransientPlaceholderIdx(): number {
+    const idx = this.S.fragments.findLastIndex(_isTransientPlaceholder);
+    return idx < this.S.fragments.findLastIndex(_isPauseDivider) ? -1 : idx;
   }
 
 
