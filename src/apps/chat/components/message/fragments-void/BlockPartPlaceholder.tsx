@@ -78,12 +78,8 @@ const _styles = {
     wordBreak: 'break-word',
   },
 
-  divider: {
-    my: 1,
-    '--Divider-childPosition': '50%',
-  },
   dividerChip: {
-    my: '1px',
+    my: 1,
     pl: 1.5,
     pr: 1.75,
     minHeight: '1.5rem',
@@ -93,10 +89,10 @@ const _styles = {
   },
   dividerCode: {
     fontFamily: 'code',
-    fontSize: 'xs',
   },
   dividerDetail: {
-    maxWidth: 480,
+    maxWidth: 720,
+    color: 'text.primary',
     fontSize: 'xs',
   },
 
@@ -189,15 +185,15 @@ function RenderChipNotice({ text, detail, warn, fragmentId, onFragmentDelete }: 
 /** Flow divider: the generation continued in a new upstream request here (e.g. Anthropic `pause_turn`); `code` spans in the text render monospaced */
 function RenderDividerNotice({ text, detail }: { text: string, detail?: string }) {
   const chip = (
-    <Chip size='sm' variant='soft' color='neutral' startDecorator={<PauseRoundedIcon />} sx={_styles.dividerChip}>
+    <Chip size='sm' startDecorator={<PauseRoundedIcon />} sx={_styles.dividerChip}>
       {text.split('`').map((segment, i) => i % 2 ? <Box key={i} component='span' sx={_styles.dividerCode}>{segment}</Box> : segment)}
     </Chip>
   );
   const detailLines = detail?.split('\n');
   return (
-    <Divider sx={_styles.divider}>
+    <Divider>
       {!detailLines ? chip : (
-        <TooltipOutlined title={<Box sx={_styles.dividerDetail}>{detailLines.map((line, i) => <div key={i}>{line}</div>)}</Box>}>
+        <TooltipOutlined size='lg' color='success' enableInteractive title={<Box sx={_styles.dividerDetail}>{detailLines.map((line, i) => <div key={i}>{line}</div>)}</Box>}>
           {chip}
         </TooltipOutlined>
       )}
