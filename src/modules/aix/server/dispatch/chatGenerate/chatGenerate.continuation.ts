@@ -6,7 +6,7 @@ import { executeChatGenerateWithOperationRetry } from './chatGenerate.operation-
 
 
 // configuration
-const MAX_CONTINUATION_TURNS = 10; // this is the outer loop count, on top of the default inner loop count of each operation (i.e. 10 for Anthropic, for a total of 100 steps)
+const MAX_CONTINUATION_TURNS = 100; // this is the outer loop count, on top of the default inner loop count of each operation (i.e. 10 for Anthropic, for a total of 100 steps)
 const DEBUG_CONTINUATION = true;
 
 
@@ -24,11 +24,33 @@ export class DispatchContinuationSignal extends Error {
 
   constructor(readonly continuation: {
     readonly reason: string;
+    /** Display-only divider the client renders at the pause point, named by the vendor; never sent upstream. */
+    readonly notice?: { kind: 'vnd.ant.pause_turn', text: string, detail?: string };
     mutateBody(body: Record<string, unknown>): Record<string, unknown>;
   }) {
     super(`dispatch-continuation: ${continuation.reason}`);
     Object.setPrototypeOf(this, DispatchContinuationSignal.prototype);
   }
+}
+
+
+// --- Continuation Metrics ---
+
+const _ADDITIVE_METRICS = ['TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', 'nWebSearch', 'dtInner', 'dtAll', '$cReported'] as const;
+
+/** Running total across continuation turns: counts and durations add up, the first byte time is the generation's, the rate follows the totals, the rest is last-wins. */
+function _sumContinuationMetrics(base: AixWire_Particles.CGSelectMetrics, turn: AixWire_Particles.CGSelectMetrics): AixWire_Particles.CGSelectMetrics {
+  const sum: AixWire_Particles.CGSelectMetrics = { ...base, ...turn };
+  for (const key of _ADDITIVE_METRICS) {
+    const b = base[key], t = turn[key];
+    if (b !== undefined || t !== undefined)
+      sum[key] = (b ?? 0) + (t ?? 0);
+  }
+  if (base.dtStart !== undefined)
+    sum.dtStart = base.dtStart;
+  if (sum.TOut !== undefined && sum.dtInner)
+    sum.vTOutInner = Math.round(sum.TOut / (sum.dtInner / 1000) * 100) / 100;
+  return sum;
 }
 
 
@@ -101,10 +123,26 @@ export async function* executeChatGenerateWithContinuation(
 
   let currentCreator = dispatchCreatorFn;
 
+  // Metrics: every continuation turn is its own upstream request with its own usage, and each dispatch reports
+  // full snapshots of its own - present the running total instead, so the message and the analytics see the
+  // whole generation (a paused research turn re-reads its context on every server iteration: the cached tokens
+  // of the earlier turns are the bulk of the bill)
+  let metricsBase: AixWire_Particles.CGSelectMetrics | undefined = undefined;
+  let metricsTurn: AixWire_Particles.CGSelectMetrics | undefined = undefined;
+
   for (let turn = 0; turn <= MAX_CONTINUATION_TURNS; turn++) {
     try {
 
-      yield* executeChatGenerateWithOperationRetry(currentCreator, abortSignal, _d);
+      for await (const particle of executeChatGenerateWithOperationRetry(currentCreator, abortSignal, _d)) {
+        if ('cg' in particle && particle.cg === 'set-metrics') {
+          metricsTurn = particle.metrics;
+          if (metricsBase) {
+            yield { ...particle, metrics: _sumContinuationMetrics(metricsBase, particle.metrics) };
+            continue;
+          }
+        }
+        yield particle;
+      }
       return; // normal completion
 
     } catch (error) {
@@ -130,6 +168,17 @@ export async function* executeChatGenerateWithContinuation(
           dispatch.request.body = continuation.mutateBody(dispatch.request.body as Record<string, unknown>);
         return dispatch;
       };
+
+      // this turn's usage joins the base the next request's snapshots are added to
+      metricsBase = _sumContinuationMetrics(metricsBase ?? {}, metricsTurn ?? {});
+      metricsTurn = undefined;
+
+      // Divider at the pause point - yielded before the checkpoint, so a retried continuation keeps it
+      if (continuation.notice)
+        yield {
+          p: 'vnt', nt: 'flow-cont', kind: continuation.notice.kind, turn: turn + 1, text: continuation.notice.text,
+          detail: [continuation.notice.detail, `Continuation ${turn + 1} of up to ${MAX_CONTINUATION_TURNS}.`].filter(Boolean).join('\n'),
+        };
 
       // Continuation checkpoint - client snapshots accumulator state and shows info placeholder
       yield { cg: 'aix-info', ait: 'flow-cont', text: `Continuing (${turn + 1}/${MAX_CONTINUATION_TURNS})...` };

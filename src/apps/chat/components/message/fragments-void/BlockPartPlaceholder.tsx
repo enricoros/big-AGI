@@ -9,10 +9,12 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CodeIcon from '@mui/icons-material/Code';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import PauseRoundedIcon from '@mui/icons-material/PauseRounded';
 import RepeatIcon from '@mui/icons-material/Repeat';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 
 import { BlocksContainer } from '~/modules/blocks/BlocksContainers';
+import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { RenderCodeMemo } from '~/modules/blocks/code/RenderCode';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
@@ -64,6 +66,28 @@ const _styles = {
     color: 'text.tertiary',
     whiteSpace: 'normal',
     wordBreak: 'break-word',
+  },
+
+  divider: {
+    my: 1,
+    '--Divider-childPosition': '50%',
+  },
+  dividerChip: {
+    my: '1px',
+    pl: 1.5,
+    pr: 1.75,
+    minHeight: '1.5rem',
+    gap: 1,
+    color: 'text.tertiary',
+    whiteSpace: 'nowrap',
+  },
+  dividerCode: {
+    fontFamily: 'code',
+    fontSize: 'xs',
+  },
+  dividerDetail: {
+    maxWidth: 480,
+    fontSize: 'xs',
   },
 
   opList: {
@@ -147,6 +171,25 @@ function RenderChipNotice({ text, detail, fragmentId, onFragmentDelete }: {
     </Chip>
   );
   return !detail ? chip : <Tooltip title={detail} variant='outlined' placement='top' arrow sx={_styles.opChipTooltip}>{chip}</Tooltip>;
+}
+
+/** Flow divider: the generation continued in a new upstream request here (e.g. Anthropic `pause_turn`); `code` spans in the text render monospaced */
+function RenderDividerNotice({ text, detail }: { text: string, detail?: string }) {
+  const chip = (
+    <Chip size='sm' variant='soft' color='neutral' startDecorator={<PauseRoundedIcon />} sx={_styles.dividerChip}>
+      {text.split('`').map((segment, i) => i % 2 ? <Box key={i} component='span' sx={_styles.dividerCode}>{segment}</Box> : segment)}
+    </Chip>
+  );
+  const detailLines = detail?.split('\n');
+  return (
+    <Divider sx={_styles.divider}>
+      {!detailLines ? chip : (
+        <TooltipOutlined title={<Box sx={_styles.dividerDetail}>{detailLines.map((line, i) => <div key={i}>{line}</div>)}</Box>}>
+          {chip}
+        </TooltipOutlined>
+      )}
+    </Divider>
+  );
 }
 
 
@@ -458,8 +501,10 @@ export function BlockPartPlaceholder({ placeholderPart, contentScaling, messageP
   if (aixControl?.ctl)
     return <RenderChipAixControl text={pText} aixControl={aixControl} />;
 
-  // 2b. Neutral dismissible notice (e.g. earlier reasoning dropped)
-  if (pType === 'notice') return !showNotices ? null : (
+  // 2b. Neutral dismissible notice (e.g. earlier reasoning dropped), or a flow divider (the generation continued in a new request here)
+  if (pType === 'notice') return !showNotices ? null : placeholderPart.pNoticeKind === 'flow-cont' ? (
+    <RenderDividerNotice text={pText} detail={pDetail} />
+  ) : (
     <RenderChipNotice text={pText} detail={pDetail} fragmentId={fragmentId} onFragmentDelete={onFragmentDelete} />
   );
 

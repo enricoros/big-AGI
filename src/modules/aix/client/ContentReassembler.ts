@@ -442,6 +442,10 @@ export class ContentReassembler {
               // Continuation checkpoint: create a snapshot now
               this.checkpointState = structuredClone(this.S);
               if (DEBUG_FLOW) console.log(`[DEV] [flow] checkpoint created: ${this.S.fragments.length} fragments snapshotted`);
+              // the pause divider (a 'flow-cont' notice, yielded just before) already marks this point - no transient chip then
+              const lastFragment = this.S.fragments[this.S.fragments.length - 1];
+              if (lastFragment && isVoidPlaceholderFragment(lastFragment) && lastFragment.part.pNoticeKind === 'flow-cont')
+                break;
             } else
               await this._removeLastVoidPlaceholderDelayed();
             this.onAixInfo(op); // creates a voidPlaceholder

@@ -90,6 +90,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
   let timeToFirstEvent: number;
   let messageStartTime: number | undefined = undefined;
   let chatInTokens: number | undefined = undefined;
+  let lastUsage: Parameters<typeof _fromAnthropicUsage>[0] | undefined = undefined; // the request's final usage, for the pause divider
   let needsTextSeparator = false; // insert text separator when text follows server tool
 
   let elideFirstTextBlock = hotFixAntElideLeadingDoubleNewline;
@@ -437,6 +438,8 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         const { delta, usage } = AnthropicWire_API_Message_Create.event_MessageDelta_schema.parse(JSON.parse(eventData));
 
         Object.assign(responseMessage, delta);
+        if (usage)
+          lastUsage = usage;
 
         // -> Container state update - arrives here when container was created mid-stream
         if (delta.container)
@@ -481,7 +484,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
         // Continuation: when pause_turn, throw to trigger re-dispatch with accumulated content
         if (responseMessage.stop_reason === 'pause_turn')
           throw new DispatchContinuationSignal(
-            _createAnthropicPauseTurnContinuation(responseMessage.content, responseMessage.container?.id),
+            _createAnthropicPauseTurnContinuation(responseMessage.content, responseMessage.container?.id, lastUsage),
           );
 
         return pt.setDialectEnded('done-dialect'); // Anthropic: stop message
@@ -701,7 +704,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     // Continuation: when pause_turn, throw to trigger re-dispatch with accumulated content
     if (stop_reason === 'pause_turn')
       throw new DispatchContinuationSignal(
-        _createAnthropicPauseTurnContinuation(content, container?.id),
+        _createAnthropicPauseTurnContinuation(content, container?.id, usage ?? undefined),
       );
 
     // -> Token Stop Reason (pause_turn already thrown above)
@@ -1155,9 +1158,15 @@ function _handleCBS_ToolSearchToolResult(pt: IParticleTransmitter, block: Extrac
 function _createAnthropicPauseTurnContinuation(
   accumulatedContent: AnthropicWire_API_Message_Create.Response['content'],
   containerId: string | undefined,
+  usage: Parameters<typeof _fromAnthropicUsage>[0] | undefined,
 ): DispatchContinuationSignal['continuation'] {
   return {
     reason: 'pause_turn',
+    notice: {
+      kind: 'vnd.ant.pause_turn',
+      text: 'Anthropic `pause_turn`',
+      detail: _describePausedTurn(accumulatedContent, usage),
+    },
     mutateBody(body: Record<string, unknown>): Record<string, unknown> {
       const messages = [...(body.messages as { role: string; content: unknown }[])];
 
@@ -1197,6 +1206,29 @@ function _createAnthropicPauseTurnContinuation(
   };
 }
 
+
+/** The pause divider's detail: what the paused request did (hosted calls by tool, direct vs from code), its size, and its own token usage. */
+function _describePausedTurn(content: AnthropicWire_API_Message_Create.Response['content'], usage: Parameters<typeof _fromAnthropicUsage>[0] | undefined): string {
+  const calls = new Map<string, { direct: number, nested: number }>();
+  let reasoning = 0;
+  for (const block of content) {
+    if (!block) continue; // sparse slot
+    if (block.type === 'thinking' || block.type === 'redacted_thinking')
+      reasoning++;
+    else if (block.type === 'server_tool_use') {
+      const count = calls.get(block.name) ?? { direct: 0, nested: 0 };
+      if (block.caller && block.caller.type !== 'direct') count.nested++;
+      else count.direct++;
+      calls.set(block.name, count);
+    }
+  }
+  const n = (v: number | null | undefined) => (v ?? 0).toLocaleString('en-US');
+  const total = [...calls.values()].reduce((acc, c) => acc + c.direct + c.nested, 0);
+  const byTool = [...calls].map(([name, c]) => `${name} ${c.direct + c.nested}${c.nested ? ` (${c.nested} from code)` : ''}`).join(', ');
+  return `Anthropic paused its hosted-tool loop after ${total} tool call${total === 1 ? '' : 's'} in this request${byTool ? ` (${byTool})` : ''}: ${content.length} blocks, ${reasoning} reasoning.`
+    + `\nThe partial turn was sent back unchanged and the model continued in a new request.`
+    + (usage ? `\nTokens this request: ${n(usage.input_tokens)} in, ${n(usage.cache_read_input_tokens)} cached, ${n(usage.output_tokens)} out.` : '');
+}
 
 /** Usage -> counts, tool calls, served tier. One mapper for message_start, message_delta (final) and the non-streaming response. input_tokens excludes the cache classes. */
 function _fromAnthropicUsage(usage: {

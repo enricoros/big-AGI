@@ -318,7 +318,7 @@ export type DVoidPlaceholderPart = {
   pType?:
     | 'chat-gen-follow-up'   // a follow-up is being generated
     | 'notice',              // neutral dismissible notice (e.g. earlier reasoning dropped): survives generation, deleted by the user
-  pNoticeKind?: 'input-transform' | 'hres-discarded', // for 'notice': the AIX notice type it came from, for per-kind UI policy (e.g. input-transform yields to errors)
+  pNoticeKind?: 'input-transform' | 'hres-discarded' | 'flow-cont', // for 'notice': the AIX notice type it came from, for per-kind UI policy (e.g. input-transform yields to errors, flow-cont renders as a divider)
 
   // operation history for stacked progress UI
   opLog?: readonly DVoidPlaceholderMOp[],
