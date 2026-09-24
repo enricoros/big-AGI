@@ -900,7 +900,18 @@ export class ContentReassembler {
       cts: anchorCts,
     };
 
-    const phIdx = this.S.fragments.findLastIndex(_isTransientPlaceholder);
+    let phIdx = this.S.fragments.findLastIndex(_isTransientPlaceholder);
+
+    // A pause divider ('flow-cont' notice) closes the placeholder before it: an op that started before the pause
+    // completes where it started (its result arrives in the continuation), a new op after the divider starts a
+    // new placeholder below it - otherwise the continuation's ops would stack above the divider
+    const dividerIdx = this.S.fragments.findLastIndex(f => isVoidPlaceholderFragment(f) && f.part.pNoticeKind === 'flow-cont');
+    if (phIdx >= 0 && phIdx < dividerIdx) {
+      const ph = this.S.fragments[phIdx];
+      if (!isVoidPlaceholderFragment(ph) || !ph.part.opLog?.some(e => e.opId === opId))
+        phIdx = -1;
+    }
+
     if (phIdx < 0) {
 
       // New placeholder with initial opLog entry (root level = 0)
