@@ -34,6 +34,8 @@ Every parser fills the same particle (`AixWire_Particles.CGSelectMetrics`):
 | `TCacheWrite` | cache writes | `input_tokens_details.cache_write_tokens` | `cache_creation_input_tokens` | never | never |
 | `TOut`, `TOutR` | output, reasoning subset | `output_tokens`, `reasoning_tokens` | `output_tokens`, `thinking_tokens` | `candidatesTokenCount + thoughtsTokenCount` | as OpenAI |
 | `nWebSearch` | billed searches | `tool_usage.web_search.num_requests` | `server_tool_use.web_search_requests` | `groundingMetadata.webSearchQueries.length` | `server_side_tool_usage_details` web + X search |
+| `nWebFetch` | fetches (count only, no per-call fee) | - | `server_tool_use.web_fetch_requests` | - | - |
+| `nCodeExec` | code executions (count only; containers bill by time) | - | `server_tool_use` blocks named `code_execution`, `bash_code_execution`, `text_editor_code_execution` (usage carries no count) | `executableCode` parts | - |
 | `$xPrice` | served-tier multiplier | `service_tier`: default 1, flex 0.5, fast 2 (2.5 on GPT-5.5; `priority` is served as `fast`) | batch 0.5 x geo-us 1.1; absent when `speed: fast` | `usageMetadata.serviceTier`: flex/batch 0.5, priority 1.8 | `service_tier` |
 | `$cReported` | exact charge, cents | - | - | - | `cost_in_usd_ticks` / 1e10 (OpenRouter `cost`, Perplexity `total_cost` on Chat Completions) |
 
@@ -74,7 +76,8 @@ Parameter-side multipliers (`enumPriceMultiplier` in the parameter registry) pre
 ## Persistence
 
 - Model pricing: `app-models` localStorage, no version bump. A def-file change rolls the vendor's defs bucket and clients re-list, which replaces the persisted pricing.
-- Message metrics: additive optional fields only (`$cIn`, `$cCacheR`, `$cCacheW`, `$cOut`, `$cTools`, `$xPrice`, `nWebSearch`); older messages lack them.
+- Message metrics: additive optional fields only (`$cIn`, `$cCacheR`, `$cCacheW`, `$cOut`, `$cTools`, `$xPrice`, `nWebSearch`, `nWebFetch`, `nCodeExec`); older messages lack them.
+- Message tooltip: hosted tool counts on their own "Tools:" row, so the Tokens line stays one line.
 
 ## Verification
 

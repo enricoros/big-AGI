@@ -36,7 +36,7 @@ export class DispatchContinuationSignal extends Error {
 
 // --- Continuation Metrics ---
 
-const _ADDITIVE_METRICS = ['TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', 'nWebSearch', 'dtInner', 'dtAll', '$cReported'] as const;
+const _ADDITIVE_METRICS = ['TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', 'nWebSearch', 'nWebFetch', 'nCodeExec', 'dtInner', 'dtAll', '$cReported'] as const;
 
 /** Running total across continuation turns: counts and durations add up, the first byte time is the generation's, the rate follows the totals, the rest is last-wins. */
 function _sumContinuationMetrics(base: AixWire_Particles.CGSelectMetrics, turn: AixWire_Particles.CGSelectMetrics): AixWire_Particles.CGSelectMetrics {

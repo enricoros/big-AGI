@@ -37,6 +37,8 @@ type MetricsChatGenerateTokens = {
 
   // n = Counts (per-call billed server tools)
   nWebSearch?: number,  // web searches executed - OpenAI tool_usage, Anthropic server_tool_use, xAI server-side tools, Gemini grounding queries
+  nWebFetch?: number,   // web fetches executed - Anthropic server_tool_use
+  nCodeExec?: number,   // hosted code executions - Anthropic code_execution and its container sub-tools, Gemini executableCode
 
   // If set, indicates unreliability or Stop Reason (sR)
   TsR?:
@@ -134,7 +136,7 @@ export function metricsFinishChatGenerateLg(metrics: DMetricsChatGenerate_Lg | u
 
 const _MD_OPTIONAL_KEYS: readonly (keyof DMetricsChatGenerate_Md)[] = [
   '$c', '$cReported', '$cdCache', '$cIn', '$cCacheR', '$cCacheW', '$cOut', '$cTools', '$xPrice', '$code', // select costs
-  'TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', 'nWebSearch', // select token and call counts
+  'TIn', 'TCacheRead', 'TCacheWrite', 'TOut', 'TOutR', 'nWebSearch', 'nWebFetch', 'nCodeExec', // select token and call counts
   'dtAll', 'dtStart', 'vTOutInner', 'dtWall', // select token timings/velocities
   'TsR', // stop reason
 ];

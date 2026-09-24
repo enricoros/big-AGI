@@ -43,6 +43,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
   let collapsedTextPartForReasoning = false;
   let skipComputingTotalsOnce = isStreaming;
   let groundingIndexNumber = 0;
+  let nCodeExec = 0;
 
   // this can throw, it's caught by the caller
   return function(pt: IParticleTransmitter, rawEventData: string): void {
@@ -246,6 +247,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
             if (DEV_DEBUG_MISSING_IDS && !mPart.executableCode.id)
               console.log('[DEV] Gemini executableCode missing id');
             pt.addCodeExecutionInvocation(mPart.executableCode.id ?? null, mPart.executableCode.language || '', mPart.executableCode.code || '', 'gemini_auto_inline');
+            pt.updateMetrics({ nCodeExec: ++nCodeExec }); // counted, not per-call billed
             break;
 
           // <- CodeExecutionResultPart

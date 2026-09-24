@@ -465,6 +465,9 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
             const chatOutRate = elapsedTimeSeconds > 0 ? usage.output_tokens / elapsedTimeSeconds : 0;
             // the delta carries the final input side (server tool results land here, not in message_start)
             Object.assign(metricsUpdate, _fromAnthropicUsage(usage));
+            const nCodeExec = _countCodeExecutions(responseMessage.content);
+            if (nCodeExec)
+              metricsUpdate.nCodeExec = nCodeExec;
             if (metricsUpdate.TIn === undefined)
               metricsUpdate.TIn = chatInTokens ?? -1;
             metricsUpdate.vTOutInner = Math.round(chatOutRate * 100) / 100; // Round to 2 decimal places
@@ -694,8 +697,10 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
     }
 
     // -> Stats: timing always (measured locally); token/cache fields only when the usage block is present (#1149)
+    const nCodeExec = _countCodeExecutions(content);
     pt.updateMetrics({
       ...(usage ? _fromAnthropicUsage(usage) : {}),
+      ...(nCodeExec ? { nCodeExec } : {}),
       // vTOutInner: // we don't know the server-side rate
       // dtStart / dtInner: // we don't know
       dtAll: Date.now() - parserCreationTimestamp,
@@ -1237,7 +1242,7 @@ function _fromAnthropicUsage(usage: {
   output_tokens_details?: { thinking_tokens: number } | null,
   cache_read_input_tokens?: number | null,
   cache_creation_input_tokens?: number | null,
-  server_tool_use?: { web_search_requests?: number } | null,
+  server_tool_use?: { web_search_requests?: number, web_fetch_requests?: number } | null,
   service_tier?: string | null,
   inference_geo?: string | null,
   speed?: string | null,
@@ -1255,11 +1260,24 @@ function _fromAnthropicUsage(usage: {
   // per-call billed server tools
   if (usage.server_tool_use?.web_search_requests)
     metrics.nWebSearch = usage.server_tool_use.web_search_requests;
+  if (usage.server_tool_use?.web_fetch_requests)
+    metrics.nWebFetch = usage.server_tool_use.web_fetch_requests;
   // served tier/geo (not on the delta)
   const $xPrice = _antPriceMultiplier(usage);
   if ($xPrice !== undefined)
     metrics.$xPrice = $xPrice;
   return metrics;
+}
+
+/** The code_execution container and its sub-tools: one kind of call, billed by container time, so usage carries no count and we count the blocks. */
+const _CODE_EXEC_TOOL_NAMES = new Set(['code_execution', 'bash_code_execution', 'text_editor_code_execution']);
+
+function _countCodeExecutions(content: AnthropicWire_API_Message_Create.Response['content']): number {
+  let n = 0;
+  for (const block of content)
+    if (block && AnthropicWire_Messages.isKnownContentBlockOutput(block) && block.type === 'server_tool_use' && _CODE_EXEC_TOOL_NAMES.has(block.name))
+      n++;
+  return n;
 }
 
 /** Served tags -> confirmed multiplier: batch 0.5x, US residency 1.1x. A served 'fast' is per-model priced and stays on the parameter side; 'standard' confirms plain rates. */

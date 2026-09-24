@@ -318,6 +318,13 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
   const $cEstimated = (metrics.$cReported !== undefined && metrics.$c !== undefined) ? metrics.$c : undefined;
   // cost by class, when cache or tools are in play
   const showCostByClass = metrics.$cCacheR !== undefined || metrics.$cCacheW !== undefined || metrics.$cTools !== undefined;
+  // hosted tool calls: counts on their own row; priced only where the vendor bills per call (searches)
+  const toolCountsAll: [count: number | undefined, one: string, many: string][] = [
+    [metrics.nWebSearch, 'search', 'searches'],
+    [metrics.nWebFetch, 'fetch', 'fetches'],
+    [metrics.nCodeExec, 'code execution', 'code executions'],
+  ];
+  const toolCounts = toolCountsAll.filter((t): t is [number, string, string] => !!t[0]);
 
   return <Box sx={tooltipMetricsGridSx}>
 
@@ -330,7 +337,12 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
       {', '}<b>{metrics.TOut?.toLocaleString() || ''}</b> out
       {metrics.TOutR !== undefined && <> (<b>{metrics.TOutR?.toLocaleString() || ''}</b> for reasoning)</>}
       {/*{metrics.TOutA !== undefined && <> (<b>{metrics.TOutA?.toLocaleString() || ''}</b> for audio)</>}*/}
-      {!!metrics.nWebSearch && <>{', '}<b>{metrics.nWebSearch.toLocaleString()}</b> {metrics.nWebSearch === 1 ? 'search' : 'searches'}</>}
+    </div>}
+
+    {/* Tools */}
+    {toolCounts.length > 0 && <div>Tools:</div>}
+    {toolCounts.length > 0 && <div>
+      {' '}{toolCounts.map(([n, one, many], i) => <React.Fragment key={one}>{i > 0 && ' · '}<b>{n.toLocaleString()}</b> {n === 1 ? one : many}</React.Fragment>)}
     </div>}
 
     {/* Timings */}

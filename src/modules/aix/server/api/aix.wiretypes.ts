@@ -812,6 +812,8 @@ export namespace AixWire_Particles {
 
     // n = Counts of per-call billed server tools
     nWebSearch?: number,  // web searches executed
+    nWebFetch?: number,   // web fetches executed
+    nCodeExec?: number,   // hosted code executions, container sub-tools included
 
     // dt = milliseconds
     dtStart?: number,
