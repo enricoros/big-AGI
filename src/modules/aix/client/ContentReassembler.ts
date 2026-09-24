@@ -32,6 +32,15 @@ const VP_PERSISTENCE_DELAY = 500; // persistence of vision for voidPlaceholders
 const _isTransientPlaceholder = (f: Parameters<typeof isVoidPlaceholderFragment>[0]) => isVoidPlaceholderFragment(f) && f.part.pType !== 'notice';
 const _isPauseDivider = (f: Parameters<typeof isVoidPlaceholderFragment>[0]) => isVoidPlaceholderFragment(f) && f.part.pNoticeKind === 'flow-cont';
 
+/**
+ * A reasoning fragment that already carries a signature, redacted data or a vendor handle is closed: the next reasoning
+ * text opens a new fragment. A signature signs exactly its block's text, and a vendor item (OpenAI reasoning id and
+ * encrypted content) must not be overwritten - two thinking blocks separated only by hosted tool calls used to merge
+ * into one fragment that kept the last signature only, and lost every earlier item on replay.
+ */
+const _isClosedReasoningFragment = (f: Parameters<typeof isVoidFragment>[0]): boolean =>
+  isVoidFragment(f) && isModelAuxPart(f.part) && (!!f.part.textSignature || !!f.part.redactedData?.length || !!f.vendorState);
+
 /** The status chip of a server retry, see onAixRetryReset */
 const _isRetryStatus = (f: Parameters<typeof isVoidPlaceholderFragment>[0]) => isVoidPlaceholderFragment(f) && f.part.aixControl?.ctl === 'ec-retry';
 const _RETRY_COUNTDOWN = 'Retrying in ';
@@ -519,9 +528,9 @@ export class ContentReassembler {
     // Break text accumulation
     this.S._textFragmentIndex = null;
 
-    // append to existing ModelAuxVoidFragment if possible
+    // append to existing ModelAuxVoidFragment if possible - unless it is closed (signed, redacted, or vendor-handled)
     const currentFragment = this.S.fragments[this.S.fragments.length - 1];
-    if (!restart && currentFragment && isVoidFragment(currentFragment) && isModelAuxPart(currentFragment.part)) {
+    if (!restart && currentFragment && isVoidFragment(currentFragment) && isModelAuxPart(currentFragment.part) && !_isClosedReasoningFragment(currentFragment)) {
       const appendedPart = { ...currentFragment.part, aText: (currentFragment.part.aText || '') + _t } satisfies DVoidModelAuxPart;
       this._replaceFragmentAt(this.S.fragments.length - 1, { ...currentFragment, part: appendedPart });
       return;
