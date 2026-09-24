@@ -17,7 +17,7 @@
 import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import type { AixDebugObject } from '~/modules/aix/server/dispatch/chatGenerate/chatGenerate.debug';
-import type { AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
+import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request, AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
 import { ChatGenerateDispatch, ChatGenerateParseFunction, createChatGenerateDispatch, createChatGenerateResumeDispatch } from '~/modules/aix/server/dispatch/chatGenerate/chatGenerate.dispatch';
 import { executeChatGenerateWithContinuation } from '~/modules/aix/server/dispatch/chatGenerate/chatGenerate.continuation';
 
@@ -92,22 +92,39 @@ export async function captureRun(opts: CaptureOptions): Promise<{ run: LabRun; k
   const scenario = findScenario(opts.scenarioId);
   const { access, keySource } = accessForFlavor(opts.flavor);
   const { model, chatGenerate, unsupportedCaps } = compileScenario(opts.flavor, scenario, opts.modelIdOverride);
+  const run = await captureRequest({ ...opts, access, model, chatGenerate, promptPreview: scenario.prompt.slice(0, 200) });
+  return { run, keySource, unsupportedCaps };
+}
+
+/** Live capture of a prebuilt request (the chain command's turn 2): same recorder and pipeline, no scenario compile. */
+export async function captureRequest(opts: Omit<CaptureOptions, 'modelIdOverride'> & {
+  access: AixAPI_Access;
+  model: AixAPI_Model;
+  chatGenerate: AixAPIChatGenerate_Request;
+  promptPreview: string;
+  /** last word on the vendor body after the adapter built it (the chain command splices a verbatim turn in) */
+  mutateBody?: (body: Record<string, unknown>) => Record<string, unknown>;
+}): Promise<LabRun> {
+
+  const { access, model, chatGenerate } = opts;
 
   const recorder = new TraceRecorder({
-    scenarioId: scenario.id,
+    scenarioId: opts.scenarioId,
     flavor: opts.flavor,
     dialect: access.dialect,
     modelId: model.id,
     streaming: opts.streaming,
     demuxerFormat: null, // set by instrumentDispatch from the real dispatch
     capturedAt: new Date().toISOString(),
-    promptPreview: scenario.prompt.slice(0, 200),
+    promptPreview: opts.promptPreview,
     kind: 'capture',
     labVersion: 1,
   });
 
   const dispatchCreator = async (): Promise<ChatGenerateDispatch> => {
     const dispatch = await createChatGenerateDispatch(access, model, chatGenerate, opts.streaming, undefined /* sessionAffinityId */, !!opts.enableResumability);
+    if (opts.mutateBody && 'body' in dispatch.request && dispatch.request.body && typeof dispatch.request.body === 'object')
+      dispatch.request.body = opts.mutateBody(dispatch.request.body as Record<string, unknown>);
     return recorder.instrumentDispatch(
       dispatch,
       (signal) => fetchResponseOrTRPCThrow({ ...dispatch.request, signal, name: `AixLab.${opts.flavor}`, throwWithoutName: true }),
@@ -115,8 +132,7 @@ export async function captureRun(opts: CaptureOptions): Promise<{ run: LabRun; k
     );
   };
 
-  const run = await _runPipeline(recorder, dispatchCreator, opts.timeoutMs ?? 600_000, !!opts.echoConsole);
-  return { run, keySource, unsupportedCaps };
+  return await _runPipeline(recorder, dispatchCreator, opts.timeoutMs ?? 600_000, !!opts.echoConsole);
 }
 
 
