@@ -155,14 +155,14 @@ export function rayHasMergeableContent(ray: BRay | null): boolean {
   return !!ray?.message.fragments.some(f => isContentFragment(f) && !isErrorPart(f.part) && !(f.part.pt === 'text' && !f.part.text.trim()));
 }
 
-// export function rayIsMessageErrorOnly(ray: BRay | null): boolean {
-//   if (ray?.message.fragments.length === 1) {
-//     const onlyFragment = ray.message.fragments[0];
-//     if (isContentFragment(onlyFragment) && isErrorPart(onlyFragment.part))
-//       return true;
-//   }
-//   return false;
-// }
+export function rayIsMessageErrorOnly(ray: BRay | null): boolean {
+  if (ray?.message.fragments.length === 1) {
+    const onlyFragment = ray.message.fragments[0];
+    if (isContentFragment(onlyFragment) && isErrorPart(onlyFragment.part))
+      return true;
+  }
+  return false;
+}
 
 export function rayIsUserSelected(ray: BRay | null): boolean {
   return !!ray?.userSelected;
