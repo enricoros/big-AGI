@@ -368,6 +368,24 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
     // Merge hosted tools with custom tools
     if (hostedTools.length > 0) {
       payload.tools = payload.tools ? [...payload.tools, ...hostedTools] : hostedTools;
+
+      /**
+       * Hosted tools run in a server-side agentic loop, and every iteration re-samples the whole growing turn.
+       * The API places an automatic cache breakpoint on each server tool result before the next iteration, but
+       * only when the request already carries at least one `cache_control` marker ("Server tool results are
+       * cached automatically", Tool use with prompt caching). A request with no marker gets no breakpoint at
+       * all, so each iteration re-reads the turn as fresh input: a 10-search turn on a 300-token prompt billed
+       * ~490K input tokens with 0 cached (measured 2026-09-24); the same turn with one marker reads ~450K from
+       * cache at a quarter of the price or less.
+       *
+       * The client's automatic breakpoints (historyApply_vndAntCachingFlags) skip histories under ~1000 tokens,
+       * the vendor's cacheable minimum - exactly the shape of a short research question. So when hosted tools
+       * are on and no marker made it into the request, ask for automatic caching at the top level: the marker
+       * itself may be too small to cache, but it is what turns on the per-iteration breakpoints. Claude API
+       * only: Bedrock rejects the top-level field.
+       */
+      if (target === 'anthropic' && !_hasAnyCacheControl(systemMessage, chatMessages, payload.tools))
+        payload.cache_control = { type: 'ephemeral' };
     }
   }
 
@@ -452,6 +470,15 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
   return validated.data;
 }
 
+
+/** Whether the request already carries a cache breakpoint anywhere: system, message blocks, or tool definitions. */
+function _hasAnyCacheControl(systemMessage: TRequest['system'], chatMessages: TRequest['messages'], tools: TRequest['tools']): boolean {
+  if (systemMessage?.some(block => !!block.cache_control))
+    return true;
+  if (chatMessages.some(message => message.content.some(block => 'cache_control' in block && !!block.cache_control)))
+    return true;
+  return !!tools?.some(tool => 'cache_control' in tool && !!tool.cache_control);
+}
 
 /** Enforce the Anthropic 4-breakpoint API limit by un-stamping the earliest (prefix-redundant) breakpoints. */
 function _capTrailingCacheBreakpoints(systemMessage: TRequest['system'], chatMessages: TRequest['messages'], maxBreakpoints: number): void {
