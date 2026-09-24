@@ -430,6 +430,19 @@ export function getOtherPanesConversationIds(): DConversationId[] {
   return chatPanes.flatMap((pane, idx) => (idx !== chatPaneFocusIndex && pane.conversationId) ? [pane.conversationId] : []);
 }
 
+/** Conversation ids on screen, unique (the party ad). */
+export function getAppChatPanesOpenConversationIds(): DConversationId[] {
+  const ids = new Set<DConversationId>();
+  for (const pane of useAppChatPanesStore.getState().chatPanes)
+    if (pane.conversationId) ids.add(pane.conversationId);
+  return [...ids];
+}
+
+/** Any pane change; readers re-derive what they need. */
+export function subscribeAppChatPanes(listener: () => void): () => void {
+  return useAppChatPanesStore.subscribe(listener);
+}
+
 
 // Reactive hooks
 
