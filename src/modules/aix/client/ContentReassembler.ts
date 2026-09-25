@@ -1000,6 +1000,25 @@ export class ContentReassembler {
       return; // container is message-scoped, not fragment-scoped
     }
 
+    // Promote xAI's hosted code-interpreter container under its OWN namespace (#1200): the Responses parser is
+    // shared across vendors, and stamping xAI's sandbox under 'openai-container' let an OpenAI-targeted turn
+    // adopt the foreign container and replay xAI's item ids (rejected by OpenAI's 64-char id cap). Nothing
+    // consumes 'vnd.xai.container' yet - the xAI adapter collapses code execution to 'execute_code' - but the
+    // state stays message-scoped and available to a future xAI container path, and can never cross vendors.
+    if (vendor === 'xai-container' && 'container' in state) {
+      const { id, expiresAt } = state.container;
+      if (id && expiresAt) {
+        const prior = this.S.generator?.upstreamContainer;
+        if (prior?.uct === 'vnd.xai.container' && prior.containerId !== id)
+          console.warn(`[DEV] AIX: xAI Responses - container diverged within one message: ${prior.containerId} -> ${id}`);
+        this.S.generator = {
+          ...this.S.generator,
+          upstreamContainer: { uct: 'vnd.xai.container', containerId: id, expiresAt },
+        };
+      }
+      return; // container is message-scoped, not fragment-scoped
+    }
+
     // Promote Gemini Interactions session handle -> Generator (message-scoped, for cross-turn reuse).
     // Today populated by Antigravity's `interaction.start.environment_id`; future Interactions
     // managed agents may emit the same svs vendor/state shape and slot in here without protocol changes.
