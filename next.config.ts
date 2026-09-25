@@ -2,6 +2,7 @@ import type { NextConfig } from 'next';
 import type { WebpackConfigContext } from 'next/dist/server/config-shared';
 import { execSync } from 'node:child_process';
 import { readFileSync, rmSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 
 // Log only on the first pass (next build evaluates this module twice: build() setup, then the webpack step)
@@ -64,7 +65,7 @@ let nextConfig: NextConfig = {
   serverExternalPackages: ['puppeteer-core'],
 
   // WEBPACK ONLY: turbopack skips this hook (client mocks, wasm) - never run --turbopack
-  webpack: (config: any, { isServer, webpack /*, dev, nextRuntime*/ }: WebpackConfigContext) => {
+  webpack: (config: any, { isServer, dev, webpack /*, nextRuntime*/ }: WebpackConfigContext) => {
     // @mui/joy: anything material gets redirected to Joy
     config.resolve.alias['@mui/material'] = '@mui/joy';
 
@@ -94,6 +95,17 @@ let nextConfig: NextConfig = {
           }),
         ),
       ];
+
+      // zustand, `next dev` only: app imports of the package resolve to the app's entry point (trace layer). Builds keep the package.
+      if (dev) {
+        const zustandUtils = fileURLToPath(new URL('./src/common/util/zustandUtils.ts', import.meta.url));
+        config.plugins.push(new webpack.NormalModuleReplacementPlugin(/^zustand(\/vanilla)?$/, (resource: any) => {
+          const issuer: string = resource.contextInfo?.issuer || '';
+          if (!issuer || issuer.includes('/node_modules/') || issuer.endsWith('zustandUtils.ts')) return; // the package's own internals and the entry point keep the package
+          // console.log('- WEBPACK ZUSTAND REDIRECT:', resource.request, 'from', issuer); // console.log, not log(): the helper is silent past the first config pass
+          resource.request = zustandUtils;
+        }));
+      }
 
       // cosmetic: fix warnings for (absent!) top-level awaits in the browser (https://github.com/vercel/next.js/issues/64792)
       config.output.environment = { ...config.output.environment, asyncFunction: true };

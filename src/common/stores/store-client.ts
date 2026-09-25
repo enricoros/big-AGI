@@ -1,4 +1,4 @@
-import { create } from 'zustand/index';
+import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 import { agiId } from '~/common/util/idUtils';
