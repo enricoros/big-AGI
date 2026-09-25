@@ -14,7 +14,6 @@
 
 import { ContentReassembler } from '~/modules/aix/client/ContentReassembler';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow } from '~/modules/aix/client/aix.client.chatGenerateRequest';
-import { applyAIBlockPoliciesToMessages } from '~/common/stores/chat/apply/history.apply.ai-block-policies';
 import { createDMessageFromFragments, DMessage, DMessageGenerator } from '~/common/stores/chat/chat.message';
 import { create_FunctionCallResponse_ContentFragment, createTextContentFragment, DMessageFragment } from '~/common/stores/chat/chat.fragments';
 import { createChatGenerateDispatch } from '~/modules/aix/server/dispatch/chatGenerate/chatGenerate.dispatch';
@@ -70,9 +69,9 @@ export async function buildNextTurn(access: AixAPI_Access, compiled: CompiledSce
   const assistant: DMessage = { ...createDMessageFromFragments('assistant', fragments), generator: turn1.generator };
   const history: DMessage[] = followupText === null ? [assistant] : [assistant, createDMessageFromFragments('user', [createTextContentFragment(followupText)])];
 
-  // same path as aixChatGenerateContent_DMessage_FromConversation: send-time block policies, then the converter
-  const policed = applyAIBlockPoliciesToMessages(history, 'send', { dropEmptyMessages: true });
-  const tail = await aixCGR_ChatSequence_FromDMessagesOrThrow(policed);
+  // the converter the app uses. The hosted build also applies send-time block policies before it (dev only); for a
+  // one-turn history they keep the last assistant turn's reasoning, so the chain skips them and runs on both branches
+  const tail = await aixCGR_ChatSequence_FromDMessagesOrThrow(history);
 
   const systemMessage = options?.systemEdit
     ? { parts: [...(compiled.chatGenerate.systemMessage?.parts ?? []), { pt: 'text' as const, text: options.systemEdit }] }
