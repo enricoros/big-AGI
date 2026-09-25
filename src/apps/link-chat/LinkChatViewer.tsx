@@ -39,6 +39,14 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
   const filteredMessages = excludeSystemMessages(messages, showSystemMessages);
   const hasMessages = filteredMessages.length > 0;
 
+  // stable callback, or the memo on every message is defeated; edits stay local to the viewer, as before
+  const messagesRef = React.useRef(filteredMessages);
+  messagesRef.current = filteredMessages;
+  const handleMessageFragmentReplace = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
+    const message = messagesRef.current.find(m => m.id === messageId);
+    if (message) message.fragments = message.fragments.map(f => (f.fId === fragmentId) ? newFragment : f);
+  }, []);
+
   // Effect: Scroll to bottom of list when messages change
 
   /*React.useEffect(() => {
@@ -128,9 +136,7 @@ export function LinkChatViewer(props: { conversation: DConversation, storedAt: D
                   fitScreen={isMobile}
                   isMobile={isMobile}
                   showBlocksDate={idx === 0 || idx === filteredMessages.length - 1 /* first and last message */}
-                  onMessageFragmentReplace={(_messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
-                    message.fragments = message.fragments.map(f => (f.fId === fragmentId) ? newFragment : f);
-                  }}
+                  onMessageFragmentReplace={handleMessageFragmentReplace}
                 />,
               )}
 
