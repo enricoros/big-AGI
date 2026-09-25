@@ -19,7 +19,7 @@ import { BlockOpEmpty } from './BlockOpEmpty';
 import { BlockPartError } from './BlockPartError';
 import { BlockPartHostedResource } from './BlockPartHostedResource';
 import { BlockPartImageRef } from './BlockPartImageRef';
-import { BlockPartModelAux, BlockPartModelAuxMemo } from '../fragments-void/BlockPartModelAux';
+import { BlockPartModelAuxMemo } from '../fragments-void/BlockPartModelAux';
 import { BlockPartPlaceholder } from '../fragments-void/BlockPartPlaceholder';
 import { BlockPartText_AutoBlocks } from './BlockPartText_AutoBlocks';
 import { BlockPartToolInvocation } from './BlockPartToolInvocation';
@@ -143,7 +143,6 @@ export function ContentFragments(props: {
       // simplify
       const { fId, ft } = fragment;
       const isLastFragment = fragmentIndex === props.contentFragments.length - 1;
-      const optimizeMemoBeforeLastBlock = props.optiAllowSubBlocksMemo === true && !isLastFragment;
 
       // VOID FRAGMENTS (reasoning, placeholders - interleaved with content)
       if (ft === 'void') {
@@ -160,9 +159,8 @@ export function ContentFragments(props: {
             const isActivelyStreaming = isLastFragment && !!props.messagePendingIncomplete;
             if (!part.aText && !part.redactedData?.length && !isActivelyStreaming)
               return null;
-            const BlockPartModelAuxMemoOrNot = optimizeMemoBeforeLastBlock ? BlockPartModelAuxMemo : BlockPartModelAux;
             return (
-              <BlockPartModelAuxMemoOrNot
+              <BlockPartModelAuxMemo
                 key={fId}
                 fragmentId={fId}
                 auxType={part.aType}

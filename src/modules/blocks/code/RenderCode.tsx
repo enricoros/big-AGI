@@ -46,8 +46,6 @@ const PARTIAL_HIGHLIGHT_THROTTLE_MS = 150;
 
 // RenderCode
 
-export const renderCodeMemoOrNot = (memo: boolean) => memo ? RenderCodeMemo : RenderCode;
-
 export const RenderCodeMemo = React.memo(RenderCode);
 
 interface RenderCodeBaseProps {
@@ -162,6 +160,11 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const [showPlantUML, setShowPlantUML] = React.useState(true);
   const [showSVG, setShowSVG] = React.useState(true);
   const fullScreenElementRef = React.useRef<HTMLDivElement>(null);
+
+  // 'render-at-end' turns this on when the block completes: the block used to remount into it
+  React.useEffect(() => {
+    if (props.initialRenderHTML === true) setShowHTML(true);
+  }, [props.initialRenderHTML]);
 
   // external state
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreenElement(fullScreenElementRef);

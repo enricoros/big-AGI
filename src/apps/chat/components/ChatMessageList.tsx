@@ -27,7 +27,7 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { CMLZeroConversation } from './messages-list/CMLZeroConversation';
-import { ChatMessage, ChatMessageMemo } from './message/ChatMessage';
+import { ChatMessageStreamingMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
@@ -127,9 +127,10 @@ export function ChatMessageList(props: {
 
 
   // Resume in-flight tracking - lives at this level (NOT inside BlockOpUpstreamResume) so it
-  // survives any remount of the message bubble during a long-running stream (e.g. Deep Research).
+  // survives an unmount of the message bubble during a long-running stream (e.g. Deep Research):
+  // pane switch, cleanup mode, ancestry collapse. Completion itself no longer remounts the message.
   // - `resumeInFlight` (state) drives the loading/Detach UI on BlockOpUpstreamResume via props.
-  // - `resumeAbortersRef` (ref) holds the AbortController so Detach can abort even after a remount.
+  // - `resumeAbortersRef` (ref) holds the AbortController so Detach can abort even after an unmount.
   // Map keyed by messageId so multiple messages could in principle resume concurrently.
   const [resumeInFlight, setResumeInFlight] = React.useState<Record<DMessageId, AixReattachMode>>({});
   const resumeAbortersRef = React.useRef<Map<DMessageId, AbortController>>(new Map());
@@ -430,13 +431,6 @@ export function ChatMessageList(props: {
 
       {filteredMessages.map((message, idx) => {
 
-          // Optimization: only memo complete components, or we'd be memoizing garbage (fragments
-          // change every chunk during streaming, so the equality check would always fail).
-          // CAVEAT: switching between memo and non-memo at the same position causes React to
-          // remount the subtree (different component types). Any state that must survive that
-          // boundary lives on this component (e.g. resumeInFlight, resumeAbortersRef).
-          const ChatMessageMemoOrNot = !message.pendingIncomplete ? ChatMessageMemo : ChatMessage;
-
           return props.isMessageSelectionMode ? (
 
             <CleanerMessage
@@ -448,7 +442,7 @@ export function ChatMessageList(props: {
 
           ) : (
 
-            <ChatMessageMemoOrNot
+            <ChatMessageStreamingMemo
               key={'msg-' + message.id}
               message={message}
               // diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}

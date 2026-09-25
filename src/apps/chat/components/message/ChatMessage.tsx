@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
+import { shallow } from 'zustand/vanilla/shallow';
 import TimeAgo from 'react-timeago';
 
 import type { SxProps } from '@mui/joy/styles/types';
@@ -106,6 +107,15 @@ export interface ChatMessageFunctionsHandle {
 export type ChatMessageTextPartEditState = { [fragmentId: DMessageFragmentId]: string };
 
 export const ChatMessageMemo = React.memo(ChatMessage);
+
+/**
+ * For the chat list: memoized while complete, re-rendered every chunk while pending, and one component
+ * type at every position, so completion never remounts the message. Not for hosts whose messages stay pending.
+ */
+export const ChatMessageStreamingMemo = React.memo(ChatMessage, (prev, next) =>
+  // prev too: a completion that clears the flag on the same object leaves the props shallow-equal, and must still render once
+  !prev.message.pendingIncomplete && !next.message.pendingIncomplete && shallow(prev, next),
+);
 
 /**
  * The Message component is a customizable chat message UI component that supports
@@ -329,6 +339,11 @@ export function ChatMessage(props: {
   const handleEditsBegin = React.useCallback(() => setTextContentEditState({}), []);
 
   const handleEditsCancel = React.useCallback(() => setTextContentEditState(null), []);
+
+  // a resume flips a complete message back to pending: leave edit mode (the remount used to)
+  React.useEffect(() => {
+    if (messagePendingIncomplete) setTextContentEditState(null);
+  }, [messagePendingIncomplete]);
 
   const handleEditSetText = React.useCallback((fragmentId: DMessageFragmentId, editedText: string, applyNow: boolean) => {
     if (applyNow)

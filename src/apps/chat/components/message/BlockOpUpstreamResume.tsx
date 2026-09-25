@@ -24,7 +24,7 @@ const ARM_TIMEOUT_MS = 4000;
  *  - Stop:    terminate the upstream run + delete the resource.
  *
  * IMPORTANT: in-flight state is owned by the parent (`inFlightMode` + `onDetach`) so it survives
- * remounts that happen while a long-running stream is active (e.g. Deep Research).
+ * unmounts that happen while a long-running stream is active (e.g. Deep Research).
  */
 export function BlockOpUpstreamResume(props: {
   upstreamHandle: Exclude<DMessageGenerator['upstreamHandle'], undefined>,

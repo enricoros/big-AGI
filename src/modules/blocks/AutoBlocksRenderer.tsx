@@ -4,11 +4,11 @@ import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { useRenderDecay } from '~/common/render-decay/RenderDecayZone';
 
-import { BLOCK_CODE_MERMAID_TITLE, BLOCK_CODE_PLANTUML_TITLE, BLOCK_CODE_SVG_TITLE, renderCodeMemoOrNot } from './code/RenderCode';
+import { BLOCK_CODE_MERMAID_TITLE, BLOCK_CODE_PLANTUML_TITLE, BLOCK_CODE_SVG_TITLE, RenderCodeMemo } from './code/RenderCode';
 import { BlocksContainer } from './BlocksContainers';
 import { EnhancedRenderCode } from './enhanced-code/EnhancedRenderCode';
 import { RenderImageURL } from './image/RenderImageURL';
-import { RenderMarkdown, RenderMarkdownMemo } from './markdown/RenderMarkdown';
+import { RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderPlainText } from './plaintext/RenderPlainText';
 import { RenderWordsDiff, WordsDiff } from './wordsdiff/RenderWordsDiff';
 import { ToggleExpansionButton } from './ToggleExpansionButton';
@@ -143,8 +143,6 @@ export function AutoBlocksRenderer(props: {
       {/* sequence of render components, for each Block */}
       {autoBlocksStable.map((bkInput, index) => {
 
-        // Optimization: only memo the non-currently-rendered components, if the message is still in flux
-        const optimizeMemoBeforeLastBlock = props.optiAllowSubBlocksMemo === true && index < (autoBlocksStable.length - 1);
         // Optimization: Code being written won't get tooltips or snap to page
         const optimizeLightweightLastBlock = props.optiAllowSubBlocksMemo === true && index === (autoBlocksStable.length - 1);
         // Optimization: disable the markdown preprocessor on the last block, only do it at the end not while in progress
@@ -153,7 +151,6 @@ export function AutoBlocksRenderer(props: {
         switch (bkInput.bkt) {
 
           case 'md-bk':
-            const RenderMarkdownMemoOrNot = optimizeMemoBeforeLastBlock ? RenderMarkdownMemo : RenderMarkdown;
             // streaming smoothness: parse up to last newline only (tail reappears on next newline; full on completion)
             let mdContent = bkInput.content;
             if (props.optiStreamingLastFragment && index === (autoBlocksStable.length - 1)) {
@@ -171,7 +168,7 @@ export function AutoBlocksRenderer(props: {
               />
             ) : (
               // Keep in sync with ScaledMarkdownRenderer
-              <RenderMarkdownMemoOrNot
+              <RenderMarkdownMemo
                 key={'md-bk-' + index}
                 content={mdContent}
                 disablePreprocessor={optimizeDisableProcessorsOnLast}
@@ -183,11 +180,6 @@ export function AutoBlocksRenderer(props: {
             );
 
           case 'code-bk':
-            // NOTE: 2024-09-24: Just memo the code all the time to prevent state loss on the last block when it switches to complete
-            // const RenderCodeMemoOrNot = renderCodeMemoOrNot(true /* optimizeMemoBeforeLastBlock */);
-            // NOTE: 2024-09-24/2: Keep it for now, as the issue seems to be on the upstream ChatMessage
-            const RenderCodeMemoOrNot = renderCodeMemoOrNot(optimizeMemoBeforeLastBlock);
-
             // Custom handling for some of our blocks
             const disableBecauseInProgress = bkInput.isPartial && props.optiAllowSubBlocksMemo === true;
             const disableBecauseTooShort = !bkInput.title && bkInput.lines <= 3;
@@ -202,7 +194,7 @@ export function AutoBlocksRenderer(props: {
               case BLOCK_CODE_MERMAID_TITLE:
               case BLOCK_CODE_PLANTUML_TITLE:
                 disableEnhancedRender = !bkInput.isPartial;
-                // NOTE: at the moment, we use the 'unwanted' refresh at the end of the message to start (that block) without collapse
+                // un-collapses when the fence closes: the block switches from Enhanced to plain RenderCode
                 enhancedStartCollapsed = bkInput.isPartial;
                 break;
 
@@ -237,7 +229,7 @@ export function AutoBlocksRenderer(props: {
                 codeSx={scaledCodeSx}
               />
             ) : (
-              <RenderCodeMemoOrNot
+              <RenderCodeMemo
                 key={'code-bk-' + index}
                 semiStableId={bkInput.bkId}
                 code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial || isTextCollapsed}
