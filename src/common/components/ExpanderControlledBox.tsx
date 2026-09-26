@@ -36,6 +36,13 @@ const collapserNoContainSx = {
   contain: 'none',
 } as const satisfies SxProps;
 
+// Collapsed content is unreachable: `inert` blurs any focused descendant (otherwise the browser refuses
+// the `aria-hidden` and warns), drops the subtree from the tab order and hides it from assistive tech.
+// React 18 has no `inert` property: the empty string sets the attribute, a boolean is dropped with a
+// warning; the experimental React types already declare the React 19 boolean, hence the cast.
+// React 19 warns on the empty string: switch to `true` then.
+const collapsedInertProps = { inert: '' as unknown as boolean };
+
 const BoxCollapsee = styled(Box)({
   /**
    * FIX: the absence of this made the ChatPanelModelParameters content overflow on the horizontal
@@ -46,8 +53,28 @@ const BoxCollapsee = styled(Box)({
 
 
 export function ExpanderControlledBox({ expanded, noContain, children, ...rest }: BoxProps & { expanded: boolean, noContain?: boolean, sx?: never }) {
+
+  const collapserRef = React.useRef<HTMLDivElement>(null);
+
+  // On collapse, drop focus held inside right away, within this commit. `inert` alone releases it a task
+  // after the next layout, and the browser's accessibility pass in between still sees the focused
+  // descendant, refuses the `aria-hidden` and warns (e.g. a switch that collapses its own row).
+  React.useLayoutEffect(() => {
+    if (expanded) return;
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && collapserRef.current?.contains(active))
+      active.blur();
+  }, [expanded]);
+
   return (
-    <BoxCollapser aria-hidden={!expanded ? true : undefined} data-agi-no-copy={!expanded || undefined} {...rest} sx={noContain ? collapserNoContainSx : undefined}>
+    <BoxCollapser
+      aria-hidden={!expanded ? true : undefined}
+      data-agi-no-copy={!expanded || undefined}
+      {...(!expanded ? collapsedInertProps : undefined)}
+      {...rest}
+      ref={collapserRef}
+      sx={noContain ? collapserNoContainSx : undefined}
+    >
       <BoxCollapsee>
         {children}
       </BoxCollapsee>
