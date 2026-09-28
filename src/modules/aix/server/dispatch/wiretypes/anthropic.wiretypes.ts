@@ -13,6 +13,14 @@ const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a
  *
  * ## Updates
  *
+ * ### 2026-09-28 - API Sync: Claude Sonnet 5.5 (launch-verified live)
+ * - Request.thinking: added `{ type: 'between_tools' }` - Sonnet 5.5's thinking-off ('disabled' and 'enabled' 400). Legal at effort
+ *   <= 'high' (xhigh/max 400 'not supported when thinking is disabled'); 'display' and 'block_binding' 400 alongside it.
+ * - Models: claude-sonnet-5-5 - forced tool_choice 400 (Fable 5.1 wording; both adapters' downgrades now cover it), temperature != 1 /
+ *   top_p / prefill / speed 400. Same tokenizer as Sonnet 5 (count_tokens within 0.2%).
+ * - Preserved thinking (docs): Sonnet 5.5 reads Sonnet 5 / Opus 4.8 / Haiku 4.5 and older blocks, not Opus 5.x / Fable / Mythos; no
+ *   other model reads Sonnet 5.5 blocks, and they are bound to the producing account (dropped elsewhere, request succeeds).
+ *
  * ### 2026-09-22 - API Sync: Claude Opus 5.5 (launch-verified live)
  * - Models: claude-opus-5-5 - Fable 5.1's surface at $4/$20: thinking.disabled/enabled 400 (at every effort, unlike Opus 5), forced
  *   tool_choice 400 (same wording as Fable 5.1; both adapters' downgrades now cover it), computer_20251124 400 (toolset only).
@@ -1087,6 +1095,9 @@ export namespace AnthropicWire_API_Message_Create {
       }),
       // having this for completeness, but seems like it's not needed / can be omitted
       z.object({ type: z.literal('disabled') }),
+      // [Anthropic, 2026-09-28] Sonnet 5.5's lowest setting ('disabled' 400s): no up-front thinking, progress updates between
+      // tool calls still come back as thinking blocks with text. Effort <= 'high' only; no other field ('display'/'block_binding' 400)
+      z.object({ type: z.literal('between_tools') }),
     ]).optional(),
 
     /**
