@@ -58,6 +58,8 @@ const IF_47_R = [...IF_4_R, LLM_IF_HOTFIX_NoTemperature];
 //                              effort to 'high' when off.
 //                              Fable/Mythos 5.1 (2026-09-01): as Fable 5; preserved thinking is handled in the AIX adapter.
 //                              Opus 5.5 (2026-09-22): as Fable 5.1 ('disabled' and budget_tokens 400 at every effort); default effort 'medium'.
+//                              Sonnet 5.5 (2026-09-28): as Opus 5 (single entry, VISIBLE Thinking switch, off only at effort 'high' or
+//                              below), but off is sent as `thinking: {type: 'between_tools'}` - 'disabled' returns 400.
 // - llmVndAntWebFetch/Search   seem an API feature available on all models
 
 const ANT_TOOLS: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = [
@@ -85,7 +87,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
 
   // NOTE: what's not redefined below is inherited from the underlying model definition
 
-  // NOTE: no 'claude-opus-5' variant here - Opus 5 is a single entry whose Thinking switch is user-facing (see the entry)
+  // NOTE: no 'claude-opus-5' / 'claude-sonnet-5-5' variants here - single entries whose Thinking switch is user-facing (see the entries)
 
   // Claude Sonnet 5 thinking variant (Claude 5 gen, adaptive-only; base allows disabling thinking)
   'claude-sonnet-5': {
@@ -281,6 +283,30 @@ type _AnthropicModelDef = ModelDescriptionSchema & {
 
 export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
 
+  // Claude Sonnet 5.5 - single entry with a user-facing Thinking switch, as Opus 5 (no base + '(Adaptive)' split as on Sonnet 5):
+  // thinking is ON by default; off is `between_tools` (no up-front thinking; progress updates between tool calls still arrive as
+  // thinking blocks), legal at effort 'high' or below only (xhigh/max -> 400; the AIX adapter clamps).
+  {
+    id: 'claude-sonnet-5-5', // Active - 2026-09-28
+    label: 'Claude Sonnet 5.5',
+    pubDate: '20260928',
+    description: 'Best combination of speed and intelligence',
+    contextWindow: 1_000_000, // 1M default and max, flat pricing
+    maxCompletionTokens: 128000,
+    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch], // reasoning on the base model: thinking on by default
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', initialValue: -1 /* VISIBLE Thinking switch: -1 adaptive (the API default), null off (sent as 'between_tools'); 'disabled' and budget_tokens return 400 */ },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }, // default 'high', recalibrated vs Sonnet 5 (docs: 'medium'/'low' for chat); xhigh/max need thinking on (editor hides them, adapter clamps)
+      ...ANT_TOOLS_DYNAMIC,
+    ],
+    // Sonnet 5.5 (launch-verified 2026-09-28, probed live): Sonnet 5's price and tokenizer, 512-token min cacheable prompt (Sonnet 5: 1,024),
+    // knowledge cutoff Jun 2026. Forced tool_choice 'any'/'tool' 400 (AIX downgrades to 'auto' + system hint), temperature only at 1 /
+    // top_p / prefill / speed 400, computer_20251124 400 (toolset only). No fast mode. Preserved thinking: account-bound blocks that
+    // no other model reads; it reads Sonnet 5 / Opus 4.8 / Haiku 4.5 blocks, not Opus 5.x / Fable / Mythos.
+    chatPrice: { input: 2, output: 10, cache: { read: 0.20, write: 2.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
+    benchmark: { cbaElo: 1462 + 4 }, // (no arena data yet - launched 2026-09-28) assuming: claude-sonnet-5-high + 4
+  },
+
   // Claude Opus 5.5 - SINGLE always-thinking entry: unlike Opus 5, thinking cannot be disabled at all
   {
     id: 'claude-opus-5-5', // Active - 2026-09-22
@@ -419,7 +445,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     id: 'claude-sonnet-5', // Active - 2026-06-30
     label: 'Claude Sonnet 5',
     pubDate: '20260630',
-    description: 'Best combination of speed and intelligence, with the largest gains in coding and agentic tasks',
+    description: 'Previous Sonnet model, with large gains in coding and agentic tasks over Sonnet 4.6',
     contextWindow: 1_000_000, // 1M GA at flat pricing (no opt-in required); 1M is both default and max, no smaller variant
     maxCompletionTokens: 128000,
     interfaces: [...IF_47, LLM_IF_ANT_ToolsSearch],

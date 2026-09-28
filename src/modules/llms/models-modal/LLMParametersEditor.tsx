@@ -412,12 +412,12 @@ export function LLMParametersEditor(props: {
     )}
 
 
-    {/* pre-Effort: Anthropic [thinking switch (adaptive-only models, e.g. Opus 5) | thinking budget, effort, ...] */}
+    {/* pre-Effort: Anthropic [thinking switch (adaptive-only models, e.g. Opus 5, Sonnet 5.5) | thinking budget, effort, ...] */}
     {antThinkingShown && antThinkingAdaptiveOnly ? (
       <FormSwitchControl
         title='Thinking'
         description={antThinkingEnabled ? 'Adaptive (model decides)' : 'Off'}
-        tooltip='Adaptive: the model decides when and how much to reason. Off: no reasoning, faster first token, effort capped at High.'
+        tooltip='Adaptive: the model decides when and how much to reason. Off: no up-front reasoning, faster first token, effort capped at High.'
         checked={antThinkingEnabled}
         onChange={on => {
           if (on) onRemoveParameter('llmVndAntThinkingBudget'); // back to the model's initial value (-1, adaptive)

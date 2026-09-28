@@ -97,6 +97,7 @@ export const EditorialDefaults = {
     { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-6' },
     { vendor: 'googleai',   modelId: 'models/gemini-3.1-pro-preview' },
+    { vendor: 'anthropic',  modelId: 'claude-sonnet-5-5' }, // launched 2026-09-28
     { vendor: 'anthropic',  modelId: 'claude-sonnet-4-6' },
     { vendor: 'xai',        modelId: 'grok-4.7' }, // 2026-09-21 GA - larger base than 4.6, same price
     { vendor: 'xai',        modelId: 'grok-4.6' }, // 2026-08-12 GA - frontier for coding/agentic/knowledge work, extends 4.5
@@ -128,6 +129,7 @@ export const EditorialDefaults = {
     { vendor: 'bedrock',    modelId: 'us.anthropic.claude-sonnet-4-6' },
     { vendor: 'bedrock',    modelId: 'global.anthropic.claude-sonnet-4-6' },
     { vendor: 'openrouter', modelId: 'anthropic/claude-sonnet-4-6' },
+    { vendor: 'anthropic',  modelId: 'claude-sonnet-5-5' }, // launched 2026-09-28 - after 4.6, which doesn't think by default
     { vendor: 'anthropic',  modelId: 'claude-opus-5-5' }, // launched 2026-09-22
     { vendor: 'anthropic',  modelId: 'claude-opus-5' }, // launched 2026-07-24
     { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
@@ -182,6 +184,7 @@ export const EditorialDefaults = {
     { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash' },
     { vendor: 'openrouter', modelId: 'google/gemini-3.5-flash' },
     { vendor: 'anthropic',  modelId: 'claude-sonnet-4-6' },
+    { vendor: 'anthropic',  modelId: 'claude-sonnet-5-5' }, // launched 2026-09-28 - after 4.6, which doesn't think by default
     { vendor: 'anthropic',  modelId: 'claude-opus-5-5' }, // launched 2026-09-22
     { vendor: 'anthropic',  modelId: 'claude-opus-5' }, // launched 2026-07-24
     { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },

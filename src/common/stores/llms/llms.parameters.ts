@@ -227,10 +227,11 @@ export const DModelParameterRegistry = {
    *
    * - `-1`: adaptive thinking (4.6+), sent as `thinking: {type: 'adaptive'}` - the model decides when and how much to reason,
    *         `llmVndAntEffort` sets the depth. Deliberately outside `range` so no slider can produce it:
-   *         it is the `initialValue` on every adaptive model's spec, hidden on most, VISIBLE on Opus 5 where the editors
+   *         it is the `initialValue` on every adaptive model's spec, hidden on most, VISIBLE on Opus 5 and Sonnet 5.5 where the editors
    *         render it as a Thinking switch (on = -1, off = null).
    *
    * - `null`: thinking off, sent as `thinking: {type: 'disabled'}`. Legal on 4.x, Sonnet 5, and Opus 5 (at effort <= high, the adapter clamps);
+   *           sent as `{type: 'between_tools'}` on Sonnet 5.5 (no up-front thinking, effort <= high, clamped);
    *           rejected by Fable/Mythos 5 and 5.1 and Opus 5.5, where the adapter coerces it to adaptive.
    *
    * - `1024..65536`: a manual budget, sent as `thinking: {type: 'enabled', budget_tokens}` - 4.5 and earlier only.

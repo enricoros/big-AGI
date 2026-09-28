@@ -8,12 +8,12 @@ import type { ModelVendorId } from '../../vendors/vendors.registry';
 export type LlmsDefsVersions = Readonly<Record<ModelVendorId | '_shared' | '_openaiCompat', string>>;
 
 export const LLMS_DEFS_VERSIONS = {
-  _openaiCompat: '50225822ab08',
+  _openaiCompat: '2f4f639ed3e0',
   _shared: '68133b8c1f89',
   alibaba: 'cfe761129f26',
-  anthropic: '390e11eeb61d',
+  anthropic: 'de4caf5d5d9d',
   azure: '542b60bb9715',
-  bedrock: 'd93367d2ec6b',
+  bedrock: '329b40b5de5f',
   cerebras: '5d9a05eafc9b',
   cohere: '244b4ec3d312',
   deepseek: 'b064e339342b',
@@ -28,7 +28,7 @@ export const LLMS_DEFS_VERSIONS = {
   nvidianim: '09a145e95785',
   ollama: 'cd4086343dc2',
   openai: '6e72f13db386',
-  openrouter: '42239e8ab554',
+  openrouter: '1cbf182e3db4',
   perplexity: 'c0ad305f4551',
   sakanaai: '440b7e29b85e',
   togetherai: '0fdf850d40c9',
