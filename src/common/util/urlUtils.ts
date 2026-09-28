@@ -133,12 +133,40 @@ export function asValidURL(textString: string | null, relaxProtocol: boolean = f
   }
 }
 
+// sentence punctuation that is never meaningful at the end of a URL
+const _URL_TRAILING_PUNCTUATION = '.,;:!?\'"';
+// closing brackets, stripped only when unbalanced within the URL (keeps '.../Foo_(bar)')
+const _URL_CLOSERS: Record<string, string> = { ')': '(', ']': '[', '}': '{' };
+
 /**
- * Extracts URLs from a text string.
+ * Extracts URLs from a text string, stripping trailing sentence punctuation and unbalanced closing brackets.
  */
 export function extractUrlsFromText(text: string): string[] {
-  const urlRegex = /(https?:\/\/\S+)/g;
-  return text.match(urlRegex) || [];
+  const urlRegex = /https?:\/\/[^\s<>"'`]+/g;
+  return (text.match(urlRegex) || []).map(_trimUrlTrailingPunctuation).filter(url => url.length > 8);
+}
+
+function _trimUrlTrailingPunctuation(url: string): string {
+  let end = url.length;
+  while (end > 0) {
+    const ch = url[end - 1];
+    if (_URL_TRAILING_PUNCTUATION.includes(ch)) {
+      end--;
+      continue;
+    }
+    const opener = _URL_CLOSERS[ch];
+    if (opener) {
+      const head = url.slice(0, end);
+      const opens = head.split(opener).length - 1;
+      const closes = head.split(ch).length - 1;
+      if (closes > opens) {
+        end--;
+        continue;
+      }
+    }
+    break;
+  }
+  return url.slice(0, end);
 }
 
 
