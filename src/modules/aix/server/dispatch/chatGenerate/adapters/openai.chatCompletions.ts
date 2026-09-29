@@ -174,8 +174,12 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     throw new Error('OpenAI Chat Completions API does not support the Reasoning Mode parameter (Responses API only)');
 
   // [2026-09-03, OpenAI] processing tier (native and OpenRouter - other compatible hosts do not know it)
-  if (model.vndOaiServiceTier && (openAIDialect === 'openai' || openAIDialect === 'openrouter'))
+  if (model.vndOaiServiceTier && (openAIDialect === 'openai' || openAIDialect === 'openrouter')) {
+    // [2026-09-29] 'ultrafast' is Responses-only: native Chat Completions 400s, OpenRouter silently serves it as 'priority' (2x)
+    if (model.vndOaiServiceTier === 'ultrafast')
+      throw new Error('OpenAI Chat Completions API does not support the Ultrafast service tier (Responses API only)');
     payload.service_tier = model.vndOaiServiceTier;
+  }
 
   // [OpenAI] Vendor-specific reasoning effort
   const reasoningEffort = model.reasoningEffort; // ?? model.vndOaiReasoningEffort;

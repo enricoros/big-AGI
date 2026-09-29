@@ -589,7 +589,7 @@ export namespace AixWire_API {
     vndOaiContainerId: z.string().optional(), // [Responses] reuse a prior code-interpreter session container (caller checks expiry before setting)
     vndOaiImageGeneration: z.enum(['mq', 'hq', 'max', 'hq_edit' /* legacy -> hq */, 'hq_png' /* legacy -> hq */]).optional(), // legacy values still accepted from older bundles
     vndOaiReasoningMode: z.enum(['standard', 'pro']).optional(), // [2026-07-09, OpenAI] [Responses] GPT-5.6+ reasoning.mode - 'pro' performs additional model work, billed at standard rates
-    vndOaiServiceTier: z.enum(['flex', 'fast']).optional(), // [2026-09-03, OpenAI] request service_tier: flex (0.5x, slower) | fast (2x, faster); native OpenAI only
+    vndOaiServiceTier: z.enum(['flex', 'fast', 'ultrafast']).optional(), // [2026-09-03, OpenAI] request service_tier: flex (0.5x, slower) | fast (2x, faster) | ultrafast (6x, fastest; Responses only, 2026-09-29); native OpenAI only
     vndOaiResponsesAPI: z.boolean().optional(),
     vndOaiRestoreMarkdown: z.boolean().optional(),
     vndOaiVerbosity: z.enum(['low', 'medium', 'high']).optional(),

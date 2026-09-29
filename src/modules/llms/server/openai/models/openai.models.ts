@@ -24,7 +24,7 @@ export const hardcodedOpenAIVariants: ModelVariantMap = {
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningMode', initialValue: 'pro', hidden: true }, // factory 'pro', not changeable
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
-      { paramId: 'llmVndOaiServiceTier' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast', 'ultrafast'] },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
       { paramId: 'llmVndOaiImageGeneration' },
@@ -45,7 +45,7 @@ export const hardcodedOpenAIVariants: ModelVariantMap = {
       parameterSpecs: [
         { paramId: 'llmVndOaiReasoningMode', initialValue: 'pro', hidden: true }, // factory 'pro', not changeable
         { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
-        { paramId: 'llmVndOaiServiceTier' },
+        { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast'] },
         { paramId: 'llmVndOaiWebSearchContext' },
         { paramId: 'llmVndOaiVerbosity' },
         { paramId: 'llmVndOaiImageGeneration' },
@@ -61,7 +61,7 @@ export const hardcodedOpenAIVariants: ModelVariantMap = {
       interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching], // NO LLM_IF_OAI_Reasoning, NO LLM_IF_HOTFIX_NoTemperature
       parameterSpecs: [
         { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'none', hidden: true }, // factory 'none', not changeable
-        { paramId: 'llmVndOaiServiceTier' },
+        { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast'] },
         { paramId: 'llmVndOaiWebSearchContext' },
         { paramId: 'llmVndOaiVerbosity' },
         { paramId: 'llmVndOaiImageGeneration' },
@@ -187,9 +187,11 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   // - multi-step hosted loops (reasoning + search + code + search + text in one turn) stream strictly serial with contiguous
   //   sequence numbers; the AIX parser metrics match the wire usage. Image generation tokens live in tool_usage.image_gen,
   //   outside usage.output_tokens - not priced by the parser (pre-existing, same on 5.6)
-  // - service_tier flex|fast echoed as served ('priority' still accepted, served as 'fast'; 'auto' serves 'default')
+  // - service_tier flex|fast echoed as served ('priority' still accepted, served as 'fast'; 'auto' serves 'default'); 'ultrafast'
+  //   (Astra only, 6x, Responses only) echoes 'ultrafast' - rejected with 400 'Invalid service_tier argument' on 6.1 Sol, Sol,
+  //   Luna, 5.6 Sol and on Chat Completions
   // - caching: implicit, 24h retention forced ('in_memory' 400); usage reports cache_write_tokens on a cold >=1K prompt, cached_tokens on replay
-  // - priced: 272K tier, 1.25x cache write, $10/1K web search; Flex/Fast via llmVndOaiServiceTier. Tier switch, cache read/write
+  // - priced: 272K tier, 1.25x cache write, $10/1K web search; Flex/Fast/Ultrafast via llmVndOaiServiceTier. Tier switch, cache read/write
   //   above 272K and cache carry-over across the boundary verified live (198K/297K runs), app cost equal to the hand calculation
   // Sol and Luna: same contract as Astra except
   // - effort adds 'none' (none..max; 'minimal' 400); temperature/top_p/logprobs only at 'none'; cutoffs Apr 20 / May 18, 2026
@@ -214,7 +216,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
-      { paramId: 'llmVndOaiServiceTier' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast', 'ultrafast'] },
       { paramId: 'llmVndOaiReasoningMode' },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
@@ -242,7 +244,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
-      { paramId: 'llmVndOaiServiceTier' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast'] },
       { paramId: 'llmVndOaiReasoningMode' },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
@@ -270,7 +272,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
-      { paramId: 'llmVndOaiServiceTier' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast'] },
       { paramId: 'llmVndOaiReasoningMode' },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
@@ -298,7 +300,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
-      { paramId: 'llmVndOaiServiceTier' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast'] },
       { paramId: 'llmVndOaiReasoningMode' },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
@@ -347,7 +349,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
-      { paramId: 'llmVndOaiServiceTier' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast'] },
       { paramId: 'llmVndOaiReasoningMode' },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
@@ -375,7 +377,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
-      { paramId: 'llmVndOaiServiceTier' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast'] },
       { paramId: 'llmVndOaiReasoningMode' },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
@@ -403,7 +405,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
-      { paramId: 'llmVndOaiServiceTier' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast'] },
       { paramId: 'llmVndOaiReasoningMode' },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
@@ -461,7 +463,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'medium' }, // medium is the new default for 5.5
-      { paramId: 'llmVndOaiServiceTier' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast'] },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
       { paramId: 'llmVndOaiImageGeneration' },
@@ -521,7 +523,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'medium' },
-      { paramId: 'llmVndOaiServiceTier' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast'] },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
       { paramId: 'llmVndOaiImageGeneration' },
@@ -1711,6 +1713,7 @@ const _ORT_OAI_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
   'llmVndOaiEffort', // OpenAI reasoning effort
   'llmVndOaiReasoningMode', // [2026-07-11] GPT-5.6+ reasoning mode - OR-documented `reasoning.mode`: 'pro' on a base id reroutes to the matching '*-pro' model
   'llmVndOaiServiceTier', // [2026-09-22] `service_tier` flex|fast routes to the openai/flex|openai/fast endpoints; OR's reported cost carries the tier
+  // flex|fast only: OR serves 'ultrafast' as 'priority' (2x), no openai/ultrafast endpoint (2026-09-29) - stripped below
   'llmVndOaiVerbosity', // verbosity
   // 'llmVndOaiImageGeneration', // OR does NOT support image gen with OAI yet (2026-02-06)
 ] as const satisfies DModelParameterId[]);
@@ -1770,7 +1773,8 @@ export function llmOrtOaiLookup(orModelName: string): OrtVendorLookupResult | un
     ?.filter(spec => _ORT_OAI_PARAM_ALLOWLIST.has(spec.paramId))
     .map(spec =>
       (isOaiProModel && spec.paramId === 'llmVndOaiReasoningMode') ? { ...spec, initialValue: 'pro' as const, hidden: true } // '-pro' ids ARE pro mode: pinned ('standard' doesn't reroute back)
-        : { ...spec },
+        : (spec.paramId === 'llmVndOaiServiceTier' && spec.enumValues) ? { ...spec, enumValues: spec.enumValues.filter(v => v !== 'ultrafast') }
+          : { ...spec },
     );
 
   // initialTemperature: not set - OpenAI models use the global fallback (0.5);

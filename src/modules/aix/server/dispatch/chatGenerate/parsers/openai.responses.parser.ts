@@ -1284,7 +1284,10 @@ function _priceMultiplierFromServiceTier(serviceTier: string | null | undefined,
     case 'fast':
       // 2x on every model exposing llmVndOaiServiceTier, except GPT-5.5 at 2.5x (Fast $12.50/$75 vs Standard $5/$30)
       return modelId?.startsWith('gpt-5.5') ? 2.5 : 2;
-    default: // 'auto', 'ultrafast' (gated, unpublished price), absent
+    case 'ultrafast':
+      // [2026-09-29] 6x on every token class, both context tiers (GPT-6 Astra: $60/$6/$75/$300 vs Standard $10/$1/$12.50/$50)
+      return 6;
+    default: // 'auto', absent
       return undefined;
   }
 }

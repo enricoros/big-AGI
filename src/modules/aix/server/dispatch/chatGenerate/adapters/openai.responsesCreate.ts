@@ -214,7 +214,8 @@ export function aixToOpenAIResponses(
   if (model.vndOaiReasoningMode)
     payload.reasoning = { ...payload.reasoning, mode: model.vndOaiReasoningMode };
 
-  // [2026-09-03, OpenAI] processing tier: flex (0.5x) | fast (2x); the response echoes the tier served
+  // [2026-09-03, OpenAI] processing tier: flex (0.5x) | fast (2x) | ultrafast (6x, 2026-09-29, GPT-6 Astra only - gated by the
+  // model's enumValues, other models 400); the response echoes the tier served
   if (model.vndOaiServiceTier)
     payload.service_tier = model.vndOaiServiceTier;
 
