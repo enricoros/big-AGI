@@ -84,6 +84,8 @@ export const EditorialDefaults = {
     { vendor: 'bedrock',    modelId: 'us.anthropic.claude-opus-4-7-thinking' },
     { vendor: 'bedrock',    modelId: 'global.anthropic.claude-opus-4-7-thinking' },
     { vendor: 'openrouter', modelId: 'anthropic/claude-opus-4-7' },
+    { vendor: 'openai',     modelId: 'gpt-6.1-sol' }, // 2026-09-29 - "near-Astra" on coding, computer use and professional work at a fifth of Astra's price ($2/$10)
+    { vendor: 'openrouter', modelId: 'openai/gpt-6.1-sol' },
     { vendor: 'openai',     modelId: 'gpt-6-astra' }, // 2026-09-03 - new flagship; $10/$50 (2.5x Sol per token, OpenAI claims lower cost per task)
     { vendor: 'openrouter', modelId: 'openai/gpt-6-astra' },
     { vendor: 'openai',     modelId: 'gpt-6-sol' }, // 2026-09-22 - succeeds 5.6 Sol at half the price ($2/$10), ~1.5x its streaming speed
@@ -122,6 +124,7 @@ export const EditorialDefaults = {
     { vendor: 'openrouter', modelId: 'google/gemini-3.5-flash' },
     { vendor: 'openai',     modelId: 'gpt-5.3-codex' },
     { vendor: 'openrouter', modelId: 'openai/gpt-5.3-codex' },
+    { vendor: 'openai',     modelId: 'gpt-6.1-sol' }, // 2026-09-29 - "exceptionally strong on agentic coding", same price as 6 Sol
     { vendor: 'openai',     modelId: 'gpt-6-sol' }, // 2026-09-22 - "built for complex coding and agentic workflows"
     { vendor: 'openai',     modelId: 'gpt-5.6-sol' }, // 2026-07-09 GA - "strongest yet for agentic coding"; codex still preferred for apply
     { vendor: 'openai',     modelId: 'gpt-5.5' },
