@@ -134,11 +134,28 @@ export function asValidURL(textString: string | null, relaxProtocol: boolean = f
 }
 
 /**
- * Extracts URLs from a text string.
+ * Extracts http(s) URLs from free text, dropping the surrounding prose: 'see https://example.com.' -> ['https://example.com'].
  */
 export function extractUrlsFromText(text: string): string[] {
-  const urlRegex = /(https?:\/\/\S+)/g;
-  return text.match(urlRegex) || [];
+  // '<', '>', '"' and '`' are invalid in a URL, so they delimit one
+  const matches = text.match(/https?:\/\/[^\s<>"`]+/g) ?? [];
+  return matches.map(_urlTrimTail).filter(url => !/^https?:\/\/$/.test(url));
+}
+
+/** Strips trailing sentence punctuation, and closing brackets unless balanced within the URL ('.../Foo_(bar)' keeps its ')'). */
+function _urlTrimTail(url: string): string {
+  let end = url.length;
+  while (end > 0) {
+    const ch = url[end - 1];
+    const closerIdx = ')]}'.indexOf(ch);
+    if (closerIdx >= 0) {
+      const head = url.slice(0, end);
+      if (head.split('([{'[closerIdx]).length >= head.split(ch).length) break;
+    } else if (!'.,;:!?\''.includes(ch))
+      break;
+    end--;
+  }
+  return url.slice(0, end);
 }
 
 
