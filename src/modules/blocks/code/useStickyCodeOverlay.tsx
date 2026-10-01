@@ -31,23 +31,24 @@ export function useStickyCodeOverlay(options?: UseStickyCodeOverlayOptions) {
 
 
   React.useEffect(() => {
-    if (options?.disabled || !overlayRef.current) return;
+    const overlay = overlayRef.current;
+    if (options?.disabled || !overlay) return;
     
     // Find the scrolling container using closest() - try custom boundary first, then role='scrollable'
     const boundarySelector = options?.boundarySelector || '[data-sticky-boundary]';
     const scrollContainer = 
-      overlayRef.current.closest(boundarySelector) || 
-      overlayRef.current.closest('[role="scrollable"]');
+      overlay.closest(boundarySelector) ||
+      overlay.closest('[role="scrollable"]');
     
     if (!scrollContainer) return; // No scroll container found
 
     // -- Scrolling interception & element positioning while Active --
 
+    let pendingFrame: number | null = null;
+
     // Sticky positioning logic
     const applyStickyPosition = () => {
-      if (!overlayRef.current) return;
-      
-      const codeContainer = overlayRef.current.parentElement;
+      const codeContainer = overlay.parentElement;
       if (!codeContainer) return;
       
       const containerRect = codeContainer.getBoundingClientRect();
@@ -58,7 +59,6 @@ export function useStickyCodeOverlay(options?: UseStickyCodeOverlayOptions) {
         containerRect.top < stickyThreshold && 
         containerRect.bottom > stickyThreshold + 44; // 44px minimum visibility
       
-      const overlay = overlayRef.current;
       if (shouldBeSticky) {
         overlay.style.position = 'fixed';
         overlay.style.top = `${stickyThreshold}px`;
@@ -70,15 +70,19 @@ export function useStickyCodeOverlay(options?: UseStickyCodeOverlayOptions) {
     };
     
     const resetToNormalPosition = () => {
-      if (!overlayRef.current) return;
-      const overlay = overlayRef.current;
       overlay.style.position = '';
       overlay.style.top = '';
       overlay.style.right = '';
       overlay.style.zIndex = '';
     };
     
-    const handleScroll = () => requestAnimationFrame(applyStickyPosition);
+    const handleScroll = () => {
+      if (pendingFrame !== null) return;
+      pendingFrame = requestAnimationFrame(() => {
+        pendingFrame = null;
+        applyStickyPosition();
+      });
+    };
 
 
     // -- Activation/deactivation logic - only when overlay is visible (on hover) --
@@ -90,10 +94,14 @@ export function useStickyCodeOverlay(options?: UseStickyCodeOverlayOptions) {
     
     const deactivateStickyBehavior = () => {
       scrollContainer.removeEventListener('scroll', handleScroll);
+      if (pendingFrame !== null) {
+        cancelAnimationFrame(pendingFrame);
+        pendingFrame = null;
+      }
       resetToNormalPosition();
     };
     
-    const boundaryContainer = overlayBoundaryRef.current || overlayRef.current.parentElement;
+    const boundaryContainer = overlayBoundaryRef.current || overlay.parentElement;
     if (boundaryContainer) {
       boundaryContainer.addEventListener('mouseenter', activateStickyBehavior);
       boundaryContainer.addEventListener('mouseleave', deactivateStickyBehavior);
@@ -104,8 +112,7 @@ export function useStickyCodeOverlay(options?: UseStickyCodeOverlayOptions) {
         boundaryContainer.removeEventListener('mouseenter', activateStickyBehavior);
         boundaryContainer.removeEventListener('mouseleave', deactivateStickyBehavior);
       }
-      // Ensure scroll listener is removed
-      scrollContainer.removeEventListener('scroll', handleScroll);
+      deactivateStickyBehavior();
     };
   }, [options?.disabled, options?.boundarySelector]);
   
