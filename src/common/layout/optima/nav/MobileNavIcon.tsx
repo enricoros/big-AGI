@@ -1,7 +1,7 @@
 import { Box, IconButton, styled } from '@mui/joy';
 
 
-export const MobileNavGroupBox = styled(Box)({
+export const MobileNavGroupBox = styled(Box, { name: 'MobileNavGroupBox' })({
   // layout
   flex: 1,
   minHeight: 'var(--Bar)',
@@ -25,7 +25,7 @@ export const mobileNavItemClasses = {
   active: 'NavButton-active',
 };
 
-export const MobileNavIcon = styled(IconButton)(({ theme }) => ({
+export const MobileNavIcon = styled(IconButton, { name: 'MobileNavIcon' })(({ theme }) => ({
 
   // custom vars
   '--MarginY': '0.5rem',

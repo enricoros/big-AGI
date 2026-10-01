@@ -17,7 +17,7 @@ import { Box, BoxProps, styled } from '@mui/joy';
  * Note that the issue of 'BoxCollapsee' having a different height than the FR implies remains, but we
  * basically just use the Collapsee to ignore the layout and clip all on the parent instead.
  */
-const BoxCollapser = styled(Box)({
+const BoxCollapser = styled(Box, { name: 'BoxCollapser' })({
   display: 'grid',
   alignItems: 'start',
   gridTemplateRows: '1fr',
@@ -43,7 +43,7 @@ const collapserNoContainSx = {
 // React 19 warns on the empty string: switch to `true` then.
 const collapsedInertProps = { inert: '' as unknown as boolean };
 
-const BoxCollapsee = styled(Box)({
+const BoxCollapsee = styled(Box, { name: 'BoxCollapsee' })({
   /**
    * FIX: the absence of this made the ChatPanelModelParameters content overflow on the horizontal
    */

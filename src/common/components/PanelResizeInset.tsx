@@ -1,7 +1,7 @@
 import { Box, styled } from '@mui/joy';
 
 
-export const PanelResizeInset = styled(Box)({
+export const PanelResizeInset = styled(Box, { name: 'PanelResizeInset' })({
   width: '100%',
   height: '100%',
 

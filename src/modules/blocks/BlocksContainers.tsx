@@ -20,7 +20,7 @@ const blocksTextStyleSx = {
  * This style is reused by all the Fragments (BlocksRenderer being the Text one),
  * contained within a singe Grid (1fr) in the Message component.
  */
-export const BlocksContainer = styled(Box)({
+export const BlocksContainer = styled(Box, { name: 'BlocksContainer' })({
   // the parent is a Grid, and this takes up to the Grid's width
   // - maxWidth: '100%' makes sure we don't x-scroll the whole chat window
   // - width: '100%' would also maximize the fragment width to the containing grid even if smaller
@@ -40,7 +40,7 @@ export const BlocksContainer = styled(Box)({
 /**
  * Use this TextArea for block-like looks while editing.
  */
-export const BlocksTextarea = styled(Textarea)({
+export const BlocksTextarea = styled(Textarea, { name: 'BlocksTextarea' })({
   // very important: back to a 100% width - the parent is a Grid - see why we need this in BlocksContainer
   width: '100%',
 

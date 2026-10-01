@@ -14,7 +14,7 @@ import { optimaClosePanel, useOptimaPanelOpen } from '../useOptima';
 
 // Desktop side Panel with the Portal content
 
-const DesktopPanelFixRoot = styled(Box)({
+const DesktopPanelFixRoot = styled(Box, { name: 'DesktopPanelFixRoot' })({
   // fix the panel size
   width: 'var(--AGI-Desktop-Panel-width)',
   flexShrink: 0,
@@ -33,7 +33,7 @@ const DesktopPanelFixRoot = styled(Box)({
   },
 });
 
-const DesktopPanelTranslatingSheet = styled(Sheet)(({ theme }) => ({
+const DesktopPanelTranslatingSheet = styled(Sheet, { name: 'DesktopPanelTranslatingSheet' })(({ theme }) => ({
   // layout
   width: '100%',
   height: '100dvh',

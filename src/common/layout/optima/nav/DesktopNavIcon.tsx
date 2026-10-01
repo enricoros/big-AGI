@@ -5,7 +5,7 @@ import { animationColorBeamScatterINV } from '~/common/util/animUtils';
 import { OPTIMA_NAV_RADIUS } from '../optima.config';
 
 
-export const DesktopNavGroupBox = styled(Box)({
+export const DesktopNavGroupBox = styled(Box, { name: 'DesktopNavGroupBox' })({
   // flex column
   display: 'flex',
   flexDirection: 'column',
@@ -34,7 +34,7 @@ export const navItemClasses = {
   attractive: 'NavButton-attractive',
 };
 
-export const DesktopNavIcon = styled(IconButton)(({ theme }) => ({
+export const DesktopNavIcon = styled(IconButton, { name: 'DesktopNavIcon' })(({ theme }) => ({
   // --Bar is defined in InvertedBar
   '--MarginX': '0.25rem',
 

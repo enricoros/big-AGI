@@ -12,7 +12,7 @@ import { useOptimaPortalOutRef } from '../portals/useOptimaPortalOutRef';
 
 // Desktop Drawer
 
-const DesktopDrawerFixRoot = styled(Box)({
+const DesktopDrawerFixRoot = styled(Box, { name: 'DesktopDrawerFixRoot' })({
   // fix the drawer size
   width: 'var(--AGI-Desktop-Drawer-width)',
   flexShrink: 0,
@@ -31,7 +31,7 @@ const DesktopDrawerFixRoot = styled(Box)({
   },
 });
 
-const DesktopDrawerTranslatingSheet = styled(Sheet)(({ theme }) => ({
+const DesktopDrawerTranslatingSheet = styled(Sheet, { name: 'DesktopDrawerTranslatingSheet' })(({ theme }) => ({
   // layout
   width: '100%',
   height: '100dvh',

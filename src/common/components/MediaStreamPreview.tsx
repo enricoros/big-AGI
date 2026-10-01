@@ -5,7 +5,7 @@ import { styled } from '@mui/joy';
 
 
 // add support for the sx prop
-const VideoPreview = styled('video')({
+const VideoPreview = styled('video', { name: 'VideoPreview' })({
   // layout
   backgroundColor: 'var(--joy-palette-neutral-solidActiveBg)',
   display: 'block',

@@ -8,7 +8,7 @@ import { animationOpacityFadeIn } from '~/common/util/animUtils';
 
 
 // adds the 'sx' prop to the Popper, and defaults zIndex to 1000
-const Popup = styled(Popper)({
+const Popup = styled(Popper, { name: 'Popup' })({
   zIndex: 1000,
 });
 

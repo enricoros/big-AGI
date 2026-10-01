@@ -41,7 +41,7 @@ export interface RenderMarkdownRendererProps {
 /*
  * For performance reasons, we style this component here and copy the equivalent of 'props.sx' (the lineHeight) locally.
  */
-const RenderMarkdownBox = styled(Box)({
+const RenderMarkdownBox = styled(Box, { name: 'RenderMarkdownBox' })({
   // same look as the other RenderComponents
   marginInline: '0.75rem !important',                             // margin: 1.5 like other blocks
   // this is here for usage outside of the Blocks (which set it in `sx`)

@@ -45,7 +45,7 @@ export const overlayButtonsActiveSx = {
 };
 
 
-export const StyledOverlayButton = styled(IconButton)(({ theme, variant }) => ({
+export const StyledOverlayButton = styled(IconButton, { name: 'StyledOverlayButton' })(({ theme, variant }) => ({
   backgroundColor: variant === 'outlined' ? theme.palette.background.surface : undefined,
   '--Icon-fontSize': theme.fontSize.lg,
 })) as typeof IconButton;

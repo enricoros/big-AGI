@@ -18,7 +18,7 @@ import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 // State Pane
 
-const StateLine = styled(Typography)(({ theme }) => ({
+const StateLine = styled(Typography, { name: 'StateLine' })(({ theme }) => ({
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
   overflow: 'hidden',

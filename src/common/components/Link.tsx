@@ -6,7 +6,7 @@ import { Link as MuiLink, LinkProps as MuiLinkProps, styled } from '@mui/joy';
 
 
 // Add support for the sx prop for consistency with the other branches.
-const Anchor = styled('a')({});
+const Anchor = styled('a', { name: 'Anchor' })({});
 
 interface NextLinkComposedProps
   extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'>,

@@ -17,7 +17,7 @@ export const beamCardClasses = {
 /**
  * Used for message-containing cards.
  */
-export const BeamCard = styled(Box)(({ theme }) => ({
+export const BeamCard = styled(Box, { name: 'BeamCard' })(({ theme }) => ({
   '--Card-padding': '1rem',
 
   backgroundColor: theme.vars.palette.background.surface,
