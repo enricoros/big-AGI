@@ -319,6 +319,110 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   }), [isBorderless, isFullscreen, isRenderingDiagram, props.sx, showSoftWrap]);
 
 
+  // Keep the overlay stable across streamed code updates. Copy reads the latest code through codeRef.
+  const showFitButton = (isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML && !plantUmlError) || (isSVGCode && showSVG && canScaleSVG);
+  const codeOverlay = React.useMemo(() => (
+    <Box
+      ref={overlayRef}
+      className={overlayButtonsClassName}
+      sx={overlayGridSx}
+    >
+
+      {/* [row 1] */}
+      <Box sx={overlayFirstRowSx}>
+
+        {/* Show HTML + Reload */}
+        {isHTMLCode && (
+          <ButtonGroup aria-label='HTML options' sx={overlayGroupWithShadowSx}>
+            <OverlayButton tooltip={noTooltips ? null : renderHTML ? 'Show Code' : 'Show Web Page'} variant={renderHTML ? 'solid' : 'outlined'} color='danger' onClick={handleHtmlRenderToggle}>
+              <HtmlIcon sx={{ fontSize: 'xl2' }} />
+            </OverlayButton>
+            {renderHTML && (
+              <OverlayButton tooltip={noTooltips ? null : 'Reload'} variant='outlined' color='danger' onClick={() => setHtmlReloadKey(k => k + 1)}>
+                <ReplayRoundedIcon />
+              </OverlayButton>
+            )}
+          </ButtonGroup>
+        )}
+
+        {/* Show Markdown Preview */}
+        {isMdCode && (
+          <OverlayButton tooltip={noTooltips ? null : renderMarkdown ? 'Show Code' : 'Show Preview'} variant={renderMarkdown ? 'solid' : 'outlined'} smShadow onClick={() => setShowMarkdown(!showMarkdown)}>
+            <DescriptionOutlinedIcon />
+          </OverlayButton>
+        )}
+
+        {/* SVG, Mermaid, PlantUML -- including a max-out button */}
+        {(isSVGCode || isMermaidCode || isPlantUMLCode) && (
+          <ButtonGroup aria-label='Diagram' sx={overlayGroupWithShadowSx}>
+            {/* Toggle rendering */}
+            <OverlayButton
+              tooltip={noTooltips ? null
+                : (renderSVG || renderMermaid || renderPlantUML) ? 'Show Code'
+                  : isSVGCode ? 'Render SVG'
+                    : isMermaidCode ? 'Mermaid Diagram'
+                      : 'PlantUML Diagram'
+              }
+              variant={(renderMermaid || renderPlantUML) ? 'solid' : 'outlined'}
+              color={isSVGCode ? 'warning' : undefined}
+              onClick={() => {
+                if (isSVGCode) setShowSVG(on => !on);
+                if (isMermaidCode) setShowMermaid(on => !on);
+                if (isPlantUMLCode) setShowPlantUML(on => !on);
+              }}>
+              {isSVGCode ? <ChangeHistoryTwoToneIcon /> : <SquareTwoToneIcon />}
+            </OverlayButton>
+
+            {/* Fit-Content */}
+            {showFitButton && (
+              <OverlayButton tooltip={noTooltips ? null : fitScreen ? 'Original Size' : 'Fit Content'} variant={fitScreen ? 'solid' : 'outlined'} onClick={() => setFitScreen(on => !on)}>
+                <FitScreenIcon />
+              </OverlayButton>
+            )}
+          </ButtonGroup>
+        )}
+
+        {/* Group: Text Options */}
+        <ButtonGroup aria-label='Text and code options' sx={overlayGroupWithShadowSx}>
+
+          {/* Fullscreen */}
+          <OverlayButton tooltip={noTooltips ? null : isFullscreen ? 'Exit Fullscreen' : !renderSyntaxHighlight ? 'Fullscreen' : 'Present'} variant={isFullscreen ? 'solid' : 'outlined'} onClick={isFullscreen ? exitFullscreen : enterFullscreen}>
+            <ZoomOutMapIcon sx={{ fontSize: 'xl' }} />
+          </OverlayButton>
+
+          {/* Soft Wrap toggle */}
+          {renderSyntaxHighlight && (
+            <OverlayButton tooltip={noTooltips ? null : 'Wrap Lines'} disabled={!renderSyntaxHighlight} variant={(showSoftWrap && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowSoftWrap(!showSoftWrap)}>
+              <WrapTextIcon />
+            </OverlayButton>
+          )}
+
+          {/* Line Numbers toggle */}
+          {renderSyntaxHighlight && uiComplexityMode !== 'minimal' && (
+            <OverlayButton tooltip={noTooltips ? null : 'Line Numbers'} disabled={cannotRenderLineNumbers} variant={(renderLineNumbers && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowLineNumbers(!showLineNumbers)}>
+              <NumbersRoundedIcon />
+            </OverlayButton>
+          )}
+
+          {/* Copy */}
+          {props.noCopyButton !== true && (
+            <OverlayButton tooltip={noTooltips ? null : 'Copy Code'} variant='outlined' onClick={handleCopyToClipboard}>
+              <ContentCopyIcon />
+            </OverlayButton>
+          )}
+        </ButtonGroup>
+
+      </Box>
+
+    </Box>
+  ), [
+    cannotRenderLineNumbers, enterFullscreen, exitFullscreen, fitScreen, handleCopyToClipboard, handleHtmlRenderToggle,
+    isFullscreen, isHTMLCode, isMdCode, isMermaidCode, isPlantUMLCode, isSVGCode, noTooltips, overlayRef, props.noCopyButton,
+    renderHTML, renderLineNumbers, renderMarkdown, renderMermaid, renderPlantUML, renderSVG, renderSyntaxHighlight,
+    setShowLineNumbers, setShowSoftWrap, showFitButton, showLineNumbers, showMarkdown, showSoftWrap, uiComplexityMode,
+  ]);
+
+
   return (
     <Box
       ref={overlayBoundaryRef}
@@ -368,101 +472,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
       </Box>
 
       {/* [overlay] Buttons (Code blocks (SVG, diagrams, HTML, syntax, ...)) */}
-      {(ALWAYS_SHOW_OVERLAY /*|| isHovering*/) && (
-        <Box
-          ref={overlayRef}
-          className={overlayButtonsClassName}
-          sx={overlayGridSx}
-        >
-
-          {/* [row 1] */}
-          <Box sx={overlayFirstRowSx}>
-
-            {/* Show HTML + Reload */}
-            {isHTMLCode && (
-              <ButtonGroup aria-label='HTML options' sx={overlayGroupWithShadowSx}>
-                <OverlayButton tooltip={noTooltips ? null : renderHTML ? 'Show Code' : 'Show Web Page'} variant={renderHTML ? 'solid' : 'outlined'} color='danger' onClick={handleHtmlRenderToggle}>
-                  <HtmlIcon sx={{ fontSize: 'xl2' }} />
-                </OverlayButton>
-                {renderHTML && (
-                  <OverlayButton tooltip={noTooltips ? null : 'Reload'} variant='outlined' color='danger' onClick={() => setHtmlReloadKey(k => k + 1)}>
-                    <ReplayRoundedIcon />
-                  </OverlayButton>
-                )}
-              </ButtonGroup>
-            )}
-
-            {/* Show Markdown Preview */}
-            {isMdCode && (
-              <OverlayButton tooltip={noTooltips ? null : renderMarkdown ? 'Show Code' : 'Show Preview'} variant={renderMarkdown ? 'solid' : 'outlined'} smShadow onClick={() => setShowMarkdown(!showMarkdown)}>
-                <DescriptionOutlinedIcon />
-              </OverlayButton>
-            )}
-
-            {/* SVG, Mermaid, PlantUML -- including a max-out button */}
-            {(isSVGCode || isMermaidCode || isPlantUMLCode) && (
-              <ButtonGroup aria-label='Diagram' sx={overlayGroupWithShadowSx}>
-                {/* Toggle rendering */}
-                <OverlayButton
-                  tooltip={noTooltips ? null
-                    : (renderSVG || renderMermaid || renderPlantUML) ? 'Show Code'
-                      : isSVGCode ? 'Render SVG'
-                        : isMermaidCode ? 'Mermaid Diagram'
-                          : 'PlantUML Diagram'
-                  }
-                  variant={(renderMermaid || renderPlantUML) ? 'solid' : 'outlined'}
-                  color={isSVGCode ? 'warning' : undefined}
-                  onClick={() => {
-                    if (isSVGCode) setShowSVG(on => !on);
-                    if (isMermaidCode) setShowMermaid(on => !on);
-                    if (isPlantUMLCode) setShowPlantUML(on => !on);
-                  }}>
-                  {isSVGCode ? <ChangeHistoryTwoToneIcon /> : <SquareTwoToneIcon />}
-                </OverlayButton>
-
-                {/* Fit-Content */}
-                {((isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML && !plantUmlError) || (isSVGCode && showSVG && canScaleSVG)) && (
-                  <OverlayButton tooltip={noTooltips ? null : fitScreen ? 'Original Size' : 'Fit Content'} variant={fitScreen ? 'solid' : 'outlined'} onClick={() => setFitScreen(on => !on)}>
-                    <FitScreenIcon />
-                  </OverlayButton>
-                )}
-              </ButtonGroup>
-            )}
-
-            {/* Group: Text Options */}
-            <ButtonGroup aria-label='Text and code options' sx={overlayGroupWithShadowSx}>
-
-              {/* Fullscreen */}
-              <OverlayButton tooltip={noTooltips ? null : isFullscreen ? 'Exit Fullscreen' : !renderSyntaxHighlight ? 'Fullscreen' : 'Present'} variant={isFullscreen ? 'solid' : 'outlined'} onClick={isFullscreen ? exitFullscreen : enterFullscreen}>
-                <ZoomOutMapIcon sx={{ fontSize: 'xl' }} />
-              </OverlayButton>
-
-              {/* Soft Wrap toggle */}
-              {renderSyntaxHighlight && (
-                <OverlayButton tooltip={noTooltips ? null : 'Wrap Lines'} disabled={!renderSyntaxHighlight} variant={(showSoftWrap && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowSoftWrap(!showSoftWrap)}>
-                  <WrapTextIcon />
-                </OverlayButton>
-              )}
-
-              {/* Line Numbers toggle */}
-              {renderSyntaxHighlight && uiComplexityMode !== 'minimal' && (
-                <OverlayButton tooltip={noTooltips ? null : 'Line Numbers'} disabled={cannotRenderLineNumbers} variant={(renderLineNumbers && renderSyntaxHighlight) ? 'solid' : 'outlined'} onClick={() => setShowLineNumbers(!showLineNumbers)}>
-                  <NumbersRoundedIcon />
-                </OverlayButton>
-              )}
-
-              {/* Copy */}
-              {props.noCopyButton !== true && (
-                <OverlayButton tooltip={noTooltips ? null : 'Copy Code'} variant='outlined' onClick={handleCopyToClipboard}>
-                  <ContentCopyIcon />
-                </OverlayButton>
-              )}
-            </ButtonGroup>
-
-          </Box>
-
-        </Box>
-      )}
+      {(ALWAYS_SHOW_OVERLAY /*|| isHovering*/) && codeOverlay}
 
     </Box>
   );

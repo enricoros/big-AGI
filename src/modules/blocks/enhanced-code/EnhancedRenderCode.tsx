@@ -83,8 +83,8 @@ export function EnhancedRenderCode(props: {
 
   // components
 
-  const headerTooltipContents = React.useMemo(() => (
-    <Box sx={enhancedCodePanelTitleTooltipSx}>
+  const headerTooltipContents = React.useMemo(function ERCHeaderTooltip() {
+    return <Box sx={enhancedCodePanelTitleTooltipSx}>
       {/* This is what we have */}
       <div><strong>Code Block</strong></div>
       <div></div>
@@ -115,10 +115,10 @@ export function EnhancedRenderCode(props: {
       {/*<div>{fragmentDocPart.data?.mimeType || '(unknown)'}</div>*/}
       {/*<div>Text Buffer Id</div>*/}
       {/*<div>{fragmentId}</div>*/}
-    </Box>
-  ), [props.code, props.isPartial, props.semiStableId, props.title]);
+    </Box>;
+  }, [props.code, props.isPartial, props.semiStableId, props.title]);
 
-  const headerRow = React.useMemo(() => {
+  const headerRow = React.useMemo(function ERCHeader() {
     const Icon = CodeIcon;
     return <>
       {/* Icon and Title */}
