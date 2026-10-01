@@ -272,9 +272,9 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   }, [blockTitle, code, inferCodeLanguage, isHTMLCode]);
 
 
-  // Optimization 1: highlight decimation: max 6.6Hz throttle during large partial streams, as skipped intermediates are harmless.
+  // Optimization 1: highlight decimation: max 6.6Hz during large partial streams. Flush on stop, even with an unclosed fence.
   const snapRef = React.useRef({ at: 0, code });
-  const throttle = !!PARTIAL_HIGHLIGHT_THROTTLE_BYTES && blockIsPartial && code.length > PARTIAL_HIGHLIGHT_THROTTLE_BYTES;
+  const throttle = !!PARTIAL_HIGHLIGHT_THROTTLE_BYTES && props.optimizeLightweight && blockIsPartial && code.length > PARTIAL_HIGHLIGHT_THROTTLE_BYTES;
   const now = throttle ? performance.now() : 0;
   if (!throttle || now - snapRef.current.at >= PARTIAL_HIGHLIGHT_THROTTLE_MS) {
     snapRef.current.at = now;
