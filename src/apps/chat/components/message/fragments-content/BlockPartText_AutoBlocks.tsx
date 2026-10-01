@@ -33,7 +33,6 @@ export function BlockPartText_AutoBlocks(props: {
   htmlRenderVariant?: AutoBlocksHtmlRenderVariant,
 
   optiAllowSubBlocksMemo: boolean,
-  optiStreamingLastFragment?: boolean,
 
   onDoubleClick?: (event: React.MouseEvent) => void;
 
@@ -81,7 +80,6 @@ export function BlockPartText_AutoBlocks(props: {
       htmlRenderVariant={props.htmlRenderVariant}
       textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
       optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
-      optiStreamingLastFragment={props.optiStreamingLastFragment}
       onDoubleClick={props.onDoubleClick}
       setText={!props.setEditedText ? undefined : handleSetText}
     />

@@ -168,7 +168,6 @@ export function ContentFragments(props: {
                 auxHasSignature={part.textSignature !== undefined}
                 auxRedactedDataCount={part.redactedData?.length ?? 0}
                 messagePendingIncomplete={!!props.messagePendingIncomplete}
-                zenMode={props.uiComplexityMode === 'minimal'}
                 contentScaling={props.contentScaling}
                 fitScreen={props.fitScreen}
                 isMobile={props.isMobile}
@@ -354,7 +353,6 @@ export function ContentFragments(props: {
               disableMarkdownText={props.disableMarkdownText}
               htmlRenderVariant={props.htmlRenderVariant}
               optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
-              optiStreamingLastFragment={!!props.optiAllowSubBlocksMemo && isLastFragment && props.uiComplexityMode === 'minimal'}
               onDoubleClick={props.onDoubleClick}
             />
           );

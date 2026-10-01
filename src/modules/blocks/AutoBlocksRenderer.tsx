@@ -19,7 +19,6 @@ import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpa
 
 // configuration
 const DISABLE_MARKDOWN_PROGRESSIVE_PREPROCESS = true; // set to false to render LaTeX inline formulas as they come in, not at the end of the message
-const STREAMING_TAIL_MAX_HIDDEN_CHARS = 280; // safety: stop hiding the post-newline tail if it grows past this (~2 classic tweets)
 // import '~/common/util/forceTouchToDoubleClick'; // Future: Mac trackpad: force press → double-click
 
 
@@ -66,12 +65,6 @@ export function AutoBlocksRenderer(props: {
    * work in progress on that
    */
   optiAllowSubBlocksMemo?: boolean;
-
-  /**
-   * optimization: streaming + last content fragment: clip last md block to last newline
-   * to avoid inline-markdown flicker
-   */
-  optiStreamingLastFragment?: boolean;
 
   onDoubleClick?: (event: React.MouseEvent) => void;
 
@@ -151,13 +144,6 @@ export function AutoBlocksRenderer(props: {
         switch (bkInput.bkt) {
 
           case 'md-bk':
-            // streaming smoothness: parse up to last newline only (tail reappears on next newline; full on completion)
-            let mdContent = bkInput.content;
-            if (props.optiStreamingLastFragment && index === (autoBlocksStable.length - 1)) {
-              const lastNewline = bkInput.content.lastIndexOf('\n');
-              if (lastNewline >= 0 && bkInput.content.length - lastNewline - 1 < STREAMING_TAIL_MAX_HIDDEN_CHARS)
-                mdContent = bkInput.content.slice(0, lastNewline + 1);
-            }
             return (props.textRenderVariant === 'text' || fromSystem /*|| isUserCommand*/) ? (
               // Keep in sync with ScaledPlainTextRenderer
               <RenderPlainText
@@ -170,7 +156,7 @@ export function AutoBlocksRenderer(props: {
               // Keep in sync with ScaledMarkdownRenderer
               <RenderMarkdownMemo
                 key={'md-bk-' + index}
-                content={mdContent}
+                content={bkInput.content}
                 disablePreprocessor={optimizeDisableProcessorsOnLast}
                 lite={optimizeLightweightLastBlock && decayActive}
                 onParseCost={optimizeLightweightLastBlock ? decayOnParseCost : undefined}

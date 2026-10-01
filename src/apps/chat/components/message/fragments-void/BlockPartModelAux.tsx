@@ -105,7 +105,6 @@ export function BlockPartModelAux(props: {
   auxHasSignature: boolean,
   auxRedactedDataCount: number,
   messagePendingIncomplete: boolean,
-  zenMode: boolean,
   contentScaling: ContentScaling,
   fitScreen: boolean,
   isMobile: boolean,
@@ -147,8 +146,8 @@ export function BlockPartModelAux(props: {
     ...scaledTypographySx,
   }), [scaledTypographySx]);
 
-  // same renderer as the message text: blocks, sub-block memo while streaming, streaming clip in minimal mode
-  const { fitScreen, isMobile, zenMode } = props;
+  // same renderer as the message text: blocks, sub-block memo while streaming
+  const { fitScreen, isMobile } = props;
   const renderedBlocks = React.useMemo(() => neverExpanded ? null : (
     <AutoBlocksRenderer
       text={shownText}
@@ -158,9 +157,8 @@ export function BlockPartModelAux(props: {
       isMobile={isMobile}
       textRenderVariant={maybeMarkdown ? 'markdown' : 'text'}
       optiAllowSubBlocksMemo={isActive}
-      optiStreamingLastFragment={isActive && zenMode}
     />
-  ), [contentScaling, fitScreen, isActive, isMobile, maybeMarkdown, neverExpanded, shownText, zenMode]);
+  ), [contentScaling, fitScreen, isActive, isMobile, maybeMarkdown, neverExpanded, shownText]);
 
 
   // handlers
