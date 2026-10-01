@@ -35,6 +35,7 @@ export function RenderCodePanelFrame(props: {
   toolbarColor?: ColorPaletteProp;
   gutterBlock?: boolean;
   noOuterShadow?: boolean;
+  frameless?: boolean; // gutter only; keep the content at the same tree position
   contentScaling: ContentScaling;
   headerRow?: React.ReactNode;
   subHeaderInline?: React.ReactNode;
@@ -61,7 +62,7 @@ export function RenderCodePanelFrame(props: {
   }, [onHeaderClick]);
 
 
-  const [frameSx, headersBlockSx, headerRowSx, subHeaderContainedSx, toolbarRowSx] = React.useMemo((): SxProps[] => [
+  const [frameSx, framelessSx, headersBlockSx, headerRowSx, subHeaderContainedSx, toolbarRowSx] = React.useMemo((): SxProps[] => [
     {
       // frame
       // add top margin (gutter) only of this is not the first block in the sequence
@@ -76,6 +77,10 @@ export function RenderCodePanelFrame(props: {
       ...(!props.noOuterShadow && { boxShadow: 'sm' }),
       // boxShadow: 'inset 2px 0px 5px -4px var(--joy-palette-background-backdrop)',
       // contain: 'paint',
+    },
+    {
+      // Frameless blocks keep the bare code block's margins on both sides.
+      ...(props.gutterBlock && { my: themeScalingMap[props.contentScaling]?.blockCodeMarginY ?? 0 }),
     },
     {
       // headers block
@@ -127,10 +132,10 @@ export function RenderCodePanelFrame(props: {
   ], [isClickableHeader, isDarkMode, props.color, props.contentScaling, props.gutterBlock, props.noOuterShadow, props.selectedOutline, props.toolbarColor]);
 
   return (
-    <Box sx={frameSx}>
+    <Box sx={props.frameless ? framelessSx : frameSx}>
 
       {/* header(s) */}
-      {(!!props.headerRow || !!props.subHeaderInline) && (
+      {!props.frameless && (!!props.headerRow || !!props.subHeaderInline) && (
         <Box
           aria-label={isClickableHeader ? 'Click to expand/collapse' : undefined}
           role={isClickableHeader ? 'button' : undefined}
@@ -154,7 +159,7 @@ export function RenderCodePanelFrame(props: {
       )}
 
       {/* toolbar */}
-      {props.toolbarRow && (
+      {!props.frameless && props.toolbarRow && (
         <Sheet color='primary' variant='soft' sx={toolbarRowSx}>
           {props.toolbarRow}
         </Sheet>

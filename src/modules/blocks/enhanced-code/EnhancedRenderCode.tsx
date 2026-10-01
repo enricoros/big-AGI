@@ -34,6 +34,7 @@ export function EnhancedRenderCode(props: {
   initialIsCollapsed: boolean;
   isMobile: boolean,
   noApplyButton?: boolean,
+  frameless?: boolean, // hide the frame without remounting the renderer
 }) {
 
   // state
@@ -48,9 +49,11 @@ export function EnhancedRenderCode(props: {
 
 
   // React to changes in the collapsed state. Note that by default, nothing is collapsed
+  // Reset collapse and dismiss hidden menus when the frame changes, as the former remount did.
   React.useEffect(() => {
     setIsCodeCollapsed(props.initialIsCollapsed);
-  }, [props.initialIsCollapsed]);
+    if (props.frameless) setContextMenuAnchor(null);
+  }, [props.frameless, props.initialIsCollapsed]);
 
 
   // handlers
@@ -84,6 +87,8 @@ export function EnhancedRenderCode(props: {
   // components
 
   const headerTooltipContents = React.useMemo(function ERCHeaderTooltip() {
+    // Skip the whole-code line count while the header is hidden during streaming.
+    if (props.frameless) return null;
     return <Box sx={enhancedCodePanelTitleTooltipSx}>
       {/* This is what we have */}
       <div><strong>Code Block</strong></div>
@@ -116,9 +121,10 @@ export function EnhancedRenderCode(props: {
       {/*<div>Text Buffer Id</div>*/}
       {/*<div>{fragmentId}</div>*/}
     </Box>;
-  }, [props.code, props.isPartial, props.semiStableId, props.title]);
+  }, [props.code, props.frameless, props.isPartial, props.semiStableId, props.title]);
 
   const headerRow = React.useMemo(function ERCHeader() {
+    if (props.frameless) return null;
     const Icon = CodeIcon;
     return <>
       {/* Icon and Title */}
@@ -153,7 +159,7 @@ export function EnhancedRenderCode(props: {
       </IconButton>
 
     </>;
-  }, [handleToggleCodeCollapse, handleToggleContextMenu, headerTooltipContents, isCodeCollapsed, liveFileButton, props.title]);
+  }, [handleToggleCodeCollapse, handleToggleContextMenu, headerTooltipContents, isCodeCollapsed, liveFileButton, props.frameless, props.title]);
 
   // const toolbarRow = React.useMemo(() => <>
   //   {props.onLiveFileCreate && (
@@ -182,9 +188,13 @@ export function EnhancedRenderCode(props: {
     borderTopRightRadius: 0,
   }), [props.codeSx]);
 
+  // The frame carries the gutter; the code block keeps its own appearance.
+  const framelessCodeSx = React.useMemo(() => ({ ...props.codeSx, my: 0 }), [props.codeSx]);
+
 
   return (
     <RenderCodePanelFrame
+      frameless={props.frameless}
       color={props.color || 'neutral'}
       gutterBlock
       noOuterShadow
@@ -196,7 +206,7 @@ export function EnhancedRenderCode(props: {
     >
 
       {/* Body of the message (it's a RenderCode with patched sx, for looks) */}
-      <ExpanderControlledBox noContain={true /* Important, allow fixed positioning on OverlayButttons */} expanded={!isCodeCollapsed}>
+      <ExpanderControlledBox noContain={true /* Important, allow fixed positioning on OverlayButttons */} expanded={!!props.frameless || !isCodeCollapsed}>
         <RenderCodeMemo
           semiStableId={props.semiStableId}
           code={props.code} title={props.title} isPartial={props.isPartial}
@@ -205,13 +215,13 @@ export function EnhancedRenderCode(props: {
           noCopyButton={props.noCopyButton}
           optimizeLightweight={props.optimizeLightweight}
           onReplaceInCode={props.onReplaceInCode}
-          renderHideTitle={true /* because we show it already, outside */}
-          sx={patchedCodeSx}
+          renderHideTitle={!props.frameless /* the header shows it, when there is one */}
+          sx={props.frameless ? framelessCodeSx : patchedCodeSx}
         />
       </ExpanderControlledBox>
 
       {/* Context Menu */}
-      {contextMenuAnchor && (
+      {contextMenuAnchor && !props.frameless && (
         <EnhancedRenderCodeMenu
           anchor={contextMenuAnchor}
           code={props.code} title={props.title}
@@ -224,3 +234,5 @@ export function EnhancedRenderCode(props: {
     </RenderCodePanelFrame>
   );
 }
+
+export const EnhancedRenderCodeMemo = React.memo(EnhancedRenderCode);

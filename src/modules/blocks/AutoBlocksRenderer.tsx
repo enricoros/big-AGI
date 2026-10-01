@@ -6,7 +6,7 @@ import { useRenderDecay } from '~/common/render-decay/RenderDecayZone';
 
 import { BLOCK_CODE_MERMAID_TITLE, BLOCK_CODE_PLANTUML_TITLE, BLOCK_CODE_SVG_TITLE, RenderCodeMemo } from './code/RenderCode';
 import { BlocksContainer } from './BlocksContainers';
-import { EnhancedRenderCode } from './enhanced-code/EnhancedRenderCode';
+import { EnhancedRenderCodeMemo } from './enhanced-code/EnhancedRenderCode';
 import { RenderImageURL } from './image/RenderImageURL';
 import { RenderMarkdownMemo } from './markdown/RenderMarkdown';
 import { RenderPlainText } from './plaintext/RenderPlainText';
@@ -166,41 +166,21 @@ export function AutoBlocksRenderer(props: {
             );
 
           case 'code-bk':
-            // Custom handling for some of our blocks
-            const disableBecauseInProgress = bkInput.isPartial && props.optiAllowSubBlocksMemo === true;
-            const disableBecauseTooShort = !bkInput.title && bkInput.lines <= 3;
-            let disableEnhancedRender = disableBecauseInProgress || disableBecauseTooShort;
-            let enhancedStartCollapsed = false;
+            // Keep the component type stable across fence closure, completion and resume.
+            // Content controls the frame, while the renderer keeps its DOM, iframe and toggles.
+            const lowerCaseTitle = bkInput.title.toLowerCase();
+            const isDiagram = lowerCaseTitle === BLOCK_CODE_MERMAID_TITLE || lowerCaseTitle === BLOCK_CODE_PLANTUML_TITLE;
+            const frameless = isDiagram
+              ? !bkInput.isPartial // diagrams: framed and collapsed while written, bare once they render
+              : (bkInput.isPartial && optimizeLightweightLastBlock) || (!bkInput.title && bkInput.lines <= 3) || lowerCaseTitle === BLOCK_CODE_SVG_TITLE;
+            const startCollapsed = (isDiagram && bkInput.isPartial) || fixUserHtmlPaste;
 
-            // Pre-collapsing of special blocks
-            let lowerCaseTitle = bkInput.title.toLowerCase();
-            switch (lowerCaseTitle) {
-
-              // start as a collapsed ERC, then remove the border and go normal
-              case BLOCK_CODE_MERMAID_TITLE:
-              case BLOCK_CODE_PLANTUML_TITLE:
-                disableEnhancedRender = !bkInput.isPartial;
-                // un-collapses when the fence closes: the block switches from Enhanced to plain RenderCode
-                enhancedStartCollapsed = bkInput.isPartial;
-                break;
-
-              // do never ERC
-              case BLOCK_CODE_SVG_TITLE:
-                disableEnhancedRender = true;
-                break;
-            }
-
-            // Pre-collapsing of user pasted HTML
-            if (fixUserHtmlPaste) {
-              // disableEnhancedRender = false;
-              enhancedStartCollapsed = true;
-            }
-
-            return (props.codeRenderVariant === 'enhanced' && !disableEnhancedRender) ? (
-              <EnhancedRenderCode
+            return props.codeRenderVariant === 'enhanced' ? (
+              <EnhancedRenderCodeMemo
                 // EnhancedRenderCode props
+                frameless={frameless}
                 contentScaling={props.contentScaling}
-                initialIsCollapsed={enhancedStartCollapsed}
+                initialIsCollapsed={startCollapsed}
                 isMobile={props.isMobile}
                 noApplyButton={props.blocksProcessor === 'diagram' || fromUser}
                 // RenderCode pass through
