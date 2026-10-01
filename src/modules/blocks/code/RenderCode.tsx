@@ -145,6 +145,26 @@ const overlayFirstRowSx: SxProps = {
 };
 
 
+// Keep deferred catch-up renders inside the syntax subtree. Prism itself remains synchronous.
+const RCSyntaxHighlight = React.memo(function RCSyntaxHighlight(props: {
+  code: string,
+  inferredCodeLanguage: string | null,
+  renderLineNumbers: boolean,
+  presenterMode: boolean,
+  highlightCode: (inferredCodeLanguage: string | null, code: string, addLineNumbers: boolean) => string,
+}) {
+  const { code, inferredCodeLanguage, renderLineNumbers, presenterMode, highlightCode } = props;
+  const deferredCode = React.useDeferredValue(code);
+  const codeSyntaxHtml = React.useMemo(() => {
+    if (!deferredCode)
+      return null;
+    return highlightCode(inferredCodeLanguage, deferredCode, renderLineNumbers);
+  }, [deferredCode, highlightCode, inferredCodeLanguage, renderLineNumbers]);
+
+  return <RenderCodeSyntax highlightedSyntaxAsHtml={codeSyntaxHtml} presenterMode={presenterMode} />;
+});
+
+
 function RenderCodeImpl(props: RenderCodeBaseProps & {
   highlightCode: (inferredCodeLanguage: string | null, code: string, addLineNumbers: boolean) => string,
   inferCodeLanguage: (blockTitle: string, code: string) => string | null,
@@ -262,18 +282,6 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   }
   const throttledCodeForHighlight = snapRef.current.code;
 
-  // Optimization 2: highlight cancellation: React-defer the *input* to Prism syntax highlight memo -> the highlight pass runs in a low-priority, interruptible render.
-  // A higher-priority update (input, scroll, another state change) aborts the pending pass -- so rapid streaming updates coalesce
-  // into fewer Prism runs under pressure.
-  const deferredCodeForHighlight = React.useDeferredValue(throttledCodeForHighlight);
-
-  const codeSyntaxHtml = React.useMemo(() => {
-    // fast-off
-    if (!renderSyntaxHighlight || !deferredCodeForHighlight)
-      return null;
-    return highlightCode(inferredCodeLanguage, deferredCodeForHighlight, renderLineNumbers);
-  }, [deferredCodeForHighlight, highlightCode, inferredCodeLanguage, renderLineNumbers, renderSyntaxHighlight]);
-
 
   // Title
   let showBlockTitle = !props.renderHideTitle && (blockTitle != inferredCodeLanguage) && (blockTitle.includes('.') || blockTitle.includes('://'));
@@ -348,7 +356,13 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
               : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
                 : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
                   : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
-                    : <RenderCodeSyntax highlightedSyntaxAsHtml={codeSyntaxHtml} presenterMode={isFullscreen} />}
+                    : <RCSyntaxHighlight
+                        code={throttledCodeForHighlight}
+                        inferredCodeLanguage={inferredCodeLanguage}
+                        renderLineNumbers={renderLineNumbers}
+                        presenterMode={isFullscreen}
+                        highlightCode={highlightCode}
+                      />}
         </span>
 
       </Box>
