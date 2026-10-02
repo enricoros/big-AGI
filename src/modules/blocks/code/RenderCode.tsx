@@ -145,6 +145,12 @@ const overlayFirstRowSx: SxProps = {
 };
 
 
+// Give the memoized overlay JSX a named Profiler boundary without duplicating its inputs as props.
+function RCOverlay(props: { children: React.ReactNode }) {
+  return props.children;
+}
+
+
 // Keep deferred catch-up renders inside the syntax subtree. Prism itself remains synchronous.
 const RCSyntaxHighlight = React.memo(function RCSyntaxHighlight(props: {
   code: string,
@@ -180,11 +186,6 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const [showPlantUML, setShowPlantUML] = React.useState(true);
   const [showSVG, setShowSVG] = React.useState(true);
   const fullScreenElementRef = React.useRef<HTMLDivElement>(null);
-
-  // 'render-at-end' turns this on when the block completes: the block used to remount into it
-  React.useEffect(() => {
-    if (props.initialRenderHTML === true) setShowHTML(true);
-  }, [props.initialRenderHTML]);
 
   // external state
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreenElement(fullScreenElementRef);
@@ -241,6 +242,12 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   const isHTMLCode = heuristicIsBlockPureHTML(_tCode);
   const renderHTML = isHTMLCode && showHTML;
+
+  // 'render-at-end' enables HTML at completion without updating state for other code blocks.
+  const shouldAutoRenderHTML = isHTMLCode && props.initialRenderHTML === true;
+  React.useEffect(() => {
+    if (shouldAutoRenderHTML) setShowHTML(true);
+  }, [shouldAutoRenderHTML]);
 
   const isMdCode = !blockIsPartial && (lcBlockTitle === 'md' || lcBlockTitle === 'markdown' || lcBlockTitle.endsWith('.md'));
   const renderMarkdown = isMdCode && showMarkdown;
@@ -321,7 +328,8 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   // Keep the overlay stable across streamed code updates. Copy reads the latest code through codeRef.
   const showFitButton = (isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML && !plantUmlError) || (isSVGCode && showSVG && canScaleSVG);
-  const codeOverlay = React.useMemo(function RCOverlay(){ return <Box
+  const codeOverlay = React.useMemo(() => (<RCOverlay>
+    <Box
       ref={overlayRef}
       className={overlayButtonsClassName}
       sx={overlayGridSx}
@@ -413,8 +421,8 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
       </Box>
 
-    </Box>;
-  }, [
+    </Box></RCOverlay>
+  ), [
     cannotRenderLineNumbers, enterFullscreen, exitFullscreen, fitScreen, handleCopyToClipboard, handleHtmlRenderToggle,
     isFullscreen, isHTMLCode, isMdCode, isMermaidCode, isPlantUMLCode, isSVGCode, noTooltips, overlayRef, props.noCopyButton,
     renderHTML, renderLineNumbers, renderMarkdown, renderMermaid, renderPlantUML, renderSVG, renderSyntaxHighlight,
