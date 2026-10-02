@@ -58,11 +58,12 @@ export type DMessageAttachmentFragment = _DMessageFragmentWrapper<'attachment',
 };
 
 /**
- * Void Fragments: no meaning, pure cosmetic, not stored, not processed
+ * Void Fragments: reasoning, annotations and UI placeholders outside ordinary content.
+ * Reasoning is stored and can be replayed to providers; transient placeholders are removed on completion.
  */
 export type DMessageVoidFragment = _DMessageFragmentWrapper<'void',
   | DVoidModelAnnotationsPart     // (non submitted) model references, citations, etc.
-  | DVoidModelAuxPart             // (non submitted) model auxiliary information, from the model itself
+  | DVoidModelAuxPart             // model reasoning and continuity data; replay depends on the provider
   | DVoidPlaceholderPart          // (non submitted) placeholder to be replaced by another part
   | _SentinelPart
 >;

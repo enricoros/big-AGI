@@ -219,7 +219,8 @@ export function ChatMessage(props: {
   const inFluxFragmentId = React.useMemo(() => messageFragmentsInFluxId(messageFragments, !!messagePendingIncomplete), [messageFragments, messagePendingIncomplete]);
 
   const fragmentFlattenedText = React.useMemo(() => messageFragmentsReduceText(messageFragments), [messageFragments]);
-  const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, interleavedFragments.filter(f => f.ft === 'content'), fromAssistant, props.onMessageFragmentReplace);
+  const contentFragments = React.useMemo(() => interleavedFragments.filter(f => f.ft === 'content'), [interleavedFragments]);
+  const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, contentFragments, fromAssistant, props.onMessageFragmentReplace);
 
   // [#1114] Vertex AI grounding redirect links present in this message (skip the scan while streaming - the button is gated on completion anyway)
   const vertexLinksCount = React.useMemo(() => {
@@ -578,9 +579,15 @@ export function ChatMessage(props: {
 
   const lookForOptions = onMessageContinue !== undefined && props.isBottom === true && !msgGenOutOfTokens && fromAssistant && !messagePendingIncomplete && !isEditingText && uiComplexityMode !== 'minimal' && false;
 
-  const { fragments: renderInterleavedFragments, options: continuationOptions } = React.useMemo(() => {
+  const { fragments: renderInterleavedFragments, options: continuationOptions, trimmedFragment } = React.useMemo(() => {
     return optionsExtractFromFragments_dangerModifyFragment(lookForOptions, interleavedFragments);
   }, [interleavedFragments, lookForOptions]);
+
+  const handleRenderedTextEdit = React.useCallback((fragmentId: DMessageFragmentId, editedText: string, applyNow: boolean) => {
+    // Restore hidden options before saving or checking for deletion. Full-text editing is untrimmed.
+    const sourceText = applyNow && trimmedFragment?.fragmentId === fragmentId ? editedText + trimmedFragment.suffix : editedText;
+    handleEditSetText(fragmentId, sourceText, applyNow);
+  }, [handleEditSetText, trimmedFragment]);
 
 
   // style
@@ -776,7 +783,7 @@ export function ChatMessage(props: {
           {annotationFragments.length >= 1 && (
             <VoidFragments
               voidFragments={annotationFragments}
-              nonVoidFragmentsCount={interleavedFragments.filter(f => f.ft === 'content').length}
+              nonVoidFragmentsCount={contentFragments.length}
               contentScaling={adjContentScaling}
               uiComplexityMode={uiComplexityMode}
               messageRole={messageRole}
@@ -804,7 +811,7 @@ export function ChatMessage(props: {
             htmlRenderVariant={props.htmlRenderVariant}
 
             textEditsState={textContentEditState}
-            setEditedText={(!onMessageFragmentReplace || messagePendingIncomplete) ? undefined : handleEditSetText}
+            setEditedText={(!onMessageFragmentReplace || messagePendingIncomplete) ? undefined : handleRenderedTextEdit}
             onEditsApply={handleApplyAllEdits}
             onEditsCancel={handleEditsCancel}
 

@@ -102,8 +102,8 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
         const _exhaustiveCheck: never = cPt;
     }
   } else if (isVoidFragment(fragment)) {
-    // all void fragments are ignored by definition and never sent to the llm
-    // NOTE: make sure you collapse/don't account for the containing message as well, if left empty
+    // Reasoning can be replayed, but this preview does not yet estimate its provider-specific token cost.
+    // Annotations and UI placeholders do not contribute to the prompt.
     return 0;
   }
   console.warn(`[DEV] Unhandled token preview for fragment/part: ${fragment.ft}/${fragment.part?.pt}`);
