@@ -137,6 +137,11 @@ export type DMessageGenerator = ({
       expiresAt: string,                // server doesn't expose retention; parser stamps now+20min (OpenAI's inactivity TTL, refreshed on any container op)
     }
     | {
+      uct: 'vnd.xai.container',         // xAI Responses code-interpreter sandbox - vendor-scoped (#1200): never adopted by the OpenAI-targeted walk; not yet consumed for xAI reuse (its adapter collapses code execution to 'execute_code')
+      containerId: string,
+      expiresAt: string,                // same now+20min stamp as the OpenAI variant (xAI doesn't expose retention either)
+    }
+    | {
       uct: 'vnd.gem.interactions',      // today: Antigravity sandbox via `interaction.start.environment_id`
       envId: string,
       expiresAt: string | null,         // server doesn't expose retention; parser stamps now+7d per docs (env retained 7d from last-active)
