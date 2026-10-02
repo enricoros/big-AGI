@@ -16,6 +16,29 @@ import { getCodeCollapseManager } from './codeCollapseManager';
 import { useLiveFilePatch } from './livefile-patch/useLiveFilePatch';
 
 
+const _styles = {
+  headerIcon: {
+    mr: -0.5,
+  },
+  headerTitle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
+    overflow: 'hidden',
+  },
+} as const satisfies Record<string, SxProps>;
+
+
+// Named Profiler boundaries; the existing useMemo calls keep their JSX stable.
+function ERCHeaderTooltip(props: { children: React.ReactNode }) {
+  return props.children;
+}
+
+function ERCHeader(props: { children: React.ReactNode }) {
+  return props.children;
+}
+
+
 export function EnhancedRenderCode(props: {
   // same as RenderCode
   semiStableId: string | undefined,
@@ -86,10 +109,10 @@ export function EnhancedRenderCode(props: {
 
   // components
 
-  const headerTooltipContents = React.useMemo(function ERCHeaderTooltip() {
+  const headerTooltipContents = React.useMemo(() => {
     // Skip the whole-code line count while the header is hidden during streaming.
     if (props.frameless) return null;
-    return <Box sx={enhancedCodePanelTitleTooltipSx}>
+    return <ERCHeaderTooltip><Box sx={enhancedCodePanelTitleTooltipSx}>
       {/* This is what we have */}
       <div><strong>Code Block</strong></div>
       <div></div>
@@ -120,16 +143,16 @@ export function EnhancedRenderCode(props: {
       {/*<div>{fragmentDocPart.data?.mimeType || '(unknown)'}</div>*/}
       {/*<div>Text Buffer Id</div>*/}
       {/*<div>{fragmentId}</div>*/}
-    </Box>;
+    </Box></ERCHeaderTooltip>;
   }, [props.code, props.frameless, props.isPartial, props.semiStableId, props.title]);
 
-  const headerRow = React.useMemo(function ERCHeader() {
+  const headerRow = React.useMemo(() => {
     if (props.frameless) return null;
     const Icon = CodeIcon;
-    return <>
+    return <ERCHeader>
       {/* Icon and Title */}
       <TooltipOutlined placement='top-start' color='neutral' title={headerTooltipContents}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, overflow: 'hidden' }}>
+        <Box sx={_styles.headerTitle}>
           <Icon
             aria-hidden
             onClick={handleToggleCodeCollapse}
@@ -153,12 +176,12 @@ export function EnhancedRenderCode(props: {
         size='sm'
         onClick={handleToggleContextMenu}
         // onContextMenu={handleToggleContextMenu} // NOTE: disabled because onContextMenu prevents */ClickAwayListeners
-        sx={{ mr: -0.5 }}
+        sx={_styles.headerIcon}
       >
         <MoreVertIcon />
       </IconButton>
 
-    </>;
+    </ERCHeader>;
   }, [handleToggleCodeCollapse, handleToggleContextMenu, headerTooltipContents, isCodeCollapsed, liveFileButton, props.frameless, props.title]);
 
   // const toolbarRow = React.useMemo(() => <>
