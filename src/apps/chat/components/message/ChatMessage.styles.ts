@@ -43,3 +43,29 @@ export const messageAvatarLabelAnimatedSx: SxProps = {
   // Extra hinting... but looks weird
   // fontStyle: 'italic',
 };
+
+// Mobile-specific: Compact sticky header bar
+// Note: backgroundColor is set dynamically in the component based on message role
+export const messageMobileHeaderSx: SxProps = {
+  position: 'sticky',
+  top: 0,
+  zIndex: 2, // on top of the textarea outline when editing
+
+  minHeight: '2.5rem', // 40px, while the rendercode buttons have 44 (4 + 36 + 4), but this doesn't feel small
+  pl: 1.5,
+  pr: 1,
+  mx: -0.5,
+  mb: 0.125,
+
+  display: 'flex',
+  alignItems: 'center',
+  gap: 1,
+};
+
+// Edit controls bar when in Beam
+export const messageEditBeamControlsTopSx: SxProps = {
+  ...messageMobileHeaderSx,
+  top: '3rem',
+  backgroundColor: 'warning.softHoverBg',
+  justifyContent: 'flex-end',
+};

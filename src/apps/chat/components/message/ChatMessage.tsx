@@ -4,7 +4,7 @@ import { shallow } from 'zustand/vanilla/shallow';
 import TimeAgo from 'react-timeago';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, ButtonGroup, CircularProgress, Divider, IconButton, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, ButtonGroup, CircularProgress, Divider, IconButton, Tooltip, Typography } from '@mui/joy';
 import { ClickAwayListener, Popper } from '@mui/base';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -47,7 +47,7 @@ import { DocumentAttachmentFragments } from './fragments-attachment-doc/Document
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
 import { InReferenceToList } from './in-reference-to/InReferenceToList';
 import { VoidFragments } from './fragments-void/VoidFragments';
-import { messageAsideColumnSx, messageAvatarLabelAnimatedSx, messageAvatarLabelSx, messageZenAsideColumnSx } from './ChatMessage.styles';
+import { messageAsideColumnSx, messageAvatarLabelAnimatedSx, messageAvatarLabelSx, messageEditBeamControlsTopSx, messageMobileHeaderSx, messageZenAsideColumnSx } from './ChatMessage.styles';
 import { useSelHighlighterMemo } from './useSelHighlighterMemo';
 
 
@@ -59,17 +59,6 @@ export const BUBBLE_MIN_TEXT_LENGTH = 3;
 // const ENABLE_COPY_MESSAGE_OVERLAY: boolean = false;
 
 
-const messageBodySx: SxProps = {
-  display: 'flex',
-  alignItems: 'flex-start', // avatars at the top, and honor 'static' position
-  gap: { xs: 0, md: 1 },
-};
-
-const messageBodyReverseSx: SxProps = {
-  ...messageBodySx,
-  flexDirection: 'row-reverse',
-};
-
 export const messageSkippedSx = {
   // show a nice ghostly border (dashed?)
   border: '1px dashed',
@@ -78,9 +67,84 @@ export const messageSkippedSx = {
   filter: 'grayscale(1)',
 } as const;
 
-const personaAvatarOrMenuSx: SxProps = {
-  display: 'flex',
-};
+// Message component styles
+const _styles = {
+  // Message body layouts
+  msgBody: {
+    display: 'flex',
+    alignItems: 'flex-start', // avatars at the top, and honor 'static' position
+    gap: { xs: 0, md: 1 },
+  },
+  msgBodyReverse: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: { xs: 0, md: 1 },
+    flexDirection: 'row-reverse',
+  },
+  msgBodyMobile: {
+    display: 'flex',
+  },
+  // Mobile toolbar (header)
+  mtIcon: {
+    '--AGI-Avatar-size': '28px',
+    width: 28,
+    height: 28,
+    flexShrink: 0,
+  },
+  mtLabel: {
+    flex: 1,
+  },
+  mtLabelGenerating: {
+    flex: 1,
+    ...messageAvatarLabelAnimatedSx,
+  },
+  mtSpacer: {
+    flex: 1,
+  },
+  mtTime: {
+    color: 'text.tertiary',
+    mr: 0.5,
+    flexShrink: 0,
+    opacity: 0.5,
+  },
+  mtButton: {
+    flexShrink: 0,
+  },
+  // Avatar/menu button (pure CSS hover system)
+  iconContainer: {
+    display: 'flex',
+    position: 'relative',
+    // Hide avatar on hover/focus-within, show button
+    '&:hover .avatar-icon, &:focus-within .avatar-icon': {
+      opacity: 0,
+    },
+    '&:hover .menu-button, &:focus-within .menu-button': {
+      opacity: 1,
+    },
+  },
+  iconAvatarVisible: {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    opacity: 1,
+  },
+  iconAvatarHidden: {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    opacity: 0,
+  },
+  iconButtonVisible: {
+    ...avatarIconSx,
+    opacity: 1,
+  },
+  iconButtonHidden: {
+    ...avatarIconSx,
+    opacity: 0,
+  },
+} as const satisfies Record<string, SxProps>;
+
+export const messageBodyReverseSx = _styles.msgBodyReverse;
 
 const editButtonWrapSx: SxProps = {
   overflowWrap: 'anywhere',
@@ -165,13 +229,16 @@ export function ChatMessage(props: {
 
   // state
   const blocksRendererRef = React.useRef<HTMLDivElement>(null);
-  const [isHovering, setIsHovering] = React.useState(false);
   const [selText, setSelText] = React.useState<string | null>(null);
   const [bubbleAnchor, setBubbleAnchor] = React.useState<HTMLElement | null>(null);
   const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [textContentEditState, setTextContentEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
   const [showInfoModal, setShowInfoModal] = React.useState(false);
   const attachmentsEditRef = React.useRef<EditModeAttachmentsHandle>(null);
+
+  // latest-message ref: lets stable callbacks read the current message without putting it in deps
+  const messageRef = React.useRef(props.message);
+  messageRef.current = props.message;
 
   // external state
   const { adjContentScaling, disableMarkdown, doubleClickToEdit, messageFullWidth, uiComplexityMode } = useUIPreferencesStore(useShallow(state => ({
@@ -377,7 +444,7 @@ export function ChatMessage(props: {
   }, [bubbleAnchor]);
 
   // restore blocksRendererRef
-  const handleOpenBubble = React.useCallback((event?: MouseEvent | null) => {
+  const handleOpenBubble = React.useCallback((_event?: MouseEvent | null) => {
     // check for selection
     const selection = window.getSelection();
     if (!selection || selection.rangeCount <= 0) return;
@@ -439,13 +506,28 @@ export function ChatMessage(props: {
 
   const handleOpsMenuClose = React.useCallback(() => setOpsMenuAnchor(null), []);
 
+  const handleAvatarClick = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
+    // [DEBUG][PROD] shift+click to dump the DMessage
+    event.shiftKey && console.log('message', messageRef.current); // [DEV-PRINT]
+    handleOpsMenuToggle(event);
+  }, [handleOpsMenuToggle]);
+
+  // Mobile: tap the sticky header (avatar/label area) to scroll message top into view
+  const handleMobileHeaderTap = React.useCallback((event: React.MouseEvent) => {
+    // [DEBUG][PROD] shift+click to dump the DMessage (parity with desktop handleAvatarClick)
+    event.shiftKey && console.log('message', messageRef.current); // [DEV-PRINT]
+    // Don't interfere with buttons (menu, edit) - only handle taps on the header background, avatar, or label
+    if ((event.target as HTMLElement).closest('button')) return;
+    const messageEl = (event.currentTarget as HTMLElement).closest('[role="chat-message"]');
+    messageEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
   const handleOpsShowInfo = React.useCallback(() => {
     setOpsMenuAnchor(null);
     setShowInfoModal(true);
   }, []);
 
   const handleInfoClose = React.useCallback(() => setShowInfoModal(false), []);
-
 
   const handleOpsAssistantFrom = React.useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -667,7 +749,6 @@ export function ChatMessage(props: {
 
   const { label: messageAvatarLabel, tooltip: messageAvatarTooltip } = useMessageAvatarLabel(props.message, uiComplexityMode);
 
-
   return (
     <Box
       component='li'
@@ -683,40 +764,108 @@ export function ChatMessage(props: {
       {props.topDecorator}
 
 
-      {/* Message Row: Aside, Fragment[][], Aside2 */}
+      {/* Mobile: Compact sticky header (tap avatar/label area to scroll message into view) */}
+      {props.isMobile && !props.hideAvatar && (
+        <Box bgcolor={backgroundColor} onClick={handleMobileHeaderTap} sx={/*isEditingText ? messageMobileEditStickyHeaderSx :*/ messageMobileHeaderSx}>
+
+          {/* Avatar (assistant/system) */}
+          {showAvatarIcon && !fromUser && (
+            <Box sx={_styles.mtIcon}>
+              {messageAvatarIcon}
+            </Box>
+          )}
+
+          {/* Model name / label */}
+          {fromAssistant && !zenMode && (
+            <Typography level='body-xs' className='agi-ellipsize' sx={(messagePendingIncomplete && !Release.Features.LIGHTER_ANIMATIONS) ? _styles.mtLabelGenerating : _styles.mtLabel}>
+              {messageAvatarLabel}
+            </Typography>
+          )}
+
+          {/* Spacer */}
+          {(fromUser || fromSystem) && <Box sx={_styles.mtSpacer} />}
+
+          {/* TimeAgo for user messages (right-aligned) */}
+          {fromUser && (messageUpdated || messageCreated) && (
+            <Typography level='body-xs' sx={_styles.mtTime}>
+              <TimeAgo date={messageUpdated || messageCreated} />
+            </Typography>
+          )}
+
+          {/* Edit buttons (when editing) */}
+          {isEditingText && <>
+            <Button size='sm' color='neutral' variant='plain' onClick={handleEditsCancel} startDecorator={<CloseRoundedIcon />} sx={_styles.mtButton}>
+              Cancel
+            </Button>
+            <Button size='sm' color='warning' onClick={handleEditsApplyClicked} startDecorator={<CheckRoundedIcon />} sx={_styles.mtButton} style={{ minWidth: 100 }}>
+              Done
+            </Button>
+          </>}
+
+          {/* Menu button (always visible on mobile) */}
+          {!isEditingText && (
+            <IconButton
+              // size='sm'
+              variant={opsMenuAnchor ? 'solid' : (zenMode || fromAssistant || fromSystem) ? 'plain' : 'soft'}
+              color={(fromAssistant || fromSystem || zenMode) ? 'neutral' : userCommandApprox === 'draw' ? 'warning' : userCommandApprox === 'react' ? 'success' : 'primary'}
+              onClick={handleAvatarClick}
+              onContextMenu={handleOpsMenuToggle}
+              sx={_styles.mtButton}
+            >
+              <MoreVertIcon sx={{ fontSize: 'xl' }} />
+            </IconButton>
+          )}
+        </Box>
+      )}
+
+      {/* Mobile: Edit controls when header is hidden (e.g., Beam mode) */}
+      {props.isMobile && !!props.hideAvatar && isEditingText && (
+        <Box bgcolor={backgroundColor} sx={messageEditBeamControlsTopSx}>
+          <Button size='sm' color='neutral' variant='plain' onClick={handleEditsCancel} startDecorator={<CloseRoundedIcon />} sx={_styles.mtButton}>
+            Cancel
+          </Button>
+          <Button size='sm' color='warning' onClick={handleEditsApplyClicked} startDecorator={<CheckRoundedIcon />} sx={_styles.mtButton} style={{ minWidth: 100 }}>
+            Done
+          </Button>
+        </Box>
+      )}
+
+      {/* Message Row: Aside, Fragment[][], Aside2 (Desktop) or Full-width (Mobile) */}
       <Box
         role={undefined /* aside | message | ops */}
-        sx={(fromAssistant && !isEditingText) ? messageBodySx : messageBodyReverseSx}
+        sx={props.isMobile ? _styles.msgBodyMobile : ((fromAssistant && !isEditingText) ? _styles.msgBody : _styles.msgBodyReverse)}
       >
 
-        {/* [start-Avatar] Avatar (Persona) */}
-        {!props.hideAvatar && !isEditingText && (
+        {/* [start-Avatar] Avatar (Persona) - Desktop only */}
+        {!props.isMobile && !props.hideAvatar && !isEditingText && (
           <Box sx={zenMode ? messageZenAsideColumnSx : messageAsideColumnSx}>
 
             {/* Persona Avatar or Menu Button */}
-            <Box
-              onClick={(event) => {
-                // [DEBUG][PROD] shift+click to dump the DMessage
-                event.shiftKey && console.log('message', props.message);
-                handleOpsMenuToggle(event);
-              }}
-              onContextMenu={handleOpsMenuToggle}
-              onMouseEnter={props.isMobile ? undefined : () => setIsHovering(true)}
-              onMouseLeave={props.isMobile ? undefined : () => setIsHovering(false)}
-              sx={personaAvatarOrMenuSx}
-            >
-              {showAvatarIcon && !isHovering && !opsMenuAnchor ? (
-                messageAvatarIcon
-              ) : (
-                <IconButton
-                  size='sm'
-                  variant={opsMenuAnchor ? 'solid' : zenMode ? 'plain' : 'soft'}
-                  color={(fromAssistant || fromSystem || zenMode) ? 'neutral' : userCommandApprox === 'draw' ? 'warning' : userCommandApprox === 'react' ? 'success' : 'primary'}
-                  sx={avatarIconSx}
+            <Box sx={_styles.iconContainer}>
+              {/* Avatar Icon - shown by default */}
+              {showAvatarIcon && (
+                <Box
+                  className='avatar-icon'
+                  onClick={handleAvatarClick}
+                  onContextMenu={handleOpsMenuToggle}
+                  sx={opsMenuAnchor ? _styles.iconAvatarHidden : _styles.iconAvatarVisible}
                 >
-                  <MoreVertIcon />
-                </IconButton>
+                  {messageAvatarIcon}
+                </Box>
               )}
+
+              {/* Menu Button - hidden by default, shown on hover/focus */}
+              <IconButton
+                className='menu-button'
+                size='sm'
+                variant={opsMenuAnchor ? 'solid' : zenMode ? 'plain' : 'soft'}
+                color={(fromAssistant || fromSystem || zenMode) ? 'neutral' : userCommandApprox === 'draw' ? 'warning' : userCommandApprox === 'react' ? 'success' : 'primary'}
+                onClick={handleAvatarClick}
+                onContextMenu={handleOpsMenuToggle}
+                sx={(opsMenuAnchor || !showAvatarIcon) ? _styles.iconButtonVisible : _styles.iconButtonHidden}
+              >
+                <MoreVertIcon />
+              </IconButton>
             </Box>
 
             {/* Assistant (llm/function) name */}
@@ -731,10 +880,10 @@ export function ChatMessage(props: {
           </Box>
         )}
 
-        {/* [start-Edit] Fragments Edit: Apply */}
-        {isEditingText && (
+        {/* [start-Edit] Fragments Edit: Apply - Desktop only */}
+        {!props.isMobile && isEditingText && (
           <Box sx={messageAsideColumnSx} className='msg-edit-button'>
-            <Tooltip arrow disableInteractive title='Apply Edits'>
+            <Tooltip arrow disableInteractive placement='top-end' title='Apply Text Edits'>
               <IconButton size='sm' variant='solid' color='warning' onClick={handleEditsApplyClicked}>
                 <CheckRoundedIcon />
               </IconButton>
@@ -906,10 +1055,10 @@ export function ChatMessage(props: {
         </Box>
 
 
-        {/* [end-Edit] Fragments Edit: Cancel */}
-        {isEditingText && (
+        {/* [end-Edit] Fragments Edit: Cancel - Desktop only */}
+        {!props.isMobile && isEditingText && (
           <Box sx={messageAsideColumnSx} className='msg-edit-button'>
-            <Tooltip arrow disableInteractive title='Discard Edits'>
+            <Tooltip arrow disableInteractive placement='top-start' title='Discard Edits'>
               <IconButton size='sm' variant='solid' onClick={handleEditsCancel}>
                 <CloseRoundedIcon />
               </IconButton>

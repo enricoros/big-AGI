@@ -30,10 +30,11 @@ const ANIM_BUSY_PAINTING = 'https://i.giphy.com/media/5t9ujj9cMisyVjUZ0m/giphy.w
 const ANIM_BUSY_THINKING = 'https://i.giphy.com/media/l44QzsOLXxcrigdgI/giphy.webp';
 
 
+// Set --AGI-Avatar-size on a parent to override (defaults to 36px)
 export const avatarIconSx = {
   borderRadius: 'sm',
-  height: 36,
-  width: 36,
+  height: 'var(--AGI-Avatar-size, 36px)',
+  width: 'var(--AGI-Avatar-size, 36px)',
 } as const;
 
 // const largerAvatarIconsSx = {
@@ -43,8 +44,8 @@ export const avatarIconSx = {
 // };
 
 const aixSkipBoxSx = {
-  height: 36,
-  width: 36,
+  height: 'var(--AGI-Avatar-size, 36px)',
+  width: 'var(--AGI-Avatar-size, 36px)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -192,8 +193,8 @@ export function makeMessageAvatarIcon(
           fontSize: '24px',
           textAlign: 'center',
           width: '100%',
-          minWidth: `${avatarIconSx.width}px`,
-          lineHeight: `${avatarIconSx.height}px`,
+          minWidth: 'var(--AGI-Avatar-size, 36px)',
+          lineHeight: 'var(--AGI-Avatar-size, 36px)',
         }}>
           {symbol}
         </Box>;
