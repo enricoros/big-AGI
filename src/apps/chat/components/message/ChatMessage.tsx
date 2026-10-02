@@ -170,6 +170,133 @@ export interface ChatMessageFunctionsHandle {
 
 export type ChatMessageTextPartEditState = { [fragmentId: DMessageFragmentId]: string };
 
+// CSS owns hover/focus; this named boundary makes the memo visible in React Profiler.
+const CMDesktopAvatar = React.memo(function CMDesktopAvatar(props: {
+  icon: React.ReactNode,
+  label: React.ReactNode,
+  tooltip: React.ReactNode,
+  zenMode: boolean,
+  pending: boolean,
+  menuOpen: boolean,
+  menuColor: React.ComponentProps<typeof IconButton>['color'],
+  onClick: (event: React.MouseEvent<HTMLElement>) => void,
+  onContextMenu: (event: React.MouseEvent<HTMLElement>) => void,
+}) {
+  return (
+    <Box sx={props.zenMode ? messageZenAsideColumnSx : messageAsideColumnSx}>
+
+      {/* Persona Avatar or Menu Button */}
+      <Box sx={_styles.iconContainer}>
+        {/* Avatar Icon - shown by default */}
+        {props.icon != null && (
+          <Box
+            className='avatar-icon'
+            onClick={props.onClick}
+            onContextMenu={props.onContextMenu}
+            sx={props.menuOpen ? _styles.iconAvatarHidden : _styles.iconAvatarVisible}
+          >
+            {props.icon}
+          </Box>
+        )}
+
+        {/* Menu Button - hidden by default, shown on hover/focus */}
+        <IconButton
+          className='menu-button'
+          size='sm'
+          variant={props.menuOpen ? 'solid' : props.zenMode ? 'plain' : 'soft'}
+          color={props.menuColor}
+          onClick={props.onClick}
+          onContextMenu={props.onContextMenu}
+          sx={(props.menuOpen || props.icon == null) ? _styles.iconButtonVisible : _styles.iconButtonHidden}
+        >
+          <MoreVertIcon />
+        </IconButton>
+      </Box>
+
+      {/* Assistant (llm/function) name */}
+      {props.label != null && (
+        <TooltipOutlined asLargePane enableInteractive title={props.tooltip} placement='bottom-start'>
+          <Typography level='body-xs' sx={(props.pending && !Release.Features.LIGHTER_ANIMATIONS) ? messageAvatarLabelAnimatedSx : messageAvatarLabelSx}>
+            {props.label}
+          </Typography>
+        </TooltipOutlined>
+      )}
+
+    </Box>
+  );
+});
+
+
+const CMMobileHeader = React.memo(function CMMobileHeader(props: {
+  icon: React.ReactNode,
+  label: React.ReactNode,
+  timestamp: number | null,
+  pending: boolean,
+  showSpacer: boolean,
+  backgroundColor: string,
+  menuVariant: React.ComponentProps<typeof IconButton>['variant'],
+  menuColor: React.ComponentProps<typeof IconButton>['color'],
+  onHeaderClick: (event: React.MouseEvent<HTMLElement>) => void,
+  onClick: (event: React.MouseEvent<HTMLElement>) => void,
+  onContextMenu: (event: React.MouseEvent<HTMLElement>) => void,
+  onEditApply: (() => void) | undefined,
+  onEditCancel: () => void,
+}) {
+  return (
+    <Box bgcolor={props.backgroundColor} onClick={props.onHeaderClick} sx={messageMobileHeaderSx}>
+
+      {/* Avatar (assistant/system) */}
+      {props.icon != null && (
+        <Box sx={_styles.mtIcon}>
+          {props.icon}
+        </Box>
+      )}
+
+      {/* Model name / label */}
+      {props.label != null && (
+        <Typography level='body-xs' className='agi-ellipsize' sx={(props.pending && !Release.Features.LIGHTER_ANIMATIONS) ? _styles.mtLabelGenerating : _styles.mtLabel}>
+          {props.label}
+        </Typography>
+      )}
+
+      {/* Spacer */}
+      {props.showSpacer && <Box sx={_styles.mtSpacer} />}
+
+      {/* TimeAgo for user messages (right-aligned) */}
+      {props.timestamp && (
+        <Typography level='body-xs' sx={_styles.mtTime}>
+          <TimeAgo date={props.timestamp} />
+        </Typography>
+      )}
+
+      {/* Edit buttons (when editing) */}
+      {props.onEditApply && <>
+        <Button size='sm' color='neutral' variant='plain' onClick={props.onEditCancel} startDecorator={<CloseRoundedIcon />} sx={_styles.mtButton}>
+          Cancel
+        </Button>
+        <Button size='sm' color='warning' onClick={props.onEditApply} startDecorator={<CheckRoundedIcon />} sx={_styles.mtButton} style={{ minWidth: 100 }}>
+          Done
+        </Button>
+      </>}
+
+      {/* Menu button (always visible on mobile) */}
+      {!props.onEditApply && (
+        <IconButton
+          // size='sm'
+          variant={props.menuVariant}
+          color={props.menuColor}
+          onClick={props.onClick}
+          onContextMenu={props.onContextMenu}
+          sx={_styles.mtButton}
+        >
+          <MoreVertIcon sx={{ fontSize: 'xl' }} />
+        </IconButton>
+      )}
+    </Box>
+  );
+});
+
+
 export const ChatMessageMemo = React.memo(ChatMessage);
 
 /**
@@ -748,6 +875,7 @@ export function ChatMessage(props: {
   );
 
   const { label: messageAvatarLabel, tooltip: messageAvatarTooltip } = useMessageAvatarLabel(props.message, uiComplexityMode);
+  const avatarMenuColor = (fromAssistant || fromSystem || zenMode) ? 'neutral' : userCommandApprox === 'draw' ? 'warning' : userCommandApprox === 'react' ? 'success' : 'primary';
 
   return (
     <Box
@@ -766,56 +894,21 @@ export function ChatMessage(props: {
 
       {/* Mobile: Compact sticky header (tap avatar/label area to scroll message into view) */}
       {props.isMobile && !props.hideAvatar && (
-        <Box bgcolor={backgroundColor} onClick={handleMobileHeaderTap} sx={/*isEditingText ? messageMobileEditStickyHeaderSx :*/ messageMobileHeaderSx}>
-
-          {/* Avatar (assistant/system) */}
-          {showAvatarIcon && !fromUser && (
-            <Box sx={_styles.mtIcon}>
-              {messageAvatarIcon}
-            </Box>
-          )}
-
-          {/* Model name / label */}
-          {fromAssistant && !zenMode && (
-            <Typography level='body-xs' className='agi-ellipsize' sx={(messagePendingIncomplete && !Release.Features.LIGHTER_ANIMATIONS) ? _styles.mtLabelGenerating : _styles.mtLabel}>
-              {messageAvatarLabel}
-            </Typography>
-          )}
-
-          {/* Spacer */}
-          {(fromUser || fromSystem) && <Box sx={_styles.mtSpacer} />}
-
-          {/* TimeAgo for user messages (right-aligned) */}
-          {fromUser && (messageUpdated || messageCreated) && (
-            <Typography level='body-xs' sx={_styles.mtTime}>
-              <TimeAgo date={messageUpdated || messageCreated} />
-            </Typography>
-          )}
-
-          {/* Edit buttons (when editing) */}
-          {isEditingText && <>
-            <Button size='sm' color='neutral' variant='plain' onClick={handleEditsCancel} startDecorator={<CloseRoundedIcon />} sx={_styles.mtButton}>
-              Cancel
-            </Button>
-            <Button size='sm' color='warning' onClick={handleEditsApplyClicked} startDecorator={<CheckRoundedIcon />} sx={_styles.mtButton} style={{ minWidth: 100 }}>
-              Done
-            </Button>
-          </>}
-
-          {/* Menu button (always visible on mobile) */}
-          {!isEditingText && (
-            <IconButton
-              // size='sm'
-              variant={opsMenuAnchor ? 'solid' : (zenMode || fromAssistant || fromSystem) ? 'plain' : 'soft'}
-              color={(fromAssistant || fromSystem || zenMode) ? 'neutral' : userCommandApprox === 'draw' ? 'warning' : userCommandApprox === 'react' ? 'success' : 'primary'}
-              onClick={handleAvatarClick}
-              onContextMenu={handleOpsMenuToggle}
-              sx={_styles.mtButton}
-            >
-              <MoreVertIcon sx={{ fontSize: 'xl' }} />
-            </IconButton>
-          )}
-        </Box>
+        <CMMobileHeader
+          icon={fromUser ? null : messageAvatarIcon}
+          label={fromAssistant && !zenMode ? messageAvatarLabel : null}
+          timestamp={fromUser ? messageUpdated || messageCreated : null}
+          pending={!!messagePendingIncomplete}
+          showSpacer={fromUser || fromSystem}
+          backgroundColor={backgroundColor}
+          menuVariant={opsMenuAnchor ? 'solid' : (zenMode || fromAssistant || fromSystem) ? 'plain' : 'soft'}
+          menuColor={avatarMenuColor}
+          onHeaderClick={handleMobileHeaderTap}
+          onClick={handleAvatarClick}
+          onContextMenu={handleOpsMenuToggle}
+          onEditApply={isEditingText ? handleEditsApplyClicked : undefined}
+          onEditCancel={handleEditsCancel}
+        />
       )}
 
       {/* Mobile: Edit controls when header is hidden (e.g., Beam mode) */}
@@ -838,46 +931,17 @@ export function ChatMessage(props: {
 
         {/* [start-Avatar] Avatar (Persona) - Desktop only */}
         {!props.isMobile && !props.hideAvatar && !isEditingText && (
-          <Box sx={zenMode ? messageZenAsideColumnSx : messageAsideColumnSx}>
-
-            {/* Persona Avatar or Menu Button */}
-            <Box sx={_styles.iconContainer}>
-              {/* Avatar Icon - shown by default */}
-              {showAvatarIcon && (
-                <Box
-                  className='avatar-icon'
-                  onClick={handleAvatarClick}
-                  onContextMenu={handleOpsMenuToggle}
-                  sx={opsMenuAnchor ? _styles.iconAvatarHidden : _styles.iconAvatarVisible}
-                >
-                  {messageAvatarIcon}
-                </Box>
-              )}
-
-              {/* Menu Button - hidden by default, shown on hover/focus */}
-              <IconButton
-                className='menu-button'
-                size='sm'
-                variant={opsMenuAnchor ? 'solid' : zenMode ? 'plain' : 'soft'}
-                color={(fromAssistant || fromSystem || zenMode) ? 'neutral' : userCommandApprox === 'draw' ? 'warning' : userCommandApprox === 'react' ? 'success' : 'primary'}
-                onClick={handleAvatarClick}
-                onContextMenu={handleOpsMenuToggle}
-                sx={(opsMenuAnchor || !showAvatarIcon) ? _styles.iconButtonVisible : _styles.iconButtonHidden}
-              >
-                <MoreVertIcon />
-              </IconButton>
-            </Box>
-
-            {/* Assistant (llm/function) name */}
-            {fromAssistant && !zenMode && (
-              <TooltipOutlined asLargePane enableInteractive title={messageAvatarTooltip} placement='bottom-start'>
-                <Typography level='body-xs' sx={(messagePendingIncomplete && !Release.Features.LIGHTER_ANIMATIONS) ? messageAvatarLabelAnimatedSx : messageAvatarLabelSx}>
-                  {messageAvatarLabel}
-                </Typography>
-              </TooltipOutlined>
-            )}
-
-          </Box>
+          <CMDesktopAvatar
+            icon={messageAvatarIcon}
+            label={fromAssistant && !zenMode ? messageAvatarLabel : null}
+            tooltip={messageAvatarTooltip}
+            zenMode={zenMode}
+            pending={!!messagePendingIncomplete}
+            menuOpen={!!opsMenuAnchor}
+            menuColor={avatarMenuColor}
+            onClick={handleAvatarClick}
+            onContextMenu={handleOpsMenuToggle}
+          />
         )}
 
         {/* [start-Edit] Fragments Edit: Apply - Desktop only */}
