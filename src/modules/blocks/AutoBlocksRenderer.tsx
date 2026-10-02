@@ -18,7 +18,7 @@ import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpa
 
 
 // configuration
-const DISABLE_MARKDOWN_PROGRESSIVE_PREPROCESS = true; // set to false to render LaTeX inline formulas as they come in, not at the end of the message
+const DEFER_MARKDOWN_PREPROCESS = true; // set to false to render LaTeX inline formulas as they come in, not at the end of the message
 // import '~/common/util/forceTouchToDoubleClick'; // Future: Mac trackpad: force press → double-click
 
 
@@ -60,11 +60,8 @@ export function AutoBlocksRenderer(props: {
   /** disables the >8 lines user-text collapser - e.g. print/export trees must render in full */
   disableTextCollapser?: boolean;
 
-  /**
-   * optimization: allow memo to all individual blocks except the last one
-   * work in progress on that
-   */
-  optiAllowSubBlocksMemo?: boolean;
+  /** The text is still being appended to: render its last block in streaming mode. */
+  inFlux?: boolean;
 
   onDoubleClick?: (event: React.MouseEvent) => void;
 
@@ -96,7 +93,7 @@ export function AutoBlocksRenderer(props: {
 
   // render decay: while in flux this is a live stream of the enclosing zone; the in-flux block reports its parse cost,
   // and renders lighter once the zone is over budget
-  const { active: decayActive, onParseCost: decayOnParseCost } = useRenderDecay(props.optiAllowSubBlocksMemo === true);
+  const { active: decayActive, onParseCost: decayOnParseCost } = useRenderDecay(props.inFlux === true);
 
   // handlers
   const { setText } = props;
@@ -137,9 +134,9 @@ export function AutoBlocksRenderer(props: {
       {autoBlocksStable.map((bkInput, index) => {
 
         // Optimization: Code being written won't get tooltips or snap to page
-        const optimizeLightweightLastBlock = props.optiAllowSubBlocksMemo === true && index === (autoBlocksStable.length - 1);
+        const lastBlockInFlux = props.inFlux === true && index === (autoBlocksStable.length - 1);
         // Optimization: disable the markdown preprocessor on the last block, only do it at the end not while in progress
-        const optimizeDisableProcessorsOnLast = DISABLE_MARKDOWN_PROGRESSIVE_PREPROCESS && props.optiAllowSubBlocksMemo === true && index === (autoBlocksStable.length - 1);
+        const deferPreprocessor = DEFER_MARKDOWN_PREPROCESS && lastBlockInFlux;
 
         switch (bkInput.bkt) {
 
@@ -157,9 +154,9 @@ export function AutoBlocksRenderer(props: {
               <RenderMarkdownMemo
                 key={'md-bk-' + index}
                 content={bkInput.content}
-                disablePreprocessor={optimizeDisableProcessorsOnLast}
-                lite={optimizeLightweightLastBlock && decayActive}
-                onParseCost={optimizeLightweightLastBlock ? decayOnParseCost : undefined}
+                disablePreprocessor={deferPreprocessor}
+                lite={lastBlockInFlux && decayActive}
+                onParseCost={lastBlockInFlux ? decayOnParseCost : undefined}
                 replaceContent={(!setText || isTextCollapsed /* IMPORTANT: do not allow replacing text if collapsed - will chop! */) ? undefined : handleReplaceCode}
                 sx={scaledTypographySx}
               />
@@ -172,7 +169,7 @@ export function AutoBlocksRenderer(props: {
             const isDiagram = lowerCaseTitle === BLOCK_CODE_MERMAID_TITLE || lowerCaseTitle === BLOCK_CODE_PLANTUML_TITLE;
             const frameless = isDiagram
               ? !bkInput.isPartial // diagrams: framed and collapsed while written, bare once they render
-              : (bkInput.isPartial && optimizeLightweightLastBlock) || (!bkInput.title && bkInput.lines <= 3) || lowerCaseTitle === BLOCK_CODE_SVG_TITLE;
+              : (bkInput.isPartial && lastBlockInFlux) || (!bkInput.title && bkInput.lines <= 3) || lowerCaseTitle === BLOCK_CODE_SVG_TITLE;
             const startCollapsed = (isDiagram && bkInput.isPartial) || fixUserHtmlPaste;
 
             return props.codeRenderVariant === 'enhanced' ? (
@@ -190,7 +187,7 @@ export function AutoBlocksRenderer(props: {
                 fitScreen={props.fitScreen}
                 initialRenderHTML={props.htmlRenderVariant === 'render' || (props.htmlRenderVariant === 'render-at-end' && !bkInput.isPartial)}
                 noCopyButton={props.blocksProcessor === 'diagram' || isTextCollapsed}
-                optimizeLightweight={optimizeLightweightLastBlock}
+                optimizeLightweight={lastBlockInFlux}
                 onReplaceInCode={(!setText || isTextCollapsed) ? undefined : handleReplaceCode}
                 codeSx={scaledCodeSx}
               />
@@ -202,7 +199,7 @@ export function AutoBlocksRenderer(props: {
                 fitScreen={props.fitScreen}
                 initialRenderHTML={props.htmlRenderVariant === 'render' || (props.htmlRenderVariant === 'render-at-end' && !bkInput.isPartial)}
                 noCopyButton={props.blocksProcessor === 'diagram' || isTextCollapsed}
-                optimizeLightweight={optimizeLightweightLastBlock}
+                optimizeLightweight={lastBlockInFlux}
                 onReplaceInCode={(!setText || isTextCollapsed) ? undefined : handleReplaceCode}
                 sx={scaledCodeSx}
               />

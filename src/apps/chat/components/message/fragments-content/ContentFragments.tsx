@@ -21,7 +21,7 @@ import { BlockPartHostedResource } from './BlockPartHostedResource';
 import { BlockPartImageRef } from './BlockPartImageRef';
 import { BlockPartModelAuxMemo } from '../fragments-void/BlockPartModelAux';
 import { BlockPartPlaceholder } from '../fragments-void/BlockPartPlaceholder';
-import { BlockPartText_AutoBlocks } from './BlockPartText_AutoBlocks';
+import { BlockPartText_AutoBlocksMemo } from './BlockPartText_AutoBlocks';
 import { BlockPartToolInvocation } from './BlockPartToolInvocation';
 import { BlockPartToolResponse } from './BlockPartToolResponse';
 import { humanReadableFunctionName } from './BlockPartToolInvocation.utils';
@@ -63,7 +63,7 @@ export function ContentFragments(props: {
   messageRole: DMessageRole,
   messagePendingIncomplete?: boolean,
   messageGeneratorLlmId?: string | null,
-  optiAllowSubBlocksMemo?: boolean,
+  inFluxFragmentId?: DMessageFragmentId,
   disableMarkdownText: boolean,
   htmlRenderVariant?: AutoBlocksHtmlRenderVariant,
 
@@ -138,11 +138,11 @@ export function ContentFragments(props: {
       />
     )}
 
-    {props.contentFragments.map((fragment, fragmentIndex) => {
+    {props.contentFragments.map((fragment) => {
 
       // simplify
       const { fId, ft } = fragment;
-      const isLastFragment = fragmentIndex === props.contentFragments.length - 1;
+      const inFlux = fId === props.inFluxFragmentId;
 
       // VOID FRAGMENTS (reasoning, placeholders - interleaved with content)
       if (ft === 'void') {
@@ -156,8 +156,7 @@ export function ContentFragments(props: {
 
           case 'ma':
             // skip rendering empty reasoning fragments (created as vehicles for vendor state / reasoning continuity)
-            const isActivelyStreaming = isLastFragment && !!props.messagePendingIncomplete;
-            if (!part.aText && !part.redactedData?.length && !isActivelyStreaming)
+            if (!inFlux && !part.aText && !part.redactedData?.length)
               return null;
             return (
               <BlockPartModelAuxMemo
@@ -167,11 +166,11 @@ export function ContentFragments(props: {
                 auxText={part.aText}
                 auxHasSignature={part.textSignature !== undefined}
                 auxRedactedDataCount={part.redactedData?.length ?? 0}
-                messagePendingIncomplete={!!props.messagePendingIncomplete}
+                hideActions={!!props.messagePendingIncomplete}
                 contentScaling={props.contentScaling}
                 fitScreen={props.fitScreen}
                 isMobile={props.isMobile}
-                isLastFragment={isLastFragment}
+                inFlux={inFlux}
                 onFragmentDelete={props.onFragmentDelete}
                 onFragmentReplace={props.onFragmentReplace}
               />
@@ -339,7 +338,7 @@ export function ContentFragments(props: {
         // This is the most frequent part by far, and can be broken down into sub-blocks
         case 'text':
           return (
-            <BlockPartText_AutoBlocks
+            <BlockPartText_AutoBlocksMemo
               key={fId}
               // ref={blocksRendererRef}
               textPartText={part.text}
@@ -352,7 +351,7 @@ export function ContentFragments(props: {
               inputAsWordsDiff={undefined}
               disableMarkdownText={props.disableMarkdownText}
               htmlRenderVariant={props.htmlRenderVariant}
-              optiAllowSubBlocksMemo={!!props.optiAllowSubBlocksMemo}
+              inFlux={inFlux}
               onDoubleClick={props.onDoubleClick}
             />
           );

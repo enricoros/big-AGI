@@ -98,17 +98,17 @@ function _maybeMarkdownReasoning(text: string): boolean {
 
 export const BlockPartModelAuxMemo = React.memo(BlockPartModelAux);
 
-export function BlockPartModelAux(props: {
+function BlockPartModelAux(props: {
   fragmentId: DMessageFragmentId,
   auxType: 'reasoning' | string,
   auxText: string,
   auxHasSignature: boolean,
   auxRedactedDataCount: number,
-  messagePendingIncomplete: boolean,
+  hideActions: boolean,
   contentScaling: ContentScaling,
   fitScreen: boolean,
   isMobile: boolean,
-  isLastFragment: boolean,
+  inFlux: boolean,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
 }) {
@@ -121,7 +121,7 @@ export function BlockPartModelAux(props: {
   const { showPromisedOverlay } = useOverlayComponents();
 
   // derived
-  const isActive = props.isLastFragment && props.messagePendingIncomplete;
+  const { inFlux } = props;
   const contentScaling = adjustContentScaling(props.contentScaling, -1);
   const typeText = props.auxType === 'reasoning' ? 'Reasoning' : 'Auxiliary';
 
@@ -136,17 +136,17 @@ export function BlockPartModelAux(props: {
   // memo style
   const chipSx: SxProps = React.useMemo(() => ({
     ..._styles.chip,
-    ...(isActive && _styles.chipActive),
+    ...(inFlux && _styles.chipActive),
     ...(expanded && _styles.chipExpanded),
     fontSize: themeScalingMap[contentScaling]?.blockFontSize ?? undefined,
-  }), [contentScaling, expanded, isActive]);
+  }), [contentScaling, expanded, inFlux]);
   const scaledTypographySx = useScaledTypographySx(contentScaling, false, false);
   const textSx = React.useMemo(() => ({
     ..._styles.text,
     ...scaledTypographySx,
   }), [scaledTypographySx]);
 
-  // same renderer as the message text: blocks, sub-block memo while streaming
+  // same renderer as the message text: blocks, in-flux last block while streaming
   const { fitScreen, isMobile } = props;
   const renderedBlocks = React.useMemo(() => neverExpanded ? null : (
     <AutoBlocksRenderer
@@ -156,9 +156,9 @@ export function BlockPartModelAux(props: {
       fitScreen={fitScreen}
       isMobile={isMobile}
       textRenderVariant={maybeMarkdown ? 'markdown' : 'text'}
-      optiAllowSubBlocksMemo={isActive}
+      inFlux={inFlux}
     />
-  ), [contentScaling, fitScreen, isActive, isMobile, maybeMarkdown, neverExpanded, shownText]);
+  ), [contentScaling, fitScreen, inFlux, isMobile, maybeMarkdown, neverExpanded, shownText]);
 
 
   // handlers
@@ -216,23 +216,23 @@ export function BlockPartModelAux(props: {
     <Box data-agi-no-copy /* do not copy these buttons */ sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', justifyContent: 'space-between' }}>
       <Chip
         size='sm'
-        color={isActive || expanded ? REASONING_COLOR : 'neutral'}
+        color={inFlux || expanded ? REASONING_COLOR : 'neutral'}
         variant={expanded ? 'solid' : 'soft'}
         onClick={handleToggleExpanded}
         sx={chipSx}
         startDecorator={
           <AllInclusiveIcon
-            sx={!expanded && isActive ? _styles.chipIconPending : _styles.chipIcon}
+            sx={!expanded && inFlux ? _styles.chipIconPending : _styles.chipIcon}
             /* sx={{ color: expanded ? undefined : REASONING_COLOR }} */
           />
         }
         // startDecorator='🧠'
       >
         {/*Show {typeText}*/}
-        {isActive && !expanded && typeText === 'Reasoning' ? `${typeText}...` : `Show ${typeText}`}
+        {inFlux && !expanded && typeText === 'Reasoning' ? `${typeText}...` : `Show ${typeText}`}
       </Chip>
 
-      {expanded && !props.messagePendingIncomplete && (showInline || showDelete) && !!props.auxText && (
+      {expanded && !props.hideActions && (showInline || showDelete) && !!props.auxText && (
         <Box sx={{ display: 'flex', gap: 1 }}>
 
           {/* Make inline */}
@@ -240,11 +240,10 @@ export function BlockPartModelAux(props: {
             color={REASONING_COLOR}
             variant='soft'
             size='sm'
-            disabled={!onFragmentReplace /* || props.messagePendingIncomplete */}
+            disabled={!onFragmentReplace}
             onClick={!onFragmentReplace ? undefined : handleInline}
             endDecorator={<TextFieldsIcon />}
             sx={_styles.chip}
-            // sx={(!onFragmentReplace /* || props.messagePendingIncomplete */) ? _styles.chipDisabled : _styles.chip}
           >
             Make Regular Text
           </Chip>}
@@ -254,11 +253,10 @@ export function BlockPartModelAux(props: {
             color={REASONING_COLOR}
             variant='soft'
             size='sm'
-            disabled={!onFragmentDelete /* || props.messagePendingIncomplete */}
+            disabled={!onFragmentDelete}
             onClick={!onFragmentDelete ? undefined : handleDelete}
             endDecorator={<DeleteOutlineIcon />}
             sx={_styles.chip}
-            // sx={(!onFragmentDelete /* || props.messagePendingIncomplete */) ? _styles.chipDisabled : _styles.chip}
           >
             Delete
           </Chip>}

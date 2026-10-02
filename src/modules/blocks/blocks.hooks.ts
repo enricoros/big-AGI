@@ -57,7 +57,6 @@ function areBlocksEqualIdIgnored(block1: RenderBlockInputs[number] | undefined, 
 
 /**
  * Note: this will keep generally stable IDs, but will change them when:
- * - when the AutoBlocksRenderer goes from non-memo to Memo: reassigned: *
  * - when the text is still being parsed, e.g. a string will find a "```" block
  *   as part of the the running text, in which case the growing text will be
  *   reassigned (when it's chopped to before the code block, in the next call)

@@ -11,11 +11,16 @@ import { InlineError } from '~/common/components/InlineError';
 
 import { explainServiceErrors } from '../explainServiceErrors';
 
+
+/** Settled fragments skip streaming updates elsewhere in the message. */
+export const BlockPartText_AutoBlocksMemo = React.memo(BlockPartText_AutoBlocks);
+
+
 /**
  * The OG part, comprised of text, which can be markdown, have code blocks, etc.
  * Uses BlocksRenderer to render the markdown/code/html/text, etc.
  */
-export function BlockPartText_AutoBlocks(props: {
+function BlockPartText_AutoBlocks(props: {
   // current value
   textPartText: string,
   messageRole: DMessageRole,
@@ -32,7 +37,7 @@ export function BlockPartText_AutoBlocks(props: {
   disableMarkdownText: boolean,
   htmlRenderVariant?: AutoBlocksHtmlRenderVariant,
 
-  optiAllowSubBlocksMemo: boolean,
+  inFlux: boolean,
 
   onDoubleClick?: (event: React.MouseEvent) => void;
 
@@ -79,7 +84,7 @@ export function BlockPartText_AutoBlocks(props: {
       codeRenderVariant='enhanced' // can still be downgraded to 'outlined', e.g. for small snippets or given vnd types
       htmlRenderVariant={props.htmlRenderVariant}
       textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
-      optiAllowSubBlocksMemo={props.optiAllowSubBlocksMemo}
+      inFlux={props.inFlux}
       onDoubleClick={props.onDoubleClick}
       setText={!props.setEditedText ? undefined : handleSetText}
     />

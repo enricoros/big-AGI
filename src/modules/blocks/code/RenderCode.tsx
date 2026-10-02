@@ -56,7 +56,7 @@ interface RenderCodeBaseProps {
   fitScreen?: boolean,
   initialRenderHTML?: boolean,
   noCopyButton?: boolean,
-  optimizeLightweight?: boolean, // set when non-memoed and partial
+  optimizeLightweight?: boolean, // the block being written: throttle highlighting, no tooltips or sticky overlay
   onReplaceInCode?: (search: string, replace: string) => boolean;
   renderHideTitle?: boolean,
   sx?: SxProps,
@@ -321,8 +321,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
   // Keep the overlay stable across streamed code updates. Copy reads the latest code through codeRef.
   const showFitButton = (isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML && !plantUmlError) || (isSVGCode && showSVG && canScaleSVG);
-  const codeOverlay = React.useMemo(() => (
-    <Box
+  const codeOverlay = React.useMemo(function RCOverlay(){ return <Box
       ref={overlayRef}
       className={overlayButtonsClassName}
       sx={overlayGridSx}
@@ -414,8 +413,8 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
       </Box>
 
-    </Box>
-  ), [
+    </Box>;
+  }, [
     cannotRenderLineNumbers, enterFullscreen, exitFullscreen, fitScreen, handleCopyToClipboard, handleHtmlRenderToggle,
     isFullscreen, isHTMLCode, isMdCode, isMermaidCode, isPlantUMLCode, isSVGCode, noTooltips, overlayRef, props.noCopyButton,
     renderHTML, renderLineNumbers, renderMarkdown, renderMermaid, renderPlantUML, renderSVG, renderSyntaxHighlight,

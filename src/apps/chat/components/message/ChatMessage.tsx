@@ -22,7 +22,7 @@ import type { AutoBlocksHtmlRenderVariant } from '~/modules/blocks/AutoBlocksRen
 import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic.vendor';
 import { vertexLinksCountInFragments, vertexLinksResolveFragments } from '~/modules/google/vertexai.client';
 
-import { DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsReduceText, messageHasUserFlag, messageWasOutOfTokens } from '~/common/stores/chat/chat.message';
+import { DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsInFluxId, messageFragmentsReduceText, messageHasUserFlag, messageWasOutOfTokens } from '~/common/stores/chat/chat.message';
 import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
 import { PhTreeStructure } from '~/common/components/icons/phosphor/PhTreeStructure';
 import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
@@ -214,6 +214,9 @@ export function ChatMessage(props: {
     imageAttachments,       // Stamp-sized Images
     nonImageAttachments,    // Document Attachments, likely the User dropped them in
   } = useFragmentBuckets(messageFragments);
+
+  // Activity follows the raw stream order, independent of display filtering and injected layout.
+  const inFluxFragmentId = React.useMemo(() => messageFragmentsInFluxId(messageFragments, !!messagePendingIncomplete), [messageFragments, messagePendingIncomplete]);
 
   const fragmentFlattenedText = React.useMemo(() => messageFragmentsReduceText(messageFragments), [messageFragments]);
   const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, interleavedFragments.filter(f => f.ft === 'content'), fromAssistant, props.onMessageFragmentReplace);
@@ -796,7 +799,7 @@ export function ChatMessage(props: {
             messageRole={messageRole}
             messageGeneratorLlmId={messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : undefined}
             messagePendingIncomplete={messagePendingIncomplete}
-            optiAllowSubBlocksMemo={!!messagePendingIncomplete}
+            inFluxFragmentId={inFluxFragmentId}
             disableMarkdownText={disableMarkdown || fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
             htmlRenderVariant={props.htmlRenderVariant}
 

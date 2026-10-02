@@ -1,6 +1,6 @@
 import { agiUuid } from '~/common/util/idUtils';
 
-import { createPlaceholderVoidFragment, createTextContentFragment, DMessageFragment, duplicateDMessageFragments } from './chat.fragments';
+import { createPlaceholderVoidFragment, createTextContentFragment, DMessageFragment, DMessageFragmentId, duplicateDMessageFragments } from './chat.fragments';
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
@@ -327,6 +327,46 @@ export function messageSetUserFlag(message: Pick<DMessage, 'userFlags'>, flag: D
       return message.userFlags || [];
     return (message.userFlags || []).filter(_f => _f !== flag);
   }
+}
+
+
+/**
+ * Rendering hint from raw fragments, not an authoritative AIX cursor: not all part endings are stored.
+ *
+ * Keep aligned with ContentReassembler's text-cursor handling: reasoning text and notices close it;
+ * signatures, vendor state, citations and hosted-tool progress do not.
+ * Redacted reasoning is treated as settled here despite the reassembler's open-text ordering issue.
+ */
+export function messageFragmentsInFluxId(fragments: Immutable<DMessageFragment[]>, pending: boolean): DMessageFragmentId | undefined {
+  if (!pending) return undefined;
+
+  for (let i = fragments.length - 1; i >= 0; i--) {
+    const fragment = fragments[i];
+    if (fragment.ft === 'content')
+      return fragment.part.pt === 'text' ? fragment.fId : undefined;
+    if (fragment.ft !== 'void') continue;
+
+    const { part } = fragment;
+    switch (part.pt) {
+      case 'ma':
+        // Signature/vendor-state-only vehicles can follow text without closing its cursor.
+        if (!part.aText && !part.redactedData?.length && (part.textSignature !== undefined || fragment.vendorState))
+          continue;
+        // Reasoning ends the preceding text's activity. Signed/redacted reasoning is itself settled.
+        return part.textSignature !== undefined || part.redactedData?.length || fragment.vendorState || i !== fragments.length - 1
+          ? undefined : fragment.fId;
+      case 'ph':
+        // Notices and continuation checkpoints close text; hosted-tool progress does not.
+        if (part.pType === 'notice' || part.aixControl?.ctl === 'ac-info') return undefined;
+        break;
+      case 'annotations':
+      case '_pt_sentinel':
+        break;
+      default:
+        const _exhaustiveCheck: never = part;
+    }
+  }
+  return undefined;
 }
 
 
