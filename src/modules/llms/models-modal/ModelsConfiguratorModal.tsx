@@ -504,7 +504,7 @@ export function ModelsConfiguratorModal(props: {
         unfilterBackdrop
         sx={{ maxWidth: '28rem' }}
         // closeText='Got It'
-        closeText='I understand'
+        closeText='I have a key'
       >
         <Box sx={{
           py: 3,
