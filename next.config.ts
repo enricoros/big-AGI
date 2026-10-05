@@ -101,7 +101,7 @@ let nextConfig: NextConfig = {
         const zustandUtils = fileURLToPath(new URL('./src/common/util/zustandUtils.ts', import.meta.url));
         config.plugins.push(new webpack.NormalModuleReplacementPlugin(/^zustand(\/vanilla)?$/, (resource: any) => {
           const issuer: string = resource.contextInfo?.issuer || '';
-          if (!issuer || issuer.includes('/node_modules/') || issuer.endsWith('zustandUtils.ts')) return; // the package's own internals and the entry point keep the package
+          if (!issuer || /[\\/]node_modules[\\/]/.test(issuer) || issuer.endsWith('zustandUtils.ts')) return; // the package's own internals and the entry point keep the package
           // console.log('- WEBPACK ZUSTAND REDIRECT:', resource.request, 'from', issuer); // console.log, not log(): the helper is silent past the first config pass
           resource.request = zustandUtils;
         }));
