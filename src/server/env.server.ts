@@ -59,6 +59,7 @@ export const env = createEnv({
     BEDROCK_SECRET_ACCESS_KEY: z.string().optional(),
     BEDROCK_SESSION_TOKEN: z.string().optional(), // required with the other 2 on corporate accounts sometimes
     BEDROCK_REGION: z.string().optional(),
+    BEDROCK_AGENTCORE_GATEWAY_ARN: z.string().optional(), // AgentCore Gateway ARN for server-side MCP tools (e.g. the managed Web Search connector) - adds a per-model Web Search toggle to Responses-capable Mantle models
 
     // LLM: Cerebras
     CEREBRAS_API_KEY: z.string().optional(),
