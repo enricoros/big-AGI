@@ -135,6 +135,12 @@ let nextConfig: NextConfig = {
       { source: '/dev/inspect/:tool(\\w+)', destination: '/dev/inspect/:tool.html' },
     ];
   },
+  async redirects() {
+    return [
+      // /preview: 2025 dark-launch marketing page (prod-only [PROD] commit) - Google indexed it, keep the 301 to preserve searchers
+      { source: '/preview', destination: 'https://big-agi.com/', permanent: true },
+    ];
+  },
 
   // Note: disabled to check whether the project becomes slower with this
   // modularizeImports: {
