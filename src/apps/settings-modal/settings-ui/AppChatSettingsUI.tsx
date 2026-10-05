@@ -19,6 +19,7 @@ import { useModelsZeroState } from '~/common/stores/llms/hooks/useModelsZeroStat
 import { SettingUIComplexity } from './SettingUIComplexity';
 import { SettingUIComposerQuickButton } from './SettingUIComposerQuickButton';
 import { SettingUIContentScaling } from './SettingUIContentScaling';
+import { SettingUIMessageTimestamps } from './SettingUIMessageTimestamps';
 
 
 // configuration
@@ -136,6 +137,8 @@ export function AppChatSettingsUI() {
         value={centerMode} onChange={setCenterMode}
       />
     )}
+
+    <SettingUIMessageTimestamps />
 
     <SettingUIComplexity />
 

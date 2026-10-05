@@ -90,6 +90,10 @@ interface AppChatStore {
   storageWarningDismissed: boolean;
   dismissStorageWarning: () => void;
 
+  // View Options - message timestamps
+  messageTimestampMode: ChatMessageTimestampMode;
+  setMessageTimestampMode: (mode: ChatMessageTimestampMode) => void;
+
   // other chat-specific configuration
 
   notificationEnabledModelIds: DLLMId[];
@@ -176,6 +180,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
     // browser-storage disclaimer: shown until the user acknowledges it (persisted, so it survives reloads but not a cache clear - which is exactly the event it warns about)
     storageWarningDismissed: false,
     dismissStorageWarning: () => _set({ storageWarningDismissed: true }),
+
+    messageTimestampMode: 'off',
+    setMessageTimestampMode: (messageTimestampMode: ChatMessageTimestampMode) => _set({ messageTimestampMode }),
 
     // Other chat-specific configuration
 
@@ -301,6 +308,12 @@ export const useChatShowToolbarNavigation = (): boolean =>
 export function useChatStorageWarning(): [boolean, () => void] {
   return useAppChatStore(useShallow(state => [state.storageWarningDismissed, state.dismissStorageWarning]));
 }
+
+/** Off by default. Auto: first user message and final message. All: every user/assistant message. */
+export type ChatMessageTimestampMode = 'off' | 'auto' | 'all';
+
+export const useChatMessageTimestampMode = (): [ChatMessageTimestampMode, (mode: ChatMessageTimestampMode) => void] =>
+  useAppChatStore(useShallow(state => [state.messageTimestampMode, state.setMessageTimestampMode]));
 
 export const getIsNotificationEnabledForModel = (modelId: DLLMId): boolean =>
   useAppChatStore.getState().isNotificationEnabledForModel(modelId);

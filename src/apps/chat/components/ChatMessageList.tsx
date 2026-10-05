@@ -31,7 +31,7 @@ import { ChatMessageStreamingMemo } from './message/ChatMessage';
 import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
-import { useChatShowSystemMessages } from '../store-app-chat';
+import { useChatShowSystemMessages, useChatMessageTimestampMode } from '../store-app-chat';
 
 
 const stableNoMessages: DMessage[] = [];
@@ -66,6 +66,7 @@ export function ChatMessageList(props: {
   // external state
   const { notifyBooting } = useScrollToBottom();
   const [showSystemMessages] = useChatShowSystemMessages();
+  const [messageTimestampMode] = useChatMessageTimestampMode();
   const { conversationMessages, historyTokenCount } = useChatStore(useShallow(({ conversations }) => {
     const conversation = conversations.find(conversation => conversation.id === props.conversationId);
     return {
@@ -82,6 +83,9 @@ export function ChatMessageList(props: {
   const { conversationHandler, conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine } = props;
   const composerCanAddInReferenceTo = _composerInReferenceToCount < 5;
   const composerHasInReferenceTo = _composerInReferenceToCount > 0;
+
+  const firstUserMessageId = messageTimestampMode === 'auto' ? conversationMessages.find(message => message.role === 'user')?.id : undefined;
+  const lastMessageId = conversationMessages.at(-1)?.id;
 
   // text actions
 
@@ -448,6 +452,7 @@ export function ChatMessageList(props: {
               // diffPreviousText={message === diffTargetMessage ? diffPrevText : undefined}
               fitScreen={props.fitScreen}
               hasInReferenceTo={composerHasInReferenceTo}
+              showTimestamp={messageTimestampMode === 'all' || (messageTimestampMode === 'auto' && (message.id === firstUserMessageId || message.id === lastMessageId))}
               isMobile={props.isMobile}
               isBottom={idx === filteredMessages.length - 1}
               isImagining={isImagining}

@@ -42,6 +42,7 @@ import { BlockOpUpstreamResume } from './BlockOpUpstreamResume';
 import { ChatMessageEditAttachments, type EditModeAttachmentsHandle } from './ChatMessageEditAttachments';
 import { ChatMessageInfoPopup } from './ChatMessageInfoPopup';
 import { ChatMessageMenu } from './ChatMessageMenu';
+import { ChatMessageTimestamp } from './ChatMessageTimestamp';
 import { ContentFragments } from './fragments-content/ContentFragments';
 import { DocumentAttachmentFragments } from './fragments-attachment-doc/DocumentAttachmentFragments';
 import { ImageAttachmentFragments } from './fragments-attachment-image/ImageAttachmentFragments';
@@ -328,6 +329,7 @@ export function ChatMessage(props: {
   isSpeaking?: boolean,
   hideAvatar?: boolean,
   blocksStretch?: boolean, // overrides 'messageFullWidth'
+  showTimestamp?: boolean,
   showAntPromptCaching?: boolean,
   showBlocksDate?: boolean,
   htmlRenderVariant?: AutoBlocksHtmlRenderVariant,
@@ -1107,6 +1109,10 @@ export function ChatMessage(props: {
               options={continuationOptions}
               onContinue={handleMessageContinue}
             />
+          )}
+
+          {props.showTimestamp && !zenMode && !isEditingText && (
+            <ChatMessageTimestamp message={props.message} onShowInfo={handleOpsShowInfo} />
           )}
 
           {/* Char & Word count */}

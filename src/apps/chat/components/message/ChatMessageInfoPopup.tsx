@@ -37,7 +37,7 @@ export function ChatMessageInfoPopup(props: {
 }) {
 
   const { message } = props;
-  const { generator, created, updated, tokenCount, role } = message;
+  const { generator, created, updated, role } = message;
 
   const isAix = generator?.mgt === 'aix';
   const vendorId = isAix ? generator.aix?.vId ?? null : null;
@@ -51,13 +51,14 @@ export function ChatMessageInfoPopup(props: {
       onClose={props.onClose}
       title='Message Info'
       hideBottomClose
+      unfilterBackdrop
       sx={{ minWidth: { xs: 300, sm: 400 }, maxWidth: 480 }}
     >
       <Box sx={contentSx}>
 
-        {/* Model / Generator */}
-        {generator && (
-          <Box sx={tooltipMetricsGridSx}>
+        {/* Message metadata */}
+        <Box sx={tooltipMetricsGridSx}>
+          {generator && <>
             <div>Model:</div>
             <div>
               {VendorIcon
@@ -68,29 +69,25 @@ export function ChatMessageInfoPopup(props: {
               <div>ID:</div>
               <div style={{ opacity: 0.75 }}>{generator.aix.mId}</div>
             </>}
-            {generator.providerInfraLabel && <>
-              <div>Provider:</div>
-              <div>{generator.providerInfraLabel}</div>
-            </>}
-            {stopReason && <>
-              <div>Status:</div>
-              <div>{stopReason}</div>
-            </>}
-          </Box>
-        )}
+          </>}
+          <div>Role:</div>
+          <div>{role}</div>
+          {/*{message.tokenCount > 0 && <>*/}
+          {/*  <div>Tokens:</div>*/}
+          {/*  <div>{message.tokenCount.toLocaleString()} (visible text ~approx)</div>*/}
+          {/*</>}*/}
+          {generator?.providerInfraLabel && <>
+            <div>Provider:</div>
+            <div>{generator.providerInfraLabel}</div>
+          </>}
+          {stopReason && <>
+            <div>Status:</div>
+            <div>{stopReason}</div>
+          </>}
+        </Box>
 
         {/* Metrics (tokens, speed, cost, time) */}
         {metrics}
-
-        {/* Message metadata */}
-        <Box sx={tooltipMetricsGridSx}>
-          <div>Role:</div>
-          <div>{role}</div>
-          {tokenCount > 0 && <>
-            <div>Tokens:</div>
-            <div>{tokenCount.toLocaleString()} (visible text ~approx)</div>
-          </>}
-        </Box>
 
         {/* Timestamps */}
         <Box sx={timestampSx}>

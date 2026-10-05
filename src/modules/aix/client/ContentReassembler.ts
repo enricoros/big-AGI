@@ -174,7 +174,7 @@ export class ContentReassembler {
     // Classify termination -> outcome + tokenStopReason + optional error message
     const { outcome, tsr, errorMessage } = this._classifyTermination();
     // termination -> legacy UI data pt
-    if (tsr) this.S.generator = { ...this.S.generator, tokenStopReason: tsr };
+    this.S.generator = { ...this.S.generator, tokenStopReason: tsr, endedAt: Date.now() };
     // termination -> User/AI issue message
     if (errorMessage) this._appendErrorFragment(errorMessage);
 

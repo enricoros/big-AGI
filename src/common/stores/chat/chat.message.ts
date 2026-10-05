@@ -124,6 +124,7 @@ export type DMessageGenerator = ({
   },
 }) & {
   metrics?: DMetricsChatGenerate_Md;   // medium-sized metrics stored in the message
+  endedAt?: number;                    // generation end (epoch ms), including interruption; unaffected by message edits
   providerInfraLabel?: string;         // upstream provider that served the request (e.g., OpenRouter provider routing)
   upstreamContainer?:
     | {
@@ -247,6 +248,7 @@ export function duplicateDMessageGenerator(generator: Readonly<DMessageGenerator
         name: generator.name,
         // ...(generator.xeOpCode ? { xeOpCode: generator.xeOpCode } : {}),
         ...(generator.metrics ? { metrics: { ...generator.metrics } } : {}),
+        ...(generator.endedAt !== undefined ? { endedAt: generator.endedAt } : {}),
         ...(generator.providerInfraLabel ? { providerInfraLabel: generator.providerInfraLabel } : {}),
         ...(generator.upstreamContainer ? { upstreamContainer: { ...generator.upstreamContainer } } : {}),
         ...(generator.upstreamHandle ? { upstreamHandle: { ...generator.upstreamHandle } } : {}),
@@ -258,6 +260,7 @@ export function duplicateDMessageGenerator(generator: Readonly<DMessageGenerator
         name: generator.name,
         aix: { ...generator.aix },
         ...(generator.metrics ? { metrics: { ...generator.metrics } } : {}),
+        ...(generator.endedAt !== undefined ? { endedAt: generator.endedAt } : {}),
         ...(generator.providerInfraLabel ? { providerInfraLabel: generator.providerInfraLabel } : {}),
         ...(generator.upstreamContainer ? { upstreamContainer: { ...generator.upstreamContainer } } : {}),
         ...(generator.upstreamHandle ? { upstreamHandle: { ...generator.upstreamHandle } } : {}),

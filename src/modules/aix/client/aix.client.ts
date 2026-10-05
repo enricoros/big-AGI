@@ -356,7 +356,7 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
     const errorMessage = error.message || (typeof error === 'string' ? error : 'Chat stopped.');
     lastDMessage = {
       fragments: [...lastDMessage.fragments, createErrorContentFragment(`Issue: ${errorMessage}`)],
-      generator: { ...lastDMessage.generator, tokenStopReason: 'issue' },
+      generator: { ...lastDMessage.generator, tokenStopReason: 'issue', endedAt: Date.now() },
       pendingIncomplete: false,
     }
 
