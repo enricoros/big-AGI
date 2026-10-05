@@ -3,10 +3,38 @@ import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import { createErrorContentFragment, createTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import type { DMessage } from '~/common/stores/chat/chat.message';
+import { createErrorContentFragment, createTextContentFragment, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 // configuration
 const EPHEMERAL_DELETION_DELAY = 5 * 1000;
+
+// ReAct chat-history context
+const REACT_HISTORY_TURNS = 6;   // last N user/assistant messages
+const REACT_HISTORY_CHARS = 600; // per-message cap
+
+/**
+ * Builds a compact transcript of the recent conversation so /react can
+ * resolve follow-ups ("what about the second one?"). Addresses the upstream
+ * `TODO: to initialize with previous chat messages to provide context` in react.ts.
+ */
+function buildHistoryContext(cHandler: ConversationHandler): string {
+  let messages: Readonly<DMessage[]>;
+  try {
+    messages = cHandler.historyViewHeadOrThrow('react-context');
+  } catch {
+    return '';
+  }
+  const lines: string[] = [];
+  for (const m of messages) {
+    if (m.role !== 'user' && m.role !== 'assistant') continue;
+    const text = m.fragments.filter(isTextContentFragment).map(f => f.part.text).join('\n').trim();
+    if (!text || text === '...') continue; // skip the assistant placeholder just appended
+    if (m.role === 'user' && text.startsWith('/react')) continue; // the current question arrives separately
+    lines.push(`${m.role === 'user' ? 'User' : 'Assistant'}: ${text.slice(0, REACT_HISTORY_CHARS)}`);
+  }
+  return lines.slice(-REACT_HISTORY_TURNS).join('\n');
+}
 
 
 /**
@@ -43,8 +71,14 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
   try {
 
     // react loop
+    // prepend the recent conversation so follow-up questions resolve
+    const historyContext = buildHistoryContext(cHandler);
+    const contextualQuestion = historyContext
+      ? `For context, here is the recent conversation:\n\n${historyContext}\n\nQuestion (if it references earlier topics, use the context above to interpret it): ${question}`
+      : question;
+
     const agent = new Agent(contextRef, abortController.signal);
-    const reactResult = await agent.reAct(question, assistantLlmId, 5, enableBrowse, logToEphemeral, showStateInEphemeral);
+    const reactResult = await agent.reAct(contextualQuestion, assistantLlmId, 5, enableBrowse, logToEphemeral, showStateInEphemeral);
 
     cHandler.messageFragmentReplace(assistantMessageId, placeholderFragmentId, createTextContentFragment(reactResult), true);
 
