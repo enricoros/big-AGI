@@ -5,7 +5,7 @@ import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.access'
 import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixParts_DocPart, AixParts_InlineAudioPart, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Chat_Completions, OpenAIWire_ContentParts, OpenAIWire_Messages } from '../../wiretypes/openai.wiretypes';
 
-import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxMediaUrlPart_To_String } from './adapters.common';
+import { AIX_MISSING_TOOL_RESULT_TEXT, aixFnv1aHex, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxMediaUrlPart_To_String } from './adapters.common';
 
 
 //
@@ -327,7 +327,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   // keeps prompt-cache hits alive: caches don't transfer across providers. The affinity id (conversationId/rayId/...) is
   // hashed to avoid shipping internal ids upstream; a 32-bit collision only means two contexts share affinity, harmless.
   if (openAIDialect === 'openrouter' && orSendStickyClientSessionId && sessionAffinityId)
-    payload.session_id = 'bagi-' + _fnv1aHex(sessionAffinityId);
+    payload.session_id = 'bagi-' + aixFnv1aHex(sessionAffinityId);
 
 
   // [Moonshot] Kimi's $web_search builtin function
@@ -922,16 +922,6 @@ function _stampTrailingCacheBreakpoint(chatMessages: TRequestMessages): void {
   }
 
   console.warn('AIX: OpenAI-dispatch: cache breakpoint with no stampable text part in any preceding message');
-}
-
-/** FNV-1a 32-bit hex digest - tiny, deterministic, edge-safe; used to mint the OpenRouter sticky client session id. */
-function _fnv1aHex(text: string): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(16).padStart(8, '0');
 }
 
 /** Enforce the Anthropic 4-breakpoint API limit by un-stamping the earliest (prefix-redundant) breakpoints. */

@@ -21,6 +21,17 @@ const DEFAULT_SPILL_PART_TYPES: AixMessages_SystemMessage['parts'][number]['pt']
 export const AIX_MISSING_TOOL_RESULT_TEXT = '[result omitted]';
 
 
+/** FNV-1a 32-bit hex digest - tiny, deterministic, edge-safe; for short stable wire ids derived from longer ones. */
+export function aixFnv1aHex(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+
 /**
  * CGR Server-side approximate Helper
  * Finds a cut point (if any) in the system message to move everything after it to a user message.
