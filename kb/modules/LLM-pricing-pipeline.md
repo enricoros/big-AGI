@@ -35,7 +35,7 @@ Every parser fills the same particle (`AixWire_Particles.CGSelectMetrics`):
 | `TOut`, `TOutR` | output, reasoning subset | `output_tokens`, `reasoning_tokens` | `output_tokens`, `thinking_tokens` | `candidatesTokenCount + thoughtsTokenCount` | as OpenAI |
 | `nWebSearch` | billed searches | `tool_usage.web_search.num_requests` | `server_tool_use.web_search_requests` | `groundingMetadata.webSearchQueries.length` | `server_side_tool_usage_details` web + X search |
 | `nWebFetch` | fetches (count only, no per-call fee) | - | `server_tool_use.web_fetch_requests` | - | - |
-| `nCodeExec` | code executions (count only; containers bill by time) | - | `server_tool_use` blocks named `code_execution`, `bash_code_execution`, `text_editor_code_execution` (usage carries no count) | `executableCode` parts | - |
+| `nCodeExec` | code executions (count only; containers bill by time) | `code_interpreter_call` output items (usage carries no count) | `server_tool_use` blocks named `code_execution`, `bash_code_execution`, `text_editor_code_execution` (usage carries no count) | `executableCode` parts | as OpenAI |
 | `$xPrice` | served-tier multiplier | `service_tier`: default 1, flex 0.5, fast 2 (2.5 on GPT-5.5; `priority` is served as `fast`), ultrafast 6 | batch 0.5 x geo-us 1.1; absent when `speed: fast` | `usageMetadata.serviceTier`: flex/batch 0.5, priority 1.8 | `service_tier` |
 | `$cReported` | exact charge, cents | - | - | - | `cost_in_usd_ticks` / 1e10 (OpenRouter `cost`, Perplexity `total_cost` on Chat Completions) |
 

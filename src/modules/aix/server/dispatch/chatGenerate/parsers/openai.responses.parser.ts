@@ -1198,7 +1198,7 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
 }
 
 
-function _fromResponseMetrics(response: Pick<OpenAIWire_API_Responses.Response, 'model' | 'usage' | 'service_tier' | 'tool_usage'> | undefined, parserCreationTimestamp: number, timeToFirstEvent: number | undefined): AixWire_Particles.CGSelectMetrics {
+function _fromResponseMetrics(response: Pick<OpenAIWire_API_Responses.Response, 'model' | 'usage' | 'service_tier' | 'tool_usage' | 'output'> | undefined, parserCreationTimestamp: number, timeToFirstEvent: number | undefined): AixWire_Particles.CGSelectMetrics {
   const usage = response?.usage;
 
   // Time Metrics - measured locally (parser-creation -> now), independent of the upstream `usage` block.
@@ -1211,6 +1211,12 @@ function _fromResponseMetrics(response: Pick<OpenAIWire_API_Responses.Response, 
   };
   if (timeToFirstEvent !== undefined)
     metricsUpdate.dtStart = timeToFirstEvent;
+
+  // Code executions: one code_interpreter_call item per sandbox run (OpenAI and xAI). OpenAI's usage carries no counter
+  // (containers bill per session, not per run), so count the terminal output - also when the event omits usage (#1231)
+  const nCodeExec = response?.output?.filter(item => item.type === 'code_interpreter_call').length ?? 0;
+  if (nCodeExec > 0)
+    metricsUpdate.nCodeExec = nCodeExec;
 
   // Token Metrics - only when the upstream usage block carries completion tokens
   if (usage?.output_tokens === undefined) {
