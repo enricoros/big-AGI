@@ -1712,8 +1712,7 @@ const _ORT_OAI_IF_ALLOWLIST: ReadonlySet<string> = new Set([
 const _ORT_OAI_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
   'llmVndOaiEffort', // OpenAI reasoning effort
   'llmVndOaiReasoningMode', // [2026-07-11] GPT-5.6+ reasoning mode - OR-documented `reasoning.mode`: 'pro' on a base id reroutes to the matching '*-pro' model
-  'llmVndOaiServiceTier', // [2026-09-22] `service_tier` flex|fast routes to the openai/flex|openai/fast endpoints; OR's reported cost carries the tier
-  // flex|fast only: OR serves 'ultrafast' as 'priority' (2x), no openai/ultrafast endpoint (2026-09-29) - stripped below
+  'llmVndOaiServiceTier', // [2026-09-22] `service_tier` routes to the openai/flex|fast|ultrafast endpoints (ultrafast: 2026-10-06, Astra and Astra Pro, 6x); OR's reported cost carries the tier
   'llmVndOaiVerbosity', // verbosity
   // 'llmVndOaiImageGeneration', // OR does NOT support image gen with OAI yet (2026-02-06)
 ] as const satisfies DModelParameterId[]);
@@ -1773,8 +1772,7 @@ export function llmOrtOaiLookup(orModelName: string): OrtVendorLookupResult | un
     ?.filter(spec => _ORT_OAI_PARAM_ALLOWLIST.has(spec.paramId))
     .map(spec =>
       (isOaiProModel && spec.paramId === 'llmVndOaiReasoningMode') ? { ...spec, initialValue: 'pro' as const, hidden: true } // '-pro' ids ARE pro mode: pinned ('standard' doesn't reroute back)
-        : (spec.paramId === 'llmVndOaiServiceTier' && spec.enumValues) ? { ...spec, enumValues: spec.enumValues.filter(v => v !== 'ultrafast') }
-          : { ...spec },
+        : { ...spec },
     );
 
   // initialTemperature: not set - OpenAI models use the global fallback (0.5);
