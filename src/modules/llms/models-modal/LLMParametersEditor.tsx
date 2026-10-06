@@ -7,7 +7,7 @@ import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 
 import type { DLLMMaxOutputTokens } from '~/common/stores/llms/llms.types';
-import { DModelParameterId, DModelParameterRegistry, DModelParameterSpec, DModelParameterSpecAny, DModelParameterValues, getAllModelParameterValues, LLMImplicitParametersRuntimeFallback } from '~/common/stores/llms/llms.parameters';
+import { DModelParameterId, DModelParameterRegistry, DModelParameterSpec, DModelParameterSpecAny, DModelParameterValue, DModelParameterValues, getAllModelParameterValues, LLMImplicitParametersRuntimeFallback } from '~/common/stores/llms/llms.parameters';
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
@@ -60,7 +60,19 @@ const _miscEffortOptions = [
   { value: _UNSPECIFIED, label: 'Default', description: 'Model Default' } as const,
 ] as const;
 
-export function llmParametersFilterEffortOptions<T extends { value: string, label: string }>(options: readonly T[], spec: DModelParameterSpecAny | undefined, registryKey: keyof typeof DModelParameterRegistry): T[] | null {
+/** Registry values of K absent from an options table - `never` when the table lists them all */
+type _OptionsMissingValues<K extends DModelParameterId, T extends { value: string }> = Exclude<DModelParameterValue<K>, T['value']>;
+
+/**
+ * Narrows an options table to the values the model allows (its `enumValues`, else the registry's).
+ * Filtering only removes, so every table must list every registry value - typechecked per call site: a value
+ * added to the registry fails the build at every picker that lacks it, instead of silently never showing (#1228).
+ */
+export function llmParametersFilterEffortOptions<K extends DModelParameterId, T extends { value: string, label: string }>(
+  options: readonly T[] & ([_OptionsMissingValues<K, T>] extends [never] ? unknown : { missingRegistryValues: _OptionsMissingValues<K, T> }),
+  spec: DModelParameterSpecAny | undefined,
+  registryKey: K,
+): T[] | null {
   if (!spec) return null;
   const registry = DModelParameterRegistry[registryKey];
   const allowedSet = new Set((spec.enumValues as readonly string[] | undefined) ?? ('values' in registry ? registry.values : []));
