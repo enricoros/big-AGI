@@ -219,18 +219,21 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
   // [Anthropic] Thinking and tool-choice constraints by family, newest first (all probed live):
   //   Fable/Mythos 5.x, Opus 5.5        adaptive only, always on: 'disabled' 400; forced tool_choice ('any'/'tool') 400
   //   Sonnet 5.5                        adaptive only; on by default; off is 'between_tools' ('disabled' 400) at effort <= high only (clamped below); forced tool_choice 400
-  //   Opus 5                            adaptive only; on by default; 'disabled' OK at effort <= high only (xhigh/max 400, clamped below) - the Thinking switch
+  //   Opus 5, Haiku 5.5                 adaptive only; on by default; 'disabled' OK at effort <= high only (xhigh/max 400, clamped below) - the Thinking switch;
+  //                                     Haiku 5.5 also 400s 'between_tools', and takes forced tool_choice (the reply skips thinking)
   //   Sonnet 5, Opus 4.8 / 4.7          adaptive only (budget_tokens 400); 'disabled' OK at every effort; on by default on Sonnet 5, off on 4.x
   //   4.6                               adaptive + deprecated budgets; off by default; 'disabled' OK
   //   4.5 and earlier                   extended thinking only (budget_tokens); 'adaptive' 400
   // From 4.7 up, temperature != 1, top_p, top_k and assistant prefill are 400 in any thinking mode.
   // Forward-compatible: every Fable/Mythos/Opus 5.x is assumed always-on, with Opus 5 itself carved out (bare id, or dated / Bedrock '-vN:M' suffixed);
-  // every Sonnet 5.x is assumed to turn thinking off with 'between_tools', with Sonnet 5 itself carved out the same way.
+  // every Sonnet 5.x is assumed to turn thinking off with 'between_tools', with Sonnet 5 itself carved out the same way;
+  // every Haiku 5.x is assumed to take 'disabled' at effort <= high only, as Opus 5.
   const isOpus5Base = /claude-opus-5(?:-\d{8})?(?:-v\d+(?::\d+)?)?$/.test(model.id);
   const isSonnet5Base = /claude-sonnet-5(?:-\d{8})?(?:-v\d+(?::\d+)?)?$/.test(model.id);
   const hotFixAdaptiveThinkingOnlyModel = !isOpus5Base && /claude-(fable|mythos|opus)-5/.test(model.id); // 'disabled' and budgets both coerced to adaptive
   const hotFixThinkingOffIsBetweenTools = !isSonnet5Base && /claude-sonnet-5/.test(model.id); // 'disabled' sent as 'between_tools'
-  const hotFixNoBudgetTokensModel = /claude-(fable|mythos|opus|sonnet)-5|claude-(opus|sonnet)-4-[78]/.test(model.id); // budgets coerced to adaptive
+  const hotFixThinkingOffCapsEffort = isOpus5Base || /claude-haiku-5/.test(model.id); // 'disabled' legal at effort <= 'high' only
+  const hotFixNoBudgetTokensModel = /claude-(fable|mythos|opus|sonnet|haiku)-5|claude-(opus|sonnet)-4-[78]/.test(model.id); // budgets coerced to adaptive
   const hotFixNoForcedToolUse = hotFixAdaptiveThinkingOnlyModel || hotFixThinkingOffIsBetweenTools;
 
   // Forced tool use -> 'auto' + a system hint: empirically the model still calls the tool. Forced tool use is deprecated AIX-wide, see ToolsPolicy_schema.
@@ -286,8 +289,8 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
   const reasoningEffort = model.reasoningEffort; // ?? model.vndAntEffort;
   if (reasoningEffort) {
     if (reasoningEffort === 'none' || reasoningEffort === 'minimal') throw new Error(`Anthropic API does not support '${reasoningEffort}' effort level`);
-    // Opus 5 'disabled' and Sonnet 5.5 'between_tools' are legal only at effort <= 'high' (Sonnet 5 and 4.x 'disabled' at every effort, see the family table) - silently clamp rather than fail the turn
-    const clampToHigh = ((isOpus5Base && payload.thinking?.type === 'disabled') || payload.thinking?.type === 'between_tools') && ['xhigh', 'max'].includes(reasoningEffort);
+    // Opus 5 / Haiku 5.5 'disabled' and Sonnet 5.5 'between_tools' are legal only at effort <= 'high' (Sonnet 5 and 4.x 'disabled' at every effort, see the family table) - silently clamp rather than fail the turn
+    const clampToHigh = ((hotFixThinkingOffCapsEffort && payload.thinking?.type === 'disabled') || payload.thinking?.type === 'between_tools') && ['xhigh', 'max'].includes(reasoningEffort);
     payload.output_config = {
       effort: clampToHigh ? 'high' : reasoningEffort,
     };

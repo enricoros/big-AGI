@@ -13,6 +13,16 @@ const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a
  *
  * ## Updates
  *
+ * ### 2026-10-07 - API Sync: Claude Haiku 5.5 (launch-verified live)
+ * - Models: claude-haiku-5-5 - Opus 5's thinking shape: adaptive on by default, 'disabled' at effort <= 'high' only (xhigh/max 400);
+ *   'enabled' (budget_tokens) and 'between_tools' 400; 'block_binding' 400 alongside 'disabled'. Forced tool_choice works (200, no
+ *   thinking block), unlike Sonnet/Opus 5.5. temperature != 1 / top_p != 0.99 / top_k / prefill / speed 400, computer_20250124 400.
+ *   Same tokenizer as Sonnet 5.5 (count_tokens equal). No wire changes.
+ * - Preserved thinking (docs): Haiku 5.5 blocks are account-bound, readable by Sonnet 5.5 and Opus 5.5; Opus 5.5 now also reads
+ *   Sonnet 5.5 blocks (Claude API and Google Cloud). The API drops what a model can't read; AIX keeps no replay table.
+ * - Models API: `line` (2026-10-01), `capabilities.thinking.types.disabled` (2026-10-05), `capabilities.server_tools` (2026-10-06) -
+ *   parsed in llms anthropic.models.ts.
+ *
  * ### 2026-09-28 - API Sync: Claude Sonnet 5.5 (launch-verified live)
  * - Request.thinking: added `{ type: 'between_tools' }` - Sonnet 5.5's thinking-off ('disabled' and 'enabled' 400). Legal at effort
  *   <= 'high' (xhigh/max 400 'not supported when thinking is disabled'); 'display' and 'block_binding' 400 alongside it.
