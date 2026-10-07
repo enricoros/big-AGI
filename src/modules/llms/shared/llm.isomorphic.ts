@@ -30,6 +30,26 @@ export function llmsHostnameMatches(hostUrl: string | undefined, expectedHostnam
 }
 
 /**
+ * The server key, only for requests to the server's own endpoint: no client host, or a client host with the same origin as
+ * one of `serverHosts` (the env host, else the vendor default). A client-set host elsewhere owns the whole request and must
+ * bring its own key - otherwise any caller could point the host at its own server and receive the deployment's key.
+ */
+export function llmsServerKeyForHost(clientHost: string | null | undefined, serverKey: string | undefined, ...serverHosts: string[]): string {
+  if (!serverKey) return '';
+  if (!clientHost) return serverKey;
+  const clientOrigin = _hostOrigin(clientHost);
+  return clientOrigin && serverHosts.some(host => _hostOrigin(host) === clientOrigin) ? serverKey : '';
+}
+
+function _hostOrigin(host: string): string | null {
+  try {
+    return new URL(host.startsWith('http') ? host : `https://${host}`).origin;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * True when the configured host points at the real OpenAI API (empty = use default = native, or explicitly api.openai.com).
  * False for OpenAI-compatible proxies configured via `oaiHost` (MiniMax, ChutesAI, Fireworks, Novita, self-hosted, ...).
  */

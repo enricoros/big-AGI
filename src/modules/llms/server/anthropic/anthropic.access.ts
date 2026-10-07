@@ -10,7 +10,7 @@ import { TRPCError } from '@trpc/server';
 
 import { env } from '~/server/env.server';
 
-import { llmsFixupHost } from '../../shared/llm.isomorphic';
+import { llmsFixupHost, llmsServerKeyForHost } from '../../shared/llm.isomorphic';
 
 
 // configuration
@@ -121,7 +121,7 @@ export const anthropicAccessSchema = z.object({
 
 export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, options?: AnthropicHostedFeatures): { headers: HeadersInit, url: string } {
   // API key
-  const anthropicKey = access.anthropicKey || env.ANTHROPIC_API_KEY || '';
+  const anthropicKey = access.anthropicKey || llmsServerKeyForHost(access.anthropicHost, env.ANTHROPIC_API_KEY, env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST); // server key: server endpoint only
 
   // break for the missing key only on the default host
   if (!anthropicKey && !(access.anthropicHost || env.ANTHROPIC_API_HOST))

@@ -17,7 +17,7 @@ import { BaseProduct } from '~/common/app.release';
 import { env } from '~/server/env.server';
 
 import type { RequestAccessValues } from '../llm.server.types';
-import { llmsFixupHost, llmsHostnameMatches } from '../../shared/llm.isomorphic';
+import { llmsFixupHost, llmsHostnameMatches, llmsServerKeyForHost } from '../../shared/llm.isomorphic';
 
 
 // configuration
@@ -109,10 +109,11 @@ export const openAIAccessSchema = z.object({
 });
 
 export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
+  // server keys (env) only go to the server's own endpoint - see llmsServerKeyForHost; the 'openai' dialect applies the same rule inline
   switch (access.dialect) {
 
     case 'alibaba':
-      let alibabaOaiKey = access.oaiKey || env.ALIBABA_API_KEY || '';
+      let alibabaOaiKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.ALIBABA_API_KEY, env.ALIBABA_API_HOST || DEFAULT_ALIBABA_HOST);
       const alibabaOaiHost = llmsFixupHost(access.oaiHost || env.ALIBABA_API_HOST || DEFAULT_ALIBABA_HOST, apiPath);
 
       // Use function to select a random key if multiple keys are provided
@@ -173,7 +174,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
     case 'deepseek':
       // https://platform.deepseek.com/api-docs/
-      let deepseekKey = access.oaiKey || env.DEEPSEEK_API_KEY || '';
+      let deepseekKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.DEEPSEEK_API_KEY, DEFAULT_DEEPSEEK_HOST);
       const deepseekHost = llmsFixupHost(access.oaiHost || DEFAULT_DEEPSEEK_HOST, apiPath);
 
       // Use function to select a random key if multiple keys are provided
@@ -191,7 +192,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
     case 'groq':
-      let groqKey = access.oaiKey || env.GROQ_API_KEY || '';
+      let groqKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.GROQ_API_KEY, DEFAULT_GROQ_HOST);
       const groqHost = llmsFixupHost(access.oaiHost || DEFAULT_GROQ_HOST, apiPath);
 
       // Use function to select a random key if multiple keys are provided
@@ -221,7 +222,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
     case 'localai':
-      const localAIKey = access.oaiKey || env.LOCALAI_API_KEY || '';
+      const localAIKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.LOCALAI_API_KEY, env.LOCALAI_API_HOST || DEFAULT_LOCALAI_HOST);
       let localAIHost = llmsFixupHost(access.oaiHost || env.LOCALAI_API_HOST || DEFAULT_LOCALAI_HOST, apiPath);
       return {
         headers: {
@@ -235,7 +236,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       // [Meta AI, 2026-09-02] Meta Model API (api.meta.ai): Muse models over the OpenAI Responses API (Chat Completions and
       // Anthropic Messages are also served, but only Responses carries reasoning across turns) - https://dev.meta.ai/docs/api-reference
       // Bearer key; served keys are 'LLM_<digits>_<secret>' (the docs print 'LLM|...'). Unknown top-level request params 400.
-      let metaaiKey = access.oaiKey || env.METAAI_API_KEY || '';
+      let metaaiKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.METAAI_API_KEY, env.METAAI_API_HOST || DEFAULT_METAAI_HOST);
       const metaaiHost = llmsFixupHost(access.oaiHost || env.METAAI_API_HOST || DEFAULT_METAAI_HOST, apiPath);
 
       // Use function to select a random key if multiple keys are provided
@@ -254,7 +255,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
     case 'mistral':
       // https://docs.mistral.ai/platform/client
-      let mistralKey = access.oaiKey || env.MISTRAL_API_KEY || '';
+      let mistralKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.MISTRAL_API_KEY, DEFAULT_MISTRAL_HOST);
       const mistralHost = llmsFixupHost(access.oaiHost || DEFAULT_MISTRAL_HOST, apiPath);
 
       // Use function to select a random key if multiple keys are provided
@@ -272,7 +273,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
     case 'modular':
       // [Modular, 2026-08-13] Modular Cloud (api.modular.com), OpenAI-compatible shared endpoints.
       // Host is user-overridable to target a self-hosted MAX server (same wire protocol, any model).
-      let modularKey = access.oaiKey || env.MODULAR_API_KEY || '';
+      let modularKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.MODULAR_API_KEY, DEFAULT_MODULAR_HOST);
       const modularHost = llmsFixupHost(access.oaiHost || DEFAULT_MODULAR_HOST, apiPath);
 
       // Use function to select a random key if multiple keys are provided
@@ -293,7 +294,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
     case 'moonshot':
       // https://platform.moonshot.ai/docs/api/chat
-      let moonshotKey = access.oaiKey || env.MOONSHOT_API_KEY || '';
+      let moonshotKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.MOONSHOT_API_KEY, DEFAULT_MOONSHOT_HOST, DEFAULT_MOONSHOT_CODING_HOST);
 
       // Use function to select a random key if multiple keys are provided
       moonshotKey = llmsRandomKeyFromMultiKey(moonshotKey);
@@ -316,7 +317,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
     case 'nvidianim':
       // [NVIDIA, 2026-07-25] NVIDIA API Catalog (build.nvidia.com), free rate-limited hosted inference on integrate.api.nvidia.com.
       // Host is user-overridable to target a self-hosted NIM / vLLM endpoint (identical wire protocol and model ids).
-      let nvidiaKey = access.oaiKey || env.NVIDIANIM_API_KEY || '';
+      let nvidiaKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.NVIDIANIM_API_KEY, env.NVIDIANIM_API_HOST || DEFAULT_NVIDIANIM_HOST);
       const nvidiaHost = llmsFixupHost(access.oaiHost || env.NVIDIANIM_API_HOST || DEFAULT_NVIDIANIM_HOST, apiPath);
 
       // Use function to select a random key if multiple keys are provided
@@ -393,7 +394,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
     }
 
     case 'openrouter':
-      let orKey = access.oaiKey || env.OPENROUTER_API_KEY || '';
+      let orKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.OPENROUTER_API_KEY, DEFAULT_OPENROUTER_HOST);
       const orHost = llmsFixupHost(access.oaiHost || DEFAULT_OPENROUTER_HOST, apiPath);
 
       // Use function to select a random key if multiple keys are provided
@@ -419,7 +420,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
     case 'perplexity':
-      let perplexityKey = access.oaiKey || env.PERPLEXITY_API_KEY || '';
+      let perplexityKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.PERPLEXITY_API_KEY, DEFAULT_PERPLEXITY_HOST);
       const perplexityHost = llmsFixupHost(access.oaiHost || DEFAULT_PERPLEXITY_HOST, apiPath);
 
       // Use function to select a random key if multiple keys are provided
@@ -448,7 +449,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
 
     case 'sakanaai':
       // https://console.sakana.ai/models - OpenAI-compatible (Responses + Chat Completions)
-      let sakanaKey = access.oaiKey || env.SAKANA_API_KEY || '';
+      let sakanaKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.SAKANA_API_KEY, env.SAKANA_API_HOST || DEFAULT_SAKANA_HOST);
       const sakanaHost = llmsFixupHost(access.oaiHost || env.SAKANA_API_HOST || DEFAULT_SAKANA_HOST, apiPath);
 
       // Use function to select a random key if multiple keys are provided
@@ -466,7 +467,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
     case 'togetherai':
-      let togetherKey = access.oaiKey || env.TOGETHERAI_API_KEY || '';
+      let togetherKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.TOGETHERAI_API_KEY, DEFAULT_TOGETHERAI_HOST);
       const togetherHost = llmsFixupHost(access.oaiHost || DEFAULT_TOGETHERAI_HOST, apiPath);
 
       // Use function to select a random key if multiple keys are provided
@@ -541,7 +542,7 @@ function _azureOpenAIAccess(access: OpenAIAccessSchema, modelRefId: string | nul
   const server = _azureServerSideVars();
 
   // Client-provided values always take precedence over server env vars
-  const azureKey = access.oaiKey || server.apiKey || '';
+  const azureKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, server.apiKey, server.apiEndpoint);
   const azureHostFixed = llmsFixupHost(access.oaiHost || server.apiEndpoint || '', apiPath);
 
   // Normalize to origin only (discard path/query) to prevent malformed URLs
