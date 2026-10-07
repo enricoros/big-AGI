@@ -337,8 +337,9 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // Sonnet 5.5 (launch-verified 2026-09-28, probed live): Sonnet 5's price and tokenizer, 512-token min cacheable prompt (Sonnet 5: 1,024),
     // knowledge cutoff Jun 2026. Forced tool_choice 'any'/'tool' 400 (AIX downgrades to 'auto' + system hint), temperature only at 1 /
     // top_p / prefill / speed 400, computer_20251124 400 (toolset only). No fast mode. Preserved thinking: account-bound blocks that
-    // no other model reads; it reads Sonnet 5 / Opus 4.8 / Haiku 4.5 blocks, not Opus 5.x / Fable / Mythos.
-    chatPrice: { input: 2, output: 10, cache: { read: 0.20, write: 2.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
+    // only Opus 5.5 also reads; it reads Sonnet 5 / Opus 4.8 / Haiku 4.5 / Haiku 5.5 blocks, not Opus 5.x / Fable / Mythos.
+    // Cache reads $0.10 (0.05x) since 2026-10-07, down from $0.20.
+    chatPrice: { input: 2, output: 10, cache: { read: 0.10, write: 2.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1462 + 4 }, // (no arena data yet - launched 2026-09-28) assuming: claude-sonnet-5-high + 4
   },
 
@@ -598,10 +599,10 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     benchmark: { cbaElo: 1469 }, // claude-opus-4-5-20251101
   },
   {
-    id: 'claude-sonnet-4-5-20250929', // Active
+    id: 'claude-sonnet-4-5-20250929', // Deprecated: September 30, 2026 | Retiring: November 30, 2026 | Replacement: claude-sonnet-5-5
     label: 'Claude Sonnet 4.5',
     pubDate: '20250929',
-    description: 'Previous best combination of speed and intelligence for complex agents and coding',
+    description: 'Previous best combination of speed and intelligence for complex agents and coding. Retiring November 30, 2026.',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
