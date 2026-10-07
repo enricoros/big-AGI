@@ -378,7 +378,7 @@ export namespace OpenAIWire_API_Chat_Completions {
 
     // [OpenRouter, 2025-12-31] Extension for Image Generation Configuration (works with Gemini models at the beginning)
     image_config: z.object({
-      aspect_ratio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9']).optional(),
+      aspect_ratio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9', '1:4', '4:1', '1:8', '8:1']).optional(),
       image_size: z.enum(['1K', '2K', '4K']).optional(),
     }).optional(),
 

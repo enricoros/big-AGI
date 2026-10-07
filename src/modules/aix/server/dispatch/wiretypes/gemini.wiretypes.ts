@@ -636,6 +636,10 @@ export namespace GeminiWire_API_Generate_Content {
     ]).optional(),
   });
 
+  /** [Gemini] Image generation: the API-wide sets (2026-10-06) - each model accepts a subset, see gemini.models.ts */
+  export const ImageAspectRatio_enum = z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9', '1:4', '4:1', '1:8', '8:1']);
+  export const ImageSize_enum = z.enum(['1K', '2K', '4K']);
+
   const GenerationConfig_schema = z.object({
     /**
      * The set of character sequences (up to 5) that will stop output generation. If specified, the API will stop at the first appearance of a stop sequence.
@@ -702,9 +706,9 @@ export namespace GeminiWire_API_Generate_Content {
     // Image generation configuration
     imageConfig: z.object({
       /** Controls the aspect ratio of generated images */
-      aspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
+      aspectRatio: ImageAspectRatio_enum.optional(),
       /** [Gemini, 2025-11-20] Controls output resolution */
-      imageSize: z.enum(['1K', '2K', '4K']).optional(),
+      imageSize: ImageSize_enum.optional(),
       /** [Gemini, 2026-03] 4 new fields - Unused yet */
       personGeneration: z.enum(['DONT_ALLOW', 'ALLOW_ADULT', 'ALLOW_ALL']).optional(),
       prominentPeople: z.enum(['PROMINENT_PEOPLE_UNSPECIFIED', 'ALLOW_PROMINENT_PEOPLE', 'BLOCK_PROMINENT_PEOPLE']).optional(),

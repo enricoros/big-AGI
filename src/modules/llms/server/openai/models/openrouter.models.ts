@@ -6,7 +6,7 @@ import { Release } from '~/common/app.release';
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 import { formatPubDate, fromManualMapping } from '../../models.mappings';
 import { llmOrtAntLookup_ThinkingVariants } from '../../anthropic/anthropic.models';
-import { llmOrtGemLookup } from '../../gemini/gemini.models';
+import { GEM_IMAGE_AR_NO_EXTREMES, llmOrtGemLookup } from '../../gemini/gemini.models';
 import { llmOrtMoonshotLookup } from './moonshot.models';
 import { llmOrtOaiLookup } from './openai.models';
 import { llmOrtMetaLookup } from './metaai.models';
@@ -355,7 +355,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       // 0-day: Gemini image generation params
       if (interfaces.includes(LLM_IF_Outputs_Image) && !parameterSpecs.some(p => p.paramId === 'llmVndGeminiAspectRatio' || p.paramId === 'llmVndGeminiImageSize')) {
         DEV_DEBUG_OPENROUTER_MODELS && console.log(`[DEV] openRouterModelToModelDescription: tagging ${gemLookup ? 'KNOWN' : 'unknown'} Gemini image output model:`, model.id);
-        parameterSpecs.push({ paramId: 'llmVndGeminiAspectRatio' });
+        parameterSpecs.push({ paramId: 'llmVndGeminiAspectRatio', enumValues: GEM_IMAGE_AR_NO_EXTREMES }); // unknown model: only the ratios every Gemini image model takes
         // NOTE: temporarily disable the size, as the returned data is a > 16MB pic which will cause issues
         // to the Zod parser, with "Maximum call stack size exceeded"
         // parameterSpecs.push({ paramId: 'llmVndGeminiImageSize' });

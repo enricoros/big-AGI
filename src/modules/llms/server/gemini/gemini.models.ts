@@ -252,6 +252,10 @@ const geminiRoboticsER2Pricing: ModelDescriptionSchema['chatPrice'] = {
 const IF_25 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching, LLM_IF_Inputs_Video];
 const IF_30 = [...IF_25]; // Note: Gemini 3 Developer Guide recommends temperature=1.0, which is now set as the default via initialTemperature
 
+// Image models: the ratios every Gemini image model takes - Nano Banana Pro and Nano Banana (2.5) 400 on the 1:4/4:1/1:8/8:1
+// that only the Nano Banana 2 family accepts (verified 2026-10-06, natively and through OpenRouter)
+export const GEM_IMAGE_AR_NO_EXTREMES: string[] = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9'];
+
 // Gemini Thinking Control (as of 2026-09-02):
 // - Gemini 3 models use `thinkingLevel` (llmVndGemEffort) - NOT thinkingBudget.
 //   Levels are per-model (docs thinking page table): 3.8/3.7 Flash=['low','medium','high'] (default 'medium'; 'minimal' 400s),
@@ -471,6 +475,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
 
   // 3.1 Flash Image (Stable / GA) - Released May 28, 2026 (graduated from preview)
   // aka "Nano Banana 2" - high-efficiency image generation optimized for speed and high-volume use; supports video-to-image input
+  // Verified live 2026-10-06: all 14 aspect ratios, sizes 512/1K/2K/4K ('512' not exposed: no other model takes it)
   {
     id: 'models/gemini-3.1-flash-image',
     labelOverride: 'Nano Banana 2',
@@ -509,6 +514,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
   // Added after the parameter sweep surfaced it: sweep shows fn roundtrip + thinkingLevel ['minimal','high']. Without this def it fell
   // through to the generic fallback ([Chat,Vision,Fn], no params) and lost the thinking-level control. Modeled on gemini-3.1-flash-image.
   // displayName + token limits verified live 2026-07-10 via /v1beta/models; GA date per Google's API changelog.
+  // Verified live 2026-10-06: all 14 aspect ratios; 1K only ('512'/'2K'/'4K' 400), so no llmVndGeminiImageSize
   {
     id: 'models/gemini-3.1-flash-lite-image',
     labelOverride: 'Nano Banana 2 Lite',
@@ -519,7 +525,6 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'high'] },
       { paramId: 'llmVndGeminiGoogleSearch' },
       { paramId: 'llmVndGeminiAspectRatio' },
-      { paramId: 'llmVndGeminiImageSize' },
     ],
     benchmark: undefined, // Non-benchmarkable because generates images
   },
@@ -577,7 +582,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high'] },
       // { paramId: 'llmVndGeminiShowThoughts' },
       { paramId: 'llmVndGeminiGoogleSearch' },
-      { paramId: 'llmVndGeminiAspectRatio' },
+      { paramId: 'llmVndGeminiAspectRatio', enumValues: GEM_IMAGE_AR_NO_EXTREMES },
       { paramId: 'llmVndGeminiImageSize' },
     ],
     benchmark: undefined, // Non-benchmarkable because generates images
@@ -597,7 +602,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high'] },
       // { paramId: 'llmVndGeminiShowThoughts' },
       { paramId: 'llmVndGeminiGoogleSearch' },
-      { paramId: 'llmVndGeminiAspectRatio' },
+      { paramId: 'llmVndGeminiAspectRatio', enumValues: GEM_IMAGE_AR_NO_EXTREMES },
       { paramId: 'llmVndGeminiImageSize' },
     ],
     benchmark: undefined, // Non-benchmarkable because generates images
@@ -614,7 +619,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high'] },
       // { paramId: 'llmVndGeminiShowThoughts' },
       { paramId: 'llmVndGeminiGoogleSearch' },
-      { paramId: 'llmVndGeminiAspectRatio' },
+      { paramId: 'llmVndGeminiAspectRatio', enumValues: GEM_IMAGE_AR_NO_EXTREMES },
       { paramId: 'llmVndGeminiImageSize' },
     ],
     benchmark: undefined, // Non-benchmarkable because generates images
@@ -882,7 +887,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     deprecated: '2026-10-02',
     chatPrice: { input: 0.30, output: undefined }, // Per pricing page: $0.30 text/image input, $0.039 per image output, but the text output is not stated
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision],
-    parameterSpecs: [{ paramId: 'llmVndGeminiAspectRatio' }],
+    parameterSpecs: [{ paramId: 'llmVndGeminiAspectRatio', enumValues: GEM_IMAGE_AR_NO_EXTREMES }],
     benchmark: undefined, // Non-benchmarkable because generates images
   },
   // 2.5 Flash Image Preview - SHUT DOWN January 15, 2026

@@ -319,7 +319,7 @@ export const DModelParameterRegistry = {
     label: 'Aspect Ratio',
     type: 'enum',
     description: 'Controls the aspect ratio of generated images',
-    values: ['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9'],
+    values: ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9', '1:4', '4:1', '1:8', '8:1'], // the API-wide set (2026-10-06); models narrow via enumValues
     // when undefined, the model decides the aspect ratio
   }),
 

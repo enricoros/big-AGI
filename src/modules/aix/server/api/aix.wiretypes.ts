@@ -571,7 +571,7 @@ export namespace AixWire_API {
     // Gemini
     vndGeminiAPI: z.enum(['interactions-agent']).optional(), // opt-in per-model API dialect; unset = generateContent
     vndGeminiAgentViz: z.enum(['auto', 'off']).optional(), // agent_config.visualization; default 'auto' upstream
-    vndGeminiAspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '9:16', '16:9', '21:9']).optional(),
+    vndGeminiAspectRatio: z.enum(['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9', '1:4', '4:1', '1:8', '8:1']).optional(),
     vndGeminiCodeExecution: z.enum(['auto']).optional(),
     vndGeminiComputerUse: z.enum(['browser']).optional(),
     vndGeminiEnvironmentId: z.string().optional(), // [vndGeminiAPI === 'interactions-agent'] Gemini Interactions API session/sandbox handle from a prior turn (forward-carry; best-effort - if upstream rejects the env, the request fails and the error surfaces)
