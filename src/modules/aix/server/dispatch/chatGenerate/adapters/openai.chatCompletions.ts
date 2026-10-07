@@ -826,7 +826,8 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
                   toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(aixOpenAICallId(part.id), invocation.name, invocation.args || '');
                   break;
                 case 'code_execution':
-                  toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(aixOpenAICallId(part.id), 'execute_code' /* suboptimal */, invocation.code || '');
+                  // JSON object arguments, as in every adapter: raw code 400s behind OpenRouter on Anthropic ("Input should be an object")
+                  toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(aixOpenAICallId(part.id), 'execute_code' /* suboptimal */, JSON.stringify({ code: invocation.code || '' }));
                   break;
                 default:
                   const _exhaustiveCheck: never = invocation;
@@ -1072,7 +1073,8 @@ export function aixTexts_to_OpenAIInstructionText(texts: string[]): string {
 export const AIX_OPENAI_MAX_ID_LENGTH = 64;
 
 /** A tool call id OpenAI accepts: the stored one when it fits, else a stable short one - a call and its result map to the same.
- * Other vendors' ids can be longer (xAI code cells: 83 chars). */
+ * Only foreign ids are ever rewritten: vendors' own call ids fit (29-53 chars measured on OpenAI, Meta AI, Sakana, xAI, DeepSeek),
+ * so same-vendor replay stays byte-exact. The long ones are xAI code cells (83 chars), replayed to xAI by its own adapter. */
 export function aixOpenAICallId(id: string): string {
   return id.length > 0 && id.length <= AIX_OPENAI_MAX_ID_LENGTH ? id : 'aix_' + aixFnv1aHex(id);
 }

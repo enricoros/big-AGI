@@ -645,12 +645,13 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
                 case 'code_execution':
                   // A 'code_interpreter_call' input item REQUIRES a container_id that still exists upstream (omitting it
                   // 400s with "Missing required parameter: 'input[..].container_id'"; a stale id 404s) and an OpenAI item id.
-                  // Without both, the container-independent 'execute_code' function_call carries the code as context.
+                  // Without both, the container-independent 'execute_code' function_call carries the code as context, its arguments
+                  // a JSON object as in every adapter (raw code 400s on strict validators: Meta AI "arguments must be valid JSON").
                   const cellContainerId = nativeCodeCellContainer(modelPart.id);
                   if (cellContainerId)
                     newCodeInterpreterCallMessage(modelPart.id, cellContainerId, invocation.code || '');
                   else
-                    newFunctionCallMessage(modelPart.id, 'execute_code', invocation.code || '');
+                    newFunctionCallMessage(modelPart.id, 'execute_code', JSON.stringify({ code: invocation.code || '' }));
                   break;
                 default:
                   const _exhaustiveCheck: never = invocation;
