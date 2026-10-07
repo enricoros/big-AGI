@@ -8,17 +8,17 @@ import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { ExpanderSection } from '~/common/components/ExpanderSection';
-import { FormChipControl } from '~/common/components/forms/FormChipControl';
 import { FormChipModelControl, FormChipModelLabels } from '~/common/components/forms/FormChipModelControl';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSecretField } from '~/common/components/forms/FormSecretField';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+import { modelPickOrAuto } from '~/common/util/modelPickUtils';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import type { DCredentialsApiKey, DSpeexEngine, DSpeexEngineAny, DSpeexVendorType, DVoiceElevenLabs, DVoiceGemini, DVoiceInworld, DVoiceLocalAI, DVoiceOpenAI, DVoiceWebSpeech } from '../speex.types';
-import { SPEEX_DEFAULTS, SPEEX_MODELS, SPEEX_PREVIEW_STREAM, SPEEX_PREVIEW_TEXT } from '../speex.config';
+import { SPEEX_AUTO_MODELS, SPEEX_MODELS, SPEEX_PREVIEW_STREAM, SPEEX_PREVIEW_TEXT } from '../speex.config';
 import { SpeexVoiceAutocomplete } from './SpeexVoiceAutocomplete';
 import { SpeexVoiceSelect } from './SpeexVoiceSelect';
 import { speakText } from '../speex.client';
@@ -127,6 +127,9 @@ const _styles = {
 } as const;
 
 
+// the Auto model by vendor - undefined for vendors without a model catalog (LocalAI, Web Speech)
+const _SPEEX_AUTO_MODEL_BY_VENDOR: Partial<Record<DSpeexVendorType, string>> = SPEEX_AUTO_MODELS;
+
 export function SpeexConfigureEngineFull(props: {
   engine: DSpeexEngineAny;
   isMobile: boolean;
@@ -153,15 +156,19 @@ export function SpeexConfigureEngineFull(props: {
 
   // Reset: only the fields the vendor declares a default for take part - the rest (e.g. instruction, backend, system voice) is data and stays;
   // a vendor with a model catalog also resets its model, whose default is Auto (unset)
+  const autoModel = _SPEEX_AUTO_MODEL_BY_VENDOR[engine.vendorType];
   const voiceDefaults = React.useMemo((): [string, unknown][] => {
     const defaults = speexFindVendor(engine.vendorType)?.getDefaultVoice();
     const declared = !defaults ? [] : Object.entries(defaults).filter(([_key, value]) => value !== undefined);
-    return engine.vendorType in SPEEX_MODELS ? [...declared, ['ttsModel', undefined]] : declared;
-  }, [engine.vendorType]);
+    return autoModel ? [...declared, ['ttsModel', undefined]] : declared;
+  }, [autoModel, engine.vendorType]);
 
-  // any of those fields set and off its default
+  // any of those fields set and off its default - a saved model equal to the Auto one is the default too (engines from before Auto saved it)
   const voiceValues = new Map<string, unknown>(Object.entries(engine.voice));
-  const hasUserParameters = voiceDefaults.some(([key, value]) => voiceValues.get(key) !== undefined && voiceValues.get(key) !== value);
+  const hasUserParameters = voiceDefaults.some(([key, value]) => {
+    const current = voiceValues.get(key);
+    return current !== undefined && current !== value && !(key === 'ttsModel' && current === autoModel);
+  });
 
   const handleResetParameters = React.useCallback(() => {
     // cast: voice and defaults come from the same vendor, a correlation the union type cannot express
@@ -289,6 +296,13 @@ export function SpeexConfigureEngineFull(props: {
 
 // Vendor-specific configs
 
+const _ELEVENLABS_LABELS: FormChipModelLabels<typeof SPEEX_MODELS.elevenlabs[number]> = {
+  'eleven_multilingual_v2': { label: 'Multilingual v2', description: 'Multilingual' },
+  'eleven_turbo_v2_5': { label: 'Turbo v2.5', description: 'Fast' },
+  'eleven_flash_v2_5': { label: 'Flash v2.5', description: 'Fastest' },
+  'eleven_v3': { label: 'v3', description: 'Newest' },
+};
+
 function ElevenLabsConfig({ engine, onUpdate, isMobile }: {
   engine: DSpeexEngine<'elevenlabs'>,
   onUpdate: (updates: Partial<DSpeexEngine<'elevenlabs'>>) => void;
@@ -309,17 +323,12 @@ function ElevenLabsConfig({ engine, onUpdate, isMobile }: {
 
   return <>
 
-    <FormChipControl<Exclude<DVoiceElevenLabs['ttsModel'], undefined>>
-      title='Model'
-      alignEnd
-      options={[
-        { value: 'eleven_multilingual_v2', label: 'Multilingual v2', description: 'Default' },
-        { value: 'eleven_turbo_v2_5', label: 'Turbo v2.5', description: 'Fast' },
-        { value: 'eleven_flash_v2_5', label: 'Flash v2.5', description: 'Fastest' },
-        { value: 'eleven_v3', label: 'v3', description: 'Newest' },
-      ]}
-      value={voice.ttsModel ?? SPEEX_DEFAULTS.ELEVENLABS_MODEL}
-      onChange={(value) => onUpdate({ voice: { ...voice, ttsModel: value } })}
+    <FormChipModelControl
+      catalog={SPEEX_MODELS.elevenlabs}
+      labels={_ELEVENLABS_LABELS}
+      autoModel={SPEEX_AUTO_MODELS.elevenlabs}
+      value={voice.ttsModel}
+      onChange={ttsModel => onUpdate({ voice: { ...voice, ttsModel } })}
     />
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
@@ -364,7 +373,7 @@ function GeminiConfig({ engine, onUpdate, isMobile }: {
     <FormChipModelControl
       catalog={SPEEX_MODELS.gemini}
       labels={_GEMINI_TTS_LABELS}
-      autoModel={SPEEX_DEFAULTS.GEMINI_MODEL}
+      autoModel={SPEEX_AUTO_MODELS.gemini}
       value={voice.ttsModel}
       onChange={ttsModel => onUpdate({ voice: { ...voice, ttsModel } })}
     />
@@ -383,6 +392,11 @@ function GeminiConfig({ engine, onUpdate, isMobile }: {
   </>;
 }
 
+
+const _INWORLD_LABELS: FormChipModelLabels<typeof SPEEX_MODELS.inworld[number]> = {
+  'inworld-tts-1.5-max': { label: 'TTS 1.5 Max', description: 'Quality' },
+  'inworld-tts-1.5-mini': { label: 'TTS 1.5 Mini', description: 'Fast' },
+};
 
 function InworldConfig({ engine, onUpdate, isMobile }: {
   engine: DSpeexEngine<'inworld'>,
@@ -408,15 +422,12 @@ function InworldConfig({ engine, onUpdate, isMobile }: {
 
   return <>
 
-    <FormChipControl<Exclude<DVoiceInworld['ttsModel'], undefined>>
-      title='Model'
-      alignEnd
-      options={[
-        { value: 'inworld-tts-1.5-max', label: 'TTS 1.5 Max', description: 'Quality' },
-        { value: 'inworld-tts-1.5-mini', label: 'TTS 1.5 Mini', description: 'Fast' },
-      ]}
-      value={voice.ttsModel ?? SPEEX_DEFAULTS.INWORLD_MODEL}
-      onChange={(value) => onUpdate({ voice: { ...voice, ttsModel: value } })}
+    <FormChipModelControl
+      catalog={SPEEX_MODELS.inworld}
+      labels={_INWORLD_LABELS}
+      autoModel={SPEEX_AUTO_MODELS.inworld}
+      value={voice.ttsModel}
+      onChange={ttsModel => onUpdate({ voice: { ...voice, ttsModel } })}
     />
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
@@ -489,6 +500,12 @@ function LocalAIConfig({ engine, onUpdate, isMobile }: {
 }
 
 
+const _OPENAI_TTS_LABELS: FormChipModelLabels<typeof SPEEX_MODELS.openai[number]> = {
+  'gpt-4o-mini-tts': { label: 'GPT-4o Mini', description: 'Expressive' },
+  'tts-1': { label: 'TTS-1', description: 'Fast' },
+  'tts-1-hd': { label: 'TTS-1-HD', description: 'Quality' },
+};
+
 function OpenAIConfig({ engine, onUpdate, isMobile }: {
   engine: DSpeexEngine<'openai'>,
   onUpdate: (updates: Partial<DSpeexEngineAny>) => void;
@@ -496,6 +513,9 @@ function OpenAIConfig({ engine, onUpdate, isMobile }: {
 }) {
 
   const { voice } = engine;
+
+  // model-dependent options follow the model that will run: the pick, or what Auto resolves to
+  const effectiveModel = modelPickOrAuto(voice.ttsModel, SPEEX_MODELS.openai) ?? SPEEX_AUTO_MODELS.openai;
 
   const handleVoiceChange = React.useCallback((ttsVoiceId: DVoiceOpenAI['ttsVoiceId']) => {
     const { ttsVoiceId: _, ...restVoice } = voice;
@@ -513,21 +533,12 @@ function OpenAIConfig({ engine, onUpdate, isMobile }: {
 
   return <>
 
-    <FormChipControl<DVoiceOpenAI['ttsModel']>
-      title='Model'
-      alignEnd
-      options={[
-        { value: 'gpt-4o-mini-tts', label: 'GPT-4o Mini', description: 'Expressive' },
-        { value: 'tts-1', label: 'TTS-1', description: 'Fast' },
-        { value: 'tts-1-hd', label: 'TTS-1-HD', description: 'Quality' },
-      ]}
-      value={voice.ttsModel ?? SPEEX_DEFAULTS.OPENAI_MODEL}
-      onChange={value => onUpdate({
-        voice: {
-          ...voice,
-          ttsModel: value,
-        },
-      })}
+    <FormChipModelControl
+      catalog={SPEEX_MODELS.openai}
+      labels={_OPENAI_TTS_LABELS}
+      autoModel={SPEEX_AUTO_MODELS.openai}
+      value={voice.ttsModel}
+      onChange={ttsModel => onUpdate({ voice: { ...voice, ttsModel } })}
     />
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
@@ -552,7 +563,7 @@ function OpenAIConfig({ engine, onUpdate, isMobile }: {
       sliderSx={{ maxWidth: 220, my: -0.5 }}
     />
 
-    {voice.ttsModel === 'gpt-4o-mini-tts' && (
+    {effectiveModel === 'gpt-4o-mini-tts' && (
       <FormTextField
         autoCompleteId='speex-openai-instruction'
         title='Instruction'

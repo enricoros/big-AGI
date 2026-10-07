@@ -51,7 +51,7 @@ export type DSpeexVoice<TVt extends DSpeexVendorType> = _TypeMap[TVt]['voice'];
 
 export interface DVoiceElevenLabs {
   dialect: 'elevenlabs';
-  ttsModel?: 'eleven_v3' | 'eleven_multilingual_v2' | 'eleven_flash_v2_5' | 'eleven_turbo_v2_5';
+  ttsModel?: typeof SPEEX_MODELS.elevenlabs[number]; // unset = Auto
   ttsVoiceId?: string;
   // ttsStability?: number;
   // ttsSimilarityBoost?: number;
@@ -67,7 +67,7 @@ export interface DVoiceGemini {
 
 export interface DVoiceInworld {
   dialect: 'inworld';
-  ttsModel?: 'inworld-tts-1.5-max' | 'inworld-tts-1.5-mini';
+  ttsModel?: typeof SPEEX_MODELS.inworld[number]; // unset = Auto
   ttsVoiceId?: string;        // e.g., 'Alex', 'Ashley', 'Dennis'
   ttsTemperature?: number;    // 0-2, default 1.1 (controls expressiveness)
   ttsSpeakingRate?: number;   // 0.5-1.5, default 1.0
@@ -84,7 +84,7 @@ export interface DVoiceLocalAI {
 
 export interface DVoiceOpenAI {
   dialect: 'openai';
-  ttsModel: 'tts-1' | 'tts-1-hd' | 'gpt-4o-mini-tts';
+  ttsModel?: typeof SPEEX_MODELS.openai[number]; // unset = Auto
   ttsVoiceId?: 'alloy' | 'ash' | 'coral' | 'echo' | 'fable' | 'nova' | 'onyx' | 'sage' | 'shimmer' | string;
   ttsSpeed?: number;       // 0.25-4.0
   ttsInstruction?: string; // voice instructions (gpt-4o-mini-tts only?)

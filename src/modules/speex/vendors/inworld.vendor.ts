@@ -25,7 +25,7 @@ export const SpeexVendorInworld: ISpeexVendor<'inworld'> = {
 
   getDefaultVoice: () => ({
     dialect: 'inworld',
-    ttsModel: SPEEX_DEFAULTS.INWORLD_MODEL,
+    // no ttsModel: Auto
     ttsVoiceId: SPEEX_DEFAULTS.INWORLD_VOICE,
     ttsSpeakingRate: 1.0,
   }),

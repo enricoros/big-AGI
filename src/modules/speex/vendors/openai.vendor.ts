@@ -38,7 +38,7 @@ export const SpeexVendorOpenAI: ISpeexVendor<'openai'> = {
 
   getDefaultVoice: () => ({
     dialect: 'openai',
-    ttsModel: SPEEX_DEFAULTS.OPENAI_MODEL,
+    // no ttsModel: Auto
     ttsVoiceId: SPEEX_DEFAULTS.OPENAI_VOICE,
     ttsSpeed: 1.0,
   }),

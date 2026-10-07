@@ -38,5 +38,16 @@ export const SPEEX_DEFAULTS = {
 // pinnable models per vendor: a voice without one is Auto (the defaults above, resolved per call), and a stored
 // model missing here (retired) resolves as Auto too - see modelPickOrAuto
 export const SPEEX_MODELS = {
+  elevenlabs: ['eleven_multilingual_v2', 'eleven_turbo_v2_5', 'eleven_flash_v2_5', 'eleven_v3'],
   gemini: ['gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts'],
+  inworld: ['inworld-tts-1.5-max', 'inworld-tts-1.5-mini'],
+  openai: ['gpt-4o-mini-tts', 'tts-1', 'tts-1-hd'],
 } as const;
+
+// the model Auto plays for normal reading, per vendor - the pickers show it, and a saved model equal to it counts as the default
+export const SPEEX_AUTO_MODELS = {
+  elevenlabs: SPEEX_DEFAULTS.ELEVENLABS_MODEL,
+  gemini: SPEEX_DEFAULTS.GEMINI_MODEL,
+  inworld: SPEEX_DEFAULTS.INWORLD_MODEL,
+  openai: SPEEX_DEFAULTS.OPENAI_MODEL,
+} as const satisfies { [TVendor in keyof typeof SPEEX_MODELS]: typeof SPEEX_MODELS[TVendor][number] };

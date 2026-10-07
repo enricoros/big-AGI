@@ -82,7 +82,7 @@ export namespace SpeexWire {
 
   export const VoiceInworld_schema = z.object({
     dialect: z.literal('inworld'),
-    ttsModel: z.enum(['inworld-tts-1.5-max', 'inworld-tts-1.5-mini']).optional(),
+    ttsModel: z.string().optional(), // resolved against SPEEX_MODELS by the synthesizer: a retired pick is Auto, not a 400
     ttsVoiceId: z.string().optional(),
     ttsTemperature: z.number().min(0).max(2).optional(),
     ttsSpeakingRate: z.number().min(0.5).max(1.5).optional(),
@@ -97,7 +97,7 @@ export namespace SpeexWire {
 
   export const VoiceOpenAI_schema = z.object({
     dialect: z.literal('openai'),
-    ttsModel: z.enum(['tts-1', 'tts-1-hd', 'gpt-4o-mini-tts']).optional(),
+    ttsModel: z.string().optional(), // resolved against SPEEX_MODELS by the synthesizer: a retired pick is Auto, not a 400
     ttsVoiceId: z.string().optional(),
     ttsSpeed: z.number().min(0.25).max(4.0).optional(),
     ttsInstruction: z.string().optional(),

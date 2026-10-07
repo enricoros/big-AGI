@@ -2,9 +2,11 @@ import * as z from 'zod/v4';
 
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
+import { modelPickOrAuto } from '~/common/util/modelPickUtils';
+
 import type { SpeexSpeechParticle, SpeexWire_Access_ElevenLabs, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
 import type { SynthesizeBackendFn } from './synthesize.core';
-import { SPEEX_DEBUG, SPEEX_DEFAULTS } from '../../speex.config';
+import { SPEEX_DEBUG, SPEEX_DEFAULTS, SPEEX_MODELS } from '../../speex.config';
 import { returnAudioWholeOrThrow, streamAudioChunksOrThrow } from './rpc.streaming';
 
 
@@ -13,19 +15,15 @@ const SAFETY_TEXT_LENGTH = 40000; // fallback safety net (user limit applied in 
 const MIN_CHUNK_SIZE = 4096;
 
 
-const _selectModel = (priority: 'fast' | 'balanced' | 'quality' | undefined, languageCode: string | undefined): string => {
-  const fast = SPEEX_DEFAULTS.ELEVENLABS_MODEL_FAST;
-  const quality = SPEEX_DEFAULTS.ELEVENLABS_MODEL;
-  return priority === 'fast' ? fast               // lowest latency, best for real-time use cases like calls
-    : priority === 'quality' ? quality            // multilingual v2 (highest quality)
-      : languageCode?.toLowerCase() === 'en' ? fast : quality; // 'balanced'/undefined: English → turbo, non-English → multilingual
-};
+// Auto: the quality model (what the picker shows), the fast one only when the caller asks for speed (e.g. calls)
+const _selectModel = (priority: 'fast' | 'balanced' | 'quality' | undefined): string =>
+  priority === 'fast' ? SPEEX_DEFAULTS.ELEVENLABS_MODEL_FAST : SPEEX_DEFAULTS.ELEVENLABS_MODEL;
 
 
 export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLabs> = async function* (params) {
 
   // destructure and validate
-  const { access, text: inputText, voice, streaming, languageCode, priority, signal } = params;
+  const { access, text: inputText, voice, streaming, priority, signal } = params;
   if (access.dialect !== 'elevenlabs' || voice.dialect !== 'elevenlabs')
     throw new Error('Mismatched dialect in ElevenLabs synthesize');
 
@@ -40,7 +38,7 @@ export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLa
 
   // build request - narrow to elevenlabs dialect for type safety
   const voiceId = voice.ttsVoiceId /*|| env.ELEVENLABS_VOICE_ID*/ || SPEEX_DEFAULTS.ELEVENLABS_VOICE;
-  const model = voice.ttsModel || _selectModel(priority, languageCode);
+  const model = modelPickOrAuto(voice.ttsModel, SPEEX_MODELS.elevenlabs) ?? _selectModel(priority);
 
   // skip inputs with nothing to voice: v3 rejects them (400 'Input at position 0 has empty text' after removing emojis and [audio tags]), older models bill for silence
   const voiceable = model.startsWith('eleven_v3') ? text.replace(/\[[^\]]*]/g, '') : text;

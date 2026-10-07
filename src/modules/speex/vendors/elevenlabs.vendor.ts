@@ -25,7 +25,7 @@ export const SpeexVendorElevenLabs: ISpeexVendor<'elevenlabs'> = {
 
   getDefaultVoice: () => ({
     dialect: 'elevenlabs',
-    ttsModel: SPEEX_DEFAULTS.ELEVENLABS_MODEL,
+    // no ttsModel: Auto
     ttsVoiceId: SPEEX_DEFAULTS.ELEVENLABS_VOICE,
   }),
 };
