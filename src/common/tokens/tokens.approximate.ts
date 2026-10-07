@@ -117,9 +117,9 @@ function detectContentType(text: string): keyof typeof LANGUAGE_MULTIPLIERS {
   return 'default';
 }
 
-// Models on the Opus 4.7+ tokenizer: opus-4-7/8/9, Opus 5/5.5, Sonnet 5/5.5, Fable 5/5.1, Mythos 5/5.1/Preview - in both Anthropic ('claude-opus-4-7') and OpenRouter ('claude-4.7-opus') id shapes
-// (count_tokens 2026-09-22: opus-4-8, opus-5, opus-5-5, sonnet-5, fable-5-1 within 0.1% of each other, 1.37-1.51x opus-4-6)
-const _CLAUDE_NEW_TOKENIZER_RE = /(opus[-.]4[-.][789]|4[-.][789][-.]opus|(opus|sonnet)[-.]5|fable|mythos)/;
+// Models on the Opus 4.7+ tokenizer: opus-4-7/8/9, Opus 5/5.5, Sonnet 5/5.5, Haiku 5.5, Fable 5/5.1, Mythos 5/5.1/Preview - in both Anthropic ('claude-opus-4-7') and OpenRouter ('claude-4.7-opus') id shapes
+// (count_tokens 2026-09-22: opus-4-8, opus-5, opus-5-5, sonnet-5, fable-5-1 within 0.1% of each other, 1.37-1.51x opus-4-6; 2026-10-07: haiku-5-5 equal to sonnet-5-5)
+const _CLAUDE_NEW_TOKENIZER_RE = /(opus[-.]4[-.][789]|4[-.][789][-.]opus|(opus|sonnet|haiku)[-.]5|fable|mythos)/;
 
 /**
  * Optimized model family detection with early exits

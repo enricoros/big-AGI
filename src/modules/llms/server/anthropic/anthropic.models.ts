@@ -60,6 +60,8 @@ const IF_47_R = [...IF_4_R, LLM_IF_HOTFIX_NoTemperature];
 //                              Opus 5.5 (2026-09-22): as Fable 5.1 ('disabled' and budget_tokens 400 at every effort); default effort 'medium'.
 //                              Sonnet 5.5 (2026-09-28): as Opus 5 (single entry, VISIBLE Thinking switch, off only at effort 'high' or
 //                              below), but off is sent as `thinking: {type: 'between_tools'}` - 'disabled' returns 400.
+//                              Haiku 5.5 (2026-10-07): as Opus 5 (single entry, VISIBLE Thinking switch, 'disabled' at effort 'high'
+//                              or below, 'between_tools' returns 400); default effort 'medium'.
 // - llmVndAntWebFetch/Search   seem an API feature available on all models
 
 const ANT_TOOLS: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = [
@@ -282,6 +284,39 @@ type _AnthropicModelDef = ModelDescriptionSchema & {
 };
 
 export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
+
+  // Claude Haiku 5.5 - single entry with a user-facing Thinking switch, as Opus 5: thinking is ON by default; off is
+  // `thinking: {type: 'disabled'}`, legal at effort 'high' or below only (xhigh/max -> 400; the AIX adapter clamps).
+  {
+    id: 'claude-haiku-5-5', // Active - 2026-10-07
+    label: 'Claude Haiku 5.5',
+    pubDate: '20261007',
+    description: 'Fastest model, for high-volume and latency-sensitive tasks',
+    contextWindow: 1_000_000, // 1M default and max
+    maxCompletionTokens: 128000,
+    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch], // reasoning on the base model: thinking on by default
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', initialValue: -1 /* VISIBLE Thinking switch: -1 adaptive (the API default), null off ('disabled'); budget_tokens and 'between_tools' return 400 */ },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }, // default 'medium', the first Haiku with effort; xhigh/max need thinking on (editor hides them, adapter clamps)
+      ...ANT_TOOLS_DYNAMIC,
+    ],
+    // Haiku 5.5 (launch-verified 2026-10-07, probed live): Sonnet 5.5's tokenizer (count_tokens equal; 1.3-1.6x Haiku 4.5), 512-token
+    // min cacheable prompt, knowledge cutoff Jun 2026. temperature only at 1 / top_p only at 0.99 / top_k / prefill / speed 400,
+    // computer_20250124 400 (toolset only). Unlike Sonnet/Opus 5.5, forced tool_choice works (200, the reply skips thinking). Prompts
+    // over 100K tokens bill every class at 5x. No Priority Tier. Preserved thinking: account-bound blocks that Sonnet/Opus 5.5 also read.
+    // Measured 2026-10-07: ~200 tok/s with thinking off (Haiku 4.5 ~87); at default effort it thought ~5s before a 400-word answer.
+    chatPrice: {
+      input: [{ upTo: 100000, price: 0.10 }, { upTo: null, price: 0.50 }],
+      output: [{ upTo: 100000, price: 0.50 }, { upTo: null, price: 2.50 }],
+      cache: {
+        read: [{ upTo: 100000, price: 0.01 }, { upTo: null, price: 0.05 }],
+        write: [{ upTo: 100000, price: 0.125 }, { upTo: null, price: 0.625 }],
+        duration: 300,
+      },
+      tools: ANT_PRICE_TOOLS,
+    },
+    benchmark: { cbaElo: 1462 - 7 }, // (no arena data yet - launched 2026-10-07) assuming: claude-sonnet-5-high - 7 (vendor evals: far above Haiku 4.5 and GPT-6 Luna, below Sonnet 5.5)
+  },
 
   // Claude Sonnet 5.5 - single entry with a user-facing Thinking switch, as Opus 5 (no base + '(Adaptive)' split as on Sonnet 5):
   // thinking is ON by default; off is `between_tools` (no up-front thinking; progress updates between tool calls still arrive as
@@ -592,7 +627,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     id: 'claude-haiku-4-5-20251001', // Active
     label: 'Claude Haiku 4.5',
     pubDate: '20251015',
-    description: 'Fastest model with exceptional speed and performance',
+    description: 'Previous Haiku model, with extended thinking and exceptional speed',
     contextWindow: 200000,
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],

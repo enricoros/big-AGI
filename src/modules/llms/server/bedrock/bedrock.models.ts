@@ -16,6 +16,8 @@
 //   (fable-5, opus-5/4-8/4-7/4-6, sonnet-5/4-6, opus-4-5, sonnet-4-5, haiku-4-5, opus-4-1, sonnet-4, haiku-3).
 //   The one exception is claude-3-sonnet-20240229 (0-day path, hidden). Mythos 5 is not offered on Bedrock.
 //   [2026-09-01] +fable-5-1 (foundation model + us./global. profiles, ACTIVE; invoke 403 on this account). Mythos 5.1 not offered.
+//   [2026-10-07] +haiku-5-5 beside opus-5-5 / sonnet-5-5 (foundation model + us./global. profiles, ACTIVE; haiku-5-5 invoke
+//   'not available for this account').
 // - Mantle also lists 6 undated 'anthropic.*' aliases, but they answer NEITHER OpenAI route ("does not support
 //   the '/v1/chat/completions' API", same for '/v1/responses') - Anthropic on Bedrock is invoke-only.
 // - Mantle accepts OpenAI tools on every id probed except writer.palmyra-vision-7b (see SKIP_MANTLE_TOOLS_IDS):
