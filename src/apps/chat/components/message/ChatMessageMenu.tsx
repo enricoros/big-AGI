@@ -14,6 +14,7 @@ import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import TelegramIcon from '@mui/icons-material/Telegram';
+import TextFieldsIcon from '@mui/icons-material/TextFields';
 import TextureIcon from '@mui/icons-material/Texture';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
@@ -68,6 +69,7 @@ export function ChatMessageMenu(props: {
   isUserNotifyComplete: boolean,
   userNotifyCompleteLlmId: DLLMId | null,
   isUserStarred: boolean,
+  isViewMarkdown: boolean,
   isVndAndCacheAuto: boolean,
   isVndAndCacheUser: boolean,
   showVndAntCaching: boolean,
@@ -81,6 +83,7 @@ export function ChatMessageMenu(props: {
   onOpsMessageCopySrc?: (event: React.MouseEvent) => void,
   onOpsMessageEditToggle?: (event: React.MouseEvent) => void,
   onOpsMessageTruncate?: (event: React.MouseEvent) => void,
+  onOpsMessageViewToggle?: (event: React.MouseEvent) => void,
   onOpsShowInfo?: () => void,
   // onOpsTextChart?: (event: React.MouseEvent) => void,
   onOpsTextDiagram?: (event: React.MouseEvent) => void,
@@ -111,6 +114,7 @@ export function ChatMessageMenu(props: {
     onOpsMessageCopySrc,
     onOpsMessageEditToggle,
     onOpsMessageTruncate,
+    onOpsMessageViewToggle,
     onOpsShowInfo,
     onOpsTextDiagram,
     onOpsTextImagine,
@@ -244,8 +248,15 @@ export function ChatMessageMenu(props: {
         </MenuItem>
       )}
 
-      {/* Aix Skip Message */}
       {!pending && <ListDivider />}
+      {/* User text: markdown or plain text, for this message only (not saved) */}
+      {!pending && onOpsMessageViewToggle && (
+        <MenuItem onClick={onOpsMessageViewToggle}>
+          <ListItemDecorator><TextFieldsIcon /></ListItemDecorator>
+          {props.isViewMarkdown ? 'View as text' : 'View as markdown'}
+        </MenuItem>
+      )}
+      {/* Aix Skip Message */}
       {!pending && onMessageUserFlagToggle && (
         <MenuItem onClick={() => onMessageUserFlagToggle(MESSAGE_FLAG_AIX_SKIP)}>
           <ListItemDecorator>{props.isUserMessageSkipped ? <VisibilityOffIcon sx={{ color: 'danger.plainColor' }} /> : <VisibilityOffIcon sx={{ color: 'neutral.plainDisabledColor' }} /> /*<VisibilityIcon />*/}</ListItemDecorator>

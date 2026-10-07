@@ -364,6 +364,7 @@ export function ChatMessage(props: {
   const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [textContentEditState, setTextContentEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
   const [showInfoModal, setShowInfoModal] = React.useState(false);
+  const [userMarkdownFlipped, setUserMarkdownFlipped] = React.useState(false); // 'View as text/markdown', this message only, not saved
   const attachmentsEditRef = React.useRef<EditModeAttachmentsHandle>(null);
 
   // latest-message ref: lets stable callbacks read the current message without putting it in deps
@@ -397,6 +398,7 @@ export function ChatMessage(props: {
   const fromAssistant = messageRole === 'assistant';
   const fromSystem = messageRole === 'system';
   const fromUser = messageRole === 'user';
+  const userMarkdown = labsUserMarkdown !== userMarkdownFlipped;
   const messageHasBeenEdited = !!messageUpdated;
   const msgGenOutOfTokens = messageWasOutOfTokens(messageGenerator);
 
@@ -707,6 +709,12 @@ export function ChatMessage(props: {
     e.preventDefault();
     handleOpsMenuClose();
   }, [handleOpsMenuClose, handleEditsBegin, handleEditsCancel, isEditingText, messagePendingIncomplete]);
+
+  const handleOpsMessageViewToggle = React.useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setUserMarkdownFlipped(flipped => !flipped);
+    handleOpsMenuClose();
+  }, [handleOpsMenuClose]);
 
   const handleOpsMessageTruncate = React.useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -1024,7 +1032,7 @@ export function ChatMessage(props: {
             messageGeneratorLlmId={messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : undefined}
             messagePendingIncomplete={messagePendingIncomplete}
             inFluxFragmentId={inFluxFragmentId}
-            disableMarkdownText={disableMarkdown || (fromUser && !labsUserMarkdown) /* user messages: plain text, unless Labs > Markdown in User Messages */}
+            disableMarkdownText={disableMarkdown || (fromUser && !userMarkdown) /* user messages: plain text, unless Labs or this message's menu says markdown */}
             htmlRenderVariant={props.htmlRenderVariant}
 
             textEditsState={textContentEditState}
@@ -1179,6 +1187,7 @@ export function ChatMessage(props: {
           isUserNotifyComplete={isUserNotifyComplete}
           userNotifyCompleteLlmId={(messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : undefined) ?? null}
           isUserStarred={isUserStarred}
+          isViewMarkdown={userMarkdown}
           isVndAndCacheAuto={isVndAndCacheAuto}
           isVndAndCacheUser={isVndAndCacheUser}
           showVndAntCaching={uiComplexityMode === 'extra' && !!props.showAntPromptCaching && !isUserMessageSkipped}
@@ -1191,6 +1200,7 @@ export function ChatMessage(props: {
           onOpsMessageCopySrc={handleOpsMessageCopySrc}
           onOpsMessageEditToggle={!onMessageFragmentReplace ? undefined : handleOpsMessageEditToggle}
           onOpsMessageTruncate={!onMessageTruncate ? undefined : handleOpsMessageTruncate}
+          onOpsMessageViewToggle={!fromUser ? undefined : handleOpsMessageViewToggle}
           onOpsShowInfo={handleOpsShowInfo}
           onOpsTextDiagram={!onTextDiagram ? undefined : handleOpsTextDiagram}
           onOpsTextImagine={!onTextImagine ? undefined : handleOpsTextImagine}
