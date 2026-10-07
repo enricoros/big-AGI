@@ -101,6 +101,22 @@ export function approxMediaUrlPart_To_String({ url, mediaKind }: AixParts_MediaU
   return `[Attached ${mediaKind}: ${url} - this model cannot watch it; only the URL is visible]`;
 }
 
+/**
+ * A stored code cell (vendor-run code and its results) as one text block, for targets that cannot replay it natively:
+ * the code fenced in its own language, then each result. Never an undeclared tool call, which models distrust.
+ * `code` is null for a result stored without its code.
+ */
+export function approxCodeCell_To_String(code: string | null, language: string | undefined, results: readonly { result: string, error?: boolean | string }[]): string {
+  const lines = ['[code execution]'];
+  if (code !== null)
+    lines.push('```' + (language || '').toLowerCase(), code, '```');
+  for (const { result, error } of results)
+    lines.push(!error ? 'output:' : typeof error === 'string' ? `error (${error}):` : 'error:', result);
+  if (!results.length)
+    lines.push('output: not received');
+  return lines.join('\n');
+}
+
 export function approxInReferenceTo_To_XMLString(irt: AixParts_MetaInReferenceToPart): string | null {
   const refs = irt.referTo.map(r => escapeXml(r.mText));
   if (!refs.length)

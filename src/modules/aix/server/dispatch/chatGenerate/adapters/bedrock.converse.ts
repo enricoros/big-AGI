@@ -4,7 +4,7 @@ import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage,
 
 import { BedrockConverseWire_API } from '../../wiretypes/bedrock-converse.wiretypes';
 
-import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString, approxMediaUrlPart_To_String } from './adapters.common';
+import { aixSpillShallFlush, aixSpillSystemToUser, approxCodeCell_To_String, approxDocPart_To_String, approxInReferenceTo_To_XMLString, approxMediaUrlPart_To_String } from './adapters.common';
 
 
 type TRequest = BedrockConverseWire_API.Request;
@@ -148,7 +148,16 @@ function* _generateConverseContentBlocks({ parts, role }: AixMessages_ChatMessag
       }
       break;
 
-    case 'model':
+    case 'model': {
+      // code cells (vendor-run code_execution) have no Converse form: each becomes one text block at its call, results included
+      const codeCellIds = new Set<string>();
+      const codeCellResults = new Map<string, { result: string, error?: boolean | string }[]>();
+      for (const part of parts)
+        if (part.pt === 'tool_invocation' && part.invocation.type === 'code_execution')
+          codeCellIds.add(part.id);
+        else if (part.pt === 'tool_response' && part.response.type === 'code_execution')
+          codeCellResults.set(part.id, [...codeCellResults.get(part.id) ?? [], { result: part.response.result, error: part.error }]);
+
       for (const part of parts) {
         switch (part.pt) {
 
@@ -178,7 +187,7 @@ function* _generateConverseContentBlocks({ parts, role }: AixMessages_ChatMessag
                 yield { role: 'assistant', content: { toolUse: { toolUseId: part.id, name: part.invocation.name, input: inputObj } } };
                 break;
               case 'code_execution':
-                // Converse API does not have native code execution - skip
+                yield { role: 'assistant', content: { text: approxCodeCell_To_String(part.invocation.code, part.invocation.language, codeCellResults.get(part.id) ?? []) } };
                 break;
               default:
                 const _exhaustiveCheck: never = part.invocation;
@@ -194,7 +203,6 @@ function* _generateConverseContentBlocks({ parts, role }: AixMessages_ChatMessag
             const toolErrorPrefix = part.error ? (typeof part.error === 'string' ? `[ERROR] ${part.error} - ` : '[ERROR] ') : '';
             switch (part.response.type) {
               case 'function_call':
-              case 'code_execution':
                 yield {
                   role: 'user', content: {
                     toolResult: {
@@ -204,6 +212,11 @@ function* _generateConverseContentBlocks({ parts, role }: AixMessages_ChatMessag
                     },
                   },
                 };
+                break;
+              case 'code_execution':
+                // rendered with its call (above), never as a toolResult: there is no toolUse to answer. A result stored without its code stands alone
+                if (!codeCellIds.has(part.id))
+                  yield { role: 'assistant', content: { text: approxCodeCell_To_String(null, undefined, [{ result: part.response.result, error: part.error }]) } };
                 break;
               default:
                 const _exhaustiveCheck: never = part.response;
@@ -221,6 +234,7 @@ function* _generateConverseContentBlocks({ parts, role }: AixMessages_ChatMessag
         }
       }
       break;
+    }
   }
 }
 
