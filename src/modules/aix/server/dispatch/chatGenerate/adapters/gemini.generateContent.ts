@@ -80,7 +80,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
   // Construct the request payload
   const payload: TRequest = {
     contents,
-    safetySettings: _toGeminiSafetySettings(geminiSafetyThreshold),
+    safetySettings: geminiSafetySettings(geminiSafetyThreshold),
     systemInstruction,
     generationConfig: {
       stopSequences: undefined, // (default, optional)
@@ -627,7 +627,7 @@ function _toGeminiToolConfig(itp: AixTools_ToolsPolicy): NonNullable<TRequest['t
   }
 }
 
-function _toGeminiSafetySettings(threshold: GeminiWire_Safety.HarmBlockThreshold): TRequest['safetySettings'] {
+export function geminiSafetySettings(threshold: GeminiWire_Safety.HarmBlockThreshold): TRequest['safetySettings'] {
   return threshold === 'HARM_BLOCK_THRESHOLD_UNSPECIFIED' ? undefined : [
     { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: threshold },
     { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: threshold },

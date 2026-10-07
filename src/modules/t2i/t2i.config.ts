@@ -107,5 +107,6 @@ export function t2iIsPainterName(generatorName: string | undefined): boolean {
     || generatorName.startsWith('DALL·E') // retired painter, still in message history
     || generatorName === 'LocalAI'
     || generatorName === 'Prodia' // legacy painter
+    || generatorName.startsWith('Nano Banana') // Gemini painters are the model labels
     || OPENROUTER_IMAGE_MODELS.some(m => m.label === generatorName); // OpenRouter painters are the model labels
 }

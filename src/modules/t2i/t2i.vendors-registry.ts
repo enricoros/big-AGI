@@ -5,6 +5,7 @@ import type { IT2IVendor, IT2IVendorAny } from './IT2IVendor';
 
 // vendor imports
 import { T2IVendorAzure } from './vendors/azure.vendor';
+import { T2IVendorGemini } from './vendors/gemini.vendor';
 import { T2IVendorLocalAI } from './vendors/localai.vendor';
 import { T2IVendorOpenAI } from './vendors/openai.vendor';
 import { T2IVendorOpenRouter } from './vendors/openrouter.vendor';
@@ -17,6 +18,7 @@ const _T2I_VENDOR_REGISTRY: { [key in DT2IVendorType]: IT2IVendor<key> } = {
   azure: T2IVendorAzure,
   localai: T2IVendorLocalAI,
   openrouter: T2IVendorOpenRouter,
+  googleai: T2IVendorGemini,
 };
 
 

@@ -1,3 +1,4 @@
+import type { DModelParameterValue } from '~/common/stores/llms/llms.parameters';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 
 
@@ -17,7 +18,7 @@ export type T2iContextName = typeof T2I_CONTEXT_NAMES[number];
 
 // T2I Vendor Types (supported image generation providers)
 
-export type DT2IVendorType = 'openai' | 'azure' | 'localai' | 'openrouter';
+export type DT2IVendorType = 'openai' | 'azure' | 'localai' | 'openrouter' | 'googleai';
 
 
 // T2I Engines - instances of T2I Vendor Types - persisted in store-module-t2i
@@ -46,6 +47,7 @@ interface _TypeMap extends Record<DT2IVendorType, { profile: unknown; credential
   'azure': { profile: DProfileDalle; credentials: DCredentialsLLMSService };
   'localai': { profile: DProfileDalle; credentials: DCredentialsLLMSService };
   'openrouter': { profile: DProfileOpenRouterImages; credentials: DCredentialsLLMSService };
+  'googleai': { profile: DProfileGeminiImages; credentials: DCredentialsLLMSService };
 }
 
 
@@ -77,6 +79,21 @@ export interface DProfileOpenRouterImages {
   dialect: 'openrouter';
   imageModelId: string | null; // null = auto = first model in the curated list
 }
+
+/**
+ * Gemini (Nano Banana) profile - the models are the linked service's image-output LLMs, so the
+ * catalog and the per-model aspect ratio / size support come from the Gemini model definitions.
+ * Unsupported selections are dropped at generation time (the model then picks its default).
+ */
+export interface DProfileGeminiImages {
+  dialect: 'gemini';
+  imageModelRef: string | null; // vendor model id (e.g. 'models/gemini-nano-banana-2.1'); null = auto = the service's first image model
+  aspectRatio?: GeminiImageAspectRatio; // undefined = model decides
+  imageSize?: GeminiImageSize;           // undefined = model default (1K)
+}
+
+export type GeminiImageAspectRatio = DModelParameterValue<'llmVndGeminiAspectRatio'>;
+export type GeminiImageSize = DModelParameterValue<'llmVndGeminiImageSize'>;
 
 
 // OpenAI/DALL·E-protocol model and output types - GPT Image family only: DALL·E 2/3 left the OpenAI API on 2026-05-12 (Azure and OpenRouter too)

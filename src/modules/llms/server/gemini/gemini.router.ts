@@ -1,9 +1,16 @@
 import * as z from 'zod/v4';
+import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import { convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
+import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
+import { geminiSafetySettings } from '~/modules/aix/server/dispatch/chatGenerate/adapters/gemini.generateContent';
+import { heartbeatsWhileAwaiting } from '~/modules/aix/server/dispatch/heartbeatsWhileAwaiting';
+import { getImageInformationFromBytes, type T2ICreateImageAsyncStreamOp } from '~/modules/t2i/t2i.server';
+import { T2I_CONTEXT_NAMES } from '~/modules/t2i/t2i.types';
+
+import { convert_Base64_To_UInt8Array, convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
 
 import { ListModelsResponse_schema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
@@ -45,6 +52,25 @@ const GeminiFileGetResponse_schema = z.looseObject({
   state: z.string().optional(),
 });
 
+// Image generation (T2I) input - reference images are a copy of AixWire_Parts.InlineImagePart_schema (kept separate, as in openai.router)
+const createImagesInputSchema = z.object({
+  access: geminiAccessSchema,
+  generationConfig: z.object({
+    model: z.string().regex(/^models\/[a-z0-9.-]+$/, 'invalid Gemini model id'),
+    prompt: z.string(),
+    aspectRatio: GeminiWire_API_Generate_Content.ImageAspectRatio_enum.optional(),
+    imageSize: GeminiWire_API_Generate_Content.ImageSize_enum.optional(),
+  }),
+  editConfig: z.object({
+    inputImages: z.array(z.object({
+      pt: z.literal('inline_image'),
+      mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']),
+      base64: z.string(),
+    })),
+  }).optional(),
+  t2iContextName: z.enum(T2I_CONTEXT_NAMES),
+});
+
 // Normalized metadata we return to the client chip.
 const GeminiFileMetadata_schema = z.object({
   name: z.string(),
@@ -71,6 +97,105 @@ export const llmGeminiRouter = createTRPCRouter({
       const models = await listModelsRunDispatch(input.access, signal);
 
       return { models };
+    }),
+
+
+  // --- [Gemini] Image generation (T2I) ---
+
+  /**
+   * One Nano Banana image per call: generateContent with the reference images (if any) before the prompt.
+   * Thought images (drafts, emitted at thinking 'high') are skipped; the model's text becomes the alt text.
+   */
+  createImages: edgeProcedure
+    .input(createImagesInputSchema)
+    .mutation(async function* ({ input, signal }): AsyncGenerator<T2ICreateImageAsyncStreamOp> {
+
+      const { access, generationConfig: config, editConfig } = input;
+
+      // -> state.started
+      yield { p: 'state', state: 'started' };
+
+      const { headers, url } = geminiAccess(access, config.model, GeminiWire_API_Generate_Content.postPath, false);
+      const body: GeminiWire_API_Generate_Content.Request = {
+        contents: [{
+          role: 'user',
+          parts: [
+            ...(editConfig?.inputImages ?? []).map(image => GeminiWire_ContentParts.InlineDataPart(image.mimeType, image.base64)),
+            GeminiWire_ContentParts.TextPart(config.prompt),
+          ],
+        }],
+        safetySettings: geminiSafetySettings(access.minSafetyLevel),
+        generationConfig: {
+          responseModalities: ['TEXT', 'IMAGE'],
+          ...((config.aspectRatio || config.imageSize) && {
+            imageConfig: {
+              ...(config.aspectRatio && { aspectRatio: config.aspectRatio }),
+              ...(config.imageSize && { imageSize: config.imageSize }),
+            },
+          }),
+        },
+      };
+
+      // -> heartbeats, while waiting for the generation response (4K takes 60-90s)
+      const wireResponse = yield* heartbeatsWhileAwaiting(
+        fetchJsonOrTRPCThrow<object, GeminiWire_API_Generate_Content.Request>({ url, method: 'POST', headers, body, signal, name: 'Gemini' })
+          .catch((error: any) => {
+            if (signal?.aborted)
+              return null; // connection already gone
+            throw error;
+          }),
+      );
+      if (!wireResponse) return;
+
+      const response = GeminiWire_API_Generate_Content.Response_schema.parse(wireResponse);
+      const candidate = response.candidates?.[0];
+      const parts = candidate?.content?.parts ?? [];
+
+      // the model's (non-thought) text, if any, describes the image
+      const altText = parts.map(part => 'text' in part && !part.thought ? part.text.trim() : '').filter(Boolean).join('\n') || config.prompt;
+
+      let imageCount = 0;
+      for (const part of parts) {
+        if (!('inlineData' in part) || part.thought || !part.inlineData.mimeType.startsWith('image/'))
+          continue;
+
+        let { mimeType } = part.inlineData;
+        let width = 0, height = 0;
+        try {
+          ({ mimeType, width, height } = getImageInformationFromBytes(convert_Base64_To_UInt8Array(part.inlineData.data, 'llms.gemini.createImages').buffer));
+        } catch (error) {
+          console.warn(`gemini.router.createImages: could not sniff image (${mimeType})`, error);
+        }
+
+        // -> createImage
+        imageCount++;
+        yield {
+          p: 'createImage',
+          image: {
+            mimeType,
+            base64Data: part.inlineData.data,
+            altText,
+            width,
+            height,
+            ...(response.usageMetadata?.promptTokenCount !== undefined ? { inputTokens: response.usageMetadata.promptTokenCount } : {}),
+            ...(response.usageMetadata?.candidatesTokenCount !== undefined ? { outputTokens: response.usageMetadata.candidatesTokenCount } : {}),
+            generatorName: config.model,
+            parameters: {
+              model: config.model,
+              ...(config.aspectRatio && { aspectRatio: config.aspectRatio }),
+              ...(config.imageSize && { imageSize: config.imageSize }),
+            },
+            generatedAt: new Date().toISOString(),
+          },
+        };
+      }
+
+      // no image: surface why (e.g. IMAGE_SAFETY, IMAGE_RECITATION, a text-only refusal)
+      if (!imageCount) {
+        const reason = response.promptFeedback?.blockReason || candidate?.finishReason || 'no image returned';
+        const message = candidate?.finishMessage || (altText !== config.prompt ? altText : '');
+        throw new TRPCError({ code: 'BAD_REQUEST', message: `[Gemini] ${reason}${message ? `: ${message}` : ''}` });
+      }
     }),
 
 

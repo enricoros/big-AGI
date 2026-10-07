@@ -8,6 +8,7 @@ import { ExpanderSection } from '~/common/components/ExpanderSection';
 
 import type { DT2IEngineAny, DT2IEngineId } from '../t2i.types';
 import { DallESettings } from '../dalle/DallESettings';
+import { GeminiT2ISettings } from '../gemini/GeminiT2ISettings';
 import { OpenRouterT2ISettings } from '../openrouter/OpenRouterT2ISettings';
 import { useT2IStore } from '../store-module-t2i';
 
@@ -38,6 +39,14 @@ function T2IEngineProfilePanel(props: {
       return (
         <OpenRouterT2ISettings
           profile={profile}
+          onUpdateProfile={update => onUpdate({ profile: { ...profile, ...update } })}
+        />
+      );
+    case 'gemini':
+      return (
+        <GeminiT2ISettings
+          profile={profile}
+          serviceId={engine.credentials.type === 'llms-service' ? engine.credentials.serviceId : null}
           onUpdateProfile={update => onUpdate({ profile: { ...profile, ...update } })}
         />
       );

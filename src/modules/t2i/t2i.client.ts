@@ -15,6 +15,7 @@ import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms'
 // IMPORTANT: Import TYPE (!)
 import type { T2iCreateImageOutput, T2iGenerateOptions } from './t2i.server';
 import type { DT2IEngineAny, DT2IEngineId } from './t2i.types';
+import { geminiGenerateImagesOrThrow } from './gemini/geminiGenerateImages';
 import { openAIGenerateImagesOrThrow } from './dalle/openaiGenerateImages';
 import { openRouterGenerateImagesOrThrow } from './openrouter/openrouterGenerateImages';
 import { t2iAreCredentialsValid, t2iFindEngineById, useT2IStore } from './store-module-t2i';
@@ -38,7 +39,7 @@ export function useCapabilityTextToImage(): CapabilityTextToImage {
     const activeProvider = _resolveActiveT2IProvider(activeEngineId, providers);
     const mayWork = providers.some(p => p.configured);
     const activeEngine = activeProvider ? engines[activeProvider.providerId] ?? null : null;
-    const mayEdit = !!activeEngine && activeEngine.vendorType === 'openai' && activeEngine.profile.dialect === 'dalle'; // every GPT Image model edits
+    const mayEdit = !!activeEngine && ((activeEngine.vendorType === 'openai' && activeEngine.profile.dialect === 'dalle') /* every GPT Image model edits */ || activeEngine.vendorType === 'googleai');
     return {
       mayWork,
       mayEdit,
@@ -107,8 +108,11 @@ export async function t2iGenerateImagesOrThrow(
 
     case 'openrouter':
       if (aixInlineImageParts?.length)
-        throw new Error('Image transformation is not yet available with OpenRouter. Please use an OpenAI service instead.');
+        throw new Error('Image transformation is not yet available with OpenRouter. Please use an OpenAI or Gemini service instead.');
       return await openRouterGenerateImagesOrThrow(_engineServiceIdOrThrow(engine), engine.profile, prompt, count, options);
+
+    case 'googleai':
+      return await geminiGenerateImagesOrThrow(_engineServiceIdOrThrow(engine), engine.profile, prompt, aixInlineImageParts, count, options);
 
     default:
       const _exhaustiveCheck: never = engine;

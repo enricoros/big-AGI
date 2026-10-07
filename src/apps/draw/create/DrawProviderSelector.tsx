@@ -6,6 +6,7 @@ import FormatPaintTwoToneIcon from '@mui/icons-material/FormatPaintTwoTone';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 import type { TextToImageProvider } from '~/common/components/useCapabilities';
+import { GeminiIcon } from '~/common/components/icons/vendors/GeminiIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { OpenRouterIcon } from '~/common/components/icons/vendors/OpenRouterIcon';
 import { hideOnMobile } from '~/common/app.theme';
@@ -28,7 +29,7 @@ export function DrawProviderSelector(props: {
         label: provider.label + (provider.painter !== provider.label ? ` ${provider.painter}` : ''),
         value: provider.providerId,
         configured: provider.configured,
-        Icon: provider.vendor === 'openai' ? OpenAIIcon : provider.vendor === 'openrouter' ? OpenRouterIcon : FormatPaintTwoToneIcon,
+        Icon: provider.vendor === 'openai' ? OpenAIIcon : provider.vendor === 'openrouter' ? OpenRouterIcon : provider.vendor === 'googleai' ? GeminiIcon : FormatPaintTwoToneIcon,
       });
     });
     return options;

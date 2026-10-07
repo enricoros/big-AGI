@@ -16,7 +16,7 @@ export interface IT2IVendor<TVt extends DT2IVendorType> {
   readonly vendorType: TVt;
   readonly name: string;
   readonly description: string; // provider description for the UI
-  readonly priority: number;  // display/auto-selection priority (lower = higher): localai=20, azure=28, openai=30, openrouter=40
+  readonly priority: number;  // display/auto-selection priority (lower = higher): localai=20, azure=28, openai=30, googleai=35, openrouter=40
 
   // auto-detection info: if a configured LLM service matches one of these vendor ids,
   // an auto-linked T2I engine is created using that service's credentials
