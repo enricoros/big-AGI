@@ -73,8 +73,8 @@ code_execution_20260120, then I would prefer the default to be not persistent."*
   now lists it and confirms the `_20260120`-only features (REPL persistence, PTC) are unavailable there,
   so the newer versions behave like `_20250825`.
 
-Model support for `code_execution_20260120` (per docs, 2026-06-18): Fable/Mythos 5, Opus 5, Sonnet 5, Opus
-4.5+, Sonnet 4.5+, Haiku 4.5 (degraded, see above) - NOT Opus 4.1 (`_20250825` only).
+Model support for `code_execution_20260120`: the Models API reports it per model (`capabilities.server_tools.code_execution`;
+the top-level `code_execution` is programmatic tool calling). Haiku 4.5 is degraded (see above); Opus 4.1 takes `_20250825` only.
 
 `code_execution_20260521` (2026-06-11) is the same runtime as `_20260120`; it only tells Claude about the
 90s per-cell wall-clock limit. NOT adopted: the dynamic web tools auto-inject `_20260120`, and a version
