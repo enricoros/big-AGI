@@ -154,6 +154,12 @@ export const EditorialDefaults = {
   ],
 
   fastUtil: [
+    // LAUNCHED 2026-10-07: GPT-6 Luna's price ($0.10/$0.50 up to 100K-token prompts), measured ~200 tok/s with thinking off vs Luna ~85 at
+    // effort none; titles in 0.4-0.8s. Thinking is on by default (Thinking switch), but short utility prompts mostly skip it at 'medium'.
+    { vendor: 'anthropic',  modelId: 'claude-haiku-5-5' },
+    { vendor: 'bedrock',    modelId: 'us.anthropic.claude-haiku-5-5' },
+    { vendor: 'bedrock',    modelId: 'global.anthropic.claude-haiku-5-5' },
+    { vendor: 'openrouter', modelId: 'anthropic/claude-haiku-5-5' },
     { vendor: 'openai',     modelId: 'gpt-6-luna' }, // 2026-09-22 - half 5.6 Luna's price ($0.10/$0.50), streamed faster side by side (~117 vs ~92 tok/s)
     { vendor: 'openrouter', modelId: 'openai/gpt-6-luna' },
     { vendor: 'openai',     modelId: 'gpt-5.6-luna' }, // 2026-07-09 GA - measured ~160 tok/s (faster than 5.4-mini), 1M ctx, $0.20/$1.20
@@ -194,6 +200,7 @@ export const EditorialDefaults = {
     { vendor: 'anthropic',  modelId: 'claude-opus-5' }, // launched 2026-07-24
     { vendor: 'anthropic',  modelId: 'claude-opus-4-8' },
     { vendor: 'anthropic',  modelId: 'claude-opus-4-7' },
+    { vendor: 'anthropic',  modelId: 'claude-haiku-5-5' }, // launched 2026-10-07 - vision (text and images in)
     { vendor: 'openrouter', modelId: 'anthropic/claude-sonnet-4-6' },
     { vendor: 'openai',     modelId: 'gpt-6-luna' }, // 2026-09-22 - vision
     { vendor: 'openrouter', modelId: 'openai/gpt-6-luna' },
