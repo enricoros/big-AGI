@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
+import type { LlmsGeminiModelId } from '~/modules/llms/server/gemini/gemini.models';
 import { DLLM, isLLMVisible, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
 import { DModelParameterRegistry, DModelParameterSpec } from '~/common/stores/llms/llms.parameters';
 import { llmsStoreState, useModelsStore } from '~/common/stores/llms/store-llms';
@@ -10,7 +11,7 @@ import type { DProfileGeminiImages, GeminiImageAspectRatio, GeminiImageSize } fr
 
 // fallback when the linked service has no image-output models loaded
 const GEMINI_IMAGE_FALLBACK: GeminiImageModel = {
-  modelRef: 'models/gemini-nano-banana-2.1',
+  modelRef: 'models/gemini-nano-banana-2.1' satisfies LlmsGeminiModelId,
   label: 'Nano Banana 2.1',
   aspectRatios: DModelParameterRegistry.llmVndGeminiAspectRatio.values,
   imageSizes: ['1K', '2K', '4K'],

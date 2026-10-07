@@ -1,3 +1,6 @@
+import type { LlmsGeminiModelId } from '~/modules/llms/server/gemini/gemini.models';
+
+
 // configuration
 export const SPEEX_DEBUG = false;
 
@@ -35,11 +38,14 @@ export const SPEEX_DEFAULTS = {
 
 } as const;
 
+// Gemini model names as defined in gemini.models.ts (without the 'models/' prefix) - type only, the defs stay out of the client bundle
+type _GeminiModelName = LlmsGeminiModelId extends `models/${infer TName}` ? TName : never;
+
 // pinnable models per vendor: a voice without one is Auto (the defaults above, resolved per call), and a stored
 // model missing here (retired) resolves as Auto too - see modelPickOrAuto
 export const SPEEX_MODELS = {
   elevenlabs: ['eleven_multilingual_v2', 'eleven_turbo_v2_5', 'eleven_flash_v2_5', 'eleven_v3'],
-  gemini: ['gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts'],
+  gemini: ['gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts'] as const satisfies readonly _GeminiModelName[], // Gemini model defs: dropping one there fails here
   inworld: ['inworld-tts-1.5-max', 'inworld-tts-1.5-mini'],
   openai: ['gpt-4o-mini-tts', 'tts-1', 'tts-1-hd'],
 } as const;
