@@ -11,7 +11,7 @@ import { BlocksContainer } from './BlocksContainers';
 import { EnhancedRenderCodeMemo } from './enhanced-code/EnhancedRenderCode';
 import { RenderImageURL } from './image/RenderImageURL';
 import { RenderMarkdownMemo } from './markdown/RenderMarkdown';
-import { RenderPlainText } from './plaintext/RenderPlainText';
+import { isTextChatCommand, RenderPlainText } from './plaintext/RenderPlainText';
 import { RenderWordsDiff, WordsDiff } from './wordsdiff/RenderWordsDiff';
 import { ToggleExpansionButton } from './ToggleExpansionButton';
 import { heuristicIsBlockPureHTML, RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
@@ -67,7 +67,7 @@ export function AutoBlocksRenderer(props: {
 
   codeRenderVariant?: AutoBlocksCodeRenderVariant /* default: outlined */,
   htmlRenderVariant?: AutoBlocksHtmlRenderVariant /* default: show-code */,
-  textRenderVariant: 'markdown' | 'text',
+  textRenderVariant: 'markdown' | 'markdown-user' | 'text', // 'markdown-user': typed by a person, see remarkUserText
 
   /** disables the height collapse of long user text - e.g. print/export trees and document panes render in full */
   disableTextCollapser?: boolean;
@@ -88,7 +88,8 @@ export function AutoBlocksRenderer(props: {
   const fromAssistant = props.fromRole === 'assistant';
   const fromSystem = props.fromRole === 'system';
   const fromUser = props.fromRole === 'user';
-  // const isUserCommand = fromUser && props.text.startsWith('/'); // disabled, the heuristic is so poor
+  const userMarkdown = props.textRenderVariant === 'markdown-user';
+  const userCommandAsText = userMarkdown && isTextChatCommand(props.text); // plain text renders the command chip
 
   // state
   const isPureHTML = heuristicIsBlockPureHTML(props.text);
@@ -154,7 +155,7 @@ export function AutoBlocksRenderer(props: {
         switch (bkInput.bkt) {
 
           case 'md-bk':
-            return (props.textRenderVariant === 'text' || fromSystem /*|| isUserCommand*/) ? (
+            return (props.textRenderVariant === 'text' || fromSystem || (index === 0 && userCommandAsText)) ? (
               // Keep in sync with ScaledPlainTextRenderer
               <RenderPlainText
                 key={'txt-bk-' + index}
@@ -168,6 +169,7 @@ export function AutoBlocksRenderer(props: {
                 key={'md-bk-' + index}
                 content={bkInput.content}
                 disablePreprocessor={deferPreprocessor}
+                userTextFlavor={userMarkdown}
                 lite={lastBlockInFlux && decayActive}
                 onParseCost={lastBlockInFlux ? decayOnParseCost : undefined}
                 replaceContent={!setText ? undefined : handleReplaceCode}

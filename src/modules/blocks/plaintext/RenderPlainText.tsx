@@ -15,6 +15,12 @@ const _style = {
 } as const;
 
 
+/** Text that starts with a known chat command - user markdown renders it as plain text, for the command chip. */
+export function isTextChatCommand(text: string): boolean {
+  return extractChatCommand(text)[0]?.type === 'cmd';
+}
+
+
 /**
  * Renders a text block with chat commands.
  * NOTE: should remove the commands parsing dependency.

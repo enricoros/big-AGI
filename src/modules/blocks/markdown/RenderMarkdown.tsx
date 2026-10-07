@@ -24,6 +24,9 @@ export interface RenderMarkdownRendererProps {
    */
   disablePreprocessor?: boolean;
 
+  /** Typed by a person, not generated: keeps line breaks, and indents and <tags> stay text. */
+  userTextFlavor?: boolean;
+
   /**
    * Optionals function to enable interactive rendering of the markdown.
    * @param currentContent shall be equal to content

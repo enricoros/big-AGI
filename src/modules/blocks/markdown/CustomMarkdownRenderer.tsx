@@ -14,6 +14,7 @@ import { CustomARenderer } from './CustomARenderer';
 import { CustomInputRenderer, rehypeTaskListRenumber, useMarkdownTaskListToggler } from './CustomTaskListRenderer';
 import { CustomTableRenderer } from './CustomTableRenderer';
 import { remarkTableCellBreaks } from './tableBreaks.remark';
+import { remarkUserText } from './userText.remark';
 import { wrapWithMarkdownSyntax } from './markdown.wrapper';
 
 
@@ -111,7 +112,7 @@ function preprocessMarkdown(markdownText: string) {
 }
 
 
-export default function CustomMarkdownRenderer({ content, disablePreprocessor, onParseCost, replaceContent }: RenderMarkdownRendererProps) {
+export default function CustomMarkdownRenderer({ content, disablePreprocessor, userTextFlavor, onParseCost, replaceContent }: RenderMarkdownRendererProps) {
 
   const enableCustomTaskList = replaceContent !== undefined;
 
@@ -125,7 +126,8 @@ export default function CustomMarkdownRenderer({ content, disablePreprocessor, o
   const remarkPluginsStable = React.useMemo<UnifiedPluggable[]>(() => [
     ...remarkPlugins,
     [remarkMath, { singleDollarTextMath: singleDollarLatex }],
-  ], [singleDollarLatex]);
+    ...(userTextFlavor ? [remarkUserText] : []),
+  ], [singleDollarLatex, userTextFlavor]);
   const rehypePluginsStable: UnifiedPluggable[] = React.useMemo(() => [
     rehypeKatex, // KaTeX
     ...(enableCustomTaskList ? [rehypeTaskListRenumber] : []), // supports numbering of checkboxes
