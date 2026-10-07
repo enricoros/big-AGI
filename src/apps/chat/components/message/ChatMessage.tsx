@@ -34,6 +34,7 @@ import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/u
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { useFragmentBuckets } from '~/common/stores/chat/hooks/useFragmentBuckets';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
+import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 import { BlockOpContinue } from './BlockOpContinue';
 import { BlockOpOptions, optionsExtractFromFragments_dangerModifyFragment } from './BlockOpOptions';
@@ -377,6 +378,7 @@ export function ChatMessage(props: {
     messageFullWidth: state.messageFullWidth,
     uiComplexityMode: state.complexityMode,
   })));
+  const labsUserMarkdown = useUXLabsStore(state => state.labsUserMarkdown);
 
 
   // derived state
@@ -1022,7 +1024,7 @@ export function ChatMessage(props: {
             messageGeneratorLlmId={messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : undefined}
             messagePendingIncomplete={messagePendingIncomplete}
             inFluxFragmentId={inFluxFragmentId}
-            disableMarkdownText={disableMarkdown || fromUser /* User messages are edited as text. Try to have them in plain text. NOTE: This may bite. */}
+            disableMarkdownText={disableMarkdown || (fromUser && !labsUserMarkdown) /* user messages: plain text, unless Labs > Markdown in User Messages */}
             htmlRenderVariant={props.htmlRenderVariant}
 
             textEditsState={textContentEditState}

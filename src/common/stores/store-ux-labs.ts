@@ -34,6 +34,9 @@ interface UXLabsStore {
   labsSingleDollarLatex: boolean;
   setLabsSingleDollarLatex: (labsSingleDollarLatex: boolean) => void;
 
+  labsUserMarkdown: boolean; // user messages render as markdown (user text flavor), not plain text
+  setLabsUserMarkdown: (labsUserMarkdown: boolean) => void;
+
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -63,6 +66,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsSingleDollarLatex: false,
       setLabsSingleDollarLatex: (labsSingleDollarLatex: boolean) => set({ labsSingleDollarLatex }),
+
+      labsUserMarkdown: false,
+      setLabsUserMarkdown: (labsUserMarkdown: boolean) => set({ labsUserMarkdown }),
 
     }),
     {
