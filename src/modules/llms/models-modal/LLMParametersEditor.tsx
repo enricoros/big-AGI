@@ -480,7 +480,7 @@ export function LLMParametersEditor(props: {
     {showParam('llmVndAntEffort') && antEffortOptions && (
       <FormSelectControl
         title='Effort'
-        tooltip='Controls thinking depth. Max = deepest reasoning with no constraints, High = default. Works alongside thinking budget.'
+        tooltip='Controls thinking depth. Max = deepest reasoning with no constraints. Works alongside thinking budget.'
         value={llmVndAntEffort ?? _UNSPECIFIED}
         onChange={(value) => {
           if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndAntEffort');
