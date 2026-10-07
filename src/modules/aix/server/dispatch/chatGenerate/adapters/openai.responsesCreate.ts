@@ -510,14 +510,12 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
   function attachCodeInterpreterCallOutputs(itemId: string, result: string, isError: boolean) {
     // Merge the paired tool_response's logs into the 'code_interpreter_call' item created above (matched by id).
     // There is no separate output item type for code interpreter, so outputs live on the call item itself.
-    // A cell can have several responses (logs, an image placeholder): append them, and keep a failure.
     for (let i = chatMessages.length - 1; i >= 0; i--) {
       const candidate = chatMessages[i];
       if (candidate.type === 'code_interpreter_call' && candidate.id === itemId) {
         if (result)
-          candidate.outputs = [...candidate.outputs ?? [], { type: 'logs', logs: result }];
-        if (isError)
-          candidate.status = 'failed';
+          candidate.outputs = [{ type: 'logs', logs: result }];
+        candidate.status = isError ? 'failed' : 'completed';
         return;
       }
     }
