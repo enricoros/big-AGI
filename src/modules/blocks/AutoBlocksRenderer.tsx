@@ -21,6 +21,7 @@ import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpa
 
 // configuration
 const DEFER_MARKDOWN_PREPROCESS = true; // set to false to render LaTeX inline formulas as they come in, not at the end of the message
+const USER_CODE_COLLAPSED_LINES = 15; // longer code in user text starts collapsed, so the words around it stay in view
 // import '~/common/util/forceTouchToDoubleClick'; // Future: Mac trackpad: force press → double-click
 
 
@@ -182,7 +183,7 @@ export function AutoBlocksRenderer(props: {
             const frameless = isDiagram
               ? !bkInput.isPartial // diagrams: framed and collapsed while written, bare once they render
               : (bkInput.isPartial && lastBlockInFlux) || (!bkInput.title && bkInput.lines <= 3) || lowerCaseTitle === BLOCK_CODE_SVG_TITLE;
-            const startCollapsed = (isDiagram && bkInput.isPartial) || fixUserHtmlPaste;
+            const startCollapsed = (isDiagram && bkInput.isPartial) || fixUserHtmlPaste || (collapseUserText && bkInput.lines > USER_CODE_COLLAPSED_LINES);
 
             return props.codeRenderVariant === 'enhanced' ? (
               <EnhancedRenderCodeMemo
