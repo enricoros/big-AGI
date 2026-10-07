@@ -5,13 +5,12 @@ import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.access'
 import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy, AixWire_Vendors } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Responses, OpenAIWire_Responses_Items, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
 
-import { aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixTexts_to_OpenAIInstructionText } from './openai.chatCompletions';
-import { AIX_MISSING_TOOL_RESULT_TEXT, aixFnv1aHex, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxMediaUrlPart_To_String } from './adapters.common';
+import { AIX_OPENAI_MAX_ID_LENGTH, aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixOpenAICallId, aixTexts_to_OpenAIInstructionText } from './openai.chatCompletions';
+import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxMediaUrlPart_To_String } from './adapters.common';
 
 
 // configuration
 const OPENAI_RESPONSES_DEFAULT_TRUNCATION: TRequest['truncation'] = undefined;
-const OPENAI_MAX_WIRE_ID_LENGTH = 64; // item ids and call_ids: a longer one 400s the request (2026-10-06)
 export const AIX_OAI_DEFAULT_IMAGE_GEN_MODEL: Exclude<Extract<TRequestTool, { type: 'image_generation' }>['model'], undefined> = 'gpt-image-2.5-flare';
 
 
@@ -367,12 +366,7 @@ export function aixToOpenAIResponses(
 /** Whether a stored code cell carries an id OpenAI accepts on a 'code_interpreter_call' item: Gemini cells ('call_...') and
  * xAI cells (83-char 'ci_...') 400 the request ("Expected an ID that begins with 'ci'", "string too long"). */
 function _isOpenAICodeInterpreterItemId(id: string): boolean {
-  return id.startsWith('ci') && id.length <= OPENAI_MAX_WIRE_ID_LENGTH;
-}
-
-/** The stored call id when OpenAI accepts it, else a stable short one - a call and its output map to the same id. */
-function _openAICallId(id: string): string {
-  return id.length > 0 && id.length <= OPENAI_MAX_WIRE_ID_LENGTH ? id : 'aix_' + aixFnv1aHex(id);
+  return id.startsWith('ci') && id.length <= AIX_OPENAI_MAX_ID_LENGTH;
 }
 
 function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage | null, chatSequence: AixMessages_ChatMessage[], sessionContainerId: string | undefined, emitMessagePhase: boolean, vndNamespace: AixWire_Vendors.RspVendor): { requestInput: TRequestInput[], requestInstructions: TRequest['instructions'] } {
@@ -454,7 +448,7 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
   function newFunctionCallMessage(callId: string, functionName: string, functionArguments: string) {
     const newMessage: FunctionCallMessage = {
       type: 'function_call',
-      call_id: _openAICallId(callId),
+      call_id: aixOpenAICallId(callId),
       name: functionName,
       arguments: functionArguments,
     };
@@ -479,7 +473,7 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
   function newFunctionCallOutputMessage(callId: string, functionOutputJson: string) {
     const newMessage: FunctionCallOutputMessage = {
       type: 'function_call_output',
-      call_id: _openAICallId(callId),
+      call_id: aixOpenAICallId(callId),
       output: functionOutputJson,
     };
     chatMessages.push(newMessage);

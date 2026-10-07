@@ -823,10 +823,10 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
               let toolCallPart;
               switch (invocation.type) {
                 case 'function_call':
-                  toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(part.id, invocation.name, invocation.args || '');
+                  toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(aixOpenAICallId(part.id), invocation.name, invocation.args || '');
                   break;
                 case 'code_execution':
-                  toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(part.id, 'execute_code' /* suboptimal */, invocation.code || '');
+                  toolCallPart = OpenAIWire_ContentParts.PredictedFunctionCall(aixOpenAICallId(part.id), 'execute_code' /* suboptimal */, invocation.code || '');
                   break;
                 default:
                   const _exhaustiveCheck: never = invocation;
@@ -852,7 +852,7 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
             case 'tool_response':
               const toolErrorPrefix = part.error ? (typeof part.error === 'string' ? `[ERROR] ${part.error} - ` : '[ERROR] ') : '';
               if (part.response.type === 'function_call' || part.response.type === 'code_execution')
-                chatMessages.push(OpenAIWire_Messages.ToolMessage(part.id, toolErrorPrefix + part.response.result));
+                chatMessages.push(OpenAIWire_Messages.ToolMessage(aixOpenAICallId(part.id), toolErrorPrefix + part.response.result));
               else
                 throw new Error(`Unsupported tool response type in Model message: ${(part as any).pt}`);
               break;
@@ -1066,6 +1066,15 @@ export function aixDocPart_to_OpenAITextContent(part: AixParts_DocPart): OpenAIW
 
 export function aixTexts_to_OpenAIInstructionText(texts: string[]): string {
   return texts.join(approxSystemMessageJoiner);
+}
+
+/** Longest tool call or item id OpenAI accepts, on Responses and Chat Completions alike (OpenRouter forwards it); longer 400s (2026-10-06) */
+export const AIX_OPENAI_MAX_ID_LENGTH = 64;
+
+/** A tool call id OpenAI accepts: the stored one when it fits, else a stable short one - a call and its result map to the same.
+ * Other vendors' ids can be longer (xAI code cells: 83 chars). */
+export function aixOpenAICallId(id: string): string {
+  return id.length > 0 && id.length <= AIX_OPENAI_MAX_ID_LENGTH ? id : 'aix_' + aixFnv1aHex(id);
 }
 
 
