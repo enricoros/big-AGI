@@ -30,11 +30,12 @@ import { geminiFileDelete, geminiFileUpload } from '~/modules/llms/vendors/gemin
 import { llmsRandomKeyFromMultiKey } from '~/modules/llms/server/openai/openai.access';
 
 import { convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
+import { modelPickOrAuto } from '~/common/util/modelPickUtils';
 
 import type { ASRxAccess_Gemini } from './batch.access';
 import type { ASRxCoreTranscribeResult, TranscribeBackendFn } from './transcribe.core';
 
-import { ASRX_DEBUG, ASRX_DEFAULTS } from '../../asrx.config';
+import { ASRX_DEBUG, ASRX_DEFAULTS, ASRX_MODELS } from '../../asrx.config';
 
 
 // Upstream Gemini responses - validated, not trusted; only the fields we read, unknown keys ignored
@@ -68,7 +69,7 @@ export const asrxTranscribeGemini: TranscribeBackendFn<ASRxAccess_Gemini> = asyn
   };
 
   // Resolve model and profile
-  const model = profile.asrModel || ASRX_DEFAULTS.GEMINI_MODEL;
+  const model = modelPickOrAuto(profile.asrModel, ASRX_MODELS.gemini) ?? ASRX_DEFAULTS.GEMINI_MODEL;
   const mode = profile.mode ?? 'smart';
   const language = languageCode ?? profile.language;
   const languageCodes = language ? language.split(/[,\s]+/).filter(Boolean) : [];

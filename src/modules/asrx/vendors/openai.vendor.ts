@@ -40,7 +40,7 @@ export const ASRxVendorOpenAI: IASRxVendor<'openai'> = {
 
   getDefaultProfile: () => ({
     dialect: 'openai',
-    asrModel: ASRX_DEFAULTS.OPENAI_MODEL,
+    // no asrModel: Auto
     // language: undefined -> auto-detect
   }),
 };

@@ -11,11 +11,13 @@
 
 import { z } from 'zod';
 
+import { modelPickOrAuto } from '~/common/util/modelPickUtils';
+
 import type { ASRxAccess_Deepgram } from './batch.access';
 import type { ASRxCoreTranscribeResult, TranscribeBackendFn } from './transcribe.core';
 import type { ASRxDetectedTopic } from '../../asrx.types';
 
-import { ASRX_DEBUG, ASRX_DEFAULTS } from '../../asrx.config';
+import { ASRX_DEBUG, ASRX_DEFAULTS, ASRX_MODELS } from '../../asrx.config';
 
 
 // Upstream Deepgram response - validated, not trusted; only the fields we read, unknown keys ignored
@@ -84,7 +86,7 @@ export const transcribeDeepgram: TranscribeBackendFn<ASRxAccess_Deepgram> = asyn
     host = host.slice(0, -1);
 
   // Resolve model (default to config)
-  const model = profile.asrModel || ASRX_DEFAULTS.DEEPGRAM_MODEL;
+  const model = modelPickOrAuto(profile.asrModel, ASRX_MODELS.deepgram) ?? ASRX_DEFAULTS.DEEPGRAM_MODEL;
 
   // Build query params
   const queryParams = new URLSearchParams();

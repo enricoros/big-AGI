@@ -4,20 +4,20 @@ import { Box, Button, FormControl, Link, Textarea, Typography } from '@mui/joy';
 import KeyIcon from '@mui/icons-material/Key';
 import LinkIcon from '@mui/icons-material/Link';
 
-import type { FormRadioOption } from '~/common/components/forms/FormRadioControl';
-import type { Immutable } from '~/common/types/immutable.types';
 import { ExpanderSection } from '~/common/components/ExpanderSection';
 import { FormChipControl } from '~/common/components/forms/FormChipControl';
+import { FormChipModelControl, FormChipModelLabels } from '~/common/components/forms/FormChipModelControl';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSecretField } from '~/common/components/forms/FormSecretField';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { modelPickOrAuto } from '~/common/util/modelPickUtils';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import type { DASRxEngine, DASRxEngineAny, DASRxVendorType, DCredentialsApiKey, DProfileDeepgram, DProfileGemini, DProfileOpenAI } from '../asrx.types';
-import { ASRX_DEFAULTS } from '../asrx.config';
+import { ASRX_DEFAULTS, ASRX_MODELS } from '../asrx.config';
 import { ASRxVendorDeepgram } from '../vendors/deepgram.vendor';
 import { ASRxVendorGemini } from '../vendors/gemini.vendor';
 import { ASRxVendorOpenAI } from '../vendors/openai.vendor';
@@ -277,6 +277,11 @@ function PersonalDictionaryRow({ show, terms, description, onSave }: {
 
 // --- Deepgram parameters ---
 
+const _DEEPGRAM_MODEL_LABELS: FormChipModelLabels<typeof ASRX_MODELS.deepgram[number]> = {
+  'nova-3': { label: 'Nova 3', description: 'Latest' },
+  'nova-2': { label: 'Nova 2', description: 'Stable' },
+};
+
 function DeepgramParameters({ engine, onUpdate }: {
   engine: DASRxEngine<'deepgram'>;
   onUpdate: (updates: Partial<DASRxEngine<'deepgram'>>) => void;
@@ -308,15 +313,12 @@ function DeepgramParameters({ engine, onUpdate }: {
   return <>
 
     {/* Model */}
-    <FormChipControl<string>
-      title='Model'
-      alignEnd
-      options={[
-        { value: 'nova-3', label: 'Nova 3', description: 'Latest' },
-        { value: 'nova-2', label: 'Nova 2', description: 'Stable' },
-      ]}
-      value={profile.asrModel ?? ASRX_DEFAULTS.DEEPGRAM_MODEL}
-      onChange={value => handleProfileUpdate({ asrModel: value })}
+    <FormChipModelControl
+      catalog={ASRX_MODELS.deepgram}
+      labels={_DEEPGRAM_MODEL_LABELS}
+      autoModel={ASRX_DEFAULTS.DEEPGRAM_MODEL}
+      value={profile.asrModel}
+      onChange={asrModel => handleProfileUpdate({ asrModel })}
     />
 
     {/* Language */}
@@ -502,12 +504,12 @@ function GeminiParameters({ engine, onUpdate, isMobile }: {
 
 // hourly audio rates on hover, from the OpenAI pricing page (2026-07) - the API bills per minute of audio
 // (the diarize model, swapped in by Label Speakers, matches gpt-4o-transcribe at $0.36/h)
-const _OPENAI_MODEL_OPTIONS: Immutable<FormRadioOption<Exclude<DProfileOpenAI['asrModel'], undefined>>[]> = [
-  { value: 'gpt-transcribe', label: 'GPT Transcribe', description: 'Latest', tooltip: '$0.27 per hour' },
-  { value: 'gpt-4o-transcribe', label: 'GPT-4o', description: 'Proven', tooltip: '$0.36 per hour' },
-  { value: 'gpt-4o-mini-transcribe', label: 'GPT-4o mini', description: 'Cheap', tooltip: '$0.18 per hour' },
-  { value: 'whisper-1', label: 'Whisper', description: 'Legacy', tooltip: '$0.36 per hour' },
-];
+const _OPENAI_MODEL_LABELS: FormChipModelLabels<typeof ASRX_MODELS.openai[number]> = {
+  'gpt-transcribe': { label: 'GPT Transcribe', description: 'Latest', tooltip: '$0.27 per hour' },
+  'gpt-4o-transcribe': { label: 'GPT-4o', description: 'Proven', tooltip: '$0.36 per hour' },
+  'gpt-4o-mini-transcribe': { label: 'GPT-4o mini', description: 'Cheap', tooltip: '$0.18 per hour' },
+  'whisper-1': { label: 'Whisper', description: 'Legacy', tooltip: '$0.36 per hour' },
+};
 
 function OpenAIParameters({ engine, onUpdate, isMobile }: {
   engine: DASRxEngine<'openai'>;
@@ -516,7 +518,8 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
 }) {
 
   const { profile } = engine;
-  const asrModel = profile.asrModel ?? ASRX_DEFAULTS.OPENAI_MODEL;
+  // model-dependent options follow the model that will run: the pick, or what Auto resolves to
+  const asrModel = modelPickOrAuto(profile.asrModel, ASRX_MODELS.openai) ?? ASRX_DEFAULTS.OPENAI_MODEL;
   const isWhisper = asrModel === 'whisper-1';
   // keywords reach the wire only for gpt-transcribe (keywords[]) and whisper-1 (prompt fold) - see the batch adapter
   const keywordsApply = !profile.diarize && (isWhisper || asrModel === 'gpt-transcribe');
@@ -542,12 +545,12 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
   return <>
 
     {/* Model */}
-    <FormChipControl<Exclude<DProfileOpenAI['asrModel'], undefined>>
-      title='Model'
-      alignEnd
-      options={_OPENAI_MODEL_OPTIONS}
-      value={profile.asrModel ?? ASRX_DEFAULTS.OPENAI_MODEL}
-      onChange={value => handleProfileUpdate({ asrModel: value })}
+    <FormChipModelControl
+      catalog={ASRX_MODELS.openai}
+      labels={_OPENAI_MODEL_LABELS}
+      autoModel={ASRX_DEFAULTS.OPENAI_MODEL}
+      value={profile.asrModel}
+      onChange={asrModel => handleProfileUpdate({ asrModel })}
     />
 
     {/* Language(s) */}

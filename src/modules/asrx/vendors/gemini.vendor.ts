@@ -40,7 +40,7 @@ export const ASRxVendorGemini: IASRxVendor<'gemini'> = {
 
   getDefaultProfile: () => ({
     dialect: 'gemini',
-    asrModel: ASRX_DEFAULTS.GEMINI_MODEL,
+    // no asrModel: Auto
     mode: 'smart',
     // language: undefined -> auto-detect
   }),

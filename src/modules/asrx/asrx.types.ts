@@ -1,6 +1,8 @@
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 
+import type { ASRX_MODELS } from './asrx.config';
+
 
 // --- Data Types for persisted Engine setups ---
 
@@ -46,7 +48,7 @@ export type DASRxProfile<TVt extends DASRxVendorType> = _TypeMap[TVt]['profile']
 
 export interface DProfileDeepgram {
   dialect: 'deepgram';
-  asrModel?: 'nova-3' | 'nova-2' | string;
+  asrModel?: typeof ASRX_MODELS.deepgram[number]; // unset = Auto
   language?: string;       // BCP-47 or 'multi' for multilingual auto-detect
   smartFormat?: boolean;   // numbers, dates, currency, punctuation AND paragraph breaks
   diarize?: boolean;       // speaker identification
@@ -58,7 +60,7 @@ export interface DProfileDeepgram {
 
 export interface DProfileGemini {
   dialect: 'gemini';
-  asrModel?: 'gemini-3.5-transcribe' | (string & {});
+  asrModel?: typeof ASRX_MODELS.gemini[number]; // unset = Auto
   mode?: 'smart' | 'verbatim'; // smart: vendor-formatted punctuation + paragraphs (attested formatting); verbatim: literal
   language?: string;       // BCP-47, comma-separated list allowed -> language_codes[] (undefined = auto-detect, 85+ languages; detection is not reported back)
   keywords?: string[];     // user dictionary -> custom_vocabulary wire param (vendor cap 1000 terms; API-incompatible with diarization/timestamps, which v1 doesn't expose)
@@ -66,7 +68,7 @@ export interface DProfileGemini {
 
 export interface DProfileOpenAI {
   dialect: 'openai';
-  asrModel?: 'gpt-transcribe' | 'gpt-4o-transcribe' | 'gpt-4o-mini-transcribe' | 'whisper-1';
+  asrModel?: typeof ASRX_MODELS.openai[number]; // unset = Auto
   language?: string;       // ISO-639-1, comma-separated list allowed - gpt-transcribe accepts several expected languages, older models use the first (undefined = auto-detect)
   prompt?: string;         // free-form context/style guidance (rejected by the diarize model)
   keywords?: string[];     // user dictionary: literal terms expected in the audio - gpt-transcribe wire param; folded into whisper-1's prompt; unused by gpt-4o models and diarize (see adapter)

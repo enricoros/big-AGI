@@ -25,7 +25,7 @@ export const ASRxVendorDeepgram: IASRxVendor<'deepgram'> = {
 
   getDefaultProfile: () => ({
     dialect: 'deepgram',
-    asrModel: ASRX_DEFAULTS.DEEPGRAM_MODEL,
+    // no asrModel: Auto
     language: ASRX_DEFAULTS.DEEPGRAM_LANGUAGE,
     smartFormat: true,
   }),

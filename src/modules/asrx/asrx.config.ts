@@ -26,3 +26,11 @@ export const ASRX_DEFAULTS = {
   OPENAI_HOST: 'https://api.openai.com',
 
 } as const;
+
+// pinnable models per vendor: a profile without one is Auto (the defaults above, resolved per call), and a stored
+// model missing here (retired) resolves as Auto too - see modelPickOrAuto
+export const ASRX_MODELS = {
+  deepgram: ['nova-3', 'nova-2'],
+  gemini: ['gemini-3.5-transcribe'],
+  openai: ['gpt-transcribe', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', 'whisper-1'],
+} as const;

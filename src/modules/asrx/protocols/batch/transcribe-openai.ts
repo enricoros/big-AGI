@@ -25,10 +25,12 @@
 
 import { z } from 'zod';
 
+import { modelPickOrAuto } from '~/common/util/modelPickUtils';
+
 import type { ASRxAccess_OpenAI } from './batch.access';
 import type { ASRxCoreTranscribeResult, TranscribeBackendFn } from './transcribe.core';
 
-import { ASRX_DEBUG, ASRX_DEFAULTS } from '../../asrx.config';
+import { ASRX_DEBUG, ASRX_DEFAULTS, ASRX_MODELS } from '../../asrx.config';
 
 
 // Upstream OpenAI response - validated, not trusted; only the fields we read, unknown keys ignored
@@ -102,7 +104,7 @@ export const transcribeOpenAI: TranscribeBackendFn<ASRxAccess_OpenAI> = async (p
 
   // Resolve model - diarization is a dedicated model, not a flag
   const useDiarize = !!profile.diarize;
-  const model = useDiarize ? 'gpt-4o-transcribe-diarize' : (profile.asrModel || ASRX_DEFAULTS.OPENAI_MODEL);
+  const model = useDiarize ? 'gpt-4o-transcribe-diarize' : (modelPickOrAuto(profile.asrModel, ASRX_MODELS.openai) ?? ASRX_DEFAULTS.OPENAI_MODEL);
   const isWhisper = model === 'whisper-1';
   const isGptTranscribe = model.startsWith('gpt-transcribe'); // new-gen STT: keywords[] + languages[] wire params (older models 400 on both)
   const language = languageCode ?? profile.language;
