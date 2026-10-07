@@ -12,8 +12,8 @@ const DEV_DEBUG_MISTRAL_MODELS = Release.IsNodeDevBuild; // not in staging to re
 
 
 // [Mistral]
-// Updated 2026-09-14
-// - models on: https://docs.mistral.ai/models/overview (cards moved to /models/<slug>)
+// Updated 2026-10-07
+// - models on: https://docs.mistral.ai/models/overview (redirects to /models; cards at /models/<slug>)
 // - pricing on: https://docs.mistral.ai/inference/pricing (now server-rendered; cards carry the same numbers)
 // - benchmark elo on CBA
 // - prompt caching: the pricing table publishes a 'Cached input' rate (10% of input) for every priced row, modeled below as cache.read;
@@ -32,6 +32,7 @@ type _MistralModelDef = {
 
 // [Mistral, 2026-08-17] reasoning_effort: Medium 3.5 (2604) and Small 4 (2603) accept exactly none|high (probed), every
 // other Mistral-built model rejects the field. Alias rows carry their own defs, so each repeats the spec.
+// [Mistral, 2026-10-07] Large 4 accepts the same none|high (probed; it thinks when the field is omitted).
 const _PS_MistralEffort: _MistralModelDef['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
 ];
@@ -42,7 +43,17 @@ const _PS_MistralGlmEffort: _MistralModelDef['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
 ];
 
+// [Mistral, 2026-10-07] GLM 5.3 drops 'none': thinking is compulsory, as on Z.ai's own API (probed: low|high|max 200,
+// none|minimal|medium|xhigh 400 "supported values: ['low', 'high', 'max']").
+const _PS_MistralGlm53Effort: _MistralModelDef['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['low', 'high', 'max'] },
+];
+
 const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
+
+  // Mistral Large 4 (Oct 2026, Public Preview) - list price; launch sale -50% (0.68 / 0.07 / 2.09) for 2 weeks from 2026-10-06
+  'mistral-large-4-0': { pubDate: '20261006', chatPrice: { input: 1.36, output: 4.18, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralEffort }, // MoE 52B active / 1.05T total + 1.6B vision encoder, open weights announced (docs: 1M ctx; API serves 524288)
+  'mistral-large-4': { pubDate: '20261006', chatPrice: { input: 1.36, output: 4.18, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // symlink
 
   // Premier models - Mistral 3 (Dec 2025)
   'mistral-large-2512': { pubDate: '20251202', chatPrice: { input: 0.5, output: 1.5, cache: { read: 0.05 } }, benchmark: { cbaElo: 1415 } }, // Mistral Large 3 - MoE 41B active / 675B total (leaderboard: mistral-large-3 = 1415)
@@ -86,11 +97,14 @@ const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
   'magistral-small-latest': { pubDate: '20260316', chatPrice: { input: 0.15, output: 0.6, cache: { read: 0.015 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2603 (the Magistral Small line was folded into Small 4)
   'mistral-vibe-cli-fast': { pubDate: '20260316', chatPrice: { input: 0.15, output: 0.6, cache: { read: 0.015 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2603 (Vibe CLI alias)
 
-  'labs-leanstral-1-5-1': { label: 'Leanstral 1.5', pubDate: '20260630', chatPrice: { input: 0, output: 0 } }, // Lean 4 formal proof engineering, Small 4 derivative (Labs, free, retires 2026-09-30)
+  'labs-leanstral-1-5-1': { label: 'Leanstral 1.5', pubDate: '20260630', chatPrice: { input: 0, output: 0 }, hidden: true }, // Lean 4 formal proof engineering, Small 4 derivative (Labs, free; docs: retired 2026-09-30, no replacement - still listed 2026-10-07)
   'labs-leanstral-1-5': { pubDate: '20260630', chatPrice: { input: 0, output: 0 }, hidden: true }, // symlink
 
-  // Third-party hosted - Mistral serves the model unmodified (docs id is 'zai-glm-5-2', listed 2026-08-06)
-  'zai-glm-5-2': { label: 'Z.ai GLM 5.2', pubDate: '20260616', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlmEffort, benchmark: { cbaElo: 1471 - 2 } }, // 1M ctx, 128k max output (lmarena: glm-5.2-max - 2, yield to native vendor)
+  // Third-party hosted - Mistral serves the model unmodified
+  'zai-glm-5-3': { label: 'Z.ai GLM 5.3', pubDate: '20260814', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlm53Effort, benchmark: { cbaElo: 1487 - 2 } }, // 1M ctx, 128k max output, text-only; GA on Mistral 2026-09-28 (lmarena: glm-5.3-max - 2, yield to native vendor)
+  'zai-glm-5': { pubDate: '20260814', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlm53Effort, hidden: true }, // -> zai-glm-5-3
+  'zai-glm-latest': { pubDate: '20260814', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlm53Effort, hidden: true }, // -> zai-glm-5-3
+  'zai-glm-5-2': { label: 'Z.ai GLM 5.2', pubDate: '20260616', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlmEffort, benchmark: { cbaElo: 1471 - 2 }, hidden: true }, // DEPRECATED 2026-09-29, retires 2026-10-31 -> GLM 5.3; 1M ctx, 128k max output (lmarena: glm-5.2-max - 2, yield to native vendor)
   'glm-5-2': { pubDate: '20260616', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlmEffort, hidden: true }, // -> zai-glm-5-2
 
   // Legacy (kept for reference, no longer in API)
@@ -99,6 +113,7 @@ const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
 
 
 const mistralModelFamilyOrder = [
+  'mistral-large-4',      // Mistral Large 4 - must come before generic 'mistral-large'
   // Mistral 3 (Dec 2025)
   'mistral-large-2512',   // Mistral Large 3 - specific prefix must come before generic 'mistral-large'
   'ministral-14b',

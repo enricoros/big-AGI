@@ -22,7 +22,7 @@ export const LLMS_DEFS_VERSIONS = {
   lmstudio: 'b8278679587e',
   localai: '169ef5505991',
   metaai: '168fb30e1a09',
-  mistral: '2de32b0356f3',
+  mistral: '2e01697d38f2',
   modular: '8eddb3438263',
   moonshot: '82c1ddb20bc0',
   nvidianim: '09a145e95785',
