@@ -4,9 +4,10 @@ import { FormControl, Option, Select } from '@mui/joy';
 
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { Link } from '~/common/components/Link';
+import { modelPickOrAuto } from '~/common/util/modelPickUtils';
 
 import type { DProfileOpenRouterImages } from '../t2i.types';
-import { OPENROUTER_IMAGE_MODELS } from '../t2i.config';
+import { OPENROUTER_IMAGE_MODEL_IDS, OPENROUTER_IMAGE_MODELS } from '../t2i.config';
 
 
 export function OpenRouterT2ISettings(props: {
@@ -24,8 +25,8 @@ export function OpenRouterT2ISettings(props: {
         description={<Link level='body-sm' href='https://openrouter.ai/models?fmt=cards&output_modalities=image' target='_blank'>Image models</Link>}
       />
       <Select
-        value={profile.imageModelId || 'auto'}
-        onChange={(_event, value) => value && onUpdateProfile({ imageModelId: value === 'auto' ? null : value })}
+        value={modelPickOrAuto(profile.imageModelId, OPENROUTER_IMAGE_MODEL_IDS) ?? 'auto'}
+        onChange={(_event, value) => value && onUpdateProfile({ imageModelId: modelPickOrAuto(value, OPENROUTER_IMAGE_MODEL_IDS) ?? null })}
         slotProps={{ button: { sx: { whiteSpace: 'inherit' } } }}
         sx={{ minWidth: '10rem' }}
       >

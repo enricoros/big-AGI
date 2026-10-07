@@ -1,3 +1,5 @@
+import { modelPickOrAuto } from '~/common/util/modelPickUtils';
+
 import type { DalleImageQualityGI, DalleModelId, DalleModelSelection, DalleSizeGI, DProfileDalle } from './t2i.types';
 
 
@@ -10,11 +12,11 @@ export const DALLE_DEFAULT_IMAGE_SIZE: DalleSizeGI = '1024x1024';
 
 /**
  * Resolve the actual DALL-E model to use
- * @param selection - User's selection (null = auto-select latest)
+ * @param selection - User's selection (null = auto-select latest; a retired id resolves as auto too - see modelPickOrAuto)
  * @returns The concrete model ID to use
  */
 export function resolveDalleModelId(selection: DalleModelSelection): DalleModelId {
-  return selection ?? DALLE_DEFAULT_MODEL_ID;
+  return modelPickOrAuto(selection, DALLE_MODEL_IDS) ?? DALLE_DEFAULT_MODEL_ID;
 }
 
 export const DALLE_MODEL_IDS: readonly DalleModelId[] = ['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst', 'gpt-image-2', 'gpt-image-1.5', 'gpt-image-1', 'gpt-image-1-mini'];
@@ -78,13 +80,15 @@ export const OPENROUTER_IMAGE_MODELS: { value: string, label: string }[] = [
   { value: 'sourceful/riverflow-v2.5-pro', label: 'Riverflow V2.5 Pro' },
 ];
 
+export const OPENROUTER_IMAGE_MODEL_IDS: readonly string[] = OPENROUTER_IMAGE_MODELS.map(m => m.value);
+
 /**
  * Resolve the actual OpenRouter image model to use
- * @param selection - User's selection (null/undefined = auto = first model in the list)
+ * @param selection - User's selection (null/undefined = auto = first model in the list; a pick no longer listed resolves as auto too)
  * @returns The concrete model ID to use
  */
 export function resolveOpenRouterImageModelId(selection: string | null): string {
-  return selection ?? OPENROUTER_IMAGE_MODELS[0].value;
+  return modelPickOrAuto(selection, OPENROUTER_IMAGE_MODEL_IDS) ?? OPENROUTER_IMAGE_MODEL_IDS[0];
 }
 
 export function openRouterImageModelLabel(modelId: string | null): string {

@@ -5,10 +5,11 @@ import { Box, FormControl, Link, Option, Select, Slider, Switch, Typography } fr
 import { FormChipControl } from '~/common/components/forms/FormChipControl';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSelectControl } from '~/common/components/forms/FormSelectControl';
+import { modelPickOrAuto } from '~/common/util/modelPickUtils';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import type { DalleModelSelection, DalleSizeGI, DProfileDalle } from '../t2i.types';
-import { DALLE_DEFAULT_IMAGE_SIZE, clampGPTImageQuality, isGPTImage25ModelId, resolveDalleModelId, t2iDefaultDalleProfile } from '../t2i.config';
+import { DALLE_DEFAULT_IMAGE_SIZE, DALLE_MODEL_IDS, clampGPTImageQuality, isGPTImage25ModelId, resolveDalleModelId, t2iDefaultDalleProfile } from '../t2i.config';
 import { openAIImageModelsPricing } from './openaiGenerateImages';
 
 
@@ -107,8 +108,8 @@ export function DallESettings(props: {
     <FormSelectControl
       title='Model'
       options={CONF.MODEL_OPTS.map(opt => ({ ...opt, value: opt.value || 'auto', description: opt.description ?? '' }))}
-      value={dalleModelId || 'auto'}
-      onChange={(value) => onUpdateProfile({ dalleModelId: value === 'auto' ? null : value as DalleModelSelection })}
+      value={modelPickOrAuto(dalleModelId, DALLE_MODEL_IDS) ?? 'auto'}
+      onChange={(value) => onUpdateProfile({ dalleModelId: modelPickOrAuto(value, DALLE_MODEL_IDS) ?? null /* 'auto' is not in the catalog: null */ })}
     />
 
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>

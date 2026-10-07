@@ -39,7 +39,7 @@ export function GeminiT2ISettings(props: {
     <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
       <FormLabelStart title='Model' description={profile.imageModelRef ? undefined : resolved.label} />
       <Select
-        value={profile.imageModelRef || _AUTO}
+        value={profile.imageModelRef && profile.imageModelRef === resolved.modelRef ? profile.imageModelRef : _AUTO /* gone from the service: Auto */}
         onChange={(_event, value) => value && onUpdateProfile({ imageModelRef: value === _AUTO ? null : value })}
         slotProps={_selectSlotProps}
         sx={_selectSx}
