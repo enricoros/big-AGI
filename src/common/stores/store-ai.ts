@@ -9,6 +9,15 @@ export type AIVndAntInlineFilesPolicy = 'off' | 'inline-file' | 'inline-file-and
 
 export type AIVndGeminiVertexLinksPolicy = 'as-is' | 'resolve';
 
+/**
+ * Which parallel Beam requests reuse the chat's OpenAI code sandbox (container) from the previous turn. OpenAI runs one
+ * request per container at a time: 3+ parallel requests on one container stall for minutes (#1211).
+ * - 'all': every request reuses it (default)
+ * - 'first': only a request that finds it free reuses it; the others start in a fresh one
+ * - 'none': every request starts in a fresh one
+ */
+export type AIVndOaiBeamSandboxPolicy = 'all' | 'first' | 'none';
+
 
 interface AIPreferencesState {
 
@@ -17,6 +26,9 @@ interface AIPreferencesState {
 
   // Vendors: Gemini/Vertex AI grounding redirect links
   vndGeminiVertexLinks: AIVndGeminiVertexLinksPolicy;
+
+  // Vendors: OpenAI code sandbox reuse across parallel Beam requests
+  vndOaiBeamSandbox: AIVndOaiBeamSandboxPolicy;
 
 }
 
@@ -28,6 +40,9 @@ interface AIPreferencesActions {
   // Vendors: Gemini
   setVndGeminiVertexLinks: (policy: AIVndGeminiVertexLinksPolicy) => void;
 
+  // Vendors: OpenAI
+  setVndOaiBeamSandbox: (policy: AIVndOaiBeamSandboxPolicy) => void;
+
   // Maintenance
   resetToDefaults: () => void;
 
@@ -37,6 +52,7 @@ interface AIPreferencesActions {
 const createAIPreferencesDefaults = (): AIPreferencesState => ({
   vndAntInlineFiles: 'inline-file',
   vndGeminiVertexLinks: 'as-is',
+  vndOaiBeamSandbox: 'all',
 });
 
 
@@ -49,6 +65,9 @@ export const useAIPreferencesStore = create<AIPreferencesState & AIPreferencesAc
 
   // Vendors: Gemini
   setVndGeminiVertexLinks: (vndGeminiVertexLinks: AIVndGeminiVertexLinksPolicy) => _set({ vndGeminiVertexLinks }),
+
+  // Vendors: OpenAI
+  setVndOaiBeamSandbox: (vndOaiBeamSandbox: AIVndOaiBeamSandboxPolicy) => _set({ vndOaiBeamSandbox }),
 
   // Maintenance
   resetToDefaults: () => _set(createAIPreferencesDefaults()),
@@ -64,6 +83,10 @@ export const useAIPreferencesStore = create<AIPreferencesState & AIPreferencesAc
 
 export function getVndAntInlineFiles(): AIVndAntInlineFilesPolicy {
   return useAIPreferencesStore.getState().vndAntInlineFiles;
+}
+
+export function getVndOaiBeamSandbox(): AIVndOaiBeamSandboxPolicy {
+  return useAIPreferencesStore.getState().vndOaiBeamSandbox;
 }
 
 export function getVndGeminiVertexLinks(): AIVndGeminiVertexLinksPolicy {

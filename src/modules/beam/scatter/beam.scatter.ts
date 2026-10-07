@@ -8,6 +8,7 @@ import { agiUuid } from '~/common/util/idUtils';
 import { createDMessageEmpty, DMessage, duplicateDMessage, messageSetGeneratorNamed, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { createPlaceholderVoidFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
+import { getVndOaiBeamSandbox } from '~/common/stores/store-ai';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
 
@@ -86,7 +87,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
     scatterSystemInstruction,
     scatterInputHistory,
     'beam-scatter', ray.rayId,
-    { abortSignal: abortController.signal, throttleParallelThreads: getLabsHighPerformance() ? 0 : !playNice ? 1 : rays.length },
+    { abortSignal: abortController.signal, throttleParallelThreads: getLabsHighPerformance() ? 0 : !playNice ? 1 : rays.length, oaiContainerShare: getVndOaiBeamSandbox() },
     onMessageUpdated,
   )
     .then((status) => {

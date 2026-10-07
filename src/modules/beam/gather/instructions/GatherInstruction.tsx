@@ -7,6 +7,7 @@ import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
 
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
+import { getVndOaiBeamSandbox } from '~/common/stores/store-ai';
 import { isErrorContentFragment, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
@@ -101,7 +102,7 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
     gatherSystemInstruction,
     gatherHistory,
     'beam-gather', inputs.contextRef,
-    { abortSignal: inputs.chainAbortController.signal, throttleParallelThreads: getLabsHighPerformance() ? 0 : 1 },
+    { abortSignal: inputs.chainAbortController.signal, throttleParallelThreads: getLabsHighPerformance() ? 0 : 1, oaiContainerShare: getVndOaiBeamSandbox() },
     onMessageUpdated,
   ).then((status) => {
 

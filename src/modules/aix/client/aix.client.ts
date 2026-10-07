@@ -13,6 +13,7 @@ import { DModelParameterValues, getAllModelParameterValues } from '~/common/stor
 import { apiAsync, apiStream } from '~/common/util/trpc.client';
 import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
+import type { AIVndOaiBeamSandboxPolicy } from '~/common/stores/store-ai';
 import { getAixInspectorEnabled } from '~/common/stores/store-ui';
 import { getLabsLosslessImages } from '~/common/stores/store-ux-labs';
 import { llmChatPricing_adjusted } from '~/common/stores/llms/llms.pricing';
@@ -240,6 +241,7 @@ interface AixClientOptions {
   // Cross-turn sandbox/container handles. Caller may pre-populate; resolver walks chat history to fill any unset slot.
   antContainerId?: string;            // [Anthropic Container] Container ID from a prior turn (caller checks expiry before setting)
   oaiContainerId?: string;            // [OpenAI Responses Container] Code-interpreter container from a prior turn (caller checks expiry before setting)
+  oaiContainerShare?: AIVndOaiBeamSandboxPolicy; // [OpenAI Responses Container] parallel callers (Beam): which requests reuse the history's container; omitted = 'all'
   gemEnvironmentId?: string;                  // [Gemini Interactions] Session/sandbox env id from a prior turn (today: Antigravity; no expiry on the wire; best-effort - no auto-fallback if upstream rejects)
 
   // Client-side tools (e.g., persona memory update)
@@ -273,6 +275,25 @@ function _findRecentUpstreamContainer<Uct extends _UC['uct']>(history: readonly 
   }
   return null;
 }
+
+
+/**
+ * [OpenAI Responses Container] Containers reused by OpenAI requests running right now, with their request count. OpenAI runs one
+ * request per container at a time: parallel requests on one container stall for minutes and can end in "Container is not
+ * running" (#1211). Under the 'first' Beam policy, a request skips a container held here and starts in a fresh one.
+ */
+const _oaiContainersInUse = new Map<string, number>();
+
+function _oaiContainerHold(containerId: string): void {
+  _oaiContainersInUse.set(containerId, (_oaiContainersInUse.get(containerId) ?? 0) + 1);
+}
+
+function _oaiContainerRelease(containerId: string): void {
+  const count = (_oaiContainersInUse.get(containerId) ?? 1) - 1;
+  if (count > 0) _oaiContainersInUse.set(containerId, count);
+  else _oaiContainersInUse.delete(containerId);
+}
+
 
 // --- L3 - Conversation-level generation (builds chat request, error wrapping) ---
 
@@ -308,6 +329,9 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
     pendingIncomplete: true,
   };
 
+  // [OpenAI Responses Container] the container this request holds while it runs (see _oaiContainersInUse)
+  let oaiContainerHeld: string | undefined;
+
   try {
 
     // Aix ChatGenerate Request
@@ -326,11 +350,21 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
       const uc = _findRecentUpstreamContainer(chatHistoryWithoutSystemMessages, 'vnd.ant.container');
       if (uc) clientOptions = { ...clientOptions, antContainerId: uc.containerId };
     }
+
     if (!clientOptions.oaiContainerId) {
       // OpenAI Responses: expiresAt is stamped now+20min by the parser; the 15s buffer falls back to auto-create when stale.
-      const uc = _findRecentUpstreamContainer(chatHistoryWithoutSystemMessages, 'vnd.oai.container');
-      if (uc) clientOptions = { ...clientOptions, oaiContainerId: uc.containerId };
+      // Parallel callers (Beam) pass their sharing policy: under 'first', a request skips a container another one holds.
+      const oaiContainerShare = clientOptions.oaiContainerShare ?? 'all';
+      const uc = oaiContainerShare === 'none' ? null : _findRecentUpstreamContainer(chatHistoryWithoutSystemMessages, 'vnd.oai.container');
+      if (uc && !(oaiContainerShare === 'first' && _oaiContainersInUse.has(uc.containerId)))
+        clientOptions = { ...clientOptions, oaiContainerId: uc.containerId };
     }
+    // An OpenAI request holds its container until it ends, whether found above or passed in. Checked and held in one
+    // synchronous step: parallel requests interleave at every later await (L2), so a later hold would let all of them pass.
+    // Only OpenAI's API runs in the container: other targets get it but ignore it, so they don't hold it.
+    if (clientOptions.oaiContainerId && findLLMOrThrow(llmId).vId === 'openai')
+      _oaiContainerHold(oaiContainerHeld = clientOptions.oaiContainerId);
+
     if (!clientOptions.gemEnvironmentId) {
       const uc = _findRecentUpstreamContainer(chatHistoryWithoutSystemMessages, 'vnd.gem.interactions');
       if (uc) clientOptions = { ...clientOptions, gemEnvironmentId: uc.envId };
@@ -365,6 +399,11 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
     await onStreamingUpdate(lastDMessage /* last we heard + the error */, true);
 
     return { outcome: 'failed', lastDMessage, outcomeFailedMessage: errorMessage };
+
+  } finally {
+
+    if (oaiContainerHeld)
+      _oaiContainerRelease(oaiContainerHeld);
 
   }
 }
@@ -541,6 +580,7 @@ function _llToL2Simple({ fragments, generator }: AixChatGenerateContent_LL, dest
       case '_pt_sentinel': // impossible
         break;
       default:
+        // noinspection JSUnusedLocalSymbols
         const _exhaustiveCheck: never = pt;
     }
   }
