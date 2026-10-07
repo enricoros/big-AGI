@@ -1,5 +1,8 @@
 import * as React from 'react';
 
+import type { SxProps } from '@mui/joy/styles/types';
+
+import { ContentScaling, lineHeightChatTextMd, themeScalingMap } from '~/common/app.theme';
 import { agiId } from '~/common/util/idUtils';
 import { countLines } from '~/common/util/textUtils';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
@@ -10,36 +13,59 @@ import { parseBlocksFromText } from './blocks.textparser';
 
 
 // configuration
-const USER_COLLAPSED_LINES: number = 8;
+const COLLAPSED_LINES = 10; // clip height, in lines of the scaled block text
+const COLLAPSE_MIN_HIDDEN_LINES = 3; // never collapse to hide fewer lines than this
 
 
-export function useTextCollapser(origText: string, enable: boolean) {
+/**
+ * Collapses long content by clipping its rendered height. The content always renders in full, so edits, copy and find
+ * operate on all of it - never chop the text instead: in-place actions would write the chopped text back.
+ * `contentRef` goes on an unconstrained element inside the one styled with `clipSx`.
+ */
+export function useHeightCollapser(enabled: boolean, contentScaling: ContentScaling) {
 
   // state
-  const [forceTextExpanded, setForceTextExpanded] = React.useState(false);
+  const [isLong, setIsLong] = React.useState(false);
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  const contentRef = React.useRef<HTMLDivElement>(null);
 
-  // quick memo
-  const { text, isTextCollapsed } = React.useMemo(() => {
-    // nothing to do
-    if (!enable || forceTextExpanded)
-      return { text: origText, isTextCollapsed: false };
+  // derived
+  const fontSize = themeScalingMap[contentScaling]?.blockFontSize;
+  const lineHeight = Number(themeScalingMap[contentScaling]?.blockLineHeight) || lineHeightChatTextMd;
+  const isCollapsed = enabled && isLong && !isExpanded;
 
-    // count lines
-    const textLines = origText.split('\n');
-    if (textLines.length <= USER_COLLAPSED_LINES)
-      return { text: origText, isTextCollapsed: false };
+  // measure before paint, so long content never flashes in full, then on every resize
+  React.useLayoutEffect(() => {
+    const contentEl = contentRef.current;
+    if (!enabled || !contentEl) return;
+    const measure = () => {
+      const linePx = (parseFloat(getComputedStyle(contentEl).fontSize) || 16) * lineHeight;
+      setIsLong(contentEl.offsetHeight > linePx * (COLLAPSED_LINES + COLLAPSE_MIN_HIDDEN_LINES));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(contentEl);
+    return () => observer.disconnect();
+  }, [enabled, lineHeight]);
 
-    // chop to the first few lines
-    return { text: textLines.slice(0, USER_COLLAPSED_LINES).join('\n'), isTextCollapsed: true };
-  }, [enable, forceTextExpanded, origText]);
+  // font size and line height as the text blocks, so 'em' is one line
+  const clipSx = React.useMemo((): SxProps => ({
+    fontSize,
+    lineHeight,
+    ...(isCollapsed && {
+      maxHeight: `${COLLAPSED_LINES * lineHeight}em`,
+      overflow: 'clip',
+      maskImage: 'linear-gradient(to bottom, black calc(100% - 2.5em), transparent)',
+    }),
+  }), [fontSize, isCollapsed, lineHeight]);
 
-  // memo handlers
-  const handleToggleExpansion = React.useCallback(() => setForceTextExpanded(on => !on), []);
+  const handleToggleExpansion = React.useCallback(() => setIsExpanded(on => !on), []);
 
   return {
-    text,
-    isTextCollapsed,
-    forceTextExpanded,
+    contentRef,
+    clipSx,
+    isCollapsed,
+    showToggle: enabled && isLong,
     handleToggleExpansion,
   };
 }

@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { Box } from '@mui/joy';
+
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { useRenderDecay } from '~/common/render-decay/RenderDecayZone';
@@ -13,13 +15,22 @@ import { RenderPlainText } from './plaintext/RenderPlainText';
 import { RenderWordsDiff, WordsDiff } from './wordsdiff/RenderWordsDiff';
 import { ToggleExpansionButton } from './ToggleExpansionButton';
 import { heuristicIsBlockPureHTML, RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
-import { useAutoBlocksMemoSemiStable, useTextCollapser } from './blocks.hooks';
+import { useAutoBlocksMemoSemiStable, useHeightCollapser } from './blocks.hooks';
 import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpansionButtonSx } from './blocks.styles';
 
 
 // configuration
 const DEFER_MARKDOWN_PREPROCESS = true; // set to false to render LaTeX inline formulas as they come in, not at the end of the message
 // import '~/common/util/forceTouchToDoubleClick'; // Future: Mac trackpad: force press → double-click
+
+
+const _styles = {
+  collapsible: {
+    // takes the grid slot of BlocksContainer: same width, and minWidth 0 so wide code scrolls inside instead of widening the grid
+    width: '100%',
+    minWidth: 0,
+  },
+} as const;
 
 
 // To get to the 'ref' version (which doesn't seem to be used anymore, and was used to isolate the source of the bubble bar):
@@ -57,7 +68,7 @@ export function AutoBlocksRenderer(props: {
   htmlRenderVariant?: AutoBlocksHtmlRenderVariant /* default: show-code */,
   textRenderVariant: 'markdown' | 'text',
 
-  /** disables the >8 lines user-text collapser - e.g. print/export trees must render in full */
+  /** disables the height collapse of long user text - e.g. print/export trees and document panes render in full */
   disableTextCollapser?: boolean;
 
   /** The text is still being appended to: render its last block in streaming mode. */
@@ -81,8 +92,9 @@ export function AutoBlocksRenderer(props: {
   // state
   const isPureHTML = heuristicIsBlockPureHTML(props.text);
   const fixUserHtmlPaste = fromUser && isPureHTML;
-  const collapseUserText = fromUser && !fixUserHtmlPaste && !props.disableTextCollapser; // probably less important now that we have ERCs with collapse, may even get in the way
-  const { text, isTextCollapsed, forceTextExpanded, handleToggleExpansion } = useTextCollapser(props.text, collapseUserText);
+  const collapseUserText = fromUser && !fixUserHtmlPaste && !props.disableTextCollapser;
+  const { contentRef, clipSx, isCollapsed, showToggle, handleToggleExpansion } = useHeightCollapser(collapseUserText, props.contentScaling);
+  const { text } = props;
   const autoBlocksStable = useAutoBlocksMemoSemiStable(
     text,
     props.inputAsCodeWithTitle || (fixUserHtmlPaste ? 'HTML' : undefined),
@@ -123,9 +135,9 @@ export function AutoBlocksRenderer(props: {
   const toggleExpansionButtonSx = useToggleExpansionButtonSx(props.contentScaling, props.codeRenderVariant || 'outlined');
 
 
-  return (
+  const blocksContainer = (
     <BlocksContainer
-      // ref={ref /* this will assign the ref, now not needed anymore */}
+      ref={contentRef /* measured by the height collapser, when enabled */}
       // data-edit-intent={props.onDoubleClick ? true : undefined /* Future: Mac Force Touch */}
       onDoubleClick={props.onDoubleClick}
     >
@@ -157,7 +169,7 @@ export function AutoBlocksRenderer(props: {
                 disablePreprocessor={deferPreprocessor}
                 lite={lastBlockInFlux && decayActive}
                 onParseCost={lastBlockInFlux ? decayOnParseCost : undefined}
-                replaceContent={(!setText || isTextCollapsed /* IMPORTANT: do not allow replacing text if collapsed - will chop! */) ? undefined : handleReplaceCode}
+                replaceContent={!setText ? undefined : handleReplaceCode}
                 sx={scaledTypographySx}
               />
             );
@@ -183,24 +195,24 @@ export function AutoBlocksRenderer(props: {
                 // RenderCode pass through
                 key={'code-bk-' + index}
                 semiStableId={bkInput.bkId}
-                code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial || isTextCollapsed}
+                code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial}
                 fitScreen={props.fitScreen}
                 initialRenderHTML={props.htmlRenderVariant === 'render' || (props.htmlRenderVariant === 'render-at-end' && !bkInput.isPartial)}
-                noCopyButton={props.blocksProcessor === 'diagram' || isTextCollapsed}
+                noCopyButton={props.blocksProcessor === 'diagram'}
                 optimizeLightweight={lastBlockInFlux}
-                onReplaceInCode={(!setText || isTextCollapsed) ? undefined : handleReplaceCode}
+                onReplaceInCode={!setText ? undefined : handleReplaceCode}
                 codeSx={scaledCodeSx}
               />
             ) : (
               <RenderCodeMemo
                 key={'code-bk-' + index}
                 semiStableId={bkInput.bkId}
-                code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial || isTextCollapsed}
+                code={bkInput.code} title={bkInput.title} isPartial={bkInput.isPartial}
                 fitScreen={props.fitScreen}
                 initialRenderHTML={props.htmlRenderVariant === 'render' || (props.htmlRenderVariant === 'render-at-end' && !bkInput.isPartial)}
-                noCopyButton={props.blocksProcessor === 'diagram' || isTextCollapsed}
+                noCopyButton={props.blocksProcessor === 'diagram'}
                 optimizeLightweight={lastBlockInFlux}
-                onReplaceInCode={(!setText || isTextCollapsed) ? undefined : handleReplaceCode}
+                onReplaceInCode={!setText ? undefined : handleReplaceCode}
                 sx={scaledCodeSx}
               />
             );
@@ -237,15 +249,26 @@ export function AutoBlocksRenderer(props: {
         }
       })}
 
-      {(isTextCollapsed || forceTextExpanded) && (
+    </BlocksContainer>
+  );
+
+  if (!collapseUserText)
+    return blocksContainer;
+
+  // long user text: clipped by height, with the toggle outside the clip; stable structure, so measuring never remounts blocks
+  return (
+    <Box sx={_styles.collapsible}>
+      <Box sx={clipSx}>
+        {blocksContainer}
+      </Box>
+      {showToggle && (
         <ToggleExpansionButton
           color={props.codeRenderVariant === 'embedded-plain' ? 'neutral' : undefined}
-          isCollapsed={isTextCollapsed}
+          isCollapsed={isCollapsed}
           onToggle={handleToggleExpansion}
           sx={toggleExpansionButtonSx}
         />
       )}
-
-    </BlocksContainer>
+    </Box>
   );
 }
