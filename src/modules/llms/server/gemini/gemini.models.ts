@@ -79,7 +79,7 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/gemini-api/docs/pricing (October 1, 2026)
+// Pricing based on https://ai.google.dev/gemini-api/docs/pricing (October 6, 2026)
 
 // NOTE(2027-01-01): 3.8/3.7/3.6 Flash, 3.8 Flash(-Lite) TTS and Robotics-ER 2 introductory pricing expires December 31, 2026 -
 // flip those consts to the list prices in their comments (pricing page + latest-model page state the promo covers all three Flash)
@@ -148,6 +148,14 @@ const gemini31FlashLitePricing: ModelDescriptionSchema['chatPrice'] = {
   output: 1.50,
   cache: { read: 0.025 }, // text/image/video; audio is $0.05 but we don't differentiate yet
   tools: GEM_PRICE_TOOLS,
+};
+
+const geminiNanoBanana21Pricing: ModelDescriptionSchema['chatPrice'] = {
+  input: 1.50, // text/image input - 3x Nano Banana 2
+  output: 7.50, // text/thinking output
+  // NOTE: Additional image-specific pricing (not yet supported in schema) - half the Nano Banana 2 rate:
+  // - Image output: $30.00/MTok ($0.0336/image 1K, $0.0504/image 2K, $0.0756/image 4K)
+  //   4K measured 3,780 tokens (not the 2,520 the per-image price implies), i.e. ~$0.113 (2026-10-06)
 };
 
 const gemini31FlashImagePricing: ModelDescriptionSchema['chatPrice'] = {
@@ -473,13 +481,33 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     benchmark: { cbaElo: 1487 - 1 }, // -1 (deprio this variant) + gemini-3.1-pro-preview
   },
 
-  // 3.1 Flash Image (Stable / GA) - Released May 28, 2026 (graduated from preview)
+  // Nano Banana 2.1 (GA) - Released October 6, 2026; successor to Nano Banana 2 (gemini-3.1-flash-image)
+  // Verified live 2026-10-06: thinkingLevel ['minimal','medium','high'] ('low' 400s; default 'medium', thinks by default),
+  // all 14 aspect ratios, sizes 1K/2K/4K ('512' 400s), system instruction + Google Search + function calling OK, code execution 400s
+  {
+    id: 'models/gemini-nano-banana-2.1',
+    labelOverride: 'Nano Banana 2.1',
+    pubDate: '20261006',
+    chatPrice: geminiNanoBanana21Pricing,
+    interfaces: IF_30,
+    parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'medium', 'high'] },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiAspectRatio' },
+      { paramId: 'llmVndGeminiImageSize' },
+    ],
+    benchmark: undefined, // Non-benchmarkable because generates images
+  },
+
+  // 3.1 Flash Image (Stable / GA) - Released May 28, 2026 (graduated from preview); DEPRECATED: shutdown October 29, 2026 (announced October 6, 2026 -> Nano Banana 2.1)
   // aka "Nano Banana 2" - high-efficiency image generation optimized for speed and high-volume use; supports video-to-image input
   // Verified live 2026-10-06: all 14 aspect ratios, sizes 512/1K/2K/4K ('512' not exposed: no other model takes it)
   {
+    hidden: true, // superseded by gemini-nano-banana-2.1 - kept so users who already selected it still resolve until shutdown
     id: 'models/gemini-3.1-flash-image',
     labelOverride: 'Nano Banana 2',
     pubDate: '20260528',
+    deprecated: '2026-10-29',
     chatPrice: gemini31FlashImagePricing,
     interfaces: IF_30,
     parameterSpecs: [
@@ -880,7 +908,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
 
   // 2.5 Flash Image
   {
-    hidden: true, // shutdown day (2026-10-02), still serving at check - superseded by gemini-3.1-flash-image
+    hidden: true, // past its 2026-10-02 shutdown, still serving as of 2026-10-06 - superseded by the Nano Banana 2 family
     id: 'models/gemini-2.5-flash-image',
     labelOverride: 'Nano Banana',
     pubDate: '20251002',
@@ -1170,6 +1198,8 @@ const _sortOderIdPrefix: string[] = [
   'models/gemini-3.1-pro-preview-customtools',
   'models/gemini-omni-1.1-flash',
   'models/gemini-omni-flash-preview',
+  'models/gemini-nano-banana-2.1',
+  'models/gemini-nano-banana-',
   'models/gemini-3.1-flash-image',
   'models/gemini-3.1-flash-image-preview',
   'models/gemini-3.1-flash-lite-image',
