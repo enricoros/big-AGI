@@ -16,7 +16,7 @@ import { env } from '~/server/env.server';
 
 import { GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
-import { llmsFixupHost } from '../../shared/llm.isomorphic';
+import { llmsFixupHost, llmsIsNativeGeminiHost } from '../../shared/llm.isomorphic';
 import { llmsRandomKeyFromMultiKey } from '../openai/openai.access';
 
 
@@ -38,15 +38,20 @@ export const geminiAccessSchema = z.object({
 
 export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | null, apiPath: string, useV1Alpha: boolean): { headers: HeadersInit, url: string } {
 
-  const geminiHost = llmsFixupHost(access.geminiHost || DEFAULT_GEMINI_HOST, apiPath);
-  let geminiKey = access.geminiKey || env.GEMINI_API_KEY || '';
+  // Credential resolution, as in openai.access: the server key only ever goes to Google. A client-set
+  // non-Google host (e.g. a proxy) owns the whole request and must bring its own key - otherwise any
+  // caller could point geminiHost at its own server and receive the deployment's GEMINI_API_KEY.
+  const clientHost = access.geminiHost?.trim() || '';
+  const isGoogleHost = llmsIsNativeGeminiHost(clientHost);
+  const geminiHost = llmsFixupHost(isGoogleHost ? DEFAULT_GEMINI_HOST : clientHost, apiPath);
+  let geminiKey = access.geminiKey || (isGoogleHost ? env.GEMINI_API_KEY : '') || '';
 
   // multi-key with random selection - https://github.com/enricoros/big-AGI/issues/653
   geminiKey = llmsRandomKeyFromMultiKey(geminiKey);
 
   // validate key
   if (!geminiKey)
-    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Gemini API Key' });
+    throw new TRPCError({ code: 'BAD_REQUEST', message: isGoogleHost ? 'Missing Gemini API Key' : 'Missing Gemini API Key (required with a custom Gemini host)' });
 
   // update model-dependent paths
   if (apiPath.includes('{model=models/*}')) {
