@@ -791,11 +791,18 @@ export namespace AnthropicWire_API_Models_List {
     image_input: _Supported_schema.nullish(),
     pdf_input: _Supported_schema.nullish(),
     structured_outputs: _Supported_schema.nullish(),
+    // 2026-10-06: whether the model accepts the server tools; the top-level `code_execution` above is programmatic tool calling
+    server_tools: z.object({
+      supported: z.boolean(),
+      code_execution: _Supported_schema.nullish(),
+      web_search: _Supported_schema.nullish(),
+    }).nullish(),
     thinking: z.object({
       supported: z.boolean(),
       types: z.object({
         enabled: _Supported_schema.nullish(),
         adaptive: _Supported_schema.nullish(),
+        disabled: _Supported_schema.nullish(), // 2026-10-05: accepts `thinking: {type: 'disabled'}` (Sonnet 5.5: false, it takes 'between_tools')
       }).nullish(),
     }).nullish(),
   });
@@ -806,6 +813,7 @@ export namespace AnthropicWire_API_Models_List {
     id: z.string(),
     display_name: z.string(),
     created_at: z.string(),
+    line: z.string().nullish(), // 2026-10-01: model line, e.g. 'opus', 'haiku'; null for none
     // expanded fields (2026-04) - per API docs: `number | null`
     max_input_tokens: z.number().nullish(),
     max_tokens: z.number().nullish(),
@@ -924,9 +932,9 @@ export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_Li
 
   // derive thinking params
   if (caps?.thinking?.supported) {
-    // Adaptive thinking (4.6+) - force adaptive mode
+    // Adaptive thinking (4.6+) - adaptive on; a visible Thinking switch where 'disabled' is accepted (the editor hides xhigh/max when off)
     if (caps.thinking.types?.adaptive?.supported)
-      parameterSpecs.push({ paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 });
+      parameterSpecs.push({ paramId: 'llmVndAntThinkingBudget', hidden: !caps.thinking.types.disabled?.supported, initialValue: -1 });
     // Classic extended thinking
     else if (caps.thinking.types?.enabled?.supported)
       parameterSpecs.push({ paramId: 'llmVndAntThinkingBudget' });
@@ -936,7 +944,8 @@ export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_Li
   // Note: 1M context is GA for recent Anthropic models - we do NOT add the `llmVndAnt1MContext` opt-in
   // for unknown models. If a 0-day model still requires the beta header (rare now), users can hit it
   // through a hardcoded definition instead.
-  parameterSpecs.push(...ANT_TOOLS);
+  if (caps?.server_tools?.supported !== false)
+    parameterSpecs.push(...ANT_TOOLS);
 
   const maxInputTokens = model.max_input_tokens;
   const createdAt = model.created_at ? new Date(model.created_at) : undefined;
