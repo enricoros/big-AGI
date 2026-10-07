@@ -329,7 +329,10 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       // would be a mislabel (no brain icon, but it reasons and bills for it): drop the spec so those models ship
       // as ONE always-thinking entry, matching their native defs. Revisit if the adapter learns to send an
       // explicit reasoning.enabled=false for the base variant - that would give Sonnet 5 a real non-thinking twin.
-      if (model.reasoning?.mandatory || model.reasoning?.default_enabled) {
+      // [2026-10-07] Haiku 5.5 also thinks by default through OR (probed: 48 reasoning tokens with no field), but OR lists it
+      // without `default_enabled`: a native visible Thinking switch (initialValue -1) carries the same fact, so trust it too.
+      const isNativeThinkingOnByDefault = !!antLookup?.parameterSpecs?.some(p => p.paramId === 'llmVndAntThinkingBudget' && p.initialValue === -1 && !p.hidden);
+      if (model.reasoning?.mandatory || model.reasoning?.default_enabled || isNativeThinkingOnByDefault) {
         const budgetIndex = parameterSpecs.findIndex(p => p.paramId === 'llmVndAntThinkingBudget');
         if (budgetIndex !== -1)
           parameterSpecs.splice(budgetIndex, 1);
