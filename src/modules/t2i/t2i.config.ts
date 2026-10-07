@@ -63,13 +63,15 @@ export function t2iDefaultDalleProfile(): DProfileDalle {
 // NOTE: starter set of image generation models available through the OpenRouter
 //       dedicated image API (POST /api/v1/images). The full list is at
 //       https://openrouter.ai/models?fmt=cards&output_modalities=image
-//       All ids verified live against GET /api/v1/images/models on 2026-07-11 (39 models
+//       All ids verified live against GET /api/v1/images/models on 2026-10-06 (59 models
 //       available); dynamic listing via that endpoint should replace this list eventually.
+//       The first entry is Auto; a pick removed here resolves as Auto (resolveOpenRouterImageModelId).
 
 export const OPENROUTER_IMAGE_MODELS: { value: string, label: string }[] = [
   { value: 'google/gemini-3-pro-image', label: 'Gemini 3 Pro Image (Nano Banana Pro)' },
-  { value: 'google/gemini-3.1-flash-image', label: 'Gemini 3.1 Flash Image' },
-  { value: 'google/gemini-2.5-flash-image', label: 'Gemini 2.5 Flash Image (Nano Banana)' },
+  { value: 'google/gemini-nano-banana-2.1', label: 'Nano Banana 2.1' },
+  { value: 'google/gemini-3.1-flash-lite-image', label: 'Nano Banana 2 Lite' },
+  { value: 'google/gemini-3.1-flash-image', label: 'Gemini 3.1 Flash Image' }, // shutdown 2026-10-29 -> Nano Banana 2.1
   { value: 'openai/gpt-image-2.5-flare', label: 'GPT Image 2.5 Flare' },
   { value: 'openai/gpt-image-1-mini', label: 'GPT Image 1 Mini' },
   { value: 'black-forest-labs/flux.2-max', label: 'FLUX.2 Max' },
@@ -111,6 +113,7 @@ export function t2iIsPainterName(generatorName: string | undefined): boolean {
     || generatorName.startsWith('DALL·E') // retired painter, still in message history
     || generatorName === 'LocalAI'
     || generatorName === 'Prodia' // legacy painter
+    || generatorName === 'Gemini 2.5 Flash Image (Nano Banana)' // retired OpenRouter painter, still in message history
     || generatorName.startsWith('Nano Banana') // Gemini painters are the model labels
     || OPENROUTER_IMAGE_MODELS.some(m => m.label === generatorName); // OpenRouter painters are the model labels
 }
