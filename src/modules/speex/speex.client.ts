@@ -229,6 +229,7 @@ function _speakRawText_withHandle(
   switch (effectiveEngine.vendorType) {
     // RPC providers: route through speex.router RPC
     case 'elevenlabs':
+    case 'gemini':
     case 'inworld':
     case 'openai':
     case 'localai': {

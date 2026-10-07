@@ -9,6 +9,7 @@ import StopRoundedIcon from '@mui/icons-material/StopRounded';
 
 import { ExpanderSection } from '~/common/components/ExpanderSection';
 import { FormChipControl } from '~/common/components/forms/FormChipControl';
+import { FormChipModelControl, FormChipModelLabels } from '~/common/components/forms/FormChipModelControl';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSecretField } from '~/common/components/forms/FormSecretField';
 import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
@@ -16,8 +17,8 @@ import { FormTextField } from '~/common/components/forms/FormTextField';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
-import type { DCredentialsApiKey, DSpeexEngine, DSpeexEngineAny, DSpeexVendorType, DVoiceElevenLabs, DVoiceInworld, DVoiceLocalAI, DVoiceOpenAI, DVoiceWebSpeech } from '../speex.types';
-import { SPEEX_DEFAULTS, SPEEX_PREVIEW_STREAM, SPEEX_PREVIEW_TEXT } from '../speex.config';
+import type { DCredentialsApiKey, DSpeexEngine, DSpeexEngineAny, DSpeexVendorType, DVoiceElevenLabs, DVoiceGemini, DVoiceInworld, DVoiceLocalAI, DVoiceOpenAI, DVoiceWebSpeech } from '../speex.types';
+import { SPEEX_DEFAULTS, SPEEX_MODELS, SPEEX_PREVIEW_STREAM, SPEEX_PREVIEW_TEXT } from '../speex.config';
 import { SpeexVoiceAutocomplete } from './SpeexVoiceAutocomplete';
 import { SpeexVoiceSelect } from './SpeexVoiceSelect';
 import { speakText } from '../speex.client';
@@ -143,17 +144,19 @@ export function SpeexConfigureEngineFull(props: {
 
   // Advanced toggle: vendors with an optional API host keep it behind Advanced;
   // LocalAI requires the host and always shows it, Inworld has no host option
-  const hasAdvancedHost = !!manualCredentials && (engine.vendorType === 'elevenlabs' || engine.vendorType === 'openai');
+  const hasAdvancedHost = !!manualCredentials && (engine.vendorType === 'elevenlabs' || engine.vendorType === 'gemini' || engine.vendorType === 'openai');
   const advanced = useToggleableBoolean(!!manualCredentials?.apiHost);
 
   const handleCredentialsUpdate = React.useCallback((credentials: DCredentialsApiKey) => {
     onUpdate({ credentials });
   }, [onUpdate]);
 
-  // Reset: only the fields the vendor declares a default for take part - the rest (e.g. instruction, backend, system voice) is data and stays
-  const voiceDefaults = React.useMemo(() => {
+  // Reset: only the fields the vendor declares a default for take part - the rest (e.g. instruction, backend, system voice) is data and stays;
+  // a vendor with a model catalog also resets its model, whose default is Auto (unset)
+  const voiceDefaults = React.useMemo((): [string, unknown][] => {
     const defaults = speexFindVendor(engine.vendorType)?.getDefaultVoice();
-    return !defaults ? [] : Object.entries(defaults).filter(([_key, value]) => value !== undefined);
+    const declared = !defaults ? [] : Object.entries(defaults).filter(([_key, value]) => value !== undefined);
+    return engine.vendorType in SPEEX_MODELS ? [...declared, ['ttsModel', undefined]] : declared;
   }, [engine.vendorType]);
 
   // any of those fields set and off its default
@@ -195,6 +198,8 @@ export function SpeexConfigureEngineFull(props: {
 
           {engine.vendorType === 'elevenlabs' ? (
             <ElevenLabsConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
+          ) : engine.vendorType === 'gemini' ? (
+            <GeminiConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
           ) : engine.vendorType === 'inworld' ? (
             <InworldConfig engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
           ) : engine.vendorType === 'localai' ? (
@@ -254,7 +259,8 @@ export function SpeexConfigureEngineFull(props: {
               hostPlaceholder={
                 engine.vendorType === 'localai' ? 'http://localhost:8080'
                   : engine.vendorType === 'elevenlabs' ? 'https://api.elevenlabs.io'
-                    : 'https://api.openai.com'
+                    : engine.vendorType === 'gemini' ? 'https://generativelanguage.googleapis.com'
+                      : 'https://api.openai.com'
               }
               keyPlaceholder={engine.vendorType === 'inworld' ? 'Base64-key' : undefined}
             />
@@ -323,6 +329,54 @@ function ElevenLabsConfig({ engine, onUpdate, isMobile }: {
         engine={engine}
         voiceId={voice.ttsVoiceId ?? null}
         onVoiceChange={handleVoiceChange}
+      />
+    </FormControl>
+
+  </>;
+}
+
+
+const _GEMINI_TTS_LABELS: FormChipModelLabels<typeof SPEEX_MODELS.gemini[number]> = {
+  'gemini-3.8-flash-tts': { label: '3.8 Flash', description: 'Quality' },
+  'gemini-3.8-flash-lite-tts': { label: '3.8 Flash-Lite', description: 'Fast' },
+};
+
+function GeminiConfig({ engine, onUpdate, isMobile }: {
+  engine: DSpeexEngine<'gemini'>,
+  onUpdate: (updates: Partial<DSpeexEngine<'gemini'>>) => void;
+  isMobile: boolean;
+}) {
+
+  const { voice } = engine;
+
+  const handleVoiceChange = React.useCallback((ttsVoiceId: DVoiceGemini['ttsVoiceId']) => {
+    const { ttsVoiceId: _, ...restVoice } = voice;
+    onUpdate({
+      voice: {
+        ...restVoice,
+        ...(ttsVoiceId && { ttsVoiceId }),
+      },
+    });
+  }, [onUpdate, voice]);
+
+  return <>
+
+    <FormChipModelControl
+      catalog={SPEEX_MODELS.gemini}
+      labels={_GEMINI_TTS_LABELS}
+      autoModel={SPEEX_DEFAULTS.GEMINI_MODEL}
+      value={voice.ttsModel}
+      onChange={ttsModel => onUpdate({ voice: { ...voice, ttsModel } })}
+    />
+
+    {/* Voice: searchable - the Voice Library has 2000+ entries */}
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
+      <FormLabelStart title='Voice' description={isMobile ? undefined : 'Name or locale'} />
+      <SpeexVoiceAutocomplete
+        engine={engine}
+        value={voice.ttsVoiceId}
+        onValueChange={handleVoiceChange}
+        placeholder='e.g., Kore'
       />
     </FormControl>
 

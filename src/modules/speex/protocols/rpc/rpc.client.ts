@@ -14,6 +14,7 @@ import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 import { isLocalUrl } from '~/common/util/urlUtils';
 import { stripUndefined } from '~/common/util/objectUtils';
 
+import type { DGeminiServiceSettings } from '~/modules/llms/vendors/gemini/gemini.vendor';
 import type { DLocalAIServiceSettings } from '~/modules/llms/vendors/localai/localai.vendor';
 import type { DOpenAIServiceSettings } from '~/modules/llms/vendors/openai/openai.vendor';
 
@@ -37,7 +38,7 @@ async function _getSpeexCsfModule() {
 // --- /CSF
 
 
-type _DSpeexEngineRPC = DSpeexEngine<'elevenlabs'> | DSpeexEngine<'inworld'> | DSpeexEngine<'localai'> | DSpeexEngine<'openai'>;
+type _DSpeexEngineRPC = DSpeexEngine<'elevenlabs'> | DSpeexEngine<'gemini'> | DSpeexEngine<'inworld'> | DSpeexEngine<'localai'> | DSpeexEngine<'openai'>;
 
 
 /**
@@ -184,6 +185,7 @@ function _buildRPCWireAccess({ credentials: c, vendorType }: _DSpeexEngineRPC): 
             ...(c.apiHost && { apiHost: c.apiHost }),
           };
 
+        case 'gemini':
         case 'localai':
         case 'openai':
           return {
@@ -207,6 +209,15 @@ function _buildRPCWireAccess({ credentials: c, vendorType }: _DSpeexEngineRPC): 
         case 'inworld':
           // no linking for ElevenLabs or Inworld - we shall NOT be here
           return null;
+
+        case 'gemini':
+          const gem = (service.setup || {}) as Partial<DGeminiServiceSettings>;
+          return {
+            dialect: vendorType,
+            ...(gem.geminiKey && { apiKey: gem.geminiKey }),
+            ...(gem.geminiHost && { apiHost: gem.geminiHost }),
+            ...(_geminiServiceCSF(gem) && { clientSideFetch: true }),
+          };
 
         case 'openai':
           const oai = (service.setup || {}) as DOpenAIServiceSettings;
@@ -253,6 +264,7 @@ function _shouldUseCSF({ credentials: c, vendorType }: _DSpeexEngineRPC): boolea
           const _exhaustiveCheck: never = vendorType;
         // fallthrough
         case 'elevenlabs':
+        case 'gemini':
         case 'openai':
           break;
       }
@@ -264,6 +276,9 @@ function _shouldUseCSF({ credentials: c, vendorType }: _DSpeexEngineRPC): boolea
       if (!service) return false;
 
       switch (vendorType) {
+        case 'gemini':
+          return _geminiServiceCSF((service.setup || {}) as Partial<DGeminiServiceSettings>);
+
         case 'localai':
           const lai = (service.setup || {}) as DLocalAIServiceSettings;
           return lai.csf || isLocalUrl(lai.localAIHost);
@@ -276,4 +291,9 @@ function _shouldUseCSF({ credentials: c, vendorType }: _DSpeexEngineRPC): boolea
           return false;
       }
   }
+}
+
+/** Gemini service CSF: opted in and holding a client key - as the LLM vendor's transport access */
+function _geminiServiceCSF(gem: Partial<DGeminiServiceSettings>): boolean {
+  return !!gem.csf && !!gem.geminiKey;
 }

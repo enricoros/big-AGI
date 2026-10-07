@@ -15,6 +15,7 @@ export type SpeexSpeechParticle =
 
 export type SpeexWire_Access = z.infer<typeof SpeexWire.Access_schema>;
 export type SpeexWire_Access_ElevenLabs = z.infer<typeof SpeexWire.AccessElevenLabs_schema>;
+export type SpeexWire_Access_Gemini = z.infer<typeof SpeexWire.AccessGemini_schema>;
 export type SpeexWire_Access_Inworld = z.infer<typeof SpeexWire.AccessInworld_schema>;
 export type SpeexWire_Access_OpenAI = z.infer<typeof SpeexWire.AccessOpenAI_schema>;
 
@@ -40,6 +41,13 @@ export namespace SpeexWire {
     apiHost: z.string().optional(),
   });
 
+  export const AccessGemini_schema = z.object({
+    dialect: z.literal('gemini'),
+    apiKey: z.string().optional(),            // optional: server-side falls back to the env key
+    apiHost: z.string().optional(),           // defaults to generativelanguage.googleapis.com
+    clientSideFetch: z.boolean().optional(),  // set when the client runs it directly (CSF): key goes in the query string
+  });
+
   export const AccessInworld_schema = z.object({
     dialect: z.literal('inworld'),
     apiKey: z.string(),             // base64-encoded API key from Inworld Portal
@@ -54,7 +62,7 @@ export namespace SpeexWire {
   });
 
   export const Access_schema = z.discriminatedUnion('dialect',
-    [AccessElevenLabs_schema, AccessInworld_schema, AccessOpenAI_schema],
+    [AccessElevenLabs_schema, AccessGemini_schema, AccessInworld_schema, AccessOpenAI_schema],
   );
 
 
@@ -63,6 +71,12 @@ export namespace SpeexWire {
   export const VoiceElevenLabs_schema = z.object({
     dialect: z.literal('elevenlabs'),
     ttsModel: z.string().optional(),
+    ttsVoiceId: z.string().optional(),
+  });
+
+  export const VoiceGemini_schema = z.object({
+    dialect: z.literal('gemini'),
+    ttsModel: z.string().optional(), // resolved against SPEEX_MODELS by the synthesizer: a retired pick is Auto, not a 400
     ttsVoiceId: z.string().optional(),
   });
 
@@ -90,7 +104,7 @@ export namespace SpeexWire {
   });
 
   export const Voice_schema = z.discriminatedUnion('dialect',
-    [VoiceElevenLabs_schema, VoiceInworld_schema, VoiceLocalAI_schema, VoiceOpenAI_schema],
+    [VoiceElevenLabs_schema, VoiceGemini_schema, VoiceInworld_schema, VoiceLocalAI_schema, VoiceOpenAI_schema],
   );
 
 

@@ -21,6 +21,7 @@ import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ElevenLabsIcon } from '~/common/components/icons/vendors/ElevenLabsIcon';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { GeminiIcon } from '~/common/components/icons/vendors/GeminiIcon';
 import { InworldIcon } from '~/common/components/icons/vendors/InworldIcon';
 import { LocalAIIcon } from '~/common/components/icons/vendors/LocalAIIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
@@ -35,6 +36,7 @@ import { speexAreCredentialsValid, useSpeexEngines, useSpeexGlobalEngine, useSpe
 
 const VENDOR_INFO: { [key in DSpeexVendorType]: { label: string; description: string; icon: React.ElementType; addable?: boolean } } = {
   elevenlabs: { label: 'ElevenLabs', description: 'Premium voices', icon: ElevenLabsIcon, addable: true },
+  gemini: { label: 'Gemini', description: '2000+ voices', icon: GeminiIcon, addable: true },
   inworld: { label: 'Inworld', description: 'Expressive AI voices', icon: InworldIcon, addable: true },
   localai: { label: 'LocalAI', description: 'Self-hosted TTS', icon: LocalAIIcon, addable: true },
   openai: { label: 'OpenAI', description: 'Reliable', icon: OpenAIIcon, addable: true },

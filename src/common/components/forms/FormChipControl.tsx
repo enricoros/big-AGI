@@ -35,6 +35,9 @@ const _styles = {
 
 } as const;
 
+// a clickable chip paints its variant on the action slot, which covers the root - so the hint background goes there
+const _hintSlotProps = { action: { sx: { backgroundColor: 'neutral.softBg' } } } as const;
+
 
 /**
  * Exact drop-in replacement for FormRadioControl, but with Chips.
@@ -51,6 +54,7 @@ export const FormChipControl = <TValue extends string>(props: {
   disabled?: boolean;
   options: Immutable<FormRadioOption<TValue>[]>;
   value?: TValue;
+  hintValue?: TValue; // secondary highlight, outlined over a soft background - e.g. the model that 'Auto' resolves to
   onChange: (value: Immutable<TValue>) => void;
 }) => {
 
@@ -63,6 +67,8 @@ export const FormChipControl = <TValue extends string>(props: {
     if (!props.disabled)
       onChange(value);
   }, [onChange, props.disabled]);
+
+  const isHint = (value: Immutable<TValue>) => value === props.hintValue && value !== props.value;
 
   return (
     <FormControl orientation='horizontal' disabled={props.disabled} sx={_styles.control}>
@@ -78,6 +84,7 @@ export const FormChipControl = <TValue extends string>(props: {
             // color={props.value === option.value ? 'neutral' : 'neutral'}
             onClick={() => handleChipClick(option.value)}
             sx={_styles.chip}
+            slotProps={isHint(option.value) ? _hintSlotProps : undefined}
           >
             {option.label}
           </Chip>,
