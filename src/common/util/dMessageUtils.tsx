@@ -312,11 +312,10 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
   // stopped or failed: no vendor-terminated stream, so no dtAll; the client wall clock stands in, labeled
   const showWallTime = !showTimeSection && metrics?.TsR === 'aborted' && !!metrics?.dtWall;
 
-  const costCode = metrics.$code ? _prettyCostCode(metrics.$code) : null;
-
   // the provider-reported (billed) cost is the headline when present; the price-table estimate demotes to a footnote
   const $cHeadline = metrics.$cReported ?? metrics.$c;
   const $cEstimated = (metrics.$cReported !== undefined && metrics.$c !== undefined) ? metrics.$c : undefined;
+  const costCode = metrics.$code ? _prettyCostCode(metrics.$code, $cHeadline !== undefined) : null;
   // cost by class, when cache or tools are in play
   const showCostByClass = metrics.$cCacheR !== undefined || metrics.$cCacheW !== undefined || metrics.$cTools !== undefined;
   // hosted tool calls: counts on their own row; priced only where the vendor bills per call (searches)
@@ -398,17 +397,18 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
   </Box>;
 }
 
-function _prettyCostCode(code: MetricsChatGenerateCost_Md['$code']): string | null {
+function _prettyCostCode(code: MetricsChatGenerateCost_Md['$code'], hasCost: boolean): string | null {
   if (!code) return null;
   switch (code) {
     case 'free':
       return 'Free';
     case 'no-tokens':
-      return 'Missing tokens for pricing';
+      return 'Usage not reported by the provider';
     case 'no-pricing':
       return 'Model pricing not available';
     case 'partial-msg':
-      return 'Incomplete Message - Partial Cost';
+      // stopped or failed: some vendors report usage only at the end, so there may be no cost to show
+      return hasCost ? 'Incomplete Message - Partial Cost' : 'Ended before usage was reported';
     case 'partial-price':
       return 'Model pricing is incomplete';
   }
