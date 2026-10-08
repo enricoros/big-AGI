@@ -82,7 +82,8 @@ export function BeamView(props: {
           copyToClipboard(combinedText, 'All Beams');
           break;
         case 'use':
-          onSuccessCallback?.({ fragments: allFragments });
+          // named generator: a replaced message must not keep its former model and metrics
+          onSuccessCallback?.({ fragments: allFragments, generator: { mgt: 'named', name: rays.length > 1 ? `${rays.length} Beams` : 'Beam' } });
           break;
       }
     }
