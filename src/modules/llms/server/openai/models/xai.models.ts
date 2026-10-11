@@ -22,13 +22,6 @@ const DEV_DEBUG_XAI_MODELS = (Release.TenantSlug as any) === 'staging' /* ALSO I
 
 // Known xAI Models - Manual Mappings
 // List on: https://docs.x.ai/docs/models?cluster=us-east-1
-// Verified: 2026-06-16 via live /v1/language-models (post-2026-05-15 retirement: grok-4-1-fast, grok-4-fast, grok-4-0709, grok-3, grok-3-mini, grok-2-vision-1212 redirect to grok-4.3; grok-code-fast-1 now aliases grok-build-0.1)
-// Re-confirmed: 2026-06-26 via docs.x.ai (no API key this run): same 5 chat models, same pricing/context windows
-// Verified: 2026-07-08 via live /v1/language-models + live probes: +grok-4.5 (released today); API now reports >200K long-context price tiers for ALL models (carried below as tiered pricing)
-// Verified: 2026-08-04 via live /v1/language-models + docs.x.ai + effort probes: same 6 chat models, contexts unchanged; fixed grok-4.5 cached-input price (0.30/0.60, was 0.50/1.00)
-// Verified: 2026-08-06 via live /v1/language-models + /v1/models + docs.x.ai + effort/tool probes: same 6 chat models, prices/contexts unchanged; grok-4.5 'xhigh' still accepted (docs table only lists low/medium/high)
-// Verified: 2026-08-13 via live ablation (effort/tools/modality/catalog probes) + docs.x.ai + x.ai/news/grok-4-6: +grok-4.6 (announced 2026-08-12, catalog created 08-06); effort domain same as 4.5 (low/medium/high/xhigh, 'none' 400s, 'minimal' silently normalizes to low on both); cache read $0.50/$1.00 vs 4.5's $0.30/$0.60 (verified via usage.cost_in_usd_ticks reconstruction); no aliases minted, grok-latest still 4.3, grok-build-latest still 4.5; nothing retired
-// Verified: 2026-08-17 via live /v1/language-models + /v1/models + docs.x.ai/developers/models + release-notes + effort probes: same 7 chat models, prices/contexts unchanged, nothing retired; grok-latest now routes to grok-4.6 (was 4.3), grok-build-latest still 4.5; grok-4.6-latest and grok-5 both 404; effort domains re-confirmed (4.6/4.5 reject 'none', 4.3 accepts it); CBA ELO refresh
 
 // Server-side tools (web search, X search): $5 / 1K calls, on top of tokens
 const XAI_PRICE_TOOLS: NonNullable<ModelDescriptionSchema['chatPrice']>['tools'] = { webSearch: 5 };
@@ -78,12 +71,12 @@ type _XaiModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
 
   // Grok 4.7 (flagship, September 2026) - larger base model than 4.6 with extended RL; same context, $2/$6 price and cache read as 4.6; always-on reasoning, effort low/medium/high/xhigh (default high)
-  // no aliases minted: grok-latest still routes to grok-4.6, grok-4.7-latest 404s; the 2x-priced 'Grok 4.7 Fast' is restricted to Cursor and Grok Build, not on the API
+  // grok-latest routes here (the API alias array reports none), grok-4.7-latest 404s; the 2x-priced 'Grok 4.7 Fast' is restricted to Cursor and Grok Build, not on the API
   {
     idPrefix: 'grok-4.7',
     label: 'Grok 4.7',
     pubDate: '20260921',
-    description: 'xAI\'s frontier model for coding, agentic tasks, and knowledge work: a larger base model than Grok 4.6 with extended reinforcement learning, better at verifying its own work and managing long context. 500K token context window, text and image inputs, always-on reasoning with effort control (low/medium/high/xhigh, default high). Knowledge cutoff: May 2026.',
+    description: 'xAI\'s frontier model for coding, agentic tasks, and knowledge work: a larger base model than Grok 4.6 with extended reinforcement learning, better at verifying its own work and managing long context. 500K token context window, text and image inputs, always-on reasoning with effort control (low/medium/high/xhigh, default high). Knowledge cutoff: May 2026. Alias: grok-latest.',
     contextWindow: 500000,
     maxCompletionTokens: undefined,
     interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
@@ -101,12 +94,12 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
   },
 
   // Grok 4.6 (flagship, August 2026) - post-training refresh extending 4.5 (same base, context, $2/$6 price); always-on reasoning, effort low/medium/high/xhigh (default high)
-  // grok-latest routes here as of 2026-08-17 (probe; the API alias array still reports none), grok-build-latest still 4.5; spends 3-20x the reasoning tokens of 4.5 at matched effort, so real per-turn cost runs higher
+  // spends 3-20x the reasoning tokens of 4.5 at matched effort, so real per-turn cost runs higher
   {
     idPrefix: 'grok-4.6',
     label: 'Grok 4.6',
     pubDate: '20260812',
-    description: 'xAI\'s August 2026 flagship for coding, agentic tasks, and knowledge work - superseded by Grok 4.7 as xAI\'s recommended model - extending Grok 4.5 with longer supplemental training and agentic RL (co-developed with Cursor). 500K token context window, text and image inputs, always-on reasoning with effort control (low/medium/high/xhigh, default high). Knowledge cutoff: February 2026. Alias: grok-latest.',
+    description: 'xAI\'s August 2026 flagship for coding, agentic tasks, and knowledge work - superseded by Grok 4.7 as xAI\'s recommended model - extending Grok 4.5 with longer supplemental training and agentic RL (co-developed with Cursor). 500K token context window, text and image inputs, always-on reasoning with effort control (low/medium/high/xhigh, default high). Knowledge cutoff: February 2026.',
     contextWindow: 500000,
     maxCompletionTokens: undefined,
     interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
@@ -230,8 +223,6 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
       tools: XAI_PRICE_TOOLS,
     },
   },
-
-  // Retired: grok-3-mini (now alias of grok-4.3), grok-2-vision-1212 (gone from API)
 
 ]);
 

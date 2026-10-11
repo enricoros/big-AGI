@@ -175,7 +175,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
 
   // [2026-09-03, OpenAI] processing tier (native and OpenRouter - other compatible hosts do not know it)
   if (model.vndOaiServiceTier && (openAIDialect === 'openai' || openAIDialect === 'openrouter')) {
-    // [2026-09-29] 'ultrafast' is Responses-only on native Chat Completions (400); OpenRouter serves it on Astra (2026-10-06)
+    // [2026-09-29] 'ultrafast' is Responses-only on native Chat Completions (400); OpenRouter serves it
     if (model.vndOaiServiceTier === 'ultrafast' && openAIDialect === 'openai')
       throw new Error('OpenAI Chat Completions API does not support the Ultrafast service tier (Responses API only)');
     payload.service_tier = model.vndOaiServiceTier;

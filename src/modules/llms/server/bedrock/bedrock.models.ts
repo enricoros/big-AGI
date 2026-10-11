@@ -14,8 +14,8 @@
 // 65 on-demand foundation models, 69 SYSTEM_DEFINED inference profiles, 55 Mantle ids.
 // - Anthropic coverage is complete: every served 'anthropic.*' id resolves through llmBedrockFindAnthropicModel
 //   (fable-5, opus-5/4-8/4-7/4-6, sonnet-5/4-6, opus-4-5, sonnet-4-5, haiku-4-5, opus-4-1, sonnet-4, haiku-3).
-//   The one exception is claude-3-sonnet-20240229 (0-day path, hidden). Mythos 5 is not offered on Bedrock.
-//   [2026-09-01] +fable-5-1 (foundation model + us./global. profiles, ACTIVE; invoke 403 on this account). Mythos 5.1 not offered.
+//   The one exception is claude-3-sonnet-20240229 (0-day path, hidden). Mythos 5 is not listed (AWS card: Mantle Messages only, not wired).
+//   [2026-09-01] +fable-5-1 (foundation model + us./global. profiles, ACTIVE; invoke 403 on this account). Mythos 5.1 not listed (AWS card: gated preview).
 //   [2026-10-07] +haiku-5-5 beside opus-5-5 / sonnet-5-5 (foundation model + us./global. profiles, ACTIVE; haiku-5-5 invoke
 //   'not available for this account').
 // - Mantle also lists 6 undated 'anthropic.*' aliases, but they answer NEITHER OpenAI route ("does not support
@@ -57,7 +57,7 @@ const SKIP_MANTLE_TOOLS_IDS = ['writer.palmyra-vision-7b']; // 400s: '"auto" too
 // `api: 'responses'`: model only implements the OpenAI Responses API (on the '/openai/v1/responses' path) and rejects
 // Chat Completions with a 400 - see https://docs.aws.amazon.com/bedrock/latest/userguide/models-api-compatibility.html
 // GPT-5.x ctx is 1M per the AWS model cards (272K is only the short/long pricing-tier boundary); out stays 128000 (cards say
-// "N/A"); GPT-6 1,050,000 / 128,000 per the Astra card. deepseek.v3.1 out 8192 and kimi-k2-thinking out 16384 per their cards' "Max output tokens".
+// "N/A"); GPT-6 1,050,000 / 128,000 per the Astra card; GPT-6.1 Sol 1M per its card (out: card 131,072, OpenAI 128,000). deepseek.v3.1 out 8192 and kimi-k2-thinking out 16384 per their cards' "Max output tokens".
 // Entries with `api: 'responses'` win over the foundation-model listing: AWS also lists GPT-5.6 and GPT-6 as foundation models
 // (2026-09), which described them as 131K Chat Completions models without reasoning. Their us./global. profiles keep the fused
 // path: per the AWS card Mantle serves no geo/global ids, so those likely need bedrock-runtime (not wired, unverified here).
@@ -72,6 +72,7 @@ const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: numbe
   'openai.gpt-6-astra': { label: 'GPT-6 Astra', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-6-luna': { label: 'GPT-6 Luna', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-6-sol': { label: 'GPT-6 Sol', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-6.1-sol': { label: 'GPT-6.1 Sol', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-oss-20b': { label: 'GPT-OSS 20B', ctx: 131072, out: 128000 },
   'openai.gpt-oss-120b': { label: 'GPT-OSS 120B', ctx: 131072, out: 128000 },
   'qwen.qwen3-32b': { label: 'Qwen3 32B', ctx: 131072, out: 16384 },
@@ -190,7 +191,7 @@ export namespace BedrockWire_API_Models_List {
 
 // --- Model ID Helpers ---
 
-const _REGION_PREFIX_RE = /^(us|eu|global|jp|apac)\./;
+const _REGION_PREFIX_RE = /^(us|eu|global|jp|apac|au|in|ca|us-gov)\./;
 
 /** Strip region prefix (us., global., etc.) from a Bedrock model ID, returning a bedrockBaseId */
 function _stripRegionPrefix(bedrockModelId: string): string {
@@ -514,7 +515,7 @@ function _bedrockModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema)
   if (aIsVariant !== bIsVariant) return aIsVariant ? -1 : 1;
 
   // Prefer global > us > eu > regional
-  const prefixOrder = ['global', 'us', 'eu', 'jp', 'apac'];
+  const prefixOrder = ['global', 'us', 'eu', 'jp', 'apac', 'au', 'in', 'ca', 'us-gov'];
   const getPrefixIdx = (id: string) => {
     const prefix = _extractRegionPrefix(id);
     return prefix ? prefixOrder.indexOf(prefix) : 999;

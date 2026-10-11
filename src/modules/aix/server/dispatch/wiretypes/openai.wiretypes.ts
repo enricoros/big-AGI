@@ -18,7 +18,7 @@ import * as z from 'zod/v4';
 /**
  * Processing tier - request and response, Chat Completions and Responses (xAI echoes it too).
  * Request: 'flex' (0.5x, slower), 'fast' (2x, up to 2.5x faster; 'priority' is the legacy name, still accepted), 'default', 'auto',
- * 'ultrafast' (6x, up to 6x faster; 2026-09-29: GPT-6 Astra on Responses only - 400 "Invalid service_tier argument" elsewhere).
+ * 'ultrafast' (6x, up to 6x faster; 2026-09-29: Responses only, per model - 400 "Invalid service_tier argument" elsewhere).
  * Response: the tier actually served - 'default' on a downgraded fast/flex request, 'priority' for fast, 'ultrafast' as is.
  * Open to new tiers rather than failing on an unknown value.
  */

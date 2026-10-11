@@ -71,7 +71,7 @@ export const OPENROUTER_IMAGE_MODELS: { value: string, label: string }[] = [
   { value: 'google/gemini-3-pro-image', label: 'Gemini 3 Pro Image (Nano Banana Pro)' },
   { value: 'google/gemini-nano-banana-2.1', label: 'Nano Banana 2.1' },
   { value: 'google/gemini-3.1-flash-lite-image', label: 'Nano Banana 2 Lite' },
-  { value: 'google/gemini-3.1-flash-image', label: 'Gemini 3.1 Flash Image' }, // shutdown 2026-10-29 -> Nano Banana 2.1
+  { value: 'google/gemini-3.1-flash-image', label: 'Gemini 3.1 Flash Image' }, // deprecated (no shutdown date) -> Nano Banana 2.1
   { value: 'openai/gpt-image-2.5-flare', label: 'GPT Image 2.5 Flare' },
   { value: 'openai/gpt-image-1-mini', label: 'GPT Image 1 Mini' },
   { value: 'black-forest-labs/flux.2-max', label: 'FLUX.2 Max' },

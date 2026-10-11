@@ -224,20 +224,6 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
   },
 
   // Claude 4 models with thinking variants (retired June 15, 2026)
-  'claude-opus-4-20250514': {
-    idVariant: 'thinking',
-    // hidden: true, // retired
-    label: 'Claude Opus 4 (Thinking)',
-    description: 'Claude Opus 4 with extended thinking mode enabled for complex reasoning. Retired June 15, 2026.',
-    maxCompletionTokens: 32000,
-    interfaces: IF_4_R,
-    parameterSpecs: [
-      { paramId: 'llmVndAntThinkingBudget' },
-      ...ANT_TOOLS,
-    ],
-    benchmark: { cbaElo: 1425 }, // claude-opus-4-20250514-thinking-16k
-  },
-
   'claude-sonnet-4-20250514': {
     idVariant: 'thinking',
     // hidden: true, // retired
@@ -251,20 +237,6 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
       ...ANT_TOOLS,
     ],
     benchmark: { cbaElo: 1399 }, // claude-sonnet-4-20250514-thinking-32k
-  },
-
-  // Changes to the thinking variant (same model ID) for the Claude Sonnet 3.7 model
-  'claude-3-7-sonnet-20250219': {
-    idVariant: 'thinking',
-    label: 'Claude Sonnet 3.7 (Thinking)',
-    description: 'Claude 3.7 with extended thinking mode enabled for complex reasoning',
-    maxCompletionTokens: 64000,
-    interfaces: IF_4_R,
-    parameterSpecs: [
-      { paramId: 'llmVndAntThinkingBudget' },
-      ...ANT_TOOLS,
-    ],
-    benchmark: { cbaElo: 1387 }, // claude-3-7-sonnet-20250219-thinking-32k
   },
 
 } as const;
@@ -399,7 +371,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
       ...ANT_TOOLS_DYNAMIC,
     ],
-    // Mythos 5.1: same specs/pricing/constraints as Fable 5.1; invitation-only (404 elsewhere, not on OpenRouter/Bedrock).
+    // Mythos 5.1: same specs/pricing/constraints as Fable 5.1; invitation-only (404 elsewhere, not on OpenRouter; gated preview on Bedrock).
     // Skips the history-editing check on replayed thinking blocks (model binding only).
     chatPrice: { input: 10, output: 50, cache: { read: 0.25, write: 12.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
     benchmark: { cbaElo: 1506 + 5 }, // (no arena data yet) assuming: claude-fable-5-1 + 1
@@ -654,20 +626,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
   },
 
   // Claude 4 models
-  {
-    hidden: true, // Deprecated: April 14, 2026 | Retired: June 15, 2026 | Replacement: claude-opus-4-8
-    id: 'claude-opus-4-20250514', // Retired (except on Vertex AI)
-    label: 'Claude Opus 4 [Retired]',
-    pubDate: '20250522',
-    description: 'Previous flagship model. Retired June 15, 2026 (except on Vertex AI).',
-    contextWindow: 200000,
-    maxCompletionTokens: 32000,
-    interfaces: IF_4,
-    parameterSpecs: ANT_TOOLS,
-    chatPrice: { input: 15, output: 75, cache: { read: 1.50, write: 18.75, duration: 300 }, tools: ANT_PRICE_TOOLS },
-    benchmark: { cbaElo: 1413 }, // claude-opus-4-20250514
-    isLegacy: true,
-  },
+  // retired: 'claude-opus-4-20250514'
   {
     hidden: true, // Deprecated: April 14, 2026 | Retired: June 15, 2026 | Replacement: claude-sonnet-4-6
     id: 'claude-sonnet-4-20250514', // Retired (except on Bedrock and Vertex AI)
@@ -698,38 +657,12 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
   },
 
   // Claude 3.7 models
-  {
-    id: 'claude-3-7-sonnet-20250219', // Retired | Deprecated: October 28, 2025 | Retired: February 19, 2026 | Replacement: claude-opus-4-6
-    label: 'Claude Sonnet 3.7 [Retired]',
-    pubDate: '20250224',
-    description: 'High-performance model with early extended thinking. Retired February 19, 2026.',
-    contextWindow: 200000,
-    maxCompletionTokens: 64000,
-    interfaces: IF_4,
-    parameterSpecs: ANT_TOOLS,
-    chatPrice: { input: 3, output: 15, cache: { read: 0.30, write: 3.75, duration: 300 }, tools: ANT_PRICE_TOOLS },
-    benchmark: { cbaElo: 1371 }, // claude-3-7-sonnet-20250219
-    hidden: true, // retired
-    isLegacy: true,
-  },
+  // retired: 'claude-3-7-sonnet-20250219'
 
   // Claude 3.5 models
   // retired: 'claude-3-5-sonnet-20241022'
   // retired: 'claude-3-5-sonnet-20240620'
-  {
-    id: 'claude-3-5-haiku-20241022', // Retired | Deprecated: December 19, 2025 | Retired: February 19, 2026
-    label: 'Claude Haiku 3.5 [Retired]',
-    pubDate: '20241104',
-    description: 'Intelligence at blazing speeds. Retired February 19, 2026.',
-    contextWindow: 200000,
-    maxCompletionTokens: 8192,
-    interfaces: IF_4,
-    parameterSpecs: ANT_TOOLS,
-    chatPrice: { input: 0.80, output: 4.00, cache: { read: 0.08, write: 1.00, duration: 300 }, tools: ANT_PRICE_TOOLS },
-    benchmark: { cbaElo: 1323 }, // claude-3-5-haiku-20241022
-    hidden: true, // retired
-    isLegacy: true,
-  },
+  // retired: 'claude-3-5-haiku-20241022'
 
   // Claude 3 models
   // retired: 'claude-3-opus-20240229' - Retired January 5, 2026
@@ -836,7 +769,7 @@ export function llmsAntValidateModelDefs_DEV(availableModels: AnthropicWire_API_
   if (DEV_DEBUG_ANTHROPIC_MODELS) {
     llmDevCheckModels_DEV('Anthropic', availableModels.map(m => m.id), hardcodedAnthropicModels.map(m => m.id), {
       // deliberate keeps: invite-only Mythos 5.1/5 + retired ids still served by Bedrock/OpenRouter (file header rule)
-      ignoreStale: ['claude-mythos-5-1', 'claude-mythos-5', 'claude-opus-4-1-20250805', 'claude-opus-4-20250514', 'claude-sonnet-4-20250514', 'claude-3-7-sonnet-20250219', 'claude-3-5-haiku-20241022', 'claude-3-haiku-20240307'],
+      ignoreStale: ['claude-mythos-5-1', 'claude-mythos-5', 'claude-opus-4-1-20250805', 'claude-sonnet-4-20250514', 'claude-3-haiku-20240307'],
     });
     _llmsAntCheckApiCapabilities_DEV(availableModels);
     _llmsAntCheckInfSpeedTiers_DEV();

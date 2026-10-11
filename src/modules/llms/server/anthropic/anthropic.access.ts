@@ -74,18 +74,8 @@ const DEFAULT_ANTHROPIC_BETA_FEATURES: string[] = [
 ] as const;
 
 const PER_MODEL_BETA_FEATURES: { [modelId: string]: string[] } = {
-  'claude-3-7-sonnet-20250219': [
-
-    /** enables long output for the 3.7 Sonnet model - no effect on Claude 4+ (native 128k) */
-    'output-128k-2025-02-19',
-
-    /** computer Tools for Sonnet 3.7 [computer_20250124, text_editor_20250124, bash_20250124] */
-    'computer-use-2025-01-24',
-
-  ] as const,
-
   // Computer use on newer models requires a different beta header:
-  //   computer-use-2025-01-24 -> Sonnet 3.7, Sonnet 4, Opus 4, Opus 4.1, Sonnet 4.5, Haiku 4.5
+  //   computer-use-2025-01-24 -> Sonnet 4, Opus 4.1, Sonnet 4.5, Haiku 4.5
   //   computer-use-2025-11-24 -> Opus 4.5, Sonnet 4.6, Opus 4.6, Opus 4.7 (adds enable_zoom)
   // Uncomment and adjust model IDs when computer use is enabled for these models:
   // 'claude-opus-4-7': ['computer-use-2025-11-24'] as const,
