@@ -12,7 +12,7 @@
  *
  * Filtering rules:
  *   - Everything on the library index is emitted (it IS the model list of record)
- *   - Models with 'embedding' capability are excluded (not carried in ollama.models.ts)
+ *   - Models with 'embedding' or 'decision' (typed classifiers, not chat) capability are excluded
  *   - Cloud-only models are NOT excluded: they are emitted with the 5th field set to 'cloud'
  *     (they have no size chips - that is expected, not a parse failure)
  *
@@ -45,7 +45,7 @@ const html = fs.readFileSync(htmlPath, 'utf8');
 // Split into model sections - each starts with <a href="/library/
 const modelSections = html.split(/<a href="\/library\//);
 const allParsedModels = [];
-let skippedEmbeddings = 0;
+let skippedNonChat = 0;
 
 for (let i = 1; i < modelSections.length; i++) {
   const section = modelSections[i].substring(0, 5000); // Large enough window to capture all data
@@ -88,9 +88,9 @@ for (let i = 1; i < modelSections.length; i++) {
     sizes.push(sizeMatch[1].trim());
   }
 
-  // Skip models with 'embedding' capability
-  if (capabilities.includes('embedding')) {
-    skippedEmbeddings++;
+  // Skip non-chat models: 'embedding', and 'decision' (typed classifiers)
+  if (capabilities.includes('embedding') || capabilities.includes('decision')) {
+    skippedNonChat++;
     continue;
   }
 
@@ -118,7 +118,7 @@ models.forEach(m => {
 
 const cloudCount = models.filter(m => m.isCloud).length;
 const noPullsCount = models.filter(m => !m.pulls).length;
-console.error(`\nTotal models: ${models.length} (${cloudCount} cloud-only, ${skippedEmbeddings} embedding models skipped)`);
+console.error(`\nTotal models: ${models.length} (${cloudCount} cloud-only, ${skippedNonChat} embedding/decision models skipped)`);
 if (noPullsCount === models.length)
   console.error('WARNING: 0 pulls on every model - the page markup changed, fix the regexes in this script');
 else if (noPullsCount)

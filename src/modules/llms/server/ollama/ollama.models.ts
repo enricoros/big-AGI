@@ -14,11 +14,6 @@
 export const OLLAMA_BASE_MODELS: { [key: string]: { pulls: number, contextWindow?: number, hasTools?: true, hasVision?: true, isEmbeddings?: true, tags?: string[], added?: string } } = {
   // Sorted by "newest" from https://ollama.com/library?sort=newest
   'mistral-large-4': { pulls: 5000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20261011' },
-  'clef-flash': { pulls: 18000, tags: ['9b'], hasVision: true, added: '20261011' },
-  'clef': { pulls: 12000, tags: ['27b'], hasVision: true, added: '20261011' },
-  'laya': { pulls: 5000, added: '20261011' },
-  'tev1': { pulls: 84000, tags: ['thinking', '0.8b', '4b'], hasTools: true, added: '20261011' },
-  'nimble': { pulls: 38000, tags: ['thinking', '9b'], hasTools: true, added: '20261011' },
   'deepseek-v4.1-flash': { pulls: 18000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260912' }, // cloud-only tag (763B)
   'qwen3.8-flash-next': { pulls: 102000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260831' },
   'glm-5.3-flash': { pulls: 136000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260831' },

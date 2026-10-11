@@ -57,11 +57,10 @@ function _nousNormalizeWireModel(wireModel: any): any {
 }
 
 // parameterSpecs that only the 'openrouter' dialect can emit - dead or throwing under the 'openai' dialect: every
-// OpenRouter-own parameter (the 'llmVndOrt' prefix, filtered below) plus the tunneled Anthropic thinking / Gemini
+// OpenRouter-own parameter (the 'llmVndOrt' prefix, filtered below) plus the tunneled Anthropic thinking budget / Gemini
 // efforts and the Responses-only reasoning mode
 const _nousDroppedParamIds: string[] = [
   'llmVndAntThinkingBudget',
-  'llmVndAntEffort',
   'llmVndGemEffort',
   'llmVndGeminiThinkingBudget',
   'llmVndGeminiAspectRatio',
@@ -82,6 +81,10 @@ function _nousAdaptToOpenAIDialect(model: ModelDescriptionSchema): ModelDescript
   if (model.id.startsWith('nousresearch/'))
     parameterSpecs = parameterSpecs?.filter(p => p.paramId !== 'llmVndMiscEffort' && p.paramId !== 'llmVndOaiEffort');
   const droppedAntThinking = !!model.parameterSpecs?.some(p => p.paramId === 'llmVndAntThinkingBudget');
+  // Anthropic effort goes out as plain `reasoning_effort`, honored on adaptive-thinking models (probe: Opus 5.5 'max'
+  // spends 3-4x the reasoning tokens of 'low'); budget-thinking models ignore it, so it goes with the budget
+  if (droppedAntThinking)
+    parameterSpecs = parameterSpecs?.filter(p => p.paramId !== 'llmVndAntEffort');
 
   let interfaces = model.interfaces;
   // Anthropic budget-thinking models degrade to their non-thinking base form (no way to enable thinking

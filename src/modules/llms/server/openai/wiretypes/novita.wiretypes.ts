@@ -4,6 +4,13 @@ import * as z from 'zod/v4';
 // [Novita] Models List API - Response
 // Based on https://api.novita.ai/openai/v1/models
 
+// prices in hundredths of a cent per 1M tokens, like the flat *_price_per_m fields
+const _wireNovitaPricesSchema = z.object({
+  prompt: z.object({ price_per_m: z.number().optional() }).optional(),
+  completion: z.object({ price_per_m: z.number().optional() }).optional(),
+  input_cache_read: z.object({ price_per_m: z.number().optional() }).optional(),
+});
+
 export const wireNovitaModelSchema = z.object({
   id: z.string(),
   object: z.literal('model'),
@@ -18,6 +25,12 @@ export const wireNovitaModelSchema = z.object({
   max_output_tokens: z.number().optional(),
   input_token_price_per_m: z.number().optional(),
   output_token_price_per_m: z.number().optional(),
+  pricing: _wireNovitaPricesSchema.optional(),
+  is_tiered_billing: z.boolean().optional(),
+  tiered_billing_configs: z.array(z.object({ // input-length tiers; the flat fields hold the first
+    max_tokens: z.number().optional(),
+    pricing: _wireNovitaPricesSchema.optional(),
+  })).optional(),
   model_type: z.string().optional(), // "chat"
   status: z.number().optional(),
 

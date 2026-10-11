@@ -25,7 +25,7 @@ The parser outputs 5 pipe-delimited fields: `modelName|pulls|capabilities|sizes|
 
 **Fallbacks if blocked:** Check https://github.com/ollama/ollama, search "ollama featured models", "ollama latest models", or search GitHub for latest model info
 
-**What the file is:** a full mirror of the library index minus embedding models, in page order (newest first). ~222 entries as of 2026-08-17. The parser applies no pull threshold and no top-N cut: every line it prints belongs in the file, and every file entry should be a printed line.
+**What the file is:** a full mirror of the library index minus embedding and decision (classifier) models, in page order (newest first). ~222 entries as of 2026-08-17. The parser applies no pull threshold and no top-N cut: every line it prints belongs in the file, and every file entry should be a printed line.
 
 **Cloud models:** cloud-only entries ARE carried (`kimi-k3`, `glm-5.2`, `minimax-m3`, ...). The 5th field is informational only - the file has no cloud marker. Empty sizes on a cloud line is expected, not a parse failure.
 
@@ -34,7 +34,7 @@ The parser outputs 5 pipe-delimited fields: `modelName|pulls|capabilities|sizes|
 **Sanity check the parse before editing:** 200+ lines, non-zero pulls, capabilities present. All-zero pulls or empty capabilities means the page markup changed - fix the regexes in the parser (it warns on this), never write a stripped list into the file.
 
 **Field mapping:**
-- `tools` -> `hasTools: true`, `vision` -> `hasVision: true`, `embedding` -> `isEmbeddings: true` (note the 's'; the parser drops embedding models, so this should not come up)
+- `tools` -> `hasTools: true`, `vision` -> `hasVision: true`, `embedding` -> `isEmbeddings: true` (note the 's'; the parser drops embedding and decision models, so this should not come up)
 - `thinking` and `audio` -> `tags`, followed by the size chips (`1.5b`, `7b`, `32b`, ...) in page order
 
 **Important:**

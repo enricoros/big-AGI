@@ -1,4 +1,4 @@
-import { DModelInterfaceV1, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio } from '~/common/stores/llms/llms.types';
+import { DModelInterfaceV1, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
@@ -49,6 +49,21 @@ function _prettyModelId(model: WireNovitaModel): string {
     })
     .join(' ')
     .trim();
+}
+
+/** USD per 1M tokens from hundredths of a cent; 'is_tiered_billing' rows fold their input-length tiers into { upTo, price }[] */
+function _novitaTieredPrice(model: WireNovitaModel, field: 'prompt' | 'completion' | 'input_cache_read', flat: number | undefined) {
+  const flatUsd = flat === undefined ? undefined : flat / 10000;
+  const tiers = model.is_tiered_billing ? model.tiered_billing_configs : undefined;
+  if (!tiers?.length) return flatUsd;
+  const usd: { upTo: number | null, price: number }[] = [];
+  for (const [i, tier] of tiers.entries()) {
+    const upTo = i === tiers.length - 1 ? null : tier.max_tokens;
+    const price = tier.pricing?.[field]?.price_per_m;
+    if (upTo === undefined || price === undefined) return flatUsd;
+    usd.push({ upTo, price: price / 10000 });
+  }
+  return usd.every(t => t.price === usd[0].price) ? usd[0].price : usd;
 }
 
 
@@ -115,15 +130,17 @@ export function novitaModelsToModelDescriptions(wireModels: unknown): ModelDescr
 
       // Pricing: API returns hundredths of a cent per million tokens, convert to USD per 1M tokens
       // (the internal pricing unit). e.g., 2700 -> $0.27/1M input for deepseek-v3-0324; 700 -> $0.07/1M.
-      // KNOWN GAP: 'is_tiered_billing' ids carry input-length tiers in 'tiered_billing_configs' (the flat fields
-      // below hold the first tier), and 51 ids also carry 'pricing.input_cache_read'. Neither field is in the wire
-      // schema (novita.wiretypes.ts), so neither is reachable from here.
+      // Automatic upstream caching: a cache read price gets the informational caching tag.
+      const cacheRead = _novitaTieredPrice(model, 'input_cache_read', model.pricing?.input_cache_read?.price_per_m);
       const chatPrice = (model.input_token_price_per_m !== undefined && model.output_token_price_per_m !== undefined)
         ? {
-          input: model.input_token_price_per_m / 10000,
-          output: model.output_token_price_per_m / 10000,
+          input: _novitaTieredPrice(model, 'prompt', model.input_token_price_per_m),
+          output: _novitaTieredPrice(model, 'completion', model.output_token_price_per_m),
+          ...(cacheRead !== undefined && { cache: { read: cacheRead } }),
         }
         : undefined;
+      if (chatPrice?.cache)
+        interfaces.push(LLM_IF_OAI_PromptCaching);
 
       const md = fromManualMapping(_novitaKnownModels, model.id, model.created, undefined, {
         idPrefix: model.id,

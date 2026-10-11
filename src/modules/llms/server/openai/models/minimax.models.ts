@@ -28,7 +28,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
   // M3.1 Flash Preview (2026-09-27) - M Plan / Token Plan Subscription Key only; pay-as-you-go keys get "unknown model"
   {
     id: 'MiniMax-M3.1-Flash-Preview',
-    label: 'MiniMax M3.1 Flash (Preview)',
+    label: 'MiniMax M3.1 Flash (Preview, M Plan)',
     pubDate: '20260927',
     description: 'Latest M-series model for agentic reasoning, tool use, coding and long-context tasks, natively multimodal (text, image, video input). 1M context. Requires an M Plan Subscription Key.',
     contextWindow: 1000000,
@@ -36,7 +36,6 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
     // per docs (not probed): thinking cannot be disabled, reasoning_effort defaults to 'max'
     parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }],
-    hidden: true, // subscription-only
   },
 
   // M3 - flagship, natively multimodal, 1M context (2026-06-01)
