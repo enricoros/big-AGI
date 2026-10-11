@@ -11,6 +11,7 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { getConversation } from '~/common/stores/chat/store-chats';
 import { humanReadableBytes } from '~/common/util/textUtils';
+import { ExportClaudeCode } from './claude-code/ExportClaudeCode';
 
 import { ChatLinkExport } from './link/ChatLinkExport';
 import { FlashBackup } from './BackupRestore';
@@ -139,6 +140,8 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
           {/*>*/}
           {/*  Share Copy · ShareGPT*/}
           {/*</Button>*/}
+
+          <ExportClaudeCode conversationId={props.config.conversationId} getConversation={getConversation} />
 
         </Box>
       </Grid>
