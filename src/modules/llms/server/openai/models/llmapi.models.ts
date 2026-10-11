@@ -39,6 +39,7 @@ const _llmapiNonChatFamilies: string[] = [
   'tts',
   'stt',
   'streaming-stt',
+  'live', // full-duplex realtime voice (gpt-live-1)
 ] as const;
 
 // The full llmVndOaiEffort ladder: a model's 'reasoning_levels' is published only if every level is one of these.
@@ -104,7 +105,8 @@ export function llmapiModelsToModelDescriptions(wireModels: unknown): ModelDescr
       else if (model.supported_parameters?.includes('effort'))
         parameterSpecs.push({ paramId: 'llmVndOaiEffort' });
 
-      // pricing: per-token dollar strings -> $/M tokens (the chatPrice unit); image/request are rare, absent = 0
+      // pricing: per-token dollar strings -> $/M tokens (the chatPrice unit); image/request are rare, absent = 0;
+      // an empty prompt/completion string (unpriced) yields no chatPrice - a NaN fails the list output schema
       const promptPerToken = parseFloat(model.pricing.prompt);
       const completionPerToken = parseFloat(model.pricing.completion);
       const perImage = parseFloat(model.pricing.image ?? '0');
@@ -117,7 +119,7 @@ export function llmapiModelsToModelDescriptions(wireModels: unknown): ModelDescr
       const isFree = model.free || isFreePriced;
       const chatPrice = isFree
         ? { input: 'free' as const, output: 'free' as const }
-        : { input: inputPriceM, output: outputPriceM };
+        : Number.isFinite(inputPriceM) && Number.isFinite(outputPriceM) ? { input: inputPriceM, output: outputPriceM } : undefined;
 
       // pubDate: 'released_at' is the upstream model release date, not the gateway listing date ('created'),
       // so it is a real "new model" signal.

@@ -41,8 +41,6 @@ const _togetherAIDenyList: string[] = [
 // Sweep 2026-08-31 (74 priced rows): all 53 entries below still dead (Kimi-K2.6 now errors 'all configured
 // deployments are stopped' instead of the non-serverless 400 - still dead); 21 alive, +Qwen3.8-Flash (new,
 // streaming-only like the other Qwen Plus/Max tiers) and +GLM-5.3 (relisted and serving, see pubDates below).
-// Sweep 2026-09-14: unchanged (52 dead, 22 alive incl. the new DeepSeek-V4.1-Flash); deepseek-ai/DeepSeek-V4-Pro is gone
-// from /v1/models altogether (entry kept, harmless).
 // Membership rotates fast in both directions ('created' gets re-stamped) - probe, never trust this list's age.
 // Accepted cost: a user with a dedicated endpoint for one of these ids no longer sees it.
 const _togetherAIRetiredIds = new Set<string>([
@@ -86,7 +84,6 @@ const _togetherAIRetiredIds = new Set<string>([
   'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
   'deepseek-ai/DeepSeek-R1-Distill-Qwen-14B',
   'deepseek-ai/DeepSeek-V3.1',
-  'deepseek-ai/DeepSeek-V4-Pro', // off serverless 2026-08-28; docs keep only the -0813 id
   'deepseek-ai/deepseek-coder-33b-instruct',
   // mistralai
   'mistralai/Ministral-3-14B-Instruct-2512',
@@ -99,12 +96,14 @@ const _togetherAIRetiredIds = new Set<string>([
   'NousResearch/Nous-Hermes-2-Mixtral-8x7B-DPO',
   'arcee-ai/trinity-mini',
   'google/gemma-2-27b-it',
+  'google/gemma-4-31B-it',
   'moonshotai/Kimi-K2.5-fp4',
   'moonshotai/Kimi-K2.6', // retired between the 2026-08-17 and -27 sweeps
   'moonshotai/Kimi-K2.7-Code', // 500 on the 08-28 sweep, standard 400 on re-probe
   'nvidia/Llama-3.1-Nemotron-70B-Instruct-HF',
   'nvidia/nemotron-3-ultra-550b-a55b', // off serverless 2026-08-28
   'nvidia/NVIDIA-Nemotron-Nano-9B-v2',
+  'openai/gpt-oss-20b',
 ]);
 
 // Vision (image input) id patterns - Together publishes no modality field, so these are the explicit
@@ -133,6 +132,7 @@ const _togetherVisionMatches: readonly (string | RegExp)[] = [
   'qwen3.8-flash', // scaling (123 -> 843 prompt tokens) + color check 2026-08-31; NOT all of qwen3.8: Together's Qwen3.8-2.4T-A95B is a text-only NVFP4 quant ('is not a multimodal model'), unlike Fireworks' serving of the same weights
   /glm-\d[\d.]*v\b/, // Z.ai vision line (GLM-4.5V, GLM-5V)
   'glm-5.3-flash', // multimodal Flash base, scaling+color check 2026-08-27 (the glm-5.3 text flagship rejects images), see zai.models.ts
+  'deepseek-v4.1-flash', // natively multimodal; fixed-size encoder (flat ~+185/image) that passes a color check, like Gemma
   '-omni', // omni-modal (Nemotron 3 Nano Omni)
   '-ocr', // OCR models are image-in by definition
 ];

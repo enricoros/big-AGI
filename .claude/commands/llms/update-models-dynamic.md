@@ -30,7 +30,7 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 - Hostname heuristic: `novita.ai`.
 
 **Baseten** - `src/modules/llms/server/openai/models/baseten.models.ts`
-- Model APIs: small curated slate (15 ids, 2026-08-28), rich listing (names, per-token pricing, cache read, features, modalities) - listing is authoritative for all of that.
+- Model APIs: small curated slate (12 ids, 2026-10-11), rich listing (names, per-token pricing, cache read, features, modalities) - listing is authoritative for all of that.
 - `_basetenCurated` map carries what the listing lacks: `reasoning_effort` ladders (docs + live-ablated, per-model llmVndOaiEffort/llmVndMiscEffort) and pubDates - check for stale/missing ids when the slate changes.
 - Effort ladder source: https://docs.baseten.co/inference/model-apis/reasoning - but verify live, the docs both under- and over-claim (GLM-5.3 'none' accepted-and-ignored; gpt-oss only honors low|medium|high).
 - Hostname heuristic: `inference.baseten.co` (deliberately excludes model-*.api.baseten.co dedicated deployments).
