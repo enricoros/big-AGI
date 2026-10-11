@@ -74,9 +74,9 @@ Three categories:
 | xAI | Hybrid | `openai/models/xai.models.ts` | `_knownXAIChatModels` | 13 | 13/13 HIGH (pilot) |
 | Meta AI | Hybrid | `openai/models/metaai.models.ts` | `_knownMetaAIModels` | 6 | 6/6 HIGH (announcement posts; the API's `created` is a constant 0 and there is no changelog - see `/llms:update-models-metaai`) |
 | Mistral | Hybrid | `openai/models/mistral.models.ts` | `_knownMistralModelDetails` | 41 | 41/41 (40 HIGH, 1 MED for legacy `mistral-medium`) |
-| Moonshot (Kimi) | Hybrid | `openai/models/moonshot.models.ts` | `_knownMoonshotModels` | 13 | 13/13 (10 HIGH, 3 MED for v1 base models) |
+| Moonshot (Kimi) | Hybrid | `openai/models/moonshot.models.ts` | `_knownMoonshotModels` | 12 | 12/12 HIGH |
 | Perplexity | Editorial | `openai/models/perplexity.models.ts` | `_knownPerplexityChatModels` | 4 | 4/4 HIGH |
-| MiniMax | Editorial | `openai/models/minimax.models.ts` | `_knownMiniMaxModels` | 10 | 10/10 HIGH |
+| MiniMax | Editorial | `openai/models/minimax.models.ts` | `_knownMiniMaxModels` | 12 | 12/12 HIGH |
 | DeepSeek | Hybrid | `openai/models/deepseek.models.ts` | `_knownDeepseekChatModels` | 4 | 4/4 HIGH |
 | Groq | Hybrid (host) | `openai/models/groq.models.ts` | `_knownGroqModels` | 11 | 11/11 HIGH (underlying-model date) |
 | Z.AI / GLM | Hybrid | `openai/models/zai.models.ts` | `_knownZAIModels` | 22 | 22/22 HIGH (`pubDate` type-required, like Anthropic) |

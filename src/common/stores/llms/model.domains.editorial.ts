@@ -113,7 +113,7 @@ export const EditorialDefaults = {
     { vendor: 'deepseek',   modelId: 'deepseek-v4-pro' },
     // NVIDIA NIM: free trial catalog, tail picks (native vendors above always win when configured; z-ai/glm-5.2 dropped: NVIDIA EOL 2026-08-24)
     { vendor: 'nvidianim',  modelId: 'nvidia/nemotron-3-ultra-550b-a55b' }, // NVIDIA flagship, 1M ctx, reliably served
-    { vendor: 'nvidianim',  modelId: 'deepseek-ai/deepseek-v4-flash-0731' }, // replaces deepseek-v4-pro (410 Gone on NVIDIA since 2026-08-17)
+    { vendor: 'nvidianim',  modelId: 'deepseek-ai/deepseek-v4.1-flash' }, // multimodal, 1M ctx (the 0731 checkpoint is 410 Gone on NVIDIA)
   ],
 
   codeApply: [
@@ -145,7 +145,7 @@ export const EditorialDefaults = {
     { vendor: 'deepseek',   modelId: 'deepseek-flash' },
     // NVIDIA NIM: free trial catalog, tail picks (z-ai/glm-5.2 dropped: NVIDIA EOL 2026-08-24)
     { vendor: 'nvidianim',  modelId: 'nvidia/nemotron-3-super-120b-a12b' }, // agentic/tool-use tuned, 12B active
-    { vendor: 'nvidianim',  modelId: 'deepseek-ai/deepseek-v4-flash-0731' }, // dated checkpoint: the undated id is 410 Gone on NVIDIA
+    { vendor: 'nvidianim',  modelId: 'deepseek-ai/deepseek-v4.1-flash' },
   ],
 
   fastUtil: [

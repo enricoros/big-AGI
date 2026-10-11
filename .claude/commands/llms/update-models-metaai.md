@@ -7,7 +7,7 @@ Update `src/modules/llms/server/openai/models/metaai.models.ts` with latest mode
 Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code. The vendor's protocol facts live in `kb/modules/LLM-metaai-responses.md`; the adapter deviations are the `metaai` row of `_RSP_DIALECT_QUIRKS` in `src/modules/aix/server/dispatch/chatGenerate/adapters/openai.responsesCreate.ts`.
 
 **Primary Sources:** dev.meta.ai/docs. Appending `.md` to any docs URL returns raw markdown that plain `curl` fetches (no auth, no browser needed).
-- Doc index: https://dev.meta.ai/docs/llms.txt (92 pages; one `curl` loop mirrors the whole set when a deep read is needed)
+- Doc index: https://dev.meta.ai/llms.txt (92 pages; one `curl` loop mirrors the whole set when a deep read is needed)
 - Models, tiers, modalities, context windows: https://dev.meta.ai/docs/models.md
 - Pricing and rate limits: https://dev.meta.ai/docs/pricing-rate-limits.md - Standard vs Contributor per-token tables, the search-grounding surcharge, per-image and per-hour prices, RPM/TPM per tier (page carries an unresolved "confirm these numbers" editorial note - Standard limits are wire-verified, the rest provisional)
 - Reasoning effort ladder: https://dev.meta.ai/docs/reasoning.md

@@ -29,7 +29,7 @@ const IF_CHAT_FN = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
  * Cerebras models - fast OpenAI-compatible inference (wafer-scale).
  * - models list: https://inference-docs.cerebras.ai/models/overview
  * - pricing: https://www.cerebras.ai/pricing (per-token rates from /public/v1/models)
- * - updated: 2026-09-14
+ * - updated: 2026-10-11
  *
  * EDITORIAL OVERRIDES: the /public/v1/models catalog carries pricing/limits/capabilities, but its
  * metadata lags for new models (it used to report gemma-4-31b with all caps false and an 8K context -
@@ -76,11 +76,7 @@ const _knownCerebrasModels = llmsDefineModels<_CerebrasModelDef>()([
     // no benchmark: lmarena has no qwen3.8-27b entry we've captured (alibaba.models.ts carries none either)
   },
 
-  // 'zai-glm-4.7' (Preview, $2.25/$2.75, 131K/40K, effort none|low|medium|high) retired 2026-08-17 as scheduled and gone from
-  // the public catalog - no replacement named, no serverless GLM 5.x on Cerebras (GLM-5.3 weights not public yet).
-  // 'gemma-4-31b' (multimodal, $0.99/$1.49, 131K/40K, effort none|high) off the public endpoints 2026-09-03 (docs
-  // /support/deprecation), Dedicated-Endpoints only now, docs page gone; the keyed /v1/models still lists it but
-  // generation 404s model_not_found. Cerebras points multimodal workloads at 'qwen-3.8-27b'.
+  // retired: 'zai-glm-4.7' (2026-08-17, no replacement), 'gemma-4-31b' (2026-09-03, Dedicated-only -> 'qwen-3.8-27b')
 ]);
 
 

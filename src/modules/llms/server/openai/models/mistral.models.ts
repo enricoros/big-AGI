@@ -12,7 +12,7 @@ const DEV_DEBUG_MISTRAL_MODELS = Release.IsNodeDevBuild; // not in staging to re
 
 
 // [Mistral]
-// Updated 2026-10-07
+// Updated 2026-10-11
 // - models on: https://docs.mistral.ai/models/overview (redirects to /models; cards at /models/<slug>)
 // - pricing on: https://docs.mistral.ai/inference/pricing (now server-rendered; cards carry the same numbers)
 // - benchmark elo on CBA
@@ -52,7 +52,7 @@ const _PS_MistralGlm53Effort: _MistralModelDef['parameterSpecs'] = [
 const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
 
   // Mistral Large 4 (Oct 2026, Public Preview) - list price; launch sale -50% (0.68 / 0.07 / 2.09) for 2 weeks from 2026-10-06
-  'mistral-large-4-0': { pubDate: '20261006', chatPrice: { input: 1.36, output: 4.18, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralEffort }, // MoE 52B active / 1.05T total + 1.6B vision encoder, open weights announced (docs: 1M ctx; API serves 524288)
+  'mistral-large-4-0': { pubDate: '20261006', chatPrice: { input: 1.36, output: 4.18, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralEffort }, // MoE 52B active / 1.05T total + 1.6B vision encoder, open weights announced
   'mistral-large-4': { pubDate: '20261006', chatPrice: { input: 1.36, output: 4.18, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // symlink
 
   // Premier models - Mistral 3 (Dec 2025)

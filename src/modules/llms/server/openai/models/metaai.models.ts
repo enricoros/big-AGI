@@ -198,9 +198,9 @@ export function llmOrtMetaLookup(orModelName: string): OrtVendorLookupResult | u
 
 
 // [Meta AI] The list API is type-blind and the catalog mixes families: 'muse-voice-transcribe-1.0' (speech-to-text on its
-// own /v1/asr endpoints; 404 model_not_found on /v1/responses) is listed next to the chat models and must never reach
-// the chat picker. Muse Image stays: it is a Responses-API model with image output (curated above).
-const _METAAI_NON_CHAT_PREFIXES = ['muse-voice-transcribe-'];
+// own /v1/asr endpoints; 404 model_not_found on /v1/responses) and 'sam-3.1' (segmentation: boxes and masks as special-token
+// text on /v1/responses) must never reach the chat picker. Muse Image stays: it is a Responses-API model with image output.
+const _METAAI_NON_CHAT_PREFIXES = ['muse-voice-transcribe-', 'sam-'];
 
 
 function _prettyModelId(id: string): string {

@@ -36,9 +36,8 @@ export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefi
 //   on the Intl table; qwen3.8-* gain the real reasoning_effort ladder (_PS_Qwen38Effort, ablated) and qwen3.8-2.4t-a95b is
 //   thinking-compulsory, so it drops the Off value; that model page is now published and confirms the caps/price we had taken
 //   from OpenRouter. Qwen3.8-27B (open weights, Apache-2.0, 2026-08-14) is not served by DashScope - hosts only. ELOs refreshed.
-// 2026-08-16 pass (GLM only): glm-5.3 (Z.ai release 2026-08-14) NOT on the intl list yet - re-probe before adding; the three GLM
-//   ids re-verified live (no retirements, no price drift); glm-5.1 context 204800 -> 202745 (model page + probe); glm-5.2 gains
-//   the reasoning_effort ladder (_PS_GlmEffort, ablated).
+// 2026-08-16 pass (GLM only): glm-5.1 context 204800 -> 202745 (model page + probe); glm-5.2 gains the reasoning_effort ladder
+//   (_PS_GlmEffort, ablated).
 // 2026-08-14 triage: deny list added (retired 2025-era lines dropped from the list entirely) + short-form curation for every
 //   other live chat id: qwen3.8-2.4t-a95b (open-weights flagship) and qwen3-coder-next visible; the qwen3.5/3.6 generations,
 //   qwen3-max/-vl-flash/-coder-flash, and glm-5.1 hidden. Zero uncurated ('[?]') ids remain against the live list.
@@ -233,32 +232,6 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     },
   },
   {
-    idPrefix: 'qwen3-coder-plus',
-    label: 'Qwen3 Coder Plus',
-    pubDate: '20260514',
-    description: 'Agentic coding model with very long context. Tiered pricing by input length (up to 1M).',
-    contextWindow: 1000000, // 1M
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn], // coding/agentic; non-thinking
-    maxCompletionTokens: 65536,
-    chatPrice: {
-      input: [{ upTo: 32000, price: 1.00 }, { upTo: 128000, price: 1.80 }, { upTo: 256000, price: 3.00 }, { upTo: null, price: 6.00 }],
-      output: [{ upTo: 32000, price: 5.00 }, { upTo: 128000, price: 9.00 }, { upTo: 256000, price: 15.00 }, { upTo: null, price: 60.00 }],
-    },
-  },
-  {
-    idPrefix: 'qwen3-coder-next',
-    label: 'Qwen3 Coder Next',
-    pubDate: '20260204',
-    description: 'Budget agentic coder on the Qwen3-Next architecture. 256K context, non-thinking, tiered pricing.',
-    contextWindow: 262144, // 256K
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    maxCompletionTokens: 65536,
-    chatPrice: {
-      input: [{ upTo: 32000, price: 0.30 }, { upTo: 128000, price: 0.50 }, { upTo: null, price: 0.80 }],
-      output: [{ upTo: 32000, price: 1.50 }, { upTo: 128000, price: 2.50 }, { upTo: null, price: 4.00 }],
-    },
-  },
-  {
     idPrefix: 'qwen3-vl-plus',
     label: 'Qwen3 VL Plus',
     parameterSpecs: _PS_Thinking,
@@ -282,14 +255,6 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     contextWindow: 1000000, maxCompletionTokens: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     chatPrice: { input: [{ upTo: 256000, price: 0.50 }, { upTo: null, price: 2.00 }], output: [{ upTo: 256000, price: 3.00 }, { upTo: null, price: 6.00 }] },
-  },
-  {
-    idPrefix: 'qwen3.6-max-preview', label: 'Qwen3.6 Max Preview', pubDate: '20260427', hidden: true,
-    description: 'Qwen3.6 Max preview (never GA; superseded by Qwen3.7 Max). 256K context, thinking, text-only.',
-    parameterSpecs: _PS_Thinking,
-    contextWindow: 262144, maxCompletionTokens: 65536,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: [{ upTo: 128000, price: 1.30 }, { upTo: null, price: 2.00 }], output: [{ upTo: 128000, price: 7.80 }, { upTo: null, price: 12.00 }] },
   },
   {
     idPrefix: 'qwen3.6-35b-a3b', label: 'Qwen3.6 35B-A3B', pubDate: '20260427', hidden: true,
@@ -356,24 +321,8 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     chatPrice: { input: 0.30, output: 2.40 },
   },
   {
-    idPrefix: 'qwen3-max', label: 'Qwen3 Max', pubDate: '20250923', hidden: true,
-    description: 'Retired 2025 flagship, superseded by Qwen3.6+ Max. 256K context; the base id now serves the thinking-capable 2026-01-23 snapshot.',
-    parameterSpecs: _PS_Thinking,
-    contextWindow: 262144, maxCompletionTokens: 65536,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: [{ upTo: 32000, price: 1.20 }, { upTo: 128000, price: 2.40 }, { upTo: null, price: 3.00 }], output: [{ upTo: 32000, price: 6.00 }, { upTo: 128000, price: 12.00 }, { upTo: null, price: 15.00 }] },
-  },
-  {
-    idPrefix: 'qwen3-vl-flash', label: 'Qwen3 VL Flash', pubDate: '20251015', hidden: true,
-    description: 'Budget VL tier below Qwen3 VL Plus. 256K context, thinking, vision.',
-    parameterSpecs: _PS_Thinking,
-    contextWindow: 262144, maxCompletionTokens: 32768, // out assumed = qwen3-vl-plus
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
-    chatPrice: { input: [{ upTo: 32000, price: 0.05 }, { upTo: 128000, price: 0.075 }, { upTo: null, price: 0.12 }], output: [{ upTo: 32000, price: 0.40 }, { upTo: 128000, price: 0.60 }, { upTo: null, price: 0.96 }] },
-  },
-  {
     idPrefix: 'qwen3-coder-flash', label: 'Qwen3 Coder Flash', pubDate: '20250728', hidden: true,
-    description: 'Former budget coder, superseded by Qwen3 Coder Next (which lacks its 1M context). Non-thinking.',
+    description: 'Former budget coder, superseded by Qwen3.7 Plus. 1M context, non-thinking.',
     contextWindow: 1000000, maxCompletionTokens: 65536,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
     chatPrice: { input: [{ upTo: 32000, price: 0.30 }, { upTo: 128000, price: 0.50 }, { upTo: 256000, price: 0.80 }, { upTo: null, price: 1.60 }], output: [{ upTo: 32000, price: 1.50 }, { upTo: 128000, price: 2.50 }, { upTo: 256000, price: 4.00 }, { upTo: null, price: 9.60 }] },
@@ -437,8 +386,8 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   // serve is undocumented - hence the 0813 snapshot is curated visible, as the only pinnable GA route here.
   // Prices: the GA snapshots (-0813, -0731) moved to peak/off-peak billing on 2026-08-17 (Intl table + model pages; the windows are
   // in a Chinese-only notice, aliyun.com/notice/118555) at exactly DeepSeek-direct's card, off-peak = half. chatPrice carries the PEAK
-  // card, as in deepseek.models.ts (no time dimension in the schema; off-peak requests are over-shown 2x). The undated ids keep their
-  // flat rate, which now sits above the pro snapshot and below the flash one; deepseek-v4.1-flash is peak/off-peak from its listing.
+  // card, as in deepseek.models.ts (no time dimension in the schema; off-peak requests are over-shown 2x). The undated deepseek-v4-pro
+  // keeps its flat rate, above the 0813 snapshot; deepseek-v4.1-flash is peak/off-peak from its listing.
   {
     // V4.1-Flash on DashScope (DeepSeek GA 2026-09-10): 552B MoE, native image input, ahead of V4-Pro-0813 on the agentic
     // set. Curated visible, not hidden like the -0731 revision: this version-suffixed id is not a snapshot beside an undated
@@ -486,18 +435,6 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     benchmark: { cbaElo: 1458 }, // lmarena: deepseek-v4-pro (preview checkpoint; the board's 0813 row is AutoEval-only, not human votes)
   },
   {
-    idPrefix: 'deepseek-v4-flash',
-    label: 'DeepSeek V4 Flash (Alibaba)',
-    parameterSpecs: _PS_DeepSeekEffort,
-    pubDate: '20260424', // = deepseek.models.ts 'deepseek-v4-flash' (upstream launch, not the DashScope listing; undated id, checkpoint undocumented)
-    description: 'DeepSeek V4 Flash served via Alibaba Model Studio. 1M context, thinking.',
-    contextWindow: 1_000_000, // 1M (Alibaba serves a decimal 1M window)
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
-    chatPrice: { input: 0.20, output: 0.40, cache: { read: 0.04 } },
-    benchmark: { cbaElo: 1435 }, // lmarena: deepseek-v4-flash
-  },
-  {
     // pinnable 0731 revision (re-post-train, same arch/size; structured outputs unsupported per its page); curated so it lists with a clean label
     idPrefix: 'deepseek-v4-flash-0731',
     label: 'DeepSeek V4 Flash 0731 (Alibaba)',
@@ -509,7 +446,19 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
     chatPrice: { input: 0.44, output: 1.32, cache: { read: 0.044 } }, // peak card (Singapore model page: busy 0.44/1.32 hit 0.044, idle 0.22/0.66 hit 0.022); was flat 0.20/0.40 before 2026-08-17
     benchmark: { cbaElo: 1435 }, // lmarena: deepseek-v4-flash
-    hidden: true, // dated snapshot; deepseek-v4-flash is the mainline entry for this tier (and now the cheaper one)
+    hidden: true, // superseded by deepseek-v4.1-flash
+  },
+  {
+    idPrefix: 'glm-5.3',
+    label: 'GLM-5.3 (Alibaba)',
+    parameterSpecs: _PS_Qwen38EffortAlwaysOn, // same shape: enable_thinking:false 400s ('restricted to True'), reasoning_effort low|high|max only
+    pubDate: '20260814', // = zai.models.ts 'glm-5.3' (Z.ai release, not the DashScope listing)
+    description: 'Zhipu GLM-5.3 served via Alibaba Model Studio. 1M context, always-on thinking.',
+    contextWindow: 1048576, // 1M
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning], // text-only (image parts are dropped)
+    maxCompletionTokens: 131072, // 128K
+    chatPrice: { input: 1.40, output: 4.40, cache: { read: 0.28 } },
+    benchmark: { cbaElo: 1487 }, // lmarena: glm-5.3-max
   },
   {
     idPrefix: 'glm-5.2',
@@ -566,19 +515,6 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     maxCompletionTokens: 131072, // house cap; live ceiling is 262144 (256K, = context window)
     chatPrice: { input: 0.95, output: 4.00, cache: { read: 0.19 } }, // repriced 2026-07-24 (was 0.8939/3.7131); cache = 20% implicit-hit rule (explicit: create 1.1875 / read 0.095)
   },
-  {
-    idPrefix: 'deepseek-v3.2',
-    label: 'DeepSeek V3.2 (Alibaba)',
-    parameterSpecs: _PS_Thinking,
-    pubDate: '20260623',
-    description: 'DeepSeek V3.2 served via Alibaba Model Studio (superseded by V4). Thinking.',
-    contextWindow: 131072, // ~128K (approx)
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
-    maxCompletionTokens: 65536,
-    chatPrice: { input: 0.57, output: 1.71 },
-    benchmark: { cbaElo: 1425 }, // lmarena: deepseek-v3.2
-    hidden: true, // available but superseded by V4
-  },
 
 ]);
 
@@ -589,14 +525,7 @@ const _ALIBABA_PREVIEW_ALIAS = /-(?:preview|latest)$/;
 
 // Editorial deny list: retired 2025-era chat lines dropped from the list entirely (matched by exact id or 'id-' prefix)
 const _ALIBABA_DENY_LIST = [
-  'qwq-plus', 'qvq-max',            // QwQ/QVQ reasoning-era lines
-  'qwen-coder-plus',                // pre-qwen3 commercial coder (no Intl price row left)
-  'qwen-vl-max', 'qwen-vl-plus',    // qwen2.5-era VL line (qwen3-vl-* replaces)
-  'qwen3-8b', 'qwen3-14b', 'qwen3-32b', // 2025 open dense models
-  'qwen3-30b-a3b', 'qwen3-235b-a22b',   // 2025 open MoE (+ their -instruct/-thinking-2507 snapshots)
-  'qwen3-coder-480b-a35b-instruct', // 2025 open coder (qwen3-coder-next replaces)
-  'qwen3-next-80b-a3b',             // 2025 Next-arch preview pair
-  'qwen3-vl-235b-a22b',             // 2025 open VL pair
+  'qwq-plus',                       // QwQ reasoning-era line (qwq-plus-2025-03-05 still listed)
 ];
 
 export function alibabaModelFilter(modelId: string): boolean {
@@ -615,6 +544,7 @@ export function alibabaModelFilter(modelId: string): boolean {
     'qwen3-s2s',      // speech-to-speech
     's2s',            // any speech-to-speech variant
     'livetranslate',  // live (audio) translation: qwen3-livetranslate*, qwen3.5-livetranslate*
+    'realtime',       // WebSocket-only realtime models: qwen-audio-3.1-realtime-plus (500s on chat/completions)
     'qwen-mt-',       // text translation models (use regular chat models instead)
     'ocr',            // OCR: qwen-vl-ocr*
     'captioner',      // image captioning

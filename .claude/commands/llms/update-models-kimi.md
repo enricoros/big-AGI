@@ -10,7 +10,8 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 Append `.md` to any docs URL to get clean markdown - the HTML pages render pricing/parameter tables via a JS component that WebFetch drops.
 `curl -sL <url>.md` beats WebFetch on these: the .md still embeds those tables as a JSX `<DocTable rows={[...]}/>` literal, which curl gives you verbatim.
 - Model list + deprecation/sunset notices: https://platform.kimi.ai/docs/models.md
-- Pricing: https://platform.kimi.ai/docs/pricing/chat.md is only an index of cards; the numbers live in per-model pages `pricing/chat-k3.md`, `chat-k27-code.md`, `chat-k26.md`, `chat-k25.md`, `chat-v1.md` (a page can outlive its index card - K2.5's card is gone but chat-k25.md still serves)
+- Pricing: https://platform.kimi.ai/docs/pricing/chat.md (the per-model pricing pages now redirect here)
+- Kimi Code subscription catalog ('sk-kimi-' keys): https://www.kimi.com/code/docs/en/kimi-code/models.html and its What's New page
 - Skip https://platform.kimi.ai/docs/platform-changelog.md - abandoned, last entry 2025-04-07
 - Per-model parameter matrix (thinking vs reasoning_effort, temperature/top_p/n locks, tool_choice): https://platform.kimi.ai/docs/api/models-overview.md
 - API reference: https://platform.kimi.ai/docs/api/chat.md; machine-readable: https://platform.kimi.ai/docs/openapi.json (per-model request schemas)

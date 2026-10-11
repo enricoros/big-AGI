@@ -13,6 +13,12 @@
  */
 export const OLLAMA_BASE_MODELS: { [key: string]: { pulls: number, contextWindow?: number, hasTools?: true, hasVision?: true, isEmbeddings?: true, tags?: string[], added?: string } } = {
   // Sorted by "newest" from https://ollama.com/library?sort=newest
+  'mistral-large-4': { pulls: 5000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20261011' },
+  'clef-flash': { pulls: 18000, tags: ['9b'], hasVision: true, added: '20261011' },
+  'clef': { pulls: 12000, tags: ['27b'], hasVision: true, added: '20261011' },
+  'laya': { pulls: 5000, added: '20261011' },
+  'tev1': { pulls: 84000, tags: ['thinking', '0.8b', '4b'], hasTools: true, added: '20261011' },
+  'nimble': { pulls: 38000, tags: ['thinking', '9b'], hasTools: true, added: '20261011' },
   'deepseek-v4.1-flash': { pulls: 18000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260912' }, // cloud-only tag (763B)
   'qwen3.8-flash-next': { pulls: 102000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260831' },
   'glm-5.3-flash': { pulls: 136000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260831' },
@@ -25,7 +31,7 @@ export const OLLAMA_BASE_MODELS: { [key: string]: { pulls: number, contextWindow
   'kimi-k3': { pulls: 81000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260817' },
   'laguna-s-2.1': { pulls: 142000, tags: ['thinking'], hasTools: true, added: '20260817' },
   'laguna-xs-2.1': { pulls: 111000, tags: ['thinking'], hasTools: true, added: '20260817' },
-  'ornith': { pulls: 494000, tags: ['9b', '35b'], hasTools: true, added: '20260817' },
+  'ornith': { pulls: 494000, tags: ['thinking', '9b', '35b'], hasTools: true, added: '20260817' },
   'north-mini-code-1.0': { pulls: 54000, tags: ['thinking'], hasTools: true, added: '20260626' },
   'glm-5.2': { pulls: 344000, tags: ['thinking'], hasTools: true, added: '20260626' },
   'kimi-k2.7-code': { pulls: 237000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260626' },
@@ -38,13 +44,11 @@ export const OLLAMA_BASE_MODELS: { [key: string]: { pulls: number, contextWindow
   'mistral-medium-3.5': { pulls: 392000, tags: ['thinking', '128b'], hasVision: true, hasTools: true, added: '20260626' },
   'granite4.1': { pulls: 437000, tags: ['3b', '8b', '30b'], hasTools: true, added: '20260626' },
   'nemotron3': { pulls: 661000, tags: ['thinking', '33b'], hasVision: true, hasTools: true, added: '20260626' },
-  'deepseek-v4-flash': { pulls: 455000, tags: ['thinking'], hasTools: true, added: '20260626' },
   'deepseek-v4-pro': { pulls: 404000, tags: ['thinking'], hasTools: true, added: '20260626' },
   'laguna-xs.2': { pulls: 30000, tags: ['thinking'], hasTools: true, added: '20260626' },
   'qwen3.6': { pulls: 6600000, tags: ['thinking', '27b', '35b'], hasVision: true, hasTools: true, added: '20260416' },
   'medgemma1.5': { pulls: 180000, tags: ['4b'], hasVision: true, added: '20260416' },
   'medgemma': { pulls: 382000, tags: ['4b', '27b'], hasVision: true, added: '20260416' },
-  'glm-5.1': { pulls: 2300000, tags: ['thinking'], hasTools: true, added: '20260416' },
   'kimi-k2.6': { pulls: 472000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260626' },
   'nemotron-cascade-2': { pulls: 147000, tags: ['thinking', '30b'], hasTools: true, added: '20260402' },
   'minimax-m2.7': { pulls: 2400000, tags: ['thinking'], hasTools: true, added: '20260402' },
@@ -242,5 +246,5 @@ export const OLLAMA_BASE_MODELS: { [key: string]: { pulls: number, contextWindow
   'everythinglm': { pulls: 568000, tags: ['13b'], added: '20251015' },
   'codeup': { pulls: 598000, tags: ['13b'], added: '20251015' },
 };
-export const OLLAMA_LAST_UPDATE: string = '20260914';
-export const OLLAMA_PREV_UPDATE: string = '20260831';
+export const OLLAMA_LAST_UPDATE: string = '20261011';
+export const OLLAMA_PREV_UPDATE: string = '20260914';

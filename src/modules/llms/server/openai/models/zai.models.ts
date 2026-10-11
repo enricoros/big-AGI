@@ -24,7 +24,6 @@ const _IF_Vision_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision,
 // - reasoning_effort is GLM-5.2+ only (openapi.json); 5.1 and below are binary -> 'none'/'high', do not widen
 // - GLM-5.2 collapses the 7-value enum (none/minimal skip, low/medium -> high, xhigh -> max) -> 3 distinct tiers
 // - GLM-5.3, 5.3-Flash and 5.3-FlashX: thinking compulsory ('disabled' -> 400 code 1210), effort exactly low|high|max, default max
-//   Live-verified 2026-08-16, re-verified 2026-09-21
 const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
 ] as const;
@@ -38,8 +37,7 @@ const _PS_Reasoning_Compulsory: ModelDescriptionSchema['parameterSpecs'] = [
 // Flash = free tier (1 concurrent request, throttled); FlashX = paid with higher concurrency & priority routing; exception: GLM-5.3-Flash is paid
 // Ref: https://docs.z.ai/openapi.json (authoritative enums + per-model limits), https://docs.z.ai/guides/overview/pricing
 // pubDate is REQUIRED on every entry (same pattern as _AnthropicModelDef in anthropic.models.ts).
-// [2026-09-21] Re-verified vs openapi.json, pricing page, live probes: prices unchanged. GET /models lists only
-// 11 of these ids - this curated list stays authoritative. 204800 "200K" entries kept (weights say 202752).
+// GET /models lists only 11 of these ids - this curated list stays authoritative. 204800 "200K" entries kept (weights say 202752).
 type _ZaiModelDef = KnownModel & { pubDate: string };
 
 const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([

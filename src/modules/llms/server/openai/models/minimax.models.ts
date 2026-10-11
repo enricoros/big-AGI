@@ -19,11 +19,25 @@ export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
  * - Pricing: https://platform.minimax.io/docs/guides/pricing-paygo.md
  * - Text generation: https://platform.minimax.io/docs/guides/text-generation.md
  * - OpenAI-compatible reference (model enum, max_completion_tokens caps, thinking/service_tier): https://platform.minimax.io/docs/api-reference/text-chat-openai.md
- * - Updated: 2026-09-14
+ * - Updated: 2026-10-11
  */
 type _MiniMaxModelDef = ModelDescriptionSchema & { pubDate: string };
 
 const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
+
+  // M3.1 Flash Preview (2026-09-27) - M Plan / Token Plan Subscription Key only; pay-as-you-go keys get "unknown model"
+  {
+    id: 'MiniMax-M3.1-Flash-Preview',
+    label: 'MiniMax M3.1 Flash (Preview)',
+    pubDate: '20260927',
+    description: 'Latest M-series model for agentic reasoning, tool use, coding and long-context tasks, natively multimodal (text, image, video input). 1M context. Requires an M Plan Subscription Key.',
+    contextWindow: 1000000,
+    maxCompletionTokens: 131072, // vendor-recommended; documented max 524288 (512K)
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
+    // per docs (not probed): thinking cannot be disabled, reasoning_effort defaults to 'max'
+    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }],
+    hidden: true, // subscription-only
+  },
 
   // M3 - flagship, natively multimodal, 1M context (2026-06-01)
   {
