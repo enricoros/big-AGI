@@ -150,7 +150,7 @@ export async function* executeChatGenerateWithContinuation(
             ...particle,
             level: 'warn',
             text: `Unexpected ${particle.text.charAt(0).toLowerCase()}${particle.text.slice(1)}`,
-            detail: `The paused turn was sent back for continuation and the API found it changed, so it dropped these reasoning blocks. This should not happen after a pause - please report it with the indices below.${indices ? `\n${indices}` : ''}`,
+            detail: `The paused turn was sent back for continuation and the API found it changed, so it dropped these reasoning blocks. This should not happen after a pause - please report it with the indices below.${indices ? `\n\n${indices}` : ''}`,
           };
           continue;
         }

@@ -22,7 +22,7 @@ import { aixToXAIResponses } from './adapters/xai.responsesCreate';
 
 import type { IParticleTransmitter } from './parsers/IParticleTransmitter';
 import { createAnthropicFileInlineTransform } from './parsers/anthropic.transform-fileInline';
-import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
+import { anthropicThinkingOrigins, createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
 import { createBedrockConverseParserNS, createBedrockConverseStreamParser } from './parsers/bedrock-converse.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
 import { createGeminiInteractionsParserNS, createGeminiInteractionsParserSSE } from './parsers/gemini.interactions.parser';
@@ -102,7 +102,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
           body: anthropicBody,
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
-        chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
+        chatGenerateParse: (streaming ? createAnthropicMessageParser : createAnthropicMessageParserNS)(() => anthropicThinkingOrigins(chatGenerate.chatSequence, anthropicBody.messages)),
         particleTransform: !model.vndAntTransformInlineFiles ? undefined : createAnthropicFileInlineTransform(
           anthropicAccess(access, ANTHROPIC_API_PATHS.files, hostedFeatures),
           model.vndAntTransformInlineFiles,
@@ -156,7 +156,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
             },
             bodyTransform: streaming ? 'aws-eventstream-binary' : null,
             demuxerFormat: streaming ? 'fast-sse' : null,
-            chatGenerateParse: streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
+            chatGenerateParse: (streaming ? createAnthropicMessageParser : createAnthropicMessageParserNS)(() => anthropicThinkingOrigins(chatGenerate.chatSequence, bedrockAnthropicBody.messages)),
           };
 
         // [Bedrock Mantle] OpenAI Chat Completions-compatible API for non-Anthropic models

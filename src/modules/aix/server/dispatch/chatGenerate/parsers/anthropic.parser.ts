@@ -1,6 +1,6 @@
 import { safeErrorString } from '~/server/wire';
 
-import type { AixWire_Particles } from '../../../api/aix.wiretypes';
+import type { AixAPIChatGenerate_Request, AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseContext, ChatGenerateParseFunction } from '../chatGenerate.dispatch';
 import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
@@ -83,7 +83,7 @@ const hotFixAntInjectToolsTextSpacer = true;
 // here) - noted in this file as the spot we track Anthropic protocol deltas pending wider model support past Opus 4.8.
 // See: https://platform.claude.com/docs/en/build-with-claude/mid-conversation-system-messages
 
-export function createAnthropicMessageParser(): ChatGenerateParseFunction {
+export function createAnthropicMessageParser(thinkingOrigins?: () => AnthropicThinkingOrigins): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
   let responseMessage: AnthropicWire_API_Message_Create.Response;
   let hasErrored = false;
@@ -148,7 +148,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 
         // -> [2026-09-01] Preserved thinking: replayed thinking blocks the API dropped (edited history, or a model switch)
         if (responseMessage.input_transformations?.length)
-          _sendInputTransforms(pt, responseMessage.input_transformations);
+          _sendInputTransforms(pt, responseMessage.input_transformations, thinkingOrigins);
 
         if (responseMessage.usage) {
           chatInTokens = responseMessage.usage.input_tokens;
@@ -544,7 +544,7 @@ export function createAnthropicMessageParser(): ChatGenerateParseFunction {
 }
 
 
-export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
+export function createAnthropicMessageParserNS(thinkingOrigins?: () => AnthropicThinkingOrigins): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
   let needsTextSeparator = false; // insert text separator when text follows server tool
 
@@ -587,7 +587,7 @@ export function createAnthropicMessageParserNS(): ChatGenerateParseFunction {
 
     // -> [2026-09-01] Preserved thinking: dropped replayed thinking blocks
     if (input_transformations?.length)
-      _sendInputTransforms(pt, input_transformations);
+      _sendInputTransforms(pt, input_transformations, thinkingOrigins);
 
     // -> Content Blocks - Non-Streaming
     for (let i = 0; i < content.length; i++) {
@@ -783,8 +783,40 @@ function _collectStrippedPaths(raw: unknown, parsed: unknown, path: string, out:
   return out;
 }
 
+/**
+ * Where each replayed thinking block of the request came from, in wire order: wire path ('messages.1.content.0') -> the 1-based
+ * reply (model message of the chat sequence) it replays, matched by signature, and that reply's opening text. Wire positions alone
+ * don't point at chat messages: a tool loop spans many wire messages, and replies with no user message between them merge into one.
+ */
+export type AnthropicThinkingOrigins = Map<string, { reply: number, opening: string }>;
+
+export function anthropicThinkingOrigins(chatSequence: AixAPIChatGenerate_Request['chatSequence'], wireMessages: AnthropicWire_API_Message_Create.Request['messages']): AnthropicThinkingOrigins {
+  const replyByHandle = new Map<string, number>();
+  const openings: string[] = [];
+  let reply = 0;
+  for (const message of chatSequence) {
+    if (message.role !== 'model') continue;
+    reply++;
+    for (const part of message.parts) {
+      if (part.pt === 'text')
+        openings[reply] ??= part.text;
+      else if (part.pt === 'ma') {
+        if (part.textSignature) replyByHandle.set(part.textSignature, reply);
+        for (const data of part.redactedData ?? []) replyByHandle.set(data, reply);
+      }
+    }
+  }
+  const origins: AnthropicThinkingOrigins = new Map();
+  wireMessages.forEach((message, m) => message.content.forEach((block, b) => {
+    const handle = block.type === 'thinking' ? block.signature : block.type === 'redacted_thinking' ? block.data : undefined;
+    const reply = handle ? replyByHandle.get(handle) : undefined;
+    if (reply) origins.set(`messages.${m}.content.${b}`, { reply, opening: openings[reply] ?? '' });
+  }));
+  return origins;
+}
+
 /** [2026-09-01] Preserved thinking: relay the replayed thinking blocks the API dropped, as one void notice per vendor reason (normalized to an AIX cause). */
-function _sendInputTransforms(pt: IParticleTransmitter, transforms: NonNullable<AnthropicWire_API_Message_Create.Response['input_transformations']>): void {
+function _sendInputTransforms(pt: IParticleTransmitter, transforms: NonNullable<AnthropicWire_API_Message_Create.Response['input_transformations']>, thinkingOrigins: (() => AnthropicThinkingOrigins) | undefined): void {
   const pathsByReason = new Map<string, string[]>();
   for (const { type, path, reason } of transforms) {
     // 'thinking_mismatch_allowed' (observed 2026-09-24): the block failed the binding check but was kept, because the
@@ -797,6 +829,7 @@ function _sendInputTransforms(pt: IParticleTransmitter, transforms: NonNullable<
     }
     pathsByReason.set(reason, [...(pathsByReason.get(reason) ?? []), path]);
   }
+  const origins = pathsByReason.size ? thinkingOrigins?.() : undefined;
   for (const [reason, paths] of pathsByReason) {
     // NOTE: Anthropic's 'prefix_binding_mismatch' fires identically for an edited/deleted message, a changed
     // tool selection, or a changed system prompt (e.g. our own {{LocaleNow}} ticking to a new hour) - it does
@@ -805,17 +838,74 @@ function _sendInputTransforms(pt: IParticleTransmitter, transforms: NonNullable<
     // provably wrong in those cases - stay cause-neutral instead.
     const cause = reason === 'prefix_binding_mismatch' ? 'prefix-changed' : reason === 'model_binding_mismatch' ? 'model-switch' : reason;
     const why = cause === 'prefix-changed' ? 'Reasoning reset' : cause === 'model-switch' ? 'Model changed' : cause;
-    const what = paths.length > 1 ? `ignored ${paths.length} reasoning blocks` : 'ignored 1 reasoning block';
+    const replies = origins && _describeDroppedReplies(paths, origins, cause === 'prefix-changed');
+    const what = replies?.what ?? (paths.length > 1 ? `ignored ${paths.length} reasoning blocks` : 'ignored 1 reasoning block');
     const where = paths.map(p => p.replace(/^messages\.(\d+)\.content\.(\d+).*$/, '$1.$2')).join(', '); // wire positions: message.block
-    const detail = cause === 'prefix-changed'
-      ? `Harmless: the model reasoned again instead of reusing earlier reasoning. This happens when a message, the tool selection, or the instructions changed since that reasoning was generated.\nIgnored indices: ${where} (zero-based)`
-      : `Harmless: the model rethinks from the messages as they are now.\nIgnored indices: ${where} (zero-based)`;
+    const harmless = cause !== 'prefix-changed' ? '**Harmless**: the model rethinks from the messages as they are now.'
+      : replies ? '**Harmless**: reasoning is reused only while everything before it is unchanged, otherwise the model reasons again.'
+        : '**Harmless**: the model reasoned again instead of reusing earlier reasoning. This happens when a message, the tool selection, or the instructions changed since that reasoning was generated.';
     pt.appendVoidNotice({
       p: 'vnt', nt: 'input-transform', itt: 'thinking-dropped', cause, reason, paths,
       text: `${why}: ${what}`,
-      detail,
+      detail: [...replies?.paragraphs ?? [], harmless, `Ignored indices: \`${where}\` (zero-based)`].join('\n\n'), // indices last: the continuation's warning keeps only the last line
     });
   }
+}
+
+/**
+ * Names the replies whose reasoning was dropped. For prefix changes it also brackets the earliest change: a block is dropped when
+ * anything before it differs from when it was generated, so the difference lies before the first dropped block and after the
+ * kept block just before it (measured: system, tool set and tool-result edits drop every later block; moved cache_control, a
+ * changed effort and omitted earlier thinking drop none; a deleted user message drops only the blocks after it).
+ */
+function _describeDroppedReplies(paths: string[], origins: AnthropicThinkingOrigins, bracketChange: boolean): { what: string, paragraphs: string[] } | undefined {
+  if (!paths.every(p => origins.has(p))) return undefined; // e.g. a block of a paused turn sent back by the continuation: plain notice
+  const dropped = new Set(paths);
+  const perReply = new Map<number, { opening: string, dropped: number, total: number }>();
+  for (const [path, { reply, opening }] of origins) {
+    const r = perReply.get(reply) ?? { opening, dropped: 0, total: 0 };
+    r.total++;
+    if (dropped.has(path)) r.dropped++;
+    perReply.set(reply, r);
+  }
+  const droppedReplies = [...perReply].filter(([, r]) => r.dropped);
+  const keptReplies = [...perReply].filter(([, r]) => !r.dropped).map(([reply]) => reply); // partly kept replies show their counts in the list
+
+  // the detail is the notice markdown subset (see RenderNoticeDetail): '- ' bullets, **label**, *excerpt*, `code`
+  const list = ['**Ignored reasoning**'];
+  for (const [reply, { opening, dropped, total }] of droppedReplies.slice(0, 8)) {
+    const excerpt = opening.replace(/[#*`>]+/g, '').replace(/\s+/g, ' ').trim();
+    list.push(`- **Reply ${reply}** (${dropped} of ${total} block${total > 1 ? 's' : ''})${!excerpt ? '' : ` *${excerpt.length > 48 ? `${excerpt.slice(0, 48).trimEnd()}…` : excerpt}*`}`);
+  }
+  if (droppedReplies.length > 8)
+    list.push(`- **Replies ${_numberRanges(droppedReplies.slice(8).map(([reply]) => reply))}**`);
+  if (keptReplies.length)
+    list.push(`**Kept**: repl${keptReplies.length > 1 ? 'ies' : 'y'} ${_numberRanges(keptReplies)}`);
+  const paragraphs = [list.join('\n')];
+
+  if (bracketChange) {
+    const order = [...origins.keys()];
+    const firstIndex = order.findIndex(p => dropped.has(p));
+    const firstReply = origins.get(order[firstIndex])?.reply;
+    const keptReply = firstIndex > 0 ? origins.get(order[firstIndex - 1])?.reply : undefined;
+    paragraphs.push(keptReply === undefined ? `**Changed**: something before reply ${firstReply}'s first reasoning - the instructions (e.g. a date or time in them), the tools, or an earlier message.`
+      : keptReply === firstReply ? `**Changed**: something inside reply ${firstReply}, after its kept reasoning (e.g. a tool result that changed or was not sent back).`
+        : `**Changed**: something between reply ${keptReply} and reply ${firstReply} (e.g. an edited or deleted message).`);
+  }
+
+  return { what: `${droppedReplies.length} earlier repl${droppedReplies.length > 1 ? 'ies' : 'y'}`, paragraphs };
+}
+
+/** [1, 2, 3, 5, 7, 8] -> '1-3, 5, 7-8' */
+function _numberRanges(sorted: number[]): string {
+  const ranges: string[] = [];
+  for (let i = 0; i < sorted.length; i++) {
+    let j = i;
+    while (j + 1 < sorted.length && sorted[j + 1] === sorted[j] + 1) j++;
+    ranges.push(j > i ? `${sorted[i]}-${sorted[j]}` : `${sorted[i]}`);
+    i = j;
+  }
+  return ranges.join(', ');
 }
 
 /** Compose a human-readable error string from Anthropic's stop_details. Returns undefined when nothing useful to surface. */
