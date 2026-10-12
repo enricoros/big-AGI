@@ -5,6 +5,7 @@ import { Box, CircularProgress, IconButton, ListDivider, ListItem, ListItemDecor
 import AddCircleOutlineRoundedIcon from '@mui/icons-material/AddCircleOutlineRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ForkRightIcon from '@mui/icons-material/ForkRight';
@@ -24,7 +25,7 @@ import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { AnthropicIcon } from '~/common/components/icons/vendors/AnthropicIcon';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
-import { CloseablePopup } from '~/common/components/CloseablePopup';
+import { CloseablePopup, joyKeepPopup } from '~/common/components/CloseablePopup';
 import { SubMenuHost, SubMenuItem, useSubMenuHost } from '~/common/components/SubMenu';
 import { DMessageUserFlag, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_USER } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
@@ -97,6 +98,7 @@ export function ChatMessageMenu(props: {
   const subMenuHost = useSubMenuHost();
 
   // state
+  const [armedAction, setArmedAction] = React.useState<'delete' | 'truncate' | null>(null);
   // const [showDiff, setShowDiff] = useChatShowTextDiff();
   // const handleOpsToggleShowDiff = () => setShowDiff(!showDiff);
 
@@ -123,7 +125,28 @@ export function ChatMessageMenu(props: {
   } = props;
 
 
+  // [effect] confirmations expire; closing the menu unmounts it and clears the timer
+  React.useEffect(() => {
+    if (!armedAction) return;
+    const timer = setTimeout(() => setArmedAction(null), 5000);
+    return () => clearTimeout(timer);
+  }, [armedAction]);
+
+
   // handlers
+
+  const handleDeleteConfirmed = React.useCallback((event: React.MouseEvent) => {
+    if (armedAction !== 'delete') return;
+    setArmedAction(null);
+    onClose();
+    onMessageDelete?.(event);
+  }, [armedAction, onClose, onMessageDelete]);
+
+  const handleTruncateConfirmed = React.useCallback((event: React.MouseEvent) => {
+    if (armedAction !== 'truncate' || props.isBottom) return;
+    setArmedAction(null);
+    onOpsMessageTruncate?.(event);
+  }, [armedAction, onOpsMessageTruncate, props.isBottom]);
 
   const handleShowInfo = React.useCallback(() => {
     onClose();
@@ -236,15 +259,27 @@ export function ChatMessageMenu(props: {
         </SubMenuItem>
       )}
       {onMessageDelete && (
-        <MenuItem onClick={onMessageDelete}>
-          <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
-          Delete <span style={{ opacity: 0.5 }}>message</span>
+        <MenuItem onClick={joyKeepPopup(() => setArmedAction(action => action === 'delete' ? null : 'delete'))}>
+          <ListItemDecorator>{armedAction === 'delete' ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}</ListItemDecorator>
+          {armedAction === 'delete' ? 'Cancel Delete' : <>Delete <span style={{ opacity: 0.5 }}>message</span></>}
+        </MenuItem>
+      )}
+      {onMessageDelete && armedAction === 'delete' && (
+        <MenuItem color='danger' onClick={handleDeleteConfirmed}>
+          <ListItemDecorator><DeleteForeverIcon /></ListItemDecorator>
+          Confirm Delete
         </MenuItem>
       )}
       {onOpsMessageTruncate && (
-        <MenuItem onClick={onOpsMessageTruncate} disabled={props.isBottom}>
+        <MenuItem onClick={joyKeepPopup(() => setArmedAction(action => action === 'truncate' ? null : 'truncate'))} disabled={props.isBottom}>
+          <ListItemDecorator>{armedAction === 'truncate' ? <CloseRoundedIcon /> : <VerticalAlignBottomIcon />}</ListItemDecorator>
+          {armedAction === 'truncate' ? 'Cancel Truncate' : <>Truncate <span style={{ opacity: 0.5 }}>after this</span></>}
+        </MenuItem>
+      )}
+      {onOpsMessageTruncate && armedAction === 'truncate' && (
+        <MenuItem color='danger' onClick={handleTruncateConfirmed} disabled={props.isBottom}>
           <ListItemDecorator><VerticalAlignBottomIcon /></ListItemDecorator>
-          Truncate <span style={{ opacity: 0.5 }}>after this</span>
+          Confirm Truncate
         </MenuItem>
       )}
 
