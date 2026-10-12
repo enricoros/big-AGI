@@ -96,6 +96,22 @@ const _styles = {
     fontSize: 'xs',
   },
 
+  noticeDetail: {
+    maxWidth: '32rem',
+    display: 'grid',
+    gap: 1.25,
+    lineHeight: 'md',
+  },
+  noticeDetailBullet: {
+    display: 'flex',
+    gap: 0.75,
+    pl: 0.5,
+  },
+  noticeDetailExcerpt: {
+    color: 'text.tertiary',
+    fontStyle: 'italic',
+  },
+
   opList: {
     // backgroundColor: 'red',
     px: 1.5,
@@ -179,7 +195,33 @@ function RenderChipNotice({ text, detail, warn, fragmentId, onFragmentDelete }: 
       {text}
     </Chip>
   );
-  return !detail ? chip : <Tooltip title={detail} variant='outlined' placement='top' arrow sx={_styles.opChipTooltip}>{chip}</Tooltip>;
+  return !detail ? chip : <Tooltip title={<RenderNoticeDetail detail={detail} />} variant='outlined' placement='top' arrow sx={_styles.opChipTooltip}>{chip}</Tooltip>;
+}
+
+/** Notice detail, a markdown subset composed by the sender: blank lines split paragraphs, '- ' starts a bullet, inline **label**, *excerpt* and `code` */
+function RenderNoticeDetail({ detail }: { detail: string }) {
+  return (
+    <Box sx={_styles.noticeDetail}>
+      {detail.split('\n\n').map((paragraph, i) => (
+        <div key={i}>
+          {paragraph.split('\n').map((line, j) => !line.startsWith('- ')
+            ? <div key={j}>{_renderNoticeInline(line)}</div>
+            : <Box key={j} sx={_styles.noticeDetailBullet}><span>•</span><span>{_renderNoticeInline(line.slice(2))}</span></Box>,
+          )}
+        </div>
+      ))}
+    </Box>
+  );
+}
+
+function _renderNoticeInline(text: string): React.ReactNode[] {
+  // the capture group keeps the markers at the odd indices
+  return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/).map((segment, i) =>
+    !(i % 2) ? segment
+      : segment.startsWith('**') ? <b key={i}>{segment.slice(2, -2)}</b>
+        : segment.startsWith('*') ? <Box key={i} component='span' sx={_styles.noticeDetailExcerpt}>{segment.slice(1, -1)}</Box>
+          : <Box key={i} component='span' sx={_styles.dividerCode}>{segment.slice(1, -1)}</Box>,
+  );
 }
 
 /** Flow divider: the generation continued in a new upstream request here (e.g. Anthropic `pause_turn`); `code` spans in the text render monospaced */

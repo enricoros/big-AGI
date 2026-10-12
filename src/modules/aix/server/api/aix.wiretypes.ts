@@ -858,7 +858,8 @@ export namespace AixWire_Particles {
     | { p: 'urlc', title: string, url: string, num?: number, from?: number, to?: number, text?: string, pubTs?: number } // url citation - pubTs: publication timestamp
     /**
      * Void Notice - inline, display-only, dismissible, never sent upstream.
-     * - `text`/`detail` are the common rendering, composed by the sender
+     * - `text`/`detail` are the common rendering, composed by the sender; `detail` may use a markdown subset:
+     *   blank-line paragraphs, '- ' bullets, inline **label**, *excerpt* and `code`
      * - `nt` (notice type) carries the structured facts of each notice, so clients can later filter, log
      *   or render a type specially without re-parsing text; add a variant per new notice, no catch-all
      */
