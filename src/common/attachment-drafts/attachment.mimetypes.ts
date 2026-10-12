@@ -240,3 +240,8 @@ export function mimeTypeIsPDF(mimeType: string): boolean {
 export function mimeTypeIsDocX(mimeType: string): boolean {
   return GuessedMimeLookupTable[mimeType]?.dt === 'doc-msw';
 }
+
+// The XLSX mini reader does not support the legacy XLS format.
+export function mimeTypeIsXlsx(mimeType: string): boolean {
+  return mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+}

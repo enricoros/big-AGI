@@ -1,0 +1,2 @@
+# Preserve the upstream bytes used by the script integrity hash on every platform.
+*.js -text
