@@ -7,6 +7,8 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import type { ContentScaling } from '~/common/app.theme';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 
 const containerSx: SxProps = {
@@ -32,21 +34,21 @@ export function BlockOpEmpty(props: {
 }) {
 
   // state
-  // const { showPromisedOverlay } = useOverlayComponents();
+  const { showPromisedOverlay } = useOverlayComponents();
 
   // derived state
-  // const { onDelete } = props;
+  const { onDelete } = props;
 
-  // const handleConfirmDelete = React.useCallback(async () => {
-  //   if (onDelete && await showPromisedOverlay('chat-message-delete-confirmation', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
-  //     <ConfirmationModal
-  //       open onClose={onUserReject} onPositive={() => onResolve(true)}
-  //       confirmationText='Are you sure you want to delete this message?'
-  //       positiveActionText='Delete'
-  //       title='Delete Message'
-  //     />,
-  //   )) onDelete();
-  // }, [onDelete, showPromisedOverlay]);
+  const handleConfirmDelete = React.useCallback(async () => {
+    if (onDelete && await showPromisedOverlay('chat-message-delete-confirmation', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        confirmationText='Permanently delete this message? This cannot be undone.'
+        positiveActionText='Delete'
+        title='Delete Message'
+      />,
+    )) onDelete();
+  }, [onDelete, showPromisedOverlay]);
 
   return (
     <Box sx={containerSx}>
@@ -63,7 +65,7 @@ export function BlockOpEmpty(props: {
           color='neutral'
           variant='outlined'
           size={props.contentScaling === 'md' ? 'lg' : 'md'}
-          onClick={props.onDelete}
+          onClick={handleConfirmDelete}
           sx={chipSx}
           startDecorator={<DeleteForeverIcon />}
         >

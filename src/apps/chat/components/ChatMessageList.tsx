@@ -12,6 +12,7 @@ import { speakText, speakTextSurfaceFailure } from '~/modules/speex/speex.client
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { DLLMContextTokens } from '~/common/stores/llms/llms.types';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { DConversationId, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { clipboardInterceptCtrlCForCleanup } from '~/common/util/clipboardUtils';
@@ -24,6 +25,7 @@ import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { themeMinWidthChatPane } from '~/common/app.theme';
 import { useChatOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { useChatStore } from '~/common/stores/chat/store-chats';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { CMLZeroConversation } from './messages-list/CMLZeroConversation';
@@ -64,6 +66,7 @@ export function ChatMessageList(props: {
   const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
 
   // external state
+  const { showPromisedOverlay } = useOverlayComponents();
   const { notifyBooting } = useScrollToBottom();
   const [showSystemMessages] = useChatShowSystemMessages();
   const [messageTimestampMode] = useChatMessageTimestampMode();
@@ -343,10 +346,21 @@ export function ChatMessageList(props: {
     setSelectedMessages(newSelected);
   };
 
-  const handleSelectionDelete = React.useCallback(() => {
-    conversationHandler?.messagesDelete(Array.from(selectedMessages));
+  const handleSelectionDelete = React.useCallback(async () => {
+    if (!conversationHandler || !selectedMessages.size) return;
+    const messageIds = Array.from(selectedMessages);
+    const confirmed = await showPromisedOverlay('chat-message-delete-confirmation', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        title='Delete Messages'
+        confirmationText={`Permanently delete ${messageIds.length} selected message${messageIds.length === 1 ? '' : 's'}? This cannot be undone.`}
+        positiveActionText='Delete'
+      />,
+    );
+    if (!confirmed) return;
+    conversationHandler.messagesDelete(messageIds);
     setSelectedMessages(new Set());
-  }, [conversationHandler, selectedMessages]);
+  }, [conversationHandler, selectedMessages, showPromisedOverlay]);
 
   const handleSelectionToggleVisibility = React.useCallback(() => {
     for (let selectedMessage of Array.from(selectedMessages))
