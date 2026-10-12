@@ -3,7 +3,7 @@ import createCache, { StylisElement, StylisPlugin } from '@emotion/cache';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
 
-import { animationEnterBelow, animationOpacityFadeIn } from '~/common/util/animUtils';
+import { animationEnterBelow, animationEnterModal, animationOpacityFadeIn } from '~/common/util/animUtils';
 
 
 // Definitions
@@ -97,25 +97,72 @@ export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({
   },
   components: {
     /**
-     * Input
-     *  - remove the box-shadow: https://github.com/mui/material-ui/commit/8d4728df8a66d710660af96ac7ff3f86d2d26382
+     * Input - Apple style refined borders, smooth focus ring
      */
     JoyInput: {
       styleOverrides: {
         root: {
           boxShadow: 'none',
+          borderRadius: '12px',
+          transition: 'border-color 150ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease, box-shadow 150ms ease',
+          '&:focus-within': {
+            borderColor: 'var(--joy-palette-primary-500, #0B6BCB)',
+            boxShadow: '0 0 0 3px rgba(11, 107, 203, 0.15)',
+          },
         },
       },
     },
 
     /**
-     * Select
-     * - remove the box-shadow: https://github.com/mui/material-ui/commit/8d4728df8a66d710660af96ac7ff3f86d2d26382
-     * */
+     * Select - Matching Apple Input style
+     */
     JoySelect: {
       styleOverrides: {
         root: {
           boxShadow: 'none',
+          borderRadius: '12px',
+          transition: 'border-color 150ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease, box-shadow 150ms ease',
+        },
+      },
+    },
+
+    /**
+     * Button - Tactile feel & optical tracking
+     */
+    JoyButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: '10px',
+          fontWeight: 600,
+          letterSpacing: '-0.01em',
+        },
+      },
+    },
+
+    JoyIconButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: '10px',
+        },
+      },
+    },
+
+    /**
+     * Card & Sheet - Apple elevation & subtle borders
+     */
+    JoyCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: '14px',
+        },
+      },
+    },
+
+    JoyChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: '8px',
+          fontWeight: 500,
         },
       },
     },
@@ -134,33 +181,30 @@ export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({
       },
     },
 
-    // JoyMenuItem: {
-    //   styleOverrides: {
-    //     root: {
-    //       '--Icon-fontSize': '1rem', // smaller menu(s) icon - default is 1.25rem ('xl', 20px)
-    //     },
-    //   },
-    // },
-
     JoyModal: {
       styleOverrides: {
         backdrop: uiComplexityMinimal ? {
           backdropFilter: 'none', // always un-blur on minimal
-          // and no animation either, to keep it simple
         } : {
-          animation: `${animationOpacityFadeIn} 0.16s ease-out`,
+          backgroundColor: 'rgba(0, 0, 0, 0.45)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          animation: `${animationOpacityFadeIn} 0.18s cubic-bezier(0.23, 1, 0.32, 1)`,
         },
       },
     },
     JoyModalDialog: {
       styleOverrides: {
         root: ({ theme }) => ({
+          borderRadius: '18px',
+          border: '1px solid var(--joy-palette-divider)',
+          boxShadow: '0 24px 64px -12px rgba(0, 0, 0, 0.25)',
           [theme.breakpoints.down('sm')]: {
             '--Card-padding': '1rem',
           },
           ...(!uiComplexityMinimal && {
             '& .agi-animate-enter': {
-              animation: `${animationEnterBelow} 0.16s ease-out`,
+              animation: `${animationEnterModal} 0.22s cubic-bezier(0.16, 1, 0.3, 1)`,
             },
           }),
         }),
@@ -175,9 +219,6 @@ export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({
       styleOverrides: {
         root: ({ ownerState }) => ({
           ...(ownerState.size === 'md' && {
-            // '--Switch-trackWidth': '36px',
-            // '--Switch-trackHeight': '22px',
-            // '--Switch-thumbSize': '17px',
             '--Switch-thumbSize': '16px',
           }),
         }),

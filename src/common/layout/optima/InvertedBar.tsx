@@ -44,12 +44,13 @@ export const InvertedBar = (props: {
   const sx: SxProps = React.useMemo(() => (
     props.direction === 'horizontal'
       ? {
-        // minHeight: 'var(--Bar)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         flexDirection: 'row',
-        // overflow: 'hidden',
         ...props.sx,
       } : {
-        // minWidth: 'var(--Bar)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
         flexDirection: 'column',
         ...props.sx,
       }
