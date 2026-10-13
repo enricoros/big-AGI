@@ -10,7 +10,7 @@ export type LlmsDefsVersions = Readonly<Record<ModelVendorId | '_shared' | '_ope
 export const LLMS_DEFS_VERSIONS = {
   _openaiCompat: '68374c5d3ee5',
   _shared: '68133b8c1f89',
-  alibaba: 'ef1629b4404a',
+  alibaba: 'a491f6689eea',
   anthropic: '50fac522d99a',
   azure: 'a6c0bb3feb9c',
   bedrock: 'a5021aab9fa0',

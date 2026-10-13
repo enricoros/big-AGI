@@ -13,6 +13,11 @@ export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefi
 // - Per-model pages carry the authoritative caps + cache-hit price, e.g. https://www.alibabacloud.com/help/en/model-studio/qwen3-8-max
 // - Cache:   https://www.alibabacloud.com/help/en/model-studio/context-cache (implicit hit = 20% of input; explicit create 125% / hit 10%; deepseek-v4-pro and
 //            the qwen3.8 line excepted - their rates come off the model pages)
+// 2026-10-13 pass: glm-5.3-prime curated visible (GLM-5.3 on Alibaba's Fast mode 'Prime', listed 2026-09-28; no model page or price
+//   row yet - price from Alibaba's own OpenRouter endpoint, caps and params live-probed). qwen-turbo dropped (no longer listed, no
+//   price row). No price drift on the Intl table, DeepSeek busy/idle rows included; kimi-k3 gained its price-table row ($3/$15).
+//   'ZHIPU/GLM-5.3' and 'kimi/kimi-k3' still 403 'product not activated'. qwen3.8-max-prime is priced in Beijing only, not listed on
+//   Intl. New non-chat ids filtered as before: qwen3.8-omni-flash (+ -realtime), qwen-image-3.0 (+ -pro), qwen3.8-livetranslate-*.
 // 2026-09-14 pass (DeepSeek only): deepseek-v4.1-flash curated visible - DashScope's only route to V4.1 (it lists no undated
 //   'deepseek-flash'), peak card 0.3/1.2 with Alibaba's own 0.03 implicit cache-hit (Intl price table + model page).
 // 2026-09-02 pass: qwen3.8-max-0902 curated visible (upgraded snapshot listed today; the base id still serves the 08-03 checkpoint per
@@ -368,16 +373,6 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     },
     hidden: true, // legacy alias, superseded by qwen3.6-flash
   },
-  {
-    idPrefix: 'qwen-turbo',
-    label: 'Qwen Turbo',
-    description: 'Fastest and cheapest for simple tasks. 1M context.',
-    contextWindow: 1000000, // 1M
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    maxCompletionTokens: 8192,
-    chatPrice: { input: 0.05, output: 0.20 },
-    hidden: true, // legacy alias
-  },
 
   // --- Third-party models resold by Alibaba Model Studio (Alibaba's own pricing; labeled to disambiguate from our native vendors) ---
   // DeepSeek on DashScope: dated snapshots are listed ALONGSIDE the undated ids (each with its own free-tier quota), unlike
@@ -461,6 +456,21 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     benchmark: { cbaElo: 1487 }, // lmarena: glm-5.3-max
   },
   {
+    // GLM-5.3 on Alibaba's Fast mode (Prime: 1.5-2x output TPS, same token billing - model-studio/prime-mode), listed 2026-09-28.
+    // No model page (glm-5-3-prime 404s), no price row, and the Prime page still names only glm-5.2-fast-preview: price from
+    // Alibaba's own OpenRouter endpoint (2.80/8.80, hit 0.56 = 2x glm-5.3, the glm-5.2-fast ratio). Live-probed 2026-10-13: input
+    // range [1, 1048576], max_tokens [1, 131072], enable_thinking restricted to True, reasoning_effort low|high|max, tools OK.
+    idPrefix: 'glm-5.3-prime',
+    label: 'GLM-5.3 Prime (Alibaba)',
+    parameterSpecs: _PS_Qwen38EffortAlwaysOn, // same surface as glm-5.3
+    pubDate: '20260921', // OpenRouter's canonical slug z-ai/glm-5.3-prime-20260921
+    description: 'Zhipu GLM-5.3 on Alibaba\'s fast-serving tier (Prime): same model, 1.5-2x output speed, 2x price. 1M context, always-on thinking.',
+    contextWindow: 1048576, // 1M (live-probed: 'Range of input length should be [1, 1048576]'; OpenRouter rounds to 1,000,000)
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning], // text-only, like glm-5.3
+    maxCompletionTokens: 131072, // 128K (live-probed max_tokens range)
+    chatPrice: { input: 2.80, output: 8.80, cache: { read: 0.56 } },
+  },
+  {
     idPrefix: 'glm-5.2',
     label: 'GLM-5.2 (Alibaba)',
     parameterSpecs: _PS_GlmEffort,
@@ -494,7 +504,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   },
   {
     // Live on DashScope since the 08-17 pass; model page published 2026-08-24. Singapore $3/$15 with implicit cache 0.30
-    // (10% of input here, not the usual Kimi 20%); no price-table row yet. Unlike K2.7 Code, thinking can be turned off.
+    // (10% of input here, not the usual Kimi 20%); Intl price-table row added by 2026-10-13. Unlike K2.7 Code, thinking can be turned off.
     idPrefix: 'kimi-k3',
     label: 'Kimi K3 (Alibaba)',
     parameterSpecs: _PS_KimiEffort,
