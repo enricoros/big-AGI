@@ -4,16 +4,18 @@ Vendor `metaai` ("Meta AI"; the product is the Meta Model API at dev.meta.ai) se
 
 ## Catalog
 
-- `GET /v1/models` lists 7 ids with `created: 0` on all and no type/modality field. Chat: `muse-spark-1.3|1.2|1.1` plus `-contributor` twins of 1.3 and 1.2. Image output: `muse-image-1.0`. ASR only: `muse-voice-transcribe-1.0` (404 `model_not_found` on `/v1/responses`, filtered by prefix).
-- Spark: 1,048,576 context, text/image/video/PDF/audio in (1.3 audio degraded), text out. Standard $1.25 in / $4.25 out / $0.15 cached per 1M; Contributor $0.10 / $0.20 / $0.002 and Meta trains on prompts and completions (hidden by default; documented 100 RPM / 3M TPM vs 3,000 / 4M per team on Standard - the wire header reported 150 RPM on the Contributor ids). Web search +$2.50 per 1K queries. Muse Image $0.01 per image, aspect ratio only.
-- Release dates are editorial (Spark 1.1 2026-07-09, Muse Image 2026-07-07, 1.2 2026-08-05, 1.3 2026-09-02); `/llms:update-models-metaai` holds the source list.
+- `GET /v1/models` lists 9 ids (2026-10-13) with `created: 0` on all and no type/modality field. Chat: `muse-wonder-1.0`, `muse-spark-1.3|1.2|1.1` plus `-contributor` twins of 1.3 and 1.2. Image output: `muse-image-1.0`. ASR only: `muse-voice-transcribe-1.0` (404 `model_not_found` on `/v1/responses`); segmentation: `sam-3.1` - both filtered by prefix.
+- Uncurated ids are guessed by line (`muse-<line>-<version>[-contributor]`): a new version inherits context, interfaces and params from its newest curated sibling of the same tier, never the price; Contributor ids stay hidden. An unknown line gets a null context window, which keeps it off the llm-registry-sync push.
+- Wonder (preview): 1,048,576 context, same inputs and request surface as Spark; $4 in / $20 out / $0.20 cached per 1M, Standard only (no Contributor tier on the API).
+- Spark: 1,048,576 context, text/image/video/PDF/audio in (1.3 audio degraded), text out. Standard $1.25 in / $4.25 out / $0.15 cached per 1M; Contributor $0.10 / $0.20 / $0.002 and Meta trains on prompts and completions (hidden by default; 150 RPM / 3M TPM vs 3,000 / 4M per team on Standard). Web search +$2.50 per 1K queries. Muse Image $0.01 per image, aspect ratio only.
+- Release dates are editorial (Spark 1.1 2026-07-09, Muse Image 2026-07-07, 1.2 2026-08-05, 1.3 2026-09-02, Wonder 1.0 2026-10-12); `/llms:update-models-metaai` holds the source list.
 
 ## Request contract
 
 - Unknown top-level parameters 400 (`unknown parameter X`); unknown nested keys are ignored. `seed`, `stop`, `n`, `logit_bias`, `response_format`, top-level `verbosity`, `conversation` all 400. The adapter's zod strip keeps the body clean.
 - `tool_choice`: only `auto` (`none`, `required`, named 400). Tools policy `any` degrades to `auto` for this dialect.
 - `truncation`: only `disabled` (`auto` 400, schema notwithstanding).
-- `reasoning.effort`: `minimal|low|medium|high|xhigh`. `none` parses but 400s on every Spark; `max` is not in the enum (announced for 1.3). Omitted = `high` - expensive on trivial prompts (95-250 reasoning tokens for "pong"). `reasoning.summary` `auto|concise|detailed` accepted; summaries are often `[]`. No raw reasoning text ever.
+- `reasoning.effort`: `minimal|low|medium|high|xhigh`, plus `max` on `muse-wonder-1.0` and `muse-spark-1.3` (2026-10-13; 1.1, 1.2 and 1.2-contributor 400 on it, 1.3-contributor accepts it although the docs exclude it - not offered). `none` parses but 400s on every Spark and Wonder. Omitted = `high` - expensive on trivial prompts (95-250 reasoning tokens for "pong"). `reasoning.summary` `auto|concise|detailed` accepted; summaries are often `[]`. No raw reasoning text ever.
 - `max_output_tokens` >= 16 (the adapter floors it); reasoning shares the budget - a tight cap returns `status: incomplete` with an EMPTY `output[]`. No enforced ceiling below 1M.
 - `store` defaults to TRUE upstream. The adapter sends `store: false` + `include: ['reasoning.encrypted_content']`, the documented stateless path. `include` + `previous_response_id` is a 400 - never combine.
 - Accepted: `instructions`, `temperature` 0..2 (2.0 is degenerate: rambling `incomplete` replies and an occasional 500 `internal server error`; the sweep records 0..1.5 as reliable), `top_p` (0,1], `metadata` (<= 16 pairs), `user`, `prompt_cache_key`, `safety_identifier`, `parallel_tool_calls`, `max_tool_calls`, `text.verbosity`, `service_tier` (normalized to `auto`). Spark is tuned for temperature 1.0 (`initialTemperature`).

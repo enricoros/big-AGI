@@ -8,7 +8,7 @@ import type { DModelParameterId } from '~/common/stores/llms/llms.parameters';
 
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 
-import { fromManualMapping, llmsDefineManualMappings, llmsLabelUncurated } from '../../models.mappings';
+import { fromManualMapping, type KnownModel, llmsDefineManualMappings, llmsLabelUncurated } from '../../models.mappings';
 
 // --- Meta Model ID inference (auto-derived from _knownMetaAIModels) ---
 export type LlmsMetaAIModelId = typeof _knownMetaAIModels[number]['idPrefix'];
@@ -27,10 +27,17 @@ const _wireMetaAIModelItemSchema = z.object({
 });
 
 
-// [Meta AI] Pricing, USD per 1M tokens - https://dev.meta.ai/docs/pricing-rate-limits (2026-09-02).
+// [Meta AI] Pricing, USD per 1M tokens - https://dev.meta.ai/docs/pricing-rate-limits (2026-10-13).
 // Flat ("no long-context premium"); all Standard Spark versions share one rate. Caching is automatic
 // (prefix KV, no breakpoints, no write charge): cached input bills at the reduced 'read' rate.
 // Web search grounding: $2.50 / 1K queries on top of tokens.
+const _wonderStandardPrice: ModelDescriptionSchema['chatPrice'] = {
+  input: 4,
+  output: 20,
+  cache: { read: 0.20 },
+  tools: { webSearch: 2.5 },
+};
+
 const _sparkStandardPrice: ModelDescriptionSchema['chatPrice'] = {
   input: 1.25,
   output: 4.25,
@@ -39,7 +46,8 @@ const _sparkStandardPrice: ModelDescriptionSchema['chatPrice'] = {
 };
 
 // [Meta AI] Contributor tier: the same model at ~12x/21x lower rates, in exchange for permission to train on
-// prompts and completions; also lower team rate limits (100 RPM / 3M TPM vs 3,000 RPM / 4M TPM on Standard).
+// prompts and completions; also lower team rate limits (150 RPM / 3M TPM vs 3,000 RPM / 4M TPM on Standard).
+// Spark 1.3 and 1.2 only: Wonder has no Contributor tier on the API.
 const _sparkContributorPrice: ModelDescriptionSchema['chatPrice'] = {
   input: 0.10,
   output: 0.20,
@@ -48,16 +56,21 @@ const _sparkContributorPrice: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Muse Spark parameters (Responses API, probed 2026-09-02 on all five Spark ids):
-// - reasoning.effort: 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'. 'none' parses but 400s on every Spark model
-//   ("does not support none with this model"); 'max' is not in the server enum yet (Meta announced it for 1.3 after
-//   safety testing - re-probe). Omitted, the server defaults to 'high' - left as the vendor default (no initialValue).
+// Muse Spark parameters (Responses API, probed 2026-09-02 on all five Spark ids; effort re-probed 2026-10-13):
+// - reasoning.effort: 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'. 'none' parses but 400s on every Spark and Wonder
+//   model ("not supported for model"). Omitted, the server defaults to 'high' - left as the vendor default (no initialValue).
+// - 'max' (extended reasoning beyond 'xhigh', same per-token price): muse-wonder-1.0 and muse-spark-1.3 only (reasoning.md).
+//   1.1, 1.2 and 1.2-contributor 400 on it; 1.3-contributor accepts it on the wire although the docs exclude it - kept off.
 // - web search: the OpenAI-shaped hosted 'web_search' tool, with search_context_size low|medium|high and an approximate
 //   user_location (dev.meta.ai/docs/search-grounding); $2.50 / 1K queries on top of tokens. Responses API only.
-// - Docs (reasoning.md + the Responses schema) list a 'max' effort for muse-spark-1.3 Standard only (not Contributor,
-//   not 1.1/1.2); unconfirmed on the wire, so not in enumValues until probed.
 const _sparkParamSpecs: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndOaiEffort', enumValues: ['minimal', 'low', 'medium', 'high', 'xhigh'] },
+  { paramId: 'llmVndOaiWebSearchContext' },
+  { paramId: 'llmVndOaiWebSearchGeolocation' },
+];
+
+const _maxEffortParamSpecs: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndOaiEffort', enumValues: ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'] },
   { paramId: 'llmVndOaiWebSearchContext' },
   { paramId: 'llmVndOaiWebSearchGeolocation' },
 ];
@@ -67,15 +80,19 @@ const _sparkParamSpecs: ModelDescriptionSchema['parameterSpecs'] = [
 // Vision: image input (jpeg/png/gif/webp, data URLs, up to 50 per request). PDF, video and audio are accepted upstream
 // too, but AIX has no native parts for them yet. Json: text.format json_schema / json_object verified. Prompt caching:
 // automatic, reported in usage.input_tokens_details.cached_tokens.
+// Muse Wonder takes the same requests on the same endpoints (models.md); verified 2026-10-13 on muse-wonder-1.0: parallel
+// function calls, web search, json_schema, image input, and cached_tokens on a repeated prefix.
 const _sparkInterfaces: ModelDescriptionSchema['interfaces'] = [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching];
 
-// All Spark versions share one context window (dev.meta.ai/docs/models). The output cap is not documented by Meta: 131072
-// is what Meta's own agent configs advertise (quickstart, coding-agents), while the server accepted max_output_tokens up
-// to 1M without a 400 (probed 2026-09-02) - an advertised figure, not an enforced ceiling. Reasoning tokens share it.
+// All Spark versions and Wonder share one context window (dev.meta.ai/docs/models). The output cap is not documented by Meta:
+// 131072 is what Meta's own agent configs advertise for Spark 1.3 (quickstart, coding-agents) and is assumed for Wonder, while
+// the server accepted max_output_tokens up to 1M without a 400 (probed 2026-09-02) - an advertised figure, not an enforced
+// ceiling. Reasoning tokens share it.
 const _SPARK_CONTEXT_WINDOW = 1048576;
 const _SPARK_MAX_OUTPUT_TOKENS = 131072;
 
 // Muse Spark is "tuned to run at the defaults (temperature=1.0, top_p=1.0)" - dev.meta.ai/docs/protocols/responses
+// (the docs say this of Spark only; applied to Wonder too, as it is the server default)
 const _SPARK_INITIAL_TEMPERATURE = 1.0;
 
 // Muse Image 1.0 - image generation over the Responses API ($0.01 per generated image, flat; not modeled in chatPrice).
@@ -87,19 +104,33 @@ const _museImageInterfaces: ModelDescriptionSchema['interfaces'] = [LLM_IF_OAI_R
 
 // Release dates: 1.1 2026-07-09 (ai.meta.com/blog/introducing-muse-spark-meta-model-api, which also dates Muse Image to
 // the same week - 07-07), 1.2 2026-08-05 (research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2), 1.3 2026-09-02
-// (Meta research blog, Wikipedia 'Muse Spark' release table). The API exposes no dates (created: 0), so these are editorial.
+// (Meta research blog, Wikipedia 'Muse Spark' release table), Wonder 1.0 2026-10-12 (research.meta.ai/blog/muse-wonder,
+// about.fb.com/news/2026/10/introducing-muse-wonder-models). The API exposes no dates (created: 0), so these are editorial.
 //
-// Array order = display order. Contributor variants are hidden by default: they train on the user's prompts and
-// completions, so opting in should be a deliberate choice (unhide in the models list).
+// Array order = display order, newest first within a line (the uncurated-id guesser below relies on it). Contributor
+// variants are hidden by default: they train on the user's prompts and completions, so opting in should be a deliberate
+// choice (unhide in the models list).
 const _knownMetaAIModels = llmsDefineManualMappings([
   {
-    idPrefix: 'muse-spark-1.3',
-    label: 'Muse Spark 1.3',
-    description: 'Meta\'s latest frontier reasoning model, tuned for agentic workflows (multi-step tool, browser and long-horizon tasks) with improved coding over 1.2. Text, image, video, PDF and audio input (audio understanding is degraded on 1.3). 1M context.',
+    idPrefix: 'muse-wonder-1.0',
+    label: 'Muse Wonder 1.0',
+    description: 'Meta\'s most capable model (preview), for complex software engineering and long-horizon agentic work: multi-file changes, sub-agent delegation, parallel tool calls. Text, image, video, audio and PDF input. 1M context. Standard tier only.',
     contextWindow: _SPARK_CONTEXT_WINDOW,
     maxCompletionTokens: _SPARK_MAX_OUTPUT_TOKENS,
     interfaces: _sparkInterfaces,
-    parameterSpecs: _sparkParamSpecs,
+    parameterSpecs: _maxEffortParamSpecs,
+    chatPrice: _wonderStandardPrice,
+    initialTemperature: _SPARK_INITIAL_TEMPERATURE,
+    pubDate: '20261012',
+  },
+  {
+    idPrefix: 'muse-spark-1.3',
+    label: 'Muse Spark 1.3',
+    description: 'Latest Muse Spark, Meta\'s reasoning model for high-volume and cost-sensitive work, tuned for agentic workflows (multi-step tool, browser and long-horizon tasks) with improved coding over 1.2. Text, image, video, PDF and audio input (audio understanding is degraded on 1.3). 1M context.',
+    contextWindow: _SPARK_CONTEXT_WINDOW,
+    maxCompletionTokens: _SPARK_MAX_OUTPUT_TOKENS,
+    interfaces: _sparkInterfaces,
+    parameterSpecs: _maxEffortParamSpecs,
     chatPrice: _sparkStandardPrice,
     initialTemperature: _SPARK_INITIAL_TEMPERATURE,
     pubDate: '20260902',
@@ -179,12 +210,14 @@ const _ORT_META_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
 
 /**
  * Lookup for OpenRouter: match an OR Meta model ID to a known hardcoded model (OR's `created` is the onboarding date and
- * api.meta.ai reports created: 0, so pubDate must come from here). OR lists 'meta/muse-spark-*' (+ '-contributor') and the
- * open-weight 'meta/muse-glimmer-30b', which is not on api.meta.ai and falls through (undefined).
+ * api.meta.ai reports created: 0, so pubDate must come from here). OR lists 'meta/muse-spark-*' (+ '-contributor'), the
+ * unversioned 'meta/muse-wonder' (resolved to the newest curated Standard version of the line), and the open-weight
+ * 'meta/muse-glimmer-30b', which is not on api.meta.ai and falls through (undefined).
  * @param orModelName - The model name after stripping 'meta/' (e.g. 'muse-spark-1.3')
  */
 export function llmOrtMetaLookup(orModelName: string): OrtVendorLookupResult | undefined {
-  const entry = _knownMetaAIModels.find(m => m.idPrefix === orModelName);
+  const entry = _knownMetaAIModels.find(m => m.idPrefix === orModelName)
+    ?? (/^muse-[a-z]+$/.test(orModelName) ? _knownMetaAIModels.find(m => m.idPrefix.startsWith(`${orModelName}-`) && !m.idPrefix.endsWith(_METAAI_CONTRIBUTOR_SUFFIX)) : undefined);
   if (!entry?.interfaces) return undefined;
 
   const interfaces = entry.interfaces.filter(i => _ORT_META_IF_ALLOWLIST.has(i));
@@ -202,15 +235,65 @@ export function llmOrtMetaLookup(orModelName: string): OrtVendorLookupResult | u
 // text on /v1/responses) must never reach the chat picker. Muse Image stays: it is a Responses-API model with image output.
 const _METAAI_NON_CHAT_PREFIXES = ['muse-voice-transcribe-', 'sam-'];
 
+const _METAAI_CONTRIBUTOR_SUFFIX = '-contributor';
+
+
+// [Meta AI] Guessing uncurated ids. Ids are 'muse-<line>-<version>' plus an optional '-contributor' tier suffix (models.md),
+// and within a line the context window, modalities, interfaces and params have held across versions (Spark 1.1-1.3), so a
+// new version inherits them from its newest curated sibling of the same tier - still '[?]'-labeled until curated, but with a
+// real context window, which also lets llm-registry-sync record it. Not inherited: price (per line - Wonder costs 3.2x Spark
+// input - and a wrong price is worse than none) and pubDate. Contributor ids are always hidden: Meta trains on their data.
+function _metaAIGuessSiblingIndex(modelId: string): number {
+  const line = /^muse-[a-z]+-/.exec(modelId)?.[0];
+  if (!line) return -1;
+  const isContributor = modelId.endsWith(_METAAI_CONTRIBUTOR_SUFFIX);
+  // array order is newest-first within a line: the first same-tier match is the newest sibling, else the newest of the line
+  const sameTier = _knownMetaAIModels.findIndex(m => m.idPrefix.startsWith(line) && m.idPrefix.endsWith(_METAAI_CONTRIBUTOR_SUFFIX) === isContributor);
+  return sameTier !== -1 ? sameTier : _knownMetaAIModels.findIndex(m => m.idPrefix.startsWith(line));
+}
+
+function _metaAIGuessModel(modelId: string): KnownModel {
+  const isContributor = modelId.endsWith(_METAAI_CONTRIBUTOR_SUFFIX);
+  const siblingIndex = _metaAIGuessSiblingIndex(modelId);
+  const sibling = siblingIndex !== -1 ? _knownMetaAIModels[siblingIndex] : undefined;
+  const tierNote = isContributor ? ' Contributor tier: Meta trains on your prompts and completions.' : '';
+
+  // unknown line: the list API discloses no type/modality/context, so null contextWindow keeps it visible in-app but
+  // holds it off the llm-registry-sync publication push
+  if (!sibling)
+    return {
+      idPrefix: modelId,
+      label: llmsLabelUncurated(_prettyModelId(modelId)),
+      description: `New Meta arrival '${modelId}', not yet curated - capabilities and context window unverified.${tierNote}`,
+      contextWindow: null,
+      interfaces: [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
+      hidden: isContributor,
+    };
+
+  return {
+    idPrefix: modelId,
+    label: llmsLabelUncurated(_prettyModelId(modelId)),
+    description: `New Meta arrival '${modelId}', not yet curated - context, capabilities and parameters assumed from ${sibling.idPrefix}; price unknown.${tierNote}`,
+    contextWindow: sibling.contextWindow,
+    maxCompletionTokens: sibling.maxCompletionTokens,
+    interfaces: sibling.interfaces,
+    parameterSpecs: sibling.parameterSpecs,
+    initialTemperature: sibling.initialTemperature,
+    hidden: isContributor,
+  };
+}
+
 
 function _prettyModelId(id: string): string {
-  // fallback labeler for unknown models, e.g. "muse-spark-1.4" => "Muse Spark 1.4"
-  return id
+  // fallback labeler for unknown models, e.g. "muse-spark-1.4" => "Muse Spark 1.4", "muse-spark-1.4-contributor" => "Muse Spark 1.4 (Contributor)"
+  const isContributor = id.endsWith(_METAAI_CONTRIBUTOR_SUFFIX);
+  const pretty = (isContributor ? id.slice(0, -_METAAI_CONTRIBUTOR_SUFFIX.length) : id)
     .replaceAll(/[_-]/g, ' ')
     .split(' ')
     .map(serverCapitalizeFirstLetter)
     .join(' ')
     .trim();
+  return isContributor ? `${pretty} (Contributor)` : pretty;
 }
 
 
@@ -237,28 +320,22 @@ export function metaAIModelsToModelDescriptions(wireModels: unknown): ModelDescr
     if (_METAAI_NON_CHAT_PREFIXES.some(prefix => model.id.startsWith(prefix)))
       continue;
 
-    // known models get full caps/pricing; unknown ids are uncurated (the list API discloses no type/modality/
-    // context): '[?]' + null contextWindow keeps them visible in-app but holds them off the llm-registry-sync
-    // publication push. A new Spark version inherits the family's interfaces and params (all versions share them).
-    const isSparkFamily = model.id.startsWith('muse-spark-');
-    descriptions.push(fromManualMapping(_knownMetaAIModels, model.id, undefined /* API `created` is a constant 0 */, undefined, {
-      idPrefix: model.id,
-      label: llmsLabelUncurated(_prettyModelId(model.id)),
-      description: `New Meta arrival '${model.id}', not yet curated - capabilities and context window unverified.`,
-      contextWindow: null,
-      interfaces: isSparkFamily ? _sparkInterfaces : [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
-      ...(isSparkFamily ? { parameterSpecs: _sparkParamSpecs } : {}),
-      hidden: false,
-    }));
+    // known models get full caps/pricing (a suffixed id of a curated version, e.g. a dated snapshot, prefix-matches it);
+    // unknown ids are guessed from their line. An unknown Contributor id must not prefix-match its Standard twin
+    // ('muse-wonder-1.0-contributor' -> 'muse-wonder-1.0'): it would inherit the Standard price and visibility.
+    const isUnknownContributor = model.id.endsWith(_METAAI_CONTRIBUTOR_SUFFIX) && !_knownMetaAIModels.some(known => known.idPrefix === model.id);
+    descriptions.push(fromManualMapping(isUnknownContributor ? [] : _knownMetaAIModels, model.id, undefined /* API `created` is a constant 0 */, undefined, _metaAIGuessModel(model.id)));
   }
 
-  // sort into editorial display order (= _knownMetaAIModels array order; unknown models sort at their
-  // family slot via prefix, ties by id) - the client preserves the service's list order
+  // sort into editorial display order (= _knownMetaAIModels array order; a suffixed id sorts at its curated base, a
+  // guessed id just above its newest sibling, anything else last; ties by id) - the client preserves the service's list order
   const _rank = (id: string) => {
     const exact = _knownMetaAIModels.findIndex(known => id === known.idPrefix);
     if (exact !== -1) return exact;
-    const prefix = _knownMetaAIModels.findIndex(known => id.startsWith(known.idPrefix));
-    return prefix === -1 ? _knownMetaAIModels.length : prefix;
+    const prefix = id.endsWith(_METAAI_CONTRIBUTOR_SUFFIX) ? -1 : _knownMetaAIModels.findIndex(known => id.startsWith(known.idPrefix));
+    if (prefix !== -1) return prefix;
+    const sibling = _metaAIGuessSiblingIndex(id);
+    return sibling === -1 ? _knownMetaAIModels.length : sibling - 0.5;
   };
   return descriptions.sort((a, b) => _rank(a.id) - _rank(b.id) || a.id.localeCompare(b.id));
 }

@@ -13,7 +13,7 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 - Reasoning effort ladder: https://dev.meta.ai/docs/reasoning.md
 - Responses API: https://dev.meta.ai/docs/protocols/responses.md; full schema https://dev.meta.ai/docs/api-reference/responses/schemas.md (5,300 lines - grep it, don't read it)
 - Capability pages to diff against `interfaces` / `parameterSpecs`: tool-calling.md, tool-search.md, search-grounding.md, structured-output.md, image-understanding.md, video-understanding.md, file-handling.md, image-generation.md, prompt-caching.md
-- Release dates (the API carries none): the announcement posts on ai.meta.com/blog and research.meta.ai/blog, and the release table on Wikipedia's "Muse Spark" page. Known: Spark 1.1 2026-07-09, Muse Image 2026-07-07, Spark 1.2 2026-08-05, Spark 1.3 2026-09-02.
+- Release dates (the API carries none): the announcement posts on ai.meta.com/blog and research.meta.ai/blog, and the release table on Wikipedia's "Muse Spark" page. Known: Spark 1.1 2026-07-09, Muse Image 2026-07-07, Spark 1.2 2026-08-05, Spark 1.3 2026-09-02, Wonder 1.0 2026-10-12 (research.meta.ai/blog/muse-wonder).
 - There is NO Model API changelog (`muse-code/changelog.md` is the CLI's). Third-party trackers (llm-stats.com/models/muse-spark-1.3, openrouter.ai/meta/muse-spark-1.3) are fallbacks for dates and benchmarks only.
 
 **Do NOT use web search for facts.** Fetch the URLs directly; search only to locate release announcements.
@@ -28,7 +28,7 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 **Live endpoint (extra signal):** If `.env.api-keys` has `METAAI_API_KEY`, scan the served list for new ids: `curl https://api.meta.ai/v1/models -H "Authorization: Bearer $METAAI_API_KEY"`. Never commit or echo the key.
 
 **Probing tips:**
-- Effort domain: `POST /v1/responses` with `{"model":"<id>","input":"pong","max_output_tokens":64,"reasoning":{"effort":"<v>"}}`. A bad value 400s with `unknown variant X, expected one of ...` (the full server enum); a value the model rejects 400s with `does not support "<v>" with this model`. As of 2026-09-02 the enum is `none|minimal|low|medium|high|xhigh`, `none` is rejected on every Spark, `max` is not served yet (Meta announced it for 1.3 - re-probe). Omitted effort runs as `high`.
+- Effort domain: `POST /v1/responses` with `{"model":"<id>","input":"pong","max_output_tokens":64,"reasoning":{"effort":"<v>"}}`. A bad value 400s with `unknown variant X, expected one of ...` (the full server enum); a value the model rejects 400s with `does not support "<v>" with this model`. As of 2026-10-13 the enum is `none|minimal|low|medium|high|xhigh|max`; `none` is rejected on every Spark and Wonder, `max` is accepted on Wonder and Spark 1.3 (and on 1.3-contributor, which the docs exclude - kept off). The rejection message lists the model's supported values. Omitted effort runs as `high`.
 - Unknown TOP-LEVEL request params 400 with `unknown parameter X` - cheap discovery of new fields; unknown nested keys are silently ignored.
 - `tool_choice` accepts only `auto`; `truncation` only `disabled`; logprobs are unreachable while reasoning is on.
 - Temperature 2.0 is accepted but degenerate (rambling `incomplete` replies, occasional HTTP 500) - the sweep records 0..1.5; do not read a 500 there as an outage.
