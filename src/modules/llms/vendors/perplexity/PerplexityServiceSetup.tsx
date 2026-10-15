@@ -53,7 +53,7 @@ export function PerplexityServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='perplexity-key' label='Perplexity API Key'
       rightLabel={<>{needsUserKey
         ? !perplexityKey && <Link level='body-sm' href={PERPLEXITY_REG_LINK} target='_blank'>API keys</Link>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!perplexityKey} />}
       </>}
       value={perplexityKey} onChange={value => updateSettings({ perplexityKey: value })}
       required={needsUserKey} isError={showKeyError}

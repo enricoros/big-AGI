@@ -52,7 +52,7 @@ export function SakanaAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='sakana-key' label='Sakana AI Key'
       rightLabel={<>{needsUserKey
         ? !sakanaKey && <Link level='body-sm' href={SAKANA_REG_LINK} target='_blank'>request Key</Link>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!sakanaKey} />}
       </>}
       value={sakanaKey} onChange={value => updateSettings({ sakanaKey: value })}
       required={needsUserKey} isError={showKeyError}

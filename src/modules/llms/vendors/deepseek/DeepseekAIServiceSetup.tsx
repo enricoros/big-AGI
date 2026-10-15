@@ -53,7 +53,7 @@ export function DeepseekAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='deepseek-key' label='Deepseek Key'
       rightLabel={<>{needsUserKey
         ? !deepseekKey && <Link level='body-sm' href={DEEPSEEK_REG_LINK} target='_blank'>request Key</Link>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!deepseekKey} />}
       </>}
       value={deepseekKey} onChange={value => updateSettings({ deepseekKey: value })}
       required={needsUserKey} isError={showKeyError}

@@ -51,7 +51,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     <ApproximateCosts serviceId={service?.id}>
       <Box sx={{ level: 'body-sm' }}>
-        Supports <b>Fable</b>, <b>Opus</b>, <b>Sonnet</b> and <b>Haiku</b>. Experiencing Issues? Check <Link href='https://status.anthropic.com/' level='body-sm' target='_blank'>Anthropic status</Link>.
+        Enjoy <b>Fable</b>, <b>Opus</b>, <b>Sonnet</b> and <b>Haiku</b>. Issues? Check <Link href='https://status.anthropic.com/' level='body-sm' target='_blank'>Anthropic status</Link>.
       </Box>
     </ApproximateCosts>
 
@@ -59,8 +59,8 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='anthropic-key' label={!!anthropicHost ? 'API Key' : 'Anthropic API Key'}
       rightLabel={<>{needsUserKey
         ? !anthropicKey && <Link level='body-sm' href='https://www.anthropic.com/earlyaccess' target='_blank'>request Key</Link>
-        : <AlreadySet />
-      } {anthropicKey && keyValid && <Link level='body-sm' href='https://console.anthropic.com/settings/usage' target='_blank'>show tokens usage</Link>}
+        : <AlreadySet overridden={!!anthropicKey} />
+      } {anthropicKey && keyValid && <Link level='body-sm' href='https://console.anthropic.com/settings/usage' target='_blank'>show usage</Link>}
       </>}
       value={anthropicKey} onChange={value => updateSettings({ anthropicKey: value })}
       required={needsUserKey} isError={keyError}

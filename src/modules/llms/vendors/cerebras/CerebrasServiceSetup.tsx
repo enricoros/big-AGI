@@ -51,7 +51,7 @@ export function CerebrasServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='cerebras-key' label='Cerebras API Key'
       rightLabel={<>{needsUserKey
         ? !cerebrasKey && <Link level='body-sm' href={CEREBRAS_REG_LINK} target='_blank'>API keys</Link>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!cerebrasKey} />}
       </>}
       value={cerebrasKey} onChange={value => updateSettings({ cerebrasKey: value })}
       required={needsUserKey} isError={showKeyError}

@@ -53,7 +53,7 @@ export function ZAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='zai-key' label='Z.ai Key'
       rightLabel={<>{needsUserKey
         ? !zaiKey && <ExternalLink level='body-sm' href={ZAI_REG_LINK}>request Key</ExternalLink>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!zaiKey} />}
       </>}
       value={zaiKey} onChange={value => updateSettings({ zaiKey: value })}
       required={needsUserKey} isError={showKeyError}

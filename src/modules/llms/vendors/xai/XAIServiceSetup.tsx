@@ -51,7 +51,7 @@ export function XAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       label='API Key'
       rightLabel={<>{needsUserKey
         ? !xaiKey && <ExternalLink level='body-sm' href={EXTERNAL_LINK_XAI_API_KEYS}>get a key</ExternalLink>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!xaiKey} />}
       </>}
       value={xaiKey}
       onChange={(value) => updateSettings({ xaiKey: value })}

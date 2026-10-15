@@ -53,7 +53,7 @@ export function MetaAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='metaai-key' label='Meta AI Key'
       rightLabel={<>{needsUserKey
         ? !metaaiKey && <ExternalLink level='body-sm' href={METAAI_REG_LINK}>get a Key</ExternalLink>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!metaaiKey} />}
       </>}
       value={metaaiKey} onChange={value => updateSettings({ metaaiKey: value })}
       required={needsUserKey} isError={showKeyError}

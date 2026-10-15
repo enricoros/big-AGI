@@ -55,7 +55,7 @@ export function NvidiaNIMServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='nvidianim-key' label='NVIDIA API Key'
       rightLabel={<>{needsUserKey
         ? !nvidiaKey && <Link level='body-sm' href={NVIDIA_REG_LINK} target='_blank'>get API Key</Link>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!nvidiaKey} />}
       </>}
       value={nvidiaKey} onChange={value => updateSettings({ nvidiaKey: value })}
       required={needsUserKey && !nvidiaHost} isError={showKeyError}

@@ -50,7 +50,7 @@ export function MistralServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='mistral-key' label='Mistral Key'
       rightLabel={<>{needsUserKey
         ? !mistralKey && <Link level='body-sm' href={MISTRAL_REG_LINK} target='_blank'>request Key</Link>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!mistralKey} />}
       </>}
       value={mistralKey} onChange={value => updateSettings({ oaiKey: value })}
       required={needsUserKey} isError={showKeyError}

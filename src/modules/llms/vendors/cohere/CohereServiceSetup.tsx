@@ -52,7 +52,7 @@ export function CohereServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='cohere-key' label='Cohere Key'
       rightLabel={<>{needsUserKey
         ? !cohereKey && <ExternalLink level='body-sm' href={COHERE_REG_LINK}>request Key</ExternalLink>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!cohereKey} />}
       </>}
       value={cohereKey} onChange={value => updateSettings({ cohereKey: value })}
       required={needsUserKey} isError={showKeyError}

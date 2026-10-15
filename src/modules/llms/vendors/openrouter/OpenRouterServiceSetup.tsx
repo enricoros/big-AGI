@@ -93,7 +93,7 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='openrouter-key' label='API Key'
       rightLabel={<>{needsUserKey
         ? !oaiKey && <Link level='body-sm' href='https://openrouter.ai/keys' target='_blank'>your keys</Link>
-        : <AlreadySet />
+        : <AlreadySet overridden={!!oaiKey} />
       } {oaiKey && keyValid && <Link level='body-sm' href='https://openrouter.ai/activity' target='_blank'>check usage</Link>}
       </>}
       value={oaiKey} onChange={value => updateSettings({ oaiKey: value })}

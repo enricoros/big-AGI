@@ -89,7 +89,7 @@ export function LocalAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       noKey
       required={userHostRequired}
       isError={userHostError}
-      rightLabel={backendHasHost ? <AlreadySet /> : <Link level='body-sm' href='https://localai.io' target='_blank'>Learn more</Link>}
+      rightLabel={backendHasHost ? <AlreadySet overridden={!!localAIHost} /> : <Link level='body-sm' href='https://localai.io' target='_blank'>Learn more</Link>}
       value={localAIHost} onChange={value => updateSettings({ localAIHost: value })}
     />
 

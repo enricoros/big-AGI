@@ -74,7 +74,7 @@ export function MoonshotServiceSetup(props: { serviceId: DModelsServiceId }) {
             <Link level='body-sm' href={KIMI_CODE_API_LINK} target='_blank'>Kimi Code</Link>
           </>
           : isKimiCodeKey ? 'Kimi Code subscription' : 'Kimi Platform'
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!moonshotKey} />}
       </>}
       value={moonshotKey} onChange={value => updateSettings({ moonshotKey: value })}
       required={needsUserKey} isError={showKeyError}

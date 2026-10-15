@@ -51,7 +51,7 @@ export function GroqServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='groq-key' label='Groq API Key'
       rightLabel={<>{needsUserKey
         ? !groqKey && <Link level='body-sm' href={GROQ_REG_LINK} target='_blank'>API keys</Link>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!groqKey} />}
       </>}
       value={groqKey} onChange={value => updateSettings({ groqKey: value })}
       required={needsUserKey} isError={showKeyError}

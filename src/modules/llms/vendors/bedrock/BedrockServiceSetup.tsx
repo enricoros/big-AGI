@@ -101,7 +101,7 @@ export function BedrockServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='bedrock-bearer-token' label='Bedrock long-term API Key'
       rightLabel={<>{needsUserKey
         ? undefined
-        : <AlreadySet />
+        : <AlreadySet overridden={!!bedrockBearerToken} />
       }</>}
       value={bedrockBearerToken} onChange={value => updateSettings({ bedrockBearerToken: value })}
       required={false} // required={needsUserKey && !hasIAM}
@@ -118,7 +118,7 @@ export function BedrockServiceSetup(props: { serviceId: DModelsServiceId }) {
           autoCompleteId='bedrock-access-key-id' label='AWS Access Key ID'
           rightLabel={<>{needsUserKey
             ? undefined
-            : <AlreadySet />
+            : <AlreadySet overridden={!!bedrockAccessKeyId} />
           }</>}
           value={bedrockAccessKeyId} onChange={value => updateSettings({ bedrockAccessKeyId: value })}
           required={false} // required={needsUserKey && !hasBearer}

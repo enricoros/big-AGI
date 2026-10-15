@@ -55,7 +55,7 @@ export function TogetherAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='togetherai-key' label='Together AI Key'
       rightLabel={<>{needsUserKey
         ? !togetherKey && <Link level='body-sm' href={TOGETHERAI_REG_LINK} target='_blank'>request Key</Link>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!togetherKey} />}
       </>}
       value={togetherKey} onChange={value => updateSettings({ togetherKey: value })}
       required={needsUserKey} isError={showKeyError}

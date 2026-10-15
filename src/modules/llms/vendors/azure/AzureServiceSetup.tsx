@@ -82,7 +82,7 @@ export function AzureServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='azure-key' label='Azure Key'
       rightLabel={<>{needsUserKey
         ? !azureKey && <Link level='body-sm' href='https://azure.microsoft.com/en-us/products/ai-services/openai-service' target='_blank'>request Key</Link>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!azureKey} />}
       </>}
       value={azureKey} onChange={value => updateSettings({ azureKey: value })}
       required={needsUserKey} isError={keyError}

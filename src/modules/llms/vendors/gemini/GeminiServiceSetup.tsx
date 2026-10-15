@@ -63,7 +63,7 @@ export function GeminiServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='gemini-key' label='Gemini API Key'
       rightLabel={<>{needsUserKey
         ? !geminiKey && <Link level='body-sm' href={GEMINI_API_KEY_LINK} target='_blank'>request Key</Link>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!geminiKey} />}
       </>}
       value={geminiKey} onChange={value => updateSettings({ geminiKey: value.trim() })}
       required={needsUserKey} isError={showKeyError}

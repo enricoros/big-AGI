@@ -70,7 +70,7 @@ export function ModularServiceSetup(props: { serviceId: DModelsServiceId }) {
       autoCompleteId='modular-key' label='Modular API Key'
       rightLabel={<>{needsUserKey
         ? !modularKey && isCloud && <Link level='body-sm' href={MODULAR_REG_LINK} target='_blank'>API tokens</Link>
-        : <AlreadySet />}
+        : <AlreadySet overridden={!!modularKey} />}
       </>}
       description={isCloud ? 'A 401 can also mean the prepaid credits ran out, or the token expired - not only a wrong key.' : undefined}
       value={modularKey} onChange={value => updateSettings({ modularKey: value })}
