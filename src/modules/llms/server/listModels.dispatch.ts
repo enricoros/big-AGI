@@ -45,7 +45,7 @@ import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './op
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription, groqValidateModelDefs_DEV } from './openai/models/groq.models';
 import { llmapiHeuristic, llmapiModelsToModelDescriptions } from './openai/models/llmapi.models';
 import { llmsIsNativeOpenAIHost } from '../shared/llm.isomorphic';
-import { minimaxHardcodedModelDescriptions, minimaxHeuristic } from './openai/models/minimax.models';
+import { minimaxHeuristic, minimaxModelsToModelDescriptions } from './openai/models/minimax.models';
 import { nousResearchHeuristic, nousResearchModelsToModelDescriptions } from './openai/models/nousresearch.models';
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
 import { nvidiaNIMHeuristic, nvidiaNIMModelsToModelDescriptions } from './openai/models/nvidianim.models';
@@ -100,6 +100,19 @@ export async function listModelsRunDispatch(access: AixAPI_Access, signal?: Abor
 // stub to reduce dependencies - either server/client or both
 function _capitalize(s: string): string {
   return s?.length ? (s.charAt(0).toUpperCase() + s.slice(1)) : s;
+}
+
+/**
+ * Curated-first vendors (Z.ai, MiniMax): /v1/models only adds 0-day ids next to a curated table, so a failed or refused
+ * list (unreliable endpoint, key without list access) yields an empty list - the curated models - instead of failing.
+ */
+async function _fetchModelsListCuratedFirst(vendorName: string, fetchList: () => Promise<OpenAIWire_API_Models_List.Response>): Promise<OpenAIWire_API_Models_List.Response> {
+  try {
+    return await fetchList();
+  } catch (error) {
+    console.warn(`[${vendorName}] Models list API failed, using curated models only:`, (error as Error)?.message || error);
+    return { object: 'list', data: [] };
+  }
 }
 
 
@@ -357,17 +370,14 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
       // Optimistically try the API for 0-day model discovery, but never fail on it.
       return createListModelsDispatch({
         fetchModels: async (): Promise<string[]> => {
-          try {
-            const { headers, url } = openAIAccess(access, null, OPENAI_API_PATHS.models);
+          const { headers, url } = openAIAccess(access, null, OPENAI_API_PATHS.models);
+          const wireModels = await _fetchModelsListCuratedFirst('Z.ai', async () => {
             _wire?.logRequest('GET', url, headers);
             const wireModels = await fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ url, headers, name: 'OpenAI/Zai', signal });
             _wire?.logResponse(wireModels);
-            return (wireModels?.data || []).map((m: { id: string }) => m.id);
-          } catch (error) {
-            // API is unreliable - log and continue with curated list only
-            console.warn('[Z.ai] Models list API failed, using curated models only:', (error as Error)?.message || error);
-            return [];
-          }
+            return wireModels;
+          });
+          return (wireModels?.data || []).map((m: { id: string }) => m.id);
         },
         convertToDescriptions: (apiModelIds) => {
           const curated = zaiCuratedModelDescriptions();
@@ -407,19 +417,23 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
         // [OpenAI-compatible dialects]: openAI-style fetch models list
         fetchModels: async () => {
 
-          // Bypass fetch for providers that do NOT have the /v1/models API yet - works in conjunction with the hardcoded models below
-          const bypassFetch = (dialect === 'openai' && minimaxHeuristic(oaiUrl)); // [MiniMax]
-          if (bypassFetch) return { data: [] }; // dummy response
+          const fetchList = async () => {
+            _wire?.logRequest('GET', oaiUrl, oaiHeaders);
+            const wireModels = await fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({
+              url: oaiUrl,
+              headers: oaiHeaders,
+              name: `OpenAI/${_capitalize(dialect)}`,
+              signal,
+            });
+            _wire?.logResponse(wireModels);
+            return wireModels;
+          };
 
-          _wire?.logRequest('GET', oaiUrl, oaiHeaders);
-          const wireModels = await fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ 
-            url: oaiUrl, 
-            headers: oaiHeaders, 
-            name: `OpenAI/${_capitalize(dialect)}`, 
-            signal,
-          });
-          _wire?.logResponse(wireModels);
-          return wireModels;
+          // [MiniMax] curated-first: the list only adds 0-day ids to the curated table (see minimaxModelsToModelDescriptions)
+          if (dialect === 'openai' && minimaxHeuristic(oaiUrl))
+            return _fetchModelsListCuratedFirst('MiniMax', fetchList);
+
+          return fetchList();
         },
 
         // OpenAI models conversions: dependent on the dialect
@@ -525,9 +539,9 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               if (fireworksAIHeuristic(oaiUrl))
                 return fireworksAIModelsToModelDescriptions(maybeModels);
 
-              // [MiniMax] hardcoded models (no /v1/models API yet)
+              // [MiniMax] curated table + 0-day arrivals from the live list
               if (minimaxHeuristic(oaiUrl))
-                return minimaxHardcodedModelDescriptions();
+                return minimaxModelsToModelDescriptions(maybeModels);
 
               // [Nous Research] Nous Portal gateway - OpenRouter-style catalog, reuses the OpenRouter mapper
               if (nousResearchHeuristic(oaiUrl))

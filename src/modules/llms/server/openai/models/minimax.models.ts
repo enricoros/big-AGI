@@ -1,7 +1,8 @@
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
-import { llmsDefineModels } from '../../models.mappings';
+import { llmDevCheckModels_DEV, llmsDefineModels, llmsLabelUncurated } from '../../models.mappings';
 
 // --- MiniMax Model ID inference (auto-derived from _knownMiniMaxModels) ---
 export type LlmsMiniMaxModelId = typeof _knownMiniMaxModels[number]['id'];
@@ -14,12 +15,13 @@ export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
 
 
 /**
- * MiniMax hardcoded models - /v1/models now exists, but returns bare ids (no context/pricing/capabilities), and omits the still-served legacy ids.
+ * MiniMax curated models - /v1/models returns bare ids (no context/pricing/capabilities) and omits still-served ids, so this
+ * table stays the catalog and the live list only adds 0-day arrivals (minimaxModelsToModelDescriptions).
  * - Models: https://platform.minimax.io/docs/release-notes/models.md
- * - Pricing: https://platform.minimax.io/docs/guides/pricing-paygo.md
+ * - Pricing: https://platform.minimax.io/docs/pricing/overview.md
  * - Text generation: https://platform.minimax.io/docs/guides/text-generation.md
  * - OpenAI-compatible reference (model enum, max_completion_tokens caps, thinking/service_tier): https://platform.minimax.io/docs/api-reference/text-chat-openai.md
- * - Updated: 2026-10-11
+ * - Updated: 2026-10-15
  */
 type _MiniMaxModelDef = ModelDescriptionSchema & { pubDate: string };
 
@@ -187,6 +189,33 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
 ]);
 
 
-export function minimaxHardcodedModelDescriptions(): ReadonlyArray<ModelDescriptionSchema> {
-  return _knownMiniMaxModels;
+// Served but never listed by /v1/models (probed 2026-10-15): the M Plan preview (Subscription Key only - pay-as-you-go keys get
+// 'unknown model') and three still-answering legacy ids. Exempt from the stale-defs drift check.
+const _minimaxUnlistedIds: string[] = ['MiniMax-M3.1-Flash-Preview', 'M2-her', 'MiniMax-M1', 'MiniMax-Text-01'] satisfies LlmsMiniMaxModelId[];
+
+/**
+ * The curated table as-is, plus each listed id the table lacks as a visible '[?]' 0-day arrival with no context window (the
+ * NVIDIA NIM convention): the app shows it at once, and the registry sync records and announces it without publishing it.
+ * An empty list (the dispatch tolerates a failed or refused /v1/models) yields exactly the curated table.
+ */
+export function minimaxModelsToModelDescriptions(maybeModels: { id?: unknown }[]): ModelDescriptionSchema[] {
+  const apiIds = maybeModels.map(m => m.id).filter((id): id is string => typeof id === 'string');
+  const knownIds = new Set<string>(_knownMiniMaxModels.map(m => m.id));
+
+  // [DEV] drift: stale curated entries and unknown arrivals (skipped on an empty list, which is a failed fetch, not a delisting)
+  if (Release.IsNodeDevBuild && apiIds.length)
+    llmDevCheckModels_DEV('MiniMax', apiIds, [...knownIds], { ignoreStale: _minimaxUnlistedIds });
+
+  const arrivals = apiIds
+    .filter(id => !knownIds.has(id))
+    .map((id): ModelDescriptionSchema => ({
+      id,
+      label: llmsLabelUncurated(id),
+      description: `New MiniMax arrival '${id}', not yet curated - capabilities and context window unverified.`,
+      contextWindow: null,
+      interfaces: [LLM_IF_OAI_Chat],
+    }));
+
+  // table order is the display order; 0-day arrivals sort last
+  return [..._knownMiniMaxModels, ...arrivals];
 }

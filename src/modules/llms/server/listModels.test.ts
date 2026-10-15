@@ -338,8 +338,9 @@ describe('listModels enumeration', () => {
     );
   });
 
-  test('openai-compat/openai via minimax.io host: hardcoded list (no /v1/models API)', async () => {
-    // Routed via dialect='openai' + minimax.io host heuristic; fetch is bypassed.
+  test('openai-compat/openai via minimax.io host: curated list (live list refused -> curated only)', async () => {
+    // Routed via dialect='openai' + minimax.io host heuristic; curated-first: the dummy key's refused (or offline-failed)
+    // /v1/models falls back to the curated table, so this stays green without a key or network.
     // OPENAI_API_KEY is NOT forwarded to this custom host - dummy key required from the client.
     const models = await expectOk(
       { dialect: 'openai', ...openAIShape({ oaiKey: 'dummy', oaiHost: 'https://api.minimax.io' }) } as AixAPI_Access,
