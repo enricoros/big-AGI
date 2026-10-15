@@ -59,8 +59,9 @@ const _sparkContributorPrice: ModelDescriptionSchema['chatPrice'] = {
 // Muse Spark parameters (Responses API, probed 2026-09-02 on all five Spark ids; effort re-probed 2026-10-13):
 // - reasoning.effort: 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'. 'none' parses but 400s on every Spark and Wonder
 //   model ("not supported for model"). Omitted, the server defaults to 'high' - left as the vendor default (no initialValue).
-// - 'max' (extended reasoning beyond 'xhigh', same per-token price): muse-wonder-1.0 and muse-spark-1.3 only (reasoning.md).
-//   1.1, 1.2 and 1.2-contributor 400 on it; 1.3-contributor accepts it on the wire although the docs exclude it - kept off.
+// - 'max' (extended reasoning beyond 'xhigh', same per-token price): muse-wonder-1.0, muse-spark-1.3 and 1.3-contributor. 1.1, 1.2
+//   and 1.2-contributor 400 on it. reasoning.md excludes 1.3-contributor, but it accepts and honors max (2026-10-15: 2.6-3.1K
+//   reasoning tokens at max vs 0.4-0.8K at xhigh on the same prompt, matching 1.3 Standard).
 // - web search: the OpenAI-shaped hosted 'web_search' tool, with search_context_size low|medium|high and an approximate
 //   user_location (dev.meta.ai/docs/search-grounding); $2.50 / 1K queries on top of tokens. Responses API only.
 const _sparkParamSpecs: ModelDescriptionSchema['parameterSpecs'] = [
@@ -174,7 +175,7 @@ const _knownMetaAIModels = llmsDefineManualMappings([
     contextWindow: _SPARK_CONTEXT_WINDOW,
     maxCompletionTokens: _SPARK_MAX_OUTPUT_TOKENS,
     interfaces: _sparkInterfaces,
-    parameterSpecs: _sparkParamSpecs,
+    parameterSpecs: _maxEffortParamSpecs,
     chatPrice: _sparkContributorPrice,
     initialTemperature: _SPARK_INITIAL_TEMPERATURE,
     pubDate: '20260902',
@@ -208,15 +209,31 @@ const _ORT_META_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
   'llmVndOaiEffort',
 ] as const satisfies DModelParameterId[]);
 
+// Open-weight Muse models: not on api.meta.ai, reached through OpenRouter's 'meta/' namespace. Kept out of _knownMetaAIModels
+// so the API mapper and the uncurated-id guesser never treat them as API siblings.
+const _ortOpenWeightMetaModels: ReadonlyArray<Pick<KnownModel, 'idPrefix' | 'pubDate' | 'interfaces' | 'parameterSpecs' | 'initialTemperature'>> = [
+  {
+    // Muse Spark Open: the open-weight Spark (816B MoE, 42B active), 1,048,576 context, text/image/audio/video in. Always
+    // reasons: reasoning_effort low|medium|high|xhigh, default xhigh; 'none', 'minimal' and 'max' are rejected
+    // (dev.meta.ai/docs/muse-spark-open/prompting). Recommended temperature 1.0 (.../muse-spark-open/settings).
+    idPrefix: 'muse-spark-open',
+    pubDate: '20261015', // OpenRouter canonical slug meta/muse-spark-open-20261015
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] }],
+    initialTemperature: 1.0,
+  },
+];
+
 /**
  * Lookup for OpenRouter: match an OR Meta model ID to a known hardcoded model (OR's `created` is the onboarding date and
  * api.meta.ai reports created: 0, so pubDate must come from here). OR lists 'meta/muse-spark-*' (+ '-contributor'), the
- * unversioned 'meta/muse-wonder' (resolved to the newest curated Standard version of the line), and the open-weight
- * 'meta/muse-glimmer-30b', which is not on api.meta.ai and falls through (undefined).
+ * unversioned 'meta/muse-wonder' (resolved to the newest curated Standard version of the line), the open-weight
+ * 'meta/muse-spark-open' (_ortOpenWeightMetaModels), and the open-weight 'meta/muse-glimmer-30b', which falls through (undefined).
  * @param orModelName - The model name after stripping 'meta/' (e.g. 'muse-spark-1.3')
  */
 export function llmOrtMetaLookup(orModelName: string): OrtVendorLookupResult | undefined {
   const entry = _knownMetaAIModels.find(m => m.idPrefix === orModelName)
+    ?? _ortOpenWeightMetaModels.find(m => m.idPrefix === orModelName)
     ?? (/^muse-[a-z]+$/.test(orModelName) ? _knownMetaAIModels.find(m => m.idPrefix.startsWith(`${orModelName}-`) && !m.idPrefix.endsWith(_METAAI_CONTRIBUTOR_SUFFIX)) : undefined);
   if (!entry?.interfaces) return undefined;
 
