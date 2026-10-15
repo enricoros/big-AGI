@@ -262,11 +262,12 @@ export const ModelItem = React.memo(function ModelItem(props: {
             </IconButton>
           </GoodTooltip>}
 
-          <GoodTooltip title='Options'>
+          {/* mobile: the whole row opens the options, the gear would only repeat it */}
+          {!props.isMobile && <GoodTooltip title='Options'>
             <IconButton aria-label='Configure LLM' size='sm' sx={absorbListPadding} onClick={handleLLMConfigure}>
               <PhGearSixIcon />
             </IconButton>
-          </GoodTooltip>
+          </GoodTooltip>}
 
         </Box>
 

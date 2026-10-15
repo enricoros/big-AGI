@@ -222,7 +222,8 @@ export function ModelsChangelogPanel(props: {
   return <>
 
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
+      {/* a real basis (not flex: 1's 0) so the chips wrap below on narrow screens instead of squeezing this to a word per line */}
+      <Box sx={{ flex: '1 1 12rem', minWidth: 0 }}>
         <Typography level='title-sm'>{headerTitle}</Typography>
         <Typography level='body-xs' textColor='text.tertiary'>{headerSubtitle}</Typography>
       </Box>

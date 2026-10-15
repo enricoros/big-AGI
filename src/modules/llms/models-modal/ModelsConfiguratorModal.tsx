@@ -463,7 +463,7 @@ export function ModelsConfiguratorModal(props: {
       disabled={refreshBatch.running}
       startDecorator={refreshBatch.running ? <CircularProgress sx={{ '--CircularProgress-size': '16px' }} /> : <RefreshIcon />}
       onClick={handleUpdateAllModels}
-      sx={{ minWidth: 140, ml: 'auto' }}
+      sx={{ minWidth: 140, flex: 1 }}
     >
       {refreshBatch.running ? `${Math.min(refreshBatch.done + 1, refreshBatch.total)} of ${refreshBatch.total}...` : 'Update all'}
     </Button>
@@ -577,7 +577,7 @@ export function ModelsConfiguratorModal(props: {
       animateEnter={!hasLLMs}
       unfilterBackdrop
       autoOverflow={true /* forces some shrinkage of the contents (ModelsList) */}
-      fullscreen={isMobile ? 'button' : undefined} // NOTE: was disabled because on mobile there's one screen with a stretch issue - but can't reproduce
+      fullscreen={isMobile ? true : undefined} // mobile: always maximized (no toggle)
     >
 
       {isTabWizard && (
