@@ -4,6 +4,8 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Badge, Box, IconButton, ListDivider, MenuItem, Option, Select, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
@@ -19,7 +21,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
 import { LLMVendorIconSprite } from '../components/LLMVendorIconSprite';
-import { findAllModelVendors, findModelVendor } from '../vendors/vendors.registry';
+import { findAllModelVendors, findModelVendor, type ModelVendorId } from '../vendors/vendors.registry';
 import { vendorHasServerConf } from '../vendors/vendor.helpers';
 // import { MODELS_WIZARD_OPTION_ID } from '~/modules/llms/models-modal/ModelsModal';
 
@@ -29,6 +31,15 @@ const ENABLE_DELETE_LAST = true; // This will fall the menu back to the 'Quick S
 
 export const ALL_SERVICES_OPTION_ID = '*'; // pseudo-service in the selector: the Updates screen (never a real service id)
 
+// Cloud priority: editorial, most relevant first (vendors not listed come last). It only picks which vendors show while
+// collapsed: configured ones always, then by priority up to CLOUD_COLLAPSED_COUNT, next to a 'Show more' tile (8 tiles, 4 full
+// rows of the 2-column grid). The section always lists alphabetically, collapsed or expanded, so a vendor is easy to find.
+const CLOUD_PRIORITY: ReadonlyArray<ModelVendorId> = [
+  'deepseek', 'nvidianim', 'groq', 'xai', 'mistral', 'zai', 'bedrock',
+  'azure', 'cohere', 'metaai', 'sakanaai', 'alibaba', 'moonshot', 'modular', 'togetherai', 'perplexity', 'cerebras',
+];
+const CLOUD_COLLAPSED_COUNT = 7;
+
 
 const _styles = {
   popup: {
@@ -37,6 +48,10 @@ const _styles = {
     borderRadius: 'xl',
     boxShadow: '0 8px 48px rgba(0,0,0,0.2)',
     // boxShadow: 'xl',
+
+    // never taller than the viewport (mobile: anchored below the Add button) - scrolls inside
+    maxHeight: { xs: 'calc(100dvh - 8rem)', md: 'calc(100dvh - 4rem)' },
+    overflowY: 'auto',
 
     // display
     display: 'grid',
@@ -50,7 +65,6 @@ const _styles = {
     gridColumn: '1 / -1',
     mt: 2,
     '&:first-of-type': { marginTop: 0 },
-    mb: 0.5,
     px: 1.5,
     py: 0.5,
     borderRadius: 'md',
@@ -82,6 +96,23 @@ const _styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerToggle: {
+    minHeight: 'auto',
+    justifyContent: 'space-between',
+    alignItems: 'baseline', // 'Show more' sits on the title's baseline (the expanded chevron re-centers itself)
+  },
+  toggleTileSpacer: {
+    width: '2rem', // = vendorItemIcon: keeps the text in line with the vendor names
+    flexShrink: 0,
+  },
+  headerToggleHint: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 0.25,
+    fontSize: 'xs',
+    fontWeight: 'md',
+    textTransform: 'uppercase',
   },
   addSubButton: {
     px: 1,
@@ -124,6 +155,29 @@ function _renderSectionHeader(title: string, isFirst: boolean = false) {
       {/*  Full Support*/}
       {/*</Box>*/}
     </Box>
+  );
+}
+
+// a section header that also toggles the section: 'Cloud ... SHOW MORE v' collapsed, 'Cloud ^' expanded
+function _renderSectionHeaderToggle(title: string, expanded: boolean, onToggle: () => void) {
+  return (
+    <MenuItem key={`header-${title}`} variant='plain' aria-expanded={expanded} onClick={onToggle} sx={{ ..._styles.header, ..._styles.headerToggle }}>
+      {title}
+      <Box sx={expanded ? { ..._styles.headerToggleHint, alignSelf: 'center' } : _styles.headerToggleHint}>
+        {!expanded && 'Show more'}
+        {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+      </Box>
+    </MenuItem>
+  );
+}
+
+// the last tile of a collapsed section: a plain text link, no icon or background (expanded, the header collapses it)
+function _renderShowMoreTile(onExpand: () => void) {
+  return (
+    <MenuItem key='show-more-tile' variant='plain' color='neutral' aria-expanded={false} onClick={onExpand} sx={{ ..._styles.vendorItem, fontSize: 'sm' }}>
+      <Box sx={_styles.toggleTileSpacer} />
+      Show more…
+    </MenuItem>
   );
 }
 
@@ -238,6 +292,7 @@ export function ModelsServiceSelector(props: {
 
   // state
   const [vendorsMenuAnchor, setVendorsMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const [showMoreVendors, setShowMoreVendors] = React.useState(false);
 
   // external state
   const isMobile = useIsMobile();
@@ -296,6 +351,18 @@ export function ModelsServiceSelector(props: {
         };
       });
 
+    // cloud vendors, alphabetical; collapsed: the configured ones, then by priority, an odd count so that with the toggle tile
+    // the rows are full; collapsible only when it hides at least 2 (the toggle tile takes a slot)
+    const _byName = (a: VendorItemData, b: VendorItemData) => a.vendor.name.localeCompare(b.vendor.name);
+    const _cloudRank = (id: ModelVendorId) => { const i = CLOUD_PRIORITY.indexOf(id); return i === -1 ? CLOUD_PRIORITY.length : i; };
+    const cloudItems = vendorItems.filter(v => v.vendor.displayGroup === 'cloud').sort(_byName);
+    const collapsedIds = new Set(cloudItems.filter(v => v.vendorInstancesCount > 0).map(v => v.vendor.id));
+    const collapsedTarget = Math.max(CLOUD_COLLAPSED_COUNT, collapsedIds.size) | 1;
+    for (const v of [...cloudItems].sort((a, b) => _cloudRank(a.vendor.id) - _cloudRank(b.vendor.id) || _byName(a, b)))
+      if (collapsedIds.size < collapsedTarget) collapsedIds.add(v.vendor.id);
+    const cloudCollapsible = cloudItems.length - collapsedIds.size >= 2;
+    const toggleCloud = () => setShowMoreVendors(show => !show);
+
     // rendered components split by display groups
     const components: React.ReactNode[] = [
 
@@ -306,11 +373,14 @@ export function ModelsServiceSelector(props: {
         // .sort((a, b) => a.vendor.displayRank - b.vendor.displayRank)
         .map(item => _renderVendorItem(item, isMobile, handleAddServiceForVendor)),
 
-      _renderSectionHeader('Cloud'),
-      ...vendorItems
-        .filter(v => v.vendor.displayGroup === 'cloud')
-        .sort((a, b) => a.vendor.name.localeCompare(b.vendor.name))
-        .map(item => _renderVendorItem(item, isMobile, handleAddServiceForVendor)),
+      ...(!cloudCollapsible ? [
+        _renderSectionHeader('Cloud'),
+        ...cloudItems.map(item => _renderVendorItem(item, isMobile, handleAddServiceForVendor)),
+      ] : [
+        _renderSectionHeaderToggle('Cloud', showMoreVendors, toggleCloud),
+        ...(showMoreVendors ? cloudItems : cloudItems.filter(v => collapsedIds.has(v.vendor.id))).map(item => _renderVendorItem(item, isMobile, handleAddServiceForVendor)),
+        ...(!showMoreVendors ? [_renderShowMoreTile(toggleCloud)] : []),
+      ]),
 
       _renderSectionHeader('Local'),
       ...vendorItems
@@ -324,7 +394,7 @@ export function ModelsServiceSelector(props: {
         .map(item => _renderVendorItem(item, isMobile, handleAddServiceForVendor)),
     ];
     return components;
-  }, [handleAddServiceForVendor, modelsServices, isMobile]);
+  }, [handleAddServiceForVendor, modelsServices, isMobile, showMoreVendors]);
 
 
   // memo deployed services items
