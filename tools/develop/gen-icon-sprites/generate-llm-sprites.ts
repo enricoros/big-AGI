@@ -6,10 +6,11 @@
  * Template:         tools/develop/gen-icon-sprites/VendorIconSprite.template.tsx
  * Output:           src/modules/llms/components/LLMVendorIconSprite.tsx
  *
- * Usage:  node tools/develop/gen-icon-sprites/generate-llm-sprites.ts
+ * Usage:  node tools/develop/gen-icon-sprites/generate-llm-sprites.ts [--check]
+ *         --check: exit 1 if the output file is stale, without writing it
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join, resolve } from 'path';
 
 const ROOT = resolve(import.meta.dirname, '../../..');
@@ -67,6 +68,10 @@ function parseIconFile(fileName: string): ParsedIcon {
   const filePath = join(VENDORS_DIR, fileName + '.tsx');
   const src = readFileSync(filePath, 'utf-8');
 
+  // one icon per file: a second <SvgIcon> would be silently ignored by the match below
+  const iconCount = src.match(/<SvgIcon\b/g)?.length ?? 0;
+  if (iconCount !== 1) throw new Error(`Expected one <SvgIcon> in ${filePath}, found ${iconCount}`);
+
   // Match <SvgIcon [attributes] {...props}> ... </SvgIcon>
   const fullMatch = src.match(/<SvgIcon\s+([\s\S]*?)>([\s\S]*?)<\/SvgIcon>/);
   if (!fullMatch) {
@@ -75,7 +80,10 @@ function parseIconFile(fileName: string): ParsedIcon {
     throw new Error(`Could not parse SvgIcon in ${filePath}`);
   }
 
-  return { attrs: parseAttrs(fullMatch[1]), children: fullMatch[2].trim() };
+  const children = fullMatch[2].trim();
+  // all symbols share one document: an inner id (gradients, clip paths) or url(#...) ref would collide across icons
+  if (/\bid=|url\(#/.test(children)) throw new Error(`Inner id or url(#...) reference in ${filePath} - not sprite-safe`);
+  return { attrs: parseAttrs(fullMatch[1]), children };
 }
 
 /**
@@ -92,6 +100,9 @@ function parseAttrs(raw: string): Record<string, string> {
   let m;
   while ((m = re.exec(cleaned)))
     attrs[m[1]] = m[2];
+  // anything the pattern did not consume (nested braces like style={{...}}, bare boolean attrs, other spreads) would be dropped
+  const leftover = cleaned.replace(re, '').trim();
+  if (leftover) throw new Error(`Unparsed SvgIcon attributes: ${leftover}`);
   return attrs;
 }
 
@@ -182,6 +193,15 @@ function main(): void {
   }
 
   const output = generateFromTemplate(vendors, symbols);
+  if (process.argv.includes('--check')) {
+    const current = existsSync(OUTPUT_FILE) ? readFileSync(OUTPUT_FILE, 'utf-8') : '';
+    if (current !== output) {
+      console.error(`\n${OUTPUT_FILE} is stale - run: npm run gen:icon-sprites`);
+      process.exit(1);
+    }
+    console.log(`\n${OUTPUT_FILE} is current`);
+    return;
+  }
   writeFileSync(OUTPUT_FILE, output, 'utf-8');
   console.log(`\nWrote ${OUTPUT_FILE}`);
 }
