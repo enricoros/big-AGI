@@ -105,6 +105,7 @@ function _capitalize(s: string): string {
 /**
  * Curated-first vendors (Z.ai, MiniMax): /v1/models only adds 0-day ids next to a curated table, so a failed or refused
  * list (unreliable endpoint, key without list access) yields an empty list - the curated models - instead of failing.
+ * Build the request inside fetchList: a missing key throws while building it, and must fall back the same way.
  */
 async function _fetchModelsListCuratedFirst(vendorName: string, fetchList: () => Promise<OpenAIWire_API_Models_List.Response>): Promise<OpenAIWire_API_Models_List.Response> {
   try {
@@ -370,8 +371,8 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
       // Optimistically try the API for 0-day model discovery, but never fail on it.
       return createListModelsDispatch({
         fetchModels: async (): Promise<string[]> => {
-          const { headers, url } = openAIAccess(access, null, OPENAI_API_PATHS.models);
           const wireModels = await _fetchModelsListCuratedFirst('Z.ai', async () => {
+            const { headers, url } = openAIAccess(access, null, OPENAI_API_PATHS.models); // throws without a key: falls back too
             _wire?.logRequest('GET', url, headers);
             const wireModels = await fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ url, headers, name: 'OpenAI/Zai', signal });
             _wire?.logResponse(wireModels);
