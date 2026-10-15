@@ -9,6 +9,7 @@ Vendor `metaai` ("Meta AI"; the product is the Meta Model API at dev.meta.ai) se
 - Wonder (preview): 1,048,576 context, same inputs and request surface as Spark; $4 in / $20 out / $0.20 cached per 1M, Standard only (no Contributor tier on the API).
 - Spark: 1,048,576 context, text/image/video/PDF/audio in (1.3 audio degraded), text out. Standard $1.25 in / $4.25 out / $0.15 cached per 1M; Contributor $0.10 / $0.20 / $0.002 and Meta trains on prompts and completions (hidden by default; 150 RPM / 3M TPM vs 3,000 / 4M per team on Standard). Web search +$2.50 per 1K queries. Muse Image $0.01 per image, aspect ratio only.
 - Release dates are editorial (Spark 1.1 2026-07-09, Muse Image 2026-07-07, 1.2 2026-08-05, 1.3 2026-09-02, Wonder 1.0 2026-10-12); `/llms:update-models-metaai` holds the source list.
+- Open weights, not on the API: Muse Spark Open (816B-A42B, 2026-10-15; effort `low|medium|high|xhigh`, default `xhigh`, reasoning always on) and Muse Glimmer. OpenRouter's `meta/muse-spark-open` takes pubDate, interfaces and effort from `llmOrtMetaLookup` (`_ortOpenWeightMetaModels`); Glimmer falls through.
 
 ## Request contract
 

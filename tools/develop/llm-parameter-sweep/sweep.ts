@@ -194,7 +194,8 @@ const SWEEP_DEFINITIONS = [
   }),
 
   // Meta AI: reasoning effort (Responses API)
-  // Muse Spark: minimal/low/medium/high/xhigh ('none' 400s on every Spark model, 'max' announced for 1.3 but not served yet - 2026-09-02)
+  // Muse Spark / Wonder: minimal/low/medium/high/xhigh, plus 'max' on muse-wonder-1.0, muse-spark-1.3 and 1.3-contributor
+  // (served since 2026-10). 'none' 400s on every model.
   defineSweep({
     name: 'metaai-reasoning-effort',
     description: 'Meta reasoning.effort values',

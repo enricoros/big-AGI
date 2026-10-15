@@ -392,7 +392,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       else if (modelIdUnaliased.startsWith('sakana/'))
         _mergeLookup(llmOrtSakLookup(llmRef));
       else if (modelIdUnaliased.startsWith('meta/'))
-        _mergeLookup(llmOrtMetaLookup(llmRef)); // Muse Spark; 'meta/muse-glimmer-30b' (open weights, not on api.meta.ai) falls through
+        _mergeLookup(llmOrtMetaLookup(llmRef)); // Muse Spark, Wonder, Spark Open; 'meta/muse-glimmer-30b' (open weights, not on api.meta.ai) falls through
 
       // 0-day: xAI/Grok/Moonshot/Z.ai/DeepSeek/Sakana models get default reasoning effort if not inherited.
       // Checks llmVndOaiEffort too (else an inherited spec gets a 2nd control stacked); skips mandatory models,
