@@ -69,7 +69,7 @@ The subsystem comprises three main components:
 1. Request Initialization: AIX Client prepares and sends request (systemInstruction, messages=AixWire_Parts[], etc.) to AIX Server
 2. Dispatch Preparation: AIX Server prepares for upstream communication
 3. AI Provider Interaction: AIX Server communicates with AI Provider (streaming or non-streaming)
-4. Data Decoding, Transformation and Transmission: AIX Server sends AixWire_Particles to AIX Client
+4. Data Decoding, Transformation and Transmission: AIX Server sends AixWire_Particles to AIX Client (see [AIX-ingestion.md](AIX-ingestion.md))
 5. Client-side Processing: Client's ContentReassembler processes AixWire_Particles into a list (likely a single) of multi-fragment (DMessageContentFragment[]) messages
 6. Completion: AIX Server sends 'done' control message, AIX Client finalizes data update
 7. Error Handling: AIX Server sends specific error messages when necessary

@@ -72,4 +72,4 @@ Not adopted. Docs as of 2026-09-29; CORS measured.
 ## Parser risks
 
 - Output items and stream events are closed unions: an unknown item type fails the stream. None seen on GPT-6 without opt-in features. Multi-agent items would fail it at the first spawn (zod rejects `multi_agent_call`, checked against a captured stream); AIX sends neither `multi_agent` nor its beta header.
-- Two reasoning items with nothing in between would merge into one `ma` fragment and keep only the second handle. Not observed: in 12 multi-step GPT-6 runs, tool calls or messages always separated them.
+- Two reasoning items with nothing in between store as two `ma` fragments when each carries its handle; items without `encrypted_content` still merge (R5 in [AIX-ingestion.md](AIX-ingestion.md)). Not observed: in 12 multi-step GPT-6 runs, tool calls or messages always separated them.

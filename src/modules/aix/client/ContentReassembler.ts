@@ -87,6 +87,7 @@ type ReassemblyState = AixChatGenerateContent_LL & {
 
 /**
  * Reassembles the content fragments and more information from the Aix ChatGenerate Particles.
+ * Rule: one fragment per vendor unit, in wire order - kb/modules/AIX-ingestion.md lists where this does not hold yet.
  */
 export class ContentReassembler {
 

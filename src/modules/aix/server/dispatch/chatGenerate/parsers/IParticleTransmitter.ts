@@ -5,6 +5,7 @@ export type ParticleServerLogLevel = false | 'srv-log' | 'srv-warn';
 
 export type ParticleCGDialectEndReason = Extract<AixWire_Particles.CGEndReason, 'done-dialect' | 'issue-dialect'>;
 
+/** Rule: parsers translate each vendor unit 1:1, presentation is a render concern - kb/modules/AIX-ingestion.md lists where this does not hold yet */
 export interface IParticleTransmitter {
 
   // Parser-initiated Control //
