@@ -4,13 +4,14 @@ import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DMessage } from '~/common/stores/chat/chat.message';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
-import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { findFirstUserPromptFragment } from '~/common/stores/chat/chat.fragment-order';
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
 
 import type { ChatExecuteMode } from '../execute-mode/execute-mode.types';
 import { textToDrawCommand } from '../commands/CommandsDraw';
 
-import { _handleExecuteCommand, RET_NO_CMD } from './_handleExecuteCommand';
+import { _handleExecuteSlashCommand, RET_NO_CMD } from './_handleExecuteSlashCommand';
 import { runImageGenerationUpdatingState } from './image-generate';
 import { runPersonaOnConversationHead } from './chat-persona';
 import { runReActUpdatingState } from './react-tangent';
@@ -48,14 +49,14 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
   // handle missing last user message (or fragment)
   // note that we use the initial history, as the user message could have been displaced on the edited versions
   const lastMessage = initialHistory.length >= 1 ? initialHistory.slice(-1)[0] : null;
-  const firstFragment = lastMessage?.fragments[0];
-  if (!lastMessage || !firstFragment)
+  if (!lastMessage?.fragments.length)
     return 'err-no-last-message';
+  const promptFragment = findFirstUserPromptFragment(lastMessage.fragments);
 
 
   // execute a command, if the last message has one
   if (lastMessage.role === 'user') {
-    const cmdRC = await _handleExecuteCommand(lastMessage.id, firstFragment, lastMessage, cHandler, chatLLMId);
+    const cmdRC = await _handleExecuteSlashCommand(lastMessage.id, lastMessage, cHandler, chatLLMId);
     if (cmdRC !== RET_NO_CMD) return cmdRC;
   }
 
@@ -80,14 +81,13 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
       return true;
 
     case 'generate-image':
-      // verify we were called with a single DMessageTextContent
-      if (!isTextContentFragment(firstFragment))
+      if (!promptFragment)
         return false;
-      const imagePrompt = firstFragment.part.text;
-      cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(textToDrawCommand(imagePrompt)), true);
+      const imagePrompt = promptFragment.part.text;
+      cHandler.messageFragmentReplace(lastMessage.id, promptFragment.fId, createTextContentFragment(textToDrawCommand(imagePrompt)), true);
 
       // use additional image fragments as image inputs
-      const imageInputFragments = lastMessage.fragments.slice(1)
+      const imageInputFragments = lastMessage.fragments
         .filter(fragment => isContentOrAttachmentFragment(fragment) && (
           isZyncAssetImageReferencePart(fragment.part) || isImageRefPart(fragment.part)
         ));
@@ -95,11 +95,10 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
       return await runImageGenerationUpdatingState(cHandler, imagePrompt, imageInputFragments);
 
     case 'react-content':
-      // verify we were called with a single DMessageTextContent
-      if (!isTextContentFragment(firstFragment))
+      if (!promptFragment)
         return false;
-      const reactPrompt = firstFragment.part.text;
-      cHandler.messageFragmentReplace(lastMessage.id, firstFragment.fId, createTextContentFragment(`/react ${reactPrompt}`), true);
+      const reactPrompt = promptFragment.part.text;
+      cHandler.messageFragmentReplace(lastMessage.id, promptFragment.fId, createTextContentFragment(`/react ${reactPrompt}`), true);
       return await runReActUpdatingState(cHandler, reactPrompt, chatLLMId, lastMessage.id);
 
     default:

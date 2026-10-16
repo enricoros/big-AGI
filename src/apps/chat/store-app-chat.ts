@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { Is } from '~/common/util/pwaUtils';
+import { normalizeUserFragmentGroupsOrder, UserMessageFragmentGroup } from '~/common/stores/chat/chat.fragment-order';
 
 
 export type ChatAutoSpeakType = 'off' | 'firstLine' | 'all';
@@ -40,11 +41,16 @@ interface AppChatStore {
   autoVndAntBreakpoints: boolean;
   setAutoVndAntBreakpoints: (autoVndAntBreakpoints: boolean) => void;
 
+  // chat Mechanics / Policies
+
   chatThinkingPolicy: ChatThinkingPolicy,
   setChatThinkingPolicy: (chatThinkingPolicy: ChatThinkingPolicy) => void;
 
   tokenCountingMethod: TokenCountingMethod;
   setTokenCountingMethod: (tokenCountingMethod: TokenCountingMethod) => void;
+
+  userMessageFragmentOrder?: UserMessageFragmentGroup[];
+  setUserMessageFragmentOrder: (order: undefined | UserMessageFragmentGroup[]) => void;
 
   // chat UI
 
@@ -134,6 +140,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     tokenCountingMethod: Is.Desktop ? 'accurate' : 'approximate',
     setTokenCountingMethod: (tokenCountingMethod: TokenCountingMethod) => _set({ tokenCountingMethod }),
+
+    // userMessageFragmentOrder: undefined, // keep the default implicit
+    setUserMessageFragmentOrder: (order) => _set({ userMessageFragmentOrder: !order ? undefined : normalizeUserFragmentGroupsOrder(order) }),
 
     // Chat UI
 
@@ -264,6 +273,15 @@ export const getChatThinkingPolicy = (): ChatThinkingPolicy =>
 
 export const getChatTokenCountingMethod = (): TokenCountingMethod =>
   useAppChatStore.getState().tokenCountingMethod;
+
+export const getUserMessageFragmentOrder = (): readonly UserMessageFragmentGroup[] | undefined =>
+  useAppChatStore.getState().userMessageFragmentOrder;
+
+export const setUserMessageFragmentOrder = (order: undefined | UserMessageFragmentGroup[]) =>
+  useAppChatStore.getState().setUserMessageFragmentOrder(order);
+
+export const useUserMessageFragmentOrder = () =>
+  useAppChatStore(state => state.userMessageFragmentOrder);
 
 export const useChatMicTimeoutMsValue = (): number =>
   useAppChatStore(state => state.micTimeoutMs);

@@ -1,7 +1,9 @@
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
+import type { Immutable } from '~/common/types/immutable.types';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
-import { createTextContentFragment, DMessageFragment, isContentOrAttachmentFragment, isImageRefPart, isTextContentFragment, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { findFirstUserPromptFragment } from '~/common/stores/chat/chat.fragment-order';
 
 import { extractChatCommand, helpPrettyChatCommands } from '../commands/commands.registry';
 import { runImageGenerationUpdatingState } from './image-generate';
@@ -11,23 +13,19 @@ import { runReActUpdatingState } from './react-tangent';
 export const RET_NO_CMD = 'no-cmd';
 
 
-export async function _handleExecuteCommand(lastMessageId: DMessageId, lastMessageFirstFragment: DMessageFragment, lastMessage: Readonly<DMessage>, cHandler: ConversationHandler, chatLLMId: DLLMId) {
+export async function _handleExecuteSlashCommand(lastMessageId: DMessageId, lastMessage: Immutable<DMessage>, cHandler: ConversationHandler, chatLLMId: DLLMId) {
 
-  // commands must have a first Content DMessageTextPart
-  if (!isTextContentFragment(lastMessageFirstFragment))
+  const userPromptFragment = findFirstUserPromptFragment(lastMessage.fragments);
+  if (!userPromptFragment)
     return RET_NO_CMD;
 
   // check if we have a command
-  const _chatCommand = extractChatCommand(lastMessageFirstFragment.part.text)[0];
+  const _chatCommand = extractChatCommand(userPromptFragment.part.text)[0];
   if (_chatCommand?.type !== 'cmd')
     return RET_NO_CMD;
 
   // extract the information from the command
-  const { providerId, command: userCommand, params: userText, isErrorNoArgs } = _chatCommand;
-
-  // create a copy of the lastMessage without the 'command' part in the first fragment
-  // TODO: future: move command to be decorators (meta parts) on the message
-  const lastMessageNoCommand = { ...lastMessage };
+  const { providerId, command: userCommand, params: userText /*, isErrorNoArgs*/ } = _chatCommand;
 
 
   // Valid /commands are intercepted here, and override chat modes, generally for mechanics or sidebars
@@ -36,7 +34,7 @@ export async function _handleExecuteCommand(lastMessageId: DMessageId, lastMessa
     case 'cmd-ass-t2i':
 
       // use additional image fragments as image inputs
-      const imageInputFragments = lastMessage.fragments.slice(1)
+      const imageInputFragments = lastMessage.fragments
         .filter(fragment => isContentOrAttachmentFragment(fragment) && (
           isZyncAssetImageReferencePart(fragment.part) || isImageRefPart(fragment.part)
         ));
@@ -54,7 +52,7 @@ export async function _handleExecuteCommand(lastMessageId: DMessageId, lastMessa
       }
       // assistant/system command: change role and remove the /command
       cHandler.messageEdit(lastMessageId, { role: userCommand.startsWith('/s') ? 'system' : userCommand.startsWith('/a') ? 'assistant' : 'user' }, false, false);
-      cHandler.messageFragmentReplace(lastMessageId, lastMessageFirstFragment.fId, createTextContentFragment(userText || ''), true);
+      cHandler.messageFragmentReplace(lastMessageId, userPromptFragment.fId, createTextContentFragment(userText || ''), true);
       return true;
 
     case 'cmd-help':
@@ -67,7 +65,7 @@ export async function _handleExecuteCommand(lastMessageId: DMessageId, lastMessa
     //   if (isErrorNoArgs || !userText)
     //     return false;
     //   // remove '/beam ', as we want to be a user chat message
-    //   cHandler.messageFragmentReplace(lastMessageId, lastMessageFirstFragment.fId, createTextContentFragment(userText), true);
+    //   cHandler.messageFragmentReplace(lastMessageId, userPromptFragment.fId, createTextContentFragment(userText), true);
     //   cHandler.beamInvoke(cHandler.historyViewHead('cmd-mode-beam'), [], null);
     //   return true;
 

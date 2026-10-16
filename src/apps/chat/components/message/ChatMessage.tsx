@@ -22,6 +22,7 @@ import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
 import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
+import { findFirstUserPromptFragment } from '~/common/stores/chat/chat.fragment-order';
 import { useFragmentBuckets } from '~/common/stores/chat/hooks/app-chat/useFragmentBuckets';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
@@ -415,6 +416,7 @@ export function ChatMessage(props: {
   const inFluxFragmentId = React.useMemo(() => messageFragmentsInFluxId(messageFragments, !!messagePendingIncomplete), [messageFragments, messagePendingIncomplete]);
 
   const fragmentFlattenedText = React.useMemo(() => messageFragmentsReduceText(messageFragments), [messageFragments]);
+  const userPromptText = React.useMemo(() => findFirstUserPromptFragment(messageFragments)?.part.text ?? '', [messageFragments]);
   const contentFragments = React.useMemo(() => interleavedFragments.filter(f => f.ft === 'content'), [interleavedFragments]);
   const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, contentFragments, fromAssistant, props.onMessageFragmentReplace);
 
@@ -424,14 +426,15 @@ export function ChatMessage(props: {
   }, [fromAssistant, messagePendingIncomplete, messageFragments]);
 
   const textSubject = selText ? selText : fragmentFlattenedText;
-  const isSpecialT2I = textSubject.startsWith('/draw ') || textSubject.startsWith('/imagine ') || textSubject.startsWith('/img ');
+  const t2iSubject = selText ?? userPromptText;
+  const isSpecialT2I = t2iSubject.startsWith('/draw ') || t2iSubject.startsWith('/imagine ') || t2iSubject.startsWith('/img ');
   const couldDiagram = textSubject.length >= 100 && !isSpecialT2I;
   const couldImagine = textSubject.length >= 3 && !isSpecialT2I;
   const couldSpeak = couldImagine;
 
   const userCommandApprox = !fromUser ? false
-    : fragmentFlattenedText.startsWith('/draw ') ? 'draw'
-      : fragmentFlattenedText.startsWith('/react ') ? 'react'
+    : userPromptText.startsWith('/draw ') ? 'draw'
+      : userPromptText.startsWith('/react ') ? 'react'
         : false;
 
 
