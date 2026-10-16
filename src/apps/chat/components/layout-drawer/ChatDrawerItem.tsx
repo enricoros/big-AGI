@@ -19,6 +19,7 @@ import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DFolder } from '~/common/stores/folders/store-chat-folders';
+import type { FolderChangeRequest } from '~/common/components/folders/FoldersSelectPopup';
 import { ANIM_BUSY_TYPING } from '~/common/util/dMessageUtils';
 import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
@@ -71,12 +72,6 @@ export interface ChatNavigationItemData {
   beingGenerated: boolean;
   systemPurposeId: SystemPurposeId;
   searchFrequency: number;
-}
-
-export interface FolderChangeRequest {
-  conversationId: DConversationId;
-  anchorEl: HTMLButtonElement;
-  currentFolder: DFolder | null;
 }
 
 function ChatDrawerItem(props: {

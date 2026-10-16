@@ -10,15 +10,14 @@ import ClearIcon from '@mui/icons-material/Clear';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
-import FolderIcon from '@mui/icons-material/Folder';
 import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { CloseablePopup } from '~/common/components/CloseablePopup';
-import { chatFoldersActions, DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
+import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
+import { FolderChangeRequest, FoldersSelectPopup } from '~/common/components/folders/FoldersSelectPopup';
 import { FoldersToggleOff } from '~/common/components/icons/FoldersToggleOff';
 import { FoldersToggleOn } from '~/common/components/icons/FoldersToggleOn';
 import { OPTIMA_DRAWER_BACKGROUND } from '~/common/layout/optima/optima.config';
@@ -30,11 +29,10 @@ import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
-import { ChatDrawerItemMemo, FolderChangeRequest } from './ChatDrawerItem';
+import { ChatDrawerItemMemo } from './ChatDrawerItem';
 import { ChatDrawerStorageWarning } from './ChatDrawerStorageWarning';
 import { ChatFolderList } from './folders/ChatFolderList';
 import { ChatNavGrouping, ChatSearchDepth, ChatSearchSorting, isDrawerSearching, useChatDrawerRenderItems } from './useChatDrawerRenderItems';
-import { ClearFolderText } from '../layout-bar/useFolderDropdown';
 import { useChatDrawerFilters } from '../../store-app-chat';
 
 
@@ -164,18 +162,6 @@ function ChatDrawer(props: {
   const handleConversationFolderChange = React.useCallback((folderChangeRequest: FolderChangeRequest) => setFolderChangeRequest(folderChangeRequest), []);
 
   const handleConversationFolderCancel = React.useCallback(() => setFolderChangeRequest(null), []);
-
-  const handleConversationFolderSet = React.useCallback((conversationId: DConversationId, nextFolderId: string | null) => {
-    // Remove conversation from existing folders
-    chatFoldersActions().removeConversationFromAll(conversationId);
-
-    // Add conversation to the selected folder
-    nextFolderId && chatFoldersActions().addConversationToFolder(nextFolderId, conversationId);
-
-    // Close the menu
-    setFolderChangeRequest(null);
-  }, []);
-
 
   // Render limit - load more items
 
@@ -533,46 +519,11 @@ function ChatDrawer(props: {
 
     {/* [Menu] Chat Item Folder Change */}
     {!!folderChangeRequest?.anchorEl && (
-      <CloseablePopup
-        menu anchorEl={folderChangeRequest.anchorEl} onClose={handleConversationFolderCancel}
-        bigIcons
-        minWidth={200}
-        placement='bottom-start'
-        zIndex={themeZIndexOverMobileDrawer /* need to be on top of the Modal on Mobile */}
-      >
-
-        {/* Folder Assignment Buttons */}
-        {allFolders.map(folder => {
-          const isRequestFolder = folder === folderChangeRequest.currentFolder;
-          return (
-            <ListItem
-              key={folder.id}
-              variant={isRequestFolder ? 'soft' : 'plain'}
-              onClick={() => handleConversationFolderSet(folderChangeRequest.conversationId, folder.id)}
-            >
-              <ListItemButton>
-                <ListItemDecorator>
-                  <FolderIcon sx={{ color: folder.color }} />
-                </ListItemDecorator>
-                {folder.title}
-              </ListItemButton>
-            </ListItem>
-          );
-        })}
-
-        {/* Remove Folder Assignment */}
-        {!!folderChangeRequest.currentFolder && (
-          <ListItem onClick={() => handleConversationFolderSet(folderChangeRequest.conversationId, null)}>
-            <ListItemButton>
-              <ListItemDecorator>
-                <ClearIcon />
-              </ListItemDecorator>
-              {ClearFolderText}
-            </ListItemButton>
-          </ListItem>
-        )}
-
-      </CloseablePopup>
+      <FoldersSelectPopup
+        allFolders={allFolders}
+        request={folderChangeRequest}
+        onClose={handleConversationFolderCancel}
+      />
     )}
 
   </>;

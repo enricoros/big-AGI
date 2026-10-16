@@ -5,30 +5,44 @@ import AddIcon from '@mui/icons-material/Add';
 import FolderIcon from '@mui/icons-material/Folder';
 
 import { InlineTextarea } from '~/common/components/InlineTextarea';
-import { getRotatingFolderColor, useFolderStore } from '~/common/stores/folders/store-chat-folders';
+import { chatFoldersActions, DFolder, getRotatingFolderColor } from '~/common/stores/folders/store-chat-folders';
 
 
-export function AddFolderButton() {
+interface AddFolderButtonProps {
+  isAddingFolder: boolean;
+  setIsAddingFolder: (value: boolean) => void;
+  onFolderCreated?: (newFolderId: DFolder['id']) => void;
+}
+
+
+/**
+ * Controlled in 'isAddingFolder' state from the parent component
+ */
+export function FoldersAddButton({ isAddingFolder, setIsAddingFolder, onFolderCreated }: AddFolderButtonProps) {
 
   // state
-  const [isAddingFolder, setIsAddingFolder] = React.useState(false);
   const [newFolderColor, setNewFolderColor] = React.useState<string | null>(null);
 
 
-  const handleAddFolder = () => {
+  // handlers
+
+  const handleStartAddFolder = React.useCallback(() => {
     setNewFolderColor(getRotatingFolderColor());
     setIsAddingFolder(true);
-  };
+  }, [setIsAddingFolder]);
 
-  const handleCreateFolder = (name: string) => {
-    if (name.trim())
-      useFolderStore.getState().createFolder(name.trim(), newFolderColor || undefined);
+  const handleCancelAddFolder = React.useCallback(() => {
     setIsAddingFolder(false);
-  };
+  }, [setIsAddingFolder]);
 
-  const handleCancelAddFolder = () => {
+  const handleCreateFolder = React.useCallback((name: string) => {
     setIsAddingFolder(false);
-  };
+    if (!name.trim()) return;
+
+    const newFolderId = chatFoldersActions().createFolder(name.trim(), newFolderColor || undefined);
+    onFolderCreated?.(newFolderId);
+  }, [newFolderColor, onFolderCreated, setIsAddingFolder]);
+
 
   return isAddingFolder ? (
     <ListItem>
@@ -49,14 +63,8 @@ export function AddFolderButton() {
   ) : (
     <ListItem>
       <ListItemButton
-        onClick={handleAddFolder}
-        sx={{
-          // equal to the 'new chat' button
-          fontSize: 'sm',
-          fontWeight: 'lg',
-          color: 'neutral.outlinedColor',
-          border: 0,
-        }}
+        onClick={handleStartAddFolder}
+        // sx={buttonSx}
       >
         <ListItemDecorator>
           <AddIcon sx={{ fontSize: 'xl', pl: '0.25rem' }} />

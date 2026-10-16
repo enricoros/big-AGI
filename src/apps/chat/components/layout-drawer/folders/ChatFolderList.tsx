@@ -10,8 +10,8 @@ import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
+import { FoldersAddButton } from '~/common/components/folders/FoldersAddButton';
 
-import { AddFolderButton } from './AddFolderButton';
 import { FolderListItem } from './FolderListItem';
 
 
@@ -63,6 +63,9 @@ export function ChatFolderList(props: {
 
   // derived props
   const { folders, folderChatCounts, onFolderSelect, activeFolderId } = props;
+
+  // state
+  const [isAddingFolder, setIsAddingFolder] = React.useState(false);
 
   // DnD Kit
   const sensors = useSensors(
@@ -161,7 +164,7 @@ export function ChatFolderList(props: {
         </DndContext>
 
         {/* 'Add Folder' Button */}
-        <AddFolderButton />
+        <FoldersAddButton isAddingFolder={isAddingFolder} setIsAddingFolder={setIsAddingFolder} />
 
       </List>
     </Box>
