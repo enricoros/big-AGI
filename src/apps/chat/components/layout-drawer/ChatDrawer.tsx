@@ -17,7 +17,7 @@ import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
-import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
+import { chatFoldersActions, DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { FoldersToggleOff } from '~/common/components/icons/FoldersToggleOff';
 import { FoldersToggleOn } from '~/common/components/icons/FoldersToggleOn';
@@ -167,11 +167,10 @@ function ChatDrawer(props: {
 
   const handleConversationFolderSet = React.useCallback((conversationId: DConversationId, nextFolderId: string | null) => {
     // Remove conversation from existing folders
-    const { addConversationToFolder, folders, removeConversationFromFolder } = useFolderStore.getState();
-    folders.forEach(folder => folder.conversationIds.includes(conversationId) && removeConversationFromFolder(folder.id, conversationId));
+    chatFoldersActions().removeConversationFromAll(conversationId);
 
     // Add conversation to the selected folder
-    nextFolderId && addConversationToFolder(nextFolderId, conversationId);
+    nextFolderId && chatFoldersActions().addConversationToFolder(nextFolderId, conversationId);
 
     // Close the menu
     setFolderChangeRequest(null);

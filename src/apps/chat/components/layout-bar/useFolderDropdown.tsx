@@ -5,7 +5,7 @@ import FolderIcon from '@mui/icons-material/Folder';
 
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
-import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
+import { chatFoldersActions, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 
 
 export const ClearFolderText = 'No Folder';
@@ -46,16 +46,12 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
   const handleFolderChange = React.useCallback((folderId: string | null) => {
     if (conversationId && folderId) {
       // Remove conversation from all folders
-      folders.forEach(folder => {
-        if (folder.conversationIds.includes(conversationId)) {
-          useFolderStore.getState().removeConversationFromFolder(folder.id, conversationId);
-        }
-      });
+      chatFoldersActions().removeConversationFromAll(conversationId);
       // Add conversation to the selected folder
       if (folderId !== SPECIAL_ID_CLEAR_FOLDER)
-        useFolderStore.getState().addConversationToFolder(folderId, conversationId);
+        chatFoldersActions().addConversationToFolder(folderId, conversationId);
     }
-  }, [conversationId, folders]);
+  }, [conversationId]);
 
   // find the folder ID for the active Conversation
   const currentFolderId = folders.find(folder => folder.conversationIds.includes(conversationId || ''))?.id || null;

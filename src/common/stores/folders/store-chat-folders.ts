@@ -19,12 +19,14 @@ interface FolderState {
 
 interface FolderActions {
   importFoldersAppend: (folders: DFolder[], enableFolders: boolean) => void;
-  createFolder: (title: string, color?: string) => void;
+  createFolder: (title: string, color?: string) => string;
   deleteFolder: (folderId: string) => void;
   moveFolder: (fromIndex: number, toIndex: number) => void;
   setFolderName: (folderId: string, title: string) => void;
   setFolderColor: (folderId: string, color: string) => void;
+  addConversationToSameFolders: (existingConversationId: DConversationId, targetConversationId: DConversationId) => void;
   addConversationToFolder: (folderId: string, conversationId: DConversationId) => void;
+  removeConversationFromAll: (conversationId: DConversationId) => void;
   removeConversationFromFolder: (folderId: string, conversationId: DConversationId) => void;
   toggleEnableFolders: () => void;
 }
@@ -49,7 +51,7 @@ export const useFolderStore = create<FolderStore>()(/*devtools(*/
           enableFolders: enableFolders || state.enableFolders,
         })),
 
-      createFolder: (title: string, color?: string) => {
+      createFolder: (title: string, color?: string): string => {
         const newFolder: DFolder = {
           id: agiUuid('chat-folders-item'),
           title,
@@ -60,6 +62,8 @@ export const useFolderStore = create<FolderStore>()(/*devtools(*/
         set(state => ({
           folders: [...state.folders, newFolder],
         }));
+
+        return newFolder.id;
       },
 
       deleteFolder: (folderId: string) =>
@@ -93,6 +97,15 @@ export const useFolderStore = create<FolderStore>()(/*devtools(*/
           ),
         })),
 
+      addConversationToSameFolders: (existingConversationId: DConversationId, targetConversationId: DConversationId) =>
+        set(state => ({
+          folders: state.folders.map(folder => {
+            if (!folder.conversationIds.includes(existingConversationId) || folder.conversationIds.includes(targetConversationId))
+              return folder;
+            return { ...folder, conversationIds: [...folder.conversationIds, targetConversationId] };
+          }),
+        })),
+
       addConversationToFolder: (folderId: string, conversationId: string) =>
         set(state => {
           const folders = state.folders.map(folder => {
@@ -105,6 +118,14 @@ export const useFolderStore = create<FolderStore>()(/*devtools(*/
           });
           return { folders };
         }),
+
+      removeConversationFromAll: (conversationId: DConversationId) =>
+        set(state => ({
+          folders: state.folders.map(folder => !folder.conversationIds.includes(conversationId) ? folder : ({
+            ...folder,
+            conversationIds: folder.conversationIds.filter(id => id !== conversationId),
+          })),
+        })),
 
       removeConversationFromFolder: (folderId: string, conversationId: DConversationId) =>
         set(state => ({
@@ -156,4 +177,11 @@ export const FOLDERS_COLOR_PALETTE = [
 export function getRotatingFolderColor(): string {
   const randomIndex = Math.floor(Math.random() * (FOLDERS_COLOR_PALETTE.length / 3));
   return FOLDERS_COLOR_PALETTE[randomIndex];
+}
+
+/**
+ * Use this to get the chat folders immediate actions (function calls)
+ */
+export function chatFoldersActions(): Readonly<FolderActions> {
+  return useFolderStore.getState();
 }
