@@ -478,7 +478,7 @@ export function AppChat() {
 
   const drawerContent = React.useMemo(() => !isDrawerOpen ? null :
       <ChatDrawerMemo
-        // isMobile={isMobile /* expensive as it undoes the memo; not passed anymore */}
+        isMobile={isMobile}
         activeConversationId={focusedPaneConversationId}
         activeFolderId={activeFolderId}
         chatPanesConversationIds={paneUniqueConversationIds}
@@ -491,7 +491,7 @@ export function AppChat() {
         onConversationsImportDialog={handleConversationImportDialog}
         setActiveFolderId={setActiveFolderId}
       />,
-    [activeFolderId, disableNewButton, focusedPaneConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleDeleteConversations, handleOpenConversationInFocusedPane, isDrawerOpen, paneUniqueConversationIds],
+    [activeFolderId, disableNewButton, focusedPaneConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleDeleteConversations, handleOpenConversationInFocusedPane, isDrawerOpen, isMobile, paneUniqueConversationIds],
   );
 
 

@@ -187,7 +187,7 @@ export function FolderListItem(props: {
             sx={_styles.itemTextArea}
           />
         ) : (
-          <ListItemContent onDoubleClick={handleEditTitle}>
+          <ListItemContent onDoubleClick={handleEditTitle} className='agi-ellipsize'>
             {folderTitle}
             {chatCount !== undefined && chatCount > 0 && <span style={{ opacity: 0.6, fontSize: '0.75rem', marginLeft: '0.5rem' }}> {chatCount}</span>}
           </ListItemContent>

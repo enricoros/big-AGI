@@ -49,6 +49,7 @@ const AGE_FILTER_OPTIONS: { days: number | null, label: string, shortLabel: stri
 export const ChatDrawerMemo = React.memo(ChatDrawer);
 
 function ChatDrawer(props: {
+  isMobile: boolean,
   activeConversationId: DConversationId | null,
   activeFolderId: string | null,
   chatPanesConversationIds: DConversationId[],
@@ -332,6 +333,7 @@ function ChatDrawer(props: {
     {/*}}>*/}
     {enableFolders && (
       <ChatFolderList
+        isMobile={props.isMobile}
         folders={allFolders}
         // folderChatCounts={folderChatCounts}
         contentScaling={contentScaling}
@@ -340,7 +342,7 @@ function ChatDrawer(props: {
         sx={{
           // shrink this at twice the rate as the Titles list
           flexGrow: 0, flexShrink: 2, overflow: 'hidden',
-          minHeight: '7.5rem',
+          // minHeight: '7.5rem', // DISABLED: let it collapse fully, we have a Zero State message
           p: 2,
           backgroundColor: 'background.level1',
         }}
