@@ -37,7 +37,9 @@ function VariformPaneFrame() {
 }
 
 
-export function ChatPane(props: {
+export const ChatPanelMemo = React.memo(ChatPanel);
+
+function ChatPanel(props: {
   isMobile: boolean,
   conversationId: DConversationId | null,
   disableItems: boolean,

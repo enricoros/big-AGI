@@ -40,7 +40,7 @@ import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
 import { useUIComplexityIsMinimal } from '~/common/stores/store-ui';
-import { ChatPane } from './components/layout-pane/ChatPane';
+import { ChatPanelMemo } from './components/layout-panel/ChatPanel';
 import { ChatBarBeam } from './components/layout-bar/ChatBarBeam';
 import { ChatBarAltTitle } from './components/layout-bar/ChatBarAltTitle';
 import { ChatBarChat } from './components/layout-bar/ChatBarChat';
@@ -497,23 +497,6 @@ export function AppChat() {
     [activeFolderId, disableNewButton, focusedPaneConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleDeleteConversations, handleOpenConversationInFocusedPane, isDrawerOpen, paneUniqueConversationIds],
   );
 
-  const focusedChatPanelContent = React.useMemo(() => !focusedPaneConversationId ? null :
-      <ChatPane
-        isMobile={isMobile}
-        conversationId={focusedPaneConversationId}
-        disableItems={!focusedPaneConversationId || isFocusedChatEmpty}
-        hasConversations={hasConversations}
-        isMessageSelectionMode={isMessageSelectionMode}
-        isVerticalSplit={isMobile || isTallScreen}
-        onConversationBranch={handleConversationBranch}
-        onConversationClear={handleConversationReset}
-        onConversationFlatten={handleConversationFlatten}
-        // onConversationNew={handleConversationNewInFocusedPane}
-        setIsMessageSelectionMode={setIsMessageSelectionMode}
-      />,
-    [focusedPaneConversationId, handleConversationBranch, handleConversationFlatten, handleConversationReset, hasConversations, isFocusedChatEmpty, isMessageSelectionMode, isMobile, isTallScreen],
-  );
-
 
   // Effects
 
@@ -621,7 +604,21 @@ export function AppChat() {
     {/* -> Toolbar, -> Drawer, -> Panel*/}
     <OptimaToolbarIn>{focusedBarContent}</OptimaToolbarIn>
     <OptimaDrawerIn>{drawerContent}</OptimaDrawerIn>
-    <OptimaPanelIn>{focusedChatPanelContent}</OptimaPanelIn>
+    <OptimaPanelIn>
+      <ChatPanelMemo
+        isMobile={isMobile}
+        conversationId={focusedPaneConversationId}
+        disableItems={!focusedPaneConversationId || isFocusedChatEmpty}
+        hasConversations={hasConversations}
+        isMessageSelectionMode={isMessageSelectionMode}
+        isVerticalSplit={isMobile || isTallScreen}
+        onConversationBranch={handleConversationBranch}
+        onConversationClear={handleConversationReset}
+        onConversationFlatten={handleConversationFlatten}
+        // onConversationNew={handleConversationNewInFocusedPane}
+        setIsMessageSelectionMode={setIsMessageSelectionMode}
+      />
+    </OptimaPanelIn>
 
     {liveSvgModeActive ? (
       <LiveSvgAnimator isMobile={isMobile} />
