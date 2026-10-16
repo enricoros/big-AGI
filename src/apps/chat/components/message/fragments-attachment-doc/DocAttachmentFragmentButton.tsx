@@ -164,6 +164,7 @@ export function DocAttachmentFragmentButton(props: {
   contentScaling: ContentScaling,
   isSelected: boolean,
   isSelectable: boolean,
+  dragHandle?: React.ReactNode,
   toggleSelected: (fragmentId: DMessageFragmentId) => void,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
 }) {
@@ -221,24 +222,24 @@ export function DocAttachmentFragmentButton(props: {
   return (
     <Button
       role={isSelectable ? 'button' : 'group'}
-      component={props.onFragmentDelete ? 'div' : 'button' /* avoid nested buttons */}
+      component={(props.dragHandle || props.onFragmentDelete) ? 'div' : 'button' /* avoid nested buttons */}
       tabIndex={isSelectable ? undefined : -1}
       size={props.contentScaling === 'md' ? 'md' : 'sm'}
       variant={isSelected ? 'solid' : 'soft'}
       color={isSelected ? DocSelColor : DocUnselColor}
-      disabled={!(props.onFragmentDelete || isSelectable)}
+      disabled={!(props.dragHandle || props.onFragmentDelete || isSelectable)}
       onClick={!isSelectable ? undefined : handleSelectFragment}
       sx={buttonSx}
     >
-      {!!Icon && (
+      {(!!props.dragHandle || !!Icon) && (
         <Box sx={{
           height: '80%', // was 100%, but it's neat-o to have the line a bit engraved
-          paddingX: '0.5rem',
+          ...(props.dragHandle ? { pl: 1.75 } : { px: 1 }),
           borderRight: '1px solid',
           borderRightColor: isSelected ? `${DocSelColor}.solidBg` : `${DocUnselColor}.outlinedDisabledBorder`, // this was outlinedBorder
           display: 'flex', alignItems: 'center',
         }}>
-          <Icon />
+          {props.dragHandle || <Icon />}
         </Box>
       )}
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', paddingX: '0.5rem' }}>

@@ -1077,9 +1077,11 @@ export function ChatMessage(props: {
               isMobile={props.isMobile}
               zenMode={zenMode}
               allowSelection={!isEditingText}
+              allowReordering={isEditingText}
               disableMarkdownText={disableMarkdown}
               onFragmentDelete={!onMessageFragmentDelete ? undefined : handleFragmentDelete}
               onFragmentReplace={!onMessageFragmentReplace ? undefined : handleFragmentReplace}
+              onFragmentsReorder={!onMessageFragmentsReorder ? undefined : handleFragmentsReorder}
             />
           )}
 
