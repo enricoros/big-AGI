@@ -20,8 +20,10 @@ export const AGI_SUGGESTIONS_COLOR: ColorPaletteProp = 'success';
 export const composerTextAreaSx: SxProps = {
   flex: 1,
 
-  // layout
+  // layout - NOTE: minmax(0, 1fr) caps the single column at the container width; an 'auto' track
+  // would grow to the items' max-content and let long chips overflow instead of ellipsizing
   display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr)',
   justifyItems: 'start',
   gap: 0.5,
   mb: 0.625,
