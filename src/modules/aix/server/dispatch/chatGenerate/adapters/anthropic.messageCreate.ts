@@ -11,7 +11,6 @@ import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser,
 // configuration
 // const DEFAULT_WEB_FETCH_MAX_USES = 5; // we don't set a default anymore, we let it be
 // const DEFAULT_WEB_SEARCH_MAX_USES = 10; // we don't set a default anymore, we let it be
-const hotFixImagePartsFirst = true;
 const hotFixMapModelImagesToUser = true;
 const hotFixDisableThinkingWhenToolsForced = true; // "Thinking may not be enabled when tool_choice forces tool use."
 const hotFixAntSeparateContiguousThinkingBlocks = true; // Interleave continuous thinking blocks (without aText) with the following text block, instead of merging them into a single block - should be more robust to unexpected thinking block formats and to changes in the thinking block format, as we have seen some variations and we might see more in the future
@@ -561,14 +560,6 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
   set_cache_control: 'anthropic-ephemeral'
 }> {
   if (parts.length < 1) return; // skip empty messages
-
-  if (hotFixImagePartsFirst) {
-    parts.sort((a, b) => {
-      if (a.pt === 'inline_image' && b.pt !== 'inline_image') return -1;
-      if (a.pt !== 'inline_image' && b.pt === 'inline_image') return 1;
-      return 0;
-    });
-  }
 
   switch (role) {
 

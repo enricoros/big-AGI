@@ -37,10 +37,10 @@ type TInputPart = z.infer<typeof GeminiInteractionsWire_API_Interactions.InputCo
  *      and let the API default to false (sync streaming). `environment: "remote"` selects a fresh
  *      Google-hosted Linux sandbox; default tool set (code_execution, google_search, url_context,
  *      filesystem) is enabled implicitly. Powered by Gemini 3.5 Flash.
- *  - Multimodal: each turn's content is always a content-part array (`{type:'text'|'image', ...}`), text
- *    first then images. We do NOT collapse a text-only turn to a bare `input: "..."` string (the SDK
+ *  - Multimodal: each turn's content is always a content-part array (`{type:'text'|'image', ...}`),
+ *    preserving the authored sequence. We do NOT collapse a text-only turn to a bare `input: "..."` string (the SDK
  *    convenience shape) - it breaks some agent paths; see `_bareSingleTurn` (kept commented for reference).
- *  - Doc parts render as text via `approxDocPart_To_String`; in-reference-to XML is prepended to the user turn.
+ *  - Doc parts and in-reference-to metadata render as text at their position in the sequence.
  *  - Model messages containing only tool invocations/responses/aux (no text or images) are dropped.
  *  - Audio and cache-control parts are silently dropped (unsupported on this path).
  */
@@ -172,27 +172,25 @@ function _collectSystemText(systemMessage: AixAPIChatGenerate_Request['systemMes
 }
 
 function _buildUserContent(parts: Extract<AixAPIChatGenerate_Request['chatSequence'][number], { role: 'user' }>['parts']): TInputPart[] {
-  const textChunks: string[] = [];
-  const prefixChunks: string[] = []; // in-reference-to goes before body
-  const images: TInputPart[] = [];
+  const contentParts: TInputPart[] = [];
 
   for (const part of parts) {
     switch (part.pt) {
       case 'text':
-        textChunks.push(part.text);
+        if (part.text) contentParts.push({ type: 'text', text: part.text });
         break;
       case 'doc':
-        textChunks.push(approxDocPart_To_String(part));
+        contentParts.push({ type: 'text', text: approxDocPart_To_String(part) });
         break;
       case 'media_url':
-        textChunks.push(approxMediaUrlPart_To_String(part)); // Deep Research can at least browse the URL
+        contentParts.push({ type: 'text', text: approxMediaUrlPart_To_String(part) }); // Deep Research can at least browse the URL
         break;
       case 'meta_in_reference_to':
         const irt = approxInReferenceTo_To_XMLString(part);
-        if (irt) prefixChunks.push(irt);
+        if (irt) contentParts.push({ type: 'text', text: irt });
         break;
       case 'inline_image':
-        images.push({ type: 'image', data: part.base64, mime_type: part.mimeType });
+        contentParts.push({ type: 'image', data: part.base64, mime_type: part.mimeType });
         break;
       case 'meta_cache_control':
         break; // unsupported here; dropped
@@ -201,28 +199,20 @@ function _buildUserContent(parts: Extract<AixAPIChatGenerate_Request['chatSequen
     }
   }
 
-  const text = [...prefixChunks, ...textChunks].join('\n\n').trim();
-
-  // Emit as a content-part array (text first, then images); the single-turn string convenience is
-  // applied later by _bareSingleTurn. An empty array (no text, no images) is filtered by the caller.
-  const contentParts: TInputPart[] = [];
-  if (text) contentParts.push({ type: 'text', text });
-  contentParts.push(...images);
   return contentParts;
 }
 
 function _buildModelContent(parts: Extract<AixAPIChatGenerate_Request['chatSequence'][number], { role: 'model' }>['parts']): TInputPart[] {
-  const textChunks: string[] = [];
-  const images: TInputPart[] = [];
+  const contentParts: TInputPart[] = [];
 
   for (const part of parts) {
     switch (part.pt) {
       case 'text':
-        textChunks.push(part.text);
+        if (part.text) contentParts.push({ type: 'text', text: part.text });
         break;
       case 'inline_image':
         // model-authored images (e.g. from a prior generation) - replay as context
-        images.push({ type: 'image', data: part.base64, mime_type: part.mimeType });
+        contentParts.push({ type: 'image', data: part.base64, mime_type: part.mimeType });
         break;
       case 'inline_audio':
       case 'tool_invocation':
@@ -235,11 +225,6 @@ function _buildModelContent(parts: Extract<AixAPIChatGenerate_Request['chatSeque
     }
   }
 
-  const text = textChunks.join('\n\n').trim();
-
-  const contentParts: TInputPart[] = [];
-  if (text) contentParts.push({ type: 'text', text });
-  contentParts.push(...images);
   return contentParts;
 }
 
