@@ -991,6 +991,7 @@ export function Composer(props: {
                   enrichment={attEnrichment}
                   enrichmentSummary={attEnrichSummary}
                   agiAttachmentPrompts={agiAttachmentPrompts}
+                  hasPendingMedia={!!pendingParts?.length}
                   onAttachmentDraftsAction={handleAttachmentDraftsAction}
                 />
               )}

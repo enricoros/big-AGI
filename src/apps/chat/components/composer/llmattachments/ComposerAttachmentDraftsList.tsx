@@ -1,7 +1,6 @@
 import * as React from 'react';
 
-import { CircularProgress, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
-import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import { Box, ListDivider } from '@mui/joy';
 
 import type { AgiAttachmentPromptsData } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 
@@ -11,6 +10,7 @@ import type { AttachmentEnrichmentSummary, IAttachmentEnrichment } from '~/commo
 import { AttachmentDraftsList } from '~/common/attachment-drafts/attachment-drafts-ui/AttachmentDraftsList';
 
 import { LLMAttachmentsPromptsButtonMemo } from './LLMAttachmentsPromptsButton';
+import { MessageFragmentOrderControl } from './MessageFragmentOrderControl';
 import { ViewDocPartModal } from '../../message/fragments-content/ViewDocPartModal';
 import { ViewImageRefPartModal } from '../../message/fragments-content/ViewImageRefPartModal';
 
@@ -25,10 +25,14 @@ export function ComposerAttachmentDraftsList(props: {
   enrichment: IAttachmentEnrichment,
   enrichmentSummary: AttachmentEnrichmentSummary,
   agiAttachmentPrompts: AgiAttachmentPromptsData,
+  hasLiveImages?: boolean,
+  hasPendingMedia?: boolean,
   onAttachmentDraftsAction: (attachmentDraftId: AttachmentDraftId | null, actionId: AttachmentDraftsAction) => void,
 }) {
 
   const { agiAttachmentPrompts, attachmentDrafts } = props;
+
+  const hasOtherContent = props.hasLiveImages || props.hasPendingMedia;
 
 
   // memo components
@@ -52,22 +56,39 @@ export function ComposerAttachmentDraftsList(props: {
     , []);
 
   const renderOverallMenuExtra = React.useCallback(() => <>
-    <MenuItem color='primary' variant='soft' onClick={agiAttachmentPrompts.refetch} disabled={!attachmentDrafts.length || agiAttachmentPrompts.isFetching}>
-      <ListItemDecorator>{agiAttachmentPrompts.isFetching ? <CircularProgress size='sm' /> : <AutoFixHighIcon />}</ListItemDecorator>
-      What can I do?
-    </MenuItem>
+
+    {/* Group ordering control  */}
+    <MessageFragmentOrderControl />
     <ListDivider />
-  </>, [agiAttachmentPrompts.isFetching, agiAttachmentPrompts.refetch, attachmentDrafts.length]);
+
+    {/* NOTE: disabled: boring */}
+    {/* "What can I do?" menu item */}
+    {/*{!!attachmentDrafts.length && <>*/}
+    {/*  <MenuItem onClick={agiAttachmentPrompts.refetch} disabled={agiAttachmentPrompts.isFetching}>*/}
+    {/*    <ListItemDecorator>{agiAttachmentPrompts.isFetching ? <CircularProgress size='sm' /> : <AutoFixHighIcon />}</ListItemDecorator>*/}
+    {/*    What can I do?*/}
+    {/*  </MenuItem>*/}
+    {/*  <ListDivider />*/}
+    {/*</>}*/}
+
+  </>, []);
 
 
   return (
     <AttachmentDraftsList
       attachmentDraftsStoreApi={props.attachmentDraftsStoreApi}
       attachmentDrafts={attachmentDrafts}
+      showWhenEmpty={hasOtherContent}
       enrichment={props.enrichment}
       enrichmentSummary={props.enrichmentSummary}
       onAttachmentDraftsAction={props.onAttachmentDraftsAction}
-      startDecorator={startDecorator}
+      startDecorator={startDecorator ||
+        (attachmentDrafts.length || !hasOtherContent ? undefined :
+          <Box fontSize='sm' fontWeight={500}>
+            {props.hasPendingMedia ? 'Media attachments' : 'Live images'}
+          </Box>
+        )
+      }
       renderDocViewer={renderDocViewer}
       renderImageViewer={renderImageViewer}
       renderOverallMenuExtra={renderOverallMenuExtra}
