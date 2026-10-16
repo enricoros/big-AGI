@@ -18,9 +18,15 @@ interface AttachmentDraftsState {
 
 }
 
+type AttachmentDraftCreationInfo = {
+  id: AttachmentDraftId;
+  label: string;
+  outputsFragmentsCount: number;
+}
+
 export interface AttachmentsDraftsStore extends AttachmentDraftsState {
 
-  createAttachmentDraft: (source: AttachmentDraftSource, options: AttachmentCreationOptions) => Promise<void>;
+  createAttachmentDraft: (source: AttachmentDraftSource, options: AttachmentCreationOptions) => Promise<null | AttachmentDraftCreationInfo>;
   removeAllAttachmentDrafts: () => void;
   removeAttachmentDraft: (attachmentDraftId: AttachmentDraftId) => void;
   moveAttachmentDraft: (attachmentDraftId: AttachmentDraftId, delta: 1 | -1) => void;
@@ -55,7 +61,7 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
   attachmentDrafts: [],
 
   // actions
-  createAttachmentDraft: async (source: AttachmentDraftSource, options: AttachmentCreationOptions) => {
+  createAttachmentDraft: async (source: AttachmentDraftSource, options: AttachmentCreationOptions): Promise<null | AttachmentDraftCreationInfo> => {
     const { _getAttachment, _editAttachment, toggleAttachmentDraftConverterAndConvert } = _get();
 
     const _attachmentDraft = attachmentCreate(source);
@@ -70,13 +76,13 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     await attachmentLoadInputAsync(source, editFn);
     const loaded = _getAttachment(attachmentDraftId);
     if (!loaded?.input)
-      return;
+      return null;
 
     // 2. Define the I->O Converters
     attachmentDefineConverters(source, loaded.input, options, editFn);
     const defined = _getAttachment(attachmentDraftId);
     if (!defined?.converters.length)
-      return;
+      return null;
 
     // 3. Select the already active, or the first (non-disabled) Converter
     let cIndex = defined.converters.findIndex(_c => _c.isActive);
@@ -85,6 +91,14 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     if (cIndex === -1)
       cIndex = 0;
     await toggleAttachmentDraftConverterAndConvert(attachmentDraftId, cIndex);
+
+    // return some select info
+    const converted = _getAttachment(attachmentDraftId);
+    return !converted ? null : {
+      id: converted.id,
+      label: converted.label,
+      outputsFragmentsCount: converted.outputFragments.length,
+    };
   },
 
   removeAllAttachmentDrafts: () =>
