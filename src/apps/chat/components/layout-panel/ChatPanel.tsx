@@ -18,6 +18,7 @@ import { OptimaPanelGroupedList, OptimaPanelGroupGutter } from '~/common/layout/
 import { useChatStore } from '~/common/stores/chat/store-chats'; // may be replaced with a dedicated hook for the chat pane
 
 import { useChatShowSystemMessages } from '../../store-app-chat';
+import { ActionFolder } from './ActionFolder';
 import { WindowSplitControls } from './WindowSplitControls';
 
 
@@ -99,6 +100,9 @@ function ChatPanel(props: {
 
     {/* Chat Actions group */}
     <OptimaPanelGroupedList title='Actions' hideExpandedCheckbox persistentCollapsibleId='chat-actions'>
+
+      <ActionFolder conversationId={props.conversationId} disabled={!props.conversationId} /* folder actions work on any existing conversation, unlike other actions that need non-empty chats */ />
+
       {/* Use 2 columns */}
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
 
