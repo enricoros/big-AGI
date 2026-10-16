@@ -282,7 +282,10 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
       const textHtml = clipboardItem.types.includes('text/html')
         ? await clipboardItem.getType('text/html')
           .then(blob => blob?.text() ?? '')
-          .catch(() => '')
+          .catch(e => {
+            console.warn('Error reading text/html from clipboard:', e);
+            return '';
+          })
         : '';
       const heuristicBypassImage = textHtml.startsWith('<table ');
 
@@ -317,7 +320,10 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
       const textPlain = clipboardItem.types.includes('text/plain')
         ? await clipboardItem.getType('text/plain')
           .then(blob => blob?.text() ?? '')
-          .catch(() => '')
+          .catch(e => {
+            console.warn('Error reading text/plain from clipboard:', e);
+            return '';
+          })
         : '';
 
       // input enhancers: consume recognized single-line text as a pending part (see attachAppendDataTransfer)
@@ -351,7 +357,7 @@ export function useAttachmentDrafts(attachmentsStoreApi: AttachmentDraftsStoreAp
         continue;
       }
 
-      console.warn('Clipboard item has no text/html or text/plain item.', clipboardItem.types, clipboardItem);
+      console.warn('Clipboard item has no text/html or text/plain item.', { types: clipboardItem.types });
     }
   }, [_createAttachmentDraft, attachAppendFile, attachAppendUrl, enableLoadURLsOnPaste, enhancersOptions, filterOnlyImages, hintAddImages]);
 
