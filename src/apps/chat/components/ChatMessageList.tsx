@@ -402,6 +402,7 @@ export function ChatMessageList(props: {
 
       {props.isMessageSelectionMode ? (
         <ChatCleanupControls
+          isMobile={props.isMobile}
           conversationHandler={conversationHandler}
           conversationMessages={conversationMessages}
           filteredMessages={filteredMessages}

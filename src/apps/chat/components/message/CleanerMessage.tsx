@@ -1,8 +1,10 @@
 import * as React from 'react';
 
-import { Box, Button, Checkbox, Chip, IconButton, ListItem, Sheet } from '@mui/joy';
+import { Box, Button, Checkbox, Chip, IconButton, ListItem, Sheet, Tooltip } from '@mui/joy';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import ClearIcon from '@mui/icons-material/Clear';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ErrorIcon from '@mui/icons-material/ErrorRounded';
 import TextFieldsIcon from '@mui/icons-material/TextFieldsRounded';
@@ -174,7 +176,16 @@ export const MessagesSelectionHeader = (props: {
  *
  * Shall look similarly to the main ChatMessage, for consistency, but just allow a simple checkbox selection
  */
-export function CleanerMessage(props: { message: DMessage, selected: boolean, remainingTokens?: number, onToggleSelected?: (messageId: string, selected: boolean) => void }) {
+export function CleanerMessage(props: {
+  message: DMessage,
+  selected: boolean,
+  remainingTokens?: number,
+  onDeleteMessage?: (messageId: string) => void,
+  onToggleSelected?: (messageId: string, selected: boolean) => void,
+}) {
+
+  // state
+  const [deleteArmed, setDeleteArmed] = React.useState(false);
 
   // derived state
   const {
@@ -187,6 +198,23 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
     tokenCount: messageTokenCount,
     updated: messageUpdated,
   } = props.message;
+
+  // delete handlers (arming pattern)
+  const handleDeleteArm = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    setDeleteArmed(true);
+  }, []);
+
+  const handleDeleteCancel = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    setDeleteArmed(false);
+  }, []);
+
+  const handleDeleteConfirm = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    setDeleteArmed(false);
+    props.onDeleteMessage?.(messageId);
+  }, [messageId, props]);
 
   const analysis = React.useMemo(() => analyzeMessageFragments(messageFragments), [messageFragments]);
 
@@ -298,6 +326,24 @@ export function CleanerMessage(props: { message: DMessage, selected: boolean, re
         )}
 
       </Box>
+
+      {/* Delete button (desktop only, arming pattern) */}
+      {!!props.onDeleteMessage && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 'auto' }}>
+          {deleteArmed && (
+            <Tooltip title='Confirm Delete' color='danger' arrow>
+              <IconButton aria-label='Confirm delete message' size='sm' variant='soft' color='danger' onClick={handleDeleteConfirm}>
+                <DeleteForeverIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title={deleteArmed ? 'Cancel' : 'Delete'} arrow>
+            <IconButton aria-label={deleteArmed ? 'Cancel delete message' : 'Delete message'} size='sm' variant='plain' color={deleteArmed ? 'neutral' : 'danger'} onClick={deleteArmed ? handleDeleteCancel : handleDeleteArm}>
+              {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
     </ListItem>
   );
 }

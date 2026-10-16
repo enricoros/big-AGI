@@ -12,6 +12,7 @@ import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessag
  * Cleanup controls and message selection. The parent retains selection across cleanup sessions.
  */
 export function ChatCleanupControls(props: {
+  isMobile: boolean,
   conversationHandler: Pick<ConversationHandler, 'messagesDelete' | 'messageSetUserFlag'> | null,
   conversationMessages: ReadonlyArray<DMessage>,
   filteredMessages: ReadonlyArray<DMessage>,
@@ -77,6 +78,16 @@ export function ChatCleanupControls(props: {
   }, [conversationHandler, selectedMessages, setSelectedMessages, areAllSelectedMessagesHidden]);
 
 
+  const handleDeleteMessage = React.useCallback((messageId: DMessageId) => {
+    conversationHandler?.messagesDelete([messageId]);
+    if (selectedMessages.has(messageId)) {
+      const newSelected = new Set(selectedMessages);
+      newSelected.delete(messageId);
+      setSelectedMessages(newSelected);
+    }
+  }, [conversationHandler, selectedMessages, setSelectedMessages]);
+
+
   return <>
 
     <MessagesSelectionHeader
@@ -95,6 +106,7 @@ export function ChatCleanupControls(props: {
         message={message}
         remainingTokens={props.remainingTokens}
         selected={selectedMessages.has(message.id)} onToggleSelected={handleSelectMessage}
+        onDeleteMessage={props.isMobile || !conversationHandler ? undefined : handleDeleteMessage}
       />
     ))}
 
