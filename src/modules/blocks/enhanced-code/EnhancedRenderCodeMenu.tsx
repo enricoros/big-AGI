@@ -1,13 +1,17 @@
 import * as React from 'react';
+import { useERCDiffContext } from './ERCDiffContext';
 import { fileSave } from 'browser-fs-access';
 
 import { Box, ListDivider, ListItemDecorator, MenuItem } from '@mui/joy';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import UnfoldLessIcon from '@mui/icons-material/UnfoldLess';
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
+import DisabledByDefaultIcon from '@mui/icons-material/DisabledByDefault';
 import SaveAsOutlinedIcon from '@mui/icons-material/SaveAsOutlined';
 
 import { CloseablePopup } from '~/common/components/CloseablePopup';
+import { animationSpinHalfPause } from '~/common/util/animUtils';
 import { copyToClipboard } from '~/common/util/clipboardUtils';
 import { reverseLookupMdTitle, reverseLookupMimeType } from '~/common/attachment-drafts/attachment.mimetypes';
 
@@ -30,6 +34,10 @@ export function EnhancedRenderCodeMenu(props: {
   // const { showPromisedOverlay } = useOverlayComponents();
 
 
+  // external state
+  const diffContext = useERCDiffContext();
+
+
   // handlers
 
   const handleCollapseAllCodeBlocks = React.useCallback(() => {
@@ -45,6 +53,29 @@ export function EnhancedRenderCodeMenu(props: {
   const handleCopyToClipboard = React.useCallback(() => {
     copyToClipboard(props.code, 'Code');
   }, [props.code]);
+
+  const canCompare = !!diffContext?.baseCode && diffContext.baseCode !== props.code;
+
+  const handleSetAsDiffBase = React.useCallback(() => {
+    if (!diffContext) return;
+    diffContext.setBase(props.code, props.title || '(no title)');
+    diffContext.setShowDiff(false); // just to be sure
+    onClose();
+  }, [diffContext, onClose, props.code, props.title]);
+
+  const handleClearDiffBase = React.useCallback(() => {
+    if (!diffContext) return;
+    diffContext.setBase('', '');
+    diffContext.setShowDiff(false);
+    onClose();
+  }, [diffContext, onClose]);
+
+  const handleCompareWithBase = React.useCallback(() => {
+    if (!diffContext) return;
+    diffContext.setCompare(props.code, props.title || '(no title)');
+    diffContext.setShowDiff(true);
+    onClose();
+  }, [diffContext, onClose, props.code, props.title]);
 
   const handleSaveAs = React.useCallback(async () => {
     // guess the mimetype from the markdown title
@@ -121,6 +152,38 @@ export function EnhancedRenderCodeMenu(props: {
         <ListItemDecorator><SaveAsOutlinedIcon /></ListItemDecorator>
         Save As ...
       </MenuItem>
+
+      {/* Diff Menu entries */}
+      {!!diffContext && <>
+        <ListDivider />
+
+        {/*{!!diffContext.baseCode && (*/}
+        {/*  <ListItem>*/}
+        {/*    <Typography level='body-sm'>Comparing</Typography>*/}
+        {/*  </ListItem>*/}
+        {/*)}*/}
+
+        {!diffContext.baseCode && (
+          <MenuItem onClick={handleSetAsDiffBase}>
+            <ListItemDecorator><CompareArrowsIcon /></ListItemDecorator>
+            <div>Compare <span style={{ opacity: 0.5 }}>From ...</span></div>
+          </MenuItem>
+        )}
+
+        {!!diffContext.baseCode && (
+          <MenuItem onClick={handleCompareWithBase} disabled={!canCompare} color={!canCompare ? undefined : 'success'}>
+            <ListItemDecorator><CompareArrowsIcon sx={!canCompare ? undefined : { animation: `${animationSpinHalfPause} 2s ease-out` }} /></ListItemDecorator>
+            <Box fontWeight='lg'>Compare <span style={{ opacity: 0.5 }}>To ...</span></Box>
+          </MenuItem>
+        )}
+
+        {!!diffContext.baseCode && (
+          <MenuItem onClick={handleClearDiffBase}>
+            <ListItemDecorator><DisabledByDefaultIcon /></ListItemDecorator>
+            Cancel <span style={{ opacity: 0.5 }}>Comparison</span>
+          </MenuItem>
+        )}
+      </>}
 
     </CloseablePopup>
   );

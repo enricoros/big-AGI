@@ -12,6 +12,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import type { AixReattachMode } from '~/modules/aix/client/aix.client';
 import type { AutoBlocksHtmlRenderVariant } from '~/modules/blocks/AutoBlocksRenderer';
 import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic.vendor';
+import { useERCDiffActions } from '~/modules/blocks/enhanced-code/ERCDiffContext';
 import { vertexLinksCountInFragments, vertexLinksResolveFragments } from '~/modules/google/vertexai.client';
 
 import { DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsInFluxId, messageFragmentsReduceText, messageHasUserFlag, messageWasOutOfTokens } from '~/common/stores/chat/chat.message';
@@ -362,13 +363,16 @@ export function ChatMessage(props: {
   messageRef.current = props.message;
 
   // external state
-  const { adjContentScaling, disableMarkdown, doubleClickToEdit, messageFullWidth, uiComplexityMode } = useUIPreferencesStore(useShallow(state => ({
+  const { adjContentScaling, devsUISymbolHighlight, disableMarkdown, doubleClickToEdit, messageFullWidth, uiComplexityMode } = useUIPreferencesStore(useShallow(state => ({
     adjContentScaling: adjustContentScaling(state.contentScaling, props.adjustContentScaling),
+    devsUISymbolHighlight: state.devsUISymbolHighlight,
     disableMarkdown: state.disableMarkdown,
     doubleClickToEdit: state.doubleClickToEdit,
     messageFullWidth: state.messageFullWidth,
     uiComplexityMode: state.complexityMode,
   })));
+  const _setContextHighlightText = useERCDiffActions()?.setContextHighlightText;
+  const setContextHighlightText = devsUISymbolHighlight ? _setContextHighlightText : undefined;
   const labsUserMarkdown = useUXLabsStore(state => state.labsUserMarkdown);
 
 
@@ -564,7 +568,8 @@ export function ChatMessage(props: {
     }
     setBubbleAnchor(null);
     setSelText(null);
-  }, [bubbleAnchor]);
+    setContextHighlightText?.(null);
+  }, [bubbleAnchor, setContextHighlightText]);
 
   // restore blocksRendererRef
   const handleOpenBubble = React.useCallback((_event?: MouseEvent | null) => {
@@ -607,7 +612,8 @@ export function ChatMessage(props: {
 
     setBubbleAnchor(anchorEl);
     setSelText(selectionText); /* TODO: operate on the underlying content, not the rendered text */
-  }, [closeBubble, props.isMobile]);
+    setContextHighlightText?.(selectionText);
+  }, [closeBubble, props.isMobile, setContextHighlightText]);
 
   const handleBubbleClickAway = React.useCallback((event?: MouseEvent | TouchEvent /* DOM, not React */) => {
     if (!event?.shiftKey)

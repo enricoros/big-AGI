@@ -8,6 +8,7 @@ import type { SystemPurposeExample } from '../../../data';
 
 import type { AixReattachMode } from '~/modules/aix/client/aix.client';
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
+import { ERCDiffContextProvider } from '~/modules/blocks/enhanced-code/ERCDiffContext';
 import { speakText, speakTextSurfaceFailure } from '~/modules/speex/speex.client';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
@@ -19,7 +20,7 @@ import { clipboardInterceptCtrlCForCleanup } from '~/common/util/clipboardUtils'
 import { convertFilesToDAttachmentFragments } from '~/common/attachment-drafts/attachment.pipeline';
 import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
-import { getRenderHTMLInitial } from '~/common/stores/store-ui';
+import { getRenderHTMLInitial, useUIContentScaling } from '~/common/stores/store-ui';
 import { openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { themeMinWidthChatPane } from '~/common/app.theme';
@@ -66,6 +67,7 @@ export function ChatMessageList(props: {
   const [selectedMessages, setSelectedMessages] = React.useState<Set<string>>(new Set());
 
   // external state
+  const contentScaling = useUIContentScaling();
   const { showPromisedOverlay } = useOverlayComponents();
   const { notifyBooting } = useScrollToBottom();
   const [showSystemMessages] = useChatShowSystemMessages();
@@ -432,7 +434,8 @@ export function ChatMessageList(props: {
       </Box>
     );
 
-  return (
+  return <ERCDiffContextProvider title='Compare Outputs' isMobile={props.isMobile} contentScaling={contentScaling}>
+
     <List role='chat-messages-list' sx={listSx} onCopy={clipboardInterceptCtrlCForCleanup}>
 
       {props.isMessageSelectionMode && (
@@ -510,5 +513,6 @@ export function ChatMessageList(props: {
       )}
 
     </List>
-  );
+
+  </ERCDiffContextProvider>;
 }

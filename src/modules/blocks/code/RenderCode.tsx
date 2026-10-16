@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ButtonGroup, Sheet, Typography } from '@mui/joy';
 import ChangeHistoryTwoToneIcon from '@mui/icons-material/ChangeHistoryTwoTone';
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
@@ -33,6 +34,7 @@ import { RenderCodeSyntax } from './code-renderers/RenderCodeSyntax';
 import { heuristicIsBlockPureHTML } from '../danger-html/RenderDangerousHtml';
 import { heuristicIsCodePlantUML, plantUMLCodeCycleTheme, plantUMLCodeToggleDirection, RenderCodePlantUML } from './code-renderers/RenderCodePlantUML';
 import { heuristicIsSVGCode, RenderCodeSVG } from './code-renderers/RenderCodeSVG';
+import { useERCDiffContext } from '../enhanced-code/ERCDiffContext';
 import { useStickyCodeOverlay } from './useStickyCodeOverlay';
 
 // style for line-numbers
@@ -41,9 +43,13 @@ import './RenderCode.css';
 
 // configuration
 const ALWAYS_SHOW_OVERLAY = true;
+const BLOCK_CODE_ENABLE_COMPARISON = true; // TODO: make this opt-in (also, 'false' does not disable the hooks)
 export const BLOCK_CODE_MERMAID_TITLE = 'mermaid';
 export const BLOCK_CODE_PLANTUML_TITLE = 'plantuml';
 export const BLOCK_CODE_SVG_TITLE = 'svg';
+
+const CONTEXT_HIGHLIGHT_START = '__AGI_MARK_START__' as const;
+const CONTEXT_HIGHLIGHT_END = '__AGI_MARK_END__' as const;
 
 // Perf: while streaming a large code block, throttle Prism re-highlighting (decimator ~15Hz -> capped here to ~7Hz).
 // Set BYTES to 0 to disable the optimization entirely (zero runtime cost when disabled).
@@ -164,15 +170,39 @@ const RCSyntaxHighlight = React.memo(function RCSyntaxHighlight(props: {
   inferredCodeLanguage: string | null,
   renderLineNumbers: boolean,
   presenterMode: boolean,
+  performSymbolHighlight: string | null | undefined,
   highlightCode: (inferredCodeLanguage: string | null, code: string, addLineNumbers: boolean) => string,
 }) {
-  const { code, inferredCodeLanguage, renderLineNumbers, presenterMode, highlightCode } = props;
+  const { code, inferredCodeLanguage, renderLineNumbers, presenterMode, performSymbolHighlight, highlightCode } = props;
   const deferredCode = React.useDeferredValue(code);
   const codeSyntaxHtml = React.useMemo(() => {
     if (!deferredCode)
       return null;
-    return highlightCode(inferredCodeLanguage, deferredCode, renderLineNumbers);
-  }, [deferredCode, highlightCode, inferredCodeLanguage, renderLineNumbers]);
+
+    // check if the highlight is within domain conditions >= 3 chars, less than 1000 chars, and no newlines
+    let codeHighlight = performSymbolHighlight?.trim();
+    if (!codeHighlight || codeHighlight.length < 3 || codeHighlight.length > 1000 || codeHighlight.includes('\n'))
+      return highlightCode(inferredCodeLanguage, deferredCode, renderLineNumbers);
+
+    // 1. pre-process with enclosing tags to locate later
+    let codeToProcess = deferredCode;
+    try {
+      codeToProcess = codeToProcess.replaceAll(codeHighlight, `${CONTEXT_HIGHLIGHT_START}${codeHighlight}${CONTEXT_HIGHLIGHT_END}`);
+    } catch (e) {
+      // console.warn('[DEV] Error during string replaceAll for highlighting:', e);
+    }
+
+    // 2. let Prism highlight the code (with placeholders inside, which shall be skipped because agnostic - hopefully)
+    let prismOutputHtml = highlightCode(inferredCodeLanguage, codeToProcess, renderLineNumbers);
+
+    // 3. post-process: replace markers with <mark> tags
+    if (prismOutputHtml)
+      prismOutputHtml = prismOutputHtml
+        .replaceAll(CONTEXT_HIGHLIGHT_START, `<mark class='agi-highlight'>`)
+        .replaceAll(CONTEXT_HIGHLIGHT_END, `</mark>`);
+
+    return prismOutputHtml;
+  }, [deferredCode, highlightCode, inferredCodeLanguage, performSymbolHighlight, renderLineNumbers]);
 
   return <RenderCodeSyntax highlightedSyntaxAsHtml={codeSyntaxHtml} presenterMode={presenterMode} />;
 });
@@ -196,11 +226,13 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const fullScreenElementRef = React.useRef<HTMLDivElement>(null);
 
   // external state
+  const diffContext = useERCDiffContext();
   const { isFullscreen, enterFullscreen, exitFullscreen } = useFullscreenElement(fullScreenElementRef);
   const { overlayRef, overlayBoundaryRef } = useStickyCodeOverlay({ disabled: props.optimizeLightweight || isFullscreen });
 
   // sticky overlay positioning
-  const { uiComplexityMode, showLineNumbers, showSoftWrap, setRenderHTMLInitial, setShowLineNumbers, setShowSoftWrap } = useUIPreferencesStore(useShallow(state => ({
+  const { devsUISymbolHighlight, uiComplexityMode, showLineNumbers, showSoftWrap, setRenderHTMLInitial, setShowLineNumbers, setShowSoftWrap } = useUIPreferencesStore(useShallow(state => ({
+    devsUISymbolHighlight: state.devsUISymbolHighlight,
     uiComplexityMode: state.complexityMode,
     showLineNumbers: state.renderCodeLineNumbers,
     showSoftWrap: state.renderCodeSoftWrap,
@@ -272,6 +304,34 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   }, []);
 
 
+  // comparison handlers
+
+  // Compare uses current content without invalidating the overlay on each stream update.
+  const comparisonRef = React.useRef({ diffContext, code, title: blockTitle });
+  comparisonRef.current = { diffContext, code, title: blockTitle };
+  const showCompareButton = BLOCK_CODE_ENABLE_COMPARISON && !!diffContext;
+  const compareBaseSet = !!diffContext?.baseCode;
+  const compareThisIsBase = diffContext?.baseCode === props.code;
+
+  const handleCompareClicked = React.useCallback(() => {
+    const { diffContext, code, title } = comparisonRef.current;
+    if (!diffContext) return;
+    if (!diffContext.baseCode) {
+      // set this as the diff base
+      diffContext.setBase(code, title || '(no title)');
+      diffContext.setShowDiff(false); // just to be sure
+    } else if (diffContext.baseCode === code) {
+      // clear the diff base
+      diffContext.setBase('', '');
+      diffContext.setShowDiff(false);
+    } else {
+      // compare this with the diff base
+      diffContext.setCompare(code, title || '(no title)');
+      diffContext.setShowDiff(true);
+    }
+  }, []);
+
+
   // heuristics for specialized rendering
 
   const _tCode = code.trim();
@@ -323,6 +383,8 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     snapRef.current.code = code;
   }
   const throttledCodeForHighlight = snapRef.current.code;
+
+  const performSymbolHighlight = !devsUISymbolHighlight ? undefined : diffContext?.contextHighlightText;
 
 
   // Title
@@ -487,6 +549,22 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
             </OverlayButton>
           )}
 
+          {/* Comparison button: single button to initiate comparison if no base is set, shows as solid if this is the base (instead of formerly having a clear comparison button), and shows as 'color=success' or outlined if clicking it will compare this against the base */}
+          {showCompareButton && (
+            <OverlayButton
+              tooltip={noTooltips ? null :
+                !compareBaseSet ? 'Compare this code'
+                  : compareThisIsBase ? 'Cancel comparison'
+                    : 'Compare with this code'
+              }
+              variant={!compareBaseSet ? 'outlined' : compareThisIsBase ? 'solid' : 'outlined'}
+              color={!compareBaseSet ? undefined : 'warning'}
+              onClick={handleCompareClicked}
+            >
+              <CompareArrowsIcon />
+            </OverlayButton>
+          )}
+
           {/* Copy */}
           {props.noCopyButton !== true && (
             <OverlayButton tooltip={noTooltips ? null : 'Copy Code'} variant='outlined' onClick={handleCopyToClipboard}>
@@ -499,6 +577,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
     </Box></RCOverlay>
   ), [
+    compareBaseSet, compareThisIsBase, handleCompareClicked, showCompareButton,
     cannotRenderLineNumbers, enterFullscreen, exitFullscreen, fitScreen, handleCopyToClipboard, handleHtmlRenderToggle,
     handleRenderHandleCopy, handleRenderHandleDownload, onReplaceInCode, showPlantUML,
     isFullscreen, isHTMLCode, isMdCode, isMermaidCode, isPlantUMLCode, isSVGCode, noTooltips, overlayRef, props.noCopyButton,
@@ -549,6 +628,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
                         inferredCodeLanguage={inferredCodeLanguage}
                         renderLineNumbers={renderLineNumbers}
                         presenterMode={isFullscreen}
+                        performSymbolHighlight={performSymbolHighlight}
                         highlightCode={highlightCode}
                       />}
         </span>

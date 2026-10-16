@@ -71,6 +71,11 @@ interface UIPreferencesStore {
   aixInspector: boolean;
   toggleAixInspector: () => void;
 
+  // Developer features
+
+  devsUISymbolHighlight: boolean;
+  toggleDevsUISymbolHighlight: () => void;
+
   // UI Dismissals
 
   dismissals: Record<string, boolean>;
@@ -154,6 +159,11 @@ export const useUIPreferencesStore = create<UIPreferencesStore>()(
 
       aixInspector: false,
       toggleAixInspector: () => set((state) => ({ aixInspector: !state.aixInspector })),
+
+      // Developer features
+
+      devsUISymbolHighlight: false,
+      toggleDevsUISymbolHighlight: () => set((state) => ({ devsUISymbolHighlight: !state.devsUISymbolHighlight })),
 
       // UI Dismissals
 
