@@ -1073,6 +1073,7 @@ export function ChatMessage(props: {
             <DocumentAttachmentFragments
               attachmentFragments={nonImageAttachments}
               messageRole={messageRole}
+              renderVariant='chat-message'
               contentScaling={adjContentScaling}
               isMobile={props.isMobile}
               zenMode={zenMode}

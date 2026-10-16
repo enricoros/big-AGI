@@ -58,6 +58,7 @@ function SortableDocAttachmentButton(props: {
 export const DocumentAttachmentFragments = React.memo(function DocumentAttachmentFragments(props: {
   attachmentFragments: DMessageAttachmentFragment[],
   messageRole: DMessageRole,
+  renderVariant: 'chat-message' | 'data-editor',
   contentScaling: ContentScaling,
   isMobile: boolean,
   zenMode: boolean,
@@ -73,7 +74,6 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
   const [_activeFragmentId, setActiveFragmentId] = React.useState<DMessageFragmentId | null>(null);
   const [editState, setEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
   const [showAllAttachments, setShowAllAttachments] = React.useState<boolean>(false);
-
 
   // DnD setup
   const sensors = useDndDefaultSensors();
@@ -100,7 +100,7 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
 
   // editing
 
-  const controlledEditor = false;
+  const controlledEditor = props.renderVariant === 'data-editor';
   const { onFragmentReplace, onFragmentsReorder } = props;
 
   const handleEditSetText = React.useCallback((fragmentId: DMessageFragmentId, value: string) => {
@@ -136,7 +136,6 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
     onFragmentReplace(fragmentId, newFragment);
   }, [controlledEditor, onFragmentReplace]);
 
-
   const handleDragEnd = React.useCallback((event: DragEndEvent) => {
     dndDragEndReorder(event, fragmentIds, onFragmentsReorder);
   }, [fragmentIds, onFragmentsReorder]);
@@ -167,9 +166,9 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
     display: 'flex',
     flexWrap: 'wrap',
     gap: 1,
-    justifyContent: props.messageRole === 'assistant' ? 'flex-start' : 'flex-end',
+    justifyContent: (props.messageRole === 'assistant' || props.renderVariant === 'data-editor') ? 'flex-start' : 'flex-end',
     ...selectedFragment && { mb: 1 },
-  }), [props.messageRole, selectedFragment]);
+  }), [props.messageRole, props.renderVariant, selectedFragment]);
 
 
   return (
@@ -238,6 +237,7 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
           fragment={selectedFragment}
           controlledEditor={controlledEditor}
           messageRole={props.messageRole}
+          renderVariant={props.renderVariant}
           editedText={controlledEditor ? undefined : editState?.[selectedFragment.fId]}
           setEditedText={handleEditSetText}
           contentScaling={props.contentScaling}
