@@ -14,7 +14,7 @@ import { workspaceActions } from '~/common/stores/workspace/store-client-workspa
 import { workspaceForConversationIdentity } from '~/common/stores/workspace/workspace.types';
 
 import { DMessage, DMessageId, DMessageMetadata, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from './chat.message';
-import { DMessageFragment, DMessageFragmentId, isVoidThinkingFragment } from './chat.fragments';
+import { DMessageFragment, DMessageFragmentId, isVoidThinkingFragment, reorderFragments } from './chat.fragments';
 import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversation } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
@@ -48,6 +48,7 @@ export interface ChatActions {
   editMessage: (cId: DConversationId, mId: DMessageId, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), removePendingState: boolean, touchUpdated: boolean) => void;
   appendMessageFragment: (cId: DConversationId, mId: DMessageId, fragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) => void;
   deleteMessageFragment: (cId: DConversationId, mId: DMessageId, fId: DMessageFragmentId, removePendingState: boolean, touchUpdated: boolean) => void;
+  reorderMessageFragments: (cId: DConversationId, mId: DMessageId, reorderedIds: DMessageFragmentId[], placement: 'end', removePendingState: boolean, touchUpdated: boolean) => void;
   replaceMessageFragment: (cId: DConversationId, mId: DMessageId, fId: DMessageFragmentId, newFragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) => void;
   updateMetadata: (cId: DConversationId, mId: DMessageId, metadataDelta: Partial<DMessageMetadata>, touchUpdated?: boolean) => void;
   setSystemPurposeId: (cId: DConversationId, personaId: SystemPurposeId) => void;
@@ -414,6 +415,12 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           {
             systemPurposeId: personaId,
           }),
+
+      reorderMessageFragments: (conversationId: DConversationId, messageId: DMessageId, reorderedIds: DMessageFragmentId[], placement: 'end', removePendingState: boolean, touchUpdated: boolean) =>
+        _get().editMessage(conversationId, messageId, message => ({
+          fragments: reorderFragments(message.fragments, reorderedIds, placement),
+        }), removePendingState, touchUpdated),
+
 
       setAutoTitle: (conversationId: DConversationId, autoTitle: string) =>
         _get()._editConversation(conversationId,

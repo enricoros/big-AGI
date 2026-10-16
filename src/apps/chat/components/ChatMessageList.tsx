@@ -1,4 +1,5 @@
 import * as React from 'react';
+import type { FileWithHandle } from 'browser-fs-access';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
@@ -281,6 +282,10 @@ export function ChatMessageList(props: {
     conversationHandler?.messageFragmentReplace(messageId, fragmentId, newFragment, true);
   }, [conversationHandler]);
 
+  const handleMessageReorderFragments = React.useCallback((messageId: DMessageId, reorderedIds: DMessageFragmentId[], placement: 'end') => {
+    conversationHandler?.messageFragmentsReorder(messageId, reorderedIds, placement, false, true);
+  }, [conversationHandler]);
+
   const handleMessageToggleUserFlag = React.useCallback((messageId: DMessageId, userFlag: DMessageUserFlag, _maxPerConversation?: number) => {
     conversationHandler?.messageToggleUserFlag(messageId, userFlag, true /* touch */);
     // Note: we don't support 'maxPerConversation' yet, which is supposed to turn off the flag from the beginning if it's too numerous
@@ -291,6 +296,12 @@ export function ChatMessageList(props: {
 
   const handleAddInReferenceTo = React.useCallback((item: DMetaReferenceItem) => {
     conversationHandler?.overlayActions.addInReferenceTo(item);
+  }, [conversationHandler]);
+
+  const handleReattachAsFile = React.useCallback((fileWithHandle: FileWithHandle, overrideFileName?: string) => {
+    conversationHandler?.overlayActions.createAttachmentDraft({
+      media: 'file', origin: 'screencapture', fileWithHandle, refPath: overrideFileName || fileWithHandle.name,
+    }, { hintAddImages: true });
   }, [conversationHandler]);
 
   const handleTextDiagram = React.useCallback(async (messageId: DMessageId, text: string) => {
@@ -489,8 +500,10 @@ export function ChatMessageList(props: {
               onMessageFragmentAppend={handleMessageAppendFragment}
               onMessageFragmentDelete={handleMessageDeleteFragment}
               onMessageFragmentReplace={handleMessageReplaceFragment}
+              onMessageFragmentsReorder={handleMessageReorderFragments}
               onMessageToggleUserFlag={handleMessageToggleUserFlag}
               onMessageTruncate={handleMessageTruncate}
+              onReattachAsFile={handleReattachAsFile}
               onTextDiagram={handleTextDiagram}
               onTextImagine={capabilityHasT2I ? handleTextImagine : undefined}
               onTextSpeak={handleTextSpeak}

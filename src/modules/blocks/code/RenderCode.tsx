@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ButtonGroup, Sheet, Typography } from '@mui/joy';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import ChangeHistoryTwoToneIcon from '@mui/icons-material/ChangeHistoryTwoTone';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -70,6 +71,7 @@ interface RenderCodeBaseProps {
   initialRenderHTML?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean, // the block being written: throttle highlighting, no tooltips or sticky overlay
+  onReattachAsFile?: (file: File) => void;
   onReplaceInCode?: (search: string, replace: string) => boolean;
   renderHideTitle?: boolean,
   sx?: SxProps,
@@ -248,6 +250,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     isPartial: blockIsPartial,
     highlightCode,
     inferCodeLanguage,
+    onReattachAsFile,
     onReplaceInCode,
   } = props;
 
@@ -302,6 +305,19 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
       alert('Failed to generate image.');
     }
   }, []);
+
+
+  const handleRenderHandleReattach = React.useCallback(async (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (!renderHandleRef.current || !onReattachAsFile) return;
+    renderHandleRef.current.renderAsPNGBlob(false)
+      .then((render) => {
+        if (!render) return alert('Failed to convert SVG to PNG.');
+        const pngFile = new File([render.blob], 'svg-render.png', { type: render.blob.type || 'image/png' });
+        onReattachAsFile(pngFile);
+      })
+      .catch(() => alert('Failed to convert SVG to PNG.'));
+  }, [onReattachAsFile]);
 
 
   // comparison handlers
@@ -527,6 +543,18 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
           </ButtonGroup>
         )}
 
+        {/* Special Group: Reattach SVG */}
+        {isSVGCode && !!props.onReattachAsFile && (
+          <ButtonGroup color='neutral' aria-label='SVG Actions' sx={overlayGroupWithShadowSx}>
+            <OverlayButton
+              tooltip={noTooltips ? null : 'Attach as image'}
+              onClick={handleRenderHandleReattach}
+            >
+              <AddPhotoAlternateIcon />
+            </OverlayButton>
+          </ButtonGroup>
+        )}
+
         {/* Group: Text Options */}
         <ButtonGroup aria-label='Text and code options' sx={overlayGroupWithShadowSx}>
 
@@ -577,6 +605,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
     </Box></RCOverlay>
   ), [
+    handleRenderHandleReattach, props.onReattachAsFile,
     compareBaseSet, compareThisIsBase, handleCompareClicked, showCompareButton,
     cannotRenderLineNumbers, enterFullscreen, exitFullscreen, fitScreen, handleCopyToClipboard, handleHtmlRenderToggle,
     handleRenderHandleCopy, handleRenderHandleDownload, onReplaceInCode, showPlantUML,

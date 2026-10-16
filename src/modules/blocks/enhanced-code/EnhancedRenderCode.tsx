@@ -49,6 +49,7 @@ export function EnhancedRenderCode(props: {
   initialRenderHTML?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean,
+  onReattachAsFile?: (file: File) => void;
   onReplaceInCode?: (search: string, replace: string) => boolean;
   codeSx?: SxProps,
   // enhanced props
@@ -240,6 +241,7 @@ export function EnhancedRenderCode(props: {
           onReplaceInCode={props.onReplaceInCode}
           renderHideTitle={!props.frameless /* the header shows it, when there is one */}
           sx={props.frameless ? framelessCodeSx : patchedCodeSx}
+          onReattachAsFile={props.onReattachAsFile}
         />
       </ExpanderControlledBox>
 

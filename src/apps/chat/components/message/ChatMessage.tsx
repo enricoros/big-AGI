@@ -340,8 +340,10 @@ export function ChatMessage(props: {
   onMessageFragmentAppend?: (messageId: DMessageId, fragment: DMessageFragment) => void
   onMessageFragmentDelete?: (messageId: DMessageId, fragmentId: DMessageFragmentId) => void,
   onMessageFragmentReplace?: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void,
+  onMessageFragmentsReorder?: (messageId: DMessageId, reorderedIds: DMessageFragmentId[], placement: 'end') => void,
   onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag, maxPerConversation?: number) => void,
   onMessageTruncate?: (messageId: string) => void,
+  onReattachAsFile?: (file: File) => void,
   onTextDiagram?: (messageId: string, text: string) => Promise<void>,
   onTextImagine?: (text: string) => Promise<void>,
   onTextSpeak?: (text: string) => Promise<void>,
@@ -437,7 +439,7 @@ export function ChatMessage(props: {
   // const wordsDiff = useWordsDifference(textSubject, props.diffPreviousText, showDiff);
 
 
-  const { onMessageAssistantFrom, onMessageDelete, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace, onMessageContinue, onMessageToggleUserFlag, onMessageUpstreamResume, onMessageUpstreamDetach, onMessageUpstreamDelete } = props;
+  const { onMessageAssistantFrom, onMessageDelete, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace, onMessageFragmentsReorder, onMessageContinue, onMessageToggleUserFlag, onMessageUpstreamResume, onMessageUpstreamDetach, onMessageUpstreamDelete } = props;
 
   const handleFragmentNew = React.useCallback(() => {
     onMessageFragmentAppend?.(messageId, createTextContentFragment(''));
@@ -450,6 +452,17 @@ export function ChatMessage(props: {
   const handleFragmentReplace = React.useCallback((fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
     onMessageFragmentReplace?.(messageId, fragmentId, newFragment);
   }, [messageId, onMessageFragmentReplace]);
+
+  const handleFragmentsReorder = React.useCallback((reorderedIds: DMessageFragmentId[]) => {
+    onMessageFragmentsReorder?.(messageId, reorderedIds, 'end');
+  }, [messageId, onMessageFragmentsReorder]);
+
+  const handleImagesReorder = React.useCallback((reorderedIds: DMessageFragmentId[]) => {
+    // Keep text and documents in their original slots.
+    const imageIds = new Set(reorderedIds);
+    let imageIndex = 0;
+    handleFragmentsReorder(messageFragments.map(({ fId }) => imageIds.has(fId) ? reorderedIds[imageIndex++] : fId));
+  }, [handleFragmentsReorder, messageFragments]);
 
   const handleResolveVertexLinks = React.useCallback(async () => {
     const outcome = await vertexLinksResolveFragments(messageFragments);
@@ -997,6 +1010,7 @@ export function ChatMessage(props: {
               messageRole={messageRole}
               isEditing={isEditingText}
               onFragmentDelete={!onMessageFragmentDelete ? undefined : handleFragmentDelete}
+              onFragmentsReorder={isEditingText && onMessageFragmentsReorder ? handleImagesReorder : undefined}
             />
           )}
 
@@ -1042,6 +1056,7 @@ export function ChatMessage(props: {
             onMessageDelete={!onMessageDelete ? undefined : handleMessageDelete}
 
             onDoubleClick={(onMessageFragmentReplace /*&& doubleClickToEdit disabled, as we may have shift too */) ? handleBlocksDoubleClick : undefined}
+            onReattachAsFile={props.onReattachAsFile}
           />
 
           {/* [#1114] Resolve Vertex AI grounding redirect links in place */}
@@ -1084,6 +1099,7 @@ export function ChatMessage(props: {
               messageRole={messageRole}
               isEditing={isEditingText}
               onFragmentDelete={!onMessageFragmentDelete ? undefined : handleFragmentDelete}
+              onFragmentsReorder={isEditingText && onMessageFragmentsReorder ? handleImagesReorder : undefined}
             />
           )}
 

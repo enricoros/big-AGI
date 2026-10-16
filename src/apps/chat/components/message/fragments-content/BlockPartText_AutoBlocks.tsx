@@ -39,6 +39,7 @@ function BlockPartText_AutoBlocks(props: {
 
   inFlux: boolean,
 
+  onReattachAsFile?: (file: File) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
 
 }) {
@@ -87,6 +88,7 @@ function BlockPartText_AutoBlocks(props: {
       inFlux={props.inFlux}
       onDoubleClick={props.onDoubleClick}
       setText={!props.setEditedText ? undefined : handleSetText}
+      onReattachAsFile={props.onReattachAsFile}
     />
   );
 }

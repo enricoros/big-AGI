@@ -181,6 +181,10 @@ export class ConversationHandler {
     _chatStoreActions.replaceMessageFragment(this.conversationId, messageId, fragmentId, newFragment, messageComplete, true);
   }
 
+  messageFragmentsReorder(messageId: DMessageId, reorderedIds: DMessageFragmentId[], placement: 'end', complete: boolean, touch: boolean) {
+    _chatStoreActions.reorderMessageFragments(this.conversationId, messageId, reorderedIds, placement, complete, touch);
+  }
+
   messageHasUserFlag(messageId: DMessageId, userFlag: DMessageUserFlag): boolean {
     const message = _chatStoreActions.historyView(this.conversationId)?.find(m => m.id === messageId);
     if (!message) return false;

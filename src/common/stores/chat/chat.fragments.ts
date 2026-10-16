@@ -1054,3 +1054,22 @@ export function prependTextPartsInline(fragments: DMessageFragment[], textPrefix
   }
   fragments.unshift(createTextContentFragment(textPrefix));
 }
+
+export function reorderFragments<T extends DMessageFragment>(unsortedFragments: ReadonlyArray<T>, reorderedIds: DMessageFragmentId[], _placement: 'end'): T[] {
+
+  // quick lookup map
+  const fragmentMap = new Map<DMessageFragmentId, T>();
+  unsortedFragments.forEach(fragment => fragmentMap.set(fragment.fId, fragment));
+
+  // ensure existance in the new order
+  reorderedIds = reorderedIds.filter(id => fragmentMap.has(id));
+
+  // fragments not in the reordering operation
+  const remainingFragments = unsortedFragments.filter(({ fId }) => !reorderedIds.includes(fId));
+
+  // 1. prepend the remaining fragments, 2. then the reordered fragments
+  return [
+    ...remainingFragments,
+    ...reorderedIds.map(id => fragmentMap.get(id)!),
+  ];
+}

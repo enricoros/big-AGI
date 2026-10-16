@@ -81,6 +81,8 @@ export function AutoBlocksRenderer(props: {
    * If defined, this will replace the Fragment text with the new one.
    */
   setText?: (newText: string) => void;
+  /** If defined, attaches the file in the owner. */
+  onReattachAsFile?: (file: File) => void;
 
 }) {
 
@@ -205,6 +207,7 @@ export function AutoBlocksRenderer(props: {
                 optimizeLightweight={lastBlockInFlux}
                 onReplaceInCode={!setText ? undefined : handleReplaceCode}
                 codeSx={scaledCodeSx}
+                onReattachAsFile={props.onReattachAsFile}
               />
             ) : (
               <RenderCodeMemo
@@ -217,6 +220,7 @@ export function AutoBlocksRenderer(props: {
                 optimizeLightweight={lastBlockInFlux}
                 onReplaceInCode={!setText ? undefined : handleReplaceCode}
                 sx={scaledCodeSx}
+                onReattachAsFile={props.onReattachAsFile}
               />
             );
 

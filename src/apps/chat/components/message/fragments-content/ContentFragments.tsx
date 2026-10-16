@@ -77,6 +77,7 @@ export function ContentFragments(props: {
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageContentFragment) => void,
   onMessageDelete?: () => void,
 
+  onReattachAsFile?: (file: File) => void;
   onDoubleClick?: (event: React.MouseEvent) => void;
 
 }) {
@@ -353,6 +354,7 @@ export function ContentFragments(props: {
               htmlRenderVariant={props.htmlRenderVariant}
               inFlux={inFlux}
               onDoubleClick={props.onDoubleClick}
+              onReattachAsFile={props.onReattachAsFile}
             />
           );
 
