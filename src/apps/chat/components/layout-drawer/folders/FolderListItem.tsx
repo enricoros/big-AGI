@@ -1,6 +1,8 @@
 import * as React from 'react';
+
 import { CSS } from '@dnd-kit/utilities';
 import { useSortable } from '@dnd-kit/sortable';
+import { dndDragCursorSx } from '~/common/components/dnd/dnd.config';
 
 import { FormLabel, IconButton, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Radio, RadioGroup, Sheet } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -11,8 +13,8 @@ import FolderIcon from '@mui/icons-material/Folder';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import { CloseablePopup } from '~/common/components/CloseablePopup';
-import { DFolder, FOLDERS_COLOR_PALETTE, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { InlineTextarea } from '~/common/components/InlineTextarea';
+import { chatFoldersActions, DFolder, FOLDERS_COLOR_PALETTE } from '~/common/stores/folders/store-chat-folders';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 
 
@@ -61,7 +63,6 @@ export function FolderListItem(props: {
     isDragging,
   } = useSortable({ id: folderId });
 
-
   // handlers
 
   const handleFolderActivate = React.useCallback((event: React.MouseEvent) => {
@@ -93,7 +94,7 @@ export function FolderListItem(props: {
 
   const handleSetTitle = React.useCallback((newTitle: string, folderId: string) => {
     if (newTitle.trim())
-      useFolderStore.getState().setFolderName(folderId, newTitle.trim());
+      chatFoldersActions().setFolderName(folderId, newTitle.trim());
     setIsEditing(false); // Exit edit mode
     // Blur the input element if it's currently focused
     if (document.activeElement instanceof HTMLElement) {
@@ -113,7 +114,7 @@ export function FolderListItem(props: {
     if (!deleteArmed) return;
     setDeleteArmed(false);
     event.stopPropagation();
-    useFolderStore.getState().deleteFolder(folderId);
+    chatFoldersActions().deleteFolder(folderId);
     handleMenuClose();
   }, [deleteArmed, folderId, handleMenuClose]);
 
@@ -127,7 +128,7 @@ export function FolderListItem(props: {
   // Color
 
   const handleColorChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    useFolderStore.getState().setFolderColor(folderId, event.target.value);
+    chatFoldersActions().setFolderColor(folderId, event.target.value);
     handleMenuClose();
   }, [folderId, handleMenuClose]);
 
@@ -136,8 +137,8 @@ export function FolderListItem(props: {
     <ListItem
       ref={setNodeRef}
       sx={{
-        transform: CSS.Transform.toString(transform),
-        transition,
+        transform: CSS.Translate.toString(transform),
+        transition: transition,
         userSelect: 'none',
         zIndex: isDragging ? 1 : undefined,
 
@@ -171,10 +172,7 @@ export function FolderListItem(props: {
         <ListItemDecorator
           {...attributes}
           {...listeners}
-          sx={{
-            cursor: isDragging ? 'grabbing' : 'grab',
-            touchAction: 'none', // Prevent scrolling on mobile when dragging
-          }}
+          sx={dndDragCursorSx}
         >
           <FolderIcon style={{ color: folderColor || 'inherit' }} />
         </ListItemDecorator>

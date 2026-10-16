@@ -1,7 +1,9 @@
 import * as React from 'react';
-import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { closestCenter, DndContext, DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers';
+
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { closestCenter, DndContext, DragEndEvent } from '@dnd-kit/core';
+import { dndModifiersParentVertical } from '~/common/components/dnd/dnd.config';
+import { useDndDefaultSensors } from '~/common/components/dnd/useDndDefaultSensors';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, List, ListItem, ListItemButton, ListItemDecorator } from '@mui/joy';
@@ -10,8 +12,8 @@ import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
-import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { FoldersAddButton } from '~/common/components/folders/FoldersAddButton';
+import { chatFoldersActions, DFolder } from '~/common/stores/folders/store-chat-folders';
 
 import { FolderListItem } from './FolderListItem';
 
@@ -57,8 +59,6 @@ const _styles = {
   } as const,
 } as const;
 
-const _dndModifiers = [restrictToVerticalAxis, restrictToParentElement];
-
 
 export function ChatFolderList(props: {
   isMobile: boolean;
@@ -77,14 +77,7 @@ export function ChatFolderList(props: {
   const [isAddingFolder, setIsAddingFolder] = React.useState(false);
 
   // DnD Kit
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
+  const sensors = useDndDefaultSensors();
 
 
   // memos
@@ -99,15 +92,14 @@ export function ChatFolderList(props: {
   }), [props.contentScaling]);
 
 
-  // handlers
+  // DnD
 
-  const handleDragEnd = React.useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
+  const handleDragEnd = React.useCallback(({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) return;
     const oldIndex = folderIds.findIndex(fId => fId === active.id);
     const newIndex = folderIds.findIndex(fId => fId === over.id);
     if (oldIndex !== -1 && newIndex !== -1)
-      useFolderStore.getState().moveFolder(oldIndex, newIndex);
+      chatFoldersActions().moveFolder(oldIndex, newIndex);
   }, [folderIds]);
 
 
@@ -154,7 +146,7 @@ export function ChatFolderList(props: {
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
-          modifiers={_dndModifiers}
+          modifiers={dndModifiersParentVertical}
         >
           <SortableContext
             items={folderIds}
@@ -179,6 +171,7 @@ export function ChatFolderList(props: {
         {(!isMobile || !displayZeroState) && <FoldersAddButton isAddingFolder={isAddingFolder} setIsAddingFolder={setIsAddingFolder} />}
 
       </List>
+
     </Box>
   );
 }
