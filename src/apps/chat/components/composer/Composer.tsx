@@ -58,7 +58,7 @@ import type { AttachmentDraftId, AttachmentDraftsAction } from '~/common/attachm
 import { AttachmentInputEnhancersOptions, attachmentEnhancersPlaceholderHints } from '~/common/attachment-drafts/attachment.enhancers';
 import { AttachmentSourcesMemo } from '~/common/attachment-drafts/attachment-sources/AttachmentSources';
 import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
-import { useAttachmentDraftsEnrichment } from '~/common/attachment-drafts/llm-enrichment/useAttachmentDraftsEnrichment';
+import { useLLMImageInputPolicy } from '~/common/attachment-drafts/llm-enrichment/useLLMImageInputPolicy';
 import { useGoogleDrivePicker } from '~/common/attachment-drafts/attachment-sources/useGoogleDrivePicker';
 
 import type { ChatExecuteMode } from '../../execute-mode/execute-mode.types';
@@ -215,7 +215,7 @@ export function Composer(props: {
   } = useAttachmentDrafts(conversationOverlayStore, enableLoadURLsInComposer, chatLLMSupportsImages, handleFilterAGIFile, showChatAttachments === 'only-images', enhancersOptions);
 
   // attachments derived state
-  const { enrichment: attEnrichment, summary: attEnrichSummary } = useAttachmentDraftsEnrichment(attachmentDrafts, props.chatLLM, chatLLMSupportsImages);
+  const { attEnrichment, attEnrichSummary, confirmUnsupportedLLMAttachments } = useLLMImageInputPolicy(props.chatLLM, attachmentDrafts);
 
   // drag/drop
   const { dragContainerSx, dropComponent, handleContainerDragEnter, handleContainerDragStart } = useComposerDragDrop(!props.isMobile, attachAppendDataTransfer);
@@ -285,24 +285,6 @@ export function Composer(props: {
   }, [composerTextAreaRef, inReferenceTo]);
 
 
-  // Confirmation Modals
-
-  const confirmProceedIfAttachmentsNotSupported = React.useCallback(async (): Promise<boolean> => {
-    if (attEnrichSummary.allCompatible) return true;
-    return await showPromisedOverlay('composer-unsupported-attachments', { rejectWithValue: false }, ({ onResolve, onUserReject }) => (
-      <ConfirmationModal
-        open
-        onClose={onUserReject}
-        onPositive={() => onResolve(true)}
-        confirmationText='Some attached files may not be fully compatible with the current AI model. This could affect processing. Would you like to review or proceed?'
-        positiveActionText='Proceed'
-        negativeActionText='Review Attachments'
-        title='Attachment Compatibility Notice'
-      />
-    ));
-  }, [attEnrichSummary.allCompatible, showPromisedOverlay]);
-
-
   // Primary button
 
   const _handleClearText = React.useCallback(() => {
@@ -317,7 +299,7 @@ export function Composer(props: {
     if (!isValidConversation(targetConversationId)) return false;
 
     // await user confirmation (or rejection) if attachments are not supported
-    if (!await confirmProceedIfAttachmentsNotSupported()) return false;
+    if (!await confirmUnsupportedLLMAttachments()) return false;
 
     // validate some chat mode inputs
     const isDraw = _chatExecuteMode === 'generate-image';
@@ -353,7 +335,7 @@ export function Composer(props: {
     if (enqueued)
       _handleClearText();
     return enqueued;
-  }, [targetConversationId, confirmProceedIfAttachmentsNotSupported, composerTextSuffix, props.capabilityHasT2IEdit, inReferenceTo, onAction, _handleClearText, attachmentsTakeAllFragments, pendingParts]);
+  }, [targetConversationId, confirmUnsupportedLLMAttachments, composerTextSuffix, props.capabilityHasT2IEdit, inReferenceTo, onAction, _handleClearText, attachmentsTakeAllFragments, pendingParts]);
 
   const handleSendAction = React.useCallback(async (chatExecuteMode: ChatExecuteMode, composerText: string): Promise<boolean> => {
     setSendStarted(true);
