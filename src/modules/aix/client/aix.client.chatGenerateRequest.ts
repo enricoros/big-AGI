@@ -1,9 +1,10 @@
 import type { Immutable } from '~/common/types/immutable.types';
+import { findLastUserPromptFragment } from '~/common/stores/chat/chat.fragment-order';
 import { getImageAsset } from '~/common/stores/blob/dblobs-portability';
 
 import { DLLM, LLM_IF_ANT_PromptCaching, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoWebP, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0 } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageRole, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag } from '~/common/stores/chat/chat.message';
-import { DMessageFragment, DMessageImageRefPart, DMessageZyncAssetReferencePart, hostedResourceMutedText, isContentOrAttachmentFragment, isToolResponseFunctionCallPart, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
+import { DMessageFragment, DMessageImageRefPart, DMessageZyncAssetReferencePart, hostedResourceMutedText, isContentOrAttachmentFragment, isToolResponseFunctionCallPart, isUnstampedFragment, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
 import { Is } from '~/common/util/pwaUtils';
 import { convert_Base64WithMimeType_To_Blob, convert_Blob_To_Base64 } from '~/common/util/blobUtils';
 import { imageBlobConvertType, imageBlobResizeIfNeeded, LLMImageResizeMode } from '~/common/util/imageUtils';
@@ -287,6 +288,8 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
     if (dMessageRole === 'user') {
 
       const dMessageUserFragments = m.fragments;
+      let inReferenceToInsertIndex = 0;
+      const lastPromptFragmentId = findLastUserPromptFragment(dMessageUserFragments)?.fId;
       const aixChatMessageUser = await dMessageUserFragments.reduce(async (uMsgPromise, uFragment: DMessageFragment) => {
 
         const uMsg = await uMsgPromise;
@@ -296,6 +299,9 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
         switch (uFragment.part.pt) {
           case 'text':
             uMsg.parts.push(uFragment.part);
+            // In-reference-to goes after the authored text; without any, after the leading stamped text (e.g. persona prefix) - inside the outer prefix/suffix either way.
+            if (uFragment.fId === lastPromptFragmentId || (!lastPromptFragmentId && !isUnstampedFragment(uFragment) && inReferenceToInsertIndex === uMsg.parts.length - 1))
+              inReferenceToInsertIndex = uMsg.parts.length;
             break;
 
           case 'reference':
@@ -389,12 +395,9 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
         return uMsg;
       }, Promise.resolve({ role: 'user', parts: [] } as AixMessages_UserMessage));
 
-      // handle in-reference-to metadata, adding a part right after the user text (or at the beginning)
+      // handle in-reference-to metadata (the quoted text the user replies to): after the authored prompt, independent of attachment order and muted media
       if (m.metadata?.inReferenceTo?.length) {
-        // find the index of the last text part
-        const lastTextPartIndex = aixChatMessageUser.parts.findLastIndex(p => p.pt === 'text');
-        // insert the meta part after the last text part (and before the first attachment)
-        aixChatMessageUser.parts.splice(lastTextPartIndex + 1, 0, _clientCreateAixMetaInReferenceToPart(m.metadata.inReferenceTo));
+        aixChatMessageUser.parts.splice(inReferenceToInsertIndex, 0, _clientCreateAixMetaInReferenceToPart(m.metadata.inReferenceTo));
       }
 
       // (on User messages) handle the ant-cache-prompt user/auto flags
