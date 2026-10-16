@@ -74,6 +74,7 @@ import { ButtonOptionsDraw } from './buttons/ButtonOptionsDraw';
 import { COMPOSER_INPUT_ENHANCERS } from './composer.input-enhancers';
 import { useComposerEnhancerHint } from './useComposerEnhancerHint';
 import { ComposerAttachmentDraftsList } from './llmattachments/ComposerAttachmentDraftsList';
+import { InReferenceToBubble } from '../message/in-reference-to/InReferenceToBubble';
 import { ComposerTextAreaActions } from './textarea/ComposerTextAreaActions';
 import { ComposerTextAreaDrawActions } from './textarea/ComposerTextAreaDrawActions';
 import { StatusBarMemo } from '../StatusBar';
@@ -846,14 +847,37 @@ export function Composer(props: {
                       />
                       : <ComposerTextAreaActions
                         agiAttachmentPrompts={agiAttachmentPrompts}
-                        inReferenceTo={inReferenceTo}
-                        pendingParts={pendingParts}
-                        pendingPartsEnhancers={COMPOSER_INPUT_ENHANCERS}
-                        enhancerDisabledHint={enhancerHintItem}
                         onAppendAndSend={handleAppendTextAndSend}
-                        onRemoveReferenceTo={handleRemoveInReferenceTo}
-                        onRemovePendingPart={handleRemovePendingPart}
-                      />
+                      >
+                        {(!!inReferenceTo?.length || !!pendingParts?.length || !!enhancerHintItem) && (
+                          <>
+                            {/* In-Reference-To bubbles */}
+                            {inReferenceTo?.map((item, index) => (
+                              <InReferenceToBubble
+                                key={index}
+                                item={item}
+                                onRemove={handleRemoveInReferenceTo}
+                                className='within-composer-focus'
+                              />
+                            ))}
+
+                            {/* Enhancer-pending part chips (e.g. video URLs) - dispatched to the owning enhancer's renderer */}
+                            {pendingParts?.map((part, index) => {
+                              const enhancer = COMPOSER_INPUT_ENHANCERS.find(e => e.ownsPart(part));
+                              if (!enhancer) return null;
+                              const PendingChip = enhancer.PendingChip;
+                              return <PendingChip key={index} part={part} onRemove={() => handleRemovePendingPart(part)} />;
+                            })}
+
+                            {/* Capability hint from a disabled enhancer (e.g. video URL pasted on a non-video model) */}
+                            {!!enhancerHintItem && COMPOSER_INPUT_ENHANCERS.map(enhancer => {
+                              const DisabledMatchHint = enhancer.DisabledMatchHint;
+                              if (!DisabledMatchHint || !enhancer.ownsPart(enhancerHintItem.part)) return null;
+                              return <DisabledMatchHint key={enhancer.id} {...enhancerHintItem} />;
+                            })}
+                          </>
+                        )}
+                      </ComposerTextAreaActions>
                     }
                     slotProps={{
                       textarea: {

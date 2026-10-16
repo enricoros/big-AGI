@@ -5,12 +5,6 @@ import { Box, Button, ColorPaletteProp } from '@mui/joy';
 
 import type { AgiAttachmentPromptsData } from '~/modules/aifn/agiattachmentprompts/useAgiAttachmentPrompts';
 
-import type { AttachmentEnhancerHintItem, AttachmentInputEnhancer } from '~/common/attachment-drafts/attachment.enhancers';
-import type { DComposerPendingPart } from '~/common/chat-overlay/store-perchat-composer_slice';
-import type { DMetaReferenceItem } from '~/common/stores/chat/chat.message';
-
-import { InReferenceToBubble } from '../../message/in-reference-to/InReferenceToBubble';
-
 
 // configuration
 export const AGI_SUGGESTIONS_COLOR: ColorPaletteProp = 'success';
@@ -66,49 +60,26 @@ const promptButtonSx: SxProps = {
 };
 
 
+/**
+ * Textarea end-decorator actions: the pre-send items row (passed as children, e.g. UserInputItemsRow)
+ * and the AI-suggested attachment prompts. Knows nothing about the items themselves.
+ */
 export function ComposerTextAreaActions(props: {
   agiAttachmentPrompts: AgiAttachmentPromptsData,
-  inReferenceTo?: DMetaReferenceItem[] | null
-  pendingParts?: DComposerPendingPart[] | null,
-  pendingPartsEnhancers?: readonly AttachmentInputEnhancer[],
-  enhancerDisabledHint?: AttachmentEnhancerHintItem | null,
   onAppendAndSend: (appendText: string) => Promise<void>,
-  onRemoveReferenceTo: (item: DMetaReferenceItem) => void,
-  onRemovePendingPart?: (part: DComposerPendingPart) => void,
+  children?: React.ReactNode,
 }) {
 
   // skip the component if there's nothing to show
-  const { agiAttachmentPrompts, enhancerDisabledHint, onRemovePendingPart } = props;
-  if (!props.inReferenceTo?.length && !props.pendingParts?.length && !enhancerDisabledHint && !agiAttachmentPrompts.prompts?.length /*&& !props.agiAttachmentPrompts.isVisible*/)
+  const { agiAttachmentPrompts } = props;
+  if (!props.children && !agiAttachmentPrompts.prompts?.length /*&& !props.agiAttachmentPrompts.isVisible*/)
     return null;
 
   return (
     <Box sx={composerTextAreaSx}>
 
-      {/* In-Reference-To bubbles */}
-      {props.inReferenceTo?.map((item, index) => (
-        <InReferenceToBubble
-          key={index}
-          item={item}
-          onRemove={props.onRemoveReferenceTo}
-          className='within-composer-focus'
-        />
-      ))}
-
-      {/* Enhancer-pending part chips (e.g. video URLs) - dispatched to the owning enhancer's renderer */}
-      {props.pendingParts?.map((part, index) => {
-        const enhancer = props.pendingPartsEnhancers?.find(e => e.ownsPart(part));
-        if (!enhancer) return null;
-        const PendingChip = enhancer.PendingChip;
-        return <PendingChip key={index} part={part} onRemove={() => onRemovePendingPart?.(part)} />;
-      })}
-
-      {/* Capability hint from a disabled enhancer (e.g. video URL pasted on a non-video model) */}
-      {!!enhancerDisabledHint && props.pendingPartsEnhancers?.map(enhancer => {
-        const DisabledMatchHint = enhancer.DisabledMatchHint;
-        if (!DisabledMatchHint || !enhancer.ownsPart(enhancerDisabledHint.part)) return null;
-        return <DisabledMatchHint key={enhancer.id} {...enhancerDisabledHint} />;
-      })}
+      {/* Pre-send items row (recipient, reply-to, pending parts) */}
+      {props.children}
 
       {/* Auto-Prompts from attachments */}
       {agiAttachmentPrompts.prompts.map((candidate, index) =>
