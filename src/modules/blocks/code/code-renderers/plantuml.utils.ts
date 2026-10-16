@@ -79,3 +79,49 @@ function encode6bit(b: number): string {
 //   }
 //   return hex;
 // }
+
+
+const PLANTUML_THEMES = ['plain', 'blueprint', 'crt-amber', 'aws-orange', 'superhero', 'hacker', 'sketchy', 'vibrant', 'mars']; // good-looking, high-contrast, and diverse themes for PlantUML
+
+
+/**
+ * Two-state toggle the layout direction of a PlantUML diagram: default (top-to-bottom) vs. left-to-right
+ */
+export function plantUMLCodeToggleDirection(code: string): string {
+  // Match directives on their own lines, never phrases inside labels or comments.
+  const leftToRight = /^[\t ]*left to right direction[\t ]*(?:\r?\n|$)/im;
+  if (leftToRight.test(code))
+    return code.replace(leftToRight, '');
+
+  const cleanCode = code.replace(/^[\t ]*top to bottom direction[\t ]*(?:\r?\n|$)/im, '');
+  return cleanCode.replace(/^([\t ]*@start\w+[^\r\n]*)(\r?\n|$)/im,
+    (_, header: string, lineEnd: string) => `${header}${lineEnd || '\n'}left to right direction${lineEnd}`);
+
+}
+
+
+/**
+ * Cycles through a predefined list of PlantUML themes, including removing it.
+ */
+export function plantUMLCodeCycleTheme(code: string): string {
+  const themeRegex = /^([\t ]*!theme[\t ]+)([a-zA-Z0-9_-]+)[\t ]*(?=\r?$)/im;
+  const match = code.match(themeRegex);
+  const currentTheme = match ? match[2].toLowerCase() : null;
+
+  // no theme: apply first
+  if (!currentTheme)
+    return code.replace(/^([\t ]*@start\w+[^\r\n]*)(\r?\n|$)/im,
+      (_, header: string, lineEnd: string) => `${header}${lineEnd || '\n'}!theme ${PLANTUML_THEMES[0]}${lineEnd}`);
+
+  // unknown theme: replace with first known theme
+  const currentIndex = PLANTUML_THEMES.indexOf(currentTheme);
+  if (currentIndex === -1)
+    return code.replace(themeRegex, `$1${PLANTUML_THEMES[0]}`);
+
+  // last theme: remove the theme directive
+  if (currentIndex === PLANTUML_THEMES.length - 1)
+    return code.replace(/^[\t ]*!theme[\t ]+[a-zA-Z0-9_-]+[\t ]*(?:\r?\n|$)/im, '');
+
+  // advance theme
+  return code.replace(themeRegex, `$1${PLANTUML_THEMES[currentIndex + 1]}`);
+}

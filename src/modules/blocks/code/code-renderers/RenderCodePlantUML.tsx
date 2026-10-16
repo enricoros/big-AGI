@@ -15,8 +15,7 @@ import type { IRenderHandle } from './IRenderHandle';
 import { useFittedSvgString } from './RenderCodeSVG';
 
 
-// configuration
-const PLANTUML_THEMES = ['plain', 'blueprint', 'crt-amber', 'aws-orange', 'superhero', 'hacker', 'sketchy', 'vibrant', 'mars']; // good-looking, high-contrast, and diverse themes for PlantUML
+export { plantUMLCodeCycleTheme, plantUMLCodeToggleDirection } from './plantuml.utils';
 
 
 export function heuristicIsCodePlantUML(code: string) {
@@ -196,49 +195,6 @@ async function fetchPlantUmlSvg(plantUmlCode: string): Promise<{ svg: string | n
 }
 
 
-/**
- * Two-state toggle the layout direction of a PlantUML diagram: default (top-to-bottom) vs. left-to-right
- */
-export function plantUMLCodeToggleDirection(code: string): string {
-  const hasLR = /left to right direction/i.test(code);
-
-  if (hasLR) {
-    // Remove LR directive to go back to default (top-to-bottom)
-    return code.replace(/left to right direction\s*\n?/i, '');
-  } else {
-    // Override any existing TB directive with LR
-    const cleanCode = code.replace(/top to bottom direction\s*\n?/i, '');
-    return cleanCode.replace(/(@start\w+.*)/i, '$1\nleft to right direction');
-  }
-}
-
-
-/**
- * Cycles through a predefined list of PlantUML themes, including removing it.
- */
-export function plantUMLCodeCycleTheme(code: string): string {
-  const themeRegex = /!theme\s+([a-zA-Z0-9_-]+)/i;
-  const match = code.match(themeRegex);
-  const currentTheme = match ? match[1].toLowerCase() : null;
-
-  // no theme: apply first
-  if (!currentTheme)
-    return code.replace(/(@start\w+.*)/i, `$1\n!theme ${PLANTUML_THEMES[0]}`);
-
-  // unknown theme: replace with first known theme
-  const currentIndex = PLANTUML_THEMES.indexOf(currentTheme);
-  if (currentIndex === -1)
-    return code.replace(themeRegex, `!theme ${PLANTUML_THEMES[0]}`);
-
-  // last theme: remove the theme directive
-  if (currentIndex === PLANTUML_THEMES.length - 1)
-    return code.replace(/!theme\s+[a-zA-Z0-9_-]+\s*\n?/i, '');
-
-  // advance theme
-  return code.replace(themeRegex, `!theme ${PLANTUML_THEMES[currentIndex + 1]}`);
-}
-
-
 export const RenderCodePlantUML = React.forwardRef(function RenderCodePlantUML(props: {
   plantUMLCode: string;
   fitContainer: boolean;
@@ -247,7 +203,8 @@ export const RenderCodePlantUML = React.forwardRef(function RenderCodePlantUML(p
 }, ref: React.Ref<IRenderHandle>) {
 
   // state
-  const [fixupError, setFixupError] = React.useState<string | null>(null);
+  const [fixupFailure, setFixupFailure] = React.useState<{ code: string; message: string } | null>(null);
+  const fixupError = fixupFailure?.code === props.plantUMLCode ? fixupFailure.message : null;
 
   // external state: the PlantUML SVG
   const { data: conversion, error: serverError, isLoading } = useQuery({
@@ -270,15 +227,15 @@ export const RenderCodePlantUML = React.forwardRef(function RenderCodePlantUML(p
   const handleDiagramRegenerate = React.useCallback(async () => {
     if (!onReplaceInCode) return;
 
-    setFixupError(null);
+    setFixupFailure(null);
     refetch()
       .then((result) => {
         if (result.data)
           onReplaceInCode(props.plantUMLCode, result.data);
         else if (result.error)
-          setFixupError(result.error.message || 'Unknown error.');
+          setFixupFailure({ code: props.plantUMLCode, message: result.error.message || 'Unknown error.' });
         else
-          setFixupError('Unknown Fixup error.');
+          setFixupFailure({ code: props.plantUMLCode, message: 'Unknown Fixup error.' });
       });
   }, [onReplaceInCode, props.plantUMLCode, refetch]);
 

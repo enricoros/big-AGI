@@ -176,7 +176,8 @@ export const RenderCodeMermaid = React.forwardRef(function RenderCodeMermaid(pro
 }, ref: React.Ref<IRenderHandle>) {
 
   // state
-  const [fixupError, setFixupError] = React.useState<string | null>(null);
+  const [fixupFailure, setFixupFailure] = React.useState<{ code: string; message: string } | null>(null);
+  const fixupError = fixupFailure?.code === props.mermaidCode ? fixupFailure.message : null;
   const mermaidContainerRef = React.useRef<HTMLDivElement>(null);
 
   // external state
@@ -210,14 +211,14 @@ export const RenderCodeMermaid = React.forwardRef(function RenderCodeMermaid(pro
 
   const handleChartRegenerate = React.useCallback(async () => {
     if (!onReplaceInCode) return;
-    setFixupError(null);
+    setFixupFailure(null);
     refetch().then((result) => {
       if (result.data)
         onReplaceInCode(props.mermaidCode, result.data);
       else if (result.error)
-        setFixupError(result.error.message || 'Unknown error.');
+        setFixupFailure({ code: props.mermaidCode, message: result.error.message || 'Unknown error.' });
       else
-        setFixupError('Unknown Fixup error.');
+        setFixupFailure({ code: props.mermaidCode, message: 'Unknown Fixup error.' });
     });
   }, [onReplaceInCode, props.mermaidCode, refetch]);
 
