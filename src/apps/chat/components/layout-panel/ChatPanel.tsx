@@ -100,19 +100,22 @@ function ChatPanel(props: {
 
     {/* Chat Actions group */}
     <OptimaPanelGroupedList title='Actions' hideExpandedCheckbox persistentCollapsibleId='chat-actions'>
-
-      <ActionFolder conversationId={props.conversationId} disabled={!props.conversationId} /* folder actions work on any existing conversation, unlike other actions that need non-empty chats */ />
-
       {/* Use 2 columns */}
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
 
         {/* Left column */}
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', overflowX: 'hidden' /* for clipping folder long names */ }}>
 
-          <MenuItem disabled={props.disableItems} onClick={handleToggleArchive}>
-            <ListItemDecorator>{isArchived ? <UnarchiveOutlinedIcon /> : <ArchiveOutlinedIcon />}</ListItemDecorator>
-            {isArchived ? <b>Unarchive</b> : 'Archive'}
-          </MenuItem>
+          {/* [PROD] Not comfortable with Archive yet, so let's just give the option to 'unarchive' chats, and have that as the alternative to the Folder button */}
+          {isArchived ? (
+            // Archive / Unarchive button
+            <MenuItem disabled={props.disableItems} onClick={handleToggleArchive}>
+              <ListItemDecorator>{isArchived ? <UnarchiveOutlinedIcon /> : <ArchiveOutlinedIcon />}</ListItemDecorator>
+              {isArchived ? <b>Unarchive</b> : 'Archive'}
+            </MenuItem>
+          ) : (
+            <ActionFolder conversationId={props.conversationId} disabled={!props.conversationId} /* folder actions work on any existing conversation, unlike other actions that need non-empty chats */ />
+          )}
 
           <MenuItem disabled={props.disableItems} onClick={handleConversationBranch}>
             <ListItemDecorator><ForkRightIcon /></ListItemDecorator>

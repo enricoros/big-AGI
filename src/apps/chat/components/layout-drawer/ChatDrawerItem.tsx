@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { Avatar, Box, IconButton, ListItem, ListItemButton, ListItemDecorator, Sheet, styled, Tooltip, Typography } from '@mui/joy';
+import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CopyAllIcon from '@mui/icons-material/CopyAll';
@@ -152,6 +153,14 @@ function ChatDrawerItem(props: {
       currentFolder: folder ?? null,
     });
   }, [conversationId, folder, onConversationFolderChange]);
+
+
+  // Archive
+
+  const handleConversationArchive = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    useChatStore.getState().setArchived(conversationId, true);
+  }, [conversationId]);
 
 
   // Title Edit
@@ -361,7 +370,7 @@ function ChatDrawerItem(props: {
 
         {/* buttons row */}
         {isActive && (
-          <Box sx={{ display: 'flex', gap: 0.5, minHeight: '2.25rem', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, minHeight: '2.25rem', alignItems: 'center' }}>
             {props.showSymbols && <ListItemDecorator />}
 
             {/* Current Folder color, and change initiator */}
@@ -406,6 +415,14 @@ function ChatDrawerItem(props: {
                     <FileUploadOutlinedIcon />
                   </FadeInButton>
                 </Tooltip>
+
+                {!props.item.isArchived && (
+                  <Tooltip arrow disableInteractive title='Archive'>
+                    <FadeInButton size='sm' aria-label='Archive' onClick={handleConversationArchive}>
+                      <ArchiveOutlinedIcon />
+                    </FadeInButton>
+                  </Tooltip>
+                )}
               </>}
 
             </>}
