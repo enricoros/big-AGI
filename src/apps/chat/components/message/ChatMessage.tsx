@@ -4,18 +4,10 @@ import { shallow } from 'zustand/vanilla/shallow';
 import TimeAgo from 'react-timeago';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ButtonGroup, CircularProgress, Divider, IconButton, Tooltip, Typography } from '@mui/joy';
-import { ClickAwayListener, Popper } from '@mui/base';
+import { Box, Button, IconButton, Tooltip, Typography } from '@mui/joy';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import ContentCutIcon from '@mui/icons-material/ContentCut';
-import FormatBoldIcon from '@mui/icons-material/FormatBold';
-import FormatPaintOutlinedIcon from '@mui/icons-material/FormatPaintOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import ReplyAllRoundedIcon from '@mui/icons-material/ReplyAllRounded';
-import ReplyRoundedIcon from '@mui/icons-material/ReplyRounded';
-import StrikethroughSIcon from '@mui/icons-material/StrikethroughS';
 
 import type { AixReattachMode } from '~/modules/aix/client/aix.client';
 import type { AutoBlocksHtmlRenderVariant } from '~/modules/blocks/AutoBlocksRenderer';
@@ -23,12 +15,9 @@ import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic
 import { vertexLinksCountInFragments, vertexLinksResolveFragments } from '~/modules/google/vertexai.client';
 
 import { DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsInFluxId, messageFragmentsReduceText, messageHasUserFlag, messageWasOutOfTokens } from '~/common/stores/chat/chat.message';
-import { MarkHighlightIcon } from '~/common/components/icons/MarkHighlightIcon';
-import { PhTreeStructure } from '~/common/components/icons/phosphor/PhTreeStructure';
-import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { Release } from '~/common/app.release';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { adjustContentScaling, themeScalingMap, themeZIndexChatBubble } from '~/common/app.theme';
+import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
 import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
@@ -40,6 +29,7 @@ import { BlockOpContinue } from './BlockOpContinue';
 import { BlockOpOptions, optionsExtractFromFragments_dangerModifyFragment } from './BlockOpOptions';
 import { BlockOpResolveLinks } from './BlockOpResolveLinks';
 import { BlockOpUpstreamResume } from './BlockOpUpstreamResume';
+import { ChatMessageBubble } from './ChatMessageBubble';
 import { ChatMessageEditAttachments, type EditModeAttachmentsHandle } from './ChatMessageEditAttachments';
 import { ChatMessageInfoPopup } from './ChatMessageInfoPopup';
 import { ChatMessageMenu } from './ChatMessageMenu';
@@ -619,8 +609,8 @@ export function ChatMessage(props: {
     setSelText(selectionText); /* TODO: operate on the underlying content, not the rendered text */
   }, [closeBubble, props.isMobile]);
 
-  const handleBubbleClickAway = React.useCallback((event: MouseEvent | TouchEvent /* DOM, not React */) => {
-    if (!event.shiftKey)
+  const handleBubbleClickAway = React.useCallback((event?: MouseEvent | TouchEvent /* DOM, not React */) => {
+    if (!event?.shiftKey)
       closeBubble();
   }, [closeBubble]);
 
@@ -1211,114 +1201,24 @@ export function ChatMessage(props: {
 
       {/* Bubble Over Toolbar */}
       {ENABLE_BUBBLE && !!bubbleAnchor && (
-        <Popper placement='top-start' open={true} anchorEl={bubbleAnchor} slotProps={{
-          root: { style: { zIndex: themeZIndexChatBubble } },
-        }}>
-          <ClickAwayListener onClickAway={handleBubbleClickAway}>
-            <ButtonGroup
-              variant='plain'
-              sx={{
-                '--ButtonGroup-separatorColor': 'none !important',
-                '--ButtonGroup-separatorSize': 0,
-                borderRadius: '0',
-                backgroundColor: 'background.popup',
-                border: '1px solid',
-                borderColor: 'primary.outlinedBorder',
-                boxShadow: '0px 4px 24px -8px rgb(var(--joy-palette-neutral-darkChannel) / 50%)',
-                mb: 1.5,
-                ml: -1.5,
-                alignItems: 'center',
-                '& > button': {
-                  '--Icon-fontSize': 'var(--joy-fontSize-lg, 1.125rem)',
-                  minHeight: '2.5rem',
-                  minWidth: '2.75rem',
-                },
-              }}
-            >
-              {/* Bubble Add Reference */}
-              {!!onAddInReferenceTo && <Tooltip disableInteractive arrow placement='top' title={props.hasInReferenceTo ? 'Reply to this too' : fromAssistant ? 'Reply' : 'Refer To'}>
-                <IconButton color='primary' onClick={handleOpsAddInReferenceTo}>
-                  {props.hasInReferenceTo ? <ReplyAllRoundedIcon sx={{ fontSize: 'xl' }} /> : <ReplyRoundedIcon sx={{ fontSize: 'xl' }} />}
-                </IconButton>
-              </Tooltip>}
-              {/*{!!onMessageBeam && fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Beam'>*/}
-              {/*  <IconButton color='primary'>*/}
-              {/*    <ChatBeamIcon sx={{ fontSize: 'xl' }} />*/}
-              {/*  </IconButton>*/}
-              {/*</Tooltip>}*/}
-              {!!onAddInReferenceTo && <Divider />}
-
-              {/* Text Tools (edits fragment, only for assistant messages) */}
-              {fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Highlight Text'>
-                <IconButton disabled={!handleHighlightSelText} onClick={!handleHighlightSelText ? undefined : () => {
-                  handleHighlightSelText('highlight');
-                  closeBubble();
-                }}>
-                  <MarkHighlightIcon hcolor={handleHighlightSelText ? 'yellow' : undefined} />
-                </IconButton>
-              </Tooltip>}
-              {fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Strike Through'>
-                <IconButton disabled={!handleHighlightSelText} onClick={!handleHighlightSelText ? undefined : () => {
-                  handleHighlightSelText('strike');
-                  closeBubble();
-                }}>
-                  <StrikethroughSIcon />
-                </IconButton>
-              </Tooltip>}
-              {fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Toggle Bold'>
-                <IconButton disabled={!handleHighlightSelText} onClick={!handleHighlightSelText ? undefined : () => {
-                  handleHighlightSelText('strong');
-                  closeBubble();
-                }}>
-                  <FormatBoldIcon />
-                </IconButton>
-              </Tooltip>}
-              {fromAssistant && <Tooltip disableInteractive arrow placement='top' title='Cut Text'>
-                <IconButton disabled={!handleHighlightSelText} onClick={!handleHighlightSelText ? undefined : () => {
-                  handleHighlightSelText('cut');
-                  closeBubble();
-                }}>
-                  <ContentCutIcon />
-                </IconButton>
-              </Tooltip>}
-              {fromAssistant && <Divider />}
-
-              {/* Intelligent functions */}
-              {onTextDiagram && <Tooltip disableInteractive arrow placement='top' title={couldDiagram ? 'Auto-Diagram...' : 'Too short to Auto-Diagram'}>
-                <IconButton color='success' onClick={couldDiagram ? handleOpsTextDiagram : undefined}>
-                  <PhTreeStructure sx={{ color: couldDiagram ? 'primary' : 'neutral.plainDisabledColor' }} />
-                </IconButton>
-              </Tooltip>}
-              {onTextImagine && <Tooltip disableInteractive arrow placement='top' title='Auto-Draw'>
-                <IconButton color='success' onClick={handleOpsTextImagine} disabled={!couldImagine || props.isImagining}>
-                  {!props.isImagining ? <FormatPaintOutlinedIcon /> : <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />}
-                </IconButton>
-              </Tooltip>}
-              {onTextSpeak && <Tooltip disableInteractive arrow placement='top' title='Speak'>
-                <IconButton color='success' onClick={handleOpsTextSpeak} disabled={!couldSpeak || props.isSpeaking}>
-                  {!props.isSpeaking ? <PhVoice /> : <CircularProgress sx={{ '--CircularProgress-size': '16px' }} />}
-                </IconButton>
-              </Tooltip>}
-              {(onTextDiagram || onTextImagine || onTextSpeak) && <Divider />}
-
-              {/* Bubble Copy */}
-              <Tooltip disableInteractive arrow placement='top' title='Copy Selection'>
-                <IconButton onClick={handleBubbleCopyDOM}>
-                  <ContentCopyIcon />
-                </IconButton>
-              </Tooltip>
-
-              {/* Selection char & word count */}
-              {!!selText && <Divider />}
-              {!!selText && (
-                <Typography level='body-xs' sx={{ px: 1, whiteSpace: 'nowrap' }}>
-                  {selText.length.toLocaleString()}c · {(selText.match(/\S+/g) || []).length.toLocaleString()}w
-                </Typography>
-              )}
-
-            </ButtonGroup>
-          </ClickAwayListener>
-        </Popper>
+        <ChatMessageBubble
+          anchorEl={bubbleAnchor}
+          onClose={handleBubbleClickAway}
+          selText={selText}
+          fromAssistant={fromAssistant}
+          hasInReferenceTo={!!props.hasInReferenceTo /* 1+ */}
+          onReferenceTo={!onAddInReferenceTo ? undefined : handleOpsAddInReferenceTo}
+          onHighlight={handleHighlightSelText}
+          onImagine={!onTextImagine ? undefined : handleOpsTextImagine}
+          onSpeak={!onTextSpeak ? undefined : handleOpsTextSpeak}
+          onDiagram={!onTextDiagram ? undefined : handleOpsTextDiagram}
+          isImagining={!!props.isImagining}
+          isSpeaking={props.isSpeaking}
+          couldImagine={couldImagine}
+          couldSpeak={couldSpeak}
+          couldDiagram={couldDiagram}
+          onCopy={handleBubbleCopyDOM}
+        />
       )}
 
 
