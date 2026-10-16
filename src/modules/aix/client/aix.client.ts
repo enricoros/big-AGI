@@ -3,6 +3,7 @@ import { ortWebToolsToAixModel } from '~/modules/llms/vendors/openrouter/openrou
 
 import { vertexLinksAutoResolveFragments } from '~/modules/google/vertexai.client';
 
+import type { Immutable } from '~/common/types/immutable.types';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { AIVndAntInlineFilesPolicy, getVndAntInlineFiles } from '~/common/stores/store-ai';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
@@ -263,7 +264,7 @@ interface AixClientOptions {
  */
 type _UC = NonNullable<DMessageGenerator['upstreamContainer']>;
 
-function _findRecentUpstreamContainer<Uct extends _UC['uct']>(history: readonly DMessage[], uct: Uct, expiryBufferMs = 15_000): Extract<_UC, { uct: Uct }> | null {
+function _findRecentUpstreamContainer<Uct extends _UC['uct']>(history: Immutable<DMessage[]>, uct: Uct, expiryBufferMs = 15_000): Extract<_UC, { uct: Uct }> | null {
   for (let i = history.length - 1; i >= 0; i--) {
     const uc = history[i].generator?.upstreamContainer;
     if (uc?.uct !== uct) continue;
@@ -312,8 +313,8 @@ export type AixChatGenerateContent_FromConversation_Result = {
 export async function aixChatGenerateContent_DMessage_FromConversation(
   // chat-inputs -> Partial<DMessage> outputs
   llmId: DLLMId,
-  chatSystemInstruction: null | Pick<DMessage, 'fragments' | 'metadata' | 'userFlags'>,
-  chatHistoryWithoutSystemMessages: Readonly<DMessage[]>,
+  chatSystemInstruction: null | Pick<Immutable<DMessage>, 'fragments' | 'metadata' | 'userFlags'>,
+  chatHistoryWithoutSystemMessages: Immutable<DMessage[]>,
   // aix inputs
   aixContextName: AixAPI_Context_ChatGenerate['name'],
   aixContextRef: AixAPI_Context_ChatGenerate['ref'],

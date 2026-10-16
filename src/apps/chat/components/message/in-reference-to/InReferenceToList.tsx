@@ -4,6 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
 import type { DMetaReferenceItem } from '~/common/stores/chat/chat.message';
+import type { Immutable } from '~/common/types/immutable.types';
 
 import { InReferenceToBubble } from './InReferenceToBubble';
 
@@ -15,7 +16,7 @@ const inReferenceToGroupSx: SxProps = {
 };
 
 
-export function InReferenceToList(props: { items: DMetaReferenceItem[] }) {
+export function InReferenceToList(props: { items: Immutable<DMetaReferenceItem[]> }) {
   return (
     <Box sx={inReferenceToGroupSx}>
       {props.items.map((item, index) => (

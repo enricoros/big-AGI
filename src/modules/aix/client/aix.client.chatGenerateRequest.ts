@@ -70,7 +70,7 @@ function aixCGRTextPart(text: string) {
 
 
 export async function aixCGR_SystemMessage_FromDMessageOrThrow(
-  systemInstruction: null | Pick<DMessage, 'fragments' | 'metadata' | 'userFlags'>,
+  systemInstruction: null | Pick<Immutable<DMessage>, 'fragments' | 'metadata' | 'userFlags'>,
 ): Promise<AixAPIChatGenerate_Request['systemMessage']> {
 
   // quick bypass for no message
@@ -263,7 +263,7 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
 
 
 export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
-  messageSequenceWithoutSystem: Readonly<Pick<DMessage, 'role' | 'fragments' | 'metadata' | 'userFlags'>[]>, // Note: adding the "Pick" to show the low requirement from the DMessage type, as we'll move to simpler APIs soon
+  messageSequenceWithoutSystem: Readonly<Pick<Immutable<DMessage>, 'role' | 'fragments' | 'metadata' | 'userFlags'>[]>, // Note: adding the "Pick" to show the low requirement from the DMessage type, as we'll move to simpler APIs soon
   // _assemblyMode: 'complete' = 'complete',
 ): Promise<AixAPIChatGenerate_Request['chatSequence']> {
 
@@ -615,7 +615,7 @@ export async function aixConvertZyncImageAssetRefToInlineImageOrThrow(assetRefPa
   throw new Error(`Asset reference ${assetRefPart.zUuid} - Asset system not yet implemented or legacy fallback missing`);
 }
 
-export async function aixConvertImageRefToInlineImageOrThrow(imageRefPart: DMessageImageRefPart, resizeMode: LLMImageResizeMode | false): Promise<AixParts_InlineImagePart> {
+export async function aixConvertImageRefToInlineImageOrThrow(imageRefPart: Immutable<DMessageImageRefPart>, resizeMode: LLMImageResizeMode | false): Promise<AixParts_InlineImagePart> {
 
   // validate
   const { dataRef } = imageRefPart;
@@ -677,8 +677,8 @@ function _clientCreateAixMetaCacheControlPart(control: AixParts_MetaCacheControl
   return { pt: 'meta_cache_control', control: control };
 }
 
-function _clientCreateAixMetaInReferenceToPart(items: DMetaReferenceItem[]): AixParts_MetaInReferenceToPart {
-  return { pt: 'meta_in_reference_to', referTo: items };
+function _clientCreateAixMetaInReferenceToPart(items: Immutable<DMetaReferenceItem[]>): AixParts_MetaInReferenceToPart {
+  return { pt: 'meta_in_reference_to', referTo: items.map(refItem => ({ ...refItem })) };
 }
 
 
