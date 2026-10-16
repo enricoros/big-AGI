@@ -89,7 +89,7 @@ function ChatPanel(props: {
   return <>
 
     {/* Window group */}
-    <OptimaPanelGroupedList title='Window'>
+    <OptimaPanelGroupedList title='Window' hideExpandedCheckbox persistentCollapsibleId='chat-window'>
 
       <WindowSplitControls isVerticalSplit={props.isVerticalSplit} />
 
@@ -98,7 +98,7 @@ function ChatPanel(props: {
     </OptimaPanelGroupedList>
 
     {/* Chat Actions group */}
-    <OptimaPanelGroupedList title='Actions'>
+    <OptimaPanelGroupedList title='Actions' hideExpandedCheckbox persistentCollapsibleId='chat-actions'>
       {/* Use 2 columns */}
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
 
@@ -151,7 +151,7 @@ function ChatPanel(props: {
     </OptimaPanelGroupedList>
 
     {/* ... how do we name this? ... */}
-    <OptimaPanelGroupedList title='Persona'>
+    <OptimaPanelGroupedList title='Persona' hideExpandedCheckbox persistentCollapsibleId='chat-persona'>
       <ListItemButton disabled={props.disableItems} onClick={handleToggleSystemMessages}>
         <ListItemDecorator><SettingsSuggestOutlinedIcon /></ListItemDecorator>
         Show Instruction
