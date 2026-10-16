@@ -61,7 +61,7 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
 
         <Box sx={{ py: 0.25, mb: OPTIMA_PANEL_GROUPS_SPACING }}>
           <OptimaPanelGroupedList>
-            <PreferencesListItem />
+            <PreferencesListItem autoClosePanel />
           </OptimaPanelGroupedList>
         </Box>
 
