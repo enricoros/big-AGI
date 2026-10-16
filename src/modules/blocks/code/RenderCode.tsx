@@ -5,27 +5,34 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ButtonGroup, Sheet, Typography } from '@mui/joy';
 import ChangeHistoryTwoToneIcon from '@mui/icons-material/ChangeHistoryTwoTone';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import FitScreenIcon from '@mui/icons-material/FitScreen';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import HtmlIcon from '@mui/icons-material/Html';
 import NumbersRoundedIcon from '@mui/icons-material/NumbersRounded';
+import PaletteIcon from '@mui/icons-material/Palette';
+import PhotoLibraryOutlinedIcon from '@mui/icons-material/PhotoLibraryOutlined';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
+import RotateRightIcon from '@mui/icons-material/RotateRight';
 import SquareTwoToneIcon from '@mui/icons-material/SquareTwoTone';
 import WrapTextIcon from '@mui/icons-material/WrapText';
 import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 
-import { copyToClipboard } from '~/common/util/clipboardUtils';
+import { copyBlobPromiseToClipboard, copyToClipboard } from '~/common/util/clipboardUtils';
+import { downloadBlob } from '~/common/util/downloadUtils';
+import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { useFullscreenElement } from '~/common/components/useFullscreenElement';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
+import type { IRenderHandle } from './code-renderers/IRenderHandle';
 import { OVERLAY_BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx } from '../OverlayButton';
 import { RenderCodeHtmlIFrame } from './code-renderers/RenderCodeHtmlIFrame';
 import { RenderCodeMarkdown } from './code-renderers/RenderCodeMarkdown';
 import { RenderCodeMermaid } from './code-renderers/RenderCodeMermaid';
-import { heuristicIsSVGCode, RenderCodeSVG } from './code-renderers/RenderCodeSVG';
 import { RenderCodeSyntax } from './code-renderers/RenderCodeSyntax';
 import { heuristicIsBlockPureHTML } from '../danger-html/RenderDangerousHtml';
-import { heuristicIsCodePlantUML, RenderCodePlantUML, usePlantUmlSvg } from './code-renderers/RenderCodePlantUML';
+import { heuristicIsCodePlantUML, plantUMLCodeCycleTheme, plantUMLCodeToggleDirection, RenderCodePlantUML } from './code-renderers/RenderCodePlantUML';
+import { heuristicIsSVGCode, RenderCodeSVG } from './code-renderers/RenderCodeSVG';
 import { useStickyCodeOverlay } from './useStickyCodeOverlay';
 
 // style for line-numbers
@@ -185,6 +192,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
   const [showSVG, setShowSVG] = React.useState(true);
+  const renderHandleRef = React.useRef<IRenderHandle>(null);
   const fullScreenElementRef = React.useRef<HTMLDivElement>(null);
 
   // external state
@@ -208,6 +216,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     isPartial: blockIsPartial,
     highlightCode,
     inferCodeLanguage,
+    onReplaceInCode,
   } = props;
 
   const noTooltips = props.optimizeLightweight /*|| !isHovering*/;
@@ -235,6 +244,34 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   }, [setRenderHTMLInitial, showHTML]);
 
 
+  const handleRenderHandleCopy = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    // Keep clipboard.write inside the click gesture for Safari; resolve the image through a promise.
+    const renderBlob = async (): Promise<Blob> => {
+      const render = await renderHandleRef.current?.renderAsPNGBlob(event.shiftKey);
+      if (render) return render.blob;
+      throw new Error(render === undefined ? 'Nothing to copy yet.' : 'Failed to generate image.');
+    };
+    const blobPromise = renderBlob();
+    // The clipboard API can reject before consuming the image promise.
+    void blobPromise.catch(() => undefined);
+    void copyBlobPromiseToClipboard('image/png', blobPromise, `Image${event.shiftKey ? ' with transparent background' : ''}`)
+      .catch((error: unknown) => alert(error instanceof Error ? error.message : 'Failed to copy image.'));
+  }, []);
+
+  const handleRenderHandleDownload = React.useCallback(async (event: React.MouseEvent) => {
+    event.stopPropagation();
+    try {
+      const render = await renderHandleRef.current?.renderAsPNGBlob(event.shiftKey);
+      if (render) downloadBlob(render.blob, `${render.prefix}_${prettyTimestampForFilenames()}.png`);
+      else if (render === undefined) alert('Nothing to download yet.');
+      else alert('Failed to generate image.');
+    } catch {
+      alert('Failed to generate image.');
+    }
+  }, []);
+
+
   // heuristics for specialized rendering
 
   const _tCode = code.trim();
@@ -256,9 +293,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const renderMermaid = isMermaidCode && showMermaid;
 
   const isPlantUMLCode = heuristicIsCodePlantUML(_tCode);
-  let renderPlantUML = isPlantUMLCode && showPlantUML;
-  const { data: plantUmlSvgData, error: plantUmlError } = usePlantUmlSvg(renderPlantUML, code);
-  renderPlantUML = renderPlantUML && (!!plantUmlSvgData || !!plantUmlError);
+  const renderPlantUML = isPlantUMLCode && showPlantUML;
 
   const isSVGCode = heuristicIsSVGCode(_tCode);
   const renderSVG = isSVGCode && showSVG;
@@ -327,7 +362,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
 
   // Keep the overlay stable across streamed code updates. Copy reads the latest code through codeRef.
-  const showFitButton = (isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML && !plantUmlError) || (isSVGCode && showSVG && canScaleSVG);
+  const showFitButton = (isMermaidCode && showMermaid) || (isPlantUMLCode && showPlantUML) || (isSVGCode && showSVG && canScaleSVG);
   const codeOverlay = React.useMemo(() => (<RCOverlay>
     <Box
       ref={overlayRef}
@@ -380,12 +415,53 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
               {isSVGCode ? <ChangeHistoryTwoToneIcon /> : <SquareTwoToneIcon />}
             </OverlayButton>
 
+            {/* PlantUML code-changing buttons */}
+            {(isPlantUMLCode && showPlantUML) && (
+              <OverlayButton
+                disabled={!onReplaceInCode}
+                tooltip={noTooltips ? null : 'Switch Direction'}
+                onClick={() => onReplaceInCode?.(codeRef.current, plantUMLCodeToggleDirection(codeRef.current))}
+              >
+                <RotateRightIcon />
+              </OverlayButton>
+            )}
+            {(isPlantUMLCode && showPlantUML) && (
+              <OverlayButton
+                disabled={!onReplaceInCode}
+                tooltip={noTooltips ? null : 'Cycle Theme'}
+                onClick={() => onReplaceInCode?.(codeRef.current, plantUMLCodeCycleTheme(codeRef.current))}
+              >
+                <PaletteIcon />
+              </OverlayButton>
+            )}
+
             {/* Fit-Content */}
             {showFitButton && (
               <OverlayButton tooltip={noTooltips ? null : fitScreen ? 'Original Size' : 'Fit Content'} variant={fitScreen ? 'solid' : 'outlined'} onClick={() => setFitScreen(on => !on)}>
                 <FitScreenIcon />
               </OverlayButton>
             )}
+          </ButtonGroup>
+        )}
+
+        {/* Download / Copy Diagram PNG */}
+        {props.noCopyButton !== true && (renderMermaid || renderPlantUML) && (
+          <ButtonGroup color='neutral' aria-label='Image Actions' sx={overlayGroupWithShadowSx}>
+            <OverlayButton
+              tooltip={noTooltips ? null : 'Download transparent PNG'}
+              tooltipProps={{ color: 'warning' }}
+              onClick={handleRenderHandleDownload}
+            >
+              <FileDownloadOutlinedIcon />
+            </OverlayButton>
+            <OverlayButton
+              tooltip={noTooltips ? null : 'Copy transparent PNG'}
+              tooltipProps={{ color: 'warning' }}
+              onClick={handleRenderHandleCopy}
+              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+            >
+              <PhotoLibraryOutlinedIcon />
+            </OverlayButton>
           </ButtonGroup>
         )}
 
@@ -424,6 +500,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     </Box></RCOverlay>
   ), [
     cannotRenderLineNumbers, enterFullscreen, exitFullscreen, fitScreen, handleCopyToClipboard, handleHtmlRenderToggle,
+    handleRenderHandleCopy, handleRenderHandleDownload, onReplaceInCode, showPlantUML,
     isFullscreen, isHTMLCode, isMdCode, isMermaidCode, isPlantUMLCode, isSVGCode, noTooltips, overlayRef, props.noCopyButton,
     renderHTML, renderLineNumbers, renderMarkdown, renderMermaid, renderPlantUML, renderSVG, renderSyntaxHighlight,
     setShowLineNumbers, setShowSoftWrap, showFitButton, showLineNumbers, showMarkdown, showSoftWrap, uiComplexityMode,
@@ -464,9 +541,9 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
           {/* Renders HTML, or inline SVG, inline plantUML rendered, or highlighted code */}
           {renderHTML ? <RenderCodeHtmlIFrame key={htmlReloadKey} htmlCode={code} isFullscreen={isFullscreen} />
             : renderMarkdown ? <RenderCodeMarkdown mdCode={code} />
-              : renderMermaid ? <RenderCodeMermaid mermaidCode={code} fitScreen={fitScreen} />
-                : renderSVG ? <RenderCodeSVG svgCode={code} fitScreen={fitScreen} />
-                  : (renderPlantUML && (plantUmlSvgData || plantUmlError)) ? <RenderCodePlantUML svgCode={plantUmlSvgData ?? null} error={plantUmlError} fitScreen={fitScreen} />
+              : renderMermaid ? <RenderCodeMermaid ref={renderHandleRef} mermaidCode={code} fitScreen={fitScreen} onReplaceInCode={onReplaceInCode} />
+                : renderSVG ? <RenderCodeSVG ref={renderHandleRef} svgCode={code} fitScreen={fitScreen} />
+                  : renderPlantUML ? <RenderCodePlantUML ref={renderHandleRef} plantUMLCode={code} fitContainer={fitScreen} allowDetails={uiComplexityMode === 'extra'} onReplaceInCode={onReplaceInCode} />
                     : <RCSyntaxHighlight
                         code={throttledCodeForHighlight}
                         inferredCodeLanguage={inferredCodeLanguage}

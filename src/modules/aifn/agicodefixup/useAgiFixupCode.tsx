@@ -16,7 +16,7 @@ export function useAgiFixupCode(codeFixType: CodeFixType, canAutoTrigger: boolea
   // Async operation state using React Query
   const { data, error, isFetching, isPending, refetch } = useQuery<string, Error>({
     enabled: canAutoTrigger,
-    queryKey: ['aifn-agi-fix-code', codeToFix, errorString],
+    queryKey: ['aifn-agi-fix-code', codeFixType, codeToFix, errorString],
     queryFn: async ({ signal }) => {
       return await agiFixupCode(codeFixType, codeToFix, errorString, signal);
     },
