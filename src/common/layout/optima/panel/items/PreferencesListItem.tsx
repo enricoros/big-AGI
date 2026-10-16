@@ -5,10 +5,10 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 import { DarkModeToggleButton } from '~/common/components/DarkModeToggleButton';
 
-import { optimaClosePanel, optimaOpenPreferences } from '../useOptima';
+import { optimaClosePanel, optimaOpenPreferences } from '../../useOptima';
 
 
-export function MobilePreferencesListItem(props: { autoClosePanel?: boolean }) {
+export function PreferencesListItem(props: { autoClosePanel?: boolean }) {
 
   const handleShowPreferences = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();

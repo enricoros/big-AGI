@@ -4,10 +4,10 @@ import { Box, Drawer } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
 
-import { MobilePreferencesListItem } from './MobilePreferencesListItem';
 import { OPTIMA_DRAWER_MOBILE_RADIUS, OPTIMA_PANEL_GROUPS_SPACING } from '../optima.config';
 import { OptimaPanelGroupedList } from './OptimaPanelGroupedList';
 import { PanelContentPortal } from './PanelContentPortal';
+import { PreferencesListItem } from './items/PreferencesListItem';
 import { optimaClosePanel, useOptimaPanelOpen } from '../useOptima';
 
 
@@ -61,7 +61,7 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
 
         <Box sx={{ py: 0.25, mb: OPTIMA_PANEL_GROUPS_SPACING }}>
           <OptimaPanelGroupedList>
-            <MobilePreferencesListItem />
+            <PreferencesListItem />
           </OptimaPanelGroupedList>
         </Box>
 
