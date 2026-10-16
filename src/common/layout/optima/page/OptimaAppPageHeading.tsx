@@ -33,6 +33,14 @@ const _styles = {
   },
 } as const;
 
+const _textSlotProps = {
+  endDecorator: {
+    sx: {
+      flex: 1,
+    },
+  },
+} as const;
+
 
 export function OptimaAppPageHeading(props: {
   title: React.ReactNode;
@@ -51,7 +59,7 @@ export function OptimaAppPageHeading(props: {
 
   return (
     <Box mb={props.noMarginBottom ? undefined : 2.25} sx={{ overflow: 'hidden', display: 'grid' }}>
-      {!!props.title && <Typography level={isMobile ? 'h3' : 'h2'} startDecorator={props.startDecorator} endDecorator={props.endDecorator} textColor={props.disabled ? 'neutral.plainDisabledColor' : undefined} sx={_styles.title}>
+      {!!props.title && <Typography level={isMobile ? 'h3' : 'h2'} startDecorator={props.startDecorator} endDecorator={props.endDecorator} textColor={props.disabled ? 'neutral.plainDisabledColor' : undefined} sx={_styles.title} slotProps={_textSlotProps}>
         {props.onClick
           ? <Box component='span' sx={_styles.textClickable} onClick={props.onClick} className='agi-ellipsize'>{props.title}</Box>
           : <span className='agi-ellipsize'>{props.title}</span>
