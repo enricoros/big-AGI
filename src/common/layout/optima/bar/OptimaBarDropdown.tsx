@@ -5,12 +5,14 @@ import { Box, ListDivider, listItemButtonClasses, ListItemDecorator, listItemDec
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 import { ListItemGroupCollapser } from '~/common/components/ListItemGroupCollapser';
+import { Starred } from '~/common/components/StarIcons';
+import { countKeys } from '~/common/util/objectUtils';
 
 
-// set to true to enable the dense mode, which is default in the rest of the app
-const useDenseDropdowns = false;
-// set to false to use normal icons - check with similar menus
-const useBigIcons = true;
+// configuration
+const OPTIMA_DROPDOWNS_DENSE_LISTS = false;  // set to true to enable the dense mode, which is default in the rest of the app
+const OPTIMA_DROPDOWNS_BIG_ICONS = true; // set to false to use normal icons - check with similar menus
+const OPTIMA_DROPDOWNS_REDUCE_OPTIONS = 64; // optimization: number of options over which only the selected is kept when closed
 
 
 export const optimaSelectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] = {
@@ -31,6 +33,7 @@ export const optimaSelectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] 
   } as const,
 
   button: {
+    'aria-description': 'Options may be filtered when closed. Open dropdown to see all options.',
     className: 'agi-ellipsize',
     sx: {
       // these + the ellipsize class will ellipsize the text in the button
@@ -58,10 +61,10 @@ export const optimaSelectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] 
     variant: 'outlined',
     sx: {
       // in sync with CloseableMenu
-      '--ListItem-minHeight': useDenseDropdowns
+      '--ListItem-minHeight': OPTIMA_DROPDOWNS_DENSE_LISTS
         ? '2.25rem' /* 2.25 is the default */
         : '2.75rem', /* we enlarge the default  */
-      ...(useBigIcons && {
+      ...(OPTIMA_DROPDOWNS_BIG_ICONS && {
         '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
         // '--ListItemDecorator-size': '2.75rem',
       }),
@@ -77,6 +80,15 @@ export const optimaSelectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] 
         maxWidth: 'min(360px, calc(100dvw - 1rem))',
         minWidth: 200,
       } as const,
+
+      // Option:selected (and :hover)
+      [`& .${optionClasses.root}.${optionClasses.selected}`]: {
+        fontWeight: 'md',
+        backgroundColor: 'primary.softBg',
+        '&:hover': {
+          backgroundColor: 'primary.softHoverBg',
+        },
+      },
 
       // Decorator: icon size
       [`& .${listItemDecoratorClasses.root}`]: {
@@ -106,13 +118,32 @@ const _styles = {
     my: 0,
   } as const,
 
+  separator: {
+    fontSize: 'sm',
+    color: 'text.tertiary',
+    textAlign: 'center',
+    my: 1.5,
+  } as const,
+
+  starSeparator: {
+    mt: 1,
+    mb: 3,
+    flex: 1,
+    backgroundColor: 'background.level1',
+    height: '1rem',
+    boxShadow: 'inset 0 2px 2px -2px rgba(0, 0, 0, 0.2)',
+  } as const,
+
 } as const;
 
 
-export type OptimaDropdownItems = Record<string, {
+type OptimaBarDropdownItemKey = string;
+export type OptimaDropdownItems = Record<OptimaBarDropdownItemKey, {
   title: string,
   symbol?: string,
-  type?: 'separator'
+  starred?: boolean,
+  type?: 'separator',
+  collapseId?: string, // separator-only: collapse ID (defaults to item key)
   icon?: React.ReactNode,
 }>;
 
@@ -141,8 +172,10 @@ function OptimaBarDropdown<TValue extends string>(props: {
   showGone?: boolean,
   showFaded?: boolean,
   // collapsible separators: when provided, separators become clickable toggle buttons
-  collapsedSeparators?: ReadonlySet<string>,
-  onSeparatorClick?: (key: string) => void,
+  collapsedSeparators?: Readonly<Partial<Record<string, true>>>,
+  onSeparatorClick?: (key: OptimaBarDropdownItemKey) => void,
+  onCollapseAllSeparators?: () => void,
+  separatorsReadOnly?: boolean, // render separators as static labels (collapse bypassed, e.g. while filtering)
 }, ref: React.Ref<OptimaBarControlMethods>) {
 
   // state
@@ -170,8 +203,96 @@ function OptimaBarDropdown<TValue extends string>(props: {
       setListboxOpen(isOpen);
   }, [listboxOpen]);
 
-  const itemsKeys = Object.keys(props.items);
-  const hasItems = itemsKeys.length >= 1;
+
+  // memo the options
+
+  const optimizeToSingleVisibleId = (!listboxOpen && countKeys(props.items) > OPTIMA_DROPDOWNS_REDUCE_OPTIONS) ? props.value : undefined; // id to keep visible when optimizing
+
+  const selectOptions = React.useMemo(() => {
+    return Object.keys(props.items).map((_itemKey: OptimaBarDropdownItemKey, idx: number) => {
+
+      // skip rendering based on the optimization
+      if (optimizeToSingleVisibleId !== undefined && _itemKey !== optimizeToSingleVisibleId)
+        return null;
+
+      const _item = props.items[_itemKey];
+      const isActive = _itemKey === props.value;
+
+      // Label & Decorators
+      const safeTitle = _item.title || '';
+      const label = (props.showSymbols && _item.symbol && !(_item.title === 'Default' && _item.symbol === '🧠')) ? `${_item.symbol} ${safeTitle}` : safeTitle;
+      const iconOrSymbol =
+        _item.starred ? <Starred />
+          : _item.icon || _item.symbol || '';
+
+      if (_item.type === 'separator') {
+        const collapseId = _item.collapseId ?? _itemKey;
+        return props.onSeparatorClick ? (
+          <ListItemGroupCollapser
+            key={_itemKey}
+            id={collapseId}
+            label={safeTitle}
+            isCollapsed={!!props.collapsedSeparators && collapseId in props.collapsedSeparators}
+            onToggleCollapse={props.onSeparatorClick}
+            onCollapseAll={props.onCollapseAllSeparators}
+            readOnly={props.separatorsReadOnly}
+          />
+        ) : (
+          <Box key={_itemKey || `sep-${idx}`} sx={_styles.separator}>
+            {/*<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, '--Icon-fontSize': 'var(--joy-fontSize-lg)' }}>*/}
+            {/*{_item.icon} */}
+            {_item.title}
+            {/*</Box>*/}
+          </Box>
+          // <ListDivider key={_itemKey || `sep-${idx}`} sx={_styles.separator}>
+          //   {/*<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, '--Icon-fontSize': 'var(--joy-fontSize-lg)' }}>*/}
+          //   {/*{_item.icon} */}
+          //   {_item.title}
+          //   {/*</Box>*/}
+          // </ListDivider>
+        );
+      }
+
+      if (isActive)
+        return (
+          <Option
+            key={_itemKey} value={_itemKey} label={label}
+            // variant='soft' // 'soft' renders weirdly, while 'plain' (or missing) acts like soft
+            color='primary'
+          >
+            {props.showSymbols === true ? <ListItemDecorator>{iconOrSymbol}</ListItemDecorator>
+              : props.showSymbols === 'compact' && iconOrSymbol ? iconOrSymbol
+                : null}
+
+            {/* Text */}
+            <div className='agi-ellipsize'>{safeTitle}</div>
+
+            {props.activeEndDecorator}
+          </Option>
+        )
+
+      return (
+        <Option key={_itemKey} value={_itemKey} label={label}>
+          {/* Icon / Symbol */}
+          {/*{(props.showSymbols === true || (props.showSymbols === 'compact' && !!iconOrSymbol)) && <ListItemDecorator>*/}
+          {/*  {iconOrSymbol}*/}
+          {/*</ListItemDecorator>}*/}
+          {props.showSymbols === true ? <ListItemDecorator>{iconOrSymbol}</ListItemDecorator>
+            : props.showSymbols === 'compact' && iconOrSymbol ? iconOrSymbol
+              : null}
+
+          {/* Text */}
+          <div className='agi-ellipsize'>{safeTitle}</div>
+
+          {/* Optional End Decorator */}
+          {/*{isActive && props.activeEndDecorator}*/}
+        </Option>
+      );
+    }).filter(item => !!item);
+  }, [optimizeToSingleVisibleId, props.activeEndDecorator, props.collapsedSeparators, props.items, props.onCollapseAllSeparators, props.onSeparatorClick, props.separatorsReadOnly, props.showSymbols, props.value]);
+
+  const hasItems = selectOptions.length >= 1;
+  const hasRest = true; // !optimizeToSingleVisibleId;
 
   return (
     <Select
@@ -186,61 +307,20 @@ function OptimaBarDropdown<TValue extends string>(props: {
       className={props.showGone ? 'agi-gone' : props.showFaded ? 'agi-faded' : ''}
     >
 
-      {/* Prepender */}
-      {!!props.prependOption && <Box sx={_styles.prependGap} />}
-      {props.prependOption}
-      {/*{!!props.prependOption && hasItems && <ListDivider sx={_styles.divider} />}*/}
+      {/* Prepend */}
+      {hasRest && !!props.prependOption && <Box sx={_styles.prependGap} />}
+      {hasRest && props.prependOption}
+      {/*{hasRest && !!props.prependOption && hasItems && <ListDivider sx={_styles.divider} />}*/}
 
       {/* Scrollable Items list*/}
-      {hasItems && <Box sx={_styles.itemsScrollable}>
-        {itemsKeys.map((_itemKey: string, idx: number) => {
-          const _item = props.items[_itemKey];
-          const isActive = _itemKey === props.value;
-
-          // Label & Decorators
-          const safeTitle = _item.title || '';
-          const label = (props.showSymbols && _item.symbol && !(_item.title === 'Default' && _item.symbol === '🧠')) ? `${_item.symbol} ${safeTitle}` : safeTitle;
-          const iconOrSymbol = _item.icon || _item.symbol || '';
-
-          if (_item.type === 'separator')
-            return props.onSeparatorClick ? (
-              <ListItemGroupCollapser
-                key={_itemKey}
-                id={_itemKey}
-                label={safeTitle}
-                isCollapsed={!!props.collapsedSeparators?.has(_itemKey)}
-                onToggleCollapse={props.onSeparatorClick}
-              />
-            ) : (
-              <ListDivider key={_itemKey || `sep-${idx}`}>
-                {/*<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, '--Icon-fontSize': 'var(--joy-fontSize-lg)' }}>*/}
-                {/*{_item.icon} */}
-                {_item.title}
-                {/*</Box>*/}
-              </ListDivider>
-            );
-
-          return (
-            <Option key={_itemKey} value={_itemKey} label={label}>
-              {/* Icon / Symbol */}
-              {(props.showSymbols === true || (props.showSymbols === 'compact' && !!iconOrSymbol)) && <ListItemDecorator>
-                {iconOrSymbol}
-              </ListItemDecorator>}
-
-              {/* Text */}
-              <div className='agi-ellipsize'>{safeTitle}</div>
-
-              {/* Optional End Decorator */}
-              {isActive && props.activeEndDecorator}
-            </Option>
-          );
-        })}
+      {hasItems && <Box role='items-list' sx={_styles.itemsScrollable}>
+        {selectOptions}
       </Box>}
 
       {/* Appender */}
-      {!!props.appendOption && hasItems && <ListDivider sx={_styles.divider} />}
-      {props.appendOption}
-      {/*{!!props.appendOption && <Box sx={{ height: 'var(--ListDivider-gap)' }} />}*/}
+      {hasRest && !!props.appendOption && hasItems && <ListDivider sx={_styles.divider} />}
+      {hasRest && props.appendOption}
+      {/*{hasRest && !!props.appendOption && <Box sx={{ height: 'var(--ListDivider-gap)' }} />}*/}
 
     </Select>
   );

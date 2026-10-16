@@ -1,8 +1,9 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { ListItem, ListItemButton } from '@mui/joy';
+import { IconButton, ListItem, ListItemButton } from '@mui/joy';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 
 
 const _styles = {
@@ -18,9 +19,18 @@ const _styles = {
       fontStyle: 'italic',
       color: 'text.primary',
     },
+    '&:hover .agi-collapse-all': {
+      opacity: 1,
+    },
   },
   headerDeco: {
     width: '1rem',
+  },
+  headerCollapseAll: {
+    '--IconButton-size': '1.5rem',
+    m: -0.5,
+    opacity: 0,
+    transition: 'opacity 0.14s',
   },
   headerCollapser: {
     fontSize: 'md',
@@ -41,10 +51,15 @@ export function ListItemGroupCollapser<TId extends string>(props: {
   label: string;
   isCollapsed: boolean;
   onToggleCollapse: (id: TId) => void;
-  readOnly?: boolean; // static section label: collapse is display-only bypassed (e.g. while filtering), so no chevron or click
+  onCollapseAll?: () => void;
+  readOnly?: boolean; // static section label: collapse is display-only bypassed (e.g. while filtering), so no chevron, caret or click
 }) {
 
-  const { readOnly } = props;
+  const { onCollapseAll, readOnly } = props;
+  const handleCollapseAll = React.useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
+    onCollapseAll?.();
+  }, [onCollapseAll]);
 
   return (
     <ListItem>
@@ -56,7 +71,20 @@ export function ListItemGroupCollapser<TId extends string>(props: {
         sx={readOnly ? _headerStaticSx : _styles.headerButton}
       >
         {/*{serviceVendor?.id && <ListItemDecorator><LLMVendorIconSprite vendorId={serviceVendor.id} /></ListItemDecorator>}*/}
-        <div style={_styles.headerDeco} />
+        {(onCollapseAll && !readOnly) ? (
+          <IconButton
+            className='agi-collapse-all'
+            size='sm'
+            variant='soft'
+            aria-label='Collapse all sections'
+            onClick={handleCollapseAll}
+            sx={_styles.headerCollapseAll}
+          >
+            <KeyboardArrowLeftIcon />
+          </IconButton>
+        ) : (
+          <div style={_styles.headerDeco} />
+        )}
         <div>{props.label}</div>
         <ExpandMoreIcon sx={readOnly ? _headerCollapserHiddenSx : _styles.headerCollapser} />
       </ListItemButton>
