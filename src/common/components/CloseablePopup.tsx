@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import type { MuiCancellableEvent } from '@mui/base/utils/MuiCancellableEvent';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, MenuList, styled } from '@mui/joy';
 import { ClickAwayListener, Popper, PopperPlacementType, Portal } from '@mui/base';
@@ -119,7 +120,9 @@ export function CloseablePopup(props: {
     handleClose(event);
   }, [handleClose]);
 
-  const handleKeyDown = React.useCallback((event: React.KeyboardEvent) => {
+  const handleKeyDown = React.useCallback((event: React.KeyboardEvent & MuiCancellableEvent) => {
+    // A child owns this key - see for instance the onKeyDown in MessageFragmentOrderControl (e.g. Escape cancelling a keyboard drag)
+    if (event.defaultMuiPrevented) return;
     if (event.key === 'Tab') {
       // NOTE: the following is not needed since we fixed 'tab'
       // Close menu on Tab - this prevents focus from escaping the popup
@@ -139,12 +142,16 @@ export function CloseablePopup(props: {
 
 
   // memos
-  const modifiersMemo = React.useMemo(() => [{
-    name: 'offset',
-    options: {
-      offset: props.placementOffset || [0, 4],
+  const modifiersMemo = React.useMemo(() => [
+    {
+      name: 'offset',
+      options: { offset: props.placementOffset || [0, 4] },
     },
-  }], [props.placementOffset]);
+    ...(props.maxHeightGapPx === undefined ? [] : [{
+      name: 'preventOverflow',
+      options: { altAxis: true, padding: 8 },
+    }]),
+  ], [props.maxHeightGapPx, props.placementOffset]);
 
   const popperMemoSx: undefined | SxProps = React.useMemo(() => !props.zIndex ? undefined : ({ zIndex: props.zIndex }), [props.zIndex]);
 
