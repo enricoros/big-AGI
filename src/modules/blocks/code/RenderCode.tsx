@@ -51,6 +51,7 @@ export const BLOCK_CODE_VND_AGI_CHARTJS = 'chartjs';
 export const BLOCK_CODE_MERMAID_TITLE = 'mermaid';
 export const BLOCK_CODE_PLANTUML_TITLE = 'plantuml';
 export const BLOCK_CODE_SVG_TITLE = 'svg';
+export const BLOCK_CODE_FALLBACK_TITLE = ''; // 'Code'
 const CONTEXT_HIGHLIGHT_START = '__AGI_MARK_START__' as const;
 const CONTEXT_HIGHLIGHT_END = '__AGI_MARK_END__' as const;
 
