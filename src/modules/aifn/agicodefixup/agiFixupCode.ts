@@ -70,7 +70,7 @@ export async function agiFixupCode(issueType: CodeFixType, codeToFix: string, er
     aixRequest,
     aixCreateChatGenerateContext('fixup-code', '_DEV_'),
     false,
-    { abortSignal, llmOptionsOverride: { llmTemperature: 0 /* chill the model for fixing code, we need valid json, not creativity */ } },
+    { abortSignal, llmParamsWrite: { llmTemperature: 0 /* chill the model for fixing code, we need valid json, not creativity */ } },
   );
 
   // Validate and parse the AI's response
