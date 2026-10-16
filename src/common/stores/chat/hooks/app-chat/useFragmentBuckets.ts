@@ -3,7 +3,8 @@ import * as React from 'react';
 import type { Immutable } from '~/common/types/immutable.types';
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
-import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, DVoidFragmentModelAnnotations, isContentFragment, isErrorPart, isImageRefPart, isVoidAnnotationsFragment, isZyncAssetImageReferencePart } from '../chat.fragments';
+import { DMessageAttachmentFragment, DMessageContentFragment, DMessageFragment, DMessageVoidFragment, DVoidFragmentModelAnnotations, isContentFragment, isErrorPart, isImageRefPart, isVoidAnnotationsFragment, isZyncAssetImageReferencePart } from '../../chat.fragments';
+
 
 /**
  * Fragments that can be interleaved: void fragments (reasoning, placeholders) and content fragments (text, code, tools).

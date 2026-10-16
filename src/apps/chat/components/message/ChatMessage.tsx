@@ -22,7 +22,7 @@ import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
 import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/util/clipboardUtils';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
-import { useFragmentBuckets } from '~/common/stores/chat/hooks/useFragmentBuckets';
+import { useFragmentBuckets } from '~/common/stores/chat/hooks/app-chat/useFragmentBuckets';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 

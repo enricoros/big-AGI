@@ -4,7 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ColorPaletteProp } from '@mui/joy';
 
 import type { ContentScaling } from '~/common/app.theme';
-import type { InterleavedFragment } from '~/common/stores/chat/hooks/useFragmentBuckets';
+import type { InterleavedFragment } from '~/common/stores/chat/hooks/app-chat/useFragmentBuckets';
 import { DMessageFragmentId, DMessageTextPart, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 
 

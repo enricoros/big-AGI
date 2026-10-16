@@ -9,7 +9,7 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
-import type { InterleavedFragment } from '~/common/stores/chat/hooks/useFragmentBuckets';
+import type { InterleavedFragment } from '~/common/stores/chat/hooks/app-chat/useFragmentBuckets';
 import { DMessageContentFragment, DMessageFragmentId, isErrorContentFragment, isTextContentFragment, isTextPart, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
 import { Release } from '~/common/app.release';
 
