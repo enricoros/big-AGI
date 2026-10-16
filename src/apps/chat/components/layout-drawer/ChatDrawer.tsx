@@ -69,6 +69,7 @@ function ChatDrawer(props: {
   const [navGrouping, setNavGrouping] = React.useState<ChatNavGrouping>('date');
   const [searchSorting, setSearchSorting] = React.useState<ChatSearchSorting>('date');
   const [searchDepth, setSearchDepth] = React.useState<ChatSearchDepth>('attachments'); // default: full search
+  const [searchInArchived, setSearchInArchived] = React.useState(false);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState('');
   const [folderChangeRequest, setFolderChangeRequest] = React.useState<FolderChangeRequest | null>(null);
   const [renderLimit, setRenderLimit] = React.useState(200); // progressive loading limit
@@ -87,7 +88,7 @@ function ChatDrawer(props: {
   } = useChatDrawerFilters();
   const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useChatFolderActive(props.activeFolderId);
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatDrawerRenderItems(
-    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasBeamOpen, filterHasStars, filterHasImageAssets, filterHasDocFragments, filterIsArchived, filterOlderThanDays, navGrouping, searchSorting, showRelativeSize, searchDepth,
+    props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasBeamOpen, filterHasStars, filterHasImageAssets, filterHasDocFragments, filterIsArchived, filterOlderThanDays, navGrouping, searchSorting, showRelativeSize, searchDepth, searchInArchived,
   );
   const [uiComplexityMode, contentScaling] = useUIPreferencesStore(useShallow((state) => [state.complexityMode, state.contentScaling]));
   const zenMode = uiComplexityMode === 'minimal';
@@ -277,11 +278,15 @@ function ChatDrawer(props: {
             <ListItemDecorator>{searchDepth === 'attachments' && <CheckRoundedIcon />}</ListItemDecorator>
             Full
           </MenuItem>
+          <MenuItem selected={searchInArchived} onClick={() => setSearchInArchived(!searchInArchived)}>
+            <ListItemDecorator>{searchInArchived && <CheckRoundedIcon />}</ListItemDecorator>
+            Include Archived
+          </MenuItem>
         </Menu>
       )}
     </Dropdown>
   ), [
-    filterHasDocFragments, filterHasImageAssets, filterHasStars, isSearching, navGrouping, searchSorting, searchDepth, filterIsArchived, showPersonaIcons, showRelativeSize, filterOlderThanDays,
+    filterHasDocFragments, filterHasImageAssets, filterHasStars, isSearching, navGrouping, searchSorting, searchDepth, searchInArchived, filterIsArchived, showPersonaIcons, showRelativeSize, filterOlderThanDays,
     toggleFilterHasDocFragments, toggleFilterHasImageAssets, toggleFilterHasStars, toggleFilterIsArchived, toggleShowPersonaIcons, toggleShowRelativeSize, setFilterOlderThanDays,
   ]);
 
