@@ -3,8 +3,8 @@
  */
 export type Immutable<T> =
   T extends (...args: any[]) => any ? T  // function types as-is
-    : T extends Array<infer U> ? ReadonlyArray<Immutable<U>> // convert arrays into ReadonlyArray
-      : T extends Map<infer K, infer V> ? ReadonlyMap<Immutable<K>, Immutable<V>>
-        : T extends Set<infer M> ? ReadonlySet<Immutable<M>>
-          : T extends object ? { readonly [K in keyof T]: Immutable<T[K]> }  // objects: recursively mark properties as readonly
-            : T; // Primitives remain the same
+    : T extends string | number | boolean | bigint | symbol ? T // primitives as-is, before 'object': keeps open sets like `'a' | (string & {})` and branded primitives intact
+      : T extends ReadonlyMap<infer K, infer V> ? ReadonlyMap<Immutable<K>, Immutable<V>> // also matches Map
+        : T extends ReadonlySet<infer M> ? ReadonlySet<Immutable<M>> // also matches Set
+          : T extends object ? { readonly [K in keyof T]: Immutable<T[K]> }  // objects, arrays and tuples: recursively readonly
+            : T; // null and undefined remain the same
