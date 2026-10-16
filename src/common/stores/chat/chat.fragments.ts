@@ -91,7 +91,10 @@ type _DMessageFragmentWrapper<TFragment, TPart extends { pt: string }> = {
   ft: TFragment;
   fId: DMessageFragmentId;
   part: TPart;
-  originId?: string;                  // optional, for multi-model, identifies which actor produced this fragment
+  originId?:
+    | 'cha-per-re-um-pre' | 'cha-per-re-um-post' // see DPersona.appChat.DPersonaChatReinforcement
+    | 'cha-live-feed-frame' // camera/screen frame attachments, see sampleLiveFeedsAsFragments
+    | (string & {}); // optional, for multi-model, identifies which actor produced this fragment
   vendorState?: DMessageFragmentVendorState; // optional vendor-specific protocol state (opaque, lossy-safe)
 }
 
@@ -874,6 +877,11 @@ export function fragmentsSetOriginId(fragments: ReadonlyArray<Readonly<DMessageF
 
   // shallow-copy + set origin
   return fragments.map(fragment => ({ ...fragment, originId: originId }));
+}
+
+/** True when no actor stamped an originId - in user messages, the fragments the user authored. */
+export function isUnstampedFragment(fragment: Immutable<DMessageFragment>): boolean {
+  return !('originId' in fragment && fragment.originId);
 }
 
 export function reorderFragments<T extends DMessageFragment>(unsortedFragments: ReadonlyArray<T>, reorderedIds: DMessageFragmentId[], _placement: 'end'): T[] {
