@@ -66,16 +66,16 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
         // note: we don't trim blockCode to preserve leading spaces, however if the last line is only made of spaces or tabs, we trim that
         const blockCode: string = match[3].replace(/[\t ]+$/, '');
         const blockEnd: string = match[4];
-        blocks.push({ bkt: 'code-bk', title: blockTitle, code: blockCode, lines: countLines(blockCode), isPartial: !blockEnd.startsWith('```') });
+        blocks.push({ bkt: 'code-bk', sourceStart: match.index, sourceEnd: match.index + match[0].length, title: blockTitle, code: blockCode, lines: countLines(blockCode), isPartial: !blockEnd.startsWith('```') });
         break;
 
       case 'htmlCodeBlock':
         const preMatchHtml: string = `<!DOCTYPE html>${match[1]}</html>`;
-        blocks.push({ bkt: 'code-bk', title: 'html', code: preMatchHtml, lines: countLines(preMatchHtml), isPartial: false });
+        blocks.push({ bkt: 'code-bk', sourceStart: match.index, sourceEnd: match.index + match[0].length, title: 'html', code: preMatchHtml, lines: countLines(preMatchHtml), isPartial: false });
         break;
 
       case 'svgBlock':
-        blocks.push({ bkt: 'code-bk', title: 'svg', code: match[0], lines: countLines(match[0]), isPartial: false });
+        blocks.push({ bkt: 'code-bk', sourceStart: match.index, sourceEnd: match.index + match[0].length, title: 'svg', code: match[0], lines: countLines(match[0]), isPartial: false });
         break;
     }
 
@@ -88,4 +88,20 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
     blocks.push({ bkt: 'md-bk', content: text.slice(lastIndex) });
 
   return blocks;
+}
+
+
+/** Remove only the selected, complete parsed block. Keep all surrounding source unchanged. */
+export function removeCodeBlockFromText(fullText: string, block: Extract<RenderBlockInputs[number], { bkt: 'code-bk' }>): string | null {
+  const { sourceStart, sourceEnd } = block;
+  if (block.isPartial || sourceStart === undefined || sourceEnd === undefined)
+    return null;
+
+  // Revalidate against current text: stale positions or edited code must never delete a different span.
+  const current = parseBlocksFromText(fullText).find(candidate => candidate.bkt === 'code-bk'
+    && candidate.sourceStart === sourceStart && candidate.sourceEnd === sourceEnd);
+  if (!current || current.bkt !== 'code-bk' || current.isPartial || current.code !== block.code || current.title !== block.title)
+    return null;
+
+  return fullText.slice(0, sourceStart) + fullText.slice(sourceEnd);
 }

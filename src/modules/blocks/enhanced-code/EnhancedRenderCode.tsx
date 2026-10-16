@@ -50,6 +50,7 @@ export function EnhancedRenderCode(props: {
   initialRenderHTML?: boolean,
   noCopyButton?: boolean,
   optimizeLightweight?: boolean,
+  onDeleteContainingCodeBlock?: (code: string, semiStableId: string | undefined) => void;
   onReattachAsFile?: (file: File) => void;
   onReplaceInCode?: (search: string, replace: string) => boolean;
   codeSx?: SxProps,
@@ -89,6 +90,11 @@ export function EnhancedRenderCode(props: {
     setIsCodeCollapsed(c => !c);
     handleCloseContextMenu();
   }, [handleCloseContextMenu]);
+
+  const { onDeleteContainingCodeBlock } = props;
+  const handleDeleteContainingCodeBlock = React.useCallback((code: string) => {
+    onDeleteContainingCodeBlock?.(code, props.semiStableId);
+  }, [onDeleteContainingCodeBlock, props.semiStableId]);
 
   const handleToggleContextMenu = React.useCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
@@ -250,6 +256,7 @@ export function EnhancedRenderCode(props: {
           code={props.code} title={props.title}
           onClose={handleCloseContextMenu}
           isCollapsed={isCodeCollapsed}
+          onDeleteContainingCodeBlock={!onDeleteContainingCodeBlock || props.isPartial ? undefined : handleDeleteContainingCodeBlock}
           onToggleCollapse={handleToggleCodeCollapse}
         />
       )}

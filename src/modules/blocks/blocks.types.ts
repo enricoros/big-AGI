@@ -20,6 +20,9 @@ type BlockInput = {
   code: string;
   lines: number;
   isPartial: boolean;
+  /** Exact source span, only present on parsed blocks. */
+  sourceStart?: number;
+  sourceEnd?: number;
 } | {
   /* Rendered as HTML (dangerous) */
   bkt: 'dang-html-bk';

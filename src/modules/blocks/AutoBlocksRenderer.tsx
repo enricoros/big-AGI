@@ -15,6 +15,7 @@ import { isTextChatCommand, RenderPlainText } from './plaintext/RenderPlainText'
 import { RenderWordsDiff, WordsDiff } from './wordsdiff/RenderWordsDiff';
 import { ToggleExpansionButton } from './ToggleExpansionButton';
 import { heuristicIsBlockPureHTML, RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
+import { removeCodeBlockFromText } from './blocks.textparser';
 import { useAutoBlocksMemoSemiStable, useHeightCollapser } from './blocks.hooks';
 import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpansionButtonSx } from './blocks.styles';
 
@@ -118,6 +119,8 @@ export function AutoBlocksRenderer(props: {
   // re-render completed non-last Code/Markdown blocks.
   const curTextRef = React.useRef(text);
   curTextRef.current = text;
+  const curBlocksRef = React.useRef(autoBlocksStable);
+  curBlocksRef.current = autoBlocksStable;
 
   const handleReplaceCode = React.useCallback((search: string, replace: string): boolean => {
     if (setText) {
@@ -130,6 +133,15 @@ export function AutoBlocksRenderer(props: {
     }
     return false;
   }, [setText]);
+
+  const handleDeleteContainingCodeBlock = React.useCallback((code: string, semiStableId: string | undefined) => {
+    if (!setText || props.inFlux || !semiStableId) return;
+    const block = curBlocksRef.current.find(block => block.bkId === semiStableId);
+    if (!block || block.bkt !== 'code-bk' || block.code !== code) return;
+    const newText = removeCodeBlockFromText(curTextRef.current, block);
+    if (newText !== null)
+      setText(newText);
+  }, [props.inFlux, setText]);
 
 
   // Memo the styles, to minimize re-renders
@@ -205,9 +217,10 @@ export function AutoBlocksRenderer(props: {
                 initialRenderHTML={props.htmlRenderVariant === 'render' || (props.htmlRenderVariant === 'render-at-end' && !bkInput.isPartial)}
                 noCopyButton={props.blocksProcessor === 'diagram'}
                 optimizeLightweight={lastBlockInFlux}
+                onDeleteContainingCodeBlock={!setText || props.inFlux || bkInput.isPartial || bkInput.sourceStart === undefined ? undefined : handleDeleteContainingCodeBlock}
+                onReattachAsFile={props.onReattachAsFile}
                 onReplaceInCode={!setText ? undefined : handleReplaceCode}
                 codeSx={scaledCodeSx}
-                onReattachAsFile={props.onReattachAsFile}
               />
             ) : (
               <RenderCodeMemo
@@ -218,9 +231,9 @@ export function AutoBlocksRenderer(props: {
                 initialRenderHTML={props.htmlRenderVariant === 'render' || (props.htmlRenderVariant === 'render-at-end' && !bkInput.isPartial)}
                 noCopyButton={props.blocksProcessor === 'diagram'}
                 optimizeLightweight={lastBlockInFlux}
+                onReattachAsFile={props.onReattachAsFile}
                 onReplaceInCode={!setText ? undefined : handleReplaceCode}
                 sx={scaledCodeSx}
-                onReattachAsFile={props.onReattachAsFile}
               />
             );
 
