@@ -6,46 +6,68 @@ import { Chip, Typography } from '@mui/joy';
 import { extractChatCommand } from '../../../apps/chat/commands/commands.registry';
 
 
-const _style = {
-  mx: 1.5,
-  // display: 'flex', // Commented on 2023-12-29: the commands were drawn as columns
-  alignItems: 'baseline',
-  overflowWrap: 'anywhere',
-  whiteSpace: 'break-spaces',
+// Adapt main's command pieces to the shared rendering shape; execution keeps its existing parser.
+function extractPlainTextCommand(text: string) {
+  const pieces = extractChatCommand(text);
+  const command = pieces[0];
+  if (command?.type !== 'cmd') return undefined;
+  return {
+    slashCmd: command.command,
+    args: pieces.map(piece => piece.type === 'cmd' ? piece.params || '' : piece.value).join(''),
+    issue: command.isErrorNoArgs,
+  };
+}
+
+
+const _styles = {
+
+  typography: {
+    mx: 1.5,
+    // display: 'flex', // Commented on 2023-12-29: the commands were drawn as columns
+    alignItems: 'baseline',
+    overflowWrap: 'anywhere',
+    whiteSpace: 'break-spaces',
+  } as const,
+
+  chip: {
+    px: 1,
+    mr: 1,
+  } as const,
+
 } as const;
 
 
 /** Text that starts with a known chat command - user markdown renders it as plain text, for the command chip. */
 export function isTextChatCommand(text: string): boolean {
-  return extractChatCommand(text)[0]?.type === 'cmd';
+  return !!extractPlainTextCommand(text);
 }
 
 
 /**
  * Renders a text block with chat commands.
- * NOTE: should remove the commands parsing dependency.
  */
 export const RenderPlainText = (props: { content: string; renderHighlightCommands?: boolean, sx?: SxProps; }) => {
 
-  const elements: ReturnType<typeof extractChatCommand> = !props.renderHighlightCommands ? [{ type: 'nocmd', value: props.content }] : extractChatCommand(props.content);
+  const slashCommand = !props.renderHighlightCommands ? undefined : extractPlainTextCommand(props.content);
 
-  const memoSx = React.useMemo(() => ({ ..._style, ...props.sx }), [props.sx]);
+  const memoSx = React.useMemo(() => ({
+    ..._styles.typography,
+    ...props.sx,
+  }), [props.sx]);
 
-  return (
+  return !slashCommand ? (
+    <Typography sx={memoSx}>{props.content}</Typography>
+  ) : (
     <Typography sx={memoSx}>
-      {elements.map((element, index) =>
-        <React.Fragment key={index}>
-          {element.type === 'cmd'
-            ? <>
-              <Chip component='span' size='md' variant='solid' color={element.isErrorNoArgs ? 'danger' : 'neutral'} sx={{ mr: 1 }}>
-                {element.command}
-              </Chip>
-              <span>{element.params}</span>
-            </>
-            : <span>{element.value}</span>
-          }
-        </React.Fragment>,
-      )}
+
+      {/* optional slash command tag */}
+      <Chip component='span' size='md' variant='solid' color={slashCommand.issue ? 'danger' : undefined} sx={_styles.chip}>
+        {slashCommand.slashCmd}
+      </Chip>
+
+      {/* args or text */}
+      {slashCommand.args}
+
     </Typography>
   );
 };
