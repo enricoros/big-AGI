@@ -34,6 +34,21 @@ import { CHAT_NOVEL_TITLE } from '../../AppChat';
 // const DEBUG_CONVERSATION_IDS = false;
 
 
+// title text: mobile (< md) stays on one ellipsized line; desktop wraps, up to 3 tight lines
+const _titleTextSx = {
+  flexGrow: 1,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: { xs: 'nowrap', md: 'normal' },
+  overflowWrap: 'anywhere',
+  display: { md: '-webkit-box' },
+  WebkitLineClamp: 3,
+  lineHeight: 'xs',
+  my: 0.5, // air for wrapped titles (margin, not padding: padding would reveal the clamped line)
+  WebkitBoxOrient: 'vertical',
+} as const;
+
+
 export const FadeInButton = styled(IconButton)({
   opacity: 0.5,
   transition: 'opacity 0.16s',
@@ -261,9 +276,8 @@ function ChatDrawerItem(props: {
       <Box
         onDoubleClick={handleTitleEditBegin}
         sx={{
+          ..._titleTextSx,
           color: isActive ? 'text.primary' : 'text.secondary',
-          overflowWrap: 'anywhere',
-          flex: 1,
         }}
       >
         {/*{DEBUG_CONVERSATION_IDS && `${conversationId} - `}*/}
@@ -272,6 +286,7 @@ function ChatDrawerItem(props: {
     ) : (
       <InlineTextarea
         invertedColors
+        maxRows={3} // long titles scroll within ~3 rows instead of making the row very tall
         initialText={title}
         onEdit={handleTitleEditChange}
         onCancel={handleTitleEditCancel}
@@ -364,7 +379,7 @@ function ChatDrawerItem(props: {
       <ListItem sx={{ border: 'none', display: 'grid', gap: 0, px: 'calc(var(--ListItem-paddingX) - 0.25rem)' }}>
 
         {/* Title row */}
-        <Box sx={{ display: 'flex', gap: 'var(--ListItem-gap)', minHeight: '2.25rem', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 'var(--ListItem-gap)', minWidth: 0, minHeight: '2.25rem', alignItems: 'center' }}>
           {titleRowComponent}
         </Box>
 
