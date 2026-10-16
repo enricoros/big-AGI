@@ -4,8 +4,7 @@ import type { ActileItem, ActileProvider } from './ActileProvider';
 import { ActilePopup } from './ActilePopup';
 
 
-export const useActileManager = (providers: ActileProvider[], anchorRef: React.RefObject<HTMLElement | null>) => {
-
+export const useActileManager = (enable: boolean, providers: ActileProvider[], anchorRef: React.RefObject<HTMLElement | null>) => {
   // state
   const [popupOpen, setPopupOpen] = React.useState(false);
   const [itemsByProvider, setItemsByProvider] = React.useState<{ provider: ActileProvider, items: ActileItem[] }[]>([]);
@@ -46,6 +45,8 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
   }, [activeItem, handlePopupItemClicked]);
 
   const actileInterceptTextChange = React.useCallback((trailingText: string) => {
+    if (!enable) return false;
+
     // Collect all providers whose trigger matches
     const matchingProviders = providers.filter(provider => provider.fastCheckTriggerText(trailingText));
 
@@ -73,9 +74,11 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
       return true;
     }
     return false;
-  }, [handleClose, providers]);
+  }, [enable, handleClose, providers]);
 
   const actileInterceptKeydown = React.useCallback((_event: React.KeyboardEvent<HTMLTextAreaElement>): boolean => {
+    if (!enable) return false;
+
     const { key, currentTarget, ctrlKey, metaKey } = _event;
 
     if (popupOpen) {
@@ -104,10 +107,10 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
     const trailingText = (currentTarget.value || '') + key;
     return actileInterceptTextChange(trailingText);
 
-  }, [actileInterceptTextChange, handleClose, handleEnterKey, popupOpen, totalItems]);
+  }, [actileInterceptTextChange, enable, handleClose, handleEnterKey, popupOpen, totalItems]);
 
   const actileComponent = React.useMemo(() => {
-    return !popupOpen ? null : (
+    return (!popupOpen || !enable) ? null : (
       <ActilePopup
         anchorEl={anchorRef.current}
         onClose={handleClose}
@@ -117,7 +120,7 @@ export const useActileManager = (providers: ActileProvider[], anchorRef: React.R
         onItemClick={handlePopupItemClicked}
       />
     );
-  }, [activeItemIndex, activeItemsByProvider, activeSearchString.length, anchorRef, handleClose, handlePopupItemClicked, popupOpen]);
+  }, [activeItemIndex, activeItemsByProvider, activeSearchString.length, anchorRef, enable, handleClose, handlePopupItemClicked, popupOpen]);
 
   return {
     actileComponent,

@@ -531,7 +531,8 @@ export function Composer(props: {
     providerStarredMessages(onActileEmbedMessage),
   ], [conversationOverlayStore, onActileCommandPaste, onActileEmbedMessage]);
 
-  const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(actileProviders, composerTextAreaRef);
+  const disableActile = chatExecuteMode === 'generate-image';
+  const { actileComponent, actileInterceptKeydown, actileInterceptTextChange } = useActileManager(!disableActile, actileProviders, composerTextAreaRef);
 
 
   // Type...
