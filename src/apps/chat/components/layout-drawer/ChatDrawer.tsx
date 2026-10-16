@@ -15,7 +15,6 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import StarOutlineRoundedIcon from '@mui/icons-material/StarOutlineRounded';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import { DFolder, useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { DebouncedInputMemo } from '~/common/components/DebouncedInput';
 import { FolderChangeRequest, FoldersSelectPopup } from '~/common/components/folders/FoldersSelectPopup';
 import { FoldersToggleOff } from '~/common/components/icons/FoldersToggleOff';
@@ -27,6 +26,7 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { getIsMobile } from '~/common/components/useMatchMedia';
 import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
+import { useChatFolderActive } from '~/common/stores/folders/hooks/useChatFolderActive';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { ChatDrawerItemMemo } from './ChatDrawerItem';
@@ -36,9 +36,6 @@ import { ChatNavGrouping, ChatSearchDepth, ChatSearchSorting, isDrawerSearching,
 import { useChatDrawerFilters } from '../../store-app-chat';
 
 
-// this is here to make shallow comparisons work on the next hook
-const noFolders: DFolder[] = [];
-
 // 'Older than' age filter presets (days of last activity; null = off)
 const AGE_FILTER_OPTIONS: { days: number | null, label: string, shortLabel: string }[] = [
   { days: null, label: 'Any age', shortLabel: 'Any' },
@@ -47,24 +44,6 @@ const AGE_FILTER_OPTIONS: { days: number | null, label: string, shortLabel: stri
   { days: 30, label: 'Older than 1 month', shortLabel: '>1m' },
   { days: 90, label: 'Older than 3 months', shortLabel: '>3m' },
 ];
-
-/*
- * Lists folders and returns the active folder
- */
-export const useFolders = (activeFolderId: string | null) => useFolderStore(useShallow(({ enableFolders, folders, toggleEnableFolders }) => {
-
-  // finds the active folder if any
-  const activeFolder = (enableFolders && activeFolderId)
-    ? folders.find(folder => folder.id === activeFolderId) ?? null
-    : null;
-
-  return {
-    activeFolder,
-    allFolders: enableFolders ? folders : noFolders,
-    enableFolders,
-    toggleEnableFolders,
-  };
-}));
 
 
 export const ChatDrawerMemo = React.memo(ChatDrawer);
@@ -105,7 +84,7 @@ function ChatDrawer(props: {
     showPersonaIcons, toggleShowPersonaIcons,
     showRelativeSize, toggleShowRelativeSize,
   } = useChatDrawerFilters();
-  const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useFolders(props.activeFolderId);
+  const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useChatFolderActive(props.activeFolderId);
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatDrawerRenderItems(
     props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasBeamOpen, filterHasStars, filterHasImageAssets, filterHasDocFragments, filterIsArchived, filterOlderThanDays, navGrouping, searchSorting, showRelativeSize, searchDepth,
   );

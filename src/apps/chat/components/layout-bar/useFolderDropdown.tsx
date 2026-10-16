@@ -5,7 +5,8 @@ import FolderIcon from '@mui/icons-material/Folder';
 
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { OptimaBarDropdownMemo, OptimaDropdownItems } from '~/common/layout/optima/bar/OptimaBarDropdown';
-import { chatFoldersActions, useFolderStore } from '~/common/stores/folders/store-chat-folders';
+import { chatFoldersActions } from '~/common/stores/folders/store-chat-folders';
+import { useChatFoldersIfEnabled } from '~/common/stores/folders/hooks/useChatFoldersIfEnabled';
 
 
 export const ClearFolderText = 'No Folder';
@@ -15,12 +16,12 @@ const SPECIAL_ID_CLEAR_FOLDER = '_REMOVE_';
 export function useFolderDropdown(conversationId: DConversationId | null) {
 
   // external state
-  const { folders, enableFolders } = useFolderStore();
+  const folders = useChatFoldersIfEnabled();
 
 
   // Prepare items for the dropdown
   const folderItems: OptimaDropdownItems | null = React.useMemo(() => {
-    if (!folders.length)
+    if (!folders?.length)
       return null;
 
     // add one item per folder
@@ -44,23 +45,23 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
 
   // Handle dropdown folder change
   const handleFolderChange = React.useCallback((folderId: string | null) => {
-    if (conversationId && folderId) {
+    if (conversationId && folderId && folders) {
       // Remove conversation from all folders
       chatFoldersActions().removeConversationFromAll(conversationId);
       // Add conversation to the selected folder
       if (folderId !== SPECIAL_ID_CLEAR_FOLDER)
         chatFoldersActions().addConversationToFolder(folderId, conversationId);
     }
-  }, [conversationId]);
+  }, [conversationId, folders]);
 
   // find the folder ID for the active Conversation
-  const currentFolderId = folders.find(folder => folder.conversationIds.includes(conversationId || ''))?.id || null;
+  const currentFolderId = folders?.find(folder => folder.conversationIds.includes(conversationId || ''))?.id || null;
 
   // Create the dropdown component
   const folderDropdown = React.useMemo(() => {
 
     // don't show the dropdown if folders are not enabled
-    if (!enableFolders || !folderItems)
+    if (!folderItems)
       return null;
 
     return (
@@ -72,7 +73,7 @@ export function useFolderDropdown(conversationId: DConversationId | null) {
         showSymbols
       />
     );
-  }, [currentFolderId, enableFolders, folderItems, handleFolderChange]);
+  }, [currentFolderId, folderItems, handleFolderChange]);
 
   return { folderDropdown };
 }

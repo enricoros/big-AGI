@@ -34,6 +34,7 @@ import { getChatLLMId } from '~/common/stores/llms/store-llms';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences, useOptimaChromeless } from '~/common/layout/optima/useOptima';
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
+import { useChatFolderValidateId } from '~/common/stores/folders/hooks/useChatFolderValidateId';
 import { useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
 import { useLLM } from '~/common/stores/llms/llms.hooks';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
@@ -205,11 +206,7 @@ export function AppChat() {
 
   const { mayWork: capabilityHasT2I, mayEdit: capabilityHasT2IEdit } = useCapabilityTextToImage();
 
-  const activeFolderId = useFolderStore(({ enableFolders, folders }) => {
-    const activeFolderId = enableFolders ? _activeFolderId : null;
-    const activeFolder = activeFolderId ? folders.find(folder => folder.id === activeFolderId) : null;
-    return activeFolder?.id ?? null;
-  });
+  const activeFolderId = useChatFolderValidateId(_activeFolderId);
 
   // Composer Auto-hiding
   const isChromeless = useOptimaChromeless() && isMobile; // auto-hide on Chromeless too
