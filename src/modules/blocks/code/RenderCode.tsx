@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, ButtonGroup, Sheet, Typography } from '@mui/joy';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import ChangeHistoryTwoToneIcon from '@mui/icons-material/ChangeHistoryTwoTone';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -28,6 +29,7 @@ import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import type { IRenderHandle } from './code-renderers/IRenderHandle';
 import { OVERLAY_BUTTON_RADIUS, OverlayButton, overlayButtonsActiveSx, overlayButtonsClassName, overlayButtonsTopRightSx, overlayGroupWithShadowSx } from '../OverlayButton';
+import { RenderCodeChartJS } from './code-renderers/RenderCodeChartJS';
 import { RenderCodeHtmlIFrame } from './code-renderers/RenderCodeHtmlIFrame';
 import { RenderCodeMarkdown } from './code-renderers/RenderCodeMarkdown';
 import { RenderCodeMermaid } from './code-renderers/RenderCodeMermaid';
@@ -45,10 +47,10 @@ import './RenderCode.css';
 // configuration
 const ALWAYS_SHOW_OVERLAY = true;
 const BLOCK_CODE_ENABLE_COMPARISON = true; // TODO: make this opt-in (also, 'false' does not disable the hooks)
+export const BLOCK_CODE_VND_AGI_CHARTJS = 'chartjs';
 export const BLOCK_CODE_MERMAID_TITLE = 'mermaid';
 export const BLOCK_CODE_PLANTUML_TITLE = 'plantuml';
 export const BLOCK_CODE_SVG_TITLE = 'svg';
-
 const CONTEXT_HIGHLIGHT_START = '__AGI_MARK_START__' as const;
 const CONTEXT_HIGHLIGHT_END = '__AGI_MARK_END__' as const;
 
@@ -224,8 +226,9 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const [showMermaid, setShowMermaid] = React.useState(true);
   const [showPlantUML, setShowPlantUML] = React.useState(true);
   const [showSVG, setShowSVG] = React.useState(true);
-  const renderHandleRef = React.useRef<IRenderHandle>(null);
+  const [showChartJS, setShowChartJS] = React.useState(true);
   const fullScreenElementRef = React.useRef<HTMLDivElement>(null);
+  const renderHandleRef = React.useRef<IRenderHandle>(null);
 
   // external state
   const diffContext = useERCDiffContext();
@@ -278,7 +281,6 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     setShowHTML(nextState);
   }, [setRenderHTMLInitial, showHTML]);
 
-
   const handleRenderHandleCopy = React.useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
     // Keep clipboard.write inside the click gesture for Safari; resolve the image through a promise.
@@ -305,7 +307,6 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
       alert('Failed to generate image.');
     }
   }, []);
-
 
   const handleRenderHandleReattach = React.useCallback(async (event: React.MouseEvent) => {
     event.stopPropagation();
@@ -375,8 +376,11 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const renderSVG = isSVGCode && showSVG;
   const canScaleSVG = renderSVG && _tCode.includes('viewBox="');
 
-  const renderSyntaxHighlight = !renderHTML && !renderMarkdown && !renderMermaid && !renderPlantUML && !renderSVG;
-  const cannotRenderLineNumbers = !renderSyntaxHighlight || showSoftWrap;
+  const isChartJSCode = lcBlockTitle === BLOCK_CODE_VND_AGI_CHARTJS && !blockIsPartial;
+  const renderChartJS = isChartJSCode && showChartJS;
+
+  const renderSyntaxHighlight = !renderHTML && !renderMarkdown && !renderMermaid && !renderPlantUML && !renderSVG && !renderChartJS;
+  const cannotRenderLineNumbers = !renderSyntaxHighlight || showSoftWrap || renderChartJS;
   const renderLineNumbers = !cannotRenderLineNumbers && ((showLineNumbers && uiComplexityMode !== 'minimal') || isFullscreen);
 
 
@@ -401,7 +405,6 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
   const throttledCodeForHighlight = snapRef.current.code;
 
   const performSymbolHighlight = !devsUISymbolHighlight ? undefined : diffContext?.contextHighlightText;
-
 
   // Title
   let showBlockTitle = !props.renderHideTitle && (blockTitle != inferredCodeLanguage) && (blockTitle.includes('.') || blockTitle.includes('://'));
@@ -472,25 +475,29 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
           </OverlayButton>
         )}
 
-        {/* SVG, Mermaid, PlantUML -- including a max-out button */}
-        {(isSVGCode || isMermaidCode || isPlantUMLCode) && (
+        {/* SVG, Chart.js, Mermaid, PlantUML -- including a max-out button */}
+        {(isSVGCode || isChartJSCode || isMermaidCode || isPlantUMLCode) && (
           <ButtonGroup aria-label='Diagram' sx={overlayGroupWithShadowSx}>
+
             {/* Toggle rendering */}
             <OverlayButton
               tooltip={noTooltips ? null
                 : (renderSVG || renderMermaid || renderPlantUML) ? 'Show Code'
-                  : isSVGCode ? 'Render SVG'
-                    : isMermaidCode ? 'Mermaid Diagram'
-                      : 'PlantUML Diagram'
+                  : renderChartJS ? 'Show Data'
+                    : isSVGCode ? 'Render SVG'
+                      : isChartJSCode ? 'Show Chart'
+                        : isMermaidCode ? 'Mermaid Diagram'
+                          : 'PlantUML Diagram'
               }
-              variant={(renderMermaid || renderPlantUML) ? 'solid' : 'outlined'}
-              color={isSVGCode ? 'warning' : undefined}
+              variant={(renderChartJS || renderMermaid || renderPlantUML) ? 'solid' : 'outlined'}
+              color={isSVGCode ? 'warning' : isChartJSCode ? 'primary' : undefined}
               onClick={() => {
                 if (isSVGCode) setShowSVG(on => !on);
+                if (isChartJSCode) setShowChartJS(on => !on);
                 if (isMermaidCode) setShowMermaid(on => !on);
                 if (isPlantUMLCode) setShowPlantUML(on => !on);
               }}>
-              {isSVGCode ? <ChangeHistoryTwoToneIcon /> : <SquareTwoToneIcon />}
+              {isSVGCode ? <ChangeHistoryTwoToneIcon /> : isChartJSCode ? <BarChartIcon /> : <SquareTwoToneIcon />}
             </OverlayButton>
 
             {/* PlantUML code-changing buttons */}
@@ -519,27 +526,33 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
                 <FitScreenIcon />
               </OverlayButton>
             )}
+
           </ButtonGroup>
         )}
 
-        {/* Download / Copy Diagram PNG */}
-        {props.noCopyButton !== true && (renderMermaid || renderPlantUML) && (
+        {/* Special Group: Download / Copy (Chart/Diagram) PNG */}
+        {props.noCopyButton !== true && (renderChartJS || renderMermaid || renderPlantUML) && (
           <ButtonGroup color='neutral' aria-label='Image Actions' sx={overlayGroupWithShadowSx}>
+
+            {/* Download PNG */}
             <OverlayButton
-              tooltip={noTooltips ? null : 'Download transparent PNG'}
+              tooltip={noTooltips ? null : !renderChartJS ? 'Download transparent PNG' : <>Download PNG<Box sx={{ fontSize: 'xs', m: 0.5 }}>hold ⇧ for transparent</Box></>}
               tooltipProps={{ color: 'warning' }}
               onClick={handleRenderHandleDownload}
             >
               <FileDownloadOutlinedIcon />
             </OverlayButton>
+
+            {/* Copy PNG */}
             <OverlayButton
-              tooltip={noTooltips ? null : 'Copy transparent PNG'}
+              tooltip={noTooltips ? null : !renderChartJS ? 'Copy transparent PNG' : <>Copy PNG<Box sx={{ fontSize: 'xs', m: 0.5 }}>hold ⇧ for transparent</Box></>}
               tooltipProps={{ color: 'warning' }}
               onClick={handleRenderHandleCopy}
               sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
             >
               <PhotoLibraryOutlinedIcon />
             </OverlayButton>
+
           </ButtonGroup>
         )}
 
@@ -594,7 +607,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
           )}
 
           {/* Copy */}
-          {props.noCopyButton !== true && (
+          {props.noCopyButton !== true && !renderChartJS && (
             <OverlayButton tooltip={noTooltips ? null : 'Copy Code'} variant='outlined' onClick={handleCopyToClipboard}>
               <ContentCopyIcon />
             </OverlayButton>
@@ -605,13 +618,13 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
 
     </Box></RCOverlay>
   ), [
-    handleRenderHandleReattach, props.onReattachAsFile,
-    compareBaseSet, compareThisIsBase, handleCompareClicked, showCompareButton,
-    cannotRenderLineNumbers, enterFullscreen, exitFullscreen, fitScreen, handleCopyToClipboard, handleHtmlRenderToggle,
-    handleRenderHandleCopy, handleRenderHandleDownload, onReplaceInCode, showPlantUML,
-    isFullscreen, isHTMLCode, isMdCode, isMermaidCode, isPlantUMLCode, isSVGCode, noTooltips, overlayRef, props.noCopyButton,
-    renderHTML, renderLineNumbers, renderMarkdown, renderMermaid, renderPlantUML, renderSVG, renderSyntaxHighlight,
-    setShowLineNumbers, setShowSoftWrap, showFitButton, showLineNumbers, showMarkdown, showSoftWrap, uiComplexityMode,
+    cannotRenderLineNumbers, compareBaseSet, compareThisIsBase, enterFullscreen, exitFullscreen, fitScreen, handleCompareClicked,
+    handleCopyToClipboard, handleHtmlRenderToggle, handleRenderHandleCopy, handleRenderHandleDownload,
+    handleRenderHandleReattach, isChartJSCode, isFullscreen, isHTMLCode, isMdCode, isMermaidCode, isPlantUMLCode, isSVGCode,
+    noTooltips, onReplaceInCode, overlayRef, props.noCopyButton, props.onReattachAsFile, renderChartJS, renderHTML,
+    renderLineNumbers, renderMarkdown, renderMermaid, renderPlantUML, renderSVG, renderSyntaxHighlight, setShowLineNumbers,
+    setShowSoftWrap, showCompareButton, showFitButton, showLineNumbers, showMarkdown, showPlantUML, showSoftWrap,
+    uiComplexityMode,
   ]);
 
 
@@ -652,7 +665,8 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
               : renderMermaid ? <RenderCodeMermaid ref={renderHandleRef} mermaidCode={code} fitScreen={fitScreen} onReplaceInCode={onReplaceInCode} />
                 : renderSVG ? <RenderCodeSVG ref={renderHandleRef} svgCode={code} fitScreen={fitScreen} />
                   : renderPlantUML ? <RenderCodePlantUML ref={renderHandleRef} plantUMLCode={code} fitContainer={fitScreen} allowDetails={uiComplexityMode === 'extra'} onReplaceInCode={onReplaceInCode} />
-                    : <RCSyntaxHighlight
+                    : renderChartJS ? <RenderCodeChartJS ref={renderHandleRef} chartJSCode={code} onReplaceInCode={onReplaceInCode} />
+                      : <RCSyntaxHighlight
                         code={throttledCodeForHighlight}
                         inferredCodeLanguage={inferredCodeLanguage}
                         renderLineNumbers={renderLineNumbers}

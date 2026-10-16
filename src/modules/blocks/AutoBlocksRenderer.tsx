@@ -6,7 +6,7 @@ import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { useRenderDecay } from '~/common/render-decay/RenderDecayZone';
 
-import { BLOCK_CODE_MERMAID_TITLE, BLOCK_CODE_PLANTUML_TITLE, BLOCK_CODE_SVG_TITLE, RenderCodeMemo } from './code/RenderCode';
+import { BLOCK_CODE_MERMAID_TITLE, BLOCK_CODE_PLANTUML_TITLE, BLOCK_CODE_SVG_TITLE, BLOCK_CODE_VND_AGI_CHARTJS, RenderCodeMemo } from './code/RenderCode';
 import { BlocksContainer } from './BlocksContainers';
 import { EnhancedRenderCodeMemo } from './enhanced-code/EnhancedRenderCode';
 import { RenderImageURL } from './image/RenderImageURL';
@@ -183,7 +183,7 @@ export function AutoBlocksRenderer(props: {
             // Keep the component type stable across fence closure, completion and resume.
             // Content controls the frame, while the renderer keeps its DOM, iframe and toggles.
             const lowerCaseTitle = bkInput.title.toLowerCase();
-            const isDiagram = lowerCaseTitle === BLOCK_CODE_MERMAID_TITLE || lowerCaseTitle === BLOCK_CODE_PLANTUML_TITLE;
+            const isDiagram = lowerCaseTitle === BLOCK_CODE_MERMAID_TITLE || lowerCaseTitle === BLOCK_CODE_PLANTUML_TITLE || lowerCaseTitle === BLOCK_CODE_VND_AGI_CHARTJS;
             const frameless = isDiagram
               ? !bkInput.isPartial // diagrams: framed and collapsed while written, bare once they render
               : (bkInput.isPartial && lastBlockInFlux) || (!bkInput.title && bkInput.lines <= 3) || lowerCaseTitle === BLOCK_CODE_SVG_TITLE;
