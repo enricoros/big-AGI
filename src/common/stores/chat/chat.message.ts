@@ -200,7 +200,7 @@ export function createDMessageFromFragments(role: DMessageRole, fragments: DMess
 
 // helpers - duplication
 
-export function duplicateDMessage(message: Readonly<DMessage>, skipVoid: boolean): DMessage {
+export function duplicateDMessage(message: Immutable<DMessage>, skipVoid: boolean): DMessage {
   return {
     id: agiUuid('chat-dmessage'),
 
@@ -225,7 +225,7 @@ export function duplicateDMessage(message: Readonly<DMessage>, skipVoid: boolean
   };
 }
 
-export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>): DMessageMetadata {
+export function duplicateDMessageMetadata(metadata: Immutable<DMessageMetadata>): DMessageMetadata {
   // NOTE: update this function when adding metadata fields
   return {
     ...(metadata.inReferenceTo ? {
@@ -240,7 +240,7 @@ export function duplicateDMessageMetadata(metadata: Readonly<DMessageMetadata>):
   };
 }
 
-export function duplicateDMessageGenerator(generator: Readonly<DMessageGenerator>): DMessageGenerator {
+export function duplicateDMessageGenerator(generator: Immutable<DMessageGenerator>): DMessageGenerator {
   switch (generator.mgt) {
     case 'named':
       return {
@@ -316,18 +316,18 @@ export function messageUserFlagToEmoji(flag: DMessageUserFlag): string {
   return flag2EmojiMap[flag] ?? '❓';
 }
 
-export function messageHasUserFlag(message: Pick<DMessage, 'userFlags'>, flag: DMessageUserFlag): boolean {
+export function messageHasUserFlag(message: Pick<Immutable<DMessage>, 'userFlags'>, flag: DMessageUserFlag): boolean {
   return message.userFlags?.includes(flag) ?? false;
 }
 
-export function messageSetUserFlag(message: Pick<DMessage, 'userFlags'>, flag: DMessageUserFlag, on: boolean): DMessageUserFlag[] {
+export function messageSetUserFlag(message: Pick<Immutable<DMessage>, 'userFlags'>, flag: DMessageUserFlag, on: boolean): DMessageUserFlag[] {
   if (on) {
     if (message.userFlags?.includes(flag))
-      return message.userFlags;
+      return [...message.userFlags];
     return [...(message.userFlags || []), flag];
   } else {
     if (!message.userFlags?.includes(flag))
-      return message.userFlags || [];
+      return [...(message.userFlags || [])];
     return (message.userFlags || []).filter(_f => _f !== flag);
   }
 }
