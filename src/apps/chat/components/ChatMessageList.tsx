@@ -14,12 +14,11 @@ import { speakText, speakTextSurfaceFailure } from '~/modules/speex/speex.client
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { DLLMContextTokens } from '~/common/stores/llms/llms.types';
-import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { DConversationId, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { clipboardInterceptCtrlCForCleanup } from '~/common/util/clipboardUtils';
 import { convertFilesToDAttachmentFragments } from '~/common/attachment-drafts/attachment.pipeline';
-import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from '~/common/stores/chat/chat.message';
+import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { getRenderHTMLInitial, useUIContentScaling } from '~/common/stores/store-ui';
 import { openFileForAttaching } from '~/common/components/ButtonAttachFiles';
@@ -27,12 +26,11 @@ import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { themeMinWidthChatPane } from '~/common/app.theme';
 import { useChatOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla';
 import { useChatStore } from '~/common/stores/chat/store-chats';
-import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { CMLZeroConversation } from './messages-list/CMLZeroConversation';
+import { ChatCleanupControls } from './ChatCleanupList';
 import { ChatMessageStreamingMemo } from './message/ChatMessage';
-import { CleanerMessage, MessagesSelectionHeader } from './message/CleanerMessage';
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
 import { useChatShowSystemMessages, useChatMessageTimestampMode } from '../store-app-chat';
@@ -69,7 +67,6 @@ export function ChatMessageList(props: {
 
   // external state
   const contentScaling = useUIContentScaling();
-  const { showPromisedOverlay } = useOverlayComponents();
   const { notifyBooting } = useScrollToBottom();
   const [showSystemMessages] = useChatShowSystemMessages();
   const [messageTimestampMode] = useChatMessageTimestampMode();
@@ -333,53 +330,7 @@ export function ChatMessageList(props: {
   }, []);
 
 
-  // operate on the local selection set
-
-  const areAllSelectedMessagesHidden = React.useMemo(() => {
-    if (selectedMessages.size === 0) return false;
-    for (const messageId of selectedMessages) {
-      const message = conversationMessages.find(m => m.id === messageId);
-      if (message && !messageHasUserFlag(message, MESSAGE_FLAG_AIX_SKIP))
-        return false;
-    }
-    return true;
-  }, [selectedMessages, conversationMessages]);
-
-  const handleSelectAll = (selected: boolean) => {
-    const newSelected = new Set<string>();
-    if (selected)
-      for (const message of conversationMessages)
-        newSelected.add(message.id);
-    setSelectedMessages(newSelected);
-  };
-
-  const handleSelectMessage = (messageId: DMessageId, selected: boolean) => {
-    const newSelected = new Set(selectedMessages);
-    selected ? newSelected.add(messageId) : newSelected.delete(messageId);
-    setSelectedMessages(newSelected);
-  };
-
-  const handleSelectionDelete = React.useCallback(async () => {
-    if (!conversationHandler || !selectedMessages.size) return;
-    const messageIds = Array.from(selectedMessages);
-    const confirmed = await showPromisedOverlay('chat-message-delete-confirmation', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
-      <ConfirmationModal
-        open onClose={onUserReject} onPositive={() => onResolve(true)}
-        title='Delete Messages'
-        confirmationText={`Permanently delete ${messageIds.length} selected message${messageIds.length === 1 ? '' : 's'}? This cannot be undone.`}
-        positiveActionText='Delete'
-      />,
-    );
-    if (!confirmed) return;
-    conversationHandler.messagesDelete(messageIds);
-    setSelectedMessages(new Set());
-  }, [conversationHandler, selectedMessages, showPromisedOverlay]);
-
-  const handleSelectionToggleVisibility = React.useCallback(() => {
-    for (let selectedMessage of Array.from(selectedMessages))
-      conversationHandler?.messageSetUserFlag(selectedMessage, MESSAGE_FLAG_AIX_SKIP, !areAllSelectedMessagesHidden, true);
-    setSelectedMessages(new Set());
-  }, [conversationHandler, selectedMessages, areAllSelectedMessagesHidden]);
+  // cleanup mode
 
   const { isMessageSelectionMode, setIsMessageSelectionMode } = props;
 
@@ -449,30 +400,20 @@ export function ChatMessageList(props: {
 
     <List role='chat-messages-list' sx={listSx} onCopy={clipboardInterceptCtrlCForCleanup}>
 
-      {props.isMessageSelectionMode && (
-        <MessagesSelectionHeader
-          hasSelected={selectedMessages.size > 0}
-          sumTokens={historyTokenCount}
+      {props.isMessageSelectionMode ? (
+        <ChatCleanupControls
+          conversationHandler={conversationHandler}
+          conversationMessages={conversationMessages}
+          filteredMessages={filteredMessages}
+          historyTokenCount={historyTokenCount}
+          remainingTokens={props.chatLLMContextTokens ? (props.chatLLMContextTokens - historyTokenCount) : undefined}
+          selectedMessages={selectedMessages}
+          setSelectedMessages={setSelectedMessages}
           onClose={() => props.setIsMessageSelectionMode(false)}
-          onSelectAll={handleSelectAll}
-          onDeleteMessages={handleSelectionDelete}
-          onToggleVisibility={handleSelectionToggleVisibility}
-          areAllMessagesHidden={areAllSelectedMessagesHidden}
         />
-      )}
+      ) : filteredMessages.map((message, idx) => {
 
-      {filteredMessages.map((message, idx) => {
-
-          return props.isMessageSelectionMode ? (
-
-            <CleanerMessage
-              key={'sel-' + message.id}
-              message={message}
-              remainingTokens={props.chatLLMContextTokens ? (props.chatLLMContextTokens - historyTokenCount) : undefined}
-              selected={selectedMessages.has(message.id)} onToggleSelected={handleSelectMessage}
-            />
-
-          ) : (
+          return (
 
             <ChatMessageStreamingMemo
               key={'msg-' + message.id}
