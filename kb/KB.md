@@ -10,6 +10,9 @@ Architecture and system documentation is available in the `/kb/` knowledge base,
 
 ### Modules Documentation
 
+#### Chat - Message rendering
+- **[CHAT-render-tree.md](modules/CHAT-render-tree.md)** - the render tree behind ChatMessage: rules in force (citation hoist, fused runs, tool pairing, edit mode shape, key continuity, layout), open work (attachments editor, edit session, block reordering, citation-split text), known limits
+
 #### Trade - Export and Import
 - **[TRADE-claude-code-export.md](modules/TRADE-claude-code-export.md)** - export for Claude Code: session and chat folder formats, measured Claude Code resume behavior, gaps
 
