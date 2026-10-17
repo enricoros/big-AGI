@@ -94,6 +94,7 @@ type _DMessageFragmentWrapper<TFragment, TPart extends { pt: string }> = {
   originId?:
     | 'cha-per-re-um-pre' | 'cha-per-re-um-post' // see DPersona.appChat.DPersonaChatReinforcement
     | 'cha-live-feed-frame' // camera/screen frame attachments, see sampleLiveFeedsAsFragments
+    | 'cha-live-feed-state' // the live feeds' vision state text appended to the user message, not the prompt
     | (string & {}); // optional, for multi-model, identifies which actor produced this fragment
   vendorState?: DMessageFragmentVendorState; // optional vendor-specific protocol state (opaque, lossy-safe)
 }
