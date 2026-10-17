@@ -436,6 +436,11 @@ export function isImageRefPart(part: DMessageContentFragment['part'] | DMessageA
   return part.pt === 'image_ref';
 }
 
+/** An image of either generation: a legacy image ref, or a zync asset reference to an image. */
+export function isImagePart(part: DMessageContentFragment['part'] | DMessageAttachmentFragment['part']): boolean {
+  return isImageRefPart(part) || isZyncAssetImageReferencePart(part);
+}
+
 export function isTextPart(part: DMessageContentFragment['part']) {
   return part.pt === 'text';
 }

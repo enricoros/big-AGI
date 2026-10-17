@@ -12,7 +12,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { DMessage, MESSAGE_FLAG_AIX_SKIP, messageFragmentsReduceText, messageHasUserFlag, messageWasOutOfTokens } from '~/common/stores/chat/chat.message';
-import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isContentFragment, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isContentFragment, isImagePart, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { PhImageSquare } from '~/common/components/icons/phosphor/PhImageSquare';
 import { makeMessageAvatarIcon, messageBackground } from '~/common/util/dMessageUtils';
 
@@ -77,7 +77,7 @@ function analyzeMessageFragments(messageFragments: ReadonlyArray<DMessageFragmen
           break;
       }
     } else if (isAttachmentFragment(fragment)) {
-      if (isZyncAssetImageReferencePart(fragment.part) || isImageRefPart(fragment.part)) {
+      if (isImagePart(fragment.part)) {
         result.imageCount++;
       } else {
         result.attachmentCount++;

@@ -2,7 +2,7 @@ import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
 import type { Immutable } from '~/common/types/immutable.types';
 import { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
-import { createTextContentFragment, isContentOrAttachmentFragment, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, isContentOrAttachmentFragment, isImagePart } from '~/common/stores/chat/chat.fragments';
 import { findFirstUserPromptFragment } from '~/common/stores/chat/chat.fragment-order';
 
 import { extractChatCommand, helpPrettyChatCommands } from '../commands/commands.registry';
@@ -36,7 +36,7 @@ export async function _handleExecuteSlashCommand(lastMessageId: DMessageId, last
       // use additional image fragments as image inputs
       const imageInputFragments = lastMessage.fragments
         .filter(fragment => isContentOrAttachmentFragment(fragment) && (
-          isZyncAssetImageReferencePart(fragment.part) || isImageRefPart(fragment.part)
+          isImagePart(fragment.part)
         ));
 
       return await runImageGenerationUpdatingState(cHandler, userText!, imageInputFragments);

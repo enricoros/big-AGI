@@ -1,5 +1,5 @@
 import type { Immutable } from '~/common/types/immutable.types';
-import { DMessageAttachmentFragment, DMessageFragment, DMessageFragmentId, DMessageToolInvocationPart, DMessageToolResponsePart, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { DMessageFragment, DMessageFragmentId, DMessageToolInvocationPart, DMessageToolResponsePart, isImagePart } from '~/common/stores/chat/chat.fragments';
 
 import type { CMCitationsFragment, CMRenderMode, CMRenderNode, CMRenderTree, CMToolCall, CMToolInvocationFragment, CMToolResponseFragment, CMTrailingOptions } from './cmRenderTree.types';
 import { parseTrailingOptions } from './parseTrailingOptions';
@@ -21,10 +21,6 @@ const CMRT_OPTIONS_AFTER_LAST_FRAGMENT_ONLY = true; // trailing options only whe
 /** Fused reasoning joins its members with a blank line, like `messageFragmentsReduceText`. */
 export const CMRT_REASONING_SEPARATOR = '\n\n';
 
-
-export function isCMImageAttachment(fragment: Immutable<DMessageAttachmentFragment>): boolean {
-  return isZyncAssetImageReferencePart(fragment.part) || isImageRefPart(fragment.part);
-}
 
 
 /**
@@ -128,7 +124,7 @@ export function buildCMRenderTree(fragments: Immutable<DMessageFragment[]>, mode
       }
 
       case 'attachment': {
-        const kind = edit ? 'edit-attachments' : isCMImageAttachment(fragment) ? 'images' : 'documents';
+        const kind = edit ? 'edit-attachments' : isImagePart(fragment.part) ? 'images' : 'documents';
         if (run.node?.kind === kind) {
           run.fragments.push(fragment);
         } else {

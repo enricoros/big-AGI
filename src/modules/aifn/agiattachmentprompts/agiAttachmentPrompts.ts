@@ -5,7 +5,7 @@ import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_SystemMessageText } fr
 import { aixChatGenerateContent_DMessage_orThrow, aixCreateChatGenerateContext } from '~/modules/aix/client/aix.client';
 import { aixFunctionCallTool, aixRequireSingleFunctionCallInvocation } from '~/modules/aix/client/aix.client.fromSimpleFunction';
 
-import { createTextContentFragment, DMessageAttachmentFragment, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageAttachmentFragment, isImagePart } from '~/common/stores/chat/chat.fragments';
 import { getDomainModelIdOrThrow } from '~/common/stores/llms/store-llms';
 
 
@@ -20,7 +20,7 @@ export async function agiAttachmentPrompts(attachmentFragments: DMessageAttachme
 
   // require llm
   const requireVision = attachmentFragments.some(f =>
-    isZyncAssetImageReferencePart(f.part) || isImageRefPart(f.part)
+    isImagePart(f.part)
   );
   const llmId = getDomainModelIdOrThrow(['fastUtil', 'primaryChat'], true, requireVision, 'guess-attachments-prompts');
 

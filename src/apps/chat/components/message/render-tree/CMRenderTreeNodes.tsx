@@ -8,7 +8,7 @@ import { HostedLinksProvider } from '~/modules/blocks/markdown/HostedLinksContex
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
-import type { DMessageAttachmentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { DMessageAttachmentFragment, DMessageFragment, DMessageFragmentId, isImagePart } from '~/common/stores/chat/chat.fragments';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { Release } from '~/common/app.release';
 
@@ -29,7 +29,7 @@ import { ImageAttachmentFragments } from '../fragments-attachment-image/ImageAtt
 import { humanReadableFunctionName } from '../fragments-content/BlockPartToolInvocation.utils';
 
 import type { CMNodeCitations, CMNodeReasoning, CMNodeReference, CMNodeText, CMRenderNode, CMRenderTree } from './cmRenderTree.types';
-import { CMRT_REASONING_SEPARATOR, isCMImageAttachment } from './cmRenderTree.build';
+import { CMRT_REASONING_SEPARATOR } from './cmRenderTree.build';
 
 
 // layout
@@ -245,7 +245,7 @@ function _bodySegments(body: readonly CMRenderNode[], emptyNotice: boolean, addT
         // one row per contiguous kind, keyed like the view rows so the lists keep their state across the mode switch
         grid = null;
         for (const fragment of node.fragments) {
-          const kind = isCMImageAttachment(fragment) ? 'images' : 'documents';
+          const kind = isImagePart(fragment.part) ? 'images' : 'documents';
           const last = segments[segments.length - 1];
           if (last?.kind === 'row' && last.row.kind === kind && last.row.editing) {
             const fragments = [...last.row.fragments, fragment];
