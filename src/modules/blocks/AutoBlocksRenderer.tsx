@@ -46,7 +46,7 @@ export type AutoBlocksHtmlRenderVariant = 'show-code' | 'render-at-end' | 'rende
 /**
  * Features: collapse/expand, auto-detects HTML, SVG, Code, etc..
  * Used by (and more):
- * - BlockPartText_AutoBlocks - the main text blocks in ChatMessage > ContentFragments > *
+ * - BlockPartText_AutoBlocks - the main text blocks in ChatMessage > CMRenderTreeNodes > *
  * - DocAttachmentFragmentPane - when not editing and with a switch to show text/fenced (which could be rendered)
  * - DiagramsModal - for the diagram blocks
  */

@@ -904,7 +904,7 @@ export function reorderFragments<T extends DMessageFragment>(unsortedFragments: 
 }
 
 export function splitFragmentsByType(fragments: DMessageFragment[]) {
-  // also see `useFragmentBuckets.ts` which inspired this function
+  // display grouping lives in cmRenderTree.build.ts
   return fragments.reduce((acc, frag) => {
     if (isContentFragment(frag))
       acc.contentFragments.push(frag);

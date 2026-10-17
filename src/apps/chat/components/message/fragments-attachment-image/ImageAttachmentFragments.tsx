@@ -152,10 +152,14 @@ function ImageTitleEditorOverlay(props: {
   }, [onFragmentReplace, fragment, editTitle]);
 
   const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter')
+    // the editor owns these keys: the global shortcuts (close Beam, stop response) must not see them
+    if (e.key === 'Enter') {
+      e.stopPropagation();
       handleSaveTitle();
-    else if (e.key === 'Escape')
+    } else if (e.key === 'Escape') {
+      e.stopPropagation();
       handleCancelEdit();
+    }
   }, [handleSaveTitle, handleCancelEdit]);
 
 
@@ -344,10 +348,10 @@ function SortableImageAttachmentCard(props: {
 
 /**
  * Shows image attachments in a flexbox that wraps the images (overflowing by rows)
- * Also see `TextAttachmentFragments` for the text version, and 'ContentFragments'.
+ * Also see `TextAttachmentFragments` for the text version, and 'CMRenderTreeNodes'.
  */
 export function ImageAttachmentFragments(props: {
-  imageAttachments: DMessageAttachmentFragment[],
+  imageAttachments: readonly DMessageAttachmentFragment[],
   contentScaling: ContentScaling,
   messageRole: DMessageRole,
   renderVariant?: 'chat-message' | 'data-editor',

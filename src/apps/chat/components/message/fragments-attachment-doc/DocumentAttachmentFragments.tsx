@@ -56,7 +56,7 @@ function SortableDocAttachmentButton(props: {
  * If one is clicked the content part (use ContentPartText) is displayed.
  */
 export const DocumentAttachmentFragments = React.memo(function DocumentAttachmentFragments(props: {
-  attachmentFragments: DMessageAttachmentFragment[],
+  attachmentFragments: readonly DMessageAttachmentFragment[],
   messageRole: DMessageRole,
   renderVariant: 'chat-message' | 'data-editor',
   contentScaling: ContentScaling,
