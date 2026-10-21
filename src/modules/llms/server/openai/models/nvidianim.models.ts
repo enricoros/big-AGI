@@ -117,7 +117,7 @@ const _knownNvidiaNIMModels = [
     parameterSpecs: _PS_Thinking, // thinking ON by default here (the 0731 checkpoint defaulted OFF); thinking:false zeroes reasoning_content
     // no benchmark: not on lmarena yet (see deepseek.models.ts)
     chatPrice: _freePrice,
-    pubDate: '20260910', // = deepseek.models.ts 'deepseek-flash' (V4.1-Flash GA)
+    pubDate: '20260910', // GA weights (HF deepseek-ai/DeepSeek-V4.1-Flash); 2026-10-21: card unchanged since 09-18, no 1017 id
   },
   // DELETED 2026-09-14 (EOL 2026-09-14: delisted + 410, no NGC date, 19 days after onboarding): deepseek-ai/deepseek-v4-pro-0813
   // DELETED 2026-10-21 (EOL 2026-10-15: delisted + 410, no NGC date): moonshotai/kimi-k3

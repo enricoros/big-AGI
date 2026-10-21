@@ -36,6 +36,8 @@ type _BasetenCurated = {
 //   ~= a low tier) and 'medium' collapses onto 'high' - docs ladder low|high|max published as-is.
 // - DeepSeek + Kimi K3: 'none' hard-off (no reasoning_content), low/high/max real tiers - docs agree.
 //   Flash-0731 also hard-offs on 'minimal' and honors 'xhigh'; MiscEffort family ladder kept for parity.
+//   V4.1-Flash-1017 (2026-10-21, n=2/arm): 'none' hard-off; -Fast is deterministic at temperature 0 and splits
+//   low < high = default = medium = xhigh < max; the standard id's noise exceeds the low/high gap on its short traces.
 // - gpt-oss-120b: docs advertise none..max, measured none~=minimal~=low (~0.45K chars), medium ~0.73K,
 //   high = xhigh = max (~1.3-1.9K) -> only the native low|medium|high tiers are real.
 const _PS_MiscEffortFull: ModelDescriptionSchema['parameterSpecs'] = [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }];
@@ -43,8 +45,10 @@ const _PS_GlmEffort52: ModelDescriptionSchema['parameterSpecs'] = [{ paramId: 'l
 const _PS_GlmEffort53: ModelDescriptionSchema['parameterSpecs'] = [{ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high', 'max'] }];
 
 const _basetenCurated: Record<string, _BasetenCurated> = {
-  'deepseek-ai/DeepSeek-V4.1-Flash': { pubDate: '20260910', parameterSpecs: _PS_MiscEffortFull }, // = deepseek.models.ts 'deepseek-flash'; listing declares image input, live-verified 2026-09-12
-  'deepseek-ai/DeepSeek-V4.1-Flash-Fast': { pubDate: '20260910', parameterSpecs: _PS_MiscEffortFull }, // same weights as V4.1-Flash, dedicated capacity
+  'deepseek-ai/DeepSeek-V4.1-Flash-1017': { pubDate: '20261017', parameterSpecs: _PS_MiscEffortFull }, // post-training update of V4.1-Flash, same card; image input (OCR) + tools live-verified 2026-10-21
+  'deepseek-ai/DeepSeek-V4.1-Flash-1017-Fast': { pubDate: '20261017', parameterSpecs: _PS_MiscEffortFull }, // same weights and precision as -1017; usage omits image tokens (reads images, bills text only)
+  'deepseek-ai/DeepSeek-V4.1-Flash': { pubDate: '20260910', parameterSpecs: _PS_MiscEffortFull }, // V4.1-Flash GA; superseded by -1017 (same card), still on the 0910 weights (hugging_face_id unchanged)
+  'deepseek-ai/DeepSeek-V4.1-Flash-Fast': { pubDate: '20260910', parameterSpecs: _PS_MiscEffortFull }, // same weights as V4.1-Flash at full precision, dedicated capacity
   'deepseek-ai/DeepSeek-V4-Flash-0731': { pubDate: '20260731', parameterSpecs: _PS_MiscEffortFull },
   'deepseek-ai/DeepSeek-V4-Pro-0813': { pubDate: '20260813', parameterSpecs: _PS_MiscEffortFull },
   'moonshotai/Kimi-K3': { pubDate: '20260716', parameterSpecs: _PS_MiscEffortFull },

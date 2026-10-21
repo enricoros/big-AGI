@@ -43,7 +43,7 @@ const _PS_MiniMaxThinking: ModelDescriptionSchema['parameterSpecs'] = [
 // never observable as a failure. Context windows ARE observable (oversized prompt -> 400 with the limit).
 // pubDate is the upstream creator's release date, not the day Modular listed the model (host rule).
 // Not added: GLM 5.3 Flash and Inkling (marketing pages only, 404 on the shared endpoint); deepseek/deepseek-v4.1-flash
-// (listed, 503 'no endpoints available' - uncurated fallback until it serves).
+// (listed, still 503 'no endpoints available' on 2026-10-21, no 1017 id - uncurated fallback until it serves).
 const _modularKnownModels = llmsDefineManualMappings([
   {
     idPrefix: 'MiniMaxAI/MiniMax-M3.1-Flash',

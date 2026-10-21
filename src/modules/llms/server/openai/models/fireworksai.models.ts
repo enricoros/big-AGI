@@ -100,15 +100,27 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     chatPrice: { input: 0.05, output: 0.20, cache: { read: 0.01 } },
   },
   {
+    idPrefix: 'accounts/fireworks/models/deepseek-v4p1-flash-1017',
+    label: 'DeepSeek V4.1 Flash 1017 (Vision)',
+    pubDate: '20261017', // upstream HF release; Fireworks listed it the same day
+    description: 'Post-training update of DeepSeek V4.1 Flash (552B multimodal MoE, 1M-token context): stronger reasoning, coding, agentic and visual results with shorter outputs.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION_REASON, // image input (OCR) and tool calls live-verified 2026-10-21
+    // 2026-10-21, n=2/arm: 'none' hard-off (0 reasoning tokens); low/high/max accepted, gaps within noise on its short traces - family ladder kept
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
+    chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.006 } }, // same card as deepseek-v4p1-flash
+  },
+  {
     idPrefix: 'accounts/fireworks/models/deepseek-v4p1-flash',
     label: 'DeepSeek V4.1 Flash (Vision)',
-    pubDate: '20260910', // = deepseek.models.ts 'deepseek-flash' (upstream release; Fireworks listed it the same day)
+    pubDate: '20260910', // V4.1-Flash GA (upstream release; Fireworks listed it the same day)
     description: 'DeepSeek multimodal MoE (552B, 8B active on input) with native image input and a 1M-token context; ahead of V4 Pro on agentic benchmarks at a fraction of the price.',
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_VISION_REASON, // image input live-verified 2026-09-12
     // 2026-09-12, one arm each: 'none' hard-off (0 reasoning tokens); low/high/max accepted - tiers per the native docs, not re-measured here
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
     chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.006 } },
+    hidden: true, // superseded by -1017 (same card); still served on the 0910 weights (control-plane HF URL unchanged, changelog: "not affected")
   },
   {
     idPrefix: 'accounts/fireworks/models/ember-1',
