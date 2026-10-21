@@ -4,7 +4,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { closestCenter, DndContext, DragEndEvent } from '@dnd-kit/core';
 
 import type { MuiCancellableEvent } from '@mui/base/utils/MuiCancellableEvent';
-import { Box, Button, Checkbox, ListItemDecorator, Typography } from '@mui/joy';
+import { Box, Button, Checkbox, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import Face6Icon from '@mui/icons-material/Face6';
@@ -68,29 +68,32 @@ const _styles = {
     '&:has([aria-pressed="true"])': {
       boxShadow: 'md',
     }, // lift while dragged: dnd-kit marks the handle pressed
+    transition: 'margin-left 0.12s ease',
+    '&[data-inner="true"]': {
+      ml: 1,
+    },
   },
   rowLabel: {
     flex: 1,
   },
-  marker: {
-    mt: 1,
-    mx: 'var(--ListItem-paddingX)',
-    fontSize: 'sm',
+  markerSymbol: {
+    fontFamily: 'code',
+    fontSize: 'xs',
   },
 } as const;
 
 
-function SortableGroupRow(props: { group: UserMessageFragmentGroup }) {
+function SortableGroupRow(props: { group: UserMessageFragmentGroup, inner: boolean }) {
 
   // external state
   const { dragContainerSetRef, dragContainerStyle, dragHandle } = useDndDragHandleSortable(props.group, false);
 
   // derived
-  const { group } = props;
+  const { group, inner } = props;
   const { label, Icon } = _GROUPS[group];
 
   return (
-    <Box ref={dragContainerSetRef} data-group={group} sx={_styles.row} style={dragContainerStyle}>
+    <Box ref={dragContainerSetRef} data-group={group} data-inner={inner} sx={_styles.row} style={dragContainerStyle}>
       <ListItemDecorator>{!Icon ? undefined : <Icon />}</ListItemDecorator>
       <Box sx={_styles.rowLabel}>{label}</Box>
       {dragHandle}
@@ -122,7 +125,7 @@ export function MessageFragmentOrderControl() {
   }, []);
 
 
-  return (
+  return <>
     <Box
       role='group'
       onKeyDown={(event: React.KeyboardEvent & MuiCancellableEvent) => {
@@ -147,20 +150,20 @@ export function MessageFragmentOrderControl() {
       <Box sx={_styles.list}>
         <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={dndModifiersParentVertical} onDragEnd={handleDragEnd}>
           <SortableContext items={order} strategy={verticalListSortingStrategy}>
-            {order.map(group => <SortableGroupRow key={group} group={group} />)}
+            {order.map(group => <SortableGroupRow key={group} group={group} inner={splitAtMarker && group !== 'text'} />)}
           </SortableContext>
         </DndContext>
       </Box>
 
-      {/* A marker line in the prompt overrides the order: the prompt splits around the attachments */}
-      <Checkbox
-        size='sm'
-        label={<>Place at <code>{USER_MESSAGE_ATTACHMENTS_MARKER}</code> in the prompt</>}
-        checked={splitAtMarker}
-        onChange={event => setUserMessageAttachmentsMarker(event.target.checked)}
-        sx={_styles.marker}
-      />
-
     </Box>
-  );
+
+    {/* Not extra good looking but not bad either */}
+    {/*<ListDivider />*/}
+
+    {/* The marker overrides the order: the prompt splits around the attachments. Checkbox in the decorator, as AttachmentDraftMenu */}
+    <MenuItem onClick={() => setUserMessageAttachmentsMarker(!splitAtMarker)} sx={{ mx: 0.375, mt: 1 }}>
+      <ListItemDecorator><Checkbox color='neutral' variant={splitAtMarker ? 'plain' : 'outlined'} checked={splitAtMarker} /></ListItemDecorator>
+      <Box sx={{ fontSize: 'sm' }}>Place at <Box component='span' sx={_styles.markerSymbol}>{USER_MESSAGE_ATTACHMENTS_MARKER}</Box> in prompt</Box>
+    </MenuItem>
+  </>;
 }
