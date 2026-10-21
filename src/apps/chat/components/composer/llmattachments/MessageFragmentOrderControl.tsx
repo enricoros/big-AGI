@@ -4,7 +4,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { closestCenter, DndContext, DragEndEvent } from '@dnd-kit/core';
 
 import type { MuiCancellableEvent } from '@mui/base/utils/MuiCancellableEvent';
-import { Box, Button, ListItemDecorator, Typography } from '@mui/joy';
+import { Box, Button, Checkbox, ListItemDecorator, Typography } from '@mui/joy';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import InsertPhotoOutlinedIcon from '@mui/icons-material/InsertPhotoOutlined';
 import Face6Icon from '@mui/icons-material/Face6';
@@ -14,9 +14,9 @@ import { dndModifiersParentVertical } from '~/common/components/dnd/dnd.config';
 import { useDndDefaultSensors } from '~/common/components/dnd/useDndDefaultSensors';
 import { useDndDragHandleSortable } from '~/common/components/dnd/useDndDragHandleSortable';
 
-import { normalizeUserFragmentGroupsOrder, UserMessageFragmentGroup } from '~/common/stores/chat/chat.fragment-order';
+import { normalizeUserFragmentGroupsOrder, USER_MESSAGE_ATTACHMENTS_MARKER, UserMessageFragmentGroup } from '~/common/stores/chat/chat.fragment-order';
 
-import { setUserMessageFragmentOrder, useUserMessageFragmentOrder } from '../../../store-app-chat';
+import { setUserMessageAttachmentsMarker, setUserMessageFragmentOrder, useUserMessageFragmentPlacement } from '../../../store-app-chat';
 
 
 const _GROUPS = {
@@ -72,6 +72,11 @@ const _styles = {
   rowLabel: {
     flex: 1,
   },
+  marker: {
+    mt: 1,
+    mx: 'var(--ListItem-paddingX)',
+    fontSize: 'sm',
+  },
 } as const;
 
 
@@ -99,7 +104,7 @@ export function MessageFragmentOrderControl() {
 
   // external state
   const sensors = useDndDefaultSensors();
-  const userMessageFragmentOrder = useUserMessageFragmentOrder();
+  const { order: userMessageFragmentOrder, splitAtMarker } = useUserMessageFragmentPlacement();
 
   // memo normalized
   const order = React.useMemo(() => {
@@ -113,6 +118,7 @@ export function MessageFragmentOrderControl() {
 
   const handleReset = React.useCallback(() => {
     setUserMessageFragmentOrder(undefined);
+    setUserMessageAttachmentsMarker(false);
   }, []);
 
 
@@ -131,7 +137,7 @@ export function MessageFragmentOrderControl() {
     >
       <Box sx={_styles.header}>
         <Typography level='title-sm' flex={1}>Attachment order</Typography>
-        {!!userMessageFragmentOrder && (
+        {(!!userMessageFragmentOrder || splitAtMarker) && (
           <Button size='sm' variant='plain' color='neutral' onClick={handleReset} sx={_styles.reset}>
             Reset
           </Button>
@@ -145,6 +151,15 @@ export function MessageFragmentOrderControl() {
           </SortableContext>
         </DndContext>
       </Box>
+
+      {/* A marker line in the prompt overrides the order: the prompt splits around the attachments */}
+      <Checkbox
+        size='sm'
+        label={<>Place at <code>{USER_MESSAGE_ATTACHMENTS_MARKER}</code> in the prompt</>}
+        checked={splitAtMarker}
+        onChange={event => setUserMessageAttachmentsMarker(event.target.checked)}
+        sx={_styles.marker}
+      />
 
     </Box>
   );

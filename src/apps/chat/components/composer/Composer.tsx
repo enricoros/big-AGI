@@ -63,7 +63,7 @@ import { useLLMImageInputPolicy } from '~/common/attachment-drafts/llm-enrichmen
 import { useGoogleDrivePicker } from '~/common/attachment-drafts/attachment-sources/useGoogleDrivePicker';
 
 import type { ChatExecuteMode } from '../../execute-mode/execute-mode.types';
-import { getUserMessageFragmentOrder } from '../../store-app-chat';
+import { getUserMessageFragmentPlacement } from '../../store-app-chat';
 import { chatExecuteModeCanAttach, useChatExecuteMode } from '../../execute-mode/useChatExecuteMode';
 
 import { ButtonBeamMemo } from './buttons/ButtonBeam';
@@ -334,7 +334,8 @@ export function Composer(props: {
     const metadata = inReferenceTo?.length ? { inReferenceTo: inReferenceTo } : undefined;
 
     // send the message - NOTE: if successful, the ownership of the fragments is transferred to the receiver, so we just clear them
-    const sortedUserFragments = orderedUserFragments(fragments, getUserMessageFragmentOrder());
+    const { order, splitAtMarker } = getUserMessageFragmentPlacement();
+    const sortedUserFragments = orderedUserFragments(fragments, order, splitAtMarker);
     const enqueued = onAction(targetConversationId, _chatExecuteMode, sortedUserFragments, metadata);
     if (enqueued)
       _handleClearText();

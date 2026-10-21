@@ -35,7 +35,7 @@ import { ChatCleanupControls } from './ChatCleanupList';
 import { ChatMessageStreamingMemo } from './message/ChatMessage';
 import { Ephemerals } from './Ephemerals';
 import { PersonaSelector } from './persona-selector/PersonaSelector';
-import { getUserMessageFragmentOrder, useChatShowSystemMessages, useChatMessageTimestampMode } from '../store-app-chat';
+import { getUserMessageFragmentPlacement, useChatShowSystemMessages, useChatMessageTimestampMode } from '../store-app-chat';
 
 
 const stableNoMessages: DMessage[] = [];
@@ -116,7 +116,7 @@ export function ChatMessageList(props: {
 
           // Create a User message with the prompt and the attachment fragments
           if (attachmentFragments.length) {
-            const sortedUserFragments = orderedUserFragments([createTextContentFragment(example.prompt), ...attachmentFragments], getUserMessageFragmentOrder());
+            const sortedUserFragments = orderedUserFragments([createTextContentFragment(example.prompt), ...attachmentFragments], getUserMessageFragmentPlacement().order);
             conversationHandler.messageAppend(createDMessageFromFragments('user', sortedUserFragments)); // [chat] append user:persona question + attachment(s)
             await onConversationExecuteHistory(conversationId);
           }

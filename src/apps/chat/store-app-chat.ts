@@ -52,6 +52,9 @@ interface AppChatStore {
   userMessageFragmentOrder?: UserMessageFragmentGroup[];
   setUserMessageFragmentOrder: (order: undefined | UserMessageFragmentGroup[]) => void;
 
+  userMessageAttachmentsMarker?: boolean; // a `{{attachments}}` prompt line places the attachments there
+  setUserMessageAttachmentsMarker: (enabled: boolean) => void;
+
   // chat UI
 
   clearFilters: () => void;
@@ -143,6 +146,9 @@ const useAppChatStore = create<AppChatStore>()(persist(
 
     // userMessageFragmentOrder: undefined, // keep the default implicit
     setUserMessageFragmentOrder: (order) => _set({ userMessageFragmentOrder: !order ? undefined : normalizeUserFragmentGroupsOrder(order) }),
+
+    // userMessageAttachmentsMarker: undefined, // off when omitted
+    setUserMessageAttachmentsMarker: (enabled) => _set({ userMessageAttachmentsMarker: enabled || undefined }),
 
     // Chat UI
 
@@ -274,14 +280,20 @@ export const getChatThinkingPolicy = (): ChatThinkingPolicy =>
 export const getChatTokenCountingMethod = (): TokenCountingMethod =>
   useAppChatStore.getState().tokenCountingMethod;
 
-export const getUserMessageFragmentOrder = (): readonly UserMessageFragmentGroup[] | undefined =>
-  useAppChatStore.getState().userMessageFragmentOrder;
+/** Where the attachments go in a new user message: the group order, and whether a `{{attachments}}` line places them. */
+export const getUserMessageFragmentPlacement = (): { order: readonly UserMessageFragmentGroup[] | undefined, splitAtMarker: boolean } => {
+  const { userMessageFragmentOrder, userMessageAttachmentsMarker } = useAppChatStore.getState();
+  return { order: userMessageFragmentOrder, splitAtMarker: !!userMessageAttachmentsMarker };
+};
 
 export const setUserMessageFragmentOrder = (order: undefined | UserMessageFragmentGroup[]) =>
   useAppChatStore.getState().setUserMessageFragmentOrder(order);
 
-export const useUserMessageFragmentOrder = () =>
-  useAppChatStore(state => state.userMessageFragmentOrder);
+export const setUserMessageAttachmentsMarker = (enabled: boolean) =>
+  useAppChatStore.getState().setUserMessageAttachmentsMarker(enabled);
+
+export const useUserMessageFragmentPlacement = () =>
+  useAppChatStore(useShallow(state => ({ order: state.userMessageFragmentOrder, splitAtMarker: !!state.userMessageAttachmentsMarker })));
 
 export const useChatMicTimeoutMsValue = (): number =>
   useAppChatStore(state => state.micTimeoutMs);
