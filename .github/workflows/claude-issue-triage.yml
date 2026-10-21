@@ -31,6 +31,7 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0 # 1 -> 0: full history helps with git blame, etc.
+          persist-credentials: ${{ github.event.repository.private }} # security: public repos leave no token in .git/config
 
       - name: Analyze issue and provide help
         uses: anthropics/claude-code-action@v1
@@ -109,7 +110,8 @@ jobs:
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
+          # security: public repos get read-only tools - issue text is untrusted, and edits + 'npm run', 'find -exec' or Skill (repo commands may grant Bash) run code
           claude_args: |
             --model claude-fable-5-1
             --max-turns 200
-            --allowedTools "Edit,Read,Grep,Glob,Write,WebFetch,WebSearch,Skill,Agent,LSP,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*)"
+            --allowedTools "${{ github.event.repository.private && 'Edit,Read,Grep,Glob,Write,WebFetch,WebSearch,Skill,Agent,LSP,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*)' || 'Read,Grep,Glob,WebSearch,Agent,LSP,Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*)' }}"
