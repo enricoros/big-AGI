@@ -15,6 +15,11 @@ import { workerPuppeteerDownloadFileOrThrow } from './browse.files';
 const DISABLE_FILE_DOWNLOADS = true;
 const WORKER_TIMEOUT = 20 * 1000; // 20 seconds
 const SCREENSHOT_TIMEOUT = 8 * 1000; // 8 seconds - a thumbnail is never worth the full protocol ceiling (WORKER_TIMEOUT + 2s)
+const MAX_REQUESTS_PER_CALL = 4; // the client sends 1
+const MAX_PARALLEL_PER_CALL = 2;
+const MAX_INFLIGHT_WORKERS = 16; // per server instance, across all calls
+const SCREENSHOT_MIN_SIDE = 16;
+const SCREENSHOT_MAX_SIDE = 2048;
 
 
 // Input schemas
@@ -30,14 +35,14 @@ const fetchPageInputSchema = z.object({
   }),
   requests: z.array(z.object({
     url: z.url(),
-    transforms: z.array(pageTransformSchema),
+    transforms: z.array(pageTransformSchema).max(pageTransformSchema.options.length),
     allowFileDownloads: z.boolean().optional(),
     screenshot: z.object({
-      width: z.number(),
-      height: z.number(),
-      quality: z.number().optional(),
+      width: z.number().int().min(SCREENSHOT_MIN_SIDE).max(SCREENSHOT_MAX_SIDE),
+      height: z.number().int().min(SCREENSHOT_MIN_SIDE).max(SCREENSHOT_MAX_SIDE),
+      quality: z.number().int().min(1).max(100).optional(),
     }).optional(),
-  })),
+  })).min(1).max(MAX_REQUESTS_PER_CALL),
 });
 
 
@@ -82,10 +87,12 @@ export const browseRouter = createTRPCRouter({
 
       yield { type: 'ack-start' as const };
 
-      // start all requests in parallel, intercepting errors too
-      const results = await Promise.allSettled(requests.map(request =>
-        workerPuppeteer(endpoint, request.url, request.transforms, request.allowFileDownloads || false, request.screenshot),
-      ));
+      // run requests with bounded parallelism, intercepting errors too
+      const results = await _allSettledLimited(requests, MAX_PARALLEL_PER_CALL, request =>
+        _withInflightSlot(() =>
+          workerPuppeteer(endpoint, request.url, [...new Set(request.transforms)], request.allowFileDownloads || false, request.screenshot),
+        ),
+      );
 
       // return all pages trapping errors
       const pages: FetchPageWorkerOutputSchema[] = results.map((result, index) => {
@@ -338,6 +345,39 @@ async function workerPuppeteer(
     console.warn(`workerPuppeteer: browser.close failed - ${_shortError(error)}`));
 
   return result;
+}
+
+
+let _inflightWorkers = 0;
+
+/** Fail fast when this instance already holds too many browser sessions, instead of queueing unbounded work. */
+async function _withInflightSlot<T>(fn: () => Promise<T>): Promise<T> {
+  if (_inflightWorkers >= MAX_INFLIGHT_WORKERS)
+    throw new Error('Browse service busy. Too many concurrent pages, please try again later.');
+  _inflightWorkers++;
+  try {
+    return await fn();
+  } finally {
+    _inflightWorkers--;
+  }
+}
+
+/** Promise.allSettled with at most `limit` tasks running at once; results keep input order. */
+async function _allSettledLimited<I, T>(items: readonly I[], limit: number, fn: (item: I) => Promise<T>): Promise<PromiseSettledResult<T>[]> {
+  const results: PromiseSettledResult<T>[] = new Array(items.length);
+  let next = 0;
+  const runner = async () => {
+    while (next < items.length) {
+      const index = next++;
+      try {
+        results[index] = { status: 'fulfilled', value: await fn(items[index]) };
+      } catch (reason) {
+        results[index] = { status: 'rejected', reason };
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, runner));
+  return results;
 }
 
 
