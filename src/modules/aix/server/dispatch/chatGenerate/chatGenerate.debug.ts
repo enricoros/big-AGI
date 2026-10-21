@@ -15,7 +15,7 @@ export function _createDebugConfig(access: AixAPI_Access, options: undefined | {
   return {
     prettyDialect: serverCapitalizeFirstLetter(access.dialect), // string
     echoRequest: echoRequest, // boolean
-    requestBodyOverride: echoRequest ? options?.debugRequestBodyOverride : undefined,
+    requestBodyOverride: AIX_SECURITY_ONLY_IN_DEV_BUILDS && echoRequest ? options?.debugRequestBodyOverride : undefined, // dev-only: server-side dispatches may carry server env keys
     consoleLogErrors,
     profiler: AIX_SECURITY_ONLY_IN_DEV_BUILDS && echoRequest && !!options?.debugProfilePerformance ? new PerformanceProfiler() : undefined, // PerformanceProfiler | undefined
     wire: createDebugWireLogger('AIX') ?? undefined, // DebugWireLogger | undefined

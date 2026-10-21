@@ -6,6 +6,7 @@ import type { AixAPI_Context_ChatGenerate } from './aix.wiretypes';
  *  2. Performance profiling: visible in the AIX debugger when requested on development builds
  *  3. 'DEV_URL: ...' in error messages to show the problematic upstream URL
  *  4. onComment on SSE streams
+ *  5. Request body override (AIX debugger injector) on server-side dispatches
  */
 export const AIX_SECURITY_ONLY_IN_DEV_BUILDS = process.env.NODE_ENV === 'development';
 
