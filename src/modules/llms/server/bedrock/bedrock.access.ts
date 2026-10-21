@@ -27,6 +27,7 @@ import { LLM_APP_IDENTITY_HEADERS } from '../../shared/llm.appIdentity';
 
 // configuration
 const DEFAULT_BEDROCK_REGION = 'us-east-1'; // default region for Bedrock, used if not provided by client or env
+const AWS_REGION_REGEX = /^[a-z]{2}(-[a-z]+)+-\d+$/; // e.g. us-east-1, ap-southeast-2, us-gov-west-1
 
 
 // --- Schema ---
@@ -53,6 +54,8 @@ function _bedrockResolveAuth(access: BedrockAccessSchema): BedrockAuthBearer | B
 
   // 1. Client bearer token (highest priority)
   let region = access.bedrockRegion || DEFAULT_BEDROCK_REGION; // client-provided region
+  if (access.bedrockBearerToken || (access.bedrockAccessKeyId && access.bedrockSecretAccessKey))
+    _bedrockValidateRegion(region); // interpolated into hostnames - must not steer requests elsewhere
   if (access.bedrockBearerToken)
     return { type: 'bearer', bearerToken: access.bedrockBearerToken, region };
 
@@ -73,6 +76,14 @@ function _bedrockResolveAuth(access: BedrockAccessSchema): BedrockAuthBearer | B
     code: 'BAD_REQUEST',
     message: 'Missing AWS credentials. Add your Bedrock API Key or IAM Access Key on the UI (Models Setup) or server side (your deployment).',
   });
+}
+
+function _bedrockValidateRegion(region: string): void {
+  if (!AWS_REGION_REGEX.test(region))
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message: `Invalid AWS region "${region.slice(0, 40)}". Use a region code such as us-east-1.`,
+    });
 }
 
 /** Resolve the Bedrock region from access config. */
