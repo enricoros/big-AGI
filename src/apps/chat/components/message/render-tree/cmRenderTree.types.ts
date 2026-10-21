@@ -40,14 +40,14 @@ export interface CMTrailingOptions {
 interface _CMNodeBase<TKind extends string> {
   kind: TKind;
   /**
-   * React key and recycling identity. Built as `kind:fId` of the first member (`citations` is a singleton). The
+   * React key and recycling identity. Built as `kind:fId` of the first member (hoisted `citations` is a singleton). The
    * recycler carries a key forward while the node shares a fragment with its predecessor, so a reorder or the
    * removal of the first member does not remount.
    */
   key: string;
 }
 
-// view: hoisted to the top
+// view: hoisted to the top; in place when ungrouped
 export interface CMNodeCitations extends _CMNodeBase<'citations'> {
   fragments: readonly CMCitationsFragment[];
 }

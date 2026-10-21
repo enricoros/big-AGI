@@ -37,6 +37,9 @@ interface UXLabsStore {
   labsUserMarkdown: boolean; // user messages render as markdown (user text flavor), not plain text
   setLabsUserMarkdown: (labsUserMarkdown: boolean) => void;
 
+  labsUngroupedFragments: boolean; // messages render every fragment on its own, in stored order (render tree `ungrouped`)
+  setLabsUngroupedFragments: (labsUngroupedFragments: boolean) => void;
+
 }
 
 export const useUXLabsStore = create<UXLabsStore>()(
@@ -69,6 +72,9 @@ export const useUXLabsStore = create<UXLabsStore>()(
 
       labsUserMarkdown: false,
       setLabsUserMarkdown: (labsUserMarkdown: boolean) => set({ labsUserMarkdown }),
+
+      labsUngroupedFragments: false,
+      setLabsUngroupedFragments: (labsUngroupedFragments: boolean) => set({ labsUngroupedFragments }),
 
     }),
     {

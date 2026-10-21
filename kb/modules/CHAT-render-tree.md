@@ -10,7 +10,7 @@
 | `useCMRenderTree.ts` | `useMemo` + previous tree; the host passes a memoized options object |
 | `CMRenderTreeNodes.tsx` | the renderer: citations row, body segments (text grids, attachment rows), one case per kind |
 | `parseTrailingOptions.ts` | the options parser, formerly in `BlockOpOptions` |
-| `*.test.ts` | 21 tests: grouping and identity. `NODE_ENV=development npx tsx --test src/apps/chat/components/message/render-tree/*.test.ts` |
+| `*.test.ts` | 25 tests: grouping and identity. `NODE_ENV=development npx tsx --test src/apps/chat/components/message/render-tree/*.test.ts` |
 
 ## Rules in force
 
@@ -20,6 +20,7 @@
 - Activity placeholders don't break the run around them; notices (`pType: 'notice'`) do.
 - A change of `originId` inserts a `separator`; attachments and citations don't take part; a falsy `originId` is unstamped.
 - Edit mode: text, errors and tool parts get an `edit-text` node each; adjacent attachments of any kind fuse into `edit-attachments`; reasoning keeps its chip (not text-editable: signatures, redacted blocks and vendor state would be lost; Delete and Make Regular Text remain); leaves stay.
+- `ungrouped` (Labs toggle "Ungrouped fragments"): every fragment is its own node in stored order. Runs never extend; responses are not claimed, so each stays a `tool-response` leaf where it sits (proposal tools included) and each invocation is a `tool-calls` group of one; citations stay in place as single-member nodes keyed `citations:fId`, rendered in the body, except a leading one, which takes the citations row. Other rules unchanged.
 - `trailingOptions` (off here, `&& false` in `ChatMessage`; a host may enable it): the option list at the end of the last text node, cut only when the message ends with that text, one object on the node and on the tree.
 - Keys: `kind:fId` of the first member, `citations` singleton. The recycler matches a node to the previous node of its kind sharing a fragment (else same key) and carries the key forward, so reorders and first-member removals don't remount. Attachment rows are keyed by their smallest member id, identical in both modes, so the lists keep state across the edit toggle.
 - Layout: text-like nodes share a grid (hug or stretch by role); each attachment list is a full-width row, as before the tree. `aria-label='message body'` sits on the first grid only.

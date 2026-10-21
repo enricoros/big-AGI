@@ -374,7 +374,10 @@ export function ChatMessage(props: {
   })));
   const _setContextHighlightText = useERCDiffActions()?.setContextHighlightText;
   const setContextHighlightText = devsUISymbolHighlight ? _setContextHighlightText : undefined;
-  const labsUserMarkdown = useUXLabsStore(state => state.labsUserMarkdown);
+  const { labsUngroupedFragments, labsUserMarkdown } = useUXLabsStore(useShallow(state => ({
+    labsUngroupedFragments: state.labsUngroupedFragments,
+    labsUserMarkdown: state.labsUserMarkdown,
+  })));
 
 
   // derived state
@@ -411,7 +414,7 @@ export function ChatMessage(props: {
   const lookForOptions = props.onMessageContinue !== undefined && props.isBottom === true && !msgGenOutOfTokens && fromAssistant && !messagePendingIncomplete && !isEditingText && uiComplexityMode !== 'minimal' && false;
 
   // Render tree: fragments grouped into nodes in message order, citations first; stable across streaming appends
-  const renderTreeOptions = React.useMemo((): CMBuildOptions => ({ trailingOptions: lookForOptions }), [lookForOptions]);
+  const renderTreeOptions = React.useMemo((): CMBuildOptions => ({ trailingOptions: lookForOptions, ungrouped: labsUngroupedFragments }), [labsUngroupedFragments, lookForOptions]);
   const renderTree = useCMRenderTree(messageFragments, isEditingText && canEditText ? 'edit' : 'view', renderTreeOptions);
   const { trailingOptions } = renderTree;
 

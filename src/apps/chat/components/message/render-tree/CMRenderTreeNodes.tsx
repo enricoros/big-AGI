@@ -319,7 +319,7 @@ export function CMRenderTreeNodes(props: {
   const zenMode = props.uiComplexityMode === 'minimal';
   const enableRestartFromEdit = !fromAssistant && props.messageRole !== 'system';
 
-  // citations keep a row of their own above the body
+  // the leading citations node keeps a row of its own above the body; in-place ones (ungrouped) render in the body
   const { citations, body } = React.useMemo(() => {
     const first = tree.nodes[0];
     return first?.kind === 'citations' ? { citations: first, body: tree.nodes.slice(1) } : { citations: null, body: tree.nodes };
@@ -395,10 +395,12 @@ export function CMRenderTreeNodes(props: {
     switch (node.kind) {
 
       case 'citations':
+        return <CMCitationsNode key={node.key} node={node} contentScaling={props.contentScaling} />;
+
       case 'images':
       case 'documents':
       case 'edit-attachments':
-        return null; // the citations row and the attachment rows render outside the grids
+        return null; // the attachment rows render outside the grids
 
       case 'reasoning':
         return (

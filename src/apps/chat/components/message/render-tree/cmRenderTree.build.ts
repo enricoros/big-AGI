@@ -12,6 +12,8 @@ export interface CMBuildOptions {
   proposalToolNames?: ReadonlySet<string>;
   /** View mode: cut a trailing option list off the last text node into `continuationOptions`. */
   trailingOptions?: boolean;
+  /** Every fragment is its own node in stored order: no fused runs, no tool-call pairing, citations in place. */
+  ungrouped?: boolean;
 }
 
 // configuration
@@ -35,6 +37,8 @@ export const CMRT_REASONING_SEPARATOR = '\n\n';
  *   adjacent attachments of any kind
  * - a change of `originId` between fragments inserts a `separator` (attachments and citations don't take part)
  * - leaves (placeholders, errors, content images, hosted resources, references) render alone in both modes
+ * - `ungrouped`: runs never extend, responses stay `tool-response` leaves where they sit (proposal tools included)
+ *   and each invocation is a group of one, citations stay in place as single-member nodes; the rest as above
  *
  * Pure. Identity across builds comes from `recycleCMRenderTree`. To add a node kind: declare it in
  * `cmRenderTree.types.ts`, emit it from the switch below, render it in `CMRenderTreeNodes.tsx`; the recycler only
@@ -42,8 +46,8 @@ export const CMRT_REASONING_SEPARATOR = '\n\n';
  */
 export function buildCMRenderTree(fragments: Immutable<DMessageFragment[]>, mode: CMRenderMode, options: CMBuildOptions = {}): CMRenderTree {
   const edit = mode === 'edit';
-  const { isVisible, proposalToolNames } = options;
-  const claimed = edit ? null : _claimToolResponses(fragments);
+  const { isVisible, proposalToolNames, ungrouped } = options;
+  const claimed = edit || ungrouped ? null : _claimToolResponses(fragments);
 
   const citations: CMCitationsFragment[] = [];
   const nodes: CMRenderNode[] = [];
@@ -56,6 +60,8 @@ export function buildCMRenderTree(fragments: Immutable<DMessageFragment[]>, mode
 
   // the last fragment left in the sequence (claimed responses included): the options rule applies only right after it
   let lastInSequence: Immutable<DMessageFragment> | null = null;
+
+  const extendsRun = (kind: CMRenderNode['kind']) => !ungrouped && run.node?.kind === kind;
 
   const close = () => {
     if (run.node?.kind === 'tool-calls') run.node.sealed = true; // content follows the group
@@ -92,7 +98,9 @@ export function buildCMRenderTree(fragments: Immutable<DMessageFragment[]>, mode
         const { part } = fragment;
         const partType: string = part.pt;
         if (part.pt === 'annotations') {
-          citations.push(_withPart(fragment, part));
+          const annotations = _withPart(fragment, part);
+          if (ungrouped) pushLeaf({ kind: 'citations', key: `citations:${fragment.fId}`, fragments: [annotations] });
+          else citations.push(annotations);
           break;
         }
         trackOrigin(fragment);
@@ -100,7 +108,7 @@ export function buildCMRenderTree(fragments: Immutable<DMessageFragment[]>, mode
         switch (part.pt) {
           case 'ma': {
             const reasoning = _withPart(fragment, part);
-            if (run.node?.kind === 'reasoning') {
+            if (extendsRun('reasoning')) {
               run.fragments.push(reasoning);
             } else {
               const members = [reasoning];
@@ -125,7 +133,7 @@ export function buildCMRenderTree(fragments: Immutable<DMessageFragment[]>, mode
 
       case 'attachment': {
         const kind = edit ? 'edit-attachments' : isImagePart(fragment.part) ? 'images' : 'documents';
-        if (run.node?.kind === kind) {
+        if (extendsRun(kind)) {
           run.fragments.push(fragment);
         } else {
           const members = [fragment];
@@ -144,7 +152,7 @@ export function buildCMRenderTree(fragments: Immutable<DMessageFragment[]>, mode
             const text = _withPart(fragment, part);
             if (edit) {
               pushLeaf({ kind: 'edit-text', key: `edit-text:${fragment.fId}`, fragment: text });
-            } else if (run.node?.kind === 'text') {
+            } else if (extendsRun('text')) {
               run.fragments.push(text);
             } else {
               const members = [text];
@@ -170,7 +178,7 @@ export function buildCMRenderTree(fragments: Immutable<DMessageFragment[]>, mode
               break;
             }
             const call: CMToolCall = { id: part.id, invocation, response };
-            if (run.node?.kind === 'tool-calls') {
+            if (extendsRun('tool-calls')) {
               run.calls.push(call);
               run.fragments.push(invocation);
               if (response) run.fragments.push(response);
@@ -187,10 +195,10 @@ export function buildCMRenderTree(fragments: Immutable<DMessageFragment[]>, mode
               break;
             }
             // a claimed response renders inside its invocation's node; an unclaimed one of a proposal tool has nothing to
-            // show (its status lives in the proposal) and leaves the run open; any other orphan stands alone
+            // show (its status lives in the proposal) and leaves the run open, unless ungrouped; any other orphan stands alone
             if (claimed?.consumed.has(fragment.fId)) break;
             const toolName = _toolName(part);
-            if (toolName !== null && proposalToolNames?.has(toolName)) break;
+            if (!ungrouped && toolName !== null && proposalToolNames?.has(toolName)) break;
             pushLeaf({ kind: 'tool-response', key: `tool-response:${fragment.fId}`, fragment: _withPart(fragment, part) });
             break;
           }

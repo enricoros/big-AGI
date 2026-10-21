@@ -7,6 +7,7 @@ import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
 import ShortcutIcon from '@mui/icons-material/Shortcut';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
+import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 import SpeedIcon from '@mui/icons-material/Speed';
 import WidthWideIcon from '@mui/icons-material/WidthWide';
 
@@ -39,6 +40,7 @@ export function UxLabsSettings() {
     labsComposerAttachmentsInline, setLabsComposerAttachmentsInline,
     labsSingleDollarLatex, setLabsSingleDollarLatex,
     labsUserMarkdown, setLabsUserMarkdown,
+    labsUngroupedFragments, setLabsUngroupedFragments,
     labsAdaptiveRendering, setLabsAdaptiveRendering,
   } = useUXLabsStore();
   const [messageFullWidth, setMessageFullWidth] = useUIPreferencesStore(useShallow(state => [state.messageFullWidth, state.setMessageFullWidth]));
@@ -73,6 +75,12 @@ export function UxLabsSettings() {
       title={<><TextFieldsIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Markdown in User Messages</>} description={labsUserMarkdown ? 'Markdown' : 'Plain text'}
       tooltip='Renders your messages as markdown, keeping your line breaks. Any message can switch between text and markdown from its menu.'
       checked={labsUserMarkdown} onChange={setLabsUserMarkdown}
+    />
+
+    <FormSwitchControl
+      title={<><UnfoldMoreIcon sx={{ fontSize: 'lg', mr: 0.5, mb: 0.25 }} />Ungrouped fragments</>} description={labsUngroupedFragments ? 'Stored order' : 'Grouped'}
+      tooltip='Show every message fragment on its own, in stored order. Disables fusing, tool call pairing and citation hoisting.'
+      checked={labsUngroupedFragments} onChange={setLabsUngroupedFragments}
     />
 
     <FormSwitchControl

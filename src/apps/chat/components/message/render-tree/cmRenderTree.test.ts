@@ -151,6 +151,28 @@ describe('CMRenderTree: grouping', () => {
     assert.equal(build([t2, doc('d')], 'view', { trailingOptions: true }).trailingOptions, null, 'only when the message ends with text');
   });
 
+  it('ungrouped: one node per fragment in stored order, no claimed responses', () => {
+    const tree = build(reference, 'view', { ungrouped: true });
+    assert.deepEqual(kinds(tree), ['reasoning', 'reasoning', 'text', 'images', 'documents', 'documents', 'images', 'images', 'text', 'reasoning', 'tool-calls', 'text', 'tool-response', 'tool-calls', 'tool-response']);
+    assert.deepEqual(membership(tree), reference.map(fragment => [fragment.fId]));
+    assert.deepEqual(nodeOfKind(tree, 'tool-calls', 0).calls.map(c => [c.id, c.invocation, c.response]), [['c1', fc1, null]]);
+    assert.deepEqual(nodeOfKind(tree, 'tool-calls', 1).calls.map(c => [c.id, c.invocation, c.response]), [['c2', fc2, null]]);
+    assert.equal(recycleCMRenderTree(tree, build(reference, 'view', { ungrouped: true })), tree, 'a rebuild recycles to the same tree');
+  });
+
+  it('ungrouped: citations stay in place, proposal responses stand alone', () => {
+    const r = reasoning('r'), ts = [text('t1'), text('t2'), text('t3'), text('t4'), text('t5')], cs = [citation('a'), citation('b'), citation('c')];
+    const fragments = [r, ts[0], cs[0], ts[1], cs[1], ts[2], ts[3], cs[2], ts[4]];
+    const tree = build(fragments, 'view', { ungrouped: true });
+    assert.deepEqual(kinds(tree), ['reasoning', 'text', 'citations', 'text', 'citations', 'text', 'text', 'citations', 'text']);
+    assert.deepEqual(membership(tree), fragments.map(fragment => [fragment.fId]));
+    assert.deepEqual(tree.nodes.filter(node => node.kind === 'citations').map(node => node.key), cs.map(c => `citations:${c.fId}`), 'keyed in place, not hoisted');
+    const fp = call('c1', 'propose_rename'), frp = result('c1', 'propose_rename');
+    const proposals = build([fp, frp], 'view', { proposalToolNames: new Set(['propose_rename']), ungrouped: true });
+    assert.deepEqual(kinds(proposals), ['tool-proposal', 'tool-response']);
+    assert.equal(nodeOfKind(proposals, 'tool-proposal').response, null);
+  });
+
 });
 
 
