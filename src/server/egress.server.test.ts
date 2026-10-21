@@ -12,8 +12,9 @@ import { egressAssertClientUrlOrThrow, egressIsBlockedIp, egressIsInternalHostna
 const publicDns = async () => ['93.184.216.34'];
 const privateDns = async () => ['93.184.216.34', '10.0.0.5'];
 
-const allowed = (url: string, extra: Partial<Parameters<typeof egressAssertClientUrlOrThrow>[1]> = {}) =>
-  egressAssertClientUrlOrThrow(url, { kind: 'api-host', label: 'Test', resolver: publicDns, allowedPrivateHosts: '', ...extra });
+const allowed = async (url: string, extra: Partial<Parameters<typeof egressAssertClientUrlOrThrow>[1]> = {}): Promise<void> => {
+  await egressAssertClientUrlOrThrow(url, { kind: 'api-host', label: 'Test', resolver: publicDns, allowedPrivateHosts: '', ...extra });
+};
 
 const blocked = (url: string, extra: Partial<Parameters<typeof egressAssertClientUrlOrThrow>[1]> = {}) =>
   assert.rejects(allowed(url, extra), /destination not allowed/, url);
