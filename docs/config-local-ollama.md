@@ -20,6 +20,8 @@ _Last updated Dec 16, 2023_
    > Optional: use the Ollama Admin interface to see which models are available and 'Pull' them in your local machine. Note
    that this operation will likely timeout due to Edge Functions timeout on the big-AGI server while pulling, and
    you'll have to press the 'Pull' button again, until a green message appears.
+   > Pull/delete against the server-side host (`OLLAMA_API_HOST`, the default `127.0.0.1:11434`, or any loopback host) is
+   disabled unless the server sets `OLLAMA_ADMIN_ENABLED=true`.
 5. **Chat with Ollama models**: select an Ollama model and begin chatting with AI personas
 
 In addition to using the UI, configuration can also be done using

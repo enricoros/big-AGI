@@ -2,6 +2,7 @@ import * as z from 'zod/v4';
 import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
+import { env } from '~/server/env.server';
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow, fetchTextOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 import { serverCapitalizeFirstLetter } from '~/server/wire';
 
@@ -15,10 +16,11 @@ import { heartbeatsWhileAwaiting } from '~/modules/aix/server/dispatch/heartbeat
 import { wireLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './wiretypes/localai.wiretypes';
 import { WireOpenRouterCreateImagesRequest, wireOpenRouterCreateImagesResponseSchema } from './wiretypes/openrouter.wiretypes';
 
+import { llmsHostTargetsServer } from '../../shared/llm.isomorphic';
 import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
-import { OPENAI_API_PATHS, openAIAccess, openAIAccessSchema, OpenAIAccessSchema, OPENROUTER_API_PATHS } from './openai.access';
+import { DEFAULT_LOCALAI_HOST, OPENAI_API_PATHS, openAIAccess, openAIAccessSchema, OpenAIAccessSchema, OPENROUTER_API_PATHS } from './openai.access';
 
 
 // Router Input/Output Schemas
@@ -434,10 +436,11 @@ export const llmOpenAIRouter = createTRPCRouter({
   dialectLocalAI_galleryModelsApply: edgeProcedure
     .input(z.object({
       access: openAIAccessSchema,
-      galleryName: z.string(),
-      modelName: z.string(),
+      galleryName: z.string().max(100).regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/, 'Invalid LocalAI gallery name'),
+      modelName: z.string().max(200).regex(/^[a-zA-Z0-9][a-zA-Z0-9._:+\/-]*$/, 'Invalid LocalAI model name'),
     }))
     .mutation(async ({ input: { access, galleryName, modelName } }) => {
+      localAIAdminCheckOrThrow(access);
       const galleryModelId = `${galleryName}@${modelName}`;
       const wireLocalAIModelApply = await openaiPOSTOrThrow(access, null, { id: galleryModelId }, '/models/apply');
       return wireLocalAIModelsApplyOutputSchema.parse(wireLocalAIModelApply);
@@ -447,10 +450,11 @@ export const llmOpenAIRouter = createTRPCRouter({
   dialectLocalAI_galleryModelsJob: edgeProcedure
     .input(z.object({
       access: openAIAccessSchema,
-      jobId: z.string(),
+      jobId: z.guid(),
     }))
     .query(async ({ input: { access, jobId } }) => {
-      const wireLocalAIModelsJobs = await openaiGETOrThrow(access, `/models/jobs/${jobId}`);
+      localAIAdminCheckOrThrow(access);
+      const wireLocalAIModelsJobs = await openaiGETOrThrow(access, `/models/jobs/${encodeURIComponent(jobId)}`);
       return wireLocalAIModelsListOutputSchema.parse(wireLocalAIModelsJobs);
     }),
 
@@ -458,6 +462,13 @@ export const llmOpenAIRouter = createTRPCRouter({
 
 
 // Mappers - all access logic is now in openai.access.ts
+
+function localAIAdminCheckOrThrow(access: OpenAIAccessSchema) {
+  if (access.dialect !== 'localai')
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'LocalAI admin operations require the LocalAI dialect.' });
+  if (env.LOCALAI_ADMIN_ENABLED !== 'true' && llmsHostTargetsServer(access.oaiHost, env.LOCALAI_API_HOST, DEFAULT_LOCALAI_HOST))
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'LocalAI admin operations on the server-side LocalAI host are disabled. Set LOCALAI_ADMIN_ENABLED=true on the server to allow them.' });
+}
 
 async function openaiGETOrThrow<TOut extends object>(access: OpenAIAccessSchema, apiPath: string, signal: undefined | AbortSignal = undefined): Promise<TOut> {
   const { headers, url } = openAIAccess(access, null, apiPath);

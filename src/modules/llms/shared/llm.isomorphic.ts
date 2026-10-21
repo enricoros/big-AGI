@@ -41,6 +41,33 @@ export function llmsServerKeyForHost(clientHost: string | null | undefined, serv
   return clientOrigin && serverHosts.some(host => _hostOrigin(host) === clientOrigin) ? serverKey : '';
 }
 
+/**
+ * True when a client-supplied host resolves to a server-side target: empty (falls back to the deployer's host),
+ * unparseable, loopback (the big-AGI server itself), or the same hostname as one of the server hosts.
+ * Used to gate admin operations (model pull/delete/install) that must not be exposed to anonymous callers.
+ */
+export function llmsHostTargetsServer(clientHost: string | null | undefined, ...serverHosts: (string | undefined)[]): boolean {
+  if (!clientHost) return true;
+  const clientHostname = _hostHostname(clientHost);
+  if (!clientHostname || _isLoopbackHostname(clientHostname)) return true;
+  return serverHosts.some(host => !!host && _hostHostname(host) === clientHostname);
+}
+
+function _hostHostname(host: string): string | null {
+  try {
+    return new URL(host.startsWith('http') ? host : `https://${host}`).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function _isLoopbackHostname(hostname: string): boolean {
+  return hostname === 'localhost' || hostname.endsWith('.localhost')
+    || hostname.startsWith('127.') || hostname === '0.0.0.0'
+    || hostname === '[::1]' || hostname === '[::]'
+    || hostname.startsWith('[::ffff:7f') || hostname.startsWith('[::ffff:127.');
+}
+
 function _hostOrigin(host: string): string | null {
   try {
     return new URL(host.startsWith('http') ? host : `https://${host}`).origin;

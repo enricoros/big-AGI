@@ -2,14 +2,16 @@ import * as z from 'zod/v4';
 import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
+import { env } from '~/server/env.server';
 import { fetchTextOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 import { serverCapitalizeFirstLetter } from '~/server/wire';
 
+import { llmsHostTargetsServer } from '../../shared/llm.isomorphic';
 import { ListModelsResponse_schema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
-import { ollamaAccess, ollamaAccessSchema } from './ollama.access';
+import { DEFAULT_OLLAMA_HOST, ollamaAccess, ollamaAccessSchema, type OllamaAccessSchema } from './ollama.access';
 
 
 // async function ollamaGET<TOut extends object>(access: OllamaAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
@@ -31,8 +33,15 @@ const accessOnlySchema = z.object({
 
 const adminPullModelSchema = z.object({
   access: ollamaAccessSchema,
-  name: z.string(),
+  // [namespace/]model[:tag] - no registry-qualified names
+  name: z.string().max(200).regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*(\/[a-zA-Z0-9][a-zA-Z0-9._-]*)?(:[a-zA-Z0-9][a-zA-Z0-9._-]*)?$/, 'Invalid Ollama model name'),
 });
+
+function ollamaAdminAccessOrThrow(access: OllamaAccessSchema, apiPath: string) {
+  if (env.OLLAMA_ADMIN_ENABLED !== 'true' && llmsHostTargetsServer(access.ollamaHost, env.OLLAMA_API_HOST, DEFAULT_OLLAMA_HOST))
+    throw new TRPCError({ code: 'FORBIDDEN', message: 'Ollama admin operations on the server-side Ollama host are disabled. Set OLLAMA_ADMIN_ENABLED=true on the server to allow them.' });
+  return ollamaAccess(access, apiPath);
+}
 
 // this may not be needed
 const listPullableOutputSchema = z.object({
@@ -86,7 +95,7 @@ export const llmOllamaRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
 
       // fetch as a large text buffer, made of JSONs separated by newlines
-      const { headers, url } = ollamaAccess(input.access, '/api/pull');
+      const { headers, url } = ollamaAdminAccessOrThrow(input.access, '/api/pull');
       const pullRequest = await fetchTextOrTRPCThrow({ url, method: 'POST', headers, body: { 'name': input.name }, name: 'Ollama::pull' });
 
       // accumulate status and error messages
@@ -107,7 +116,7 @@ export const llmOllamaRouter = createTRPCRouter({
   adminDelete: edgeProcedure
     .input(adminPullModelSchema)
     .mutation(async ({ input }) => {
-      const { headers, url } = ollamaAccess(input.access, '/api/delete');
+      const { headers, url } = ollamaAdminAccessOrThrow(input.access, '/api/delete');
       const deleteOutput = await fetchTextOrTRPCThrow({ url, method: 'DELETE', headers, body: { 'name': input.name }, name: 'Ollama::delete' });
       if (deleteOutput?.length && deleteOutput !== 'null')
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Ollama delete issue: ' + deleteOutput });

@@ -75,6 +75,7 @@ export const env = createEnv({
     // LLM: LocalAI
     LOCALAI_API_HOST: z.url().optional(),
     LOCALAI_API_KEY: z.string().optional(),
+    LOCALAI_ADMIN_ENABLED: z.enum(['true']).optional(), // allow gallery installs on the server-side LocalAI
 
     // LLM: Meta AI
     METAAI_API_KEY: z.string().optional(),
@@ -95,6 +96,7 @@ export const env = createEnv({
 
     // LLM: Ollama
     OLLAMA_API_HOST: z.url().optional(),
+    OLLAMA_ADMIN_ENABLED: z.enum(['true']).optional(), // allow model pull/delete on the server-side Ollama
 
     // LLM: OpenRouter
     OPENROUTER_API_KEY: z.string().optional(),

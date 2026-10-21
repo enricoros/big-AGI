@@ -39,6 +39,7 @@ GEMINI_API_KEY=
 GROQ_API_KEY=
 LOCALAI_API_HOST=
 LOCALAI_API_KEY=
+LOCALAI_ADMIN_ENABLED=
 METAAI_API_KEY=
 METAAI_API_HOST=
 MISTRAL_API_KEY=
@@ -46,6 +47,7 @@ MOONSHOT_API_KEY=
 NVIDIANIM_API_KEY=
 NVIDIANIM_API_HOST=
 OLLAMA_API_HOST=
+OLLAMA_ADMIN_ENABLED=
 OPENROUTER_API_KEY=
 PERPLEXITY_API_KEY=
 TOGETHERAI_API_KEY=
@@ -116,6 +118,7 @@ requiring the user to enter an API key
 | `GROQ_API_KEY`              | The API key for Groq Cloud                                                                                     | Optional                                                          |
 | `LOCALAI_API_HOST`          | Sets the URL of the LocalAI server, or defaults to http://127.0.0.1:8080                                       | Optional                                                          |
 | `LOCALAI_API_KEY`           | The (Optional) API key for LocalAI                                                                             | Optional                                                          |
+| `LOCALAI_ADMIN_ENABLED`     | Set to `true` to allow gallery model installs on the server-side LocalAI host (anyone reaching the server can use it) | Optional, off by default                                          |
 | `METAAI_API_KEY`            | The API key for Meta AI (dev.meta.ai)                                                                          | Optional                                                          |
 | `METAAI_API_HOST`           | Changes the Meta AI host, defaults to https://api.meta.ai                                                      | Optional                                                          |
 | `MISTRAL_API_KEY`           | The API key for Mistral                                                                                        | Optional                                                          |
@@ -123,6 +126,7 @@ requiring the user to enter an API key
 | `NVIDIANIM_API_KEY`         | The API key ('nvapi-...') for NVIDIA NIM (build.nvidia.com)                                                    | Optional                                                          |
 | `NVIDIANIM_API_HOST`        | Changes the NVIDIA NIM host, e.g. to a self-hosted NIM/vLLM endpoint                                           | Optional                                                          |
 | `OLLAMA_API_HOST`           | Changes the backend host for the Ollama vendor. See [config-local-ollama.md](config-local-ollama.md)           |                                                                   |
+| `OLLAMA_ADMIN_ENABLED`      | Set to `true` to allow model pull/delete on the server-side Ollama host (anyone reaching the server can use it) | Optional, off by default                                          |
 | `OPENROUTER_API_KEY`        | The API key for OpenRouter                                                                                     | Optional                                                          |
 | `PERPLEXITY_API_KEY`        | The API key for Perplexity                                                                                     | Optional                                                          |
 | `TOGETHERAI_API_KEY`        | The API key for Together AI                                                                                    | Optional                                                          |
