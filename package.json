@@ -57,6 +57,7 @@
     "dexie": "~4.0.11",
     "dexie-react-hooks": "~1.1.7",
     "diff": "^9.0.0",
+    "dompurify": "^3.4.14",
     "eventemitter3": "^5.0.4",
     "idb-keyval": "^6.2.6",
     "mammoth": "^1.12.3",
