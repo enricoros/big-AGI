@@ -277,6 +277,8 @@ async function main(): Promise<void> {
     for (let i = 0; i < models.length; i++) {
       const model = models[i];
       const progress = `${String(i + 1).padStart(3)}/${models.length}`;
+      // the id goes out before its probes, so a slow model shows as in flight, not as a hang
+      process.stdout.write(`  ${progress} [${elapsed(startedAt)}] ${model.id.padEnd(48)} `);
 
       const liveness = await probeLiveness(key.value, model.id);
       model.alive = liveness.alive;
@@ -290,7 +292,7 @@ async function main(): Promise<void> {
         if (ctx.ctxProbe) model.notes.push(`ctxProbe: ${ctx.ctxProbe}`);
         ctxLine = ctx.ctxMeasured !== null ? ` ctx=${ctx.ctxMeasured}` : ` ctx=${ctx.ctxProbe ?? '?'}`;
       }
-      console.log(`  ${progress} [${elapsed(startedAt)}] ${model.id.padEnd(48)} ${model.alive}${ctxLine}`);
+      console.log(`${model.alive}${ctxLine}`);
     }
   } else {
     console.log('\n[4/4] live probes: skipped, every model stays classified as "unprobed"');

@@ -237,16 +237,21 @@ const trunc = (s, n) => { const t = (s || '').trim(); return t.length > n ? t.sl
 async function runAll(tasks, limit) {
   const results = new Array(tasks.length);
   let next = 0, done = 0;
+  const t0 = Date.now();
+  const status = () => `  ${done}/${tasks.length} calls done, ${Math.round((Date.now() - t0) / 1000)}s`;
+  // terminal: one live line; piped or captured: one line per 30s, so a stall shows without flooding the log
+  const ticker = process.stderr.isTTY ? null : setInterval(() => process.stderr.write(status() + '\n'), 30_000);
   async function worker() {
     while (next < tasks.length) {
       const i = next++;
       results[i] = await tasks[i]();
       done++;
-      process.stderr.write(`\r  ${done}/${tasks.length} calls done   `);
+      if (!ticker) process.stderr.write(`\r${status()}   `);
     }
   }
   await Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, worker));
-  process.stderr.write('\n');
+  if (ticker) clearInterval(ticker);
+  process.stderr.write(ticker ? status() + '\n' : '\n');
   return results;
 }
 

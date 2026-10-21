@@ -98,6 +98,7 @@ async function _pacedChatRequest(apiKey: string, payload: unknown, timeoutMs = R
   } catch (error: unknown) {
     const message = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
     const timedOut = /timeout|abort|timed out/i.test(message);
+    if (timedOut) process.stdout.write(`[timeout ${timeoutMs / 1000}s] `); // inline on the harvest's in-flight line
     return { status: null, body: message, timedOut, elapsedMs: Date.now() - startedAt };
   }
 }
