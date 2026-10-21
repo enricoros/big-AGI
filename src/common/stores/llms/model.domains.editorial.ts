@@ -94,7 +94,7 @@ export const EditorialDefaults = {
     { vendor: 'openrouter', modelId: 'openai/gpt-5.6-sol' },
     { vendor: 'openai',     modelId: 'gpt-5.5' },
     { vendor: 'openrouter', modelId: 'openai/gpt-5.5' },
-    { vendor: 'googleai',   modelId: 'models/gemini-4-argon' }, // SPECULATIVE: announced 2026-09-30, API-gated; Elo 1525 prelim (#1), $2/$10 intro. Prefix match also takes '-preview'
+    { vendor: 'googleai',   modelId: 'models/gemini-4-argon' }, // 2026-10-13 API GA; Elo 1525 prelim (#1), $2/$10 intro through 2026-11-30, then $4/$20
     { vendor: 'openrouter', modelId: 'google/gemini-4-argon' },
     { vendor: 'googleai',   modelId: 'models/gemini-3.8-flash' }, // 2026-09-02 GA - newest Flash flagship, same intro price as 3.6 (3.7 Flash, deprecated 2026-10-08, routes here)
     { vendor: 'googleai',   modelId: 'models/gemini-3.6-flash' }, // 2026-07-21 GA - cheaper output (3.5 Flash, deprecated 2026-10-08, routes here)

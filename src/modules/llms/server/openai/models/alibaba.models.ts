@@ -7,12 +7,16 @@ import { fromManualMapping, llmsDefineManualMappings, llmsLabelUncurated } from 
 // --- Alibaba Model ID inference (auto-derived from _knownAlibabaChatModels) ---
 export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefix'];
 
-// Sources (verified 2026-09-02 against the live /v1/models list + docs):
+// Sources (verified 2026-10-21 against the live /v1/models list + docs):
 // - Models:  https://www.alibabacloud.com/help/en/model-studio/models
 // - Pricing: https://www.alibabacloud.com/help/en/model-studio/model-pricing (International/Singapore, USD per 1M tokens)
 // - Per-model pages carry the authoritative caps + cache-hit price, e.g. https://www.alibabacloud.com/help/en/model-studio/qwen3-8-max
 // - Cache:   https://www.alibabacloud.com/help/en/model-studio/context-cache (implicit hit = 20% of input; explicit create 125% / hit 10%; deepseek-v4-pro and
 //            the qwen3.8 line excepted - their rates come off the model pages)
+// 2026-10-21 pass: deepseek-v4.1-flash-1017 curated visible (listed 2026-10-18, same card; model page + live probes); the undated
+//   deepseek-v4.1-flash hidden as superseded (OR's Alibaba endpoint still names it 20260910). No price drift on the Intl table or
+//   model pages. Non-model ids filtered: pre-mock_new_gateway_session_affinity (canned stub text), tongyi-skynet-llm-fd (RouteError).
+//   'ZHIPU/GLM-5.3' and 'kimi/kimi-k3' still 'product not activated'. lmarena 403, ELOs left as-is.
 // 2026-10-13 pass: glm-5.3-prime curated visible (GLM-5.3 on Alibaba's Fast mode 'Prime', listed 2026-09-28; no model page or price
 //   row yet - price from Alibaba's own OpenRouter endpoint, caps and params live-probed). qwen-turbo dropped (no longer listed, no
 //   price row). No price drift on the Intl table, DeepSeek busy/idle rows included; kimi-k3 gained its price-table row ($3/$15).
@@ -125,7 +129,8 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   },
   {
     // Upgraded snapshot (alias qwen3.8-max-2026-09-02), listed 2026-09-02: engineering-scale coding, multi-tool orchestration and vision
-    // refined; same 1M window, thinking and tool surface. Curated verbatim and visible because the base id has not moved onto it.
+    // refined; same 1M window, thinking and tool surface. Curated verbatim and visible because the base id has not moved onto it
+    // (2026-10-21: base and 0902 still sample distinct outputs live, though OpenRouter folded qwen3.8-max into its 0902 slug).
     // Live-probed 2026-09-02: input cap 991,808, 128K out in both modes, vision + tools OK, thinking on by default, enable_thinking:false
     // accepted, reasoning_effort validated with the full 7-value enum. Same $2/$6 + 0.25 cache-hit row on the Intl table and model page.
     idPrefix: 'qwen3.8-max-0902',
@@ -378,22 +383,34 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   // DeepSeek on DashScope: dated snapshots are listed ALONGSIDE the undated ids (each with its own free-tier quota), unlike
   // api.deepseek.com, which only exposes undated ids and swaps checkpoints in place behind them. Alibaba does not print the
   // "Currently equivalent to <snapshot>" note it uses for Qwen on the DeepSeek rows, so which checkpoint the undated ids
-  // serve is undocumented - hence the 0813 snapshot is curated visible, as the only pinnable GA route here.
+  // serve is undocumented - hence the 0813 and 1017 snapshots are curated visible, as the pinnable routes here.
   // Prices: the GA snapshots (-0813, -0731) moved to peak/off-peak billing on 2026-08-17 (Intl table + model pages; the windows are
   // in a Chinese-only notice, aliyun.com/notice/118555) at exactly DeepSeek-direct's card, off-peak = half. chatPrice carries the PEAK
   // card, as in deepseek.models.ts (no time dimension in the schema; off-peak requests are over-shown 2x). The undated deepseek-v4-pro
-  // keeps its flat rate, above the 0813 snapshot; deepseek-v4.1-flash is peak/off-peak from its listing.
+  // keeps its flat rate, above the 0813 snapshot; deepseek-v4.1-flash and its -1017 snapshot are peak/off-peak from their listing.
   {
-    // V4.1-Flash on DashScope (DeepSeek GA 2026-09-10): 552B MoE, native image input, ahead of V4-Pro-0813 on the agentic
-    // set. Curated visible, not hidden like the -0731 revision: this version-suffixed id is not a snapshot beside an undated
-    // twin (DashScope lists no 'deepseek-flash'), so it is the only route to V4.1 and the best flash tier here. Images work
-    // with thinking on and off; enable_thinking:false works; reasoning_effort enum minimal|low|medium|high|xhigh|max|ultra -
-    // 'none' 400s, so Off rides on enable_thinking as the dialect already does; no per-tier preamble tell, and max_tokens
-    // is not range-checked.
+    // V4.1-Flash 1017 snapshot (listed 2026-10-18; DeepSeek-direct moved 'deepseek-flash' onto it): self-feedback RL, gains on
+    // Terminal-Bench 4.0 / DeepSWE v1.1 / ProgramBench with shorter outputs; same 552B MoE, image input, 1M in / 384K out.
+    // Live-probed 2026-10-21: image input with thinking on and off, tools OK, enable_thinking:false works, reasoning_effort enum
+    // none|minimal|low|medium|high|xhigh|max|ultra with no per-tier preamble tell, max_tokens not range-checked.
+    idPrefix: 'deepseek-v4.1-flash-1017',
+    label: 'DeepSeek V4.1 Flash 1017 (Alibaba)',
+    parameterSpecs: _PS_DeepSeekEffort,
+    pubDate: '20261017',
+    description: 'DeepSeek V4.1 Flash 1017 snapshot served via Alibaba Model Studio. Stronger agentic coding with shorter outputs. Multimodal 552B MoE with 1M context, native image input, and thinking on by default.',
+    contextWindow: 1_000_000, // 1M (live-probed: 'Range of input length should be [1, 1000000]')
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
+    chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.03 } }, // peak card, same as deepseek-v4.1-flash (Intl table + model page)
+  },
+  {
+    // V4.1-Flash on DashScope (DeepSeek GA 2026-09-10): 552B MoE, native image input. Same probe results as the 1017 snapshot
+    // ('none' effort now accepted too); OR's Alibaba endpoint still names this undated id 20260910.
     idPrefix: 'deepseek-v4.1-flash',
     label: 'DeepSeek V4.1 Flash (Alibaba)',
+    hidden: true, // superseded by deepseek-v4.1-flash-1017
     parameterSpecs: _PS_DeepSeekEffort,
-    pubDate: '20260910', // = deepseek.models.ts 'deepseek-flash' (DeepSeek release, not the DashScope listing)
+    pubDate: '20260910', // DeepSeek V4.1-Flash GA, not the DashScope listing
     description: 'DeepSeek V4.1 Flash served via Alibaba Model Studio. Multimodal 552B MoE with 1M context, native image input, and thinking on by default.',
     contextWindow: 1_000_000, // 1M (model page: 1,000,000 max input)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
@@ -566,6 +583,8 @@ export function alibabaModelFilter(modelId: string): boolean {
     'tingwu',         // transcription service (tongyi-tingwu*)
     '-slp',           // speech service
     'qwen2-7b',       // legacy small open model
+    'mock',           // gateway test stubs: pre-mock_* (returns canned text)
+    'skynet',         // tongyi-skynet-llm-fd: 500 'Service route not found'
   ];
   return !excludePatterns.some(pattern => modelId.includes(pattern));
 }

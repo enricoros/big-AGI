@@ -202,7 +202,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   // Multi-agent (beta header `responses_multi_agent=v1`, also on GPT-5.6) - not adopted. GPT-6.1 Astra was pulled before launch.
   // Shipped with GPT-6, accepted on every tier but not adopted: async tool calling (`async: true` on tools; the function_call item
   // echoes `async: true` and the model answers before the result), `configuration_update` input items (change effort mid-conversation,
-  // cache prefix intact), `prompt_cache_options.ttl: '30m'` (echoed as mode 'implicit' beside prompt_cache_retention '24h').
+  // cache prefix intact), `prompt_cache_options.ttl` '30m' or '12h' (2026-10-20, 2.5x write; AIX omits it, so writes bill at the 30m 1.25x).
   // Not probed: mid-turn steering over WebSockets, asynchronous misalignment monitoring (can stop a conversation for review).
 
   // GPT-6 Astra - flagship
@@ -1092,10 +1092,12 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 
   // GPT-4.1
   {
+    hidden: true, // deprecated Oct 14, 2026, shutdown 2027-01-14
     idPrefix: 'gpt-4.1-2025-04-14',
-    label: 'GPT-4.1',
+    label: 'GPT-4.1 [Deprecated]',
     pubDate: '20250414',
-    description: 'Flagship GPT model for complex tasks. Major improvements on coding, instruction following, and long context with 1M token context window.',
+    isLegacy: true,
+    description: '[Use: GPT-6 Luna - Shut down: 2027-01-14] Flagship GPT model for complex tasks. Major improvements on coding, instruction following, and long context with 1M token context window.',
     contextWindow: 1047576,
     maxCompletionTokens: 32768,
     interfaces: IFS_CHAT_CACHE,
@@ -1110,10 +1112,12 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 
   // GPT-4.1 mini
   {
+    hidden: true, // deprecated Oct 14, 2026, shutdown 2027-01-14
     idPrefix: 'gpt-4.1-mini-2025-04-14',
-    label: 'GPT-4.1 Mini',
+    label: 'GPT-4.1 Mini [Deprecated]',
     pubDate: '20250414',
-    description: 'Balanced for intelligence, speed, and cost. Matches or exceeds GPT-4o in intelligence while reducing latency by nearly half and cost by 83%.',
+    isLegacy: true,
+    description: '[Use: GPT-6 Luna - Shut down: 2027-01-14] Balanced for intelligence, speed, and cost. Matches or exceeds GPT-4o in intelligence while reducing latency by nearly half and cost by 83%.',
     contextWindow: 1047576,
     maxCompletionTokens: 32768,
     interfaces: IFS_CHAT_CACHE,
@@ -1207,10 +1211,12 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 
   // GPT-4o
   {
+    hidden: true, // deprecated Oct 14, 2026, shutdown 2027-01-14
     idPrefix: 'gpt-4o-2024-11-20',
-    label: 'GPT-4o',
+    label: 'GPT-4o [Deprecated]',
     pubDate: '20241120',
-    description: 'Snapshot of gpt-4o from November 20th, 2024.',
+    isLegacy: true,
+    description: '[Use: GPT-6 Luna - Shut down: 2027-01-14] Snapshot of gpt-4o from November 20th, 2024.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     interfaces: IFS_CHAT_CACHE,
@@ -1219,10 +1225,11 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   },
   {
     idPrefix: 'gpt-4o-2024-08-06',
-    label: 'GPT-4o',
+    label: 'GPT-4o [Deprecated]',
     pubDate: '20240806',
-    hidden: true, // previous version
-    description: 'Snapshot that supports Structured Outputs. gpt-4o currently points to this version.',
+    hidden: true, // deprecated Oct 14, 2026, shutdown 2027-01-14
+    isLegacy: true,
+    description: '[Use: GPT-6 Luna - Shut down: 2027-01-14] Snapshot that supports Structured Outputs. gpt-4o currently points to this version.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     interfaces: IFS_CHAT_CACHE,
@@ -1255,10 +1262,12 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 
   // GPT-4o mini
   {
+    hidden: true, // deprecated Oct 14, 2026, shutdown 2027-01-14
     idPrefix: 'gpt-4o-mini-2024-07-18',
-    label: 'GPT-4o Mini',
+    label: 'GPT-4o Mini [Deprecated]',
     pubDate: '20240718',
-    description: 'Affordable model for fast, lightweight tasks. GPT-4o Mini is cheaper and more capable than GPT-3.5 Turbo.',
+    isLegacy: true,
+    description: '[Use: GPT-6 Luna - Shut down: 2027-01-14] Affordable model for fast, lightweight tasks. GPT-4o Mini is cheaper and more capable than GPT-3.5 Turbo.',
     contextWindow: 128000,
     maxCompletionTokens: 16384,
     interfaces: IFS_CHAT_CACHE,
@@ -1440,8 +1449,10 @@ const openAIModelsDenyList: string[] = [
   'sora-2-pro', 'sora-2',
 
   // Specialized domain models - cybersecurity, gated behind the Daybreak program ('does not exist or you do not have access', probed 2026-08-17)
-  'gpt-5.4-cyber', 'gpt-5.5-cyber', 'gpt-5.6-cyber',
-  'daybreak-blue-latest', 'daybreak-red-latest', // program aliases -> gpt-5.6-sol / gpt-5.6-cyber
+  'gpt-5.4-cyber' /* shut down 2026-10-01 */, 'gpt-5.5-cyber', 'gpt-5.6-cyber',
+  'daybreak-blue-latest', 'daybreak-red-latest', // deprecated 'gpt-daybreak-*' program aliases -> gpt-5.6-sol / gpt-5.6-cyber
+  // Specialized domain models - life sciences, gated behind the GPT-Rosalind trusted-access program (probed 2026-10-21)
+  'gpt-rosalind-research', 'gpt-rosalind-discovery',
 
   // Safety/moderation models
   'gpt-oss-safeguard',

@@ -14,7 +14,7 @@ import { fromManualMapping, type KnownModel, llmsDefineManualMappings, llmsLabel
 export type LlmsMetaAIModelId = typeof _knownMetaAIModels[number]['idPrefix'];
 
 
-// [Meta AI] Models List API - https://api.meta.ai/v1/models (verified 2026-09-02). Every item is
+// [Meta AI] Models List API - https://api.meta.ai/v1/models (verified 2026-10-21). Every item is
 // { id, object: 'model', created: 0, owned_by: 'meta' }: `created` is a constant 0 (no date and no
 // ordering signal, contradicting dev.meta.ai/docs/models) and there is no type/modality field, so an
 // image or transcription id is indistinguishable from a chat id. GET /v1/models/{id} returns the same
@@ -27,7 +27,7 @@ const _wireMetaAIModelItemSchema = z.object({
 });
 
 
-// [Meta AI] Pricing, USD per 1M tokens - https://dev.meta.ai/docs/pricing-rate-limits (2026-10-13).
+// [Meta AI] Pricing, USD per 1M tokens - https://dev.meta.ai/docs/pricing-rate-limits (2026-10-21).
 // Flat ("no long-context premium"); all Standard Spark versions share one rate. Caching is automatic
 // (prefix KV, no breakpoints, no write charge): cached input bills at the reduced 'read' rate.
 // Web search grounding: $2.50 / 1K queries on top of tokens.
@@ -56,12 +56,13 @@ const _sparkContributorPrice: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Muse Spark parameters (Responses API, probed 2026-09-02 on all five Spark ids; effort re-probed 2026-10-13):
+// Muse Spark parameters (Responses API, probed 2026-09-02 on all five Spark ids; effort re-probed 2026-10-21):
 // - reasoning.effort: 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'. 'none' parses but 400s on every Spark and Wonder
 //   model ("not supported for model"). Omitted, the server defaults to 'high' - left as the vendor default (no initialValue).
 // - 'max' (extended reasoning beyond 'xhigh', same per-token price): muse-wonder-1.0, muse-spark-1.3 and 1.3-contributor. 1.1, 1.2
 //   and 1.2-contributor 400 on it. reasoning.md excludes 1.3-contributor, but it accepts and honors max (2026-10-15: 2.6-3.1K
-//   reasoning tokens at max vs 0.4-0.8K at xhigh on the same prompt, matching 1.3 Standard).
+//   reasoning tokens at max vs 0.4-0.8K at xhigh on the same prompt, matching 1.3 Standard). 'max' on Wonder does not select
+//   Muse Wonder Full, a Muse Code-only variant (models.md).
 // - web search: the OpenAI-shaped hosted 'web_search' tool, with search_context_size low|medium|high and an approximate
 //   user_location (dev.meta.ai/docs/search-grounding); $2.50 / 1K queries on top of tokens. Responses API only.
 const _sparkParamSpecs: ModelDescriptionSchema['parameterSpecs'] = [
@@ -222,13 +223,24 @@ const _ortOpenWeightMetaModels: ReadonlyArray<Pick<KnownModel, 'idPrefix' | 'pub
     parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] }],
     initialTemperature: 1.0,
   },
+  {
+    // Muse Glimmer: the open-weight 30B dense model distilled from Spark, text/image in, 128K default context. Always reasons:
+    // reasoning_strength low|medium|high|xhigh, default high (dev.meta.ai/docs/muse-glimmer/prompting). On OpenRouter (2026-10-21)
+    // 'none' 400s ("reasoning is mandatory"); 'minimal' and 'max' are accepted but outside the template's domain. Model-card
+    // temperature 1.0.
+    idPrefix: 'muse-glimmer-30b',
+    pubDate: '20260810', // OpenRouter canonical slug meta/muse-glimmer-30b-20260810
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] }],
+    initialTemperature: 1.0,
+  },
 ];
 
 /**
  * Lookup for OpenRouter: match an OR Meta model ID to a known hardcoded model (OR's `created` is the onboarding date and
  * api.meta.ai reports created: 0, so pubDate must come from here). OR lists 'meta/muse-spark-*' (+ '-contributor'), the
- * unversioned 'meta/muse-wonder' (resolved to the newest curated Standard version of the line), the open-weight
- * 'meta/muse-spark-open' (_ortOpenWeightMetaModels), and the open-weight 'meta/muse-glimmer-30b', which falls through (undefined).
+ * unversioned 'meta/muse-wonder' (resolved to the newest curated Standard version of the line), and the open-weight
+ * 'meta/muse-spark-open' and 'meta/muse-glimmer-30b' (_ortOpenWeightMetaModels).
  * @param orModelName - The model name after stripping 'meta/' (e.g. 'muse-spark-1.3')
  */
 export function llmOrtMetaLookup(orModelName: string): OrtVendorLookupResult | undefined {

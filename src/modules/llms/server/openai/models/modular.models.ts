@@ -31,22 +31,41 @@ const _PS_GlmEffort: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['high', 'max'] },
 ] as const;
 
+// MiniMax on Modular: Off/On. 'none' = off (0 reasoning tokens); low..max accepted, measured indistinguishable from default.
+const _PS_MiniMaxThinking: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
+] as const;
+
 
 // [Modular Cloud] Editorial table for the shared endpoints (array order = display order), measured
 // live. Output caps are unverified where
 // noted: the server silently clamps oversized max_tokens instead of erroring, so an over-large value is
 // never observable as a failure. Context windows ARE observable (oversized prompt -> 400 with the limit).
 // pubDate is the upstream creator's release date, not the day Modular listed the model (host rule).
-// The marketing page shows a 'GLM 5.3 Flash' that /v1/models does not list - not added until it does.
+// Not added: GLM 5.3 Flash and Inkling (marketing pages only, 404 on the shared endpoint); deepseek/deepseek-v4.1-flash
+// (listed, 503 'no endpoints available' - uncurated fallback until it serves).
 const _modularKnownModels = llmsDefineManualMappings([
+  {
+    idPrefix: 'MiniMaxAI/MiniMax-M3.1-Flash',
+    label: 'MiniMax M3.1 Flash',
+    pubDate: '20260927', // = minimax.models.ts 'MiniMax-M3.1-Flash-Preview'
+    description: '1M-context multimodal MoE for agentic coding and tool use, successor to M3. Reasoning on by default (switchable off).',
+    contextWindow: 1048576, // enforced by the shared endpoint (400 'exceeds the configured maximum context length of 1048576 tokens')
+    maxCompletionTokens: 131072, // unverified
+    // no Json: json_object returns '{}' or drops keys, json_schema strict once ran away into garbage
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    parameterSpecs: _PS_MiniMaxThinking,
+    // no benchmark: no arena row; chatPrice: not on modular.com/pricing yet - add when published
+  },
   {
     idPrefix: 'minimax/minimax-m3',
     label: 'MiniMax M3',
     pubDate: '20260601',
-    description: '1M-context multimodal MoE with default-on reasoning. Served as NVIDIA NVFP4 (4-bit) quantization on Modular Cloud shared endpoints.',
+    description: '1M-context multimodal MoE, reasoning on by default (switchable off).',
     contextWindow: 1048576,
     maxCompletionTokens: 131072, // unverified
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    parameterSpecs: _PS_MiniMaxThinking,
     benchmark: { cbaElo: 1444 }, // lmarena: minimax-m3
     chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.06 } },
   },
@@ -63,7 +82,6 @@ const _modularKnownModels = llmsDefineManualMappings([
     benchmark: { cbaElo: 1451 }, // lmarena: gemma-4-31b
     chatPrice: { input: 0.25, output: 0.65, cache: { read: 0.08 } },
   },
-  { idPrefix: 'google/gemma-4-31B-it-b', label: 'Gemma 4 31B', symLink: 'google/gemma-4-31b-it' }, // same deployment (echoes the same nvidia/*-NVFP4 id)
   {
     idPrefix: 'qwen/qwen3.8-27b',
     label: 'Qwen3.8 27B',
@@ -80,8 +98,8 @@ const _modularKnownModels = llmsDefineManualMappings([
     idPrefix: 'zai-org/glm-5.3',
     label: 'GLM 5.3',
     pubDate: '20260814', // = zai.models.ts 'glm-5.3'
-    description: 'Zhipu GLM-5.3, post-trained on the GLM-5.2 base for frontier coding and long-horizon agentic work, reasoning on by default (effort control), text-only. 512K context on the shared endpoint (native: 1M).',
-    contextWindow: 524288, // enforced by the shared endpoint (400 'exceeds the configured maximum context length of 524288 tokens')
+    description: 'Zhipu GLM-5.3, post-trained on the GLM-5.2 base for frontier coding and long-horizon agentic work, reasoning on by default (effort control), text-only. Full 1M context.',
+    contextWindow: 1048576, // enforced by the shared endpoint (400 'exceeds the configured maximum context length of 1048576 tokens')
     maxCompletionTokens: 131072, // unverified
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
     parameterSpecs: _PS_GlmEffort,

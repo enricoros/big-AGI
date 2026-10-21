@@ -39,7 +39,7 @@ const orModelFamilyOrder = [
   // Chinese majors (surfaced on OpenRouter directly)
   'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'stepfun/', 'meituan/',
   // Research/open models
-  'nvidia/', 'microsoft/', 'nousresearch/', 'ibm-granite/', 'poolside/', 'xiaomi/',
+  'nvidia/', 'microsoft/', 'nousresearch/', 'ibm-granite/', 'poolside/', 'xiaomi/', 'reflection/',
 ] as const;
 
 // llmVndMiscEffort thinking levels we expose, in canonical order ('xhigh' deliberately absent) - see llms.parameters.ts
@@ -103,7 +103,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
   // drop ':batch' variants: async batch tiers (50%-off resold vendor batch APIs) can't serve
   // synchronous chat; they'd list as half-price chat models and fail or queue on send.
-  // They came back and stayed: 31 across 7 vendors as of 2026-08-28 (17 openai/* at the 2026-07-22 debut, 60 on 08-27).
+  // They came back and stayed: 76 across 9 vendors as of 2026-10-21 (17 openai/* at the 2026-07-22 debut).
   // Before ever removing this gate, re-verify the semantics:
   // - if batch stays async (jobs API / delayed delivery), keep the gate; proper support means a batch
   //   job surface (submit/poll/retrieve) outside the chat list, a product feature not a parser change
@@ -177,8 +177,8 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   const cacheWritePrice = _orPricePerM('input_cache_write');
   const cacheReadPrice = _orPricePerM('input_cache_read');
 
-  // [OpenRouter] the 6 'openrouter/*' routers (auto, fusion, pareto-code, ...) quote '-1': the price is only
-  // known after routing. Emit no price at all - a raw -1 becomes -$1,000,000/M, and 'free' would be a lie.
+  // [OpenRouter] router ids (openrouter/auto, fusion, ..., nvidia/switchyard, typesafe/jev-router) quote '-1': the price
+  // is only known after routing. Emit no price at all - a raw -1 becomes -$1,000,000/M, and 'free' would be a lie.
   const isPostRoutingPrice = typeof inputPrice === 'number' && inputPrice < 0;
 
   const chatPrice: ModelDescriptionSchema['chatPrice'] | undefined = isPostRoutingPrice ? undefined : {
@@ -187,9 +187,10 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   };
 
   if (chatPrice) {
-    // one cache shape: write only when quoted (OpenAI 5.6+, Anthropic), no duration (OR quotes no TTL)
+    // one cache shape: write only when quoted (OpenAI 5.6+, Anthropic). A quoted 1h write marks the base write as the
+    // 5-minute TTL our ephemeral breakpoints buy (Anthropic, billed at that rate, probed 2026-10-21)
     if (cacheReadPrice)
-      chatPrice.cache = { read: cacheReadPrice, ...(cacheWritePrice && { write: cacheWritePrice }) };
+      chatPrice.cache = { read: cacheReadPrice, ...(cacheWritePrice && { write: cacheWritePrice, ...(pricing.input_cache_write_1h && { duration: 300 }) }) };
     // OR quotes web search $ per call; we keep $ per 1K
     const webSearchPerCall = parseFloat(pricing.web_search ?? '');
     if (webSearchPerCall > 0)
@@ -492,10 +493,12 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 
   // -- Hidden --
 
-  // hidden: hide by default older models or models not in known families; match with startsWith for both orOldModelIDs and orModelFamilyOrder
+  // hidden: hide by default older models, models not in known families, and routers (unknown model, price and
+  // capabilities until routed); match with startsWith for both orOldModelIDs and orModelFamilyOrder
   const hidden = orOldModelIDs.some(prefix => modelIdUnaliased.startsWith(prefix))
     || orOldExactModelIDs.some(oldId => modelIdUnaliased === oldId)
-    || !orModelFamilyOrder.some(prefix => modelIdUnaliased.startsWith(prefix));
+    || !orModelFamilyOrder.some(prefix => modelIdUnaliased.startsWith(prefix))
+    || isPostRoutingPrice;
 
 
   // -- pubDate fallback --

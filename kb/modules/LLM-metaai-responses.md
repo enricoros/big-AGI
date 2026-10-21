@@ -4,12 +4,12 @@ Vendor `metaai` ("Meta AI"; the product is the Meta Model API at dev.meta.ai) se
 
 ## Catalog
 
-- `GET /v1/models` lists 9 ids (2026-10-13) with `created: 0` on all and no type/modality field. Chat: `muse-wonder-1.0`, `muse-spark-1.3|1.2|1.1` plus `-contributor` twins of 1.3 and 1.2. Image output: `muse-image-1.0`. ASR only: `muse-voice-transcribe-1.0` (404 `model_not_found` on `/v1/responses`); segmentation: `sam-3.1` - both filtered by prefix.
+- `GET /v1/models` lists 9 ids (2026-10-21) with `created: 0` on all and no type/modality field. Chat: `muse-wonder-1.0`, `muse-spark-1.3|1.2|1.1` plus `-contributor` twins of 1.3 and 1.2. Image output: `muse-image-1.0`. ASR only: `muse-voice-transcribe-1.0` (404 `model_not_found` on `/v1/responses`); segmentation: `sam-3.1` - both filtered by prefix.
 - Uncurated ids are guessed by line (`muse-<line>-<version>[-contributor]`): a new version inherits context, interfaces and params from its newest curated sibling of the same tier, never the price; Contributor ids stay hidden. An unknown line gets a null context window, which keeps it off the llm-registry-sync push.
-- Wonder (preview): 1,048,576 context, same inputs and request surface as Spark; $4 in / $20 out / $0.20 cached per 1M, Standard only (no Contributor tier on the API).
+- Wonder (preview): 1,048,576 context, same inputs and request surface as Spark; $4 in / $20 out / $0.20 cached per 1M, Standard only (no Contributor tier on the API). Muse Wonder Full is Muse Code only; `max` effort does not select it.
 - Spark: 1,048,576 context, text/image/video/PDF/audio in (1.3 audio degraded), text out. Standard $1.25 in / $4.25 out / $0.15 cached per 1M; Contributor $0.10 / $0.20 / $0.002 and Meta trains on prompts and completions (hidden by default; 150 RPM / 3M TPM vs 3,000 / 4M per team on Standard). Web search +$2.50 per 1K queries. Muse Image $0.01 per image, aspect ratio only.
 - Release dates are editorial (Spark 1.1 2026-07-09, Muse Image 2026-07-07, 1.2 2026-08-05, 1.3 2026-09-02, Wonder 1.0 2026-10-12); `/llms:update-models-metaai` holds the source list.
-- Open weights, not on the API: Muse Spark Open (816B-A42B, 2026-10-15; effort `low|medium|high|xhigh`, default `xhigh`, reasoning always on) and Muse Glimmer. OpenRouter's `meta/muse-spark-open` takes pubDate, interfaces and effort from `llmOrtMetaLookup` (`_ortOpenWeightMetaModels`); Glimmer falls through.
+- Open weights, not on the API: Muse Spark Open (816B-A42B, 2026-10-15; effort `low|medium|high|xhigh`, default `xhigh`, reasoning always on) and Muse Glimmer (30B dense, 2026-08-10; effort `low|medium|high|xhigh`, default `high`, reasoning always on). OpenRouter's `meta/muse-spark-open` and `meta/muse-glimmer-30b` take pubDate, interfaces and effort from `llmOrtMetaLookup` (`_ortOpenWeightMetaModels`).
 
 ## Request contract
 
@@ -20,7 +20,7 @@ Vendor `metaai` ("Meta AI"; the product is the Meta Model API at dev.meta.ai) se
 - `max_output_tokens` >= 16 (the adapter floors it); reasoning shares the budget - a tight cap returns `status: incomplete` with an EMPTY `output[]`. No enforced ceiling below 1M.
 - `store` defaults to TRUE upstream. The adapter sends `store: false` + `include: ['reasoning.encrypted_content']`, the documented stateless path. `include` + `previous_response_id` is a 400 - never combine.
 - Accepted: `instructions`, `temperature` 0..2 (2.0 is degenerate: rambling `incomplete` replies and an occasional 500 `internal server error`; the sweep records 0..1.5 as reliable), `top_p` (0,1], `metadata` (<= 16 pairs), `user`, `prompt_cache_key`, `safety_identifier`, `parallel_tool_calls`, `max_tool_calls`, `text.verbosity`, `service_tier` (normalized to `auto`). Spark is tuned for temperature 1.0 (`initialTemperature`).
-- Function tools: flat `{type: 'function', name, parameters}`, `strict` defaults to false (the schema page says true - wrong), names take at most one dot. `web_search` takes `search_context_size` and `user_location`; the adapter's `external_web_access` is tolerated, `filters.allowed_domains` 400s. `include: ['web_search_call.action.sources']` populates `action.sources`, which the parser reads. `code_interpreter`, `custom`, and `image_generation` on Spark 400.
+- Function tools: flat `{type: 'function', name, parameters}`, `strict` defaults to false (the schema page says true - wrong), names take at most one dot. `web_search` takes `search_context_size` and `user_location`; the adapter's `external_web_access` is tolerated, `filters.allowed_domains` 400s. `include: ['web_search_call.action.sources']` populates `action.sources` (URLs only), which the parser reads. The documented `include: ['web_search_call.results']` instead adds an item-level `results[]` of `{type: 'text_result', title, url, snippet}` (titled, snippets empty; 2026-10-21) - not requested. `code_interpreter` and `image_generation` on Spark 400; `custom` 400s on every model ("not supported on this endpoint"), although tool-calling.md documents it.
 - Structured output: `text.format` json_schema / json_object, Responses-only.
 - Tool pairing is enforced both ways: an unmatched `function_call_output` and a dangling `function_call` both 400 (`_pairInteriorFunctionCalls` covers the latter).
 
@@ -43,6 +43,7 @@ Vendor `metaai` ("Meta AI"; the product is the Meta Model API at dev.meta.ai) se
 ## Deliberately not wired
 
 - Resume / delete (`GET`/`DELETE /v1/responses/{id}`): served OpenAI-identically, but the client lever is globally off and the adapter's `include` gate is coupled to `store: false`.
+- The `computer` tool (`{type: 'computer'}` -> `computer_call` items with batched actions; Responses only, accepted by Wonder and every Spark) and the Anthropic-shaped `POST /v1/messages` (a stateless adapter over the Responses pipeline).
 - `tool_search` + `namespace` tools, `context_management` / compaction items, `frequency_penalty` / `presence_penalty`, `prompt_cache_retention`, `background`, `POST /v1/responses/input_tokens` (its count includes ~157 injected scaffolding tokens and is not comparable to `usage.input_tokens`).
 - `input_video`, `input_file` (PDF), `input_audio` parts: AIX has no native parts for them yet, so those attachments degrade to text.
 
