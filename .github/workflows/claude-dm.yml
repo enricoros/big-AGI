@@ -12,8 +12,9 @@ on:
 
 jobs:
   claude-dm:
-    # Only allow repository owner to trigger DMs with @claude (blocks other users and bots)
+    # Upstream repo only; only allow repository owner to trigger DMs with @claude (blocks other users and bots)
     if: |
+      github.repository == 'enricoros/big-AGI' &&
       github.actor == 'enricoros' &&
       github.triggering_actor == 'enricoros' &&
       ((github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
@@ -36,17 +37,19 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0 # 1 -> 0: full history helps with git blame, etc.
+          persist-credentials: false # security: the action configures its own git auth; no checkout token left in .git/config
 
       - name: Run Claude Code DM Response
         id: claude
         uses: anthropics/claude-code-action@v1
         env:
           CLAUDE_CODE_SUBAGENT_MODEL: claude-opus-5-5 # brains on Fable (--model below), delegated subagents on the latest Opus
+          CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: 1 # security: scrub Anthropic/GitHub secrets from subprocess environments
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          # Security: Only users with write access can trigger (DMs allow code execution)
-          # Note: contents:write permission enables code creation and commits
+          # Security: Only the owner can trigger, but threads carry third-party text (indirect prompt injection)
+          # Note: contents:write permission enables code creation and commits (via the action's own git tooling)
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
@@ -55,7 +58,12 @@ jobs:
           # Optional: Add claude_args to customize behavior and configuration
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://docs.claude.com/en/docs/claude-code/cli-reference for available options
+          # Security: no npm/find/cp/cat shell, no WebFetch, no Skill (repo commands can grant Bash via allowed-tools),
+          # gh limited to read + comment. --permission-mode auto (after the action's acceptEdits, so it wins): a tool call
+          # outside --allowedTools runs only if Claude Code's safety review passes it; --disallowedTools never run.
           claude_args: |
             --model claude-fable-5-1
             --max-turns 300
-            --allowedTools "Edit,Read,Grep,Glob,Write,WebFetch,WebSearch,Skill,Agent,LSP,Bash(cat:*),Bash(cp:*),Bash(find:*),Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(mkdir:*),Bash(npm run:*),Bash(gh issue:*),Bash(gh search:*),Bash(gh label:*),Bash(gh pr:*)"
+            --permission-mode auto
+            --allowedTools "Edit,Read,Grep,Glob,Write,WebSearch,Agent,LSP,Bash(git branch:*),Bash(grep:*),Bash(ls:*),Bash(gh issue view:*),Bash(gh issue list:*),Bash(gh issue comment:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr list:*),Bash(gh pr checks:*),Bash(gh search:*),Bash(gh label list:*)"
+            --disallowedTools "WebFetch,Skill,Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(find:*),Bash(curl:*),Bash(wget:*),Bash(env:*),Bash(printenv:*)"
