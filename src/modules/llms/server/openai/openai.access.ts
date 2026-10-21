@@ -591,6 +591,9 @@ function _azureOpenAIAccess(access: OpenAIAccessSchema, modelRefId: string | nul
       // require the model Id for traditional deployment-based routing
       if (!modelRefId)
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Azure OpenAI API needs a deployment id' });
+      // the deployment id is client-supplied and goes into the path next to the (possibly server) api-key: one plain segment only
+      if (!/^[A-Za-z0-9._-]+$/.test(modelRefId) || /^\.+$/.test(modelRefId))
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Azure OpenAI API deployment id is not valid' });
 
       const functionName = apiPath.replace('/v1/', ''); // e.g. 'chat/completions'
       apiPath = `/openai/deployments/${modelRefId}/${functionName}?api-version=${server.versionAzureOpenAI}`;
