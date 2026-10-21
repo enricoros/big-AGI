@@ -349,7 +349,13 @@ function _shortError(error: any): string {
 }
 
 
+const CLEAN_HTML_MAX_CHARS = 5_000_000;
+
 function cleanHtml(html: string): string {
+  // bound parse/serialize cost on attacker-controlled pages
+  if (html.length > CLEAN_HTML_MAX_CHARS)
+    html = html.slice(0, CLEAN_HTML_MAX_CHARS);
+
   try {
     const _C = cheerioLoad(html);
 
@@ -486,19 +492,17 @@ function cleanHtml(html: string): string {
         $div.replaceWith(`<p>${$div.html()}</p>`);
     });
 
-    // 7. clean up whitespace
-    _C('*').each(function() {
-      if (this.type === 'text') {
-        const text = _C(this).text().trim().replace(/\s+/g, ' ');
-        if (text) _C(this).text(text);
-      }
+    // 7. clean up whitespace (text nodes, outside preformatted content)
+    _C('*:not(pre, pre *, textarea)').contents().each(function() {
+      if (this.type === 'text')
+        this.data = this.data.replace(/\s+/g, ' ');
     });
 
     // 8. format final output
     return _C.html()
       .replace(/>\s+</g, '>\n<')
       .replace(/\n\s+/g, '\n')
-      .replace(/^\s+|\s+$/gm, '')
+      .split('\n').map(line => line.trim()).join('\n')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
 
