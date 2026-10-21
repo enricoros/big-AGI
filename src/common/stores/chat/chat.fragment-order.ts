@@ -40,18 +40,26 @@ export function userFragmentGroup(fragment: DMessageFragment): UserMessageFragme
   return 'text';
 }
 
+/** Where the attachments go in a new user message. */
+export interface UserMessageFragmentPlacement {
+  /** Group order, completed by `normalizeUserFragmentGroupsOrder`. */
+  order?: readonly unknown[] | null;
+  /** The first `{{attachments}}` in the prompt places them there instead. */
+  splitAtMarker?: boolean;
+}
+
 /**
  * Apply only when composing a NEW user message. Stored or edited sequences retain their explicit order.
- * With `splitAtMarker`, the first prompt line equal to the marker places the attachments (in preference order) there:
- * the prompt goes out as the text before and after it, the marker line dropped. No attachments: nothing is split.
+ * With `splitAtMarker`, the first marker in the prompt places the attachments (in preference order) there: the prompt
+ * goes out as the text before and after it, the marker dropped. No attachments: nothing is split.
  */
-export function orderedUserFragments<T extends DMessageFragment>(fragments: readonly T[], order?: readonly unknown[] | null, splitAtMarker?: boolean): (T | DMessageContentFragment)[] {
+export function orderedUserFragments<T extends DMessageFragment>(fragments: readonly T[], placement?: UserMessageFragmentPlacement | null): (T | DMessageContentFragment)[] {
   const groups: Record<UserMessageFragmentGroup, T[]> = { images: [], documents: [], text: [] };
   for (const fragment of fragments)
     groups[userFragmentGroup(fragment)].push(fragment);
-  const groupsOrder = normalizeUserFragmentGroupsOrder(order);
+  const groupsOrder = normalizeUserFragmentGroupsOrder(placement?.order);
 
-  if (splitAtMarker) {
+  if (placement?.splitAtMarker) {
     const attachments = groupsOrder.filter(group => group !== 'text').flatMap(group => groups[group]);
     const index = attachments.length ? groups.text.findIndex(_isUserPromptFragment) : -1;
     const prompt = index < 0 ? undefined : groups.text[index];
@@ -70,12 +78,11 @@ export function orderedUserFragments<T extends DMessageFragment>(fragments: read
   return groupsOrder.flatMap(group => groups[group]);
 }
 
-/** The text before and after the first line equal to the marker, trimmed at the cut; null without such a line. */
+/** The text before and after the first marker, trimmed at the cut; null without a marker. */
 function _splitAtMarker(text: string): { before: string, after: string } | null {
-  const lines = text.split('\n');
-  const index = lines.findIndex(line => line.trim() === USER_MESSAGE_ATTACHMENTS_MARKER);
+  const index = text.indexOf(USER_MESSAGE_ATTACHMENTS_MARKER);
   if (index < 0) return null;
-  return { before: lines.slice(0, index).join('\n').trimEnd(), after: lines.slice(index + 1).join('\n').trimStart() };
+  return { before: text.slice(0, index).trimEnd(), after: text.slice(index + USER_MESSAGE_ATTACHMENTS_MARKER.length).trimStart() };
 }
 
 

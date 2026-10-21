@@ -334,8 +334,7 @@ export function Composer(props: {
     const metadata = inReferenceTo?.length ? { inReferenceTo: inReferenceTo } : undefined;
 
     // send the message - NOTE: if successful, the ownership of the fragments is transferred to the receiver, so we just clear them
-    const { order, splitAtMarker } = getUserMessageFragmentPlacement();
-    const sortedUserFragments = orderedUserFragments(fragments, order, splitAtMarker);
+    const sortedUserFragments = orderedUserFragments(fragments, getUserMessageFragmentPlacement());
     const enqueued = onAction(targetConversationId, _chatExecuteMode, sortedUserFragments, metadata);
     if (enqueued)
       _handleClearText();

@@ -116,7 +116,7 @@ export function ChatMessageList(props: {
 
           // Create a User message with the prompt and the attachment fragments
           if (attachmentFragments.length) {
-            const sortedUserFragments = orderedUserFragments([createTextContentFragment(example.prompt), ...attachmentFragments], getUserMessageFragmentPlacement().order);
+            const sortedUserFragments = orderedUserFragments([createTextContentFragment(example.prompt), ...attachmentFragments], getUserMessageFragmentPlacement());
             conversationHandler.messageAppend(createDMessageFromFragments('user', sortedUserFragments)); // [chat] append user:persona question + attachment(s)
             await onConversationExecuteHistory(conversationId);
           }

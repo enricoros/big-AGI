@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { Is } from '~/common/util/pwaUtils';
-import { normalizeUserFragmentGroupsOrder, UserMessageFragmentGroup } from '~/common/stores/chat/chat.fragment-order';
+import { normalizeUserFragmentGroupsOrder, UserMessageFragmentGroup, UserMessageFragmentPlacement } from '~/common/stores/chat/chat.fragment-order';
 
 
 export type ChatAutoSpeakType = 'off' | 'firstLine' | 'all';
@@ -280,8 +280,8 @@ export const getChatThinkingPolicy = (): ChatThinkingPolicy =>
 export const getChatTokenCountingMethod = (): TokenCountingMethod =>
   useAppChatStore.getState().tokenCountingMethod;
 
-/** Where the attachments go in a new user message: the group order, and whether a `{{attachments}}` line places them. */
-export const getUserMessageFragmentPlacement = (): { order: readonly UserMessageFragmentGroup[] | undefined, splitAtMarker: boolean } => {
+/** Where the attachments go in a new user message: the group order, and whether a `{{attachments}}` marker places them. */
+export const getUserMessageFragmentPlacement = (): UserMessageFragmentPlacement => {
   const { userMessageFragmentOrder, userMessageAttachmentsMarker } = useAppChatStore.getState();
   return { order: userMessageFragmentOrder, splitAtMarker: !!userMessageAttachmentsMarker };
 };
