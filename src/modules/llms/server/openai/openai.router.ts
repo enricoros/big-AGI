@@ -447,10 +447,10 @@ export const llmOpenAIRouter = createTRPCRouter({
   dialectLocalAI_galleryModelsJob: edgeProcedure
     .input(z.object({
       access: openAIAccessSchema,
-      jobId: z.string(),
+      jobId: z.guid(), // LocalAI job uuid
     }))
     .query(async ({ input: { access, jobId } }) => {
-      const wireLocalAIModelsJobs = await openaiGETOrThrow(access, `/models/jobs/${jobId}`);
+      const wireLocalAIModelsJobs = await openaiGETOrThrow(access, `/models/jobs/${encodeURIComponent(jobId)}`);
       return wireLocalAIModelsListOutputSchema.parse(wireLocalAIModelsJobs);
     }),
 
