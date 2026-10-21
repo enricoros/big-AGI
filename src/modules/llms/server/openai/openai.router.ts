@@ -21,6 +21,37 @@ import { listModelsRunDispatch } from '../listModels.dispatch';
 import { OPENAI_API_PATHS, openAIAccess, openAIAccessSchema, OpenAIAccessSchema, OPENROUTER_API_PATHS } from './openai.access';
 
 
+/** Reads the response body up to maxBytes; returns null (and cancels the stream) if the body exceeds it. */
+async function _readBodyBytesCapped(response: Response, maxBytes: number): Promise<Uint8Array | null> {
+  if (!response.body)
+    return new Uint8Array(0);
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel().catch(() => {});
+        return null;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+}
+
+
 // Router Input/Output Schemas
 
 const listModelsInputSchema = z.object({
@@ -155,12 +186,13 @@ export const llmOpenAIRouter = createTRPCRouter({
       if (contentLength > MAX_FILE_BYTES)
         throw new Error(`File too large to download (${(contentLength / 1024 / 1024).toFixed(1)} MB, limit ${MAX_FILE_BYTES / 1024 / 1024} MB)`);
 
-      const arrayBuffer = await response.arrayBuffer();
-      if (arrayBuffer.byteLength > MAX_FILE_BYTES)
-        throw new Error(`File too large to download (${(arrayBuffer.byteLength / 1024 / 1024).toFixed(1)} MB, limit ${MAX_FILE_BYTES / 1024 / 1024} MB)`);
+      // stream the body and abort past the limit - Content-Length may be absent (chunked) or wrong
+      const bytes = await _readBodyBytesCapped(response, MAX_FILE_BYTES);
+      if (!bytes)
+        throw new Error(`File too large to download (over ${MAX_FILE_BYTES / 1024 / 1024} MB limit)`);
 
       return {
-        base64Data: convert_UInt8Array_To_Base64(new Uint8Array(arrayBuffer), 'llms.openai.fileDownload'),
+        base64Data: convert_UInt8Array_To_Base64(bytes, 'llms.openai.fileDownload'),
         mimeType: response.headers.get('content-type') || 'application/octet-stream',
       };
     }),
