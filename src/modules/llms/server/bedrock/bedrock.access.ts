@@ -27,7 +27,7 @@ import { LLM_APP_IDENTITY_HEADERS } from '../../shared/llm.appIdentity';
 
 // configuration
 const DEFAULT_BEDROCK_REGION = 'us-east-1'; // default region for Bedrock, used if not provided by client or env
-const AWS_REGION_REGEX = /^[a-z]{2}(-[a-z]+)+-\d+$/; // e.g. us-east-1, ap-southeast-2, us-gov-west-1
+const AWS_REGION_REGEX = /^[a-z]{2}(-[a-z]+)+-\d+$/i; // e.g. us-east-1, ap-southeast-2, us-gov-west-1 - any case: hostnames are case-insensitive
 
 
 // --- Schema ---
