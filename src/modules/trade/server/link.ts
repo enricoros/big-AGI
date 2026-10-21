@@ -1,4 +1,5 @@
 import * as z from 'zod/v4';
+import { TRPCError } from '@trpc/server';
 
 import { LinkStorageDataType, LinkStorageVisibility } from '@prisma/client';
 
@@ -10,6 +11,40 @@ import { agiUuid } from '~/common/util/idUtils';
 
 // configuration
 const DEFAULT_EXPIRES_SECONDS = 60 * 60 * 24 * 30; // 30 days
+const MIN_EXPIRES_SECONDS = 60 * 60; // 1 hour
+const MAX_EXPIRES_SECONDS = DEFAULT_EXPIRES_SECONDS;
+export const STORAGE_PUT_MAX_DATA_SIZE = 5 * 1024 * 1024; // 5 MB of serialized JSON
+const MAX_TITLE_LENGTH = 512;
+const PUT_RATE_LIMIT_MAX = 30; // puts per client per window
+const PUT_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const PUT_RATE_LIMIT_MAX_TRACKED = 10_000;
+
+
+/// Rate limiting (best-effort, in-memory, per server instance)
+
+const putRateLimits = new Map<string, { count: number, resetAt: number }>();
+
+function _consumePutRateLimit(clientKey: string): boolean {
+  const now = Date.now();
+
+  // prune expired windows, and hard-cap the tracked clients
+  if (putRateLimits.size >= PUT_RATE_LIMIT_MAX_TRACKED) {
+    for (const [key, entry] of putRateLimits)
+      if (entry.resetAt <= now) putRateLimits.delete(key);
+    if (putRateLimits.size >= PUT_RATE_LIMIT_MAX_TRACKED)
+      putRateLimits.clear();
+  }
+
+  const entry = putRateLimits.get(clientKey);
+  if (!entry || entry.resetAt <= now) {
+    putRateLimits.set(clientKey, { count: 1, resetAt: now + PUT_RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= PUT_RATE_LIMIT_MAX)
+    return false;
+  entry.count++;
+  return true;
+}
 
 
 /// Zod schemas
@@ -18,11 +53,11 @@ const dataTypesSchema = z.enum([LinkStorageDataType.CHAT_V1]);
 
 
 const storagePutInputSchema = z.object({
-  ownerId: z.string().optional(),
+  ownerId: z.string().max(128).optional(),
   dataType: dataTypesSchema,
   dataTitle: z.string().optional(),
   dataObject: z.any(), // was .passthrough()
-  expiresSeconds: z.number().optional(),
+  expiresSeconds: z.number().int().min(MIN_EXPIRES_SECONDS).max(MAX_EXPIRES_SECONDS).optional(),
 });
 
 export const storagePutOutputSchema = z.union([
@@ -99,9 +134,20 @@ export const storagePutProcedure =
   publicProcedure
     .input(storagePutInputSchema)
     .output(storagePutOutputSchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
 
-      const { ownerId, dataType, dataTitle, dataObject, expiresSeconds } = input;
+      const { ownerId, dataType, dataObject, expiresSeconds } = input;
+      const dataTitle = input.dataTitle?.slice(0, MAX_TITLE_LENGTH);
+
+      if (typeof dataObject !== 'object' || dataObject === null)
+        return { type: 'error', error: 'Invalid data' };
+
+      const dataSize = JSON.stringify(dataObject).length;
+      if (dataSize > STORAGE_PUT_MAX_DATA_SIZE)
+        return { type: 'error', error: `Data too large (max ${Math.round(STORAGE_PUT_MAX_DATA_SIZE / 1024 / 1024)} MB)` };
+
+      if (!_consumePutRateLimit(ctx.clientIp))
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Too many shared links created, please try again later.' });
 
       const { id: objectId, ...rest } = await prismaDb.linkStorage.create({
         select: {
@@ -117,11 +163,9 @@ export const storagePutProcedure =
           visibility: LinkStorageVisibility.UNLISTED,
           dataType,
           dataTitle,
-          dataSize: JSON.stringify(dataObject).length, // data size estimate
+          dataSize, // data size estimate
           data: dataObject,
-          expiresAt: expiresSeconds === 0
-            ? undefined // never expires
-            : new Date(Date.now() + 1000 * (expiresSeconds || DEFAULT_EXPIRES_SECONDS)), // default
+          expiresAt: new Date(Date.now() + 1000 * (expiresSeconds ?? DEFAULT_EXPIRES_SECONDS)), // always expires
           deletionKey: agiUuid('server-storage-deletion-key'),
           isDeleted: false,
         },

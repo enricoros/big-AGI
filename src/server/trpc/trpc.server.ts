@@ -34,8 +34,18 @@ export const createTRPCFetchContext = async ({ req }: FetchCreateContextFnOption
     hostName: req.headers?.get('host') ?? 'localhost',
     // enables cancelling upstream requests when the downstream request is aborted
     reqSignal: req.signal,
+    // best-effort client address (proxy-provided), used for per-client rate limiting
+    clientIp: _getClientIp(req.headers),
   };
 };
+
+
+function _getClientIp(headers: Headers | undefined): string {
+  const realIp = headers?.get('x-real-ip')?.trim();
+  if (realIp) return realIp;
+  const forwardedFor = headers?.get('x-forwarded-for')?.split(',')[0]?.trim();
+  return forwardedFor || 'unknown';
+}
 
 
 /**
