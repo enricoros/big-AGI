@@ -38,12 +38,17 @@ Host data (tool names, the visibility predicate, the options switch) goes throug
 
 ## Open work
 
-1. **Attachments editor**: one mixed DnD list for `edit-attachments` (images and documents, cross-kind reorder). Today the renderer splits the node into per-kind rows and reorders within a row.
-2. **Edit session**: a working copy of the fragments held outside the component (per-chat overlay store keyed by message id) so an edit survives pane switches; Cancel reverts attachment deletes and reorders (today they write to the store immediately); Save applies atomically to the owner with a changed-underneath check; an insertion anchor for new attachments. The logic is renderer-independent; only the anchor UI touches the attachment rows.
-3. **Block reordering**: move whole nodes (a reasoning run, a text run, an attachment group).
-4. **Citation-split text**: when AIX emits per-block citations, set `joined` on the text run the builder hoisted a citation from, and render it as one flow (`''` join); inline edits stay edit-mode-only for joined nodes.
-5. **Placeholder transparency** uses "not a notice" as a proxy for transient; a producer-set flag would be the proper signal.
-6. **One-container layout** would need `width: fit-content; max-width: 100%` on the block containers; separate layout pass.
+By priority (P0 foundation, P3 waits on other work):
+
+- [ ] P0 Edit session: a working copy of the fragments inside `ChatMessage`; Cancel atomic (text, deletes, reorders, new attachments); Apply in one write with a changed-underneath check offering Overwrite or Discard; ready drafts enter the copy at the attachment group, drafts still converting at Apply are dropped; the copy's blobs are GC-protected until Apply or Cancel. Foundation for the attachments editor and block reordering. Edits do not survive unmount.
+- [ ] P0 Attachments editor: one mixed list for `edit-attachments` (images and documents, cross-kind reorder); new attachments enter the last attachment group rather than the message tail.
+- [ ] P1 Attachment marker: with the Chat preference on (checkbox below the order rows in the attachments menu, stored beside the order), `{{attachments}}` alone on a line of the prompt places the attachments there at send: the text goes out as two fragments around them, the marker line dropped. Without the preference or the marker, the order preference applies as today. Composer-side, no dependency on the session.
+- [ ] P1 Block reordering: move nodes of user and system messages (text, attachment groups, leaves) with a left-gutter handle; assistant messages after checking provider replay constraints (thinking before tool use).
+- [ ] P1 Reorder callback: drop `onMessageFragmentsReorder` from `ChatMessage` and `ChatMessageList` once the session carries reorders; the store action later, after checking dev's history for other users.
+- [ ] P2 Composer attachment menu: restore "What can I do?" (commented out in `ComposerAttachmentDraftsList`) with neutral styling.
+- [ ] P2 Placeholder transparency: group content according to whether placeholders are transient (producer-set flag; today "not a notice" stands in).
+- [ ] P2 Layout: one container for text-like nodes and attachment rows (`width: fit-content; max-width: 100%` on block containers), preserving role alignment and responsive attachment rows.
+- [ ] P3 Citation-split text: read as one flow while retaining safe fragment-level editing; waits for AIX per-block citations.
 
 ## Known limits
 
