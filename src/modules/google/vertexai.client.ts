@@ -66,27 +66,8 @@ export async function vertexLinksResolveFragments(fragments: readonly DMessageFr
   const redirectUrls = Array.from(_collectRedirectUrls(fragments));
   if (!redirectUrls.length) return { status: 'none' };
 
-  // batch-resolve on the server - the redirect host sends no CORS headers, so the browser cannot follow the 302s itself
-  const resolvedMap = new Map<string, string>();
-  const timeoutController = new AbortController();
-  const timeout = setTimeout(() => timeoutController.abort(), timeoutMs);
-  try {
-    const chunks: string[][] = [];
-    for (let i = 0; i < redirectUrls.length; i += MAX_URLS_PER_CALL)
-      chunks.push(redirectUrls.slice(i, i + MAX_URLS_PER_CALL));
-    const responses = await Promise.all(chunks.map(urls =>
-      apiAsync.googleSearch.resolveGroundingRedirects.mutate({ urls }, { signal: timeoutController.signal }),
-    ));
-    for (const { resolutions } of responses)
-      for (const { url, resolved } of resolutions)
-        if (resolved)
-          resolvedMap.set(url, resolved);
-  } catch (error) {
-    console.warn('[DEV] vertexLinksResolveFragments: resolution failed', { error });
-    return { status: 'failed' };
-  } finally {
-    clearTimeout(timeout);
-  }
+  const resolvedMap = await vertexLinksResolveUrls(redirectUrls, timeoutMs);
+  if (!resolvedMap) return { status: 'failed' };
   // links present but none came back resolved: the redirect host no longer 302s, typically expiry
   if (!resolvedMap.size) return { status: 'unresolved' };
 
@@ -122,6 +103,33 @@ export async function vertexLinksResolveFragments(fragments: readonly DMessageFr
   });
 
   return { status: 'resolved', resolution: { newFragments, changedFragments } };
+}
+
+
+/** Shared by saved-message resolution and live status displays. Null means the request failed; an empty map means no links resolved. */
+export async function vertexLinksResolveUrls(redirectUrls: readonly string[], timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<Map<string, string> | null> {
+  // The redirect host sends no CORS headers, so the browser cannot read the redirects itself.
+  const resolvedMap = new Map<string, string>();
+  const timeoutController = new AbortController();
+  const timeout = setTimeout(() => timeoutController.abort(), timeoutMs);
+  try {
+    const chunks: string[][] = [];
+    for (let i = 0; i < redirectUrls.length; i += MAX_URLS_PER_CALL)
+      chunks.push(redirectUrls.slice(i, i + MAX_URLS_PER_CALL));
+    const responses = await Promise.all(chunks.map(urls =>
+      apiAsync.googleSearch.resolveGroundingRedirects.mutate({ urls }, { signal: timeoutController.signal }),
+    ));
+    for (const { resolutions } of responses)
+      for (const { url, resolved } of resolutions)
+        if (resolved)
+          resolvedMap.set(url, resolved);
+    return resolvedMap;
+  } catch (error) {
+    console.warn('[DEV] vertexLinksResolveUrls: resolution failed', { error });
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 

@@ -6,7 +6,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { DModelDomainId } from '~/common/stores/llms/model.domains.types';
-import { AIVndAntInlineFilesPolicy, useAIPreferencesStore } from '~/common/stores/store-ai';
+import { AIVndAntInlineFilesPolicy, AIVndGeminiVertexLinksPolicy, useAIPreferencesStore } from '~/common/stores/store-ai';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSelectControl, FormSelectOption } from '~/common/components/forms/FormSelectControl';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
@@ -39,6 +39,11 @@ const _vndAntInlineFilesOptions: FormSelectOption<AIVndAntInlineFilesPolicy>[] =
   { value: 'inline-file', label: 'Embed', description: 'Default, embed in chat' },
   { value: 'inline-file-and-delete', label: 'Embed + Free', description: 'Embed, then free' },
   { value: 'discard', label: 'Discard', description: 'Free, never embed' },
+] as const;
+
+const _vndGeminiVertexLinksOptions: FormSelectOption<AIVndGeminiVertexLinksPolicy>[] = [
+  { value: 'as-is', label: 'As-Is', description: 'Keep redirect URLs' },
+  { value: 'resolve', label: 'Resolve', description: 'Show destination URLs' },
 ] as const;
 
 const _tokenCountingMethodOptions: FormSelectOption<TokenCountingMethod>[] = [
@@ -96,6 +101,7 @@ export function AppChatSettingsAI() {
     tokenCountingMethod, setTokenCountingMethod,
   } = useChatAutoAI();
   const vndAntInlineFiles = useAIPreferencesStore(state => state.vndAntInlineFiles);
+  const vndGeminiVertexLinks = useAIPreferencesStore(state => state.vndGeminiVertexLinks);
 
   const showModelIcons = false; // useUIComplexityMode() === 'extra';
 
@@ -182,6 +188,14 @@ export function AppChatSettingsAI() {
       options={_vndAntInlineFilesOptions}
       value={vndAntInlineFiles}
       onChange={useAIPreferencesStore.getState().setVndAntInlineFiles}
+    />
+
+    <FormSelectControl<AIVndGeminiVertexLinksPolicy>
+      title='Vertex AI Links'
+      tooltip='Resolve Google redirect links in live search steps and save destination URLs when a message completes. Sends requests to Google’s redirect service. Failed or expired links stay unchanged.'
+      options={_vndGeminiVertexLinksOptions}
+      value={vndGeminiVertexLinks}
+      onChange={useAIPreferencesStore.getState().setVndGeminiVertexLinks}
     />
 
     <ListDivider inset='gutter'>Automatic AI Functions</ListDivider>
