@@ -170,23 +170,34 @@ export class ConversationHandler {
     void gcChatImageAssets(); // fire/forget
   }
 
+  // per-fragment writes, for programmatic edits (also on pending messages); user edits go through messageFragmentsReplace
+
   messageFragmentAppend(messageId: string, fragment: DMessageFragment, complete: boolean, touch: boolean) {
-    _chatStoreActions.appendMessageFragment(this.conversationId, messageId, fragment, complete, touch);
+    this.messageEdit(messageId, message => ({ fragments: [...message.fragments, fragment] }), complete, touch);
   }
 
   messageFragmentDelete(messageId: string, fragmentId: string, complete: boolean, touch: boolean) {
-    _chatStoreActions.deleteMessageFragment(this.conversationId, messageId, fragmentId, complete, touch);
+    this.messageEdit(messageId, message => ({ fragments: message.fragments.filter(f => f.fId !== fragmentId) }), complete, touch);
   }
 
   messageFragmentReplace(messageId: string, fragmentId: string, newFragment: DMessageFragment, messageComplete: boolean) {
-    _chatStoreActions.replaceMessageFragment(this.conversationId, messageId, fragmentId, newFragment, messageComplete, true);
+    this.messageEdit(messageId, message => {
+      const fragmentIndex = message.fragments.findIndex(f => f.fId === fragmentId);
+      if (fragmentIndex < 0) {
+        console.error(`replaceFragment: fragment not found for ID ${fragmentId}`);
+        return {};
+      }
+      // a new object, in case the contents changed but not the object reference
+      return { fragments: message.fragments.map((f, index) => index === fragmentIndex ? { ...newFragment } : f) };
+    }, messageComplete, true);
   }
 
   /** Replaces all the fragments in one write; nothing while the message is missing or generating. */
   messageFragmentsReplace(messageId: DMessageId, fragments: DMessageFragment[]) {
     const message = _chatStoreActions.historyView(this.conversationId)?.find(m => m.id === messageId);
     if (!message || message.pendingIncomplete) return;
-    _chatStoreActions.editMessage(this.conversationId, messageId, { fragments }, false, true);
+    // removePendingState: a no-op past the guard above, and it marks the write final for persistence
+    _chatStoreActions.editMessage(this.conversationId, messageId, { fragments }, true, true);
 
     // GC the images the replacement dropped
     const keptIds = new Set<DBlobAssetId>(), priorIds = new Set<DBlobAssetId>();

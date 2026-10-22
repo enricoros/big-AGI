@@ -890,23 +890,13 @@ export function isUnstampedFragment(fragment: Immutable<DMessageFragment>): bool
   return !('originId' in fragment && fragment.originId);
 }
 
-export function reorderFragments<T extends DMessageFragment>(unsortedFragments: ReadonlyArray<T>, reorderedIds: DMessageFragmentId[], _placement: 'end'): T[] {
-
-  // quick lookup map
-  const fragmentMap = new Map<DMessageFragmentId, T>();
-  unsortedFragments.forEach(fragment => fragmentMap.set(fragment.fId, fragment));
-
-  // ensure existance in the new order
-  reorderedIds = reorderedIds.filter(id => fragmentMap.has(id));
-
-  // fragments not in the reordering operation
-  const remainingFragments = unsortedFragments.filter(({ fId }) => !reorderedIds.includes(fId));
-
-  // 1. prepend the remaining fragments, 2. then the reordered fragments
-  return [
-    ...remainingFragments,
-    ...reorderedIds.map(id => fragmentMap.get(id)!),
-  ];
+/** Moves only the listed fragments, into the slots they held; the rest keep theirs. A stale list changes nothing. */
+export function reorderFragmentsInSlots<T extends Pick<DMessageFragment, 'fId'>>(fragments: ReadonlyArray<T>, orderedIds: ReadonlyArray<DMessageFragmentId>): ReadonlyArray<T> {
+  const byId = new Map(fragments.map(fragment => [fragment.fId, fragment] as const));
+  const ordered = orderedIds.flatMap(id => byId.get(id) ?? []);
+  if (ordered.length !== orderedIds.length || new Set(orderedIds).size !== orderedIds.length) return fragments;
+  let next = 0;
+  return fragments.map(fragment => orderedIds.includes(fragment.fId) ? ordered[next++] : fragment);
 }
 
 export function splitFragmentsByType(fragments: DMessageFragment[]) {

@@ -6,7 +6,7 @@ import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { abortWithReason } from '~/common/util/errorUtils';
 import { agiUuid } from '~/common/util/idUtils';
 import { createDMessageEmpty, DMessage, duplicateDMessage, messageSetGeneratorNamed, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
-import { createPlaceholderVoidFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
+import { createPlaceholderVoidFragment, DMessageFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getVndOaiBeamSandbox } from '~/common/stores/store-ai';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
@@ -214,8 +214,6 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
   rayReattach: (rayId: BRayId, mode: AixReattachMode) => void;
   rayClearUpstreamHandle: (rayId: BRayId) => void;
   raySetLlmId: (rayId: BRayId, llmId: DLLMId | null) => void;
-  rayDeleteFragment: (rayId: BRayId, fragmentId: DMessageFragmentId) => void;
-  rayReplaceFragment: (rayId: BRayId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void;
   rayReplaceFragments: (rayId: BRayId, fragments: DMessageFragment[]) => void;
   _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => void;
 
@@ -417,46 +415,6 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
     });
     _storeLastScatterConfig();
   },
-
-  rayDeleteFragment: (rayId: BRayId, fragmentId: DMessageFragmentId) =>
-    _get()._rayUpdate(rayId, (ray) => {
-      // Find the fragment to delete
-      const fragmentIndex = ray.message.fragments.findIndex(f => f.fId === fragmentId);
-      if (fragmentIndex < 0) {
-        console.error(`rayDeleteFragment: Fragment not found for ID ${fragmentId} in ray ${rayId}`);
-        return {};
-      }
-
-      return {
-        message: {
-          ...ray.message,
-          fragments: ray.message.fragments.filter((_, index) => index !== fragmentIndex),
-          updated: Date.now(),
-        },
-      };
-    }),
-
-  rayReplaceFragment: (rayId: BRayId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) =>
-    _get()._rayUpdate(rayId, (ray) => {
-      // Find the fragment to replace
-      const fragmentIndex = ray.message.fragments.findIndex(f => f.fId === fragmentId);
-      if (fragmentIndex < 0) {
-        console.error(`rayReplaceFragment: Fragment not found for ID ${fragmentId} in ray ${rayId}`);
-        return {};
-      }
-
-      return {
-        message: {
-          ...ray.message,
-          fragments: ray.message.fragments.map((fragment, index) =>
-            (index === fragmentIndex)
-              ? { ...newFragment }
-              : fragment,
-          ),
-          updated: Date.now(),
-        },
-      };
-    }),
 
   rayReplaceFragments: (rayId: BRayId, fragments: DMessageFragment[]) =>
     _get()._rayUpdate(rayId, (ray) => ({

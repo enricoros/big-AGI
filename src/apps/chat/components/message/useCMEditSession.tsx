@@ -15,12 +15,13 @@ import { getUserMessageFragmentPlacement } from '../../store-app-chat';
 
 type CMEditFragments = Immutable<DMessageFragment[]>;
 
-/** The host calls that store an edit: one replace, else per fragment. */
-interface CMEditHost {
-  onMessageFragmentsReplace?: (messageId: DMessageId, fragments: DMessageFragment[]) => void;
-  onMessageFragmentAppend?: (messageId: DMessageId, fragment: DMessageFragment) => void;
-  onMessageFragmentDelete?: (messageId: DMessageId, fragmentId: DMessageFragmentId) => void;
-  onMessageFragmentReplace?: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void;
+/** The host's one write: all the fragments of a message. A host without it is read-only. */
+type CMFragmentsReplace = (messageId: DMessageId, fragments: DMessageFragment[]) => void;
+
+/** Single-fragment calls for view-mode operations, derived from the one write. */
+interface CMFragmentCalls {
+  onMessageFragmentDelete: (messageId: DMessageId, fragmentId: DMessageFragmentId) => void;
+  onMessageFragmentReplace: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void;
 }
 
 type CMEditSession = {
@@ -38,9 +39,7 @@ const _isDraftsBusy = (state: AttachmentsDraftsStore) => state.attachmentDrafts.
  * edit returns a new array that keeps the untouched fragment objects. Done writes the copy over the message; Cancel
  * confirms when edited. The session owns its attachment drafts store. No effects: a pending flip ends it during render.
  */
-export function useCMEditSession(messageId: DMessageId, messageFragments: CMEditFragments, messagePendingIncomplete: boolean, host: CMEditHost) {
-
-  const { onMessageFragmentsReplace, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace } = host;
+export function useCMEditSession(messageId: DMessageId, messageFragments: CMEditFragments, messagePendingIncomplete: boolean, onMessageFragmentsReplace: CMFragmentsReplace | undefined) {
 
   // state
   const [session, setSession] = React.useState<CMEditSession | null>(null);
@@ -100,28 +99,17 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
     setSession(null);
     if (!current.editable && !drafts.length) return true;
 
-    // new attachments join the attachment group; the per-fragment calls can only append
+    // new attachments join the attachment group
     let editable = current.editable ?? messageFragments;
     if (drafts.length) {
-      const index = onMessageFragmentsReplace ? _attachmentGroupIndex(editable, drafts[0]) : editable.length;
+      const index = _attachmentGroupIndex(editable, drafts[0]);
       editable = [...editable.slice(0, index), ...drafts, ...editable.slice(index)];
     }
 
     // store, overwriting the message: empty text is dropped
-    const fragments = editable.filter(fragment => !isTextContentFragment(fragment) || !!fragment.part.text);
-    if (onMessageFragmentsReplace)
-      onMessageFragmentsReplace(messageId, fragments);
-    else {
-      const keptIds = new Set(fragments.map(fragment => fragment.fId));
-      const storedIds = new Set(messageFragments.map(fragment => fragment.fId));
-      for (const { fId } of messageFragments)
-        if (!keptIds.has(fId)) onMessageFragmentDelete?.(messageId, fId);
-      for (const fragment of fragments)
-        if (!storedIds.has(fragment.fId)) onMessageFragmentAppend?.(messageId, fragment);
-        else if (!messageFragments.includes(fragment)) onMessageFragmentReplace?.(messageId, fragment.fId, fragment);
-    }
+    onMessageFragmentsReplace?.(messageId, editable.filter(fragment => !isTextContentFragment(fragment) || !!fragment.part.text));
     return true;
-  }, [draftsBusy, messageFragments, messageId, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace, onMessageFragmentsReplace]);
+  }, [draftsBusy, messageFragments, messageId, onMessageFragmentsReplace]);
 
 
   // the fragments the copy changed or added, by id: their editors count as edited (save shortcuts)
@@ -138,15 +126,14 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
 
 
 /**
- * The per-fragment host calls, derived from `onMessageFragmentsReplace` when the host has it (else the host's own):
- * each call is one write of the whole message, and calls within one event (reasoning to text, link resolution) chain.
+ * The single-fragment calls, derived from `onMessageFragmentsReplace`; none without it (read-only). Each call is one
+ * write of the whole message, and calls within one event (reasoning to text, link resolution) chain.
  */
-export function useCMHostFragmentCalls(messageRef: { readonly current: Immutable<Pick<DMessage, 'fragments'>> }, host: CMEditHost): Omit<CMEditHost, 'onMessageFragmentsReplace'> {
-  const { onMessageFragmentsReplace, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace } = host;
+export function useCMHostFragmentCalls(messageRef: { readonly current: Immutable<Pick<DMessage, 'fragments'>> }, onMessageFragmentsReplace: CMFragmentsReplace | undefined): Partial<CMFragmentCalls> {
   const lastWriteRef = React.useRef<{ stored: CMEditFragments, written: CMEditFragments } | null>(null);
   return React.useMemo(() => {
     if (!onMessageFragmentsReplace)
-      return { onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace };
+      return {};
     const write = (messageId: DMessageId, edit: (fragments: CMEditFragments) => CMEditFragments) => {
       const stored = messageRef.current.fragments;
       const last = lastWriteRef.current;
@@ -155,22 +142,12 @@ export function useCMHostFragmentCalls(messageRef: { readonly current: Immutable
       onMessageFragmentsReplace(messageId, [...written]);
     };
     return {
-      onMessageFragmentAppend: (messageId, fragment) => write(messageId, fragments => [...fragments, fragment]),
       onMessageFragmentDelete: (messageId, fragmentId) => write(messageId, fragments => fragments.filter(f => f.fId !== fragmentId)),
       onMessageFragmentReplace: (messageId, fragmentId, newFragment) => write(messageId, fragments => fragments.map(f => f.fId === fragmentId ? newFragment : f)),
     };
-  }, [messageRef, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace, onMessageFragmentsReplace]);
+  }, [messageRef, onMessageFragmentsReplace]);
 }
 
-
-/** Moves only the listed fragments, into the slots they held; the rest keep theirs. A stale list changes nothing. */
-export function cmEditReorder(fragments: CMEditFragments, orderedIds: readonly DMessageFragmentId[]): CMEditFragments {
-  const byId = new Map(fragments.map(fragment => [fragment.fId, fragment] as const));
-  const ordered = orderedIds.flatMap(id => byId.get(id) ?? []);
-  if (ordered.length !== orderedIds.length || new Set(orderedIds).size !== orderedIds.length) return fragments;
-  let next = 0;
-  return fragments.map(fragment => orderedIds.includes(fragment.fId) ? ordered[next++] : fragment);
-}
 
 /** After the last attachment; without one, before the first user text when the composer's group order puts `inserted` first, else the end. */
 function _attachmentGroupIndex(fragments: CMEditFragments, inserted: Immutable<DMessageFragment>): number {

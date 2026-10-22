@@ -14,7 +14,7 @@ import { workspaceActions } from '~/common/stores/workspace/store-client-workspa
 import { workspaceForConversationIdentity } from '~/common/stores/workspace/workspace.types';
 
 import { DMessage, DMessageId, DMessageMetadata, MESSAGE_FLAG_AIX_SKIP, messageHasUserFlag } from './chat.message';
-import { DMessageFragment, DMessageFragmentId, isVoidThinkingFragment } from './chat.fragments';
+import { isVoidThinkingFragment } from './chat.fragments';
 import { V3StoreDataToHead, V4ToHeadConverters } from './chats.converters';
 import { conversationTitle, createDConversation, DConversation, DConversationId, duplicateDConversation } from './chat.conversation';
 import { estimateTokensForFragments } from './chat.tokens';
@@ -46,9 +46,6 @@ export interface ChatActions {
   appendMessage: (cId: DConversationId, message: DMessage) => void;
   deleteMessage: (cId: DConversationId, mId: DMessageId) => void;
   editMessage: (cId: DConversationId, mId: DMessageId, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), removePendingState: boolean, touchUpdated: boolean) => void;
-  appendMessageFragment: (cId: DConversationId, mId: DMessageId, fragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) => void;
-  deleteMessageFragment: (cId: DConversationId, mId: DMessageId, fId: DMessageFragmentId, removePendingState: boolean, touchUpdated: boolean) => void;
-  replaceMessageFragment: (cId: DConversationId, mId: DMessageId, fId: DMessageFragmentId, newFragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) => void;
   updateMetadata: (cId: DConversationId, mId: DMessageId, metadataDelta: Partial<DMessageMetadata>, touchUpdated?: boolean) => void;
   setSystemPurposeId: (cId: DConversationId, personaId: SystemPurposeId) => void;
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
@@ -352,41 +349,6 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           };
         }),
 
-
-      appendMessageFragment: (conversationId: DConversationId, messageId: DMessageId, fragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) => {
-        _get().editMessage(conversationId, messageId, message => ({
-          fragments: [...message.fragments, fragment],
-        }), removePendingState, touchUpdated);
-
-        // [workspace]
-        // Note: in the future when we have side-effect appends (e.g. new Attachment/Docs/Etc) we may
-        // need implementation of the fragment methods here
-      },
-
-      deleteMessageFragment: (conversationId: DConversationId, messageId: DMessageId, fragmentId: DMessageFragmentId, removePendingState: boolean, touchUpdated: boolean) =>
-        _get().editMessage(conversationId, messageId, message => ({
-          fragments: message.fragments.filter(f => f.fId !== fragmentId),
-        }), removePendingState, touchUpdated),
-
-      replaceMessageFragment: (conversationId: DConversationId, messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment, removePendingState: boolean, touchUpdated: boolean) =>
-        _get().editMessage(conversationId, messageId, message => {
-
-          // Warn if the fragment is not found
-          const fragmentIndex = message.fragments.findIndex(f => f.fId === fragmentId);
-          if (fragmentIndex < 0) {
-            console.error(`replaceFragment: fragment not found for ID ${fragmentId}`);
-            return {};
-          }
-
-          // Replace the fragment
-          return {
-            fragments: message.fragments.map((fragment, index) =>
-              (index === fragmentIndex)
-                ? { ...newFragment } // force the object tree to change, just in case the contents changed but not the object reference
-                : fragment,
-            ),
-          };
-        }, removePendingState, touchUpdated),
 
       updateMetadata: (conversationId: DConversationId, messageId: DMessageId, metadataDelta: Partial<DMessageMetadata>, touchUpdated: boolean = true) => {
         _get()._editConversation(conversationId, conversation => {

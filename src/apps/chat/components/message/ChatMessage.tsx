@@ -21,7 +21,7 @@ import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
 import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isTextContentFragment, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isTextContentFragment, reorderFragmentsInSlots, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { findFirstUserPromptFragment } from '~/common/stores/chat/chat.fragment-order';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
@@ -39,7 +39,7 @@ import type { CMBuildOptions } from './render-tree/cmRenderTree.build';
 import { CMRenderTreeNodes } from './render-tree/CMRenderTreeNodes';
 import { InReferenceToList } from './in-reference-to/InReferenceToList';
 import { useCMRenderTree } from './render-tree/useCMRenderTree';
-import { cmEditReorder, useCMEditSession, useCMHostFragmentCalls } from './useCMEditSession';
+import { useCMEditSession, useCMHostFragmentCalls } from './useCMEditSession';
 import { messageAsideColumnSx, messageAvatarLabelAnimatedSx, messageAvatarLabelSx, messageEditBeamControlsTopSx, messageMobileHeaderSx, messageZenAsideColumnSx } from './ChatMessage.styles';
 import { useSelHighlighterMemo } from './useSelHighlighterMemo';
 
@@ -338,10 +338,7 @@ export function ChatMessage(props: {
   onMessageUpstreamDelete?: (generator: DMessageGenerator, messageId: string) => Promise<void>,
   upstreamResumeMode?: AixReattachMode, // set by parent while a resume is in flight on this message
   onMessageDelete?: (messageId: string) => void,
-  onMessageFragmentAppend?: (messageId: DMessageId, fragment: DMessageFragment) => void
-  onMessageFragmentDelete?: (messageId: DMessageId, fragmentId: DMessageFragmentId) => void,
-  onMessageFragmentReplace?: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void,
-  onMessageFragmentsReplace?: (messageId: DMessageId, fragments: DMessageFragment[]) => void, // one write per edit; the per-fragment calls above are for hosts without it
+  onMessageFragmentsReplace?: (messageId: DMessageId, fragments: DMessageFragment[]) => void, // the one write, per edit or single operation; without it the message is read-only
   onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag, maxPerConversation?: number) => void,
   onMessageTruncate?: (messageId: string) => void,
   onReattachAsFile?: (file: File) => void,
@@ -407,11 +404,12 @@ export function ChatMessage(props: {
   const isVndAndCacheUser = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_USER);
 
   // Text editing state (handlers below): a working copy of the fragments, shown by the render tree in edit mode
-  const { onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace } = useCMHostFragmentCalls(messageRef, props);
+  const { onMessageFragmentsReplace } = props;
+  const { onMessageFragmentDelete, onMessageFragmentReplace } = useCMHostFragmentCalls(messageRef, onMessageFragmentsReplace);
   const { editable: editableFragments, editedFragmentIds, drafts: editDrafts, draftsBusy, update: editFragments, apply: editApply, begin: handleEditsBegin, cancel: handleEditsCancel } =
-    useCMEditSession(messageId, messageFragments, !!messagePendingIncomplete, props);
+    useCMEditSession(messageId, messageFragments, !!messagePendingIncomplete, onMessageFragmentsReplace);
   const isEditingText = !!editableFragments;
-  const canEditText = !!onMessageFragmentReplace && !messagePendingIncomplete;
+  const canEditText = !!onMessageFragmentsReplace && !messagePendingIncomplete;
 
   // Options interceptor: a trailing option list on the last text block becomes continuation buttons
   const lookForOptions = props.onMessageContinue !== undefined && props.isBottom === true && !msgGenOutOfTokens && fromAssistant && !messagePendingIncomplete && !isEditingText && uiComplexityMode !== 'minimal' && false;
@@ -451,7 +449,7 @@ export function ChatMessage(props: {
   // const wordsDiff = useWordsDifference(textSubject, props.diffPreviousText, showDiff);
 
 
-  const { onMessageAssistantFrom, onMessageDelete, onMessageFragmentsReplace, onMessageContinue, onMessageToggleUserFlag, onMessageUpstreamResume, onMessageUpstreamDetach, onMessageUpstreamDelete } = props;
+  const { onMessageAssistantFrom, onMessageDelete, onMessageContinue, onMessageToggleUserFlag, onMessageUpstreamResume, onMessageUpstreamDetach, onMessageUpstreamDelete } = props;
 
   const handleFragmentNew = React.useCallback(() => {
     editFragments(fragments => [...fragments, createTextContentFragment('')]);
@@ -468,7 +466,7 @@ export function ChatMessage(props: {
   }, [editFragments, isEditingText, messageId, onMessageFragmentReplace]);
 
   const handleFragmentsReorder = React.useCallback((reorderedIds: DMessageFragmentId[]) => {
-    editFragments(fragments => cmEditReorder(fragments, reorderedIds));
+    editFragments(fragments => reorderFragmentsInSlots(fragments, reorderedIds));
   }, [editFragments]);
 
   const handleResolveVertexLinks = React.useCallback(async () => {
@@ -757,18 +755,18 @@ export function ChatMessage(props: {
   // Expose actions handle for parent components
   React.useImperativeHandle(props.actionsRef, () => ({
     beginEditTextContent: () => {
-      if (!isEditingText && onMessageFragmentReplace && !messagePendingIncomplete)
+      if (!isEditingText && onMessageFragmentsReplace && !messagePendingIncomplete)
         handleEditsBegin();
     },
-  }), [handleEditsBegin, isEditingText, messagePendingIncomplete, onMessageFragmentReplace]);
+  }), [handleEditsBegin, isEditingText, messagePendingIncomplete, onMessageFragmentsReplace]);
 
 
   // Blocks renderer
 
   const handleBlocksDoubleClick = React.useCallback((event: React.MouseEvent) => {
-    if ((doubleClickToEdit || event.shiftKey) && onMessageFragmentReplace)
+    if ((doubleClickToEdit || event.shiftKey) && onMessageFragmentsReplace)
       handleOpsMessageEditToggle(event);
-  }, [doubleClickToEdit, handleOpsMessageEditToggle, onMessageFragmentReplace]);
+  }, [doubleClickToEdit, handleOpsMessageEditToggle, onMessageFragmentsReplace]);
 
   const handleBlocksMouseUp = React.useCallback((event: React.MouseEvent) => {
     // https://github.com/enricoros/big-AGI/issues/788
@@ -985,7 +983,7 @@ export function ChatMessage(props: {
             tree={renderTree}
             inFluxFragmentId={inFluxFragmentId}
             showEmptyNotice={!messageFragments.length && !messagePendingIncomplete}
-            showAddText={isEditingText && !!onMessageFragmentAppend && !editableFragments?.some(isTextContentFragment)}
+            showAddText={isEditingText && !!onMessageFragmentsReplace && !editableFragments?.some(isTextContentFragment)}
 
             contentScaling={adjContentScaling}
             uiComplexityMode={uiComplexityMode}
@@ -1004,18 +1002,18 @@ export function ChatMessage(props: {
             onEditsApply={handleApplyAllEdits}
             onEditsCancel={handleEditsCancel}
 
-            onFragmentAddBlank={!onMessageFragmentAppend ? undefined : handleFragmentNew}
-            onFragmentDelete={!onMessageFragmentDelete ? undefined : handleFragmentDelete}
-            onFragmentReplace={!onMessageFragmentReplace ? undefined : handleFragmentReplace}
+            onFragmentAddBlank={!onMessageFragmentsReplace ? undefined : handleFragmentNew}
+            onFragmentDelete={!onMessageFragmentsReplace ? undefined : handleFragmentDelete}
+            onFragmentReplace={!onMessageFragmentsReplace ? undefined : handleFragmentReplace}
             onFragmentsReorder={!onMessageFragmentsReplace ? undefined : handleFragmentsReorder}
             onMessageDelete={!onMessageDelete ? undefined : handleMessageDelete}
 
-            onDoubleClick={(onMessageFragmentReplace /*&& doubleClickToEdit disabled, as we may have shift too */) ? handleBlocksDoubleClick : undefined}
+            onDoubleClick={(onMessageFragmentsReplace /*&& doubleClickToEdit disabled, as we may have shift too */) ? handleBlocksDoubleClick : undefined}
             onReattachAsFile={props.onReattachAsFile}
           />
 
           {/* [#1114] Resolve Vertex AI grounding redirect links in place */}
-          {vertexLinksCount >= 1 && !messagePendingIncomplete && !isEditingText && !!onMessageFragmentReplace && (
+          {vertexLinksCount >= 1 && !messagePendingIncomplete && !isEditingText && !!onMessageFragmentsReplace && (
             <BlockOpResolveLinks
               contentScaling={adjContentScaling}
               linksCount={vertexLinksCount}
@@ -1024,7 +1022,7 @@ export function ChatMessage(props: {
           )}
 
           {/* [Edit Mode] Add new attachments */}
-          {!!editDrafts && !fromAssistant && !!onMessageFragmentAppend && (
+          {!!editDrafts && !fromAssistant && !!onMessageFragmentsReplace && (
             <ChatMessageEditAttachments
               attachmentDraftsStoreApi={editDrafts}
               isMobile={props.isMobile}
@@ -1138,7 +1136,7 @@ export function ChatMessage(props: {
           onOpsBeamFrom={!onMessageBeam ? undefined : handleOpsBeamFrom}
           onOpsBranchFrom={!onMessageBranch ? undefined : handleOpsBranchFrom}
           onOpsMessageCopySrc={handleOpsMessageCopySrc}
-          onOpsMessageEditToggle={!onMessageFragmentReplace ? undefined : handleOpsMessageEditToggle}
+          onOpsMessageEditToggle={!onMessageFragmentsReplace ? undefined : handleOpsMessageEditToggle}
           onOpsMessageTruncate={!onMessageTruncate ? undefined : handleOpsMessageTruncate}
           onOpsMessageViewToggle={!fromUser ? undefined : handleOpsMessageViewToggle}
           onOpsShowInfo={handleOpsShowInfo}

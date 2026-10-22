@@ -3,7 +3,7 @@ import { createStore as createVanillaStore, StateCreator } from 'zustand/vanilla
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
-import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
 import { llmsHeuristicGetTopDiverseLlmIds } from '~/common/stores/llms/store-llms-domains_slice';
 
 import { BeamConfigSnapshot, useModuleBeamStore } from './store-module-beam';
@@ -62,7 +62,6 @@ export interface RootStoreSlice extends RootStateSlice {
   loadBeamConfig: (preset: BeamConfigSnapshot | null) => void;
 
   setIsMaximized: (maximized: boolean) => void;
-  inputHistoryReplaceMessageFragment: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void;
   inputHistoryReplaceMessageFragments: (messageId: DMessageId, fragments: DMessageFragment[]) => void;
 
 }
@@ -148,32 +147,6 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
     _set({
       isMaximized: maximized,
     }),
-
-  inputHistoryReplaceMessageFragment: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) =>
-    _set(state => ({
-      inputHistory: state.inputHistory?.map((message): DMessage => {
-        if (message.id !== messageId)
-          return message;
-
-        // probably unnecessary development warning
-        if (message.fragments.findIndex(f => f.fId === fragmentId) === -1) {
-          console.error(`inputHistoryReplaceMessageFragment: cannot find missing fragment ID ${fragmentId} for message ${messageId}`);
-          return message;
-        }
-
-        const updatedFragments = message.fragments.map((fragment) =>
-          (fragment.fId === fragmentId)
-            ? newFragment
-            : fragment,
-        );
-
-        return {
-          ...message,
-          fragments: updatedFragments,
-          updated: Date.now(),
-        };
-      }),
-    })),
 
   inputHistoryReplaceMessageFragments: (messageId: DMessageId, fragments: DMessageFragment[]) =>
     _set(state => ({

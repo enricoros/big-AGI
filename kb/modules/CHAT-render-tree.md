@@ -43,7 +43,9 @@ Host data (tool names, the visibility predicate, the options switch) goes throug
 - Copy: untouched, the stored fragments render and `editable` is null. The first edit captures `base` and copies; every edit returns a new array that keeps the untouched fragment objects, so `editable !== null` means edited. `editedFragmentIds` marks the changed editors for the save shortcuts. A pending flip ends the session during render.
 - Done: takes the session's drafts into the attachment group (after the last attachment, else by the order preference), drops empty text, and writes the message once. Disabled while a draft loads or converts. Cancel confirms only when edited.
 - Drafts: the session owns its attachment drafts store (created at begin, disposed at the end); the strip only renders it. A session lost to unmount leaves its draft blobs to the boot GC of the `attachment-drafts` scope.
-- Hosts: one call, `onMessageFragmentsReplace(messageId, fragments)`: `ChatMessageList` (`ConversationHandler.messageFragmentsReplace`, GC when an asset id was dropped), Beam ray, fusion and base-history message, link viewer (local state). `useCMHostFragmentCalls` derives the view-mode delete, replace and append from it; calls within one event chain. Hosts with only the per-fragment calls commit through them and get no reorders.
+- Hosts: one write, `onMessageFragmentsReplace(messageId, fragments)`; without it the message is read-only. `ChatMessageList` (`ConversationHandler.messageFragmentsReplace`: skips pending messages, writes as complete, GC when an asset id was dropped), Beam ray, fusion and base-history message, link viewer (local state). `useCMHostFragmentCalls` derives the view-mode delete and replace from it; calls within one event chain.
+- Reorders: `reorderFragmentsInSlots` (`chat.fragments.ts`) moves the listed fragments into the slots they held; `reorderFragments` is gone.
+- Programmatic edits: `ConversationHandler.messageFragmentAppend/Delete/Replace`, `editMessage` updaters on the latest stored message, also on pending messages (placeholders, image generation, follow-ups).
 
 ## Open work
 
