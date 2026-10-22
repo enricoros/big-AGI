@@ -8,7 +8,7 @@ import { HostedLinksProvider } from '~/modules/blocks/markdown/HostedLinksContex
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
 
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
-import { DMessageAttachmentFragment, DMessageFragment, DMessageFragmentId, isImagePart } from '~/common/stores/chat/chat.fragments';
+import type { DMessageAttachmentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { Release } from '~/common/app.release';
 
@@ -24,6 +24,7 @@ import { BlockPartText_AutoBlocksMemo } from '../fragments-content/BlockPartText
 import { BlockPartToolInvocation } from '../fragments-content/BlockPartToolInvocation';
 import { BlockPartToolResponse } from '../fragments-content/BlockPartToolResponse';
 import { DocumentAttachmentFragments } from '../fragments-attachment-doc/DocumentAttachmentFragments';
+import { EditAttachmentFragments } from '../fragments-attachment-edit/EditAttachmentFragments';
 import { ImageAttachmentFragments } from '../fragments-attachment-image/ImageAttachmentFragments';
 import { humanReadableFunctionName } from '../fragments-content/BlockPartToolInvocation.utils';
 
@@ -205,21 +206,21 @@ const CMTextNode = React.memo(function CMTextNode(props: {
 });
 
 
-// body layout: text-like nodes share a grid (hugging or stretching with the role); each attachment list is a
-// full-width row of its own, as before the render tree, so an attachment never widens the text column
+// body layout: text-like nodes share a grid (hugging or stretching with the role); each attachment list (per kind in
+// view mode, the mixed list in edit mode) is a full-width row of its own, as before the render tree, so an attachment
+// never widens the text column
 
 interface AttachmentRow {
-  kind: 'images' | 'documents';
+  kind: 'images' | 'documents' | 'edit';
   fragments: readonly DMessageAttachmentFragment[];
-  editing: boolean;
 }
 
 type BodySegment =
   | { kind: 'grid', key: string, nodes: CMRenderNode[], emptyNotice?: boolean, addText?: boolean }
   | { kind: 'row', key: string, row: AttachmentRow };
 
-/** Keyed by membership, not position: the list survives the mode switch, a reorder, and the removal of other members. */
-function _attachmentRowKey(kind: AttachmentRow['kind'], fragments: readonly DMessageAttachmentFragment[]): string {
+/** View rows, keyed by membership, not position: the list survives a reorder and the removal of other members. */
+function _attachmentRowKey(kind: 'images' | 'documents', fragments: readonly DMessageAttachmentFragment[]): string {
   let minId = fragments[0].fId;
   for (const fragment of fragments)
     if (fragment.fId < minId) minId = fragment.fId;
@@ -230,28 +231,17 @@ function _bodySegments(body: readonly CMRenderNode[], emptyNotice: boolean, addT
   const segments: BodySegment[] = [];
   let grid: CMRenderNode[] | null = null;
 
-  const pushRow = (kind: AttachmentRow['kind'], fragments: readonly DMessageAttachmentFragment[], editing: boolean) =>
-    segments.push({ kind: 'row', key: _attachmentRowKey(kind, fragments), row: { kind, fragments, editing } });
-
   for (const node of body) {
     switch (node.kind) {
       case 'images':
       case 'documents':
         grid = null;
-        pushRow(node.kind, node.fragments, false);
+        segments.push({ kind: 'row', key: _attachmentRowKey(node.kind, node.fragments), row: { kind: node.kind, fragments: node.fragments } });
         break;
       case 'edit-attachments':
-        // one row per contiguous kind, keyed like the view rows so the lists keep their state across the mode switch
+        // one mixed list; the recycler keeps the node key across reorders and the removal of members
         grid = null;
-        for (const fragment of node.fragments) {
-          const kind = isImagePart(fragment.part) ? 'images' : 'documents';
-          const last = segments[segments.length - 1];
-          if (last?.kind === 'row' && last.row.kind === kind && last.row.editing) {
-            const fragments = [...last.row.fragments, fragment];
-            segments[segments.length - 1] = { kind: 'row', key: _attachmentRowKey(kind, fragments), row: { kind, fragments, editing: true } };
-          } else
-            pushRow(kind, [fragment], true);
-        }
+        segments.push({ kind: 'row', key: node.key, row: { kind: 'edit', fragments: node.fragments } });
         break;
       default:
         if (!grid) {
@@ -600,16 +590,23 @@ export function CMRenderTreeNodes(props: {
     }
   };
 
-  const renderRow = (key: string, row: AttachmentRow): React.ReactNode => row.kind === 'images' ? (
+  const renderRow = (key: string, row: AttachmentRow): React.ReactNode => row.kind === 'edit' ? (
+    <EditAttachmentFragments
+      key={key}
+      fragments={row.fragments}
+      contentScaling={props.contentScaling}
+      messageRole={props.messageRole}
+      onFragmentDelete={props.onFragmentDelete}
+      onFragmentReplace={props.onFragmentReplace}
+      onFragmentsReorder={props.onFragmentsReorder}
+    />
+  ) : row.kind === 'images' ? (
     <ImageAttachmentFragments
       key={key}
       imageAttachments={row.fragments}
       contentScaling={props.contentScaling}
       messageRole={props.messageRole}
-      isEditing={row.editing}
       onFragmentDelete={props.onFragmentDelete}
-      onFragmentReplace={row.editing ? props.onFragmentReplace : undefined}
-      onFragmentsReorder={row.editing ? props.onFragmentsReorder : undefined}
     />
   ) : (
     <DocumentAttachmentFragments
@@ -620,12 +617,11 @@ export function CMRenderTreeNodes(props: {
       contentScaling={props.contentScaling}
       isMobile={props.isMobile}
       zenMode={zenMode}
-      allowSelection={!row.editing}
-      allowReordering={row.editing}
+      allowSelection
+      allowReordering={false}
       disableMarkdownText={props.disableMarkdownDocuments}
       onFragmentDelete={props.onFragmentDelete}
       onFragmentReplace={props.onFragmentReplace}
-      onFragmentsReorder={row.editing ? props.onFragmentsReorder : undefined}
     />
   );
 

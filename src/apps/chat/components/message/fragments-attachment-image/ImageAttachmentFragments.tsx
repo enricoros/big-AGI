@@ -309,10 +309,24 @@ function ImageAttachmentCard(props: {
 }
 
 
+/** The card style at the content scale; the data editor adds a shadow. */
+export function imageAttachmentCardSx(contentScaling: ContentScaling, renderVariant?: 'chat-message' | 'data-editor'): SxProps {
+  return {
+    fontSize: themeScalingMap[contentScaling]?.blockFontSize ?? undefined,
+    lineHeight: themeScalingMap[contentScaling]?.blockLineHeight ?? 1.75,
+    ..._styles.imageCard,
+    ...(renderVariant !== 'data-editor' ? {} : {
+      // border: 0, // no border in data-editor
+      boxShadow: `0px 2px 4px -2px rgb(var(--joy-palette-primary-darkChannel) / 50%)`,
+    }),
+  };
+}
+
+
 /**
- * Wrapper for a RenderImageRefDBlob that adds DnD support with a grab handle.
+ * Wrapper for a RenderImageRefDBlob that adds DnD support with a grab handle. Also an item of `EditAttachmentFragments`.
  */
-function SortableImageAttachmentCard(props: {
+export function SortableImageAttachmentCard(props: {
   fragment: DMessageAttachmentFragment,
   isEditing?: boolean,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
@@ -398,15 +412,7 @@ export function ImageAttachmentFragments(props: {
     justifyContent: (props.messageRole === 'assistant' || props.renderVariant === 'data-editor') ? 'flex-start' : 'flex-end',
   }), [props.messageRole, props.renderVariant]);
 
-  const cardStyleMemo = React.useMemo((): SxProps => ({
-    fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
-    lineHeight: themeScalingMap[props.contentScaling]?.blockLineHeight ?? 1.75,
-    ..._styles.imageCard,
-    ...(props.renderVariant !== 'data-editor' ? {} : {
-      // border: 0, // no border in data-editor
-      boxShadow: `0px 2px 4px -2px rgb(var(--joy-palette-primary-darkChannel) / 50%)`,
-    }),
-  }), [props.contentScaling, props.renderVariant]);
+  const cardStyleMemo = React.useMemo(() => imageAttachmentCardSx(props.contentScaling, props.renderVariant), [props.contentScaling, props.renderVariant]);
 
 
   return (

@@ -18,9 +18,9 @@ import { DocAttachmentFragmentPane } from './DocAttachmentFragmentPane';
 
 
 /**
- * Wrapper for a DocAttachmentFragmentButton that adds DnD support.
+ * Wrapper for a DocAttachmentFragmentButton that adds DnD support. Also an item of `EditAttachmentFragments`.
  */
-function SortableDocAttachmentButton(props: {
+export function SortableDocAttachmentButton(props: {
   fragment: DMessageAttachmentFragment,
   contentScaling: ContentScaling,
   isSelected: boolean,

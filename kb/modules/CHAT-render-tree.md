@@ -19,11 +19,11 @@
 - Consecutive tool invocations form one `tool-calls` node; a response joins its invocation by id from anywhere in the message; other content seals the group (`sealed`). An invocation whose tool name is in `proposalToolNames` is its own `tool-proposal` node, never grouped; an unclaimed response of such a tool emits no node and leaves the run open.
 - Activity placeholders don't break the run around them; notices (`pType: 'notice'`) do.
 - A change of `originId` inserts a `separator`; attachments and citations don't take part; a falsy `originId` is unstamped.
-- Edit mode: text, errors and tool parts get an `edit-text` node each; adjacent attachments of any kind fuse into `edit-attachments`; reasoning keeps its chip (not text-editable: signatures, redacted blocks and vendor state would be lost; Delete and Make Regular Text remain); leaves stay.
+- Edit mode: text, errors and tool parts get an `edit-text` node each; adjacent attachments of any kind fuse into `edit-attachments`, rendered as one sortable list (`EditAttachmentFragments`: images and documents in message order, a drag crosses kinds, each item keeps delete, images their title editor and viewer); reasoning keeps its chip (not text-editable: signatures, redacted blocks and vendor state would be lost; Delete and Make Regular Text remain); leaves stay.
 - `ungrouped` (Labs toggle "Ungrouped fragments"): every fragment is its own node in stored order. Runs never extend; responses are not claimed, so each stays a `tool-response` leaf where it sits (proposal tools included) and each invocation is a `tool-calls` group of one; citations stay in place as single-member nodes keyed `citations:fId`, rendered in the body, except a leading one, which takes the citations row. Other rules unchanged.
 - `trailingOptions` (off here, `&& false` in `ChatMessage`; a host may enable it): the option list at the end of the last text node, cut only when the message ends with that text, one object on the node and on the tree.
 - Keys: `kind:fId` of the first member, `citations` singleton. The recycler matches a node to the previous node of its kind sharing a fragment (else same key) and carries the key forward, so reorders and first-member removals don't remount. Attachment rows are keyed by their smallest member id, identical in both modes, so the lists keep state across the edit toggle.
-- Layout: text-like nodes share a grid (hug or stretch by role); each attachment list is a full-width row, as before the tree. `aria-label='message body'` sits on the first grid only.
+- Layout: text-like nodes share a grid (hug or stretch by role); each attachment list (per kind in view mode, the mixed list in edit mode) is a full-width row, as before the tree. `aria-label='message body'` sits on the first grid only.
 
 ## Configuration
 
@@ -52,7 +52,7 @@ Host data (tool names, the visibility predicate, the options switch) goes throug
 By priority (P0 foundation, P3 waits on other work):
 
 - [x] P0 Edit session: see the section above (copy on first edit, one write at Done, confirm on Cancel when edited, one host call).
-- [ ] P0 Attachments editor: one mixed list for `edit-attachments` (images and documents, cross-kind reorder).
+- [x] P0 Attachments editor: one mixed list for `edit-attachments` (images and documents, cross-kind reorder).
 - [x] P1 Attachment marker: with the Chat preference on (checkbox below the order rows in the attachments menu, stored beside the order), the first `{{attachments}}` in the prompt places the attachments there at send: the text goes out as two fragments around them, the marker dropped. Without the preference, the marker or attachments, the order preference applies (`orderedUserFragments`, `chat.fragment-order.ts`).
 - [ ] P1 Block reordering: move nodes of user and system messages (text, attachment groups, leaves) with a left-gutter handle; assistant messages after checking provider replay constraints (thinking before tool use).
 - [x] P1 Reorder callback: `onMessageFragmentsReorder`, `ConversationHandler.messageFragmentsReorder` and the store's `reorderMessageFragments` removed (reorders live in the copy).
