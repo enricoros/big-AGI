@@ -41,6 +41,10 @@ import { CMNodeCitations, CMNodeReasoning, CMNodeReference, CMNodeText, cmNodeFr
 import { CMRT_REASONING_SEPARATOR } from './cmRenderTree.build';
 
 
+// configuration
+const CMRT_ASSISTANT_BLOCK_REORDER = true; // assistant blocks move too; the edit shows a warning, as some providers reject replays with reasoning or tool calls out of order
+
+
 // layout
 
 const _stretchLayoutSx: SxProps = {
@@ -96,6 +100,9 @@ const _editBarGutteredSx: SxProps = {
   ..._editBarSx,
 } as const;
 
+const _assistantReorderNoticeSx: SxProps = {
+  mb: 1,
+} as const;
 
 const _blockGutterSx: SxProps = {
   display: 'flex',
@@ -351,11 +358,10 @@ export function CMRenderTreeNodes(props: {
   // input-transform notices are neutral infos: hidden (not removed) beside an error, where they'd read as its cause
   const noticesYieldToError = body.some(node => node.kind === 'error' || (node.kind === 'edit-text' && node.fragment.part.pt === 'error'));
 
-  // block reordering: user and system messages in edit mode move whole nodes; assistant messages keep their order
-  // (providers replay thinking before tool use); a drop permutes the blocks' fragments among the slots they held
+  // block reordering: edit mode moves whole nodes; a drop permutes the blocks' fragments among the slots they held
   const { onFragmentsReorder } = props;
   const blockKeys = React.useMemo(() => body.filter(node => cmNodeFragments(node).length).map(node => node.key), [body]);
-  const canReorderBlocks = isEditing && !fromAssistant && !!onFragmentsReorder && blockKeys.length > 1;
+  const canReorderBlocks = isEditing && (!fromAssistant || CMRT_ASSISTANT_BLOCK_REORDER) && !!onFragmentsReorder && blockKeys.length > 1;
   const blockSensors = useDndDefaultSensors();
   const handleBlocksDragEnd = React.useCallback((event: DragEndEvent) => {
     dndDragEndReorder(event, blockKeys, reorderedKeys => {
@@ -708,6 +714,13 @@ export function CMRenderTreeNodes(props: {
       <Box aria-label='message void' sx={fromAssistant ? _citationsStartSx : _citationsEndSx}>
         <CMCitationsNode node={citations} contentScaling={props.contentScaling} />
       </Box>
+    )}
+
+    {/* assistant blocks move at the user's risk */}
+    {canReorderBlocks && fromAssistant && (
+      <Typography level='body-xs' color='warning' sx={_assistantReorderNoticeSx}>
+        Moving the blocks of a model reply can break the next request: some models need their reasoning and tool calls in the original order.
+      </Typography>
     )}
 
     {/* links in the text resolve to this message's hosted-file blocks; no provider when there are none, so text-only messages pay nothing */}
