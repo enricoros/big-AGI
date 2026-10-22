@@ -12,7 +12,6 @@ import { DMessageAttachmentFragment, DMessageFragment, DMessageFragmentId, isIma
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { Release } from '~/common/app.release';
 
-import type { ChatMessageTextPartEditState } from '../ChatMessage';
 import { BlockEdit_TextFragment } from '../fragments-content/BlockEdit_TextFragment';
 import { BlockOpEmpty } from '../fragments-content/BlockOpEmpty';
 import { BlockPartError } from '../fragments-content/BlockPartError';
@@ -296,7 +295,7 @@ export function CMRenderTreeNodes(props: {
   disableMarkdownDocuments: boolean,
   htmlRenderVariant?: AutoBlocksHtmlRenderVariant,
 
-  textEditsState: ChatMessageTextPartEditState | null,
+  editedFragmentIds: ReadonlySet<DMessageFragmentId> | null, // the fragments the edit session changed: their editors count as edited
   setEditedText?: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
   onEditsApply: (withControl: boolean) => void,
   onEditsCancel: () => void,
@@ -558,6 +557,9 @@ export function CMRenderTreeNodes(props: {
               editText = part.response.result;
               const responseName = part.response.type === 'function_call' ? part.response.name : 'code_execution';
               editLabel = `[Response] ${humanReadableFunctionName(responseName, part.response.type, 'response')} · \`${part.id}\``;
+            } else {
+              editText = typeof part.error === 'string' ? part.error : '';
+              editLabel = `[Response] error · \`${part.id}\``;
             }
             break;
           default: {
@@ -572,7 +574,7 @@ export function CMRenderTreeNodes(props: {
             fragmentId={fragment.fId}
             contentScaling={props.contentScaling}
             enableRestart={enableRestartFromEdit}
-            editedText={props.textEditsState?.[fragment.fId]}
+            editedText={props.editedFragmentIds?.has(fragment.fId) ? editText : undefined}
             setEditedText={setEditedText}
             onSubmit={props.onEditsApply}
             onEscapePressed={props.onEditsCancel}

@@ -6,11 +6,9 @@ import { Sheet } from '@mui/joy';
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts_slice';
-import type { DMessageAttachmentFragment } from '~/common/stores/chat/chat.fragments';
 import { AttachmentDraftsList } from '~/common/attachment-drafts/attachment-drafts-ui/AttachmentDraftsList';
 import { AttachmentSourcesMemo } from '~/common/attachment-drafts/attachment-sources/AttachmentSources';
 import { useAttachHandler_CameraOpen, useAttachHandler_Files, useAttachHandler_ScreenCapture, useAttachHandler_UrlWebLinks } from '~/common/attachment-drafts/attachment-sources/useAttachmentSourceHandlers';
-import { createAttachmentDraftsVanillaStore } from '~/common/attachment-drafts/store-attachment-drafts_vanilla';
 import { supportsCameraCapture } from '~/common/components/camera/useCameraCapture';
 import { supportsScreenCapture } from '~/common/util/screenCaptureUtils';
 import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDrafts';
@@ -18,14 +16,6 @@ import { useGoogleDrivePicker } from '~/common/attachment-drafts/attachment-sour
 
 import { ViewDocPartModal } from './fragments-content/ViewDocPartModal';
 import { ViewImageRefPartModal } from './fragments-content/ViewImageRefPartModal';
-
-
-/**
- * Imperative interface used outside
- */
-export interface EditModeAttachmentsHandle {
-  takeAllFragments: () => Promise<DMessageAttachmentFragment[]>;
-}
 
 
 const _styles = {
@@ -57,39 +47,18 @@ const _styles = {
 
 
 /**
- * Encapsulates all attachment wiring for ChatMessage edit mode.
- * Owns a standalone attachment drafts store (one per edit session).
- * Exposes an imperative handle for the parent to "take" fragments on save.
+ * Encapsulates all attachment wiring for ChatMessage edit mode, over the edit session's drafts store
+ * (the session takes the drafts at Done and disposes the store).
  */
-export const ChatMessageEditAttachments = React.forwardRef<EditModeAttachmentsHandle, { isMobile: boolean }>(
-  function EditModeAttachments(props, ref) {
-
-    // state
-    const storeApiRef = React.useRef<AttachmentDraftsStoreApi | null>(null);
-    if (!storeApiRef.current) storeApiRef.current = createAttachmentDraftsVanillaStore(); // created only on mount
+export const ChatMessageEditAttachments = React.memo(
+  function ChatMessageEditAttachments(props: { attachmentDraftsStoreApi: AttachmentDraftsStoreApi, isMobile: boolean }) {
 
     // external state
     const {
       attachmentDrafts,
       attachAppendClipboardItems, attachAppendCloudFile, attachAppendFile, attachAppendUrl, // attachAppendDataTransfer
-      attachmentsTakeAllFragments,
-    } = useAttachmentDrafts(storeApiRef.current, false, false, undefined, false);
+    } = useAttachmentDrafts(props.attachmentDraftsStoreApi, false, false, undefined, false);
     const browseCapability = useBrowseCapability();
-
-
-    // imperative handle for parent to take fragments on save
-    React.useImperativeHandle(ref, () => ({
-      takeAllFragments: () => attachmentsTakeAllFragments('global', 'app-chat'),
-    }), [attachmentsTakeAllFragments]);
-
-
-    // [effect] cleanup on unmount - remove all drafts (deleted their DBlob assets, except for 'taken' ones)
-    React.useEffect(() => {
-      const store = storeApiRef.current;
-      return () => {
-        store?.getState().removeAllAttachmentDrafts();
-      };
-    }, []);
 
 
     // handlers - composed from shared attachment source hooks
@@ -136,7 +105,7 @@ export const ChatMessageEditAttachments = React.forwardRef<EditModeAttachmentsHa
         {/* Attachment Drafts list */}
         {attachmentDrafts.length > 0 ? (
           <AttachmentDraftsList
-            attachmentDraftsStoreApi={storeApiRef.current!}
+            attachmentDraftsStoreApi={props.attachmentDraftsStoreApi}
             attachmentDrafts={attachmentDrafts}
             buttonsCanWrap
             renderDocViewer={renderDocViewer}

@@ -267,20 +267,8 @@ export function ChatMessageList(props: {
     conversationHandler?.messagesDelete([messageId]);
   }, [conversationHandler]);
 
-  const handleMessageAppendFragment = React.useCallback((messageId: DMessageId, fragment: DMessageFragment) => {
-    conversationHandler?.messageFragmentAppend(messageId, fragment, false, false);
-  }, [conversationHandler]);
-
-  const handleMessageDeleteFragment = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId) => {
-    conversationHandler?.messageFragmentDelete(messageId, fragmentId, false, true);
-  }, [conversationHandler]);
-
-  const handleMessageReplaceFragment = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
-    conversationHandler?.messageFragmentReplace(messageId, fragmentId, newFragment, true);
-  }, [conversationHandler]);
-
-  const handleMessageReorderFragments = React.useCallback((messageId: DMessageId, reorderedIds: DMessageFragmentId[], placement: 'end') => {
-    conversationHandler?.messageFragmentsReorder(messageId, reorderedIds, placement, false, true);
+  const handleMessageReplaceFragments = React.useCallback((messageId: DMessageId, fragments: DMessageFragment[]) => {
+    conversationHandler?.messageFragmentsReplace(messageId, fragments);
   }, [conversationHandler]);
 
   const handleMessageToggleUserFlag = React.useCallback((messageId: DMessageId, userFlag: DMessageUserFlag, _maxPerConversation?: number) => {
@@ -439,10 +427,7 @@ export function ChatMessageList(props: {
               onMessageUpstreamDelete={handleMessageUpstreamDelete}
               upstreamResumeMode={resumeInFlight[message.id]}
               onMessageDelete={handleMessageDelete}
-              onMessageFragmentAppend={handleMessageAppendFragment}
-              onMessageFragmentDelete={handleMessageDeleteFragment}
-              onMessageFragmentReplace={handleMessageReplaceFragment}
-              onMessageFragmentsReorder={handleMessageReorderFragments}
+              onMessageFragmentsReplace={handleMessageReplaceFragments}
               onMessageToggleUserFlag={handleMessageToggleUserFlag}
               onMessageTruncate={handleMessageTruncate}
               onReattachAsFile={handleReattachAsFile}

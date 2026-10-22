@@ -28,7 +28,11 @@ export class ConversationsManager {
   private _collectBeamAssetIds(): DBlobAssetId[] {
     const assetIds = new Set<DBlobAssetId>();
     for (const handler of this.handlers.values()) {
-      const { rays, fusions } = handler.getBeamStore().getState();
+      const { inputHistory, rays, fusions } = handler.getBeamStore().getState();
+
+      // Base history: attachments added while editing its last message are not in the chat yet
+      for (const message of inputHistory ?? [])
+        collectFragmentAssetIds(message.fragments, assetIds);
 
       // Scatter rays + their follow-up messages
       for (const ray of rays) {

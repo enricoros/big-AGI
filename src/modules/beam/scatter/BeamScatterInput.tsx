@@ -58,7 +58,7 @@ const userChatMessageSx: SxProps = {
 export function BeamScatterInput(props: {
   isMobile: boolean,
   history: DMessage[] | null,
-  onMessageFragmentReplace: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void,
+  onMessageFragmentsReplace: (messageId: DMessageId, fragments: DMessageFragment[]) => void,
 }) {
 
   // state
@@ -102,7 +102,7 @@ export function BeamScatterInput(props: {
         isMobile={props.isMobile}
         adjustContentScaling={-1}
         topDecorator={userMessageDecorator}
-        onMessageFragmentReplace={props.onMessageFragmentReplace}
+        onMessageFragmentsReplace={props.onMessageFragmentsReplace}
         sx={userChatMessageSx}
       />
     </Box>

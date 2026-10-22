@@ -216,6 +216,7 @@ export interface ScatterStoreSlice extends ScatterStateSlice {
   raySetLlmId: (rayId: BRayId, llmId: DLLMId | null) => void;
   rayDeleteFragment: (rayId: BRayId, fragmentId: DMessageFragmentId) => void;
   rayReplaceFragment: (rayId: BRayId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void;
+  rayReplaceFragments: (rayId: BRayId, fragments: DMessageFragment[]) => void;
   _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) => void;
 
   _storeLastScatterConfig: () => void;
@@ -456,6 +457,11 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
         },
       };
     }),
+
+  rayReplaceFragments: (rayId: BRayId, fragments: DMessageFragment[]) =>
+    _get()._rayUpdate(rayId, (ray) => ({
+      message: { ...ray.message, fragments, updated: Date.now() },
+    })),
 
   _rayUpdate: (rayId: BRayId, update: Partial<BRay> | ((ray: BRay) => Partial<BRay>)) =>
     _set(state => ({

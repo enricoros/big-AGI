@@ -236,18 +236,11 @@ export function BeamRay(props: {
     rayToggleScattering(props.rayId);
   }, [props.rayId, rayToggleScattering]);
 
-  const handleFragmentDelete = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId) => {
-    const { rays, rayDeleteFragment } = props.beamStore.getState();
+  const handleFragmentsReplace = React.useCallback((messageId: DMessageId, fragments: DMessageFragment[]) => {
+    const { rays, rayReplaceFragments } = props.beamStore.getState();
     const ray = rays.find(ray => ray.message.id === messageId);
     if (ray)
-      rayDeleteFragment(ray.rayId, fragmentId);
-  }, [props.beamStore]);
-
-  const handleFragmentReplace = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
-    const { rays, rayReplaceFragment } = props.beamStore.getState();
-    const ray = rays.find(ray => ray.message.id === messageId);
-    if (ray)
-      rayReplaceFragment(ray.rayId, fragmentId, newFragment);
+      rayReplaceFragments(ray.rayId, fragments);
   }, [props.beamStore]);
 
   /*const handleRayToggleSelect = React.useCallback(() => {
@@ -304,8 +297,7 @@ export function BeamRay(props: {
               blocksStretch
               htmlRenderVariant='render'
               adjustContentScaling={-1}
-              onMessageFragmentDelete={handleFragmentDelete}
-              onMessageFragmentReplace={handleFragmentReplace}
+              onMessageFragmentsReplace={handleFragmentsReplace}
               sx={!cardScrolling ? beamCardMessageSx : beamCardMessageScrollingSx}
             />
           )}

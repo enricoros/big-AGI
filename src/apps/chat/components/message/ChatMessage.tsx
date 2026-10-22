@@ -31,7 +31,7 @@ import { BlockOpOptions } from './BlockOpOptions';
 import { BlockOpResolveLinks } from './BlockOpResolveLinks';
 import { BlockOpUpstreamResume } from './BlockOpUpstreamResume';
 import { ChatMessageBubble } from './ChatMessageBubble';
-import { ChatMessageEditAttachments, type EditModeAttachmentsHandle } from './ChatMessageEditAttachments';
+import { ChatMessageEditAttachments } from './ChatMessageEditAttachments';
 import { ChatMessageInfoPopup } from './ChatMessageInfoPopup';
 import { ChatMessageMenu } from './ChatMessageMenu';
 import { ChatMessageTimestamp } from './ChatMessageTimestamp';
@@ -39,6 +39,7 @@ import type { CMBuildOptions } from './render-tree/cmRenderTree.build';
 import { CMRenderTreeNodes } from './render-tree/CMRenderTreeNodes';
 import { InReferenceToList } from './in-reference-to/InReferenceToList';
 import { useCMRenderTree } from './render-tree/useCMRenderTree';
+import { cmEditReorder, useCMEditSession, useCMHostFragmentCalls } from './useCMEditSession';
 import { messageAsideColumnSx, messageAvatarLabelAnimatedSx, messageAvatarLabelSx, messageEditBeamControlsTopSx, messageMobileHeaderSx, messageZenAsideColumnSx } from './ChatMessage.styles';
 import { useSelHighlighterMemo } from './useSelHighlighterMemo';
 
@@ -232,6 +233,7 @@ const CMMobileHeader = React.memo(function CMMobileHeader(props: {
   onClick: (event: React.MouseEvent<HTMLElement>) => void,
   onContextMenu: (event: React.MouseEvent<HTMLElement>) => void,
   onEditApply: (() => void) | undefined,
+  editApplyDisabled: boolean,
   onEditCancel: () => void,
 }) {
   return (
@@ -266,7 +268,7 @@ const CMMobileHeader = React.memo(function CMMobileHeader(props: {
         <Button size='sm' color='neutral' variant='plain' onClick={props.onEditCancel} startDecorator={<CloseRoundedIcon />} sx={_styles.mtButton}>
           Cancel
         </Button>
-        <Button size='sm' color='warning' onClick={props.onEditApply} startDecorator={<CheckRoundedIcon />} sx={_styles.mtButton} style={{ minWidth: 100 }}>
+        <Button size='sm' color='warning' disabled={props.editApplyDisabled} onClick={props.onEditApply} startDecorator={<CheckRoundedIcon />} sx={_styles.mtButton} style={{ minWidth: 100 }}>
           Done
         </Button>
       </>}
@@ -339,7 +341,7 @@ export function ChatMessage(props: {
   onMessageFragmentAppend?: (messageId: DMessageId, fragment: DMessageFragment) => void
   onMessageFragmentDelete?: (messageId: DMessageId, fragmentId: DMessageFragmentId) => void,
   onMessageFragmentReplace?: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void,
-  onMessageFragmentsReorder?: (messageId: DMessageId, reorderedIds: DMessageFragmentId[], placement: 'end') => void,
+  onMessageFragmentsReplace?: (messageId: DMessageId, fragments: DMessageFragment[]) => void, // one write per edit; the per-fragment calls above are for hosts without it
   onMessageToggleUserFlag?: (messageId: string, flag: DMessageUserFlag, maxPerConversation?: number) => void,
   onMessageTruncate?: (messageId: string) => void,
   onReattachAsFile?: (file: File) => void,
@@ -354,10 +356,8 @@ export function ChatMessage(props: {
   const [selText, setSelText] = React.useState<string | null>(null);
   const [bubbleAnchor, setBubbleAnchor] = React.useState<HTMLElement | null>(null);
   const [opsMenuAnchor, setOpsMenuAnchor] = React.useState<HTMLElement | null>(null);
-  const [textContentEditState, setTextContentEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
   const [showInfoModal, setShowInfoModal] = React.useState(false);
   const [userMarkdownFlipped, setUserMarkdownFlipped] = React.useState(false); // 'View as text/markdown', this message only, not saved
-  const attachmentsEditRef = React.useRef<EditModeAttachmentsHandle>(null);
 
   // latest-message ref: lets stable callbacks read the current message without putting it in deps
   const messageRef = React.useRef(props.message);
@@ -406,16 +406,19 @@ export function ChatMessage(props: {
   const isVndAndCacheAuto = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_AUTO);
   const isVndAndCacheUser = !!props.showAntPromptCaching && messageHasUserFlag(props.message, MESSAGE_FLAG_VND_ANT_CACHE_USER);
 
-  // Text editing state (handlers below); the render tree switches to edit nodes when edits can be written back
-  const isEditingText = !!textContentEditState;
-  const canEditText = !!props.onMessageFragmentReplace && !messagePendingIncomplete;
+  // Text editing state (handlers below): a working copy of the fragments, shown by the render tree in edit mode
+  const { onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace } = useCMHostFragmentCalls(messageRef, props);
+  const { editable: editableFragments, editedFragmentIds, drafts: editDrafts, draftsBusy, update: editFragments, apply: editApply, begin: handleEditsBegin, cancel: handleEditsCancel } =
+    useCMEditSession(messageId, messageFragments, !!messagePendingIncomplete, props);
+  const isEditingText = !!editableFragments;
+  const canEditText = !!onMessageFragmentReplace && !messagePendingIncomplete;
 
   // Options interceptor: a trailing option list on the last text block becomes continuation buttons
   const lookForOptions = props.onMessageContinue !== undefined && props.isBottom === true && !msgGenOutOfTokens && fromAssistant && !messagePendingIncomplete && !isEditingText && uiComplexityMode !== 'minimal' && false;
 
   // Render tree: fragments grouped into nodes in message order, citations first; stable across streaming appends
   const renderTreeOptions = React.useMemo((): CMBuildOptions => ({ trailingOptions: lookForOptions, ungrouped: labsUngroupedFragments }), [labsUngroupedFragments, lookForOptions]);
-  const renderTree = useCMRenderTree(messageFragments, isEditingText && canEditText ? 'edit' : 'view', renderTreeOptions);
+  const renderTree = useCMRenderTree(editableFragments ?? messageFragments, isEditingText && canEditText ? 'edit' : 'view', renderTreeOptions);
   const { trailingOptions } = renderTree;
 
   // Activity follows the raw stream order, independent of display filtering and injected layout.
@@ -424,7 +427,7 @@ export function ChatMessage(props: {
   const fragmentFlattenedText = React.useMemo(() => messageFragmentsReduceText(messageFragments), [messageFragments]);
   const userPromptText = React.useMemo(() => findFirstUserPromptFragment(messageFragments)?.part.text ?? '', [messageFragments]);
   const contentFragments = React.useMemo(() => messageFragments.filter(isContentFragment), [messageFragments]);
-  const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, contentFragments, fromAssistant, props.onMessageFragmentReplace);
+  const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, contentFragments, fromAssistant, onMessageFragmentReplace);
 
   // [#1114] Vertex AI grounding redirect links present in this message (skip the scan while streaming - the button is gated on completion anyway)
   const vertexLinksCount = React.useMemo(() => {
@@ -448,29 +451,25 @@ export function ChatMessage(props: {
   // const wordsDiff = useWordsDifference(textSubject, props.diffPreviousText, showDiff);
 
 
-  const { onMessageAssistantFrom, onMessageDelete, onMessageFragmentAppend, onMessageFragmentDelete, onMessageFragmentReplace, onMessageFragmentsReorder, onMessageContinue, onMessageToggleUserFlag, onMessageUpstreamResume, onMessageUpstreamDetach, onMessageUpstreamDelete } = props;
+  const { onMessageAssistantFrom, onMessageDelete, onMessageFragmentsReplace, onMessageContinue, onMessageToggleUserFlag, onMessageUpstreamResume, onMessageUpstreamDetach, onMessageUpstreamDelete } = props;
 
   const handleFragmentNew = React.useCallback(() => {
-    onMessageFragmentAppend?.(messageId, createTextContentFragment(''));
-  }, [messageId, onMessageFragmentAppend]);
+    editFragments(fragments => [...fragments, createTextContentFragment('')]);
+  }, [editFragments]);
 
   const handleFragmentDelete = React.useCallback((fragmentId: DMessageFragmentId) => {
-    onMessageFragmentDelete?.(messageId, fragmentId);
-  }, [messageId, onMessageFragmentDelete]);
+    if (isEditingText) editFragments(fragments => fragments.filter(fragment => fragment.fId !== fragmentId));
+    else onMessageFragmentDelete?.(messageId, fragmentId);
+  }, [editFragments, isEditingText, messageId, onMessageFragmentDelete]);
 
   const handleFragmentReplace = React.useCallback((fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
-    onMessageFragmentReplace?.(messageId, fragmentId, newFragment);
-  }, [messageId, onMessageFragmentReplace]);
+    if (isEditingText) editFragments(fragments => fragments.map(fragment => fragment.fId !== fragmentId ? fragment : newFragment.fId === fragmentId ? newFragment : { ...newFragment, fId: fragmentId }));
+    else onMessageFragmentReplace?.(messageId, fragmentId, newFragment);
+  }, [editFragments, isEditingText, messageId, onMessageFragmentReplace]);
 
   const handleFragmentsReorder = React.useCallback((reorderedIds: DMessageFragmentId[]) => {
-    // Only the listed fragments move; every other fragment keeps its slot. A stale drag result (ids gone or repeated) is ignored.
-    const fragments = messageRef.current.fragments;
-    const moving = new Set(reorderedIds);
-    if (moving.size !== reorderedIds.length || !reorderedIds.every(id => fragments.some(fragment => fragment.fId === id)))
-      return;
-    let next = 0;
-    onMessageFragmentsReorder?.(messageId, fragments.map(({ fId }) => moving.has(fId) ? reorderedIds[next++] : fId), 'end');
-  }, [messageId, onMessageFragmentsReorder]);
+    editFragments(fragments => cmEditReorder(fragments, reorderedIds));
+  }, [editFragments]);
 
   const handleResolveVertexLinks = React.useCallback(async () => {
     const outcome = await vertexLinksResolveFragments(messageFragments);
@@ -531,43 +530,23 @@ export function ChatMessage(props: {
   }, [handleFragmentDelete, handleFragmentReplace, messageFragments]);
 
   const handleApplyAllEdits = React.useCallback(async (withControl: boolean) => {
-    // 0. take state, including new attachment drafts BEFORE clearing state
-    const fragmentsEdits = textContentEditState || {};
-    const newFragments = await attachmentsEditRef.current?.takeAllFragments() ?? [];
+    // 1. store the edited copy, new attachments taken in; edit mode stays while attachments convert
+    if (!await editApply())
+      return;
 
-    // 1. clear edit state (unmounts EditModeAttachments, triggers cleanup)
-    setTextContentEditState(null);
-
-    // 2A. apply text fragment edits
-    for (const [fragmentId, editedText] of Object.entries(fragmentsEdits))
-      handleApplyEdit(fragmentId, editedText);
-
-    // 2B. append new attachment fragments
-    for (const fragment of newFragments)
-      onMessageFragmentAppend?.(messageId, fragment);
-
-    // 3. if the user pressed Ctrl, we begin a regeneration from here
+    // 2. if the user pressed Ctrl, we begin a regeneration from here
     if (withControl && onMessageAssistantFrom)
       await onMessageAssistantFrom(messageId, 0);
-  }, [handleApplyEdit, messageId, onMessageAssistantFrom, onMessageFragmentAppend, textContentEditState]);
+  }, [editApply, messageId, onMessageAssistantFrom]);
 
   const handleEditsApplyClicked = React.useCallback(() => handleApplyAllEdits(false), [handleApplyAllEdits]);
-
-  const handleEditsBegin = React.useCallback(() => setTextContentEditState({}), []);
-
-  const handleEditsCancel = React.useCallback(() => setTextContentEditState(null), []);
-
-  // a resume flips a complete message back to pending: leave edit mode (the remount used to)
-  React.useEffect(() => {
-    if (messagePendingIncomplete) setTextContentEditState(null);
-  }, [messagePendingIncomplete]);
 
   const handleEditSetText = React.useCallback((fragmentId: DMessageFragmentId, editedText: string, applyNow: boolean) => {
     if (applyNow)
       handleApplyEdit(fragmentId, editedText);
     else
-      setTextContentEditState((prev): ChatMessageTextPartEditState => ({ ...prev, [fragmentId]: editedText || '' }));
-  }, [handleApplyEdit]);
+      editFragments(fragments => fragments.map(fragment => fragment.fId !== fragmentId ? fragment : updateFragmentWithEditedText(fragment, editedText) ?? fragment));
+  }, [editFragments, handleApplyEdit]);
 
 
   /// Bubble ///
@@ -926,6 +905,7 @@ export function ChatMessage(props: {
           onClick={handleAvatarClick}
           onContextMenu={handleOpsMenuToggle}
           onEditApply={isEditingText ? handleEditsApplyClicked : undefined}
+          editApplyDisabled={draftsBusy}
           onEditCancel={handleEditsCancel}
         />
       )}
@@ -936,7 +916,7 @@ export function ChatMessage(props: {
           <Button size='sm' color='neutral' variant='plain' onClick={handleEditsCancel} startDecorator={<CloseRoundedIcon />} sx={_styles.mtButton}>
             Cancel
           </Button>
-          <Button size='sm' color='warning' onClick={handleEditsApplyClicked} startDecorator={<CheckRoundedIcon />} sx={_styles.mtButton} style={{ minWidth: 100 }}>
+          <Button size='sm' color='warning' disabled={draftsBusy} onClick={handleEditsApplyClicked} startDecorator={<CheckRoundedIcon />} sx={_styles.mtButton} style={{ minWidth: 100 }}>
             Done
           </Button>
         </Box>
@@ -967,7 +947,7 @@ export function ChatMessage(props: {
         {!props.isMobile && isEditingText && (
           <Box sx={messageAsideColumnSx} className='msg-edit-button'>
             <Tooltip arrow disableInteractive placement='top-end' title='Apply Text Edits'>
-              <IconButton size='sm' variant='solid' color='warning' onClick={handleEditsApplyClicked}>
+              <IconButton size='sm' variant='solid' color='warning' disabled={draftsBusy} onClick={handleEditsApplyClicked}>
                 <CheckRoundedIcon />
               </IconButton>
             </Tooltip>
@@ -1005,7 +985,7 @@ export function ChatMessage(props: {
             tree={renderTree}
             inFluxFragmentId={inFluxFragmentId}
             showEmptyNotice={!messageFragments.length && !messagePendingIncomplete}
-            showAddText={isEditingText && !!onMessageFragmentAppend && !messageFragments.some(isTextContentFragment)}
+            showAddText={isEditingText && !!onMessageFragmentAppend && !editableFragments?.some(isTextContentFragment)}
 
             contentScaling={adjContentScaling}
             uiComplexityMode={uiComplexityMode}
@@ -1019,7 +999,7 @@ export function ChatMessage(props: {
             disableMarkdownDocuments={disableMarkdown}
             htmlRenderVariant={props.htmlRenderVariant}
 
-            textEditsState={textContentEditState}
+            editedFragmentIds={editedFragmentIds}
             setEditedText={canEditText ? handleRenderedTextEdit : undefined}
             onEditsApply={handleApplyAllEdits}
             onEditsCancel={handleEditsCancel}
@@ -1027,7 +1007,7 @@ export function ChatMessage(props: {
             onFragmentAddBlank={!onMessageFragmentAppend ? undefined : handleFragmentNew}
             onFragmentDelete={!onMessageFragmentDelete ? undefined : handleFragmentDelete}
             onFragmentReplace={!onMessageFragmentReplace ? undefined : handleFragmentReplace}
-            onFragmentsReorder={!onMessageFragmentsReorder ? undefined : handleFragmentsReorder}
+            onFragmentsReorder={!onMessageFragmentsReplace ? undefined : handleFragmentsReorder}
             onMessageDelete={!onMessageDelete ? undefined : handleMessageDelete}
 
             onDoubleClick={(onMessageFragmentReplace /*&& doubleClickToEdit disabled, as we may have shift too */) ? handleBlocksDoubleClick : undefined}
@@ -1044,9 +1024,9 @@ export function ChatMessage(props: {
           )}
 
           {/* [Edit Mode] Add new attachments */}
-          {isEditingText && !fromAssistant && !!onMessageFragmentAppend && (
+          {!!editDrafts && !fromAssistant && !!onMessageFragmentAppend && (
             <ChatMessageEditAttachments
-              ref={attachmentsEditRef}
+              attachmentDraftsStoreApi={editDrafts}
               isMobile={props.isMobile}
             />
           )}

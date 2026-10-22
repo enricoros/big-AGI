@@ -146,6 +146,7 @@ export interface GatherStoreSlice extends GatherStateSlice {
   fusionSetLlmId: (fusionId: BFusionId, llmId: DLLMId | null) => void;
   fusionDeleteFragment: (fusionId: BFusionId, fragmentId: DMessageFragmentId) => void;
   fusionReplaceFragment: (fusionId: BFusionId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void;
+  fusionReplaceFragments: (fusionId: BFusionId, fragments: DMessageFragment[]) => void;
 
   createFusion: () => void;
   removeFusion: (fusionId: BFusionId) => void;
@@ -282,6 +283,11 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
           updated: Date.now(),
         },
       };
+    }),
+
+  fusionReplaceFragments: (fusionId: BFusionId, fragments: DMessageFragment[]) =>
+    _get()._fusionUpdate(fusionId, (fusion) => !fusion.outputDMessage ? {} : {
+      outputDMessage: { ...fusion.outputDMessage, fragments, updated: Date.now() },
     }),
 
 

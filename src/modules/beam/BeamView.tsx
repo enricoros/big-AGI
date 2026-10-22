@@ -39,7 +39,7 @@ export function BeamView(props: {
     gatherAutoStartAfterScatter: state.gatherAutoStartAfterScatter,
   })));
   const {
-    /* root */ inputHistoryReplaceMessageFragment,
+    /* root */ inputHistoryReplaceMessageFragments,
     /* scatter */ setRayCount, startScatteringAll, stopScatteringAll,
   } = props.beamStore.getState();
   const {
@@ -165,7 +165,7 @@ export function BeamView(props: {
       <BeamScatterInput
         isMobile={props.isMobile}
         history={inputHistory}
-        onMessageFragmentReplace={inputHistoryReplaceMessageFragment}
+        onMessageFragmentsReplace={inputHistoryReplaceMessageFragments}
       />
 
       {/* Scatter Controls */}

@@ -36,15 +36,24 @@
 
 Host data (tool names, the visibility predicate, the options switch) goes through `CMBuildOptions` instead.
 
+## Edit session
+
+`useCMEditSession.tsx` (beside `ChatMessage`), no effects:
+
+- Copy: untouched, the stored fragments render and `editable` is null. The first edit captures `base` and copies; every edit returns a new array that keeps the untouched fragment objects, so `editable !== null` means edited. `editedFragmentIds` marks the changed editors for the save shortcuts. A pending flip ends the session during render.
+- Done: takes the session's drafts into the attachment group (after the last attachment, else by the order preference), drops empty text, and writes the message once. Disabled while a draft loads or converts. Cancel confirms only when edited.
+- Drafts: the session owns its attachment drafts store (created at begin, disposed at the end); the strip only renders it. A session lost to unmount leaves its draft blobs to the boot GC of the `attachment-drafts` scope.
+- Hosts: one call, `onMessageFragmentsReplace(messageId, fragments)`: `ChatMessageList` (`ConversationHandler.messageFragmentsReplace`, GC when an asset id was dropped), Beam ray, fusion and base-history message, link viewer (local state). `useCMHostFragmentCalls` derives the view-mode delete, replace and append from it; calls within one event chain. Hosts with only the per-fragment calls commit through them and get no reorders.
+
 ## Open work
 
 By priority (P0 foundation, P3 waits on other work):
 
-- [ ] P0 Edit session: a working copy of the fragments inside `ChatMessage`; Cancel atomic (text, deletes, reorders, new attachments); Apply in one write with a changed-underneath check offering Overwrite or Discard; ready drafts enter the copy at the attachment group, drafts still converting at Apply are dropped; the copy's blobs are GC-protected until Apply or Cancel. Foundation for the attachments editor and block reordering. Edits do not survive unmount.
-- [ ] P0 Attachments editor: one mixed list for `edit-attachments` (images and documents, cross-kind reorder); new attachments enter the last attachment group rather than the message tail.
+- [x] P0 Edit session: see the section above (copy on first edit, one write at Done, confirm on Cancel when edited, one host call).
+- [ ] P0 Attachments editor: one mixed list for `edit-attachments` (images and documents, cross-kind reorder).
 - [x] P1 Attachment marker: with the Chat preference on (checkbox below the order rows in the attachments menu, stored beside the order), the first `{{attachments}}` in the prompt places the attachments there at send: the text goes out as two fragments around them, the marker dropped. Without the preference, the marker or attachments, the order preference applies (`orderedUserFragments`, `chat.fragment-order.ts`).
 - [ ] P1 Block reordering: move nodes of user and system messages (text, attachment groups, leaves) with a left-gutter handle; assistant messages after checking provider replay constraints (thinking before tool use).
-- [ ] P1 Reorder callback: drop `onMessageFragmentsReorder` from `ChatMessage` and `ChatMessageList` once the session carries reorders; the store action later, after checking dev's history for other users.
+- [x] P1 Reorder callback: `onMessageFragmentsReorder`, `ConversationHandler.messageFragmentsReorder` and the store's `reorderMessageFragments` removed (reorders live in the copy).
 - [ ] P2 Composer attachment menu: restore "What can I do?" (commented out in `ComposerAttachmentDraftsList`) with neutral styling.
 - [ ] P2 Placeholder transparency: group content according to whether placeholders are transient (producer-set flag; today "not a notice" stands in).
 - [ ] P2 Layout: one container for text-like nodes and attachment rows (`width: fit-content; max-width: 100%` on block containers), preserving role alignment and responsive attachment rows.

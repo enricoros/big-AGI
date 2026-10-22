@@ -130,18 +130,11 @@ export function Fusion(props: {
     toggleFusionGathering(props.fusionId);
   }, [props.fusionId, toggleFusionGathering]);
 
-  const handleFragmentDelete = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId) => {
-    const { fusions, fusionDeleteFragment } = props.beamStore.getState();
+  const handleFragmentsReplace = React.useCallback((messageId: DMessageId, fragments: DMessageFragment[]) => {
+    const { fusions, fusionReplaceFragments } = props.beamStore.getState();
     const fusion = fusions.find(f => f.outputDMessage?.id === messageId);
     if (fusion)
-      fusionDeleteFragment(fusion.fusionId, fragmentId);
-  }, [props.beamStore]);
-
-  const handleFragmentReplace = React.useCallback((messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => {
-    const { fusions, fusionReplaceFragment } = props.beamStore.getState();
-    const fusion = fusions.find(f => f.outputDMessage?.id === messageId);
-    if (fusion)
-      fusionReplaceFragment(fusion.fusionId, fragmentId, newFragment);
+      fusionReplaceFragments(fusion.fusionId, fragments);
   }, [props.beamStore]);
 
   // escape hatch: no factory, no fusion - nothing to do
@@ -218,8 +211,7 @@ export function Fusion(props: {
               blocksStretch
               htmlRenderVariant='render'
               adjustContentScaling={-1}
-              onMessageFragmentDelete={handleFragmentDelete}
-              onMessageFragmentReplace={handleFragmentReplace}
+              onMessageFragmentsReplace={handleFragmentsReplace}
               sx={!cardScrolling ? beamCardMessageSx : beamCardMessageScrollingSx}
             />
           )}

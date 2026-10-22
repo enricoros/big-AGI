@@ -63,6 +63,7 @@ export interface RootStoreSlice extends RootStateSlice {
 
   setIsMaximized: (maximized: boolean) => void;
   inputHistoryReplaceMessageFragment: (messageId: DMessageId, fragmentId: DMessageFragmentId, newFragment: DMessageFragment) => void;
+  inputHistoryReplaceMessageFragments: (messageId: DMessageId, fragments: DMessageFragment[]) => void;
 
 }
 
@@ -172,6 +173,11 @@ const createRootSlice: StateCreator<BeamStore, [], [], RootStoreSlice> = (_set, 
           updated: Date.now(),
         };
       }),
+    })),
+
+  inputHistoryReplaceMessageFragments: (messageId: DMessageId, fragments: DMessageFragment[]) =>
+    _set(state => ({
+      inputHistory: state.inputHistory?.map((message): DMessage => message.id !== messageId ? message : { ...message, fragments, updated: Date.now() }),
     })),
 
 });
