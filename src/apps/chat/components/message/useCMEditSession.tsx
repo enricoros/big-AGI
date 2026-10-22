@@ -1,12 +1,14 @@
 import * as React from 'react';
 import { useStore } from 'zustand';
 
+import type { DBlobAssetId } from '~/common/stores/blob/dblobs-portability';
 import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
 import type { Immutable } from '~/common/types/immutable.types';
 import type { AttachmentDraftsStoreApi, AttachmentsDraftsStore } from '~/common/attachment-drafts/store-attachment-drafts_slice';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { createAttachmentDraftsVanillaStore } from '~/common/attachment-drafts/store-attachment-drafts_vanilla';
 import { DMessageFragment, DMessageFragmentId, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { collectFragmentAssetIds, gcRegisterAssetCollector } from '~/common/stores/chat/chat.gc';
 import { findFirstUserPromptFragment, normalizeUserFragmentGroupsOrder, userFragmentGroup } from '~/common/stores/chat/chat.fragment-order';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -111,22 +113,30 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
       if (!confirmed || sessionRef.current?.drafts !== started.drafts) return false;
     }
 
-    const drafts = await started.drafts.getState().takeAllFragments('global', 'app-chat');
-    const current = sessionRef.current;
-    if (current?.drafts !== started.drafts) return false; // ended while taking
-    setSession(null);
-    if (!current.editable && !drafts.length) return true;
+    // the new images leave the drafts scope before the message references them: keep them from a chat GC meanwhile
+    const draftAssetIds = new Set<DBlobAssetId>();
+    collectFragmentAssetIds(started.drafts.getState().attachmentDrafts.flatMap(draft => draft.outputFragments), draftAssetIds);
+    const unregisterCollector = gcRegisterAssetCollector(() => [...draftAssetIds]);
+    try {
+      const drafts = await started.drafts.getState().takeAllFragments('global', 'app-chat');
+      const current = sessionRef.current;
+      if (current?.drafts !== started.drafts) return false; // ended while taking
+      setSession(null);
+      if (!current.editable && !drafts.length) return true;
 
-    // new attachments join the attachment group
-    let editable = current.editable ?? storedRef.current;
-    if (drafts.length) {
-      const index = _attachmentGroupIndex(editable, drafts[0]);
-      editable = [...editable.slice(0, index), ...drafts, ...editable.slice(index)];
+      // new attachments join the attachment group
+      let editable = current.editable ?? storedRef.current;
+      if (drafts.length) {
+        const index = _attachmentGroupIndex(editable, drafts[0]);
+        editable = [...editable.slice(0, index), ...drafts, ...editable.slice(index)];
+      }
+
+      // store, overwriting the message: empty text is dropped
+      onMessageFragmentsReplace?.(messageId, editable.filter(fragment => !isTextContentFragment(fragment) || !!fragment.part.text));
+      return true;
+    } finally {
+      unregisterCollector();
     }
-
-    // store, overwriting the message: empty text is dropped
-    onMessageFragmentsReplace?.(messageId, editable.filter(fragment => !isTextContentFragment(fragment) || !!fragment.part.text));
-    return true;
   }, [draftsBusy, messageId, onMessageFragmentsReplace, showPromisedOverlay]);
 
 
