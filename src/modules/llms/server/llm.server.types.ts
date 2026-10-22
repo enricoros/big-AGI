@@ -103,7 +103,7 @@ const ModelParameterSpec_schema = z.object({
     'llmVndGeminiImageSize',
     'llmVndGeminiMediaResolution',
     'llmVndGeminiThinkingBudget',
-    // 'llmVndGeminiUrlContext',
+    'llmVndGeminiUrlContext',
     // Moonshot
     'llmVndMoonshotWebSearch',
     // OpenAI

@@ -44,6 +44,7 @@ const _paramIdToInterface: { paramIds: DModelParameterId[], iface: DModelInterfa
       'llmVndAntWebFetch',
       'llmVndAntWebSearch',
       'llmVndGeminiGoogleSearch',
+      'llmVndGeminiUrlContext',
       'llmVndMoonshotWebSearch',
       'llmVndOaiWebSearchContext',
       'llmVndOrtWebFetch',

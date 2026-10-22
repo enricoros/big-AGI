@@ -385,14 +385,13 @@ export const DModelParameterRegistry = {
     // undefined means upstream default ('auto'); we only forward when explicitly 'off'
   }),
 
-  // NOTE: we don't have this as a parameter, as for now we use it in tandem with llmVndGeminiGoogleSearch
-  // llmVndGeminiUrlContext: {
-  //   label: 'URL Context',
-  //   type: 'enum',
-  //   description: 'Enable fetching and analyzing content from URLs provided in prompts (up to 20 URLs, 34MB each)',
-  //   values: ['auto'],
-  //   // undefined means off
-  // },
+  llmVndGeminiUrlContext: _enumDef({
+    label: 'URL Context',
+    type: 'enum',
+    description: 'Read content from URLs independently of Google Search (up to 20 URLs, 34MB each)',
+    values: ['auto'],
+    // undefined means off
+  }),
 
 
   // Moonshot-specific parameters

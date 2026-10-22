@@ -296,6 +296,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
     ],
     benchmark: { cbaElo: 1525 }, // gemini-4-argon-high (LMArena 2026-09-30, preliminary, CI +/-9)
   },
@@ -318,6 +319,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
     ],
     benchmark: { cbaElo: 1494 }, // gemini-3.8-flash-high (LMArena 2026-09-30, preliminary, CI +/-5)
   },
@@ -338,6 +340,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
     ],
     benchmark: { cbaElo: 1488 }, // gemini-3.7-flash-high (LMArena 2026-09-30, preliminary, CI +/-5)
   },
@@ -365,6 +368,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
     ],
     benchmark: { cbaElo: 1483 }, // gemini-3.6-flash-high (LMArena 2026-09-30)
   },
@@ -385,6 +389,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
     ],
     benchmark: { cbaElo: 1477 }, // gemini-3.5-flash-high (LMArena 2026-08-06; arena scores per-effort, 'high' variant)
   },
@@ -403,6 +408,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
     ],
     benchmark: { cbaElo: 1454 }, // gemini-3.5-flash-lite (LMArena 2026-09-30)
   },
@@ -424,6 +430,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
       // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
     ],
     benchmark: { cbaElo: 1487 }, // gemini-3.1-pro-preview (LMArena 2026-09-30)
@@ -443,6 +450,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
     ],
     benchmark: { cbaElo: 1487 - 1 }, // -1 (deprio this variant) + gemini-3.1-pro-preview
   },
@@ -536,6 +544,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
     ],
     benchmark: { cbaElo: 1433 }, // same lineage as gemini-3.1-flash-lite-preview (LMArena 2026-09-30)
   },
@@ -555,6 +564,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
     ],
     benchmark: { cbaElo: 1433 }, // gemini-3.1-flash-lite-preview (LMArena 2026-09-30)
   },
@@ -632,6 +642,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGeminiMediaResolution' },
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
       // { paramId: 'llmVndGeminiComputerUse' }, // we don't have the logic to handle this yet
     ],
     benchmark: { cbaElo: 1473 }, // gemini-3-flash (LMArena 2026-07-22)
@@ -655,6 +666,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
         rangeOverride: [128, 32768], // does not support 0 which would turn thinking off - NOTE: 2026-03-04: verified 128, while the sweep min is 1024, this model accepts 128 too
       },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
     ],
     benchmark: { cbaElo: 1446 }, // gemini-2.5-pro
   },
@@ -811,6 +823,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     parameterSpecs: [
       { paramId: 'llmVndGeminiThinkingBudget' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
     ],
     benchmark: { cbaElo: 1409 }, // gemini-2.5-flash
   },
@@ -853,6 +866,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
   // normalized 0-1000 - never returns annotated images, a client-side overlay renderer would make this shine
   // Verified live 2026-07-31: generateContent works (no phantom), thinkingLevel all 4 levels ('minimal' -> 0 thoughts),
   // emits thoughtSignature, code execution + search grounding both work (code exec = its "zoom in" trick for gauges/small print)
+  // URL Context verified independently with successful retrieval, 2026-10-22.
   // NOTE: sibling endpoint gemini-robotics-er-2-streaming-preview is bidiGenerateContent-only (Live API),
   // auto-excluded by the generateContent filter - do not add a def for it
   {
@@ -866,6 +880,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
       { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'low', 'medium', 'high'] }, // docs recommend 'medium' for latency/performance balance
       { paramId: 'llmVndGeminiCodeExecution' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
     ],
     benchmark: undefined, // Robotics model, not benchmarkable on standard tests
   },
@@ -986,6 +1001,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     parameterSpecs: [
       { paramId: 'llmVndGeminiThinkingBudget' },
       { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
     ],
     benchmark: { cbaElo: 1310 }, // Based on 2.0 Flash-Lite performance
   },

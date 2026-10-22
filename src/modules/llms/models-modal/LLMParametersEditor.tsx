@@ -166,6 +166,11 @@ const _geminiGoogleSearchOptions = [
   { value: _UNSPECIFIED, label: 'Off', description: 'Default (disabled)' },
 ] as const;
 
+const _geminiUrlContextOptions = [
+  { value: 'auto', label: 'On', description: 'Read content from URLs' },
+  { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
+] as const;
+
 const _geminiAgentVizOptions = [
   { value: _UNSPECIFIED, label: 'Auto', description: 'Default - agent may include charts/images' },
   { value: 'off', label: 'Off', description: 'Text only (better when merging multiple reports)' },
@@ -305,6 +310,7 @@ export function LLMParametersEditor(props: {
     llmVndGeminiImageSize,
     llmVndGeminiMediaResolution,
     llmVndGeminiThinkingBudget,
+    llmVndGeminiUrlContext,
     llmVndMiscEffort,
     // llmVndMoonshotWebSearch,
     llmVndOaiEffort,
@@ -783,6 +789,19 @@ export function LLMParametersEditor(props: {
           else onChangeParameter({ llmVndGeminiGoogleSearch: value });
         }}
         options={_geminiGoogleSearchOptions}
+      />
+    )}
+
+    {showParam('llmVndGeminiUrlContext') && (
+      <FormSelectControl
+        title='URL Context'
+        tooltip='Read content from URLs independently of Google Search'
+        value={llmVndGeminiUrlContext ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGeminiUrlContext');
+          else onChangeParameter({ llmVndGeminiUrlContext: value });
+        }}
+        options={_geminiUrlContextOptions}
       />
     )}
 
