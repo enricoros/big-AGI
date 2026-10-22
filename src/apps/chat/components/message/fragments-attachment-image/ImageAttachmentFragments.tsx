@@ -372,12 +372,11 @@ export function SortableImageAttachmentCard(props: {
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => void,
   onViewImageRefPart: (part: DMessageImageRefPart) => void,
   cardStyleSx: SxProps,
-  isReordering: boolean,
 }) {
 
-  const { fragment, isEditing, onFragmentDelete, onFragmentReplace, onViewImageRefPart, cardStyleSx, isReordering } = props;
+  const { fragment, isEditing, onFragmentDelete, onFragmentReplace, onViewImageRefPart, cardStyleSx } = props;
 
-  const { dragContainerSetRef, dragContainerStyle, dragHandle } = useDndDragHandleSortable(fragment.fId, !isReordering, isEditing ? 'warning' : 'neutral');
+  const { dragContainerSetRef, dragContainerStyle, dragHandle } = useDndDragHandleSortable(fragment.fId, false, isEditing ? 'warning' : 'neutral');
 
   return (
     <Box ref={dragContainerSetRef} style={dragContainerStyle} sx={_styles.sortableContainer}>
@@ -480,7 +479,6 @@ export function ImageAttachmentFragments(props: {
                 onFragmentReplace={props.onFragmentReplace}
                 onViewImageRefPart={handleViewImageRefPart}
                 cardStyleSx={cardStyleMemo}
-                isReordering={true}
               />,
             )}
           </SortableContext>

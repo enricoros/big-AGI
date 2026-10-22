@@ -25,15 +25,14 @@ export function SortableDocAttachmentButton(props: {
   contentScaling: ContentScaling,
   isSelected: boolean,
   toggleSelected: (fragmentId: DMessageFragmentId) => void,
-  isReordering: boolean,
   color?: ColorPaletteProp, // the unselected button look
   dragHandleColor?: ColorPaletteProp,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
 }) {
 
-  const { fragment, contentScaling, isSelected, isReordering, toggleSelected } = props;
+  const { fragment, contentScaling, isSelected, toggleSelected } = props;
 
-  const { dragContainerSetRef, dragContainerStyle, dragHandle } = useDndDragHandleSortable(fragment.fId, !isReordering, props.dragHandleColor ?? 'neutral');
+  const { dragContainerSetRef, dragContainerStyle, dragHandle } = useDndDragHandleSortable(fragment.fId, false, props.dragHandleColor ?? 'neutral');
 
   return (
     <Box ref={dragContainerSetRef} style={dragContainerStyle} sx={{ display: 'inline-block' }}>
@@ -44,7 +43,7 @@ export function SortableDocAttachmentButton(props: {
         isSelectable
         color={props.color}
         toggleSelected={toggleSelected}
-        dragHandle={(isReordering && !isSelected) ? dragHandle : undefined}
+        dragHandle={!isSelected ? dragHandle : undefined}
         onFragmentDelete={props.onFragmentDelete}
       />
     </Box>
@@ -214,7 +213,6 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
                   contentScaling={props.contentScaling}
                   isSelected={activeFragmentId === attachmentFragment.fId}
                   toggleSelected={handleToggleSelectedId}
-                  isReordering={true}
                 />,
               )}
             </Box>

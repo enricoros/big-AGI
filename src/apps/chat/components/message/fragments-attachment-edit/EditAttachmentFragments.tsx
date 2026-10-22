@@ -72,7 +72,6 @@ export function EditAttachmentFragments(props: {
   // dnd
   const sensors = useDndDefaultSensors();
   const fragmentIds = React.useMemo(() => props.fragments.map(fragment => fragment.fId), [props.fragments]);
-  const isReordering = !!props.onFragmentsReorder;
 
   // the open document, when still a member
   const selectedFragment = props.fragments.find(fragment => fragment.fId === activeFragmentId);
@@ -116,7 +115,6 @@ export function EditAttachmentFragments(props: {
                 onFragmentReplace={props.onFragmentReplace}
                 onViewImageRefPart={setViewingImageRefPart}
                 cardStyleSx={cardSx}
-                isReordering={isReordering}
               />
             ) : (
               <SortableDocAttachmentButton
@@ -126,7 +124,6 @@ export function EditAttachmentFragments(props: {
                 isSelected={activeFragmentId === fragment.fId}
                 color='warning'
                 toggleSelected={handleToggleSelected}
-                isReordering={isReordering}
                 dragHandleColor='warning'
                 onFragmentDelete={props.onFragmentDelete}
               />
