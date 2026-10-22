@@ -3,6 +3,9 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Typography } from '@mui/joy';
 
+import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+
 import type { AutoBlocksHtmlRenderVariant } from '~/modules/blocks/AutoBlocksRenderer';
 import { HostedLinksProvider } from '~/modules/blocks/markdown/HostedLinksContext';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
@@ -11,6 +14,10 @@ import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import type { DMessageAttachmentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
 import { Release } from '~/common/app.release';
+import { dndDragEndReorder } from '~/common/components/dnd/dndDragEndReorder';
+import { dndModifiers } from '~/common/components/dnd/dnd.config';
+import { useDndDefaultSensors } from '~/common/components/dnd/useDndDefaultSensors';
+import { useDndDragHandleSortable } from '~/common/components/dnd/useDndDragHandleSortable';
 
 import { BlockEdit_TextFragment } from '../fragments-content/BlockEdit_TextFragment';
 import { BlockOpEmpty } from '../fragments-content/BlockOpEmpty';
@@ -28,7 +35,7 @@ import { EditAttachmentFragments } from '../fragments-attachment-edit/EditAttach
 import { ImageAttachmentFragments } from '../fragments-attachment-image/ImageAttachmentFragments';
 import { humanReadableFunctionName } from '../fragments-content/BlockPartToolInvocation.utils';
 
-import type { CMNodeCitations, CMNodeReasoning, CMNodeReference, CMNodeText, CMRenderNode, CMRenderTree } from './cmRenderTree.types';
+import { CMNodeCitations, CMNodeReasoning, CMNodeReference, CMNodeText, cmNodeFragments, CMRenderNode, CMRenderTree } from './cmRenderTree.types';
 import { CMRT_REASONING_SEPARATOR } from './cmRenderTree.build';
 
 
@@ -80,6 +87,20 @@ const _addTextUserSx: SxProps = {
   justifyContent: 'flex-start',
   backgroundColor: 'primary.softBg',
   '&:hover': { backgroundColor: 'primary.softHoverBg' },
+} as const;
+
+// a reorderable block: the handle in a left gutter, the node in the remaining width
+const _blockSx: SxProps = {
+  display: 'grid',
+  gridTemplateColumns: 'auto minmax(0, 1fr)',
+  alignItems: 'start',
+  columnGap: 0.5,
+} as const;
+
+const _blockGutterSx: SxProps = {
+  display: 'flex',
+  pl: 1.5, // undo the handle's inline margin
+  pt: 1,
 } as const;
 
 
@@ -206,12 +227,24 @@ const CMTextNode = React.memo(function CMTextNode(props: {
 });
 
 
-// body layout: text-like nodes share a grid (hugging or stretching with the role); each attachment list (per kind in
-// view mode, the mixed list in edit mode) is a full-width row of its own, as before the render tree, so an attachment
-// never widens the text column
+/** Edit mode: a node of a user or system message, movable as one block by its gutter handle. */
+function CMSortableBlock(props: { id: string, children: React.ReactNode }) {
+  const { dragContainerSetRef, dragContainerStyle, dragHandle } = useDndDragHandleSortable(props.id, false, 'warning');
+  return (
+    <Box ref={dragContainerSetRef} style={dragContainerStyle} sx={_blockSx}>
+      <Box sx={_blockGutterSx}>{dragHandle}</Box>
+      <Box>{props.children}</Box>
+    </Box>
+  );
+}
+
+
+// body layout: text-like nodes share a grid (hugging or stretching with the role); in view mode each attachment list
+// is a full-width row of its own, as before the render tree, so an attachment never widens the text column; in edit
+// mode the grid stretches and holds every node, the attachment list included, so the blocks form one sortable list
 
 interface AttachmentRow {
-  kind: 'images' | 'documents' | 'edit';
+  kind: 'images' | 'documents';
   fragments: readonly DMessageAttachmentFragment[];
 }
 
@@ -220,7 +253,7 @@ type BodySegment =
   | { kind: 'row', key: string, row: AttachmentRow };
 
 /** View rows, keyed by membership, not position: the list survives a reorder and the removal of other members. */
-function _attachmentRowKey(kind: 'images' | 'documents', fragments: readonly DMessageAttachmentFragment[]): string {
+function _attachmentRowKey(kind: AttachmentRow['kind'], fragments: readonly DMessageAttachmentFragment[]): string {
   let minId = fragments[0].fId;
   for (const fragment of fragments)
     if (fragment.fId < minId) minId = fragment.fId;
@@ -237,11 +270,6 @@ function _bodySegments(body: readonly CMRenderNode[], emptyNotice: boolean, addT
       case 'documents':
         grid = null;
         segments.push({ kind: 'row', key: _attachmentRowKey(node.kind, node.fragments), row: { kind: node.kind, fragments: node.fragments } });
-        break;
-      case 'edit-attachments':
-        // one mixed list; the recycler keeps the node key across reorders and the removal of members
-        grid = null;
-        segments.push({ kind: 'row', key: node.key, row: { kind: 'edit', fragments: node.fragments } });
         break;
       default:
         if (!grid) {
@@ -328,6 +356,19 @@ export function CMRenderTreeNodes(props: {
   // input-transform notices are neutral infos: hidden (not removed) beside an error, where they'd read as its cause
   const noticesYieldToError = body.some(node => node.kind === 'error' || (node.kind === 'edit-text' && node.fragment.part.pt === 'error'));
 
+  // block reordering: user and system messages in edit mode move whole nodes; assistant messages keep their order
+  // (providers replay thinking before tool use); a drop permutes the blocks' fragments among the slots they held
+  const { onFragmentsReorder } = props;
+  const blockKeys = React.useMemo(() => body.filter(node => cmNodeFragments(node).length).map(node => node.key), [body]);
+  const canReorderBlocks = isEditing && !fromAssistant && !!onFragmentsReorder && blockKeys.length > 1;
+  const blockSensors = useDndDefaultSensors();
+  const handleBlocksDragEnd = React.useCallback((event: DragEndEvent) => {
+    dndDragEndReorder(event, blockKeys, reorderedKeys => {
+      const idsByKey = new Map(body.map(node => [node.key, cmNodeFragments(node).map(fragment => fragment.fId)]));
+      onFragmentsReorder?.(reorderedKeys.flatMap(key => idsByKey.get(key) ?? []));
+    });
+  }, [blockKeys, body, onFragmentsReorder]);
+
   if (!segments.length && !citations)
     return null;
 
@@ -388,8 +429,20 @@ export function CMRenderTreeNodes(props: {
 
       case 'images':
       case 'documents':
-      case 'edit-attachments':
         return null; // the attachment rows render outside the grids
+
+      case 'edit-attachments':
+        return (
+          <EditAttachmentFragments
+            key={node.key}
+            fragments={node.fragments}
+            contentScaling={props.contentScaling}
+            messageRole={props.messageRole}
+            onFragmentDelete={props.onFragmentDelete}
+            onFragmentReplace={props.onFragmentReplace}
+            onFragmentsReorder={props.onFragmentsReorder}
+          />
+        );
 
       case 'reasoning':
         return (
@@ -590,17 +643,7 @@ export function CMRenderTreeNodes(props: {
     }
   };
 
-  const renderRow = (key: string, row: AttachmentRow): React.ReactNode => row.kind === 'edit' ? (
-    <EditAttachmentFragments
-      key={key}
-      fragments={row.fragments}
-      contentScaling={props.contentScaling}
-      messageRole={props.messageRole}
-      onFragmentDelete={props.onFragmentDelete}
-      onFragmentReplace={props.onFragmentReplace}
-      onFragmentsReorder={props.onFragmentsReorder}
-    />
-  ) : row.kind === 'images' ? (
+  const renderRow = (key: string, row: AttachmentRow): React.ReactNode => row.kind === 'images' ? (
     <ImageAttachmentFragments
       key={key}
       imageAttachments={row.fragments}
@@ -642,7 +685,7 @@ export function CMRenderTreeNodes(props: {
         />
       )}
 
-      {segment.nodes.map(renderNode)}
+      {segment.nodes.map(node => canReorderBlocks && cmNodeFragments(node).length ? <CMSortableBlock key={node.key} id={node.key}>{renderNode(node)}</CMSortableBlock> : renderNode(node))}
 
       {/* Edit zero-state: nothing to type into yet */}
       {segment.addText && (
@@ -660,6 +703,14 @@ export function CMRenderTreeNodes(props: {
     </Box>
   ));
 
+  const sortableBody = !canReorderBlocks ? bodyElements : (
+    <DndContext sensors={blockSensors} modifiers={dndModifiers} onDragEnd={handleBlocksDragEnd}>
+      <SortableContext items={blockKeys} strategy={verticalListSortingStrategy}>
+        {bodyElements}
+      </SortableContext>
+    </DndContext>
+  );
+
   return <>
 
     {citations && (
@@ -669,7 +720,7 @@ export function CMRenderTreeNodes(props: {
     )}
 
     {/* links in the text resolve to this message's hosted-file blocks; no provider when there are none, so text-only messages pay nothing */}
-    {body.some(node => node.kind === 'hosted-resource') ? <HostedLinksProvider>{bodyElements}</HostedLinksProvider> : bodyElements}
+    {body.some(node => node.kind === 'hosted-resource') ? <HostedLinksProvider>{sortableBody}</HostedLinksProvider> : sortableBody}
 
   </>;
 }
