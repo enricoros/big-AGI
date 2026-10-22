@@ -121,7 +121,7 @@ const converterTypeToIconMap: { [key in AttachmentDraftConverterType]: React.Com
   'unhandled': TextureIcon,
 };
 
-function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, onViewImageRefPart?: (imageRefPart: DMessageImageRefPart) => void) {
+function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void) {
   const activeConverters = attachmentDraft.converters.filter(c => c.isActive);
   if (activeConverters.length === 0)
     return null;
@@ -140,7 +140,7 @@ function attachmentIcons(attachmentDraft: AttachmentDraft, noTooltips: boolean, 
       outputSingleImageRefDBlobs = [fragment.part.dataRef];
   }
 
-  const handleViewFirstImage = !onViewImageRefPart ? undefined : (e: React.MouseEvent) => {
+  const handleViewFirstImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const fragment = attachmentDraft.outputFragments[0];
@@ -232,7 +232,7 @@ function AttachmentDraftButton(props: {
   enrichment?: IAttachmentEnrichment,
   menuShown: boolean,
   onToggleMenu: (attachmentDraftId: AttachmentDraftId, anchor: HTMLAnchorElement) => void,
-  onViewImageRefPart?: (imageRefPart: DMessageImageRefPart) => void,
+  onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void,
 }) {
 
   // derived state

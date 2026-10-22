@@ -9,6 +9,8 @@ import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import type { DMessageDocPart, DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { ViewDocPartModal } from '~/common/components/modals/ViewDocPartModal';
+import { ViewImageRefPartModal } from '~/common/components/modals/ViewImageRefPartModal';
 import { richMenuCompactSx, richMenuSx } from '~/common/components/RichMenu';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -74,8 +76,6 @@ export function AttachmentDraftsList(props: {
   onAttachmentDraftsAction?: (attachmentDraftId: AttachmentDraftId | null, actionId: AttachmentDraftsAction) => void,
   // optional rendering props
   startDecorator?: React.ReactNode,
-  renderDocViewer?: (docPart: DMessageDocPart, onClose: () => void) => React.ReactNode,
-  renderImageViewer?: (imageRefPart: DMessageImageRefPart, onClose: () => void) => React.ReactNode,
   renderOverallMenuExtra?: () => React.ReactNode, // rendered at the top of the overall menu, before the built-in items
 }) {
 
@@ -157,21 +157,9 @@ export function AttachmentDraftsList(props: {
     onAttachmentDraftsAction?.(attachmentDraftId, actionId);
   }, [handleDraftMenuHide, onAttachmentDraftsAction]);
 
-  const handleViewImageRefPart = React.useCallback((imageRefPart: DMessageImageRefPart) => {
-    setViewerImageRefPart(imageRefPart);
-  }, []);
+  const handleCloseImageViewer = React.useCallback(() => setViewerImageRefPart(null), []);
 
-  const handleCloseImageViewer = React.useCallback(() => {
-    setViewerImageRefPart(null);
-  }, []);
-
-  const handleViewDocPart = React.useCallback((docPart: DMessageDocPart) => {
-    setViewerDocPart(docPart);
-  }, []);
-
-  const handleCloseDocPartViewer = React.useCallback(() => {
-    setViewerDocPart(null);
-  }, []);
+  const handleCloseDocPartViewer = React.useCallback(() => setViewerDocPart(null), []);
 
 
   // no components without attachments
@@ -197,7 +185,7 @@ export function AttachmentDraftsList(props: {
             enrichment={props.enrichment}
             menuShown={draft.id === itemMenuAttachmentDraftId}
             onToggleMenu={handleDraftMenuToggle}
-            onViewImageRefPart={!props.renderImageViewer ? undefined : handleViewImageRefPart}
+            onViewImageRefPart={setViewerImageRefPart}
           />,
         )}
 
@@ -222,11 +210,9 @@ export function AttachmentDraftsList(props: {
     </Box>
 
 
-    {/* Image Viewer Modal - when opening attachment images */}
-    {!!viewerImageRefPart && props.renderImageViewer?.(viewerImageRefPart, handleCloseImageViewer)}
-
-    {/* Text Viewer Modal */}
-    {!!viewerDocPart && props.renderDocViewer?.(viewerDocPart, handleCloseDocPartViewer)}
+    {/* Viewers */}
+    {!!viewerImageRefPart && <ViewImageRefPartModal imageRefPart={viewerImageRefPart} onClose={handleCloseImageViewer} />}
+    {!!viewerDocPart && <ViewDocPartModal docPart={viewerDocPart} onClose={handleCloseDocPartViewer} />}
 
 
     {/* Single Attachment Draft Menu */}
@@ -240,8 +226,8 @@ export function AttachmentDraftsList(props: {
         isPositionLast={itemMenuIndex === attachmentDrafts.length - 1}
         onClose={handleDraftMenuHide}
         onDraftAction={!onAttachmentDraftsAction ? undefined : handleDraftAction}
-        onViewDocPart={!props.renderDocViewer ? undefined : handleViewDocPart}
-        onViewImageRefPart={!props.renderImageViewer ? undefined : handleViewImageRefPart}
+        onViewDocPart={setViewerDocPart}
+        onViewImageRefPart={setViewerImageRefPart}
       />
     )}
 

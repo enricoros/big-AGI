@@ -8,8 +8,7 @@ import { RenderImageURL } from '~/modules/blocks/image/RenderImageURL';
 
 import type { DMessageContentFragment, DMessageFragmentId, DMessageImageRefPart } from '~/common/stores/chat/chat.fragments';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
-
-import { ViewImageRefPartModal } from './ViewImageRefPartModal';
+import { ViewImageRefPartModal } from '~/common/components/modals/ViewImageRefPartModal';
 
 
 export function BlockPartImageRef(props: {

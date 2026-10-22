@@ -11,13 +11,11 @@ import { AttachmentDraftsList } from '~/common/attachment-drafts/attachment-draf
 
 import { LLMAttachmentsPromptsButtonMemo } from './LLMAttachmentsPromptsButton';
 import { MessageFragmentOrderControl } from './MessageFragmentOrderControl';
-import { ViewDocPartModal } from '../../message/fragments-content/ViewDocPartModal';
-import { ViewImageRefPartModal } from '../../message/fragments-content/ViewImageRefPartModal';
 
 
 /**
  * Composer-specific wrapper around the generic AttachmentDraftsList.
- * Provides: viewer modals, AI prompts button, "What can I do?" menu item.
+ * Provides: the AI prompts button and the group ordering menu item.
  */
 export function ComposerAttachmentDraftsList(props: {
   attachmentDrafts: AttachmentDraft[],
@@ -44,16 +42,6 @@ export function ComposerAttachmentDraftsList(props: {
 
 
   // memo rendering functions
-
-  const renderDocViewer = React.useCallback(
-    (part: React.ComponentProps<typeof ViewDocPartModal>['docPart'], onClose: () => void) =>
-      <ViewDocPartModal docPart={part} onClose={onClose} />
-    , []);
-
-  const renderImageViewer = React.useCallback(
-    (part: React.ComponentProps<typeof ViewImageRefPartModal>['imageRefPart'], onClose: () => void) =>
-      <ViewImageRefPartModal imageRefPart={part} onClose={onClose} />
-    , []);
 
   const renderOverallMenuExtra = React.useCallback(() => <>
 
@@ -89,8 +77,6 @@ export function ComposerAttachmentDraftsList(props: {
           </Box>
         )
       }
-      renderDocViewer={renderDocViewer}
-      renderImageViewer={renderImageViewer}
       renderOverallMenuExtra={renderOverallMenuExtra}
     />
   );

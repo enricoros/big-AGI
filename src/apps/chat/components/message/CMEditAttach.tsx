@@ -18,8 +18,6 @@ import { useAttachmentDrafts } from '~/common/attachment-drafts/useAttachmentDra
 import { useGoogleDrivePicker } from '~/common/attachment-drafts/attachment-sources/useGoogleDrivePicker';
 
 import type { CMEditDrafts } from './cmEditDrafts';
-import { ViewDocPartModal } from './fragments-content/ViewDocPartModal';
-import { ViewImageRefPartModal } from './fragments-content/ViewImageRefPartModal';
 
 
 /** The edit-mode frame, like the text editor boxes: the end bar and the attachments editor share it. */
@@ -103,18 +101,6 @@ export function CMEditAttach(props: {
   const { openWebInputDialog, webInputDialogComponent } = useAttachHandler_UrlWebLinks(attachAppendUrl);
   const { openGoogleDrivePicker, googleDrivePickerComponent } = useGoogleDrivePicker(attachAppendCloudFile, props.isMobile);
 
-  const renderDocViewer = React.useCallback(
-    (part: React.ComponentProps<typeof ViewDocPartModal>['docPart'], onClose: () => void) =>
-      <ViewDocPartModal docPart={part} onClose={onClose} />,
-    [],
-  );
-
-  const renderImageViewer = React.useCallback(
-    (part: React.ComponentProps<typeof ViewImageRefPartModal>['imageRefPart'], onClose: () => void) =>
-      <ViewImageRefPartModal imageRefPart={part} onClose={onClose} />,
-    [],
-  );
-
 
   // drafts still loading or converting: Insert waits
   const draftsBusy = attachmentDrafts.some(draft => draft.inputLoading || draft.outputsConverting);
@@ -145,8 +131,6 @@ export function CMEditAttach(props: {
       attachmentDraftsStoreApi={store}
       attachmentDrafts={attachmentDrafts}
       buttonsCanWrap
-      renderDocViewer={renderDocViewer}
-      renderImageViewer={renderImageViewer}
     />
     <Button size='sm' variant='solid' color='warning' disabled={draftsBusy} startDecorator={<CheckRoundedIcon />} onClick={handleInsert} sx={_styles.textButton}>
       Insert

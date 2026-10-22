@@ -60,8 +60,8 @@ export function AttachmentDraftMenu(props: {
   isPositionLast: boolean,
   onClose: () => void,
   onDraftAction?: (attachmentDraftId: AttachmentDraftId, actionId: AttachmentDraftsAction) => void,
-  onViewDocPart?: (docPart: DMessageDocPart) => void,
-  onViewImageRefPart?: (imageRefPart: DMessageImageRefPart) => void
+  onViewDocPart: (docPart: DMessageDocPart) => void,
+  onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void
 }) {
 
   // state
@@ -166,13 +166,13 @@ export function AttachmentDraftMenu(props: {
   const handleViewImageRefPart = React.useCallback((event: React.MouseEvent, imageRefPart: DMessageImageRefPart) => {
     event.preventDefault();
     event.stopPropagation();
-    onViewImageRefPart?.(imageRefPart);
+    onViewImageRefPart(imageRefPart);
   }, [onViewImageRefPart]);
 
   const handleViewDocPart = React.useCallback((event: React.MouseEvent, docPart: DMessageDocPart) => {
     event.preventDefault();
     event.stopPropagation();
-    onViewDocPart?.(docPart);
+    onViewDocPart(docPart);
   }, [onViewDocPart]);
 
   const canHaveDetails = !!draftInput && !isConverting;
@@ -369,7 +369,7 @@ export function AttachmentDraftMenu(props: {
               <Typography level='body-sm' textColor='success.softColor' sx={{ display: 'flex', alignItems: 'center' }}>
                 Input: {draftInput.urlImage.mimeType} · {draftInput.urlImage.width}x{draftInput.urlImage.height}{!draftInput.urlImage.imgDataUrl?.length ? '' : ` · ${humanReadableBytes(draftInput.urlImage.imgDataUrl.length)}`}
                 &nbsp;
-                {!!onViewImageRefPart && <Chip component='span' size='sm' color='success' variant='soft' startDecorator={<VisibilityIcon />} onClick={(event) => {
+                <Chip component='span' size='sm' color='success' variant='soft' startDecorator={<VisibilityIcon />} onClick={(event) => {
                   if (draftInput?.urlImage?.imgDataUrl) {
                     // Invoke the viewer but with a virtual 'temp' part description to see this preview image
                     handleViewImageRefPart(event, {
@@ -385,7 +385,7 @@ export function AttachmentDraftMenu(props: {
                   }
                 }} sx={{ ml: 'auto' }}>
                   view input
-                </Chip>}
+                </Chip>
               </Typography>
             )}
 
@@ -415,9 +415,9 @@ export function AttachmentDraftMenu(props: {
                         {/*  copy*/}
                         {/*</Chip>*/}
                         <ButtonGroup size='sm' color='primary' variant='outlined' sx={actionButtonsSx}>
-                          {!!onViewDocPart && <Button startDecorator={<VisibilityIcon sx={{ fontSize: 'md' }} />} onClick={(event) => handleViewDocPart(event, part)}>
+                          <Button startDecorator={<VisibilityIcon sx={{ fontSize: 'md' }} />} onClick={(event) => handleViewDocPart(event, part)}>
                             view
-                          </Button>}
+                          </Button>
                           <Button onClick={(event) => handleCopyToClipboard(event, part.data.text)}/* endDecorator={<ContentCopyIcon />} */>
                             copy
                           </Button>
@@ -444,12 +444,12 @@ export function AttachmentDraftMenu(props: {
                         {/*  del*/}
                         {/*</Chip>}*/}
                         <ButtonGroup size='sm' color='primary' variant='outlined' sx={actionButtonsSx}>
-                          {!!onViewImageRefPart && <Button
+                          <Button
                             startDecorator={<VisibilityIcon sx={{ fontSize: 'md' }} />}
                             onClick={(event) => handleViewImageRefPart(event, legacyImageRefPart)}
                           >
                             view
-                          </Button>}
+                          </Button>
                           {isOutputMultiple && (
                             <Button
                               color='warning'

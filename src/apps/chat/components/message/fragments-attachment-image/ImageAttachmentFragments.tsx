@@ -15,8 +15,7 @@ import { dndDragEndReorder } from '~/common/components/dnd/dndDragEndReorder';
 import { dndModifiers } from '~/common/components/dnd/dnd.config';
 import { useDndDefaultSensors } from '~/common/components/dnd/useDndDefaultSensors';
 import { useDndDragHandleSortable } from '~/common/components/dnd/useDndDragHandleSortable';
-
-import { ViewImageRefPartModal } from '../fragments-content/ViewImageRefPartModal';
+import { ViewImageRefPartModal } from '~/common/components/modals/ViewImageRefPartModal';
 
 
 // configuration

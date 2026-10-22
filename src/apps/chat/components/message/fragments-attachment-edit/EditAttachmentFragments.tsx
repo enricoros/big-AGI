@@ -12,13 +12,13 @@ import { DMessageAttachmentFragment, DMessageFragmentId, DMessageImageRefPart, i
 import { dndDragEndReorder } from '~/common/components/dnd/dndDragEndReorder';
 import { dndModifiers } from '~/common/components/dnd/dnd.config';
 import { useDndDefaultSensors } from '~/common/components/dnd/useDndDefaultSensors';
+import { ViewImageRefPartModal } from '~/common/components/modals/ViewImageRefPartModal';
 
 import type { CMEditDrafts } from '../cmEditDrafts';
 import { CMEditAttach, cmEditFrameSx } from '../CMEditAttach';
 import { DocAttachmentFragmentPane } from '../fragments-attachment-doc/DocAttachmentFragmentPane';
 import { SortableDocAttachmentButton } from '../fragments-attachment-doc/DocumentAttachmentFragments';
 import { SortableImageAttachmentCard, imageAttachmentCardSx } from '../fragments-attachment-image/ImageAttachmentFragments';
-import { ViewImageRefPartModal } from '../fragments-content/ViewImageRefPartModal';
 
 
 const _styles = {
