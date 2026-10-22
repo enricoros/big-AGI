@@ -124,8 +124,25 @@ const _styles = {
     py: 0.25,
     fontSize: 'xs',
   },
+  titleText: {
+    color: 'text.primary',
+    // clamp to 3 lines
+    display: '-webkit-box',
+    WebkitLineClamp: 3,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
+  },
+  titleTextCompact: {
+    color: 'text.primary',
+    display: '-webkit-box',
+    WebkitLineClamp: 1,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
+  },
 
 } as const satisfies Record<string, SxProps>;
+
+const _titleOverlayCompactSx: SxProps = { ..._styles.titleOverlay, ..._styles.titleOverlayCompact };
 
 
 /**
@@ -189,7 +206,7 @@ function ImageTitleEditorOverlay(props: {
   if (!onFragmentReplace) return null;
 
   return (
-    <Sheet color='primary' variant='solid' invertedColors className={isEditingTitle ? 'agi-image-title agi-editing' : 'agi-image-title'} sx={!props.compact ? _styles.titleOverlay : { ..._styles.titleOverlay, ..._styles.titleOverlayCompact }} onClick={handleStartEditTitle}>
+    <Sheet color='primary' variant='solid' invertedColors className={isEditingTitle ? 'agi-image-title agi-editing' : 'agi-image-title'} sx={props.compact ? _titleOverlayCompactSx : _styles.titleOverlay} onClick={handleStartEditTitle}>
       {isEditingTitle ? (
         <Input
           size='sm'
@@ -202,14 +219,7 @@ function ImageTitleEditorOverlay(props: {
           sx={{ color: 'text.primary' }}
         />
       ) : (
-        <Typography level={props.compact ? 'body-xs' : 'body-sm'} sx={{
-          color: 'text.primary',
-          // clamp to 3 lines, 1 when compact
-          display: '-webkit-box',
-          WebkitLineClamp: props.compact ? 1 : 3,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-        }}>
+        <Typography level={props.compact ? 'body-xs' : 'body-sm'} sx={props.compact ? _styles.titleTextCompact : _styles.titleText}>
           {title || 'Click to add title...'}
         </Typography>
       )}

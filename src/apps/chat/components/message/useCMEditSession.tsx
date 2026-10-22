@@ -111,7 +111,7 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
   /** Done: takes the new attachments into the copy and stores it when anything changed. False while attachments convert, or when declined. */
   const apply = React.useCallback(async (): Promise<boolean> => {
     const started = sessionRef.current;
-    if (!started || draftsBusy) return false;
+    if (!started || started.drafts.getState() & 2) return false; // a draft still loads or converts
 
     // the stored message changed under the copy (sync, a follow-up, another tab): confirm the overwrite
     if (started.base && !isDeepEqual(started.base, storedRef.current)) {
@@ -145,7 +145,7 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
     } finally {
       started.gcRelease();
     }
-  }, [draftsBusy, messageId, onMessageFragmentsReplace, showPromisedOverlay]);
+  }, [messageId, onMessageFragmentsReplace, showPromisedOverlay]);
 
 
   // the fragments the copy changed or added, by id: their editors count as edited (save shortcuts)

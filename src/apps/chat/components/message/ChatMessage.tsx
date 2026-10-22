@@ -408,6 +408,8 @@ export function ChatMessage(props: {
   const { editable: editableFragments, editedFragmentIds, drafts: editDrafts, draftsBusy, update: editFragments, apply: editApply, begin: editBegin, cancel: handleEditsCancel } =
     useCMEditSession(messageId, messageFragments, !!messagePendingIncomplete, onMessageFragmentsReplace);
   const [editFocus, setEditFocus] = React.useState<{ fragmentId: DMessageFragmentId, seq: number } | null>(null);
+  const editableRef = React.useRef(editableFragments);
+  editableRef.current = editableFragments;
   const handleEditsBegin = React.useCallback(() => {
     setEditFocus(null);
     editBegin();
@@ -457,12 +459,13 @@ export function ChatMessage(props: {
 
   // '+ Text': a new empty block at the end, focused; while the last block is still empty, focus that one instead
   const handleFragmentNew = React.useCallback(() => {
-    const last = editableFragments?.[editableFragments.length - 1];
+    const editable = editableRef.current;
+    const last = editable?.[editable.length - 1];
     const target = last && isTextContentFragment(last) && !last.part.text ? last : createTextContentFragment('');
     if (target !== last)
       editFragments(fragments => [...fragments, target]);
     setEditFocus(focus => ({ fragmentId: target.fId, seq: (focus?.seq ?? 0) + 1 }));
-  }, [editableFragments, editFragments]);
+  }, [editFragments]);
 
   const handleFragmentDelete = React.useCallback((fragmentId: DMessageFragmentId) => {
     if (isEditingText) editFragments(fragments => fragments.filter(fragment => fragment.fId !== fragmentId));
