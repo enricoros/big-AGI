@@ -8,6 +8,7 @@ import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal'
 import { createAttachmentDraftsVanillaStore } from '~/common/attachment-drafts/store-attachment-drafts_vanilla';
 import { DMessageFragment, DMessageFragmentId, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
 import { findFirstUserPromptFragment, normalizeUserFragmentGroupsOrder, userFragmentGroup } from '~/common/stores/chat/chat.fragment-order';
+import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import { getUserMessageFragmentPlacement } from '../../store-app-chat';
@@ -36,8 +37,9 @@ const _isDraftsBusy = (state: AttachmentsDraftsStore) => state.attachmentDrafts.
 
 /**
  * Edit mode on a copy of the fragments. Untouched, the stored fragments render; the first edit copies them, and every
- * edit returns a new array that keeps the untouched fragment objects. Done writes the copy over the message; Cancel
- * confirms when edited. The session owns its attachment drafts store. No effects: a pending flip ends it during render.
+ * edit returns a new array that keeps the untouched fragment objects. Done writes the copy over the message, confirming
+ * when the stored message changed since the first edit; Cancel confirms when edited. The session owns its attachment
+ * drafts store. No effects: a pending flip ends it during render.
  */
 export function useCMEditSession(messageId: DMessageId, messageFragments: CMEditFragments, messagePendingIncomplete: boolean, onMessageFragmentsReplace: CMFragmentsReplace | undefined) {
 
@@ -45,6 +47,8 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
   const [session, setSession] = React.useState<CMEditSession | null>(null);
   const sessionRef = React.useRef(session);
   sessionRef.current = session;
+  const storedRef = React.useRef(messageFragments);
+  storedRef.current = messageFragments;
 
   // external state
   const { showPromisedOverlay } = useOverlayComponents();
@@ -89,10 +93,24 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
     setSession(s => s === current ? null : s);
   }, [showPromisedOverlay]);
 
-  /** Done: takes the new attachments into the copy and stores it when anything changed. False while attachments convert. */
+  /** Done: takes the new attachments into the copy and stores it when anything changed. False while attachments convert, or when declined. */
   const apply = React.useCallback(async (): Promise<boolean> => {
     const started = sessionRef.current;
     if (!started || draftsBusy) return false;
+
+    // the stored message changed under the copy (sync, a follow-up, another tab): confirm the overwrite
+    if (started.base && !isDeepEqual(started.base, storedRef.current)) {
+      const confirmed = await showPromisedOverlay('chat-message-edit-overwrite', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+        <ConfirmationModal
+          open onClose={onUserReject} onPositive={() => onResolve(true)}
+          title='Message Changed'
+          confirmationText='The message changed while you edited. Overwrite it?'
+          positiveActionText='Overwrite'
+        />,
+      );
+      if (!confirmed || sessionRef.current?.drafts !== started.drafts) return false;
+    }
+
     const drafts = await started.drafts.getState().takeAllFragments('global', 'app-chat');
     const current = sessionRef.current;
     if (current?.drafts !== started.drafts) return false; // ended while taking
@@ -100,7 +118,7 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
     if (!current.editable && !drafts.length) return true;
 
     // new attachments join the attachment group
-    let editable = current.editable ?? messageFragments;
+    let editable = current.editable ?? storedRef.current;
     if (drafts.length) {
       const index = _attachmentGroupIndex(editable, drafts[0]);
       editable = [...editable.slice(0, index), ...drafts, ...editable.slice(index)];
@@ -109,7 +127,7 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
     // store, overwriting the message: empty text is dropped
     onMessageFragmentsReplace?.(messageId, editable.filter(fragment => !isTextContentFragment(fragment) || !!fragment.part.text));
     return true;
-  }, [draftsBusy, messageFragments, messageId, onMessageFragmentsReplace]);
+  }, [draftsBusy, messageId, onMessageFragmentsReplace, showPromisedOverlay]);
 
 
   // the fragments the copy changed or added, by id: their editors count as edited (save shortcuts)

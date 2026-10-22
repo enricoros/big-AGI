@@ -26,6 +26,7 @@ export type GlobalOverlayId = // string - disabled so we keep an orderliness
   | 'chat-message-delete-aux'
   | 'chat-message-delete-hosted-resource'
   | 'chat-message-edit-discard'
+  | 'chat-message-edit-overwrite'
   | 'chat-message-auto-embed-notice'
   | 'chat-message-inline-aux'
   | 'livefile-overwrite'
