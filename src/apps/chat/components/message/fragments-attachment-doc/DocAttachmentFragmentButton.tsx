@@ -162,11 +162,11 @@ function DocAttachmentDeleteButton(props: { fragmentId: DMessageFragmentId, colo
 export function DocAttachmentFragmentButton(props: {
   fragment: DMessageAttachmentFragment,
   contentScaling: ContentScaling,
+  color?: ColorPaletteProp, // the unselected look; selected is always DocSelColor
   isSelected: boolean,
   isSelectable: boolean,
-  color?: ColorPaletteProp, // the unselected look; selected is always DocSelColor
+  toggleSelected?: (fragmentId: DMessageFragmentId) => void,
   dragHandle?: React.ReactNode,
-  toggleSelected: (fragmentId: DMessageFragmentId) => void,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
 }) {
 
@@ -181,7 +181,7 @@ export function DocAttachmentFragmentButton(props: {
 
   // handlers
   const handleSelectFragment = React.useCallback(() => {
-    toggleSelected(fragment.fId);
+    toggleSelected?.(fragment.fId);
   }, [fragment.fId, toggleSelected]);
 
   // memos
@@ -204,10 +204,13 @@ export function DocAttachmentFragmentButton(props: {
       borderColor: `${unselColor}.outlinedBorder`,
       backgroundColor: 'background.popup',
     },
+    ...(!isSelectable && {
+      cursor: 'default', // remove pointer cursor from the button if not selectable
+    }),
 
     // from LLMAttachmentButton
     display: 'flex', flexDirection: 'row',
-  }), [isSelected, props.contentScaling, unselColor]);
+  }), [isSelectable, isSelected, props.contentScaling, unselColor]);
 
   // only operate on doc fragments
   if (!isDocPart(fragment.part))
