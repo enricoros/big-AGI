@@ -438,6 +438,9 @@ export function CMRenderTreeNodes(props: {
             fragments={node.fragments}
             contentScaling={props.contentScaling}
             messageRole={props.messageRole}
+            isMobile={props.isMobile}
+            zenMode={zenMode}
+            disableMarkdownText={props.disableMarkdownDocuments}
             onFragmentDelete={props.onFragmentDelete}
             onFragmentReplace={props.onFragmentReplace}
             onFragmentsReorder={props.onFragmentsReorder}

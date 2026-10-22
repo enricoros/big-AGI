@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Button } from '@mui/joy';
+import { Box, Button, ColorPaletteProp } from '@mui/joy';
 
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext } from '@dnd-kit/sortable';
@@ -27,12 +27,13 @@ export function SortableDocAttachmentButton(props: {
   isSelectable: boolean,
   toggleSelected: (fragmentId: DMessageFragmentId) => void,
   isReordering: boolean,
+  dragHandleColor?: ColorPaletteProp, // default: neutral when selectable, else warning
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
 }) {
 
   const { fragment, contentScaling, isSelected, isSelectable, isReordering, toggleSelected } = props;
 
-  const { dragContainerSetRef, dragContainerStyle, dragHandle } = useDndDragHandleSortable(fragment.fId, !isReordering, isSelectable ? 'neutral' : 'warning');
+  const { dragContainerSetRef, dragContainerStyle, dragHandle } = useDndDragHandleSortable(fragment.fId, !isReordering, props.dragHandleColor ?? (isSelectable ? 'neutral' : 'warning'));
 
   return (
     <Box ref={dragContainerSetRef} style={dragContainerStyle} sx={{ display: 'inline-block' }}>

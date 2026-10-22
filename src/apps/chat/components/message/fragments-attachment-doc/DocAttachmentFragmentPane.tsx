@@ -360,13 +360,13 @@ export const DocAttachmentFragmentPane = React.memo(function DocAttachmentFragme
               startDecorator={showDeleteInstead ? <DeleteForeverIcon /> : props.controlledEditor ? undefined : <CheckRoundedIcon />}
               sx={_styles.button}
             >
-              {!showDeleteInstead ? (props.renderVariant === 'data-editor' ? 'Ok' : 'Save') : 'Delete'}
+              {!showDeleteInstead ? (props.controlledEditor ? 'Ok' : 'Save') : 'Delete'}
             </Button>
           )}
         </Box>
       )}
     </Box>
-  ), [handleEditApply, handleFragmentDelete, handleToggleDeleteArmed, handleToggleEdit, isDeleteArmed, isEditing, onFragmentDelete, onFragmentReplace, props.controlledEditor, props.renderVariant, reverseToolbar, showDeleteInstead]);
+  ), [handleEditApply, handleFragmentDelete, handleToggleDeleteArmed, handleToggleEdit, isDeleteArmed, isEditing, onFragmentDelete, onFragmentReplace, props.controlledEditor, reverseToolbar, showDeleteInstead]);
 
 
   return (
