@@ -5,6 +5,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
+import { openModelsForLLM } from '~/modules/llms/llms.optima';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { DLLM, DLLMId, getLLMLabel, isLLMVisible } from '~/common/stores/llms/llms.types';
@@ -16,7 +17,7 @@ import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon'
 import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { sortLLMsByServiceLabel } from '~/common/stores/llms/components/llms.dropdown.utils';
-import { optimaActions, optimaOpenModels } from '~/common/layout/optima/useOptima';
+import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useAllLLMs } from '~/common/stores/llms/hooks/useAllLLMs';
 import { setPrimaryChatModelId, useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { useUIComplexityMode } from '~/common/stores/store-ui';
@@ -182,7 +183,7 @@ function LLMDropdown(props: {
     {/*  </ListItemButton>*/}
     {/*)}*/}
 
-    <ListItemButton key='menu-llms' onClick={optimaOpenModels} sx={{ backgroundColor: 'background.surface', py: 'calc(2 * var(--ListDivider-gap))' }}>
+    <ListItemButton key='menu-llms' onClick={() => openModelsForLLM(chatLlmId)} sx={{ backgroundColor: 'background.surface', py: 'calc(2 * var(--ListDivider-gap))' }}>
       <ListItemDecorator>{!hasDropdownOptions ? '⚠️' : <BuildCircleIcon color='success' />}</ListItemDecorator>
       <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1, alignItems: 'center' }}>
         {!hasDropdownOptions ? 'Add Models' : 'Models'}
@@ -193,7 +194,7 @@ function LLMDropdown(props: {
       </Box>
     </ListItemButton>
 
-  </>, [hasDropdownOptions]);
+  </>, [chatLlmId, hasDropdownOptions]);
 
 
   return (

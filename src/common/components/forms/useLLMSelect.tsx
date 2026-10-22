@@ -8,6 +8,7 @@ import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 
 import { LLMVendorIconSprite } from '~/modules/llms/components/LLMVendorIconSprite';
 import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
+import { openModelsForLLM } from '~/modules/llms/llms.optima';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { isLLMChatFree_cached } from '~/common/stores/llms/llms.pricing';
@@ -309,12 +310,12 @@ export function useLLMSelect(
 
   const onSelectChange = React.useCallback((_event: unknown, value: DLLMId | null) => {
     // special: open the Models panel
-    if (value === LLM_SPECIAL_CONFIGURE_ID) return optimaOpenModels();
+    if (value === LLM_SPECIAL_CONFIGURE_ID) return openModelsForLLM(llmId);
     // special: caller-defined reset-to-Auto strategy (no-op if caller didn't provide one)
     if (value === LLM_SPECIAL_AUTO_ID) return setLlmToAuto?.();
     // invoke the explicit-pin setter when we have a non-null id
     value && setLlmId(value);
-  }, [setLlmId, setLlmToAuto]);
+  }, [llmId, setLlmId, setLlmToAuto]);
 
 
   const hasNoModels = _filteredLLMs.length === 0;
