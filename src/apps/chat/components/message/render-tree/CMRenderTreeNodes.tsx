@@ -447,7 +447,6 @@ export function CMRenderTreeNodes(props: {
             contentScaling={props.contentScaling}
             messageRole={props.messageRole}
             isMobile={props.isMobile}
-            zenMode={zenMode}
             disableMarkdownText={props.disableMarkdownDocuments}
             drafts={props.editDrafts}
             onFragmentDelete={props.onFragmentDelete}
@@ -673,9 +672,6 @@ export function CMRenderTreeNodes(props: {
       renderVariant='chat-message'
       contentScaling={props.contentScaling}
       isMobile={props.isMobile}
-      zenMode={zenMode}
-      allowSelection
-      allowReordering={false}
       disableMarkdownText={props.disableMarkdownDocuments}
       onFragmentDelete={props.onFragmentDelete}
       onFragmentReplace={props.onFragmentReplace}

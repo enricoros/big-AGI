@@ -399,7 +399,6 @@ export function ImageAttachmentFragments(props: {
   contentScaling: ContentScaling,
   messageRole: DMessageRole,
   renderVariant?: 'chat-message' | 'data-editor',
-  isEditing?: boolean,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => void,
   onFragmentsReorder?: (reorderedIds: DMessageFragmentId[]) => void,
@@ -415,7 +414,7 @@ export function ImageAttachmentFragments(props: {
   }, [props.imageAttachments]);
 
   // derived state
-  const isReorderable = !!props.onFragmentsReorder && (props.isEditing || props.imageAttachments.length > 1);
+  const isReorderable = !!props.onFragmentsReorder && props.imageAttachments.length > 1;
 
 
   // handlers
@@ -454,7 +453,6 @@ export function ImageAttachmentFragments(props: {
           <ImageAttachmentCard
             key={fragment.fId}
             fragment={fragment}
-            isEditing={props.isEditing}
             onFragmentDelete={props.onFragmentDelete}
             onFragmentReplace={props.onFragmentReplace}
             onViewImageRefPart={handleViewImageRefPart}
@@ -468,7 +466,6 @@ export function ImageAttachmentFragments(props: {
               <SortableImageAttachmentCard
                 key={fragment.fId}
                 fragment={fragment}
-                isEditing={props.isEditing}
                 onFragmentDelete={props.onFragmentDelete}
                 onFragmentReplace={props.onFragmentReplace}
                 onViewImageRefPart={handleViewImageRefPart}

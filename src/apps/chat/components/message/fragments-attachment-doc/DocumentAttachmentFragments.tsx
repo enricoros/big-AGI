@@ -24,17 +24,16 @@ export function SortableDocAttachmentButton(props: {
   fragment: DMessageAttachmentFragment,
   contentScaling: ContentScaling,
   isSelected: boolean,
-  isSelectable: boolean,
   toggleSelected: (fragmentId: DMessageFragmentId) => void,
   isReordering: boolean,
   color?: ColorPaletteProp, // the unselected button look
-  dragHandleColor?: ColorPaletteProp, // default: neutral when selectable, else warning
+  dragHandleColor?: ColorPaletteProp,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
 }) {
 
-  const { fragment, contentScaling, isSelected, isSelectable, isReordering, toggleSelected } = props;
+  const { fragment, contentScaling, isSelected, isReordering, toggleSelected } = props;
 
-  const { dragContainerSetRef, dragContainerStyle, dragHandle } = useDndDragHandleSortable(fragment.fId, !isReordering, props.dragHandleColor ?? (isSelectable ? 'neutral' : 'warning'));
+  const { dragContainerSetRef, dragContainerStyle, dragHandle } = useDndDragHandleSortable(fragment.fId, !isReordering, props.dragHandleColor ?? 'neutral');
 
   return (
     <Box ref={dragContainerSetRef} style={dragContainerStyle} sx={{ display: 'inline-block' }}>
@@ -42,7 +41,7 @@ export function SortableDocAttachmentButton(props: {
         fragment={fragment}
         contentScaling={contentScaling}
         isSelected={isSelected}
-        isSelectable={isSelectable}
+        isSelectable
         color={props.color}
         toggleSelected={toggleSelected}
         dragHandle={(isReordering && !isSelected) ? dragHandle : undefined}
@@ -64,17 +63,14 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
   renderVariant: 'chat-message' | 'data-editor',
   contentScaling: ContentScaling,
   isMobile: boolean,
-  zenMode: boolean,
-  allowSelection: boolean,
-  allowReordering: boolean,
   disableMarkdownText: boolean,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => void,
-  onFragmentsReorder?: (reorderedIds: DMessageFragmentId[]) => void,
+  onFragmentsReorder?: (reorderedIds: DMessageFragmentId[]) => void, // with it, the buttons reorder
 }) {
 
   // state
-  const [_activeFragmentId, setActiveFragmentId] = React.useState<DMessageFragmentId | null>(null);
+  const [activeFragmentId, setActiveFragmentId] = React.useState<DMessageFragmentId | null>(null);
   const [editState, setEditState] = React.useState<ChatMessageTextPartEditState | null>(null);
   const [showAllAttachments, setShowAllAttachments] = React.useState<boolean>(false);
 
@@ -85,18 +81,14 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
   }, [props.attachmentFragments]);
 
   // derived state
-  const isSelectable = props.allowSelection;
-  const onInlineDelete = !isSelectable ? props.onFragmentDelete : undefined;
-  const isReorderable = props.allowReordering && !!props.onFragmentsReorder && (!isSelectable || props.attachmentFragments.length > 1);
-  const activeFragmentId = !isSelectable ? null : _activeFragmentId;
+  const isReorderable = !!props.onFragmentsReorder && props.attachmentFragments.length > 1;
 
 
   // selection
 
   const handleToggleSelectedId = React.useCallback((fragmentId: DMessageFragmentId) => {
-    if (isSelectable)
-      setActiveFragmentId(prevId => prevId === fragmentId ? null : fragmentId);
-  }, [isSelectable]);
+    setActiveFragmentId(prevId => prevId === fragmentId ? null : fragmentId);
+  }, []);
 
   const selectedFragment = props.attachmentFragments.find(fragment => fragment.fId === activeFragmentId);
 
@@ -190,9 +182,8 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
               fragment={attachmentFragment}
               contentScaling={props.contentScaling}
               isSelected={activeFragmentId === attachmentFragment.fId}
-              isSelectable={isSelectable}
+              isSelectable
               toggleSelected={handleToggleSelectedId}
-              onFragmentDelete={onInlineDelete}
             />,
           )}
 
@@ -200,7 +191,7 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
           {hasMoreThanLimit && (
             <Button
               size={props.contentScaling === 'md' ? 'md' : 'sm'}
-              variant={isSelectable ? 'soft' : 'plain'}
+              variant='soft'
               onClick={handleToggleShowAll}
               sx={{
                 minHeight: props.contentScaling === 'md' ? 40 : props.contentScaling === 'sm' ? 38 : 36,
@@ -222,10 +213,8 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
                   fragment={attachmentFragment}
                   contentScaling={props.contentScaling}
                   isSelected={activeFragmentId === attachmentFragment.fId}
-                  isSelectable={isSelectable}
                   toggleSelected={handleToggleSelectedId}
                   isReordering={true}
-                  onFragmentDelete={onInlineDelete}
                 />,
               )}
             </Box>
@@ -240,12 +229,10 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
           fragment={selectedFragment}
           controlledEditor={controlledEditor}
           messageRole={props.messageRole}
-          renderVariant={props.renderVariant}
           editedText={controlledEditor ? undefined : editState?.[selectedFragment.fId]}
           setEditedText={handleEditSetText}
           contentScaling={props.contentScaling}
           isMobile={props.isMobile}
-          zenMode={props.zenMode}
           disableMarkdownText={props.disableMarkdownText}
           onFragmentDelete={props.onFragmentDelete}
           onFragmentReplace={!props.onFragmentReplace ? undefined : handleFragmentReplace}

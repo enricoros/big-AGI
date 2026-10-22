@@ -54,7 +54,6 @@ export function EditAttachmentFragments(props: {
   contentScaling: ContentScaling,
   messageRole: DMessageRole,
   isMobile: boolean,
-  zenMode: boolean,
   disableMarkdownText: boolean,
   drafts?: CMEditDrafts,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
@@ -125,7 +124,6 @@ export function EditAttachmentFragments(props: {
                 fragment={fragment}
                 contentScaling={props.contentScaling}
                 isSelected={activeFragmentId === fragment.fId}
-                isSelectable
                 color='warning'
                 toggleSelected={handleToggleSelected}
                 isReordering={isReordering}
@@ -145,11 +143,9 @@ export function EditAttachmentFragments(props: {
             fragment={selectedFragment}
             controlledEditor
             messageRole={props.messageRole}
-            renderVariant='chat-message'
             setEditedText={handleEditSetText}
             contentScaling={props.contentScaling}
             isMobile={props.isMobile}
-            zenMode={props.zenMode}
             disableMarkdownText={props.disableMarkdownText}
             onFragmentDelete={props.onFragmentDelete}
             onFragmentReplace={props.onFragmentReplace}
