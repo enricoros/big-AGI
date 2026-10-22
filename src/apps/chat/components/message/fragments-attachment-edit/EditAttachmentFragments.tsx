@@ -13,6 +13,8 @@ import { dndDragEndReorder } from '~/common/components/dnd/dndDragEndReorder';
 import { dndModifiers } from '~/common/components/dnd/dnd.config';
 import { useDndDefaultSensors } from '~/common/components/dnd/useDndDefaultSensors';
 
+import type { CMEditDrafts } from '../cmEditDrafts';
+import { CMEditAttach } from '../CMEditAttach';
 import { DocAttachmentFragmentPane } from '../fragments-attachment-doc/DocAttachmentFragmentPane';
 import { SortableDocAttachmentButton } from '../fragments-attachment-doc/DocumentAttachmentFragments';
 import { SortableImageAttachmentCard, imageAttachmentCardSx } from '../fragments-attachment-image/ImageAttachmentFragments';
@@ -29,14 +31,20 @@ const _styles = {
     flexWrap: 'wrap',
     alignItems: 'center',
     gap: 1,
+    // edit mode: the row starts at the gutter, like the editors (view mode aligns by role)
+    justifyContent: 'flex-start',
+  },
+  listWithPane: {
+    mb: 1,
   },
 } as const satisfies Record<string, SxProps>;
 
 
 /**
- * Edit mode: one sortable list for the attachments of an `edit-attachments` node, images and documents in message
- * order, so a drag moves an item across kinds. Each item keeps its delete; images keep the title editor and the viewer;
- * a document opens its pane below the list, where text and title edits go to the copy like every other edit.
+ * Edit mode: one sortable list for the attachments of an `edit-attachments` node, images (compact) and documents in
+ * message order, so a drag moves an item across kinds. Each item keeps its delete; images keep the title editor and the
+ * viewer; a document opens its pane below the list, where text and title edits go to the copy like every other edit.
+ * With `drafts`, an add row below takes new attachments into this group (after its last member, at Done).
  * The view-mode lists (`ImageAttachmentFragments`, `DocumentAttachmentFragments`) render the same items, per kind.
  */
 export function EditAttachmentFragments(props: {
@@ -46,6 +54,7 @@ export function EditAttachmentFragments(props: {
   isMobile: boolean,
   zenMode: boolean,
   disableMarkdownText: boolean,
+  drafts?: CMEditDrafts,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => void,
   onFragmentsReorder?: (reorderedIds: DMessageFragmentId[]) => void,
@@ -54,6 +63,10 @@ export function EditAttachmentFragments(props: {
   // state
   const [viewingImageRefPart, setViewingImageRefPart] = React.useState<DMessageImageRefPart | null>(null);
   const [activeFragmentId, setActiveFragmentId] = React.useState<DMessageFragmentId | null>(null);
+
+  // the add row's anchor: this group's last member, read at Done
+  const lastMemberRef = React.useRef<DMessageFragmentId | null>(null);
+  lastMemberRef.current = props.fragments[props.fragments.length - 1]?.fId ?? null;
 
   // dnd
   const sensors = useDndDefaultSensors();
@@ -83,13 +96,8 @@ export function EditAttachmentFragments(props: {
   const handleCloseViewImage = React.useCallback(() => setViewingImageRefPart(null), []);
 
   // memos
-  const listSx = React.useMemo((): SxProps => ({
-    ..._styles.list,
-    justifyContent: props.messageRole === 'assistant' ? 'flex-start' : 'flex-end',
-    ...selectedFragment && { mb: 1 },
-  }), [props.messageRole, selectedFragment]);
-
-  const cardSx = React.useMemo(() => imageAttachmentCardSx(props.contentScaling), [props.contentScaling]);
+  const listSx = !selectedFragment ? _styles.list : { ..._styles.list, ..._styles.listWithPane };
+  const cardSx = React.useMemo(() => imageAttachmentCardSx(props.contentScaling, undefined, true), [props.contentScaling]);
 
 
   return (
@@ -103,6 +111,7 @@ export function EditAttachmentFragments(props: {
                 key={fragment.fId}
                 fragment={fragment}
                 isEditing
+                compact
                 onFragmentDelete={props.onFragmentDelete}
                 onFragmentReplace={props.onFragmentReplace}
                 onViewImageRefPart={setViewingImageRefPart}
@@ -142,6 +151,11 @@ export function EditAttachmentFragments(props: {
           onFragmentDelete={props.onFragmentDelete}
           onFragmentReplace={props.onFragmentReplace}
         />
+      )}
+
+      {/* Add attachments to this group */}
+      {!!props.drafts && (
+        <CMEditAttach variant='group' drafts={props.drafts} anchorRef={lastMemberRef} isMobile={props.isMobile} />
       )}
 
       {/* Image Viewer modal */}

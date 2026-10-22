@@ -103,6 +103,12 @@ const _styles = {
     '&:hover': { backgroundColor: 'primary.solidHoverBg', },
     cursor: 'pointer',
   },
+  // compact thumbnails: one line, small
+  titleOverlayCompact: {
+    px: 0.5,
+    py: 0.25,
+    fontSize: 'xs',
+  },
 
 } as const satisfies Record<string, SxProps>;
 
@@ -113,6 +119,7 @@ const _styles = {
 function ImageTitleEditorOverlay(props: {
   title?: string,
   fragment: DMessageAttachmentFragment,
+  compact?: boolean,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => void,
 }) {
 
@@ -167,7 +174,7 @@ function ImageTitleEditorOverlay(props: {
   if (!onFragmentReplace) return null;
 
   return (
-    <Sheet color='primary' variant='solid' invertedColors sx={_styles.titleOverlay} onClick={handleStartEditTitle}>
+    <Sheet color='primary' variant='solid' invertedColors sx={!props.compact ? _styles.titleOverlay : { ..._styles.titleOverlay, ..._styles.titleOverlayCompact }} onClick={handleStartEditTitle}>
       {isEditingTitle ? (
         <Input
           size='sm'
@@ -180,11 +187,11 @@ function ImageTitleEditorOverlay(props: {
           sx={{ color: 'text.primary' }}
         />
       ) : (
-        <Typography level='body-sm' sx={{
+        <Typography level={props.compact ? 'body-xs' : 'body-sm'} sx={{
           color: 'text.primary',
-          // clamp to 3 lines
+          // clamp to 3 lines, 1 when compact
           display: '-webkit-box',
-          WebkitLineClamp: 3,
+          WebkitLineClamp: props.compact ? 1 : 3,
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
         }}>
@@ -202,6 +209,7 @@ function ImageTitleEditorOverlay(props: {
 function ImageAttachmentCard(props: {
   fragment: DMessageAttachmentFragment,
   isEditing?: boolean,
+  compact?: boolean,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => void,
   onViewImageRefPart: (part: DMessageImageRefPart) => void,
@@ -249,6 +257,7 @@ function ImageAttachmentCard(props: {
           <ImageTitleEditorOverlay
             title={title}
             fragment={props.fragment}
+            compact={props.compact}
             onFragmentReplace={props.onFragmentReplace}
           />
         </Box>
@@ -284,6 +293,7 @@ function ImageAttachmentCard(props: {
           <ImageTitleEditorOverlay
             title={title}
             fragment={props.fragment}
+            compact={props.compact}
             onFragmentReplace={props.onFragmentReplace}
           />
         </Box>
@@ -309,8 +319,8 @@ function ImageAttachmentCard(props: {
 }
 
 
-/** The card style at the content scale; the data editor adds a shadow. */
-export function imageAttachmentCardSx(contentScaling: ContentScaling, renderVariant?: 'chat-message' | 'data-editor'): SxProps {
+/** The card style at the content scale; the data editor adds a shadow; `compact` crops to a square thumbnail (edit list). */
+export function imageAttachmentCardSx(contentScaling: ContentScaling, renderVariant?: 'chat-message' | 'data-editor', compact?: boolean): SxProps {
   return {
     fontSize: themeScalingMap[contentScaling]?.blockFontSize ?? undefined,
     lineHeight: themeScalingMap[contentScaling]?.blockLineHeight ?? 1.75,
@@ -318,6 +328,9 @@ export function imageAttachmentCardSx(contentScaling: ContentScaling, renderVari
     ...(renderVariant !== 'data-editor' ? {} : {
       // border: 0, // no border in data-editor
       boxShadow: `0px 2px 4px -2px rgb(var(--joy-palette-primary-darkChannel) / 50%)`,
+    }),
+    ...(!compact ? {} : {
+      '& picture > img': { width: CARD_MIN_SQR, height: CARD_MIN_SQR, objectFit: 'cover' },
     }),
   };
 }
@@ -329,6 +342,7 @@ export function imageAttachmentCardSx(contentScaling: ContentScaling, renderVari
 export function SortableImageAttachmentCard(props: {
   fragment: DMessageAttachmentFragment,
   isEditing?: boolean,
+  compact?: boolean, // square thumbnail with a one-line title (edit list)
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
   onFragmentReplace?: (fragmentId: DMessageFragmentId, newFragment: DMessageAttachmentFragment) => void,
   onViewImageRefPart: (part: DMessageImageRefPart) => void,
@@ -350,6 +364,7 @@ export function SortableImageAttachmentCard(props: {
       <ImageAttachmentCard
         fragment={fragment}
         isEditing={isEditing}
+        compact={props.compact}
         onFragmentDelete={onFragmentDelete}
         onFragmentReplace={onFragmentReplace}
         onViewImageRefPart={onViewImageRefPart}

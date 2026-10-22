@@ -1,19 +1,15 @@
 import * as React from 'react';
-import { useStore } from 'zustand';
 
 import type { DBlobAssetId } from '~/common/stores/blob/dblobs-portability';
 import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
 import type { Immutable } from '~/common/types/immutable.types';
-import type { AttachmentDraftsStoreApi, AttachmentsDraftsStore } from '~/common/attachment-drafts/store-attachment-drafts_slice';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
-import { createAttachmentDraftsVanillaStore } from '~/common/attachment-drafts/store-attachment-drafts_vanilla';
 import { DMessageFragment, DMessageFragmentId, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
-import { collectFragmentAssetIds, gcRegisterAssetCollector } from '~/common/stores/chat/chat.gc';
-import { findFirstUserPromptFragment, normalizeUserFragmentGroupsOrder, userFragmentGroup } from '~/common/stores/chat/chat.fragment-order';
+import { gcRegisterAssetCollector } from '~/common/stores/chat/chat.gc';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
-import { getUserMessageFragmentPlacement } from '../../store-app-chat';
+import { CMEditDrafts } from './cmEditDrafts';
 
 
 type CMEditFragments = Immutable<DMessageFragment[]>;
@@ -28,20 +24,20 @@ interface CMFragmentCalls {
 }
 
 type CMEditSession = {
-  drafts: AttachmentDraftsStoreApi;       // the new attachments, taken at Done
+  drafts: CMEditDrafts;                   // the add controls' drafts, taken at Done
   base: CMEditFragments | null;           // the stored fragments at the first edit
   editable: CMEditFragments | null;       // the copy; null while untouched (the stored fragments render)
 };
 
-const _noDrafts = createAttachmentDraftsVanillaStore();
-const _isDraftsBusy = (state: AttachmentsDraftsStore) => state.attachmentDrafts.some(draft => draft.inputLoading || draft.outputsConverting);
+const _noDrafts = new CMEditDrafts();
+const _noDraftsState = () => 0;
 
 
 /**
  * Edit mode on a copy of the fragments. Untouched, the stored fragments render; the first edit copies them, and every
  * edit returns a new array that keeps the untouched fragment objects. Done writes the copy over the message, confirming
- * when the stored message changed since the first edit; Cancel confirms when edited. The session owns its attachment
- * drafts store. No effects: a pending flip ends it during render.
+ * when the stored message changed since the first edit; Cancel confirms when edited. The add controls register their
+ * drafts stores with the session (`CMEditDrafts`). No effects: a pending flip ends it during render.
  */
 export function useCMEditSession(messageId: DMessageId, messageFragments: CMEditFragments, messagePendingIncomplete: boolean, onMessageFragmentsReplace: CMFragmentsReplace | undefined) {
 
@@ -54,18 +50,19 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
 
   // external state
   const { showPromisedOverlay } = useOverlayComponents();
-  const draftsBusy = useStore(session?.drafts ?? _noDrafts, _isDraftsBusy);
+  const drafts = session?.drafts ?? _noDrafts;
+  const draftsState = React.useSyncExternalStore(drafts.subscribe, drafts.getState, _noDraftsState);
+  const draftsBusy = !!(draftsState & 2);
 
   // a resume or ray restart flips the message to pending: the session ends
   if (session && messagePendingIncomplete) {
-    session.drafts.getState().removeAllAttachmentDrafts();
+    session.drafts.disposeAll();
     setSession(null);
   }
 
 
   const begin = React.useCallback(() => {
-    const drafts = createAttachmentDraftsVanillaStore();
-    setSession(s => s ?? { drafts, base: null, editable: null });
+    setSession(s => s ?? { drafts: new CMEditDrafts(), base: null, editable: null });
   }, []);
 
   /** Applies an edit to the copy; a result with the same fragments changes nothing. */
@@ -79,8 +76,8 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
   const cancel = React.useCallback(async () => {
     const current = sessionRef.current;
     if (!current) return;
-    // edited, or attachments waiting in the strip: confirm before dropping them
-    if (current.editable || current.drafts.getState().attachmentDrafts.length) {
+    // edited, or attachments waiting in an add control: confirm before dropping them
+    if (current.editable || current.drafts.getState() & 1) {
       const confirmed = await showPromisedOverlay('chat-message-edit-discard', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
         <ConfirmationModal
           open onClose={onUserReject} onPositive={() => onResolve(true)}
@@ -91,7 +88,7 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
       );
       if (!confirmed) return;
     }
-    current.drafts.getState().removeAllAttachmentDrafts();
+    current.drafts.disposeAll();
     setSession(s => s === current ? null : s);
   }, [showPromisedOverlay]);
 
@@ -115,20 +112,20 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
 
     // the new images leave the drafts scope before the message references them: keep them from a chat GC meanwhile
     const draftAssetIds = new Set<DBlobAssetId>();
-    collectFragmentAssetIds(started.drafts.getState().attachmentDrafts.flatMap(draft => draft.outputFragments), draftAssetIds);
+    started.drafts.collectAssetIds(draftAssetIds);
     const unregisterCollector = gcRegisterAssetCollector(() => [...draftAssetIds]);
     try {
-      const drafts = await started.drafts.getState().takeAllFragments('global', 'app-chat');
+      const taken = await started.drafts.takeAll();
       const current = sessionRef.current;
       if (current?.drafts !== started.drafts) return false; // ended while taking
       setSession(null);
-      if (!current.editable && !drafts.length) return true;
+      if (!current.editable && !taken.length) return true;
 
-      // new attachments join the attachment group
+      // each control's drafts follow its anchor (the group's last member), or go to the end
       let editable = current.editable ?? storedRef.current;
-      if (drafts.length) {
-        const index = _attachmentGroupIndex(editable, drafts[0]);
-        editable = [...editable.slice(0, index), ...drafts, ...editable.slice(index)];
+      for (const { anchor, fragments } of taken) {
+        const index = anchor === null ? -1 : editable.findIndex(fragment => fragment.fId === anchor);
+        editable = index < 0 ? [...editable, ...fragments] : [...editable.slice(0, index + 1), ...fragments, ...editable.slice(index + 1)];
       }
 
       // store, overwriting the message: empty text is dropped
@@ -176,12 +173,3 @@ export function useCMHostFragmentCalls(messageRef: { readonly current: Immutable
   }, [messageRef, onMessageFragmentsReplace]);
 }
 
-
-/** After the last attachment; without one, before the first user text when the composer's group order puts `inserted` first, else the end. */
-function _attachmentGroupIndex(fragments: CMEditFragments, inserted: Immutable<DMessageFragment>): number {
-  const lastAttachment = fragments.findLastIndex(fragment => fragment.ft === 'attachment');
-  if (lastAttachment >= 0) return lastAttachment + 1;
-  const groups = normalizeUserFragmentGroupsOrder(getUserMessageFragmentPlacement().order);
-  const prompt = groups.indexOf(userFragmentGroup(inserted)) < groups.indexOf('text') ? findFirstUserPromptFragment(fragments) : undefined;
-  return prompt ? fragments.indexOf(prompt) : fragments.length;
-}

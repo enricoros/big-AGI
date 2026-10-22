@@ -21,7 +21,7 @@ import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
 import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isTextContentFragment, reorderFragmentsInSlots, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, reorderFragmentsInSlots, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { findFirstUserPromptFragment } from '~/common/stores/chat/chat.fragment-order';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
@@ -31,7 +31,6 @@ import { BlockOpOptions } from './BlockOpOptions';
 import { BlockOpResolveLinks } from './BlockOpResolveLinks';
 import { BlockOpUpstreamResume } from './BlockOpUpstreamResume';
 import { ChatMessageBubble } from './ChatMessageBubble';
-import { ChatMessageEditAttachments } from './ChatMessageEditAttachments';
 import { ChatMessageInfoPopup } from './ChatMessageInfoPopup';
 import { ChatMessageMenu } from './ChatMessageMenu';
 import { ChatMessageTimestamp } from './ChatMessageTimestamp';
@@ -983,7 +982,6 @@ export function ChatMessage(props: {
             tree={renderTree}
             inFluxFragmentId={inFluxFragmentId}
             showEmptyNotice={!messageFragments.length && !messagePendingIncomplete}
-            showAddText={isEditingText && !!onMessageFragmentsReplace && !editableFragments?.some(isTextContentFragment)}
 
             contentScaling={adjContentScaling}
             uiComplexityMode={uiComplexityMode}
@@ -998,11 +996,12 @@ export function ChatMessage(props: {
             htmlRenderVariant={props.htmlRenderVariant}
 
             editedFragmentIds={editedFragmentIds}
+            editDrafts={(!editDrafts || fromAssistant || !onMessageFragmentsReplace) ? undefined : editDrafts}
             setEditedText={canEditText ? handleRenderedTextEdit : undefined}
             onEditsApply={handleApplyAllEdits}
             onEditsCancel={handleEditsCancel}
 
-            onFragmentAddBlank={!onMessageFragmentsReplace ? undefined : handleFragmentNew}
+            onFragmentAddText={!onMessageFragmentsReplace ? undefined : handleFragmentNew}
             onFragmentDelete={!onMessageFragmentsReplace ? undefined : handleFragmentDelete}
             onFragmentReplace={!onMessageFragmentsReplace ? undefined : handleFragmentReplace}
             onFragmentsReorder={!onMessageFragmentsReplace ? undefined : handleFragmentsReorder}
@@ -1018,14 +1017,6 @@ export function ChatMessage(props: {
               contentScaling={adjContentScaling}
               linksCount={vertexLinksCount}
               onResolve={handleResolveVertexLinks}
-            />
-          )}
-
-          {/* [Edit Mode] Add new attachments */}
-          {!!editDrafts && !fromAssistant && !!onMessageFragmentsReplace && (
-            <ChatMessageEditAttachments
-              attachmentDraftsStoreApi={editDrafts}
-              isMobile={props.isMobile}
             />
           )}
 

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, Typography } from '@mui/joy';
+import { Box, Typography } from '@mui/joy';
 
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -19,7 +19,9 @@ import { dndModifiers } from '~/common/components/dnd/dnd.config';
 import { useDndDefaultSensors } from '~/common/components/dnd/useDndDefaultSensors';
 import { useDndDragHandleSortable } from '~/common/components/dnd/useDndDragHandleSortable';
 
+import type { CMEditDrafts } from '../cmEditDrafts';
 import { BlockEdit_TextFragment } from '../fragments-content/BlockEdit_TextFragment';
+import { CMEditAttach } from '../CMEditAttach';
 import { BlockOpEmpty } from '../fragments-content/BlockOpEmpty';
 import { BlockPartError } from '../fragments-content/BlockPartError';
 import { BlockPartHostedResource } from '../fragments-content/BlockPartHostedResource';
@@ -76,19 +78,6 @@ const _separatorSx: SxProps = {
   fontWeight: 'lg',
 } as const;
 
-// the zero-state button keeps a fill, so it stays visible on the message background (#934)
-const _addTextAssistantSx: SxProps = {
-  justifyContent: 'flex-start',
-  backgroundColor: 'neutral.softBg',
-  '&:hover': { backgroundColor: 'neutral.softHoverBg' },
-} as const;
-
-const _addTextUserSx: SxProps = {
-  justifyContent: 'flex-start',
-  backgroundColor: 'primary.softBg',
-  '&:hover': { backgroundColor: 'primary.softHoverBg' },
-} as const;
-
 // a reorderable block: the handle in a left gutter, the node in the remaining width
 const _blockSx: SxProps = {
   display: 'grid',
@@ -96,6 +85,17 @@ const _blockSx: SxProps = {
   alignItems: 'start',
   columnGap: 0.5,
 } as const;
+
+// the add bar below the blocks, in the content column when the blocks have a gutter
+const _editBarSx: SxProps = {
+  mt: 1.5, // the grid gap
+} as const;
+
+const _editBarGutteredSx: SxProps = {
+  ..._blockSx,
+  ..._editBarSx,
+} as const;
+
 
 const _blockGutterSx: SxProps = {
   display: 'flex',
@@ -249,7 +249,7 @@ interface AttachmentRow {
 }
 
 type BodySegment =
-  | { kind: 'grid', key: string, nodes: CMRenderNode[], emptyNotice?: boolean, addText?: boolean }
+  | { kind: 'grid', key: string, nodes: CMRenderNode[], emptyNotice?: boolean }
   | { kind: 'row', key: string, row: AttachmentRow };
 
 /** View rows, keyed by membership, not position: the list survives a reorder and the removal of other members. */
@@ -260,7 +260,7 @@ function _attachmentRowKey(kind: AttachmentRow['kind'], fragments: readonly DMes
   return `${kind}:${minId}`;
 }
 
-function _bodySegments(body: readonly CMRenderNode[], emptyNotice: boolean, addText: boolean): BodySegment[] {
+function _bodySegments(body: readonly CMRenderNode[], emptyNotice: boolean): BodySegment[] {
   const segments: BodySegment[] = [];
   let grid: CMRenderNode[] | null = null;
 
@@ -282,11 +282,6 @@ function _bodySegments(body: readonly CMRenderNode[], emptyNotice: boolean, addT
 
   if (emptyNotice && !segments.length)
     segments.push({ kind: 'grid', key: 'grid:empty', nodes: [], emptyNotice: true });
-  if (addText) {
-    const last = segments[segments.length - 1];
-    if (last?.kind === 'grid') last.addText = true;
-    else segments.push({ kind: 'grid', key: 'grid:add-text', nodes: [], addText: true });
-  }
   return segments;
 }
 
@@ -299,7 +294,6 @@ export function CMRenderTreeNodes(props: {
   tree: CMRenderTree,
   inFluxFragmentId?: DMessageFragmentId,
   showEmptyNotice: boolean,
-  showAddText: boolean,
 
   contentScaling: ContentScaling,
   uiComplexityMode: UIComplexityMode,
@@ -314,11 +308,12 @@ export function CMRenderTreeNodes(props: {
   htmlRenderVariant?: AutoBlocksHtmlRenderVariant,
 
   editedFragmentIds: ReadonlySet<DMessageFragmentId> | null, // the fragments the edit session changed: their editors count as edited
+  editDrafts?: CMEditDrafts, // the session's drafts registry: the add controls take attachments (none: text only)
   setEditedText?: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
   onEditsApply: (withControl: boolean) => void,
   onEditsCancel: () => void,
 
-  onFragmentAddBlank?: () => void,
+  onFragmentAddText?: () => void,
   onFragmentDelete?: FragmentDeleteHandler,
   onFragmentReplace?: FragmentReplaceHandler,
   onFragmentsReorder?: FragmentsReorderHandler,
@@ -343,7 +338,7 @@ export function CMRenderTreeNodes(props: {
   }, [tree]);
 
   const showEmptyNotice = props.showEmptyNotice && !isEditing;
-  const segments = React.useMemo(() => _bodySegments(body, showEmptyNotice, props.showAddText), [body, props.showAddText, showEmptyNotice]);
+  const segments = React.useMemo(() => _bodySegments(body, showEmptyNotice), [body, showEmptyNotice]);
 
   // solo placeholder: the data stream visualization while generating
   const showDataStreamViz =
@@ -369,7 +364,12 @@ export function CMRenderTreeNodes(props: {
     });
   }, [blockKeys, body, onFragmentsReorder]);
 
-  if (!segments.length && !citations)
+  // the add bar: a new text block, and attachments at the end (the registry decides); none when the host is read-only
+  const editBar = !isEditing || (!props.editDrafts && !props.onFragmentAddText) ? null : (
+    <CMEditAttach variant='bar' drafts={props.editDrafts} isMobile={props.isMobile} onAddText={props.onFragmentAddText} />
+  );
+
+  if (!segments.length && !citations && !editBar)
     return null;
 
 
@@ -441,6 +441,7 @@ export function CMRenderTreeNodes(props: {
             isMobile={props.isMobile}
             zenMode={zenMode}
             disableMarkdownText={props.disableMarkdownDocuments}
+            drafts={props.editDrafts}
             onFragmentDelete={props.onFragmentDelete}
             onFragmentReplace={props.onFragmentReplace}
             onFragmentsReorder={props.onFragmentsReorder}
@@ -690,19 +691,6 @@ export function CMRenderTreeNodes(props: {
 
       {segment.nodes.map(node => canReorderBlocks && cmNodeFragments(node).length ? <CMSortableBlock key={node.key} id={node.key}>{renderNode(node)}</CMSortableBlock> : renderNode(node))}
 
-      {/* Edit zero-state: nothing to type into yet */}
-      {segment.addText && (
-        <Button
-          aria-label='Add message text'
-          color={fromAssistant ? 'neutral' : 'primary'}
-          variant='outlined'
-          onClick={props.onFragmentAddBlank}
-          sx={fromAssistant ? _addTextAssistantSx : _addTextUserSx}
-        >
-          Add text
-        </Button>
-      )}
-
     </Box>
   ));
 
@@ -724,6 +712,9 @@ export function CMRenderTreeNodes(props: {
 
     {/* links in the text resolve to this message's hosted-file blocks; no provider when there are none, so text-only messages pay nothing */}
     {body.some(node => node.kind === 'hosted-resource') ? <HostedLinksProvider>{sortableBody}</HostedLinksProvider> : sortableBody}
+
+    {/* the add bar, aligned with the blocks' content column */}
+    {editBar && (canReorderBlocks ? <Box sx={_editBarGutteredSx}><Box />{editBar}</Box> : <Box sx={_editBarSx}>{editBar}</Box>)}
 
   </>;
 }
