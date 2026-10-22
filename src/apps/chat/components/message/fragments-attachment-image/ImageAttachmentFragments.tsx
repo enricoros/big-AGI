@@ -29,11 +29,8 @@ const _styles = {
 
   // wrap around image cards
   flow: {
-    // style
-    my: 'auto',
-    flex: 0,
-
-    // layout
+    // layout: the full width of the body grid, then wrap
+    justifySelf: 'stretch',
     display: 'flex',
     flexWrap: 'wrap',
     // alignItems: 'center',        // commented to keep them to the top

@@ -28,8 +28,8 @@ const USER_CODE_COLLAPSED_LINES = 15; // longer code in user text starts collaps
 
 const _styles = {
   collapsible: {
-    // takes the grid slot of BlocksContainer: same width, and minWidth 0 so wide code scrolls inside instead of widening the grid
-    width: '100%',
+    // the grid slot of BlocksContainer: stretches or hugs with the grid; minWidth 0 so wide code scrolls inside instead of widening it
+    maxWidth: '100%',
     minWidth: 0,
   },
 } as const;

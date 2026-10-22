@@ -1,4 +1,6 @@
 import * as React from 'react';
+
+import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, ColorPaletteProp } from '@mui/joy';
 
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
@@ -49,6 +51,14 @@ export function SortableDocAttachmentButton(props: {
     </Box>
   );
 }
+
+
+// the full width of the body grid: buttons wrap, the pane spans
+const _rootSx: SxProps = {
+  justifySelf: 'stretch',
+  display: 'flex',
+  flexDirection: 'column',
+};
 
 
 /**
@@ -166,11 +176,7 @@ export const DocumentAttachmentFragments = React.memo(function DocumentAttachmen
 
 
   return (
-    <Box aria-label={`${props.attachmentFragments.length} attachments`} sx={{
-      // layout
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
+    <Box aria-label={`${props.attachmentFragments.length} attachments`} sx={_rootSx}>
 
       {/* Document buttons with or without DnD */}
       {!isReorderable ? (

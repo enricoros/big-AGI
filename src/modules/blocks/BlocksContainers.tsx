@@ -28,7 +28,9 @@ export const BlocksContainer = styled(Box, { name: 'BlocksContainer' })({
   // however see `ContentPartTextEdit` where we set the width to 100% as we need a large editor
   // NOTE 2: after seeing html/code fragments smaller than the text fragments before them, we're back
   // to using width: 100% to make sure the fragments are all the same width (we lose the alignment unfortunately)
-  width: '100%',
+  // NOTE 3: the body is one grid now and blocks hug one by one (`justify-items`), so back to maxWidth: a block
+  // stretches when the grid stretches, and hugs its own content otherwise
+  maxWidth: '100%',
 
   // enables children's x-scrollbars (clips to the Fragment, so sub-parts will stay within this)
   overflowX: 'auto',
