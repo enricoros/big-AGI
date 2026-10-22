@@ -21,7 +21,7 @@ import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
 import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, reorderFragmentsInSlots, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isTextContentFragment, reorderFragmentsInSlots, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { findFirstUserPromptFragment } from '~/common/stores/chat/chat.fragment-order';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 import { useUXLabsStore } from '~/common/stores/store-ux-labs';
@@ -405,8 +405,13 @@ export function ChatMessage(props: {
   // Text editing state (handlers below): a working copy of the fragments, shown by the render tree in edit mode
   const { onMessageFragmentsReplace } = props;
   const { onMessageFragmentDelete, onMessageFragmentReplace } = useCMHostFragmentCalls(messageRef, onMessageFragmentsReplace);
-  const { editable: editableFragments, editedFragmentIds, drafts: editDrafts, draftsBusy, update: editFragments, apply: editApply, begin: handleEditsBegin, cancel: handleEditsCancel } =
+  const { editable: editableFragments, editedFragmentIds, drafts: editDrafts, draftsBusy, update: editFragments, apply: editApply, begin: editBegin, cancel: handleEditsCancel } =
     useCMEditSession(messageId, messageFragments, !!messagePendingIncomplete, onMessageFragmentsReplace);
+  const [editFocus, setEditFocus] = React.useState<{ fragmentId: DMessageFragmentId, seq: number } | null>(null);
+  const handleEditsBegin = React.useCallback(() => {
+    setEditFocus(null);
+    editBegin();
+  }, [editBegin]);
   const isEditingText = !!editableFragments;
   const canEditText = !!onMessageFragmentsReplace && !messagePendingIncomplete;
 
@@ -450,9 +455,14 @@ export function ChatMessage(props: {
 
   const { onMessageAssistantFrom, onMessageDelete, onMessageContinue, onMessageToggleUserFlag, onMessageUpstreamResume, onMessageUpstreamDetach, onMessageUpstreamDelete } = props;
 
+  // '+ Text': a new empty block at the end, focused; while the last block is still empty, focus that one instead
   const handleFragmentNew = React.useCallback(() => {
-    editFragments(fragments => [...fragments, createTextContentFragment('')]);
-  }, [editFragments]);
+    const last = editableFragments?.[editableFragments.length - 1];
+    const target = last && isTextContentFragment(last) && !last.part.text ? last : createTextContentFragment('');
+    if (target !== last)
+      editFragments(fragments => [...fragments, target]);
+    setEditFocus(focus => ({ fragmentId: target.fId, seq: (focus?.seq ?? 0) + 1 }));
+  }, [editableFragments, editFragments]);
 
   const handleFragmentDelete = React.useCallback((fragmentId: DMessageFragmentId) => {
     if (isEditingText) editFragments(fragments => fragments.filter(fragment => fragment.fId !== fragmentId));
@@ -996,6 +1006,7 @@ export function ChatMessage(props: {
             htmlRenderVariant={props.htmlRenderVariant}
 
             editedFragmentIds={editedFragmentIds}
+            editFocus={editFocus ?? undefined}
             editDrafts={(!editDrafts || fromAssistant || !onMessageFragmentsReplace) ? undefined : editDrafts}
             setEditedText={canEditText ? handleRenderedTextEdit : undefined}
             onEditsApply={handleApplyAllEdits}

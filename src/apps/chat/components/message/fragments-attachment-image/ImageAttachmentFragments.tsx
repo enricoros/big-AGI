@@ -88,6 +88,21 @@ const _styles = {
     position: 'relative',
     display: 'inline-block',
   },
+  // compact: the title shows on hover or focus (always on touch devices, and while editing it)
+  imageCardTitleWrapperCompact: {
+    position: 'relative',
+    display: 'inline-block',
+    '& .agi-image-title': {
+      opacity: 0,
+      transition: 'opacity 0.15s',
+    },
+    '&:hover .agi-image-title, &:focus-within .agi-image-title, & .agi-image-title.agi-editing': {
+      opacity: 1,
+    },
+    '@media (hover: none)': {
+      '& .agi-image-title': { opacity: 1 },
+    },
+  },
   // title overlay for image
   titleOverlay: {
     position: 'absolute',
@@ -174,7 +189,7 @@ function ImageTitleEditorOverlay(props: {
   if (!onFragmentReplace) return null;
 
   return (
-    <Sheet color='primary' variant='solid' invertedColors sx={!props.compact ? _styles.titleOverlay : { ..._styles.titleOverlay, ..._styles.titleOverlayCompact }} onClick={handleStartEditTitle}>
+    <Sheet color='primary' variant='solid' invertedColors className={isEditingTitle ? 'agi-image-title agi-editing' : 'agi-image-title'} sx={!props.compact ? _styles.titleOverlay : { ..._styles.titleOverlay, ..._styles.titleOverlayCompact }} onClick={handleStartEditTitle}>
       {isEditingTitle ? (
         <Input
           size='sm'
@@ -238,7 +253,7 @@ function ImageAttachmentCard(props: {
 
       const legacy = part._legacyImageRefPart;
       return (
-        <Box sx={_styles.imageCardTitleWrapper}>
+        <Box sx={props.compact ? _styles.imageCardTitleWrapperCompact : _styles.imageCardTitleWrapper}>
           <RenderImageRefDBlob
             key={'att-img-legacy-' + fId}
             dataRefDBlobAssetId={legacy.dataRef.dblobAssetId}
@@ -274,7 +289,7 @@ function ImageAttachmentCard(props: {
       }
 
       return (
-        <Box sx={_styles.imageCardTitleWrapper}>
+        <Box sx={props.compact ? _styles.imageCardTitleWrapperCompact : _styles.imageCardTitleWrapper}>
           <RenderImageRefDBlob
             key={'att-img-' + fId}
             dataRefDBlobAssetId={dataRef.dblobAssetId}

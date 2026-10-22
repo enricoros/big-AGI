@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box } from '@mui/joy';
+import { Box, Sheet } from '@mui/joy';
 
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext } from '@dnd-kit/sortable';
@@ -14,7 +14,7 @@ import { dndModifiers } from '~/common/components/dnd/dnd.config';
 import { useDndDefaultSensors } from '~/common/components/dnd/useDndDefaultSensors';
 
 import type { CMEditDrafts } from '../cmEditDrafts';
-import { CMEditAttach } from '../CMEditAttach';
+import { CMEditAttach, cmEditFrameSx } from '../CMEditAttach';
 import { DocAttachmentFragmentPane } from '../fragments-attachment-doc/DocAttachmentFragmentPane';
 import { SortableDocAttachmentButton } from '../fragments-attachment-doc/DocumentAttachmentFragments';
 import { SortableImageAttachmentCard, imageAttachmentCardSx } from '../fragments-attachment-image/ImageAttachmentFragments';
@@ -22,7 +22,9 @@ import { ViewImageRefPartModal } from '../fragments-content/ViewImageRefPartModa
 
 
 const _styles = {
-  column: {
+  // the group is one framed unit: list, add row, pane
+  frame: {
+    ...cmEditFrameSx,
     display: 'flex',
     flexDirection: 'column',
   },
@@ -34,8 +36,8 @@ const _styles = {
     // edit mode: the row starts at the gutter, like the editors (view mode aligns by role)
     justifyContent: 'flex-start',
   },
-  listWithPane: {
-    mb: 1,
+  pane: {
+    mt: 1,
   },
 } as const satisfies Record<string, SxProps>;
 
@@ -96,14 +98,13 @@ export function EditAttachmentFragments(props: {
   const handleCloseViewImage = React.useCallback(() => setViewingImageRefPart(null), []);
 
   // memos
-  const listSx = !selectedFragment ? _styles.list : { ..._styles.list, ..._styles.listWithPane };
   const cardSx = React.useMemo(() => imageAttachmentCardSx(props.contentScaling, undefined, true), [props.contentScaling]);
 
 
   return (
-    <Box aria-label={`${props.fragments.length} attachments`} sx={_styles.column}>
+    <Sheet color='warning' variant='soft' aria-label={`${props.fragments.length} attachments`} sx={_styles.frame}>
 
-      <Box sx={listSx}>
+      <Box sx={_styles.list}>
         <DndContext sensors={sensors} modifiers={dndModifiers} onDragEnd={handleDragEnd}>
           <SortableContext items={fragmentIds}>
             {props.fragments.map(fragment => isImagePart(fragment.part) ? (
@@ -135,27 +136,29 @@ export function EditAttachmentFragments(props: {
         </DndContext>
       </Box>
 
-      {/* Document viewer and editor: edits go to the copy, Ok closes the editor, Done stores the message */}
-      {!!selectedFragment && isDocPart(selectedFragment.part) && (
-        <DocAttachmentFragmentPane
-          key={selectedFragment.fId /* the useLiveFile hook must not carry state across fragments */}
-          fragment={selectedFragment}
-          controlledEditor
-          messageRole={props.messageRole}
-          renderVariant='chat-message'
-          setEditedText={handleEditSetText}
-          contentScaling={props.contentScaling}
-          isMobile={props.isMobile}
-          zenMode={props.zenMode}
-          disableMarkdownText={props.disableMarkdownText}
-          onFragmentDelete={props.onFragmentDelete}
-          onFragmentReplace={props.onFragmentReplace}
-        />
-      )}
-
-      {/* Add attachments to this group */}
+      {/* Add attachments to this group: stays with the list */}
       {!!props.drafts && (
         <CMEditAttach variant='group' drafts={props.drafts} anchorRef={lastMemberRef} isMobile={props.isMobile} />
+      )}
+
+      {/* Document viewer and editor, the group's detail panel: edits go to the copy, Ok closes the editor, Done stores */}
+      {!!selectedFragment && isDocPart(selectedFragment.part) && (
+        <Box sx={_styles.pane}>
+          <DocAttachmentFragmentPane
+            key={selectedFragment.fId /* the useLiveFile hook must not carry state across fragments */}
+            fragment={selectedFragment}
+            controlledEditor
+            messageRole={props.messageRole}
+            renderVariant='chat-message'
+            setEditedText={handleEditSetText}
+            contentScaling={props.contentScaling}
+            isMobile={props.isMobile}
+            zenMode={props.zenMode}
+            disableMarkdownText={props.disableMarkdownText}
+            onFragmentDelete={props.onFragmentDelete}
+            onFragmentReplace={props.onFragmentReplace}
+          />
+        </Box>
       )}
 
       {/* Image Viewer modal */}
@@ -166,6 +169,6 @@ export function EditAttachmentFragments(props: {
         />
       )}
 
-    </Box>
+    </Sheet>
   );
 }

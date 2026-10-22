@@ -21,26 +21,31 @@ import { ViewDocPartModal } from './fragments-content/ViewDocPartModal';
 import { ViewImageRefPartModal } from './fragments-content/ViewImageRefPartModal';
 
 
+/** The edit-mode frame, like the text editor boxes: the end bar and the attachments editor share it. */
+export const cmEditFrameSx: SxProps = {
+  overflow: 'hidden',
+  p: 0.5,
+  boxShadow: 'inset 1px 0px 3px -2px var(--joy-palette-warning-softColor)',
+  outline: '1px solid',
+  outlineColor: 'var(--joy-palette-warning-solidBg)',
+  borderRadius: 'sm',
+  // shade to the draft buttons inside this > div > div > button
+  '& > div > div > button': {
+    borderColor: 'warning.outlinedBorder',
+    borderRadius: 'sm',
+    boxShadow: 'sm',
+  },
+} as const;
+
 const _styles = {
 
-  // the bar at the end: looks exactly like the text editor boxes
+  // the bar at the end
   bar: {
-    overflow: 'hidden',
-    p: 0.5,
-    boxShadow: 'inset 1px 0px 3px -2px var(--joy-palette-warning-softColor)',
-    outline: '1px solid',
-    outlineColor: 'var(--joy-palette-warning-solidBg)',
-    borderRadius: 'sm',
+    ...cmEditFrameSx,
     display: 'flex',
     flexWrap: 'wrap',
     alignItems: 'center',
     gap: 1,
-    // shade to the draft buttons inside this > div > div > button
-    '& > div > div > button': {
-      borderColor: 'warning.outlinedBorder',
-      borderRadius: 'sm',
-      boxShadow: 'sm',
-    },
   },
 
   // the row below an attachments group

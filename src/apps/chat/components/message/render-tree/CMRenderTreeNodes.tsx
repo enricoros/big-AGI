@@ -82,10 +82,11 @@ const _separatorSx: SxProps = {
   fontWeight: 'lg',
 } as const;
 
-// a reorderable block: the handle in a left gutter, the node in the remaining width
+// a reorderable block: the handle in a left gutter, the node in the remaining width; the gutter never shrinks below
+// the handle (a 2rem IconButton), so the add bar's empty gutter keeps the content column aligned
 const _blockSx: SxProps = {
   display: 'grid',
-  gridTemplateColumns: 'auto minmax(0, 1fr)',
+  gridTemplateColumns: 'minmax(2rem, auto) minmax(0, 1fr)',
   alignItems: 'start',
   columnGap: 0.5,
 } as const;
@@ -315,6 +316,7 @@ export function CMRenderTreeNodes(props: {
   htmlRenderVariant?: AutoBlocksHtmlRenderVariant,
 
   editedFragmentIds: ReadonlySet<DMessageFragmentId> | null, // the fragments the edit session changed: their editors count as edited
+  editFocus?: { fragmentId: DMessageFragmentId, seq: number }, // the editor to focus, per request
   editDrafts?: CMEditDrafts, // the session's drafts registry: the add controls take attachments (none: text only)
   setEditedText?: (fragmentId: DMessageFragmentId, value: string, applyNow: boolean) => void,
   onEditsApply: (withControl: boolean) => void,
@@ -627,6 +629,8 @@ export function CMRenderTreeNodes(props: {
             fragmentId={fragment.fId}
             contentScaling={props.contentScaling}
             enableRestart={enableRestartFromEdit}
+            placeholder={props.editedFragmentIds?.has(fragment.fId) && !editText ? 'New text' : undefined}
+            focusSeq={props.editFocus?.fragmentId === fragment.fId ? props.editFocus.seq : undefined}
             editedText={props.editedFragmentIds?.has(fragment.fId) ? editText : undefined}
             setEditedText={setEditedText}
             onSubmit={props.onEditsApply}
@@ -719,7 +723,7 @@ export function CMRenderTreeNodes(props: {
     {/* assistant blocks move at the user's risk */}
     {canReorderBlocks && fromAssistant && (
       <Typography level='body-xs' color='warning' sx={_assistantReorderNoticeSx}>
-        Moving the blocks of a model reply can break the next request: some models need their reasoning and tool calls in the original order.
+        Editing or moving the blocks of a model reply can break the next request: some models need their original text, reasoning and tool calls.
       </Typography>
     )}
 

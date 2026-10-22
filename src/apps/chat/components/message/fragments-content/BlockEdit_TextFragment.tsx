@@ -67,6 +67,8 @@ export function BlockEdit_TextFragment(props: {
   contentScaling: ContentScaling,
   // endDecorator?: React.ReactNode
   squareTopBorder?: boolean,
+  placeholder?: string,
+  focusSeq?: number, // focuses the textarea whenever this changes (a new value per request)
 
   // edited value
   controlled?: boolean, // if true, the editor will assume enter is new line, and not emit onSubmit
@@ -78,6 +80,14 @@ export function BlockEdit_TextFragment(props: {
 
   // state
   const [isFocused, setIsFocused] = React.useState(false);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+
+  // [effect] focus on request (an already mounted editor, e.g. the empty block '+ Text' points at again)
+  const { focusSeq } = props;
+  React.useEffect(() => {
+    if (focusSeq !== undefined)
+      rootRef.current?.querySelector('textarea')?.focus();
+  }, [focusSeq]);
 
   // external
   // NOTE: we disabled `useUIPreferencesStore(state => state.enterIsNewline)` on 2024-06-19, as it's
@@ -152,6 +162,7 @@ export function BlockEdit_TextFragment(props: {
 
   return (
     <BlocksTextarea
+      ref={rootRef}
       variant={/*props.invertedColors ? 'plain' :*/ 'soft'}
       color={/*props.uncolor ? undefined : props.invertedColors ? 'primary' :*/ 'warning'}
       autoFocus
@@ -161,7 +172,7 @@ export function BlockEdit_TextFragment(props: {
         : props.initialText /* DMessageTextPart text */
       }
       startDecorator={props.inputLabel ? <small>{props.inputLabel}</small> : undefined}
-      placeholder={'Edit the message...'}
+      placeholder={props.placeholder ?? 'Edit the message...'}
       minRows={1.5} // unintuitive
       onFocus={isControlled ? undefined : () => setIsFocused(true)}
       onBlur={isControlled ? undefined : () => setIsFocused(false)}
