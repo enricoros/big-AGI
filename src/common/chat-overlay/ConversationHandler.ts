@@ -160,7 +160,7 @@ export class ConversationHandler {
     _chatStoreActions.appendMessage(this.conversationId, message);
   }
 
-  messageEdit(messageId: string, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), messageComplete: boolean, touch: boolean) {
+  messageEdit(messageId: string, update: Partial<DMessage> | ((message: DMessage) => (Partial<DMessage> | false)), messageComplete: boolean, touch: boolean) {
     _chatStoreActions.editMessage(this.conversationId, messageId, update, messageComplete, touch);
   }
 
@@ -185,7 +185,7 @@ export class ConversationHandler {
       const fragmentIndex = message.fragments.findIndex(f => f.fId === fragmentId);
       if (fragmentIndex < 0) {
         console.error(`replaceFragment: fragment not found for ID ${fragmentId}`);
-        return {};
+        return false; // no write
       }
       // a new object, in case the contents changed but not the object reference
       return { fragments: message.fragments.map((f, index) => index === fragmentIndex ? { ...newFragment } : f) };

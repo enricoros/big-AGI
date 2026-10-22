@@ -45,7 +45,7 @@ export interface ChatActions {
   historyView: (cId: DConversationId) => Readonly<DMessage[]> | undefined;
   appendMessage: (cId: DConversationId, message: DMessage) => void;
   deleteMessage: (cId: DConversationId, mId: DMessageId) => void;
-  editMessage: (cId: DConversationId, mId: DMessageId, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), removePendingState: boolean, touchUpdated: boolean) => void;
+  editMessage: (cId: DConversationId, mId: DMessageId, update: Partial<DMessage> | ((message: DMessage) => (Partial<DMessage> | false)), removePendingState: boolean, touchUpdated: boolean) => void;
   updateMetadata: (cId: DConversationId, mId: DMessageId, metadataDelta: Partial<DMessageMetadata>, touchUpdated?: boolean) => void;
   setSystemPurposeId: (cId: DConversationId, personaId: SystemPurposeId) => void;
   setAutoTitle: (cId: DConversationId, autoTitle: string) => void;
@@ -55,7 +55,7 @@ export interface ChatActions {
   title: (cId: DConversationId) => string | undefined;
 
   // utility function
-  _editConversation: (cId: DConversationId, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) => void;
+  _editConversation: (cId: DConversationId, update: Partial<DConversation> | ((conversation: DConversation) => (Partial<DConversation> | false))) => void;
 }
 
 type ConversationsStore = ChatState & ChatActions;
@@ -164,17 +164,18 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 
       // within a conversation
 
-      _editConversation: (conversationId: DConversationId, update: Partial<DConversation> | ((conversation: DConversation) => Partial<DConversation>)) =>
+      _editConversation: (conversationId: DConversationId, update: Partial<DConversation> | ((conversation: DConversation) => (Partial<DConversation> | false))) => {
+        const conversation = _get().conversations.find(c => c.id === conversationId);
+        if (!conversation) return;
+
+        // an updater may decline (false): no state change, no persistence
+        const conversationUpdate = typeof update === 'function' ? update(conversation) : update;
+        if (!conversationUpdate) return;
+
         _set(state => ({
-          conversations: state.conversations.map((conversation): DConversation =>
-            conversation.id === conversationId
-              ? {
-                ...conversation,
-                ...(typeof update === 'function' ? update(conversation) : update),
-              }
-              : conversation,
-          ),
-        })),
+          conversations: state.conversations.map((c): DConversation => c.id === conversationId ? { ...c, ...conversationUpdate } : c),
+        }));
+      },
 
       isIncognito: (conversationId: DConversationId): boolean | undefined =>
         _get().conversations.find(_c => _c.id === conversationId)?._isIncognito ?? undefined,
@@ -317,19 +318,27 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           };
         }),
 
-      editMessage: (conversationId: DConversationId, messageId: DMessageId, update: Partial<DMessage> | ((message: DMessage) => Partial<DMessage>), removePendingState: boolean, touchUpdated: boolean) =>
+      editMessage: (conversationId: DConversationId, messageId: DMessageId, update: Partial<DMessage> | ((message: DMessage) => (Partial<DMessage> | false)), removePendingState: boolean, touchUpdated: boolean) =>
         _get()._editConversation(conversationId, conversation => {
 
+          let didUpdate = false;
           const messages = conversation.messages.map((message): DMessage => {
-            if (message.id !== messageId)
-              return message;
 
+            // non-target messages pass through
+            if (message.id !== messageId) return message;
+
+            // verify real update, or pass through
+            const messageUpdate = typeof update === 'function' ? update(message) : update;
+            if (!messageUpdate) return message;
+
+            didUpdate = true;
             const updatedMessage: DMessage = {
               ...message,
-              ...(typeof update === 'function' ? update(message) : update),
-              ...(touchUpdated && { updated: Date.now() }),
+              ...messageUpdate,
+              ...(touchUpdated && { updated: Date.now() }), // update Message timestamp if requested
             };
 
+            // [optimization] pending state is removed at the end, and indicator of message readiness
             if (removePendingState)
               delete updatedMessage.pendingIncomplete;
 
@@ -338,6 +347,9 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
 
             return updatedMessage;
           });
+
+          // skip conversation update if no message changes
+          if (!didUpdate) return false;
 
           // [workspaces]
           // NOTE: we assume that no workspace side-effect-producing change is performed

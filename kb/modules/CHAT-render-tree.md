@@ -45,7 +45,7 @@ Host data (tool names, the visibility predicate, the options switch) goes throug
 - Drafts: the session owns its attachment drafts store (created at begin, disposed at the end); the strip only renders it. A session lost to unmount leaves its draft blobs to the boot GC of the `attachment-drafts` scope.
 - Hosts: one write, `onMessageFragmentsReplace(messageId, fragments)`; without it the message is read-only. `ChatMessageList` (`ConversationHandler.messageFragmentsReplace`: skips pending messages, writes as complete, GC when an asset id was dropped), Beam ray, fusion and base-history message, link viewer (local state). `useCMHostFragmentCalls` derives the view-mode delete and replace from it; calls within one event chain.
 - Reorders: `reorderFragmentsInSlots` (`chat.fragments.ts`) moves the listed fragments into the slots they held; `reorderFragments` is gone.
-- Programmatic edits: `ConversationHandler.messageFragmentAppend/Delete/Replace`, `editMessage` updaters on the latest stored message, also on pending messages (placeholders, image generation, follow-ups).
+- Programmatic edits: `ConversationHandler.messageFragmentAppend/Delete/Replace`, `editMessage` updaters on the latest stored message, also on pending messages (placeholders, image generation, follow-ups). An updater returns `false` to decline: no write, no touch (a replace of a missing fragment logs and declines).
 
 ## Open work
 
