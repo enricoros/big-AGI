@@ -3,6 +3,7 @@ import * as React from 'react';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Divider, Sheet } from '@mui/joy';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 
 import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
@@ -68,7 +69,8 @@ const _styles = {
 /**
  * Edit mode add control, in two places: the bar at the end of the message (a new text block, new attachments) and
  * the row below each attachments group (attachments into that group). Owns a drafts store, registered with the
- * session's `CMEditDrafts` under its anchor; the session takes the drafts at Done. Without `drafts`, text only.
+ * session's `CMEditDrafts` under its anchor; Insert takes the drafts into the copy now, else Done takes them.
+ * Without `drafts`, text only.
  */
 export function CMEditAttach(props: {
   variant: 'bar' | 'group',
@@ -114,9 +116,18 @@ export function CMEditAttach(props: {
   );
 
 
+  // drafts still loading or converting: Insert waits
+  const draftsBusy = attachmentDrafts.some(draft => draft.inputLoading || draft.outputsConverting);
+
+  const handleInsert = React.useCallback(() => {
+    void drafts?.takeStore(store);
+  }, [drafts, store]);
+
+
   const sources = !drafts ? null : (
     <AttachmentSourcesMemo
       mode='menu-message'
+      menuButtonLabel={props.variant === 'group' ? 'Add' : undefined}
       canBrowse={browseCapability.mayWork}
       hasScreenCapture={supportsScreenCapture}
       hasCamera={supportsCameraCapture()}
@@ -129,7 +140,7 @@ export function CMEditAttach(props: {
     />
   );
 
-  const list = !attachmentDrafts.length ? null : (
+  const list = !attachmentDrafts.length ? null : <>
     <AttachmentDraftsList
       attachmentDraftsStoreApi={store}
       attachmentDrafts={attachmentDrafts}
@@ -137,7 +148,10 @@ export function CMEditAttach(props: {
       renderDocViewer={renderDocViewer}
       renderImageViewer={renderImageViewer}
     />
-  );
+    <Button size='sm' variant='solid' color='warning' disabled={draftsBusy} startDecorator={<CheckRoundedIcon />} onClick={handleInsert} sx={_styles.textButton}>
+      Insert
+    </Button>
+  </>;
 
   const modals = <>
     {webInputDialogComponent}

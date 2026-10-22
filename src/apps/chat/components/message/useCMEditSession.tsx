@@ -4,8 +4,8 @@ import type { DBlobAssetId } from '~/common/stores/blob/dblobs-portability';
 import type { DMessage, DMessageId } from '~/common/stores/chat/chat.message';
 import type { Immutable } from '~/common/types/immutable.types';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
-import { DMessageFragment, DMessageFragmentId, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
-import { gcRegisterAssetCollector } from '~/common/stores/chat/chat.gc';
+import { DMessageAttachmentFragment, DMessageFragment, DMessageFragmentId, isTextContentFragment } from '~/common/stores/chat/chat.fragments';
+import { collectFragmentAssetIds, gcRegisterAssetCollector } from '~/common/stores/chat/chat.gc';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
@@ -24,12 +24,13 @@ interface CMFragmentCalls {
 }
 
 type CMEditSession = {
-  drafts: CMEditDrafts;                   // the add controls' drafts, taken at Done
+  drafts: CMEditDrafts;                   // the add controls' drafts, taken by Insert or at Done
+  gcRelease: () => void;                  // unregisters the session's asset collector
   base: CMEditFragments | null;           // the stored fragments at the first edit
   editable: CMEditFragments | null;       // the copy; null while untouched (the stored fragments render)
 };
 
-const _noDrafts = new CMEditDrafts();
+const _noDrafts = new CMEditDrafts(() => undefined);
 const _noDraftsState = () => 0;
 
 
@@ -37,7 +38,9 @@ const _noDraftsState = () => 0;
  * Edit mode on a copy of the fragments. Untouched, the stored fragments render; the first edit copies them, and every
  * edit returns a new array that keeps the untouched fragment objects. Done writes the copy over the message, confirming
  * when the stored message changed since the first edit; Cancel confirms when edited. The add controls register their
- * drafts stores with the session (`CMEditDrafts`). No effects: a pending flip ends it during render.
+ * drafts stores with the session (`CMEditDrafts`); Insert takes a control's drafts into the copy at once, Done takes the
+ * rest. A collector registered for the session keeps the copy's and the drafts' images from the chat GC until the
+ * write. No effects: a pending flip ends it during render.
  */
 export function useCMEditSession(messageId: DMessageId, messageFragments: CMEditFragments, messagePendingIncomplete: boolean, onMessageFragmentsReplace: CMFragmentsReplace | undefined) {
 
@@ -57,21 +60,33 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
   // a resume or ray restart flips the message to pending: the session ends
   if (session && messagePendingIncomplete) {
     session.drafts.disposeAll();
+    session.gcRelease();
     setSession(null);
   }
 
 
-  const begin = React.useCallback(() => {
-    setSession(s => s ?? { drafts: new CMEditDrafts(), base: null, editable: null });
-  }, []);
-
   /** Applies an edit to the copy; a result with the same fragments changes nothing. */
   const update = React.useCallback((edit: (fragments: CMEditFragments) => CMEditFragments) => setSession(s => {
     if (!s) return s;
-    const from = s.editable ?? messageFragments;
+    const from = s.editable ?? storedRef.current;
     const editable = edit(from);
     return editable.length === from.length && editable.every((fragment, i) => fragment === from[i]) ? s : { ...s, base: s.base ?? from, editable };
-  }), [messageFragments]);
+  }), []);
+
+  const begin = React.useCallback(() => {
+    if (sessionRef.current) return;
+    const drafts = new CMEditDrafts((anchor, fragments) => update(editable => _insertAfter(editable, anchor, fragments)));
+    // the copy's images (inserted drafts live in the chat scope) and the drafts' are referenced by no stored message yet
+    const gcRelease = gcRegisterAssetCollector(() => {
+      const current = sessionRef.current;
+      if (current?.drafts !== drafts) return [];
+      const assetIds = new Set<DBlobAssetId>();
+      if (current.editable) collectFragmentAssetIds(current.editable, assetIds);
+      drafts.collectAssetIds(assetIds);
+      return [...assetIds];
+    });
+    setSession({ drafts, gcRelease, base: null, editable: null });
+  }, [update]);
 
   const cancel = React.useCallback(async () => {
     const current = sessionRef.current;
@@ -89,6 +104,7 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
       if (!confirmed) return;
     }
     current.drafts.disposeAll();
+    current.gcRelease();
     setSession(s => s === current ? null : s);
   }, [showPromisedOverlay]);
 
@@ -110,10 +126,7 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
       if (!confirmed || sessionRef.current?.drafts !== started.drafts) return false;
     }
 
-    // the new images leave the drafts scope before the message references them: keep them from a chat GC meanwhile
-    const draftAssetIds = new Set<DBlobAssetId>();
-    started.drafts.collectAssetIds(draftAssetIds);
-    const unregisterCollector = gcRegisterAssetCollector(() => [...draftAssetIds]);
+    // the session's collector stays registered until after the write (the taken images are pinned in the registry)
     try {
       const taken = await started.drafts.takeAll();
       const current = sessionRef.current;
@@ -123,16 +136,14 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
 
       // each control's drafts follow its anchor (the group's last member), or go to the end
       let editable = current.editable ?? storedRef.current;
-      for (const { anchor, fragments } of taken) {
-        const index = anchor === null ? -1 : editable.findIndex(fragment => fragment.fId === anchor);
-        editable = index < 0 ? [...editable, ...fragments] : [...editable.slice(0, index + 1), ...fragments, ...editable.slice(index + 1)];
-      }
+      for (const { anchor, fragments } of taken)
+        editable = _insertAfter(editable, anchor, fragments);
 
       // store, overwriting the message: empty text is dropped
       onMessageFragmentsReplace?.(messageId, editable.filter(fragment => !isTextContentFragment(fragment) || !!fragment.part.text));
       return true;
     } finally {
-      unregisterCollector();
+      started.gcRelease();
     }
   }, [draftsBusy, messageId, onMessageFragmentsReplace, showPromisedOverlay]);
 
@@ -147,6 +158,13 @@ export function useCMEditSession(messageId: DMessageId, messageFragments: CMEdit
     draftsBusy,
     update, begin, cancel, apply,
   };
+}
+
+
+/** After the anchor fragment; at the end when there is none or it left the copy. */
+function _insertAfter(fragments: CMEditFragments, anchor: DMessageFragmentId | null, inserted: DMessageAttachmentFragment[]): CMEditFragments {
+  const index = anchor === null ? -1 : fragments.findIndex(fragment => fragment.fId === anchor);
+  return index < 0 ? [...fragments, ...inserted] : [...fragments.slice(0, index + 1), ...inserted, ...fragments.slice(index + 1)];
 }
 
 

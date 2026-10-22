@@ -27,6 +27,7 @@ export function SortableDocAttachmentButton(props: {
   isSelectable: boolean,
   toggleSelected: (fragmentId: DMessageFragmentId) => void,
   isReordering: boolean,
+  color?: ColorPaletteProp, // the unselected button look
   dragHandleColor?: ColorPaletteProp, // default: neutral when selectable, else warning
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
 }) {
@@ -42,6 +43,7 @@ export function SortableDocAttachmentButton(props: {
         contentScaling={contentScaling}
         isSelected={isSelected}
         isSelectable={isSelectable}
+        color={props.color}
         toggleSelected={toggleSelected}
         dragHandle={(isReordering && !isSelected) ? dragHandle : undefined}
         onFragmentDelete={props.onFragmentDelete}

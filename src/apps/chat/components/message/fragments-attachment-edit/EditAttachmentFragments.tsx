@@ -46,7 +46,7 @@ const _styles = {
  * Edit mode: one sortable list for the attachments of an `edit-attachments` node, images (compact) and documents in
  * message order, so a drag moves an item across kinds. Each item keeps its delete; images keep the title editor and the
  * viewer; a document opens its pane below the list, where text and title edits go to the copy like every other edit.
- * With `drafts`, an add row below takes new attachments into this group (after its last member, at Done).
+ * With `drafts`, a footer row adds attachments to this group (after its last member; Insert now, else at Done).
  * The view-mode lists (`ImageAttachmentFragments`, `DocumentAttachmentFragments`) render the same items, per kind.
  */
 export function EditAttachmentFragments(props: {
@@ -126,6 +126,7 @@ export function EditAttachmentFragments(props: {
                 contentScaling={props.contentScaling}
                 isSelected={activeFragmentId === fragment.fId}
                 isSelectable
+                color='warning'
                 toggleSelected={handleToggleSelected}
                 isReordering={isReordering}
                 dragHandleColor='warning'
@@ -136,12 +137,7 @@ export function EditAttachmentFragments(props: {
         </DndContext>
       </Box>
 
-      {/* Add attachments to this group: stays with the list */}
-      {!!props.drafts && (
-        <CMEditAttach variant='group' drafts={props.drafts} anchorRef={lastMemberRef} isMobile={props.isMobile} />
-      )}
-
-      {/* Document viewer and editor, the group's detail panel: edits go to the copy, Ok closes the editor, Done stores */}
+      {/* Document viewer and editor: edits go to the copy, Ok closes the editor, Done stores */}
       {!!selectedFragment && isDocPart(selectedFragment.part) && (
         <Box sx={_styles.pane}>
           <DocAttachmentFragmentPane
@@ -159,6 +155,11 @@ export function EditAttachmentFragments(props: {
             onFragmentReplace={props.onFragmentReplace}
           />
         </Box>
+      )}
+
+      {/* The group's footer: add attachments to this group (after its last member), Insert takes them now */}
+      {!!props.drafts && (
+        <CMEditAttach variant='group' drafts={props.drafts} anchorRef={lastMemberRef} isMobile={props.isMobile} />
       )}
 
       {/* Image Viewer modal */}

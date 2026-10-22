@@ -248,14 +248,14 @@ export const RenderImageURL = (props: {
 
         {/* Delete toggle/cancel */}
         {!!onImageDelete && !regenArmed && (
-          <OverlayButton tooltip={deleteArmed ? 'Cancel Deletion' : 'Delete Image'} aria-label={deleteArmed ? 'Cancel Deletion' : 'Delete Image'} placement='bottom' variant={deleteArmed ? 'solid' : isEditingAttachment ? 'soft' : 'outlined'} color={cardColor} onClick={handleToggleDeleteArmed} sx={{ gridRow: '1', gridColumn: '2' }}>
+          <OverlayButton tooltip={deleteArmed ? 'Cancel Deletion' : 'Delete Image'} aria-label={deleteArmed ? 'Cancel Deletion' : 'Delete Image'} placement='bottom' size={isEditingAttachment ? 'sm' : undefined} variant={deleteArmed ? 'solid' : isEditingAttachment ? 'soft' : 'outlined'} color={cardColor} onClick={handleToggleDeleteArmed} sx={{ gridRow: '1', gridColumn: '2' }}>
             {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
           </OverlayButton>
         )}
 
         {/* Delete confirm (armed) */}
         {deleteArmed && !regenArmed && (
-          <OverlayButton tooltip='Confirm Deletion' aria-label='Confirm Deletion' placement='bottom' variant='outlined' color='danger' onClick={onImageDelete} sx={{ gridRow: '2', gridColumn: '2' }}>
+          <OverlayButton tooltip='Confirm Deletion' aria-label='Confirm Deletion' placement='bottom' size={isEditingAttachment ? 'sm' : undefined} variant='outlined' color='danger' onClick={onImageDelete} sx={{ gridRow: '2', gridColumn: '2' }}>
             <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
           </OverlayButton>
         )}

@@ -108,7 +108,7 @@ export function buttonIconForFragment(part: DMessageAttachmentFragment['part']):
 }
 
 
-function DocAttachmentDeleteButton(props: { fragmentId: DMessageFragmentId, onFragmentDelete: (fragmentId: DMessageFragmentId) => void }) {
+function DocAttachmentDeleteButton(props: { fragmentId: DMessageFragmentId, color: ColorPaletteProp, onFragmentDelete: (fragmentId: DMessageFragmentId) => void }) {
 
   const [deleteArmed, setDeleteArmed] = React.useState(false);
 
@@ -139,7 +139,7 @@ function DocAttachmentDeleteButton(props: { fragmentId: DMessageFragmentId, onFr
           setDeleteArmed(false);
         }
       }}
-      sx={{ position: 'relative', display: 'flex', alignItems: 'center', px: 0.5, borderLeft: '1px solid', borderColor: 'primary.outlinedDisabledBorder', '& svg': { fontSize: '1.25rem' } }}
+      sx={{ position: 'relative', display: 'flex', alignItems: 'center', px: 0.5, borderLeft: '1px solid', borderColor: `${props.color}.outlinedDisabledBorder`, '& svg': { fontSize: '1.25rem' } }}
     >
       {/* Overlay the confirm button to the left so arming never moves the cancel target or wraps the chip. */}
       {deleteArmed && (
@@ -164,6 +164,7 @@ export function DocAttachmentFragmentButton(props: {
   contentScaling: ContentScaling,
   isSelected: boolean,
   isSelectable: boolean,
+  color?: ColorPaletteProp, // the unselected look; selected is always DocSelColor
   dragHandle?: React.ReactNode,
   toggleSelected: (fragmentId: DMessageFragmentId) => void,
   onFragmentDelete?: (fragmentId: DMessageFragmentId) => void,
@@ -174,6 +175,7 @@ export function DocAttachmentFragmentButton(props: {
 
   // derived state
   const { fragment, isSelectable, isSelected, toggleSelected } = props;
+  const unselColor = props.color ?? DocUnselColor;
   const hasLiveFile = !!liveFileMetadata;
   const isLiveFilePaired = liveFileMetadata ? liveFileMetadata.isPairingValid || false : false;
 
@@ -195,17 +197,17 @@ export function DocAttachmentFragmentButton(props: {
     fontSize: themeScalingMap[props.contentScaling]?.fragmentButtonFontSize ?? undefined,
     border: '1px solid',
     borderRadius: 'sm',
-    boxShadow: isSelected ? undefined : `0px 3px 4px -2px rgb(var(--joy-palette-${isSelected ? DocSelColor : DocUnselColor}-darkChannel) / ${isSelected ? 50 : 20}%)`,
+    boxShadow: isSelected ? undefined : `0px 3px 4px -2px rgb(var(--joy-palette-${unselColor}-darkChannel) / 20%)`,
     ...isSelected ? {
       borderColor: `${DocSelColor}.solidBg`,
     } : {
-      borderColor: `${DocUnselColor}.outlinedBorder`,
+      borderColor: `${unselColor}.outlinedBorder`,
       backgroundColor: 'background.popup',
     },
 
     // from LLMAttachmentButton
     display: 'flex', flexDirection: 'row',
-  }), [isSelected, props.contentScaling]);
+  }), [isSelected, props.contentScaling, unselColor]);
 
   // only operate on doc fragments
   if (!isDocPart(fragment.part))
@@ -226,7 +228,7 @@ export function DocAttachmentFragmentButton(props: {
       tabIndex={isSelectable ? undefined : -1}
       size={props.contentScaling === 'md' ? 'md' : 'sm'}
       variant={isSelected ? 'solid' : 'soft'}
-      color={isSelected ? DocSelColor : DocUnselColor}
+      color={isSelected ? DocSelColor : unselColor}
       disabled={!(props.dragHandle || props.onFragmentDelete || isSelectable)}
       onClick={!isSelectable ? undefined : handleSelectFragment}
       sx={buttonSx}
@@ -236,7 +238,7 @@ export function DocAttachmentFragmentButton(props: {
           height: '80%', // was 100%, but it's neat-o to have the line a bit engraved
           ...(props.dragHandle ? { pl: 1.75 } : { px: 1 }),
           borderRight: '1px solid',
-          borderRightColor: isSelected ? `${DocSelColor}.solidBg` : `${DocUnselColor}.outlinedDisabledBorder`, // this was outlinedBorder
+          borderRightColor: isSelected ? `${DocSelColor}.solidBg` : `${unselColor}.outlinedDisabledBorder`, // this was outlinedBorder
           display: 'flex', alignItems: 'center',
         }}>
           {props.dragHandle || <Icon />}
@@ -264,7 +266,7 @@ export function DocAttachmentFragmentButton(props: {
         </TooltipOutlined>
       )}
       {!!props.onFragmentDelete && (
-        <DocAttachmentDeleteButton fragmentId={fragment.fId} onFragmentDelete={props.onFragmentDelete} />
+        <DocAttachmentDeleteButton fragmentId={fragment.fId} color={unselColor} onFragmentDelete={props.onFragmentDelete} />
       )}
     </Button>
   );
