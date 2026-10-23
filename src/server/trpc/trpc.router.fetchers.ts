@@ -305,7 +305,7 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     }
 
     if (SERVER_DEBUG_WIRE || SERVER_LOG_FETCHERS_ERRORS)
-      console.log(`[${method}->${parserName}] [${moduleName} issue] (http ${s}, ${response.statusText}):`, { url, responseOk: response.ok, notOkayPayload: payloadString || notOkayPayload });
+      console.log(`[${method}->${parserName}] [${moduleName} issue] (http ${s}, ${response.statusText}):`, { url: debugCleanUrl || url, responseOk: response.ok, notOkayPayload: payloadString || notOkayPayload });
 
     // -> throw HTTP error: will be a 400 (BAD_REQUEST), with preserved status
     // machine-readable upstream code: the message alone cannot tell a temporary 429 from a permanent one
@@ -337,7 +337,7 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     // [logging - Parsing error] candidate for the logging system
     if (SERVER_DEBUG_WIRE || SERVER_LOG_FETCHERS_ERRORS) {
       // WARN because we want to understand if something is wrong with the upstream APIs, otherwise HTTP errors are expected and simply logged
-      console.warn(`[${method}] [${moduleName}]: (${parserName} parsing error): ${error?.name}`, { error, url });
+      console.warn(`[${method}] [${moduleName}]: (${parserName} parsing error): ${error?.name}`, { error, url: debugCleanUrl || url });
     }
 
     // Forward already processed Parsing error, adding the module name if required

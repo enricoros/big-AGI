@@ -5,7 +5,7 @@
  * that works identically on server and client environments.
  *
  * Server: Uses header-based auth (x-goog-api-key) with package version
- * Client: Uses query param auth (?key=) for CORS compatibility
+ * Client (browser only, with the user's own key): query param auth (?key=) for CORS compatibility; the server never honors the flag
  */
 import * as z from 'zod/v4';
 import { TRPCError } from '@trpc/server';
@@ -13,6 +13,7 @@ import { TRPCError } from '@trpc/server';
 import packageJson from '../../../../../package.json';
 
 import { env } from '~/server/env.server';
+import { isBrowser } from '~/common/util/pwaUtils';
 
 import { GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
@@ -44,7 +45,8 @@ export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | nu
   const clientHost = access.geminiHost?.trim() || '';
   const isGoogleHost = llmsIsNativeGeminiHost(clientHost);
   const geminiHost = llmsFixupHost(isGoogleHost ? DEFAULT_GEMINI_HOST : clientHost, apiPath);
-  let geminiKey = access.geminiKey || (isGoogleHost ? env.GEMINI_API_KEY : '') || '';
+  const clientKey = access.geminiKey || '';
+  let geminiKey = clientKey || (isGoogleHost ? env.GEMINI_API_KEY : '') || '';
 
   // multi-key with random selection - https://github.com/enricoros/big-AGI/issues/653
   geminiKey = llmsRandomKeyFromMultiKey(geminiKey);
@@ -64,8 +66,10 @@ export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | nu
   if (useV1Alpha)
     apiPath = apiPath.replaceAll('v1beta', 'v1alpha');
 
-  // [CSF] build headers and URL
-  if (access.clientSideFetch) {
+  // [CSF] query-parameter auth, browser only and with the user's own key: the server never honors the client-side-fetch
+  // flag (a crafted request can carry it), so no server fetch ever puts a key in a URL - URLs are echoed to the AIX
+  // inspector and logged on fetch errors. The one consumer of the flag enforces this; routers need no stripping.
+  if (isBrowser && access.clientSideFetch && clientKey) {
     const separator = apiPath.includes('?') ? '&' : '?';
     return {
       headers: {

@@ -12,6 +12,24 @@ import type { IParticleTransmitter, ParticleCGDialectEndReason, ParticleServerLo
 const ENABLE_EXTRA_DEV_MESSAGES = true;
 const DEBUG_REQUEST_MAX_STRING_BYTES = 2048;
 
+// query-string credentials (Gemini's `?key=`, and anything named like one) never reach the client
+const DEBUG_REQUEST_URL_SECRET_PARAMS = new Set(['key', 'api_key', 'apikey', 'api-key', 'token', 'access_token', 'sig', 'signature']);
+
+function _redactUrlSecrets(url: string): string {
+  try {
+    const parsed = new URL(url);
+    let redacted = false;
+    for (const name of [...parsed.searchParams.keys()])
+      if (DEBUG_REQUEST_URL_SECRET_PARAMS.has(name.toLowerCase())) {
+        parsed.searchParams.set(name, 'hidden');
+        redacted = true;
+      }
+    return redacted ? parsed.toString() : url;
+  } catch {
+    return url.split('?')[0]; // unparsable: drop the whole query string
+  }
+}
+
 /**
  * This is enabled by default because probabilistically unlikely -- however there will be false positives/negatives.
  *
@@ -142,7 +160,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
       cg: '_debugDispatchRequest',
       security: 'dev-env',
       dispatchRequest: {
-        url: url,
+        url: hideSensitiveData ? _redactUrlSecrets(url) : url,
         headers: hideSensitiveData ? '(hidden sensitive data)' : JSON.stringify(headers, null, 2),
         body: processedBody,
         bodySize: body ? objectEstimateJsonSize(body, 'aix.addDebugRequest') : 0,

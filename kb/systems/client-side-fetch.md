@@ -22,6 +22,8 @@ Net: Direct Connection is a win on speed, limits, and privacy whenever the provi
 
 CSF is implemented as an opt-in setting stored as `csf: boolean` in each vendor's service settings. The vendor interface exposes `csfAvailable?: (setup) => boolean` to determine if CSF can be enabled (typically checking if an API key or host is configured). The actual execution happens in `aix.client.direct-chatGenerate.ts` which dynamically imports when CSF is active, making direct fetch calls using the same wire protocols as the server.
 
+The server never honors the flag. Its only consumer is `geminiAccess`, which takes the query-parameter auth branch only in a browser and only with the user's own key; every server fetch uses header auth, so no deployment or user key enters a URL, and fetch-error logs print origin and path only. Routers strip nothing.
+
 Most cloud vendors support CSF (OpenAI, Anthropic, Gemini, Deepseek, Groq, Mistral, xAI, Meta AI, OpenRouter, Perplexity, Together AI, Alibaba, Cohere, Moonshot, Z.ai, Cerebras, Azure). Cerebras defaults CSF on; the others are opt-in. Modular and Sakana serve no CORS headers at all, NVIDIA's hosted endpoint allowlists `*.nvidia.com` origins only (CSF there requires a custom host), Bedrock has no CORS, and Moonshot's Kimi Code subscription host 404s the preflight - all four are excluded in the vendor files. Local vendors (Ollama, LocalAI, LM Studio) require CORS enabled on the local server.
 
 ## Request headers on the CSF path
