@@ -65,8 +65,8 @@ export function Fusion(props: {
   // counted title: 'Combined N' after a completed run; 'Combine N' otherwise, with the interrupted run's count or the next run's (a pending restart shows the next run)
   const recordedCount = fusion?.inputsWait ? undefined : fusion?.fusedInputsCount;
   const cardTitle = !factory ? '' : fusionCardTitle(factory,
-    (fusion?.stage === 'stopped' && recordedCount !== undefined) ? recordedCount : nextCount,
-    fusion?.stage === 'success' ? recordedCount : undefined
+    (fusion?.stage === 'aborted' && recordedCount !== undefined) ? recordedCount : nextCount,
+    fusion?.stage === 'completed' ? recordedCount : undefined
   );
 
   const { removeFusion, toggleFusionGathering, fusionSetLlmId } = props.beamStore.getState();

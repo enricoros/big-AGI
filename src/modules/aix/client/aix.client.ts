@@ -9,6 +9,7 @@ import { AIVndAntInlineFilesPolicy, getVndAntInlineFiles } from '~/common/stores
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { DLLM, DLLMId, LLM_IF_GEM_Interactions, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Responses, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageGenerator, createGeneratorAIX_AutoLabel } from '~/common/stores/chat/chat.message';
+import type { DMessageTerminalOutcome } from '~/common/stores/chat/chat.message.outcome';
 import { DMetricsChatGenerate_Lg, DMetricsChatGenerate_Md, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd, } from '~/common/stores/metrics/metrics.chatgenerate';
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { apiAsync, apiStream } from '~/common/util/trpc.client';
@@ -537,6 +538,12 @@ export async function aixChatGenerateText_Simple(
   if (outcome === 'failed')
     throw new Error('AIX: Generation failed.');
 
+  // NOTE: a 'truncated' outcome returns the cut text as if complete - the callers (titles, briefings, follow-ups, summaries) cannot tell.
+  // Options, for a later iteration (every one changes the callers' contract):
+  //  1. throw a typed AixTruncatedError carrying the partial text - loud like 'failed', callers that want the partial text catch it
+  //  2. return { text, outcome } - every caller decides, every signature changes
+  //  3. keep returning the text and let callers read state.generator.tokenStopReason from the streaming callback (only the streaming ones can)
+
   // final update
   await onTextStreamUpdate?.(state.text, true, state.generator);
 
@@ -708,7 +715,7 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   // [#1114] resolve Gemini/Vertex AI grounding redirect links before the final 'done' update, so every
   // caller (chat, Beam scatter/fusion, reattach) gets resolved links atomically with completion.
   // Policy-gated (no-op unless 'resolve') and timeout-capped; failures keep the originals.
-  if (outcome === 'completed' && dMessage.fragments.length) {
+  if ((outcome === 'completed' || outcome === 'truncated') && dMessage.fragments.length) { // truncated: the partial content is shown, so its links resolve too
     const resolvedFragments = await vertexLinksAutoResolveFragments(dMessage.fragments);
     if (resolvedFragments) dMessage.fragments = resolvedFragments;
   }
@@ -859,12 +866,19 @@ export interface AixChatGenerateContent_LL_Result extends AixChatGenerateContent
 }
 
 /**
- * Terminal state of a single LL generation call - why it stopped.
- * - 'completed': model responded normally (content may have tokenStopReason detail like out-of-tokens or filter)
- * - 'aborted': user cancelled
- * - 'failed': error occurred (error fragments carry the detail)
+ * Terminal state of a single LL generation call - why it stopped. The stored message's terminal outcome, which the
+ * reassembler derives from the final message (one outcome function, no parallel classification).
+ * - 'completed': model responded and stopped cleanly - the only success
+ * - 'truncated': model ran out of tokens - an error typed apart (warning, not danger); the partial output is kept, not usable
+ * - 'failed':    error occurred (error fragments carry the detail)
+ * - 'aborted':   user cancelled
  */
-export type AixChatGenerateTerminal_LL = 'completed' | 'aborted' | 'failed';
+export type AixChatGenerateTerminal_LL = DMessageTerminalOutcome;
+
+/** Boolean projection of the outcome: a clean completion and nothing else. */
+export function aixOutcomeIsSuccess(outcome: AixChatGenerateTerminal_LL): boolean {
+  return outcome === 'completed';
+}
 
 
 async function _aixChatGenerateContent_LL(...args: Parameters<typeof _aixChatGenerateContent_LL_unlocked>): Promise<AixChatGenerateContent_LL_Result> {

@@ -2,6 +2,7 @@ import * as z from 'zod/v4';
 
 // Used to align Particles to the Typescript definitions from the frontend-side, on 'chat.fragments.ts'
 import type { DMessageFragmentVendorStateKnown, DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
+import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 
 import { anthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.access';
 import { bedrockAccessSchema } from '~/modules/llms/server/bedrock/bedrock.access';
@@ -784,15 +785,39 @@ export namespace AixWire_Particles {
     | 'dispatch-read'           // [2] "
     | 'dispatch-parse';         // [2] "
 
-  export type GCTokenStopReason =
+
+  // Token stop reasons, grouped by class. The class is the one grouping shared by the edge (analytics) and the
+  // browser (reassembler outcome): 'ok' is the only success, 'truncated' is an error typed apart, 'error' is the rest.
+  export type GCTokenStopReason = _GCTokenStopReason_Ok | _GCTokenStopReason_Truncated | _GCTokenStopReason_Error;
+  type _GCTokenStopReason_Ok =
     | 'ok'                      // clean, including reaching 'stop sequences'
-    | 'ok-tool_invocations'     // clean & tool invocations
-    // premature:
+    | 'ok-tool_invocations';    // clean & tool invocations
+  type _GCTokenStopReason_Truncated =
+    | 'out-of-tokens';          // got out of tokens: the output is cut, kept but not usable as-is
+  type _GCTokenStopReason_Error =
     | 'cg-issue'                // [1][2] chat-generation issue (see CGIssueId, mostly a dispatch or dialect issue)
     | 'filter-content'          // content filter (e.g. profanity)
     | 'filter-recitation'       // recitation filter (e.g. recitation)
-    | 'filter-refusal'          // safety refusal filter (e.g. Anthropic safety concerns)
-    | 'out-of-tokens';          // got out of tokens
+    | 'filter-refusal';         // safety refusal filter (e.g. Anthropic safety concerns)
+
+  type GCStopClass = 'ok' | 'truncated' | 'error';
+
+  /** The projections of one wire stop reason: the class (edge analytics), the stored stop reason (DMessageGenerator.tokenStopReason, the client's persisted fact), the user-facing message appended on a cut */
+  export type GCStopReasonRow = { class: GCStopClass; stored: DMessageGenerator['tokenStopReason']; message?: string };
+
+  /** One row per wire stop reason. Read a row through GCStopReasonRow: rows without `message` are a different literal type under `as const`. */
+  export const GC_STOP_REASONS = {
+    'ok':                  { class: 'ok', stored: undefined },
+    'ok-tool_invocations': { class: 'ok', stored: undefined },
+    'out-of-tokens':       { class: 'truncated', stored: 'out-of-tokens' },
+    'cg-issue':            { class: 'error', stored: 'issue' },
+    // emitted by: OpenAI content_filter, Gemini SAFETY/BLOCKLIST/PROHIBITED_CONTENT/SPII/IMAGE_*, Bedrock content filter
+    'filter-content':      { class: 'error', stored: 'filter', message: 'Response blocked by the provider\'s content filter.' },
+    // emitted by: Gemini RECITATION/IMAGE_RECITATION (note: can be FP-prone on benign content like code/quotes)
+    'filter-recitation':   { class: 'error', stored: 'filter', message: 'Response blocked - potential copyrighted/recited content.' },
+    // emitted by: Anthropic stop_reason=refusal, Gemini LANGUAGE (unsupported)
+    'filter-refusal':      { class: 'error', stored: 'filter', message: 'Response refused by the provider\'s safety classifier.' },
+  } as const satisfies Record<GCTokenStopReason, GCStopReasonRow>;
 
   /**
    * NOTE: break compatibility with this D-stored-type only when we'll

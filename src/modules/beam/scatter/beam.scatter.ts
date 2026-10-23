@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand/vanilla';
 
-import { AixChatGenerateContent_DMessageGuts, AixReattachMode, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessageGuts, AixChatGenerateTerminal_LL, AixReattachMode, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { abortWithReason } from '~/common/util/errorUtils';
@@ -23,7 +23,7 @@ export type BRayId = string;
 
 export interface BRay {
   rayId: BRayId;
-  status: 'empty' | 'scattering' | 'success' | 'stopped' | 'error';
+  status: 'empty' | 'scattering' | AixChatGenerateTerminal_LL; // terminal values are the AIX outcome values: completed (success) | truncated | failed | aborted
   message: DMessage;
   rayLlmId: DLLMId | null;
   scatterIssue?: string;
@@ -94,9 +94,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
       const clearFragments = messageWasInterruptedAtStart(status.lastDMessage);
       _rayUpdate(ray.rayId, {
         ...(clearFragments && { message: createDMessageEmpty('assistant') }),
-        status: (status.outcome === 'completed') ? 'success'
-          : (status.outcome === 'aborted') ? 'stopped'
-            : (status.outcome === 'failed') ? 'error' : 'empty',
+        status: status.outcome,
         scatterIssue: status.outcomeFailedMessage || undefined,
         genAbortController: undefined,
       });
@@ -129,14 +127,14 @@ function rayScatterStop(ray: BRay): BRay {
   abortWithReason(ray.genAbortController, 'Beam Stopped');
   return {
     ...ray,
-    ...(ray.status === 'scattering' ? { status: 'stopped' } : {}),
+    ...(ray.status === 'scattering' ? { status: 'aborted' } : {}),
     genAbortController: undefined,
   };
 }
 
 
 export function rayIsError(ray: BRay | null): boolean {
-  return ray?.status === 'error';
+  return ray?.status === 'failed';
 }
 
 export function rayIsScattering(ray: BRay | null): boolean {
@@ -291,7 +289,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
 
       // pre-fill the ray with the imported message
       if (message.fragments.length) {
-        emptyRay.status = 'success';
+        emptyRay.status = 'completed';
         emptyRay.message = duplicateDMessage(message, false); // [beam] import dmessage copy from chat
         emptyRay.message.updated = Date.now();
         emptyRay.imported = true;
@@ -384,7 +382,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
       onMessageUpdate: (guts, completed) => _rayUpdate(rayId, (ray) => ({ message: beamMergeStreamedGuts(ray.message, guts, completed) })),
       onTerminal: (outcome) => {
         _rayUpdate(rayId, (ray) => ({
-          status: (outcome === 'completed') ? 'success' : (outcome === 'failed') ? 'error' : 'stopped',
+          status: outcome,
           genAbortController: undefined,
           message: { ...ray.message, pendingIncomplete: undefined },
         }));

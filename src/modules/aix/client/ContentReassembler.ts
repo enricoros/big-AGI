@@ -1,6 +1,7 @@
 import { addDBImageAsset } from '~/common/stores/blob/dblobs-portability';
 
 import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
+import { messageTerminalOutcome } from '~/common/stores/chat/chat.message.outcome';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
 import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createHostedResourceContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderMOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
@@ -10,13 +11,12 @@ import { imageBlobTransform, PLATFORM_IMAGE_MIMETYPE } from '~/common/util/image
 import { metricsChatGenerateLgToMd, metricsFinishChatGenerateLg, metricsPendChatGenerateLg } from '~/common/stores/metrics/metrics.chatgenerate';
 import { nanoidToUuidV4 } from '~/common/util/idUtils';
 
-import type { AixWire_Particles } from '../server/api/aix.wiretypes';
-import { AixWire_Vendors } from '../server/api/aix.wiretypes';
+import { AixWire_Particles, AixWire_Vendors } from '../server/api/aix.wiretypes';
 
 import type { AixClientDebugger, AixFrameId } from './debugger/memstore-aix-client-debugger';
 import { aixClientDebugger_completeFrame, aixClientDebugger_init, aixClientDebugger_recordParticleReceived, aixClientDebugger_setProfilerMeasurements, aixClientDebugger_setRequest } from './debugger/reassembler-debug';
 
-import { AixChatGenerateContent_LL, AixChatGenerateContent_LL_Result, AixChatGenerateTerminal_LL, DEBUG_PARTICLES } from './aix.client';
+import { AixChatGenerateContent_LL, AixChatGenerateContent_LL_Result, DEBUG_PARTICLES } from './aix.client';
 import { aixClassifyReassemblyError } from './aix.client.errors';
 
 
@@ -172,15 +172,20 @@ export class ContentReassembler {
 
   finalizeReassembly(): AixChatGenerateContent_LL_Result {
 
-    // Classify termination -> outcome + tokenStopReason + optional error message
-    const { outcome, tsr, errorMessage } = this._classifyTermination();
-    // termination -> legacy UI data pt
+    // Termination -> what the stored message carries: the stop reason, and an error fragment or a display-only notice
+    const { tsr, errorMessage, notice } = this._storedTermination();
     this.S.generator = { ...this.S.generator, tokenStopReason: tsr, endedAt: Date.now() };
-    // termination -> User/AI issue message
     if (errorMessage) this._appendErrorFragment(errorMessage);
+    if (notice) this._pushFragment(createPlaceholderVoidFragment(notice, 'notice', undefined, undefined, undefined, 'no-stop-reason', 'warn'));
 
-    // clean completion -> remove upstreamHandle (SET in onResponseHandle, CLEARED here on clean completion)
-    if (outcome === 'completed' && this.S.generator.upstreamHandle)
+    // The outcome is read back from the message: one function for the LL result, the stored message and every surface
+    const outcome = messageTerminalOutcome({ generator: this.S.generator, fragments: this.S.fragments });
+
+    // a truncated run ended on the vendor's signal like a completed one: the transport-level steps below treat the two alike
+    const vendorEnded = outcome === 'completed' || outcome === 'truncated';
+
+    // vendor-ended -> remove upstreamHandle (SET in onResponseHandle, CLEARED here; a truncated run cannot be resumed either)
+    if (vendorEnded && this.S.generator.upstreamHandle)
       this._clearGeneratorUpstreamHandle();
 
 
@@ -191,7 +196,7 @@ export class ContentReassembler {
       this._removeAllVoidPlaceholders(); // [PH-LIFECYCLE]
 
     // - mark active operations as errored on non-clean terminations
-    if (outcome !== 'completed') {
+    if (!vendorEnded) {
       this.S.fragments = this.S.fragments.map(fragment => {
         // a retry countdown left behind by a stop or by the final failure is no longer true: say what happened
         if (isVoidPlaceholderFragment(fragment) && fragment.part.aixControl?.ctl === 'ec-retry' && fragment.part.pText.includes(_RETRY_COUNTDOWN)) {
@@ -215,9 +220,9 @@ export class ContentReassembler {
 
     // Metrics
     // dtWall: the vendor-measured dtAll only arrives with a vendor-terminated stream; a stopped or failed run gets the client wall clock instead
-    if (!this.S.cgMetricsLg && outcome !== 'completed') this.S.cgMetricsLg = {};
+    if (!this.S.cgMetricsLg && !vendorEnded) this.S.cgMetricsLg = {};
     if (this.S.cgMetricsLg) this.S.cgMetricsLg.dtWall = Date.now() - this.wallStartTs;
-    metricsFinishChatGenerateLg(this.S.cgMetricsLg, outcome !== 'completed');
+    metricsFinishChatGenerateLg(this.S.cgMetricsLg, !vendorEnded);
 
     // [AI Inspector] Debugging, finalize the frame
     if (this.debuggerFrameId)
@@ -1107,43 +1112,28 @@ export class ContentReassembler {
   }
 
   /**
-   * Pure classification of termination state - no side effects.
-   * Cross-references terminationReason + dialectStopReason to derive:
-   * - outcome: definitive result of this LL call
-   * - tsr: tokenStopReason for the generator (UI detail, undefined = normal completion)
-   * - errorMessage: optional user/AI-facing message explaining what happened (appended by caller)
+   * Termination -> what the stored message will carry: the stop reason (DMessageGenerator.tokenStopReason), and either an
+   * error fragment text or a display-only notice. No outcome is decided here: finalizeReassembly() reads it back from the
+   * message with messageTerminalOutcome(), so the LL result, the stored message and every surface share one function.
    */
-  private _classifyTermination(): { outcome: AixChatGenerateTerminal_LL; tsr: DMessageGenerator['tokenStopReason']; errorMessage?: string; } {
+  private _storedTermination(): { tsr: DMessageGenerator['tokenStopReason']; errorMessage?: string; notice?: string } {
     const { terminationReason: endReason, dialectStopReason: dialectTokenStopReason } = this.S;
 
     // -- Client-set terminations --
 
     if (endReason === 'done-client-aborted')
-      return { outcome: 'aborted', tsr: 'client-abort' };
+      return { tsr: 'client-abort' };
     if (endReason === 'issue-client-rpc')
-      return { outcome: 'failed', tsr: 'issue' /* error fragment already appended by setClientExcepted() */ };
+      return { tsr: 'issue' /* error fragment already appended by setClientExcepted() */ };
 
     // -- Dialect-set dispatch terminations (model responded with an explicit stop reason at the end) --
 
     if (dialectTokenStopReason) {
-      const classification: Record<AixWire_Particles.GCTokenStopReason, ReturnType<typeof this._classifyTermination>> = {
-        // normal completions - the model responded and stopped cleanly
-        'ok': { outcome: 'completed', tsr: undefined },
-        'ok-tool_invocations': { outcome: 'completed', tsr: undefined },
-        // issues from the dialect/dispatch layer
-        'cg-issue': { outcome: 'failed', tsr: 'issue' },
-        // model completed but with a specific stop condition
-        'out-of-tokens': { outcome: 'completed', tsr: 'out-of-tokens' },
-        // filter-triggered terminations - treated as failures so all surfaces (chat, beam, etc.) render the error state uniformly
-        // emitted by: OpenAI content_filter, Gemini SAFETY/BLOCKLIST/PROHIBITED_CONTENT/SPII/IMAGE_*, Bedrock content filter
-        'filter-content': { outcome: 'failed', tsr: 'filter', errorMessage: 'Response blocked by the provider\'s content filter.' },
-        // emitted by: Gemini RECITATION/IMAGE_RECITATION (note: can be FP-prone on benign content like code/quotes)
-        'filter-recitation': { outcome: 'failed', tsr: 'filter', errorMessage: 'Response blocked - potential copyrighted/recited content.' },
-        // emitted by: Anthropic stop_reason=refusal, Gemini LANGUAGE (unsupported)
-        'filter-refusal': { outcome: 'failed', tsr: 'filter', errorMessage: 'Response refused by the provider\'s safety classifier.' },
-      } as const;
-      if (dialectTokenStopReason in classification)
-        return classification[dialectTokenStopReason];
+      // one row per wire reason, shared with the edge: GC_STOP_REASONS in aix.wiretypes
+      if (dialectTokenStopReason in AixWire_Particles.GC_STOP_REASONS) {
+        const { stored, message }: AixWire_Particles.GCStopReasonRow = AixWire_Particles.GC_STOP_REASONS[dialectTokenStopReason];
+        return { tsr: stored, ...(message && { errorMessage: message }) };
+      }
       console.warn(`[ContentReassembler] Unmapped dialectStopReason: ${dialectTokenStopReason}. Falling back to terminationReason.`);
     }
 
@@ -1152,35 +1142,36 @@ export class ContentReassembler {
     if (endReason === undefined) {
       // SEVERE - AIX BUG: either client terminations or an 'end' particle must be received
       console.warn(`⚠️ [ContentReassembler] finished without 'terminationReason' - possible missing 'end' particle.`);
-      return { outcome: 'failed', tsr: 'issue', errorMessage: 'Response may be incomplete - missing completion signal.' };
+      return { tsr: 'issue', errorMessage: 'Response may be incomplete - missing completion signal.' };
     }
 
     // -- Dispatch-set terminations: AixWire_Particles.CGEndReason --
 
     switch (endReason) {
       case 'done-dialect':
-        // Acceptable - dialect said done but didn't provide a stop reason - likely a parser gap
+        // the dialect said done without a stop reason (parser gap, or a gateway omitting finish_reason): completeness unknown, assumed
+        // complete - a dismissible warning notice, not an error fragment (error fragments are content and may reach the model)
         console.warn(`⚠️ [ContentReassembler] termination by dialect without 'dialectStopReason' - possible dialect parser issue.`);
-        return { outcome: 'completed', tsr: undefined, errorMessage: 'Note: response may be incomplete - the finish reason was not provided by the model.' };
+        return { tsr: undefined, notice: 'Response may be incomplete - the finish reason was not provided by the model.' };
 
       case 'done-dispatch-closed': // (!) VERY COMMON
         // BROKEN - Stream EOF before the dialect sent a termination signal - provider closed the connection early
         console.warn(`⚠️ [ContentReassembler] done-dispatch-closed without dialectStopReason - possible truncation`);
-        return { outcome: 'failed', tsr: 'issue', errorMessage: 'Response may be truncated - stream ended before completion.' };
+        return { tsr: 'issue', errorMessage: 'Response may be truncated - stream ended before completion.' };
 
       case 'done-dispatch-aborted':
         // BROKEN - Infrastructure abort (not user-initiated) - dispatch connection severed
         console.warn(`⚠️ [ContentReassembler] done-dispatch-aborted - connection lost, not user-initiated.`);
-        return { outcome: 'failed', tsr: 'issue', errorMessage: 'Response interrupted - the AI provider connection was lost.' };
+        return { tsr: 'issue', errorMessage: 'Response interrupted - the AI provider connection was lost.' };
 
       case 'issue-dialect':
       case 'issue-dispatch-rpc':
-        return { outcome: 'failed', tsr: 'issue' /* error fragments already added by upstream issue particles */};
+        return { tsr: 'issue' /* error fragments already added by upstream issue particles */ };
 
       default:
         const _exhaustiveCheck: never = endReason;
         console.warn(`⚠️ [ContentReassembler] unmapped termination reason: ${endReason}`);
-        return { outcome: 'failed', tsr: undefined };
+        return { tsr: 'issue' };
     }
   }
 

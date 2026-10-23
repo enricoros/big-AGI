@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { StateCreator } from 'zustand/vanilla';
 
-import type { AixReattachMode } from '~/modules/aix/client/aix.client';
+import type { AixChatGenerateTerminal_LL, AixReattachMode } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage } from '~/common/stores/chat/chat.message';
@@ -24,9 +24,7 @@ type BFusionId = string;
 type BFusionStage =
   | 'idle'      // at the beginning, never go back here
   | 'fusing'    // in progress (progressX is defined)
-  | 'success'   // completed successfully
-  | 'stopped'   // aborted by the user
-  | 'error';    // failed (fusionIssue is defined)
+  | AixChatGenerateTerminal_LL; // terminal values are the AIX outcome values: completed (success) | truncated | failed (errorText may be set) | aborted (by the user)
 
 
 export interface BFusion {
@@ -91,7 +89,7 @@ export function fusionIsFusing(fusion: BFusion | null): boolean {
 }
 
 export function fusionIsStopped(fusion: BFusion | null): boolean {
-  return fusion?.stage === 'stopped';
+  return fusion?.stage === 'aborted';
 }
 
 export function fusionIsUsableOutput(fusion: BFusion | null): boolean {
@@ -99,7 +97,7 @@ export function fusionIsUsableOutput(fusion: BFusion | null): boolean {
 }
 
 export function fusionIsError(fusion: BFusion | null): boolean {
-  return fusion?.stage === 'error' || fusion?.errorText !== undefined;
+  return fusion?.stage === 'failed' || fusion?.errorText !== undefined;
 }
 
 
@@ -326,7 +324,7 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
       abortSignal: abortController.signal,
       onMessageUpdate: (guts, completed) => _fusionUpdate(fusionId, (fusion) => fusion.outputDMessage ? ({ outputDMessage: beamMergeStreamedGuts(fusion.outputDMessage, guts, completed) }) : {}),
       onTerminal: (outcome) => _fusionUpdate(fusionId, (fusion) => ({
-        stage: (outcome === 'completed') ? 'success' : (outcome === 'failed') ? 'error' : 'stopped',
+        stage: outcome,
         fusingAbortController: undefined,
         outputDMessage: fusion.outputDMessage ? { ...fusion.outputDMessage, pendingIncomplete: undefined } : fusion.outputDMessage,
       })),

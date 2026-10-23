@@ -4,6 +4,7 @@ import { Typography } from '@mui/joy';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { abortWithReason } from '~/common/util/errorUtils';
 import { createDMessageEmpty, DMessage, messageSetGeneratorNamed } from '~/common/stores/chat/chat.message';
+import { messageTerminalOutcome } from '~/common/stores/chat/chat.message.outcome';
 import { createPlaceholderVoidFragment } from '~/common/stores/chat/chat.fragments';
 
 import type { BFusion, FusionUpdateOrFn } from '../beam.gather';
@@ -51,7 +52,7 @@ export function gatherStartFusion(
 
   // validate preconditions
   const onError = (errorText: string) => onUpdateBFusion({
-    stage: 'error',
+    stage: 'failed',
     errorText: errorText,
     fusingAbortController: undefined,
   });
@@ -141,8 +142,9 @@ export function gatherStartFusion(
   // Chain completion handlers
   promiseChain
     .then(() => {
+      // the last instruction's output decides the stage, with the one outcome function
       onUpdateBFusion({
-        stage: 'success',
+        stage: messageTerminalOutcome(inputState.intermediateDMessage),
         errorText: undefined,
         fusingProgressComponent: undefined,
       });
@@ -151,7 +153,7 @@ export function gatherStartFusion(
       // User abort: no need to show an error
       if (inputState.chainAbortController.signal.aborted) {
         return onUpdateBFusion({
-          stage: 'stopped',
+          stage: 'aborted',
           // errorText: 'Merge Canceled.',
           fusingProgressComponent: undefined,
         });
@@ -159,7 +161,7 @@ export function gatherStartFusion(
 
       // Error handling
       onUpdateBFusion({
-        stage: 'error',
+        stage: 'failed',
         errorText: 'Issue: ' + (error?.message || error?.toString() || 'Unknown error'),
         fusingProgressComponent: undefined, // stops the spinner
       });
@@ -178,7 +180,7 @@ export function gatherStopFusion(fusion: BFusion): BFusion {
   abortWithReason(fusion.fusingAbortController, 'Merge Stopped');
   return {
     ...fusion,
-    ...(fusion.stage === 'fusing' ? { stage: 'stopped' /* optimistic as the abort shall do the same */ } : {}),
+    ...(fusion.stage === 'fusing' ? { stage: 'aborted' /* optimistic as the abort shall do the same */ } : {}),
     inputsWait: undefined,
     fusingAbortController: undefined,
   };
