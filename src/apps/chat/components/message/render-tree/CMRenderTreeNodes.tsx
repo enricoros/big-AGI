@@ -86,22 +86,33 @@ const _separatorSx: SxProps = {
   fontWeight: 'lg',
 } as const;
 
-// a reorderable block: the handle in a left gutter, the node in the remaining width; the gutter never shrinks below
-// the handle (a 2rem IconButton), so the add bar's empty gutter keeps the content column aligned
+// a reorderable block: the handle in a left gutter, the node in the middle, Delete in a right gutter (on mobile, under
+// the handle instead); a gutter never shrinks below a 2rem IconButton, so the add bar's empty gutters keep the content
+// column aligned
 const _blockSx: SxProps = {
   display: 'grid',
-  gridTemplateColumns: 'minmax(2rem, auto) minmax(0, 1fr)',
+  gridTemplateColumns: 'minmax(2rem, auto) minmax(0, 1fr) minmax(2rem, auto)',
   alignItems: 'start',
   columnGap: 0.5,
 } as const;
 
-// the add bar below the blocks, in the content column when the blocks have a gutter
+const _blockMobileSx: SxProps = {
+  ..._blockSx,
+  gridTemplateColumns: 'minmax(2rem, auto) minmax(0, 1fr)',
+} as const;
+
+// the add bar below the blocks, in the content column when the blocks have gutters
 const _editBarSx: SxProps = {
   mt: 1.5, // the grid gap
 } as const;
 
 const _editBarGutteredSx: SxProps = {
   ..._blockSx,
+  ..._editBarSx,
+} as const;
+
+const _editBarGutteredMobileSx: SxProps = {
+  ..._blockMobileSx,
   ..._editBarSx,
 } as const;
 
@@ -116,11 +127,15 @@ const _blockGutterSx: SxProps = {
   pt: 1,
 } as const;
 
-// below the handle, which pulls its block margins in
 const _blockDeleteSx: SxProps = {
+  borderRadius: '50%',
+} as const;
+
+// under the handle, which pulls its block margins in
+const _blockDeleteStackedSx: SxProps = {
+  ..._blockDeleteSx,
   ml: -1.5,
   mt: 1.5,
-  borderRadius: '50%',
 } as const;
 
 const _blockDeleteIconSx = {
@@ -251,38 +266,52 @@ const CMTextNode = React.memo(function CMTextNode(props: {
 });
 
 
-/** Edit mode: a node as one block, movable by its gutter handle; a text block also deletes from the gutter. */
-function CMSortableBlock(props: { id: string, deleteConfirm?: boolean, onDelete?: () => void, children: React.ReactNode }) {
+/** Edit mode: a node as one block, movable by its gutter handle and deletable from the right gutter (on mobile, under the handle). */
+function CMSortableBlock(props: { id: string, isMobile: boolean, deleteConfirm: string | null, onDelete?: () => void, children: React.ReactNode }) {
   const { dragContainerSetRef, dragContainerStyle, dragHandle } = useDndDragHandleSortable(props.id, false, 'warning');
   const { showPromisedOverlay } = useOverlayComponents();
-  const { deleteConfirm, onDelete } = props;
+  const { isMobile, deleteConfirm, onDelete } = props;
 
-  // the dialog only when there is text to lose; an empty block goes at once (Done would drop it anyway)
-  const handleDelete = !onDelete ? undefined : async () => {
-    if (deleteConfirm && !await showPromisedOverlay('chat-message-delete-block', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
-      <ConfirmationModal
-        open onClose={onUserReject} onPositive={() => onResolve(true)}
-        title='Delete Block'
-        confirmationText='Delete this text block?'
-        positiveActionText='Delete'
-      />,
-    )) return;
-    onDelete();
-  };
+  // the dialog only when there is something to lose (null: an empty text block, which Done would drop anyway)
+  const deleteButton = !onDelete ? null : (
+    <IconButton
+      size='sm' variant='plain' color='warning' aria-label='Delete block' title='Delete this block'
+      onClick={async () => {
+        if (deleteConfirm && !await showPromisedOverlay('chat-message-delete-block', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+          <ConfirmationModal
+            open onClose={onUserReject} onPositive={() => onResolve(true)}
+            title='Delete Block'
+            confirmationText={deleteConfirm}
+            positiveActionText='Delete'
+          />,
+        )) return;
+        onDelete();
+      }}
+      sx={isMobile ? _blockDeleteStackedSx : _blockDeleteSx}
+    >
+      <DeleteOutlineIcon sx={_blockDeleteIconSx} />
+    </IconButton>
+  );
 
   return (
-    <Box ref={dragContainerSetRef} style={dragContainerStyle} sx={_blockSx}>
-      <Box sx={_blockGutterSx}>
-        {dragHandle}
-        {!!handleDelete && (
-          <IconButton size='sm' variant='plain' color='warning' aria-label='Delete block' title='Delete this block' onClick={handleDelete} sx={_blockDeleteSx}>
-            <DeleteOutlineIcon sx={_blockDeleteIconSx} />
-          </IconButton>
-        )}
-      </Box>
+    <Box ref={dragContainerSetRef} style={dragContainerStyle} sx={isMobile ? _blockMobileSx : _blockSx}>
+      <Box sx={_blockGutterSx}>{dragHandle}{isMobile && deleteButton}</Box>
       <Box>{props.children}</Box>
+      {!isMobile && <Box>{deleteButton}</Box>}
     </Box>
   );
+}
+
+/** What the Delete dialog asks; null skips the dialog. */
+function _blockDeleteConfirm(node: CMRenderNode): string | null {
+  switch (node.kind) {
+    case 'edit-text':
+      return node.fragment.part.pt === 'text' && !node.fragment.part.text ? null : 'Delete this text block?';
+    case 'edit-attachments':
+      return node.fragments.length === 1 ? 'Delete this attachment?' : `Delete these ${node.fragments.length} attachments?`;
+    default:
+      return 'Delete this block?';
+  }
 }
 
 
@@ -688,8 +717,9 @@ export function CMRenderTreeNodes(props: {
         <CMSortableBlock
           key={node.key}
           id={node.key}
-          deleteConfirm={node.kind === 'edit-text' && !(node.fragment.part.pt === 'text' && !node.fragment.part.text)}
-          onDelete={node.kind === 'edit-text' && onFragmentDelete ? () => onFragmentDelete(node.fragment.fId) : undefined}
+          isMobile={props.isMobile}
+          deleteConfirm={_blockDeleteConfirm(node)}
+          onDelete={!onFragmentDelete ? undefined : () => cmNodeFragments(node).forEach(fragment => onFragmentDelete(fragment.fId))}
         >
           {renderNode(node)}
         </CMSortableBlock>
@@ -725,7 +755,7 @@ export function CMRenderTreeNodes(props: {
     {body.some(node => node.kind === 'hosted-resource') ? <HostedLinksProvider>{sortableBody}</HostedLinksProvider> : sortableBody}
 
     {/* the add bar, aligned with the blocks' content column */}
-    {editBar && (canReorderBlocks ? <Box sx={_editBarGutteredSx}><Box />{editBar}</Box> : <Box sx={_editBarSx}>{editBar}</Box>)}
+    {editBar && (!canReorderBlocks ? <Box sx={_editBarSx}>{editBar}</Box> : props.isMobile ? <Box sx={_editBarGutteredMobileSx}><Box />{editBar}</Box> : <Box sx={_editBarGutteredSx}><Box />{editBar}<Box /></Box>)}
 
   </>;
 }
