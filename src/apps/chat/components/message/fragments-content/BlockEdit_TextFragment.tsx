@@ -173,7 +173,7 @@ export function BlockEdit_TextFragment(props: {
       }
       startDecorator={props.inputLabel ? <small>{props.inputLabel}</small> : undefined}
       placeholder={props.placeholder ?? 'Edit the message...'}
-      minRows={2}
+      minRows={2.5}
       onFocus={isControlled ? undefined : () => setIsFocused(true)}
       onBlur={isControlled ? undefined : () => setIsFocused(false)}
       // onBlur={props.disableAutoSaveOnBlur ? undefined : handleEditBlur}
