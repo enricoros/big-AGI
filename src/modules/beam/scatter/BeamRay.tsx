@@ -286,7 +286,7 @@ export function BeamRay(props: {
       {issueColor === 'warning' && <BeamCardNotice color='warning' variant='solid' fullWidth>Out of tokens - response cut short.</BeamCardNotice>}
 
       {/* Ray Message */}
-      {(!!ray?.message?.fragments.length || ray?.status === 'scattering') && (
+      {(!!ray?.message?.fragments.length || ray?.status === 'running') && (
         <Box onCopy={clipboardInterceptCtrlCForCleanup} sx={beamCardMessageWrapperSx}>
           {!!ray.message && (
             <ChatMessageMemo

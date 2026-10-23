@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { StateCreator } from 'zustand/vanilla';
 
-import type { AixChatGenerateTerminal_LL, AixReattachMode } from '~/modules/aix/client/aix.client';
+import type { AixReattachMode } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMessage } from '~/common/stores/chat/chat.message';
@@ -9,6 +9,7 @@ import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
 import { agiUuid } from '~/common/util/idUtils';
 
 import { CUSTOM_FACTORY_ID, FFactoryId, findFusionFactory, FUSION_FACTORIES, FUSION_FACTORY_DEFAULT } from './instructions/beam.gather.factories';
+import type { BeamStatus } from '../beam.status';
 import { RootStoreSlice } from '../store-beam_vanilla';
 import { ScatterStoreSlice } from '../scatter/beam.scatter';
 import { beamMergeStreamedGuts, beamReattachStream } from '../beam.reattach';
@@ -21,10 +22,7 @@ import { updateBeamLastConfig } from '../store-module-beam';
 
 type BFusionId = string;
 
-type BFusionStage =
-  | 'idle'      // at the beginning, never go back here
-  | 'fusing'    // in progress (progressX is defined)
-  | AixChatGenerateTerminal_LL; // terminal values are the AIX outcome values: completed (success) | truncated | failed (errorText may be set) | aborted (by the user)
+type BFusionStage = BeamStatus; // shared with rays: idle | running | completed | truncated | failed (errorText may be set) | aborted (by the user)
 
 
 export interface BFusion {
@@ -85,7 +83,7 @@ export function fusionIsWaiting(fusion: BFusion | null): boolean {
 }
 
 export function fusionIsFusing(fusion: BFusion | null): boolean {
-  return fusion?.stage === 'fusing';
+  return fusion?.stage === 'running';
 }
 
 export function fusionIsStopped(fusion: BFusion | null): boolean {
@@ -271,7 +269,7 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
     if (!fusion) return;
 
     // stop if fusing, or waiting to
-    if (fusion.stage === 'fusing' || fusion.inputsWait)
+    if (fusion.stage === 'running' || fusion.inputsWait)
       return gatherStopFusion(fusion);
 
     // start: update the model (NOTE: keep the same per-fusion)
@@ -307,7 +305,7 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
     _get().fusions.forEach(fusion => fusion.inputsWait?.cancel()),
 
   // Gemini Interactions (Deep Research) resume for a merge: re-stream (replay) or one-shot fetch (snapshot)
-  // the upstream-stored run into the fusion output. Enters 'fusing' so the header Stop aborts it (= detach,
+  // the upstream-stored run into the fusion output. Enters 'running' so the header Stop aborts it (= detach,
   // the background run survives) and the resume block hides. See kb/modules/LLM-gemini-interactions.md.
   fusionReattach: (fusionId: BFusionId, mode: AixReattachMode) => {
     const { fusions, _fusionUpdate } = _get();
@@ -332,7 +330,7 @@ export const createGatherSlice: StateCreator<RootStoreSlice & ScatterStoreSlice 
 
     // optimistic: enter fusing (header shows Stop, resume block hides)
     _fusionUpdate(fusionId, (fusion) => ({
-      stage: 'fusing',
+      stage: 'running',
       errorText: undefined,
       fusingAbortController: abortController,
       outputDMessage: fusion.outputDMessage ? { ...fusion.outputDMessage, pendingIncomplete: true } : fusion.outputDMessage,

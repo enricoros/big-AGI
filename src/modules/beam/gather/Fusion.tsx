@@ -200,7 +200,7 @@ export function Fusion(props: {
       {!!fusion?.fusingInstructionComponent && fusion.fusingInstructionComponent}
 
       {/* Output Message */}
-      {(!!fusion?.outputDMessage?.fragments.length || fusion?.stage === 'fusing') && (
+      {(!!fusion?.outputDMessage?.fragments.length || fusion?.stage === 'running') && (
         <Box onCopy={clipboardInterceptCtrlCForCleanup} sx={beamCardMessageWrapperSx}>
           {!!fusion.outputDMessage?.fragments.length && (
             <ChatMessageMemo

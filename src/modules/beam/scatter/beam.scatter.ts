@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand/vanilla';
 
-import { AixChatGenerateContent_DMessageGuts, AixChatGenerateTerminal_LL, AixReattachMode, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
+import { AixChatGenerateContent_DMessageGuts, AixReattachMode, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { abortWithReason } from '~/common/util/errorUtils';
@@ -13,6 +13,7 @@ import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
 
 import type { GatherStoreSlice } from '../gather/beam.gather';
+import type { BeamStatus } from '../beam.status';
 import type { RootStoreSlice } from '../store-beam_vanilla';
 import { SCATTER_DEBUG_STATE, SCATTER_PLACEHOLDER } from '../beam.config';
 import { beamMergeStreamedGuts, beamReattachStream } from '../beam.reattach';
@@ -23,7 +24,7 @@ export type BRayId = string;
 
 export interface BRay {
   rayId: BRayId;
-  status: 'empty' | 'scattering' | AixChatGenerateTerminal_LL; // terminal values are the AIX outcome values: completed (success) | truncated | failed | aborted
+  status: BeamStatus;
   message: DMessage;
   rayLlmId: DLLMId | null;
   scatterIssue?: string;
@@ -38,7 +39,7 @@ export function createBRayEmpty(llmId: DLLMId | null): BRay {
   messageSetGeneratorNamed(message, 'Beam');
   return {
     rayId: agiUuid('beam-ray'),
-    status: 'empty',
+    status: 'idle',
     message: message, // [state] assistant:Ray_empty
     rayLlmId: llmId,
     userSelected: false,
@@ -49,7 +50,7 @@ export function createBRayEmpty(llmId: DLLMId | null): BRay {
 function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage[], onlyIdle: boolean, playNice: boolean, scatterStore: ScatterStoreSlice): BRay {
   if (ray.genAbortController)
     return ray;
-  if (onlyIdle && ray.status !== 'empty')
+  if (onlyIdle && ray.status !== 'idle')
     return ray;
   if (!llmId)
     return { ...ray, scatterIssue: 'No model selected' };
@@ -113,7 +114,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
 
   return {
     rayId: ray.rayId,
-    status: 'scattering',
+    status: 'running',
     message: newMessage,
     rayLlmId: llmId,
     scatterIssue: undefined,
@@ -127,7 +128,7 @@ function rayScatterStop(ray: BRay): BRay {
   abortWithReason(ray.genAbortController, 'Beam Stopped');
   return {
     ...ray,
-    ...(ray.status === 'scattering' ? { status: 'aborted' } : {}),
+    ...(ray.status === 'running' ? { status: 'aborted' } : {}),
     genAbortController: undefined,
   };
 }
@@ -138,7 +139,7 @@ export function rayIsError(ray: BRay | null): boolean {
 }
 
 export function rayIsScattering(ray: BRay | null): boolean {
-  return ray?.status === 'scattering';
+  return ray?.status === 'running';
 }
 
 export function rayIsSelectable(ray: BRay | null): boolean {
@@ -300,7 +301,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
 
     // remove the empty rays that have the same models as the imported messages
     const raysToRemove = rays
-      .filter(_r => _r.status === 'empty' && importedRays.some((importedRay) => importedRay.rayLlmId === _r.rayLlmId))
+      .filter(_r => _r.status === 'idle' && importedRays.some((importedRay) => importedRay.rayLlmId === _r.rayLlmId))
       .slice(0, importedRays.length);
 
     _set({
@@ -335,7 +336,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
     _set(state => ({
       // Start all rays
       rays: state.rays.map(ray =>
-        (!restart || ray.status !== 'empty')
+        (!restart || ray.status !== 'idle')
           ? rayScatterStart(ray, ray.rayLlmId, inputHistory || [], false, true, _get())
           : ray
       ),
@@ -356,7 +357,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
   rayToggleScattering: (rayId: BRayId) => {
     const { inputHistory, _rayUpdate, _syncRaysStateToScatter } = _get();
     _rayUpdate(rayId, (ray) =>
-      ray.status === 'scattering'
+      ray.status === 'running'
         ? /* User Terminated the ray */ rayScatterStop(ray)
         : /* User Started the ray */ rayScatterStart(ray, ray.rayLlmId, inputHistory || [], false, false, _get()),
     );
@@ -364,7 +365,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
   },
 
   // Gemini Interactions (Deep Research) resume: re-stream (replay) or one-shot fetch (snapshot) the
-  // upstream-stored run into this ray. Enters 'scattering' so the header Stop aborts it (= detach, the
+  // upstream-stored run into this ray. Enters 'running' so the header Stop aborts it (= detach, the
   // background run survives) and the resume block hides. See kb/modules/LLM-gemini-interactions.md.
   rayReattach: (rayId: BRayId, mode: AixReattachMode) => {
     const { rays, _rayUpdate, _syncRaysStateToScatter } = _get();
@@ -392,7 +393,7 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
 
     // optimistic: enter scattering (header shows Stop, resume block hides)
     _rayUpdate(rayId, (ray) => ({
-      status: 'scattering',
+      status: 'running',
       scatterIssue: undefined,
       genAbortController: abortController,
       message: { ...ray.message, pendingIncomplete: true },

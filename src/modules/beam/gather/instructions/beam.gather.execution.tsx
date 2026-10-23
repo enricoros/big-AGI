@@ -92,7 +92,7 @@ export function gatherStartFusion(
   // BFusion: startup full status reset
   onUpdateBFusion({
     // status
-    stage: 'fusing',
+    stage: 'running',
     fusedInputsCount: rayMessages.length,
     errorText: undefined,
     outputDMessage: undefined,
@@ -180,7 +180,7 @@ export function gatherStopFusion(fusion: BFusion): BFusion {
   abortWithReason(fusion.fusingAbortController, 'Merge Stopped');
   return {
     ...fusion,
-    ...(fusion.stage === 'fusing' ? { stage: 'aborted' /* optimistic as the abort shall do the same */ } : {}),
+    ...(fusion.stage === 'running' ? { stage: 'aborted' /* optimistic as the abort shall do the same */ } : {}),
     inputsWait: undefined,
     fusingAbortController: undefined,
   };
