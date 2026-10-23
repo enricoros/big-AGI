@@ -48,7 +48,7 @@ const _modularKnownModels = llmsDefineManualMappings([
   {
     idPrefix: 'MiniMaxAI/MiniMax-M3.1-Flash',
     label: 'MiniMax M3.1 Flash',
-    pubDate: '20260927', // = minimax.models.ts 'MiniMax-M3.1-Flash-Preview'
+    pubDate: '20260927', // first vendor release, as the retired 'MiniMax-M3.1-Flash-Preview' (GA 20261019)
     description: '1M-context multimodal MoE for agentic coding and tool use, successor to M3. Reasoning on by default (switchable off).',
     contextWindow: 1048576, // enforced by the shared endpoint (400 'exceeds the configured maximum context length of 1048576 tokens')
     maxCompletionTokens: 131072, // unverified

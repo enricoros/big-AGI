@@ -33,15 +33,20 @@ const _PS_ReasoningEffort: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
 ] as const;
 
+const _PS_ReasoningEffortNoOff: ModelDescriptionSchema['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['low', 'high', 'max'] },
+] as const;
+
 
 /**
  * Moonshot AI (Kimi) models.
  * - models list: https://platform.kimi.ai/docs/models (was platform.moonshot.ai - now 301 redirect)
  * - pricing: https://platform.kimi.ai/docs/pricing/chat
  * - API docs: https://platform.kimi.ai/docs/api/chat + https://platform.kimi.ai/docs/api/models-overview (per-model parameter matrix)
- * - updated: 2026-10-11
+ * - updated: 2026-10-23
  * - NOTE: K2 series discontinued on 2026-05-25, kimi-k2.5 on 2026-08-31 (calls 404); kept hidden as OpenRouter still serves them.
- * - NOTE: 'sk-kimi-' subscription keys list a separate 4-model catalog from api.kimi.com/coding (see the Kimi Code section below);
+ * - NOTE: K2.6 and K2.7 Code close to new accounts on 2026-10-31 and retire by the end of 2026-12.
+ * - NOTE: 'sk-kimi-' subscription keys list a separate 6-model catalog from api.kimi.com/coding (see the Kimi Code section below);
  *   the two catalogs never mix, as each endpoint only lists its own models.
  */
 type _MoonshotModelDef = KnownModel & { pubDate: string };
@@ -51,10 +56,32 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
   // Kimi Code subscription models - only listed for 'sk-kimi-' keys via api.kimi.com/coding (probe-verified 2026-07-18).
   // Subscription-billed: no per-token pricing. All support image/video inputs (k3-256k: image only); prompt caching confirmed (cached_tokens in usage).
   {
+    idPrefix: 'k3.1-pro',
+    label: 'Kimi K3.1 Pro',
+    pubDate: '20261023',
+    description: 'Kimi K3.1 Pro on the Kimi Code subscription. Native multimodal, always-on thinking with adjustable effort. 1M context (Pro/Allegretto+ plans; 262K below).',
+    contextWindow: 1048576,
+    maxCompletionTokens: 131072,
+    interfaces: IF_K2_7_CODE,
+    parameterSpecs: _PS_ReasoningEffortNoOff, // effort low/high/max (default 'max'); thinking off is rejected (HTTP 400)
+    benchmark: { cbaElo: 1489 + 2 }, // same weights as kimi-k3.1-pro
+  },
+  {
+    idPrefix: 'k3.1-pro-highspeed',
+    label: 'Kimi K3.1 Pro Highspeed',
+    pubDate: '20261023',
+    description: 'High-speed K3.1 Pro on the Kimi Code subscription (Pro/Allegretto+ plans), ~2-3x faster at ~2x the quota. Native multimodal, always-on thinking with adjustable effort. 1M context.',
+    contextWindow: 1048576,
+    maxCompletionTokens: 131072,
+    interfaces: IF_K2_7_CODE,
+    parameterSpecs: _PS_ReasoningEffortNoOff,
+    benchmark: { cbaElo: 1489 + 1 }, // same weights as kimi-k3.1-pro-highspeed
+  },
+  {
     idPrefix: 'k3',
     label: 'Kimi K3', // API display_name: 'K3'
     pubDate: '20260716',
-    description: 'Kimi K3 on the Kimi Code subscription. Native multimodal with adjustable thinking effort. 1M context (Allegretto+ plans; 262K below).',
+    description: 'Kimi K3 on the Kimi Code subscription. Native multimodal with adjustable thinking effort. 1M context (Pro/Allegretto+ plans; 262K below).',
     contextWindow: 1048576,
     maxCompletionTokens: 131072,
     interfaces: IF_K2_7_CODE,
@@ -87,19 +114,47 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     idPrefix: 'kimi-for-coding-highspeed',
     label: 'Kimi K2.7 Coding Highspeed', // API display_name: 'K2.7 Coding Highspeed'
     pubDate: '20260612',
-    description: 'High-speed K2.7 Code variant on the Kimi Code subscription (Allegretto+ plans). Always-on thinking, native multimodal. 256K context.',
+    description: 'High-speed K2.7 Code variant on the Kimi Code subscription (Pro/Allegretto+ plans). Always-on thinking, native multimodal. 256K context.',
     contextWindow: 262144,
     maxCompletionTokens: 32768,
     interfaces: IF_K2_7_CODE,
     benchmark: { cbaElo: 1461 + 1 }, // same weights as kimi-k2.7-code-highspeed
   },
 
-  // Kimi K3 - 1M-context flagship (native multimodal, always-on thinking at 'max' effort)
+  // Kimi K3.1 Pro - 1M-context flagship, K3 with scaled-up post-training (native multimodal, always-on thinking at 'max' effort)
+  {
+    idPrefix: 'kimi-k3.1-pro',
+    label: 'Kimi K3.1 Pro',
+    pubDate: '20261023',
+    description: 'Most capable flagship: K3 with scaled-up post-training, stronger coding, 3D creation and financial research. Native multimodal (text, image, video inputs), thinking on by default. 1M context.',
+    contextWindow: 1048576,
+    maxCompletionTokens: 131072, // API default; configurable up to 1M
+    interfaces: IF_K2_7_CODE, // probe-verified 2026-10-23: temperature != 1 rejected, tool_choice 'required' and json_object accepted
+    // effort honored (probed 2026-10-23: low/high/max 833/1207/3073 reasoning tokens, unset 2471 = max); thinking {type:'disabled'}
+    // zeroes reasoning as on K3, though the docs say thinking cannot be turned off, so keep the Off level
+    parameterSpecs: _PS_ReasoningEffort,
+    chatPrice: { input: 2.00, output: 10.00, cache: { read: 0.20 } }, // cache write: default 5m TTL = input price; 1h TTL ($4) never requested
+    benchmark: { cbaElo: 1489 + 2 }, // not available yet, assuming kimi-k3 + 2
+  },
+  {
+    idPrefix: 'kimi-k3.1-pro-highspeed',
+    label: 'Kimi K3.1 Pro Highspeed',
+    pubDate: '20261023',
+    description: 'High-speed K3.1 Pro: same model at about 2-3x the output speed. Native multimodal (text, image, video inputs), thinking on by default. 1M context.',
+    contextWindow: 1048576,
+    maxCompletionTokens: 131072, // API default; configurable up to 1M
+    interfaces: IF_K2_7_CODE,
+    parameterSpecs: _PS_ReasoningEffort, // same constraints as kimi-k3.1-pro (probed 2026-10-23: thinking off zeroes reasoning, effort low < default)
+    chatPrice: { input: 4.00, output: 20.00, cache: { read: 0.20 } }, // cache read as listed (same as K3.1 Pro, not 2x); 5m write = input, 1h TTL ($8) never requested
+    benchmark: { cbaElo: 1489 + 1 }, // not available yet, assuming kimi-k3 + 1
+  },
+
+  // Kimi K3 - previous-generation 1M-context flagship (native multimodal, always-on thinking at 'max' effort)
   {
     idPrefix: 'kimi-k3',
     label: 'Kimi K3',
     pubDate: '20260716',
-    description: 'Native multimodal flagship (text, image, video inputs) with thinking on by default. 1M context.',
+    description: 'Previous-generation flagship (2.8T parameters), native multimodal (text, image, video inputs) with thinking on by default. 1M context.',
     contextWindow: 1048576,
     maxCompletionTokens: 131072, // API default; configurable up to 1M
     interfaces: IF_K2_7_CODE, // same surface as K2.7-code: Vision, NoTemperature (probe-verified 2026-07-17: temperature != 1 rejected), always-on Reasoning

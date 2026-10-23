@@ -21,23 +21,24 @@ export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
  * - Pricing: https://platform.minimax.io/docs/pricing/overview.md
  * - Text generation: https://platform.minimax.io/docs/guides/text-generation.md
  * - OpenAI-compatible reference (model enum, max_completion_tokens caps, thinking/service_tier): https://platform.minimax.io/docs/api-reference/text-chat-openai.md
- * - Updated: 2026-10-15
+ * - Updated: 2026-10-23
  */
 type _MiniMaxModelDef = ModelDescriptionSchema & { pubDate: string };
 
 const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
 
-  // M3.1 Flash Preview (2026-09-27) - M Plan / Token Plan Subscription Key only; pay-as-you-go keys get "unknown model"
+  // M3.1 Flash - efficient open-weight, natively multimodal, 1M context (2026-10-19). The retired 'MiniMax-M3.1-Flash-Preview' name is served as this model
   {
-    id: 'MiniMax-M3.1-Flash-Preview',
-    label: 'MiniMax M3.1 Flash (Preview, M Plan)',
-    pubDate: '20260927',
-    description: 'Latest M-series model for agentic reasoning, tool use, coding and long-context tasks, natively multimodal (text, image, video input). 1M context. Requires an M Plan Subscription Key.',
+    id: 'MiniMax-M3.1-Flash',
+    label: 'MiniMax M3.1 Flash',
+    pubDate: '20261019',
+    description: 'Efficient open-weight M-series model for agentic reasoning, tool use, coding and long-context tasks, natively multimodal (text, image, video input). 1M context, tunable thinking depth.',
     contextWindow: 1000000,
-    maxCompletionTokens: 131072, // vendor-recommended; documented max 524288 (512K)
+    maxCompletionTokens: 131072, // vendor-recommended; live ceiling is 524288 (512K)
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision],
-    // per docs (not probed): thinking cannot be disabled, reasoning_effort defaults to 'max'
+    // [MiniMax, 2026-10-23] probed: always thinks (reasoning_effort 'none' and thinking.type 'disabled' 400), reasoning_effort allows low..max, vendor default 'max'
     parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }],
+    chatPrice: { input: 0.15, output: 0.60, cache: { read: 0.015 } }, // flat; no service_tier
   },
 
   // M3 - flagship, natively multimodal, 1M context (2026-06-01)
@@ -61,7 +62,8 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     benchmark: { cbaElo: 1444 }, // lmarena: minimax-m3
   },
 
-  // M2.7 series
+  // M2.7 series - [MiniMax, 2026-10-19] closed to new users (probed: 404 'no longer available'), retires 2026-11-18. Kept hidden while
+  // /v1/models still lists the M2.x ids: dropping them would resurface each as a '[?]' 0-day arrival.
   {
     id: 'MiniMax-M2.7',
     label: 'MiniMax M2.7',
@@ -72,6 +74,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.06 } },
     benchmark: { cbaElo: 1416 }, // lmarena: minimax-m2.7
+    hidden: true, // retiring
   },
   {
     id: 'MiniMax-M2.7-highspeed',
@@ -83,9 +86,10 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.60, output: 2.40, cache: { read: 0.06 } },
     benchmark: { cbaElo: 1416 }, // same weights as minimax-m2.7
+    hidden: true, // retiring
   },
 
-  // M2.5 series - vendor Legacy since 2026-08 (hidden, still served)
+  // M2.5 series - same retirement as M2.7
   {
     id: 'MiniMax-M2.5',
     label: 'MiniMax M2.5',
@@ -96,7 +100,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.03 } },
     benchmark: { cbaElo: 1390 }, // lmarena: minimax-m2.5
-    hidden: true, // vendor Legacy
+    hidden: true, // retiring
   },
   {
     id: 'MiniMax-M2.5-highspeed',
@@ -108,22 +112,10 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning],
     chatPrice: { input: 0.60, output: 2.40, cache: { read: 0.03 } },
     benchmark: { cbaElo: 1390 }, // same weights as minimax-m2.5
-    hidden: true, // vendor Legacy
+    hidden: true, // retiring
   },
 
-  // M2-her - dialogue-first, roleplay and character-driven chat (Jan 2026)
-  {
-    id: 'M2-her', // (!) not 'MiniMax-M2-her': the served id has no vendor prefix
-    label: 'MiniMax M2-her',
-    pubDate: '20260127',
-    description: 'Dialogue-first model for immersive roleplay, character-driven chat, and expressive multi-turn conversations. 64K context.',
-    contextWindow: 65536,
-    maxCompletionTokens: 2048,
-    interfaces: [LLM_IF_OAI_Chat], // no function calling: ignores tools even with tool_choice: 'required'
-    chatPrice: { input: 0.30, output: 1.20 },
-  },
-
-  // M2.1 series (legacy)
+  // M2.1 series - retired (probed: 404 'no longer available'), still listed, kept hidden (see M2.7)
   {
     id: 'MiniMax-M2.1',
     label: 'MiniMax M2.1',
@@ -147,7 +139,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     hidden: true, // yield to newer
   },
 
-  // M2
+  // M2 - retired (probed: 404 'no longer available'), still listed, kept hidden (see M2.7)
   {
     id: 'MiniMax-M2',
     label: 'MiniMax M2',
@@ -189,9 +181,8 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
 ]);
 
 
-// Served but never listed by /v1/models (probed 2026-10-15): the M Plan preview (Subscription Key only - pay-as-you-go keys get
-// 'unknown model') and three still-answering legacy ids. Exempt from the stale-defs drift check.
-const _minimaxUnlistedIds: string[] = ['MiniMax-M3.1-Flash-Preview', 'M2-her', 'MiniMax-M1', 'MiniMax-Text-01'] satisfies LlmsMiniMaxModelId[];
+// Served but never listed by /v1/models (probed 2026-10-23): two still-answering legacy ids. Exempt from the stale-defs drift check.
+const _minimaxUnlistedIds: string[] = ['MiniMax-M1', 'MiniMax-Text-01'] satisfies LlmsMiniMaxModelId[];
 
 /**
  * The curated table as-is, plus each listed id the table lacks as a visible '[?]' 0-day arrival with no context window (the

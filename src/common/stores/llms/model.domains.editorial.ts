@@ -106,6 +106,7 @@ export const EditorialDefaults = {
     { vendor: 'xai',        modelId: 'grok-4.6' }, // 2026-08-12 GA - frontier for coding/agentic/knowledge work, extends 4.5
     { vendor: 'xai',        modelId: 'grok-4.5' },
     { vendor: 'xai',        modelId: 'grok-4.3' },
+    { vendor: 'moonshot',   modelId: 'kimi-k3.1-pro' }, // 2026-10-23 GA, $2/$10, cheaper than K3
     { vendor: 'moonshot',   modelId: 'kimi-k3' },
     { vendor: 'moonshot',   modelId: 'kimi-k2.6' },
     { vendor: 'zai',        modelId: 'glm-5.3' }, // 2026-08-27: standard API GA (was Coding-Plan-only at launch)
