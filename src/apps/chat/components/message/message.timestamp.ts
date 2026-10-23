@@ -1,6 +1,9 @@
 import type { DMessage } from '~/common/stores/chat/chat.message';
+import type { DMessageFragment } from '~/common/stores/chat/chat.fragments';
+import { messageOutcomeLabel, messageTerminalOutcome } from '~/common/stores/chat/chat.message.outcome';
 
-export type MessageTimestampSource = Pick<DMessage, 'role' | 'created' | 'updated' | 'generator' | 'pendingIncomplete'>;
+/** fragments readonly: callers may hold an Immutable<DMessage> */
+export type MessageTimestampSource = Pick<DMessage, 'role' | 'created' | 'updated' | 'generator' | 'pendingIncomplete'> & { fragments: readonly DMessageFragment[] };
 
 /** Generation end is independent of edits. Older messages only have creation/update times. */
 export function getMessageTimestamp(message: MessageTimestampSource) {
@@ -13,10 +16,12 @@ export function getMessageTimestamp(message: MessageTimestampSource) {
   const at = fromUser ? message.created : hasEnd ? endedAt : message.updated || message.created;
   if (!Number.isFinite(at) || at <= 0) return null;
 
-  const completionLabel = generator?.tokenStopReason === 'client-abort' ? 'Stopped'
-    : generator?.tokenStopReason === 'issue' ? 'Failed'
-      : generator?.tokenStopReason || generator?.metrics?.TsR ? 'Interrupted'
-        : 'Done';
+  const outcome = messageTerminalOutcome(message);
+  const completionLabel = outcome === 'aborted' ? messageOutcomeLabel.aborted
+    : outcome === 'failed' ? 'Failed'
+      : outcome === 'truncated' ? messageOutcomeLabel.truncated
+        : generator?.metrics?.TsR ? 'Interrupted'
+          : 'Done';
   const label = fromUser ? 'Sent' : hasEnd ? completionLabel : message.updated ? 'Updated' : 'Created';
   const duration = fromUser ? undefined : generator?.metrics?.dtWall ?? generator?.metrics?.dtAll;
   const durationMs = duration !== undefined && Number.isFinite(duration) && duration > 0 ? duration : undefined;

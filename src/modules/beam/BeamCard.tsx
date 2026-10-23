@@ -8,7 +8,7 @@ import { BEAM_INVERT_BACKGROUND, BEAM_PANE_ZINDEX } from './beam.config';
 
 export const beamCardClasses = {
   fusionIdle: 'beamCard-fusionIdle',
-  issue: { danger: 'beamCard-Errored', warning: 'beamCard-OutOfTokens' }, // by messageIssueColor()
+  issue: { danger: 'beamCard-Errored', warning: 'beamCard-OutOfTokens', neutral: 'beamCard-Stopped' }, // by beamStatusColor()
   selectable: 'beamCard-Selectable',
   attractive: 'beamCard-Attractive',
   smashTop: 'beamCard-SmashTop',
@@ -44,6 +44,10 @@ export const BeamCard = styled(Box, { name: 'BeamCard' })(({ theme }) => ({
   [`&.${beamCardClasses.issue.warning}`]: {
     backgroundColor: theme.vars.palette.warning.softBg,
     borderColor: theme.vars.palette.warning.outlinedBorder,
+  },
+  [`&.${beamCardClasses.issue.neutral}`]: {
+    backgroundColor: theme.vars.palette.neutral.softBg,
+    borderColor: theme.vars.palette.neutral.outlinedBorder,
   },
   [`&.${beamCardClasses.attractive}`]: {
     animation: `${animationShadowLimey} 2s linear infinite`,

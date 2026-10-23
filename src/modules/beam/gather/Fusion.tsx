@@ -11,7 +11,7 @@ import { ChatMessageMemo } from '../../../apps/chat/components/message/ChatMessa
 import { DLLMId, getLLMLabel } from '~/common/stores/llms/llms.types';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import type { DMessageId } from '~/common/stores/chat/chat.message';
-import { messageFragmentsReduceText, messageWasOutOfTokens } from '~/common/stores/chat/chat.message';
+import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
@@ -20,6 +20,7 @@ import { clipboardInterceptCtrlCForCleanup, copyToClipboard } from '~/common/uti
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
+import { beamStatusColor } from '../beam.status';
 import { BeamUpstreamResume } from '../BeamUpstreamResume';
 import { BeamCardNotice, BeamModelUnavailable } from '../components/BeamCardNotice';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
@@ -31,7 +32,7 @@ import { findFusionFactory, fusionCardTitle } from './instructions/beam.gather.f
 import { fusionIsEditable, fusionIsError, fusionIsFusing, fusionIsIdle, fusionIsStopped, fusionIsUsableOutput, fusionIsWaiting } from './beam.gather';
 import { beamStoreGatherInputsNextCount } from './beam.gather.inputs';
 import { useBeamCardScrolling } from '../store-module-beam';
-import { messageIssueColor, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
+import { useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 
 
 export function Fusion(props: {
@@ -58,8 +59,7 @@ export function Fusion(props: {
   const isUsable = fusionIsUsableOutput(fusion);
   const showUseButtons = isUsable && !isFusing;
   const { tooltip: fusionAvatarTooltip } = useMessageAvatarLabel(fusion?.outputDMessage, 'pro');
-  const isOutOfTokens = !isFusing && messageWasOutOfTokens(fusion?.outputDMessage?.generator);
-  const issueColor = messageIssueColor(isError, isOutOfTokens);
+  const issueColor = isError ? 'danger' : beamStatusColor(fusion?.stage ?? 'idle'); // errorText outside the stage still reads as danger
 
   const factory = findFusionFactory(fusion?.factoryId);
   // counted title: 'Combined N' after a completed run; 'Combine N' otherwise, with the interrupted run's count or the next run's (a pending restart shows the next run)

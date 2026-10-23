@@ -277,10 +277,6 @@ export function messageWasInterruptedAtStart(message: Pick<DMessage, 'generator'
   return message.generator?.tokenStopReason === 'client-abort' && !message.fragments?.length;
 }
 
-export function messageWasOutOfTokens(generator: DMessageGenerator | undefined): boolean {
-  return generator?.tokenStopReason === 'out-of-tokens';
-}
-
 // export function messageOnlyContainsPlaceholder(message: Pick<DMessage, 'fragments'>): boolean {
 //   return message.fragments.length === 1 && isVoidFragment(message.fragments[0]) && isPlaceholderPart(message.fragments[0].part);
 // }

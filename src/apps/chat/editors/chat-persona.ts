@@ -1,4 +1,4 @@
-import { aixChatGenerateContent_DMessage_FromConversation, AixChatGenerateContent_DMessageGuts } from '~/modules/aix/client/aix.client';
+import { aixChatGenerateContent_DMessage_FromConversation, AixChatGenerateContent_DMessageGuts, aixOutcomeIsSuccess } from '~/modules/aix/client/aix.client';
 import { autoChatFollowUps } from '~/modules/aifn/auto-chat-follow-ups/autoChatFollowUps';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 
@@ -135,5 +135,5 @@ export async function runPersonaOnConversationHead(
     cHandler.historyStripThinking(0);
 
   // return true if this succeeded
-  return messageStatus.outcome === 'completed';
+  return aixOutcomeIsSuccess(messageStatus.outcome);
 }

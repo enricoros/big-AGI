@@ -24,10 +24,11 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { InlineError } from '~/common/components/InlineError';
 import { animationEnterBelow } from '~/common/util/animUtils';
 import { clipboardInterceptCtrlCForCleanup, copyToClipboard } from '~/common/util/clipboardUtils';
-import { messageFragmentsReduceText, messageWasOutOfTokens } from '~/common/stores/chat/chat.message';
+import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
+import { beamStatusColor } from '../beam.status';
 import { BeamUpstreamResume } from '../BeamUpstreamResume';
 import { BeamCardNotice, BeamModelUnavailable } from '../components/BeamCardNotice';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
@@ -35,7 +36,7 @@ import { BEAM_SHOW_REASONING_ICON, GATHER_COLOR, SCATTER_COLOR, SCATTER_RAY_SHOW
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { rayHasMergeableContent, rayIsError, rayIsImported, rayIsScattering, rayIsSelectable, rayIsUserSelected } from './beam.scatter';
 import { useBeamCardScrolling, useBeamScatterShowLettering } from '../store-module-beam';
-import { messageIssueColor, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
+import { useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 
 
 /*const letterSx: SxProps = {
@@ -176,8 +177,7 @@ export function BeamRay(props: {
   const showUseButtons = !isScattering && rayHasMergeableContent(ray); // nothing to copy or use in an empty or error-only reply
   const { removeRay, rayToggleScattering, raySetLlmId } = props.beamStore.getState();
   const { tooltip: rayAvatarTooltip } = useMessageAvatarLabel(ray?.message, 'pro');
-  const isOutOfTokens = !isScattering && messageWasOutOfTokens(ray?.message.generator);
-  const issueColor = messageIssueColor(isError, isOutOfTokens);
+  const issueColor = beamStatusColor(ray?.status ?? 'idle'); // failed: danger, truncated: warning, aborted: neutral
 
   // This old code used the Gather LLM as Ray fallback - but now we use the last Scatter LLM as fallback
   // const isLlmLinked = !!props.linkedLlmId && !ray?.rayLlmId;

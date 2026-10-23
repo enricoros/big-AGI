@@ -7,6 +7,7 @@ import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRendere
 
 import type { ContentScaling } from '~/common/app.theme';
 import type { DMessageRole } from '~/common/stores/chat/chat.message';
+import { messageOutcomeLabel } from '~/common/stores/chat/chat.message.outcome';
 
 
 // configuration
@@ -41,7 +42,7 @@ export function BlockOpContinue(props: {
     <Box sx={containerSx}>
 
       <ScaledTextBlockRenderer
-        text='🧱 Token limit hit.'
+        text={`🧱 ${messageOutcomeLabel.truncated}.`}
         contentScaling={props.contentScaling}
         textRenderVariant='text'
         // showAsItalic
