@@ -1,7 +1,8 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Typography } from '@mui/joy';
+import { Box, IconButton, Typography } from '@mui/joy';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -18,6 +19,8 @@ import { dndDragEndReorder } from '~/common/components/dnd/dndDragEndReorder';
 import { dndModifiers } from '~/common/components/dnd/dnd.config';
 import { useDndDefaultSensors } from '~/common/components/dnd/useDndDefaultSensors';
 import { useDndDragHandleSortable } from '~/common/components/dnd/useDndDragHandleSortable';
+import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 
 import type { CMEditDrafts } from '../cmEditDrafts';
 import { BlockEdit_TextFragment } from '../fragments-content/BlockEdit_TextFragment';
@@ -108,8 +111,20 @@ const _assistantReorderNoticeSx: SxProps = {
 
 const _blockGutterSx: SxProps = {
   display: 'flex',
+  flexDirection: 'column',
   pl: 1.5, // undo the handle's inline margin
   pt: 1,
+} as const;
+
+// below the handle, which pulls its block margins in
+const _blockDeleteSx: SxProps = {
+  ml: -1.5,
+  mt: 1.5,
+  borderRadius: '50%',
+} as const;
+
+const _blockDeleteIconSx = {
+  fontSize: '1.25rem',
 } as const;
 
 
@@ -236,12 +251,35 @@ const CMTextNode = React.memo(function CMTextNode(props: {
 });
 
 
-/** Edit mode: a node of a user or system message, movable as one block by its gutter handle. */
-function CMSortableBlock(props: { id: string, children: React.ReactNode }) {
+/** Edit mode: a node as one block, movable by its gutter handle; a text block also deletes from the gutter. */
+function CMSortableBlock(props: { id: string, deleteConfirm?: boolean, onDelete?: () => void, children: React.ReactNode }) {
   const { dragContainerSetRef, dragContainerStyle, dragHandle } = useDndDragHandleSortable(props.id, false, 'warning');
+  const { showPromisedOverlay } = useOverlayComponents();
+  const { deleteConfirm, onDelete } = props;
+
+  // the dialog only when there is text to lose; an empty block goes at once (Done would drop it anyway)
+  const handleDelete = !onDelete ? undefined : async () => {
+    if (deleteConfirm && !await showPromisedOverlay('chat-message-delete-block', { rejectWithValue: false }, ({ onResolve, onUserReject }) =>
+      <ConfirmationModal
+        open onClose={onUserReject} onPositive={() => onResolve(true)}
+        title='Delete Block'
+        confirmationText='Delete this text block?'
+        positiveActionText='Delete'
+      />,
+    )) return;
+    onDelete();
+  };
+
   return (
     <Box ref={dragContainerSetRef} style={dragContainerStyle} sx={_blockSx}>
-      <Box sx={_blockGutterSx}>{dragHandle}</Box>
+      <Box sx={_blockGutterSx}>
+        {dragHandle}
+        {!!handleDelete && (
+          <IconButton size='sm' variant='plain' color='warning' aria-label='Delete block' title='Delete this block' onClick={handleDelete} sx={_blockDeleteSx}>
+            <DeleteOutlineIcon sx={_blockDeleteIconSx} />
+          </IconButton>
+        )}
+      </Box>
       <Box>{props.children}</Box>
     </Box>
   );
@@ -287,7 +325,7 @@ export function CMRenderTreeNodes(props: {
 
 }) {
 
-  const { tree, setEditedText } = props;
+  const { tree, setEditedText, onFragmentDelete } = props;
   const fromAssistant = props.messageRole === 'assistant';
   const fromUser = props.messageRole === 'user';
   const isEditing = tree.mode === 'edit';
@@ -646,7 +684,16 @@ export function CMRenderTreeNodes(props: {
         />
       )}
 
-      {body.map(node => canReorderBlocks && cmNodeFragments(node).length ? <CMSortableBlock key={node.key} id={node.key}>{renderNode(node)}</CMSortableBlock> : renderNode(node))}
+      {body.map(node => !canReorderBlocks || !cmNodeFragments(node).length ? renderNode(node) : (
+        <CMSortableBlock
+          key={node.key}
+          id={node.key}
+          deleteConfirm={node.kind === 'edit-text' && !(node.fragment.part.pt === 'text' && !node.fragment.part.text)}
+          onDelete={node.kind === 'edit-text' && onFragmentDelete ? () => onFragmentDelete(node.fragment.fId) : undefined}
+        >
+          {renderNode(node)}
+        </CMSortableBlock>
+      ))}
 
     </Box>
   );
