@@ -190,6 +190,8 @@ export namespace AixWire_Parts {
      */
     mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']), // keep in sync with AIX_WIRE_IMAGE_MIMETYPES
     base64: z.string(),
+    /** Optional name of the image (e.g. the attachment file name), lowered by the dialects that can label images in user messages. */
+    label: z.string().optional(),
   });
 
   // The reason of existence of a doc part, is to be encoded differently depending on
