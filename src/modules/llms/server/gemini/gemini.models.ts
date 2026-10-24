@@ -274,7 +274,7 @@ type _GeminiModelDef = {
   symLink?: string,
   deprecated?: string, // Gemini may provide deprecation dates
   // _delete removed - models are now physically removed from the list instead of marked for deletion
-} & Pick<ModelDescriptionSchema, 'pubDate' | 'interfaces' | 'parameterSpecs' | 'chatPrice' | 'hidden' | 'benchmark'> & { pubDate: string /* make it required */ };
+} & Pick<ModelDescriptionSchema, 'pubDate' | 'interfaces' | 'parameterSpecs' | 'chatPrice' | 'hidden' | 'benchmark' | 'maxCompletionTokens'> & { pubDate: string /* make it required */ };
 
 const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
 
@@ -291,6 +291,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     pubDate: '20260930', // Fairwind access; API GA 2026-10-13
     chatPrice: gemini4ArgonPricing,
     interfaces: IF_30,
+    maxCompletionTokens: 65536, // the models list API reports 32768, but the docs allow 64K output (see note above)
     parameterSpecs: [
       { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high'] }, // no 'minimal' (live 400); default 'medium' per docs
       { paramId: 'llmVndGeminiMediaResolution' },
@@ -1338,6 +1339,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
   // context window
   const { inputTokenLimit, outputTokenLimit } = geminiModel;
   const contextWindow = inputTokenLimit + outputTokenLimit;
+  const maxCompletionTokens = knownModel?.maxCompletionTokens ?? outputTokenLimit; // the curated value wins over what the models list reports
 
   // description
   const { version, topK, topP, temperature } = geminiModel;
@@ -1366,7 +1368,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
     pubDate: knownModel?.pubDate ?? formatPubDate(), // 0-day fallback; the editorial entry is the source of truth; today's date is a placeholder until editorial catches up
     description: descriptionLong,
     contextWindow: contextWindow,
-    maxCompletionTokens: outputTokenLimit,
+    maxCompletionTokens,
     interfaces,
     parameterSpecs: knownModel?.parameterSpecs,
     // rateLimits: isGeminiPro ? { reqPerMinute: 60 } : undefined,
