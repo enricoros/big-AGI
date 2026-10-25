@@ -25,45 +25,24 @@ const blocksRenderHTMLIFrameFullScreenCss: React.CSSProperties = {
 } as const;
 
 
-function _renderHtmlInIFrame(iframeDoc: Document, htmlString: string) {
-  // Note: not using this for now (2024-06-15), or it would remove the JS code
-  // which is what makes the HTML interactive.
-  // Sanitize the HTML string to remove any potentially harmful content
-  // const sanitizedHtml = DOMPurify.sanitize(props.htmlString);
+// Prevents arrow keys from scrolling the parent page; runs inside the frame, as the parent cannot reach an opaque-origin document
+const arrowKeysGuardScript = `<script>document.addEventListener('keydown',function(e){if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.key)!==-1)e.preventDefault();});</script>`;
+
+function _prepareSrcDoc(htmlString: string): string {
+  // Note: not sanitizing (e.g. DOMPurify), or it would remove the JS code which is what makes the HTML interactive.
+  // Isolation comes from the sandbox: without 'allow-same-origin' the frame has an opaque origin.
 
   // Inject the CSS reset
   const modifiedHtml = htmlString.replace(/<style/i, `<style>${simpleCssReset}</style><style`);
 
-  // Write the HTML to the iframe
-  iframeDoc.open();
-  try {
-    iframeDoc.write(modifiedHtml);
-  } catch (error) {
-    console.error('Error writing to iframe:', error);
-  }
-  iframeDoc.close();
-
-  // Enhanced Security with Content Security Policy
-  // NOTE: 2024-06-15 disabled until we understand exactly all the implications
-  // In theory we want script from self, images from everywhere, and styles from self
-  // const meta = iframeDoc.createElement('meta');
-  // meta.httpEquiv = 'Content-Security-Policy';
-  // // meta.content = 'default-src \'self\'; script-src \'self\';';
-  // meta.content = 'script-src \'self\' \'unsafe-inline\';';
-  // iframeDoc.head.appendChild(meta);
-
-  // Adding this event listener to prevent arrow keys from scrolling the parent page
-  iframeDoc.addEventListener('keydown', (event: any) => {
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-      event.preventDefault();
-    }
-  });
+  // Appended (not prepended) so a leading <!DOCTYPE> keeps the document out of quirks mode
+  return modifiedHtml + arrowKeysGuardScript;
 }
 
 export function RenderCodeHtmlIFrame(props: { htmlCode: string, isFullscreen?: boolean }) {
 
   // state
-  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+  const [srcDoc, setSrcDoc] = React.useState<string | undefined>(undefined);
   const firstRender = React.useRef(true);
 
   React.useEffect(() => {
@@ -75,21 +54,18 @@ export function RenderCodeHtmlIFrame(props: { htmlCode: string, isFullscreen?: b
     firstRender.current = false;
 
     // Coalesce the rendering of the HTML content to prevent flickering and work around the React StrictMode
-    const timeoutId = setTimeout(() => {
-      const iframeDoc = iframeRef.current?.contentWindow?.document;
-      iframeDoc && !!props.htmlCode && _renderHtmlInIFrame(iframeDoc, props.htmlCode);
-    }, delay);
+    const timeoutId = setTimeout(() => setSrcDoc(_prepareSrcDoc(props.htmlCode)), delay);
 
     return () => clearTimeout(timeoutId);
   }, [props.htmlCode]);
 
   return (
     <iframe
-      ref={iframeRef}
       style={props.isFullscreen ? blocksRenderHTMLIFrameFullScreenCss : blocksRenderHTMLIFrameCss}
       title='Sandboxed Web Content'
       aria-label='Interactive content frame'
-      sandbox='allow-scripts allow-same-origin allow-forms' // restrict to only these
+      srcDoc={srcDoc}
+      sandbox='allow-scripts allow-forms' // no 'allow-same-origin': opaque origin, no access to the app's storage or DOM
       loading='lazy' // do not load until visible in the viewport
     />
   );
