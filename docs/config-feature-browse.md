@@ -54,6 +54,8 @@ docker run -p 9222:3000 browserless/chrome:latest
 Now you can use the following connection string in `big-AGI`: `ws://127.0.0.1:9222`.
 A local endpoint entered in the UI is blocked by the server's outbound policy unless the deployment sets
 `SERVER_ALLOWED_PRIVATE_HOSTS=127.0.0.1:9222` (or uses `PUPPETEER_WSS_ENDPOINT`, which is trusted).
+The pages to browse, and every request they make (redirects, subresources), go through the same policy:
+private, loopback, link-local and metadata addresses are blocked unless in `SERVER_ALLOWED_PRIVATE_HOSTS`.
 You can also browse to [http://127.0.0.1:9222](http://127.0.0.1:9222) to see the Browserless debug viewer
 and configure some options.
 

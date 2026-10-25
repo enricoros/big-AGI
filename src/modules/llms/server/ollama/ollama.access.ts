@@ -9,6 +9,7 @@ import * as z from 'zod/v4';
 
 import { env } from '~/server/env.server';
 
+import type { RequestAccessValues } from '../llm.server.types';
 import { llmsFixupHost } from '../../shared/llm.isomorphic';
 
 
@@ -26,7 +27,7 @@ export const ollamaAccessSchema = z.object({
 });
 
 
-export function ollamaAccess(access: OllamaAccessSchema, apiPath: string): { headers: HeadersInit, url: string } {
+export function ollamaAccess(access: OllamaAccessSchema, apiPath: string): RequestAccessValues {
 
   const ollamaHost = llmsFixupHost(access.ollamaHost || env.OLLAMA_API_HOST || DEFAULT_OLLAMA_HOST, apiPath);
 
@@ -35,5 +36,6 @@ export function ollamaAccess(access: OllamaAccessSchema, apiPath: string): { hea
       'Content-Type': 'application/json',
     },
     url: ollamaHost + apiPath,
+    ...(access.ollamaHost && { redirect: 'error' as const }), // no redirects for a client-set host: a redirect could bounce the server-side fetch past the outbound policy
   };
 }

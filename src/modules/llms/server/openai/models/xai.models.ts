@@ -238,8 +238,8 @@ function xaiValidateModelDefs_DEV(availableModels: z.infer<typeof wireXAIModelsL
 export async function xaiFetchModelDescriptions(access: OpenAIAccessSchema): Promise<ModelDescriptionSchema[]> {
 
   // List models
-  const { headers, url } = openAIAccess(access, null, OPENAI_API_PATHS.xaiLanguageModels);
-  const modelsResponse = await fetchJsonOrTRPCThrow({ url, headers, name: 'xAI' });
+  const { headers, url, redirect } = openAIAccess(access, null, OPENAI_API_PATHS.xaiLanguageModels);
+  const modelsResponse = await fetchJsonOrTRPCThrow({ url, headers, redirect, name: 'xAI' });
 
   const xaiModels = wireXAIModelsListSchema.parse(modelsResponse);
 

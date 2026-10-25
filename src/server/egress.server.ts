@@ -3,8 +3,8 @@
  *
  * The server fetches whatever host a caller puts in `access.apiHost` / `access.wssEndpoint`, so those
  * values must not reach loopback, private, link-local or cloud-metadata addresses. Rules:
- * - scheme in the allowed set (http/https for API hosts, ws/wss for browser endpoints)
- * - API hosts are concatenated with a path: no userinfo, '?' or '#'
+ * - scheme in the allowed set (http/https for API hosts and pages, ws/wss for browser endpoints)
+ * - API hosts are concatenated with a path: no userinfo, '?' or '#' (pages may carry a query and fragment)
  * - hostname must not be an internal name (localhost, *.local, *.internal, single-label, ...)
  * - every DNS-resolved address must be public (literal IPs are checked directly)
  * - operators can exempt hosts via SERVER_ALLOWED_PRIVATE_HOSTS (comma-separated host or host:port, or '*')
@@ -25,7 +25,7 @@ const DNS_CACHE_TTL_MS = 60 * 1000;
 const DNS_CACHE_MAX = 500;
 
 
-export type EgressUrlKind = 'api-host' | 'websocket';
+export type EgressUrlKind = 'api-host' | 'page' | 'websocket';
 
 /** Resolves a hostname to all its IPv4/IPv6 addresses; throws or returns [] when unresolvable. */
 export type EgressDnsResolver = (hostname: string) => Promise<string[]>;
@@ -63,14 +63,15 @@ export async function egressAssertClientUrlOrThrow(
   }
 
   // syntax
-  const allowedSchemes = kind === 'api-host' ? ['http:', 'https:'] : ['ws:', 'wss:'];
+  const allowedSchemes = kind === 'websocket' ? ['ws:', 'wss:'] : ['http:', 'https:'];
   if (!allowedSchemes.includes(url.protocol))
     reject(`scheme must be ${allowedSchemes.map(s => s.slice(0, -1)).join(' or ')}`);
   if (kind === 'api-host') {
     if (url.username || url.password || input.includes('@')) reject('credentials in URL');
     if (input.includes('?') || input.includes('#')) reject('query or fragment in host');
   }
-  if (input.includes('#')) reject('fragment in URL');
+  if (kind === 'page' && (url.username || url.password)) reject('credentials in URL');
+  if (kind !== 'page' && input.includes('#')) reject('fragment in URL');
 
   // operator allowlist (still subject to the syntax rules above)
   if (egressIsHostAllowlisted(url, options.allowedPrivateHosts ?? env.SERVER_ALLOWED_PRIVATE_HOSTS))

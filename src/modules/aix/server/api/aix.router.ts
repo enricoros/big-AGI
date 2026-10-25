@@ -1,6 +1,7 @@
 import * as z from 'zod/v4';
 
 import { createTRPCRouter, edgeProcedure } from '~/server/trpc/trpc.server';
+import { llmsAssertClientHostOrThrow } from '~/modules/llms/server/llm.server.egress';
 
 import { _createDebugConfig } from '../dispatch/chatGenerate/chatGenerate.debug';
 import { createChatGenerateDispatch, createChatGenerateResumeDispatch, executeChatGenerateDelete } from '../dispatch/chatGenerate/chatGenerate.dispatch';
@@ -44,6 +45,7 @@ export const aixRouter = createTRPCRouter({
       connectionOptions: AixWire_API.ConnectionOptionsChatGenerate_schema.optional(), // debugDispatchRequest, debugProfilePerformance, enableResumability
     }))
     .mutation(async function* ({ input, ctx }) {
+      await llmsAssertClientHostOrThrow(input.access);
       const _clearWatchdog = _armSlowRequestWatchdog(`model=${input.model.id} dialect=${input.access.dialect} context=${input.context.name}/${input.context.ref}`);
       try {
         const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
@@ -68,6 +70,7 @@ export const aixRouter = createTRPCRouter({
       connectionOptions: AixWire_API.ConnectionOptionsChatGenerate_schema.pick({ debugDispatchRequest: true }).optional(), // debugDispatchRequest
     }))
     .mutation(async function* ({ input, ctx }) {
+      await llmsAssertClientHostOrThrow(input.access);
       const _clearWatchdog = _armSlowRequestWatchdog(`reattach dialect=${input.access.dialect} context=${input.context.name}/${input.context.ref}`);
       try {
         const _d = _createDebugConfig(input.access, input.connectionOptions, input.context.name);
@@ -89,6 +92,7 @@ export const aixRouter = createTRPCRouter({
       upstreamHandle: AixWire_API.UpstreamHandle_schema, // { uht, runId, ... } - the schema strips unknown fields (createdAt/expiresAt)
     }))
     .mutation(async ({ input, ctx }) => {
+      await llmsAssertClientHostOrThrow(input.access);
       return await executeChatGenerateDelete(input.access, input.upstreamHandle, ctx.reqSignal);
     }),
 

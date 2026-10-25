@@ -4,7 +4,7 @@ import type { DModelParameterId } from '~/common/stores/llms/llms.parameters'; /
 import { LLMS_ALL_INTERFACES } from '~/common/stores/llms/llms.types';
 
 
-export type RequestAccessValues = { headers: HeadersInit; url: string; };
+export type RequestAccessValues = { headers: HeadersInit; url: string; redirect?: RequestRedirect; };
 
 export type ModelDescriptionSchema = z.infer<typeof ModelDescription_schema>;
 

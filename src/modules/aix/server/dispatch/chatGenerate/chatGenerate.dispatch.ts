@@ -53,8 +53,8 @@ export type ChatGenerateDispatch = {
 };
 
 export type ChatGenerateDispatchRequest =
-  | { url: string, headers: HeadersInit, method: 'POST', body: object }
-  | { url: string, headers: HeadersInit, method: 'GET' };
+  | { url: string, headers: HeadersInit, redirect?: RequestRedirect, method: 'POST', body: object }
+  | { url: string, headers: HeadersInit, redirect?: RequestRedirect, method: 'GET' };
 
 export type ChatGenerateParseContext = {
   // whether the operation retrier has attempts left for an error of this HTTP(-equivalent) class - parsers throw OperationRetrySignal only if true
@@ -358,7 +358,7 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
       // ASSUME the OpenAI Responses API - https://platform.openai.com/docs/api-reference/responses/get
       if (resumeHandle.uht !== 'vnd.oai.responses')
         throw new Error(`Resume handle mismatch for ${dialect}: expected 'vnd.oai.responses', got '${resumeHandle.uht}'`);
-      const { url, headers } = openAIAccess(access, '', `${OPENAI_API_PATHS.responses}/${resumeHandle.runId /* OpenAI response.id */}`);
+      const { url, headers, redirect } = openAIAccess(access, '', `${OPENAI_API_PATHS.responses}/${resumeHandle.runId /* OpenAI response.id */}`);
       const queryParams = new URLSearchParams({
         stream: streaming ? 'true' : 'false',
         ...(!!resumeHandle.startingAfter && { starting_after: resumeHandle.startingAfter.toString() }),
@@ -366,7 +366,7 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
       });
 
       return {
-        request: { url: `${url}?${queryParams.toString()}`, method: 'GET', headers },
+        request: { url: `${url}?${queryParams.toString()}`, method: 'GET', headers, redirect },
         demuxerFormat: streaming ? 'fast-sse' : null,
         chatGenerateParse: streaming ? createOpenAIResponsesEventParser('openai') : createOpenAIResponseParserNS('openai'),
       };
@@ -447,6 +447,7 @@ export async function executeChatGenerateDelete(access: AixAPI_Access, handle: A
 
   let url: string;
   let headers: HeadersInit;
+  let redirect: RequestRedirect | undefined;
   let name: string;
 
   switch (dialect) {
@@ -477,7 +478,7 @@ export async function executeChatGenerateDelete(access: AixAPI_Access, handle: A
     case 'openrouter':
       if (handle.uht !== 'vnd.oai.responses')
         throw new Error(`Delete handle mismatch for ${dialect}: expected 'vnd.oai.responses', got '${handle.uht}'`);
-      ({ url, headers } = openAIAccess(access, '', `${OPENAI_API_PATHS.responses}/${handle.runId}`));
+      ({ url, headers, redirect } = openAIAccess(access, '', `${OPENAI_API_PATHS.responses}/${handle.runId}`));
       name = `Aix.${dialect}.Responses.delete`;
       break;
 
@@ -486,7 +487,7 @@ export async function executeChatGenerateDelete(access: AixAPI_Access, handle: A
   }
 
   try {
-    const response = await fetchResponseOrTRPCThrow({ url, method: 'DELETE', headers, signal: abortSignal, name, throwWithoutName: true });
+    const response = await fetchResponseOrTRPCThrow({ url, method: 'DELETE', headers, redirect, signal: abortSignal, name, throwWithoutName: true });
     return { ok: response.ok, httpStatus: response.status };
   } catch (error: any) {
     if (abortSignal.aborted) throw error; // let the caller handle abort

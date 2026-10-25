@@ -69,8 +69,8 @@ export namespace LMStudioWire_API_Models_List {
 
 
 export async function lmStudioFetchModels(access: OpenAIAccessSchema): Promise<LMStudioWire_API_Models_List.Response> {
-  const { headers, url } = openAIAccess(access, null, LMSTUDIO_API_PATHS.models);
-  const wireModels = await fetchJsonOrTRPCThrow({ url, headers, name: 'LM Studio' });
+  const { headers, url, redirect } = openAIAccess(access, null, LMSTUDIO_API_PATHS.models);
+  const wireModels = await fetchJsonOrTRPCThrow({ url, headers, redirect, name: 'LM Studio' });
   return LMStudioWire_API_Models_List.Response_schema.parse(wireModels);
 }
 

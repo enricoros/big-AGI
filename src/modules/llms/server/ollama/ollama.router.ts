@@ -10,6 +10,7 @@ import { listModelsRunDispatch } from '../listModels.dispatch';
 
 import { OLLAMA_BASE_MODELS, OLLAMA_PREV_UPDATE } from './ollama.models';
 import { ollamaAccess, ollamaAccessSchema } from './ollama.access';
+import { llmsAssertClientHostOrThrow } from '../llm.server.egress';
 
 
 // async function ollamaGET<TOut extends object>(access: OllamaAccessSchema, apiPath: string /*, signal?: AbortSignal*/): Promise<TOut> {
@@ -86,8 +87,9 @@ export const llmOllamaRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
 
       // fetch as a large text buffer, made of JSONs separated by newlines
-      const { headers, url } = ollamaAccess(input.access, '/api/pull');
-      const pullRequest = await fetchTextOrTRPCThrow({ url, method: 'POST', headers, body: { 'name': input.name }, name: 'Ollama::pull' });
+      await llmsAssertClientHostOrThrow(input.access);
+      const { headers, url, redirect } = ollamaAccess(input.access, '/api/pull');
+      const pullRequest = await fetchTextOrTRPCThrow({ url, method: 'POST', headers, redirect, body: { 'name': input.name }, name: 'Ollama::pull' });
 
       // accumulate status and error messages
       let lastStatus: string = 'unknown';
@@ -107,8 +109,9 @@ export const llmOllamaRouter = createTRPCRouter({
   adminDelete: edgeProcedure
     .input(adminPullModelSchema)
     .mutation(async ({ input }) => {
-      const { headers, url } = ollamaAccess(input.access, '/api/delete');
-      const deleteOutput = await fetchTextOrTRPCThrow({ url, method: 'DELETE', headers, body: { 'name': input.name }, name: 'Ollama::delete' });
+      await llmsAssertClientHostOrThrow(input.access);
+      const { headers, url, redirect } = ollamaAccess(input.access, '/api/delete');
+      const deleteOutput = await fetchTextOrTRPCThrow({ url, method: 'DELETE', headers, redirect, body: { 'name': input.name }, name: 'Ollama::delete' });
       if (deleteOutput?.length && deleteOutput !== 'null')
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Ollama delete issue: ' + deleteOutput });
     }),

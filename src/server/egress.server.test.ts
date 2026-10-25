@@ -58,6 +58,19 @@ describe('egress: api-host', () => {
   it('allowlist does not bypass syntax rules', () => blocked('http://localhost:8080/?', { allowedPrivateHosts: '*' }));
 });
 
+describe('egress: page', () => {
+  const page = (url: string) => egressAssertClientUrlOrThrow(url, { kind: 'page', label: 'Test', resolver: publicDns, allowedPrivateHosts: '' });
+  it('allows a public page with query and fragment', async () => {
+    await page('https://example.com/a?b=1#c');
+  });
+  it('blocks private, metadata and non-http targets', async () => {
+    await assert.rejects(page('http://169.254.169.254/latest/meta-data/'), /destination not allowed/);
+    await assert.rejects(page('http://127.0.0.1:3000/'), /destination not allowed/);
+    await assert.rejects(page('file:///etc/passwd'));
+    await assert.rejects(page('https://user:pass@example.com/'));
+  });
+});
+
 describe('egress: websocket', () => {
   const ws = { kind: 'websocket' as const };
   it('allows a public wss endpoint with auth and token', () => allowed('wss://user:pw@chrome.example.com?token=abc', ws));

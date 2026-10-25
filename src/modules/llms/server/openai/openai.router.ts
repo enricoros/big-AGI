@@ -19,6 +19,7 @@ import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
 import { OPENAI_API_PATHS, openAIAccess, openAIAccessSchema, OpenAIAccessSchema, OPENROUTER_API_PATHS } from './openai.access';
+import { llmsAssertClientHostOrThrow } from '../llm.server.egress';
 
 
 // Router Input/Output Schemas
@@ -146,8 +147,9 @@ export const llmOpenAIRouter = createTRPCRouter({
       fileId: z.string(),
     }))
     .query(async ({ input: { access, containerId, fileId } }) => {
-      const { headers, url } = openAIAccess(access, null, `/v1/containers/${containerId}/files/${fileId}/content`);
-      const response = await fetchResponseOrTRPCThrow({ url, headers, name: 'OpenAI' });
+      await llmsAssertClientHostOrThrow(access);
+      const { headers, url, redirect } = openAIAccess(access, null, `/v1/containers/${containerId}/files/${fileId}/content`);
+      const response = await fetchResponseOrTRPCThrow({ url, headers, redirect, name: 'OpenAI' });
 
       // Guard against excessively large files (10 MB limit) - mirrors the Anthropic file download endpoint
       const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -173,9 +175,10 @@ export const llmOpenAIRouter = createTRPCRouter({
       fileId: z.string(),
     }))
     .mutation(async ({ input: { access, containerId, fileId } }) => {
-      const { headers, url } = openAIAccess(access, null, `/v1/containers/${containerId}/files/${fileId}`);
+      await llmsAssertClientHostOrThrow(access);
+      const { headers, url, redirect } = openAIAccess(access, null, `/v1/containers/${containerId}/files/${fileId}`);
       try {
-        await fetchTextOrTRPCThrow({ url, headers, method: 'DELETE', name: 'OpenAI' });
+        await fetchTextOrTRPCThrow({ url, headers, redirect, method: 'DELETE', name: 'OpenAI' });
         return { success: true, alreadyGone: false };
       } catch (error: any) {
         // 404: the file is gone, or the whole container expired ("Container is expired.") - the outcome the caller wanted
@@ -460,13 +463,15 @@ export const llmOpenAIRouter = createTRPCRouter({
 // Mappers - all access logic is now in openai.access.ts
 
 async function openaiGETOrThrow<TOut extends object>(access: OpenAIAccessSchema, apiPath: string, signal: undefined | AbortSignal = undefined): Promise<TOut> {
-  const { headers, url } = openAIAccess(access, null, apiPath);
-  return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: `OpenAI/${serverCapitalizeFirstLetter(access.dialect)}`, signal });
+  await llmsAssertClientHostOrThrow(access);
+  const { headers, url, redirect } = openAIAccess(access, null, apiPath);
+  return await fetchJsonOrTRPCThrow<TOut>({ url, headers, redirect, name: `OpenAI/${serverCapitalizeFirstLetter(access.dialect)}`, signal });
 }
 
 async function openaiPOSTOrThrow<TOut extends object, TPostBody extends object | FormData>(access: OpenAIAccessSchema, modelRefId: string | null, body: TPostBody, apiPath: string, signal: undefined | AbortSignal = undefined): Promise<TOut> {
-  const { headers, url } = openAIAccess(access, modelRefId, apiPath);
-  return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, body, name: `OpenAI/${serverCapitalizeFirstLetter(access.dialect)}`, signal });
+  await llmsAssertClientHostOrThrow(access);
+  const { headers, url, redirect } = openAIAccess(access, modelRefId, apiPath);
+  return await fetchJsonOrTRPCThrow<TOut, TPostBody>({ url, method: 'POST', headers, redirect, body, name: `OpenAI/${serverCapitalizeFirstLetter(access.dialect)}`, signal });
 }
 
 

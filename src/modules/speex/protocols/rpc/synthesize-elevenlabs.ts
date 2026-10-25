@@ -73,6 +73,14 @@ export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLa
     return;
   }
 
+  // relay audio only, never other upstream content
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.startsWith('audio/')) {
+    await response.body?.cancel().catch(() => {});
+    yield { t: 'error', e: `ElevenLabs audio error: unexpected content type '${contentType.slice(0, 64)}'` };
+    return;
+  }
+
   // Stream or return whole audio (with metadata for non-streaming)
   try {
     yield* streaming

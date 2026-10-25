@@ -108,7 +108,12 @@ export const openAIAccessSchema = z.object({
   orRequireParameters: z.boolean().optional(), // Only route to providers supporting all request params
 });
 
-export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
+export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): RequestAccessValues {
+  const values = _openAIAccessByDialect(access, modelRefId, apiPath);
+  return access.oaiHost ? { ...values, redirect: 'error' } : values; // no redirects for a client-set host: a redirect could bounce the server-side fetch past the outbound policy
+}
+
+function _openAIAccessByDialect(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): RequestAccessValues {
   // server keys (env) only go to the server's own endpoint - see llmsServerKeyForHost; the 'openai' dialect applies the same rule inline
   switch (access.dialect) {
 

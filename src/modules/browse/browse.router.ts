@@ -85,6 +85,10 @@ export const browseRouter = createTRPCRouter({
       if (access.wssEndpoint)
         await egressAssertClientUrlOrThrow(endpoint, { kind: 'websocket', label: 'Browse endpoint', resolver: egressResolveNodeDns });
 
+      // the target pages are client-supplied too
+      for (const request of requests)
+        await egressAssertClientUrlOrThrow(request.url, { kind: 'page', label: 'Browse URL', resolver: egressResolveNodeDns });
+
       const workerHost = new URL(endpoint).host;
 
       yield { type: 'ack-start' as const };
@@ -192,6 +196,16 @@ async function workerPuppeteer(
     incognitoContext = await browser.createBrowserContext();
   const page = incognitoContext ? await incognitoContext.newPage() : await browser.newPage();
   page.setDefaultNavigationTimeout(WORKER_TIMEOUT);
+
+  // every request of the page (navigation, redirects, subresources) passes the outbound policy
+  await page.setRequestInterception(true);
+  const originVerdicts = new Map<string, Promise<boolean>>();
+  page.on('request', (request) => {
+    if (request.isInterceptResolutionHandled()) return;
+    _isPageRequestAllowed(request.url(), originVerdicts)
+      .then((allowed) => allowed ? request.continue() : request.abort('blockedbyclient'))
+      .catch((error) => console.warn(`workerPuppeteer: request interception failed - ${_shortError(error)}`));
+  });
 
   // open url
   try {
@@ -513,4 +527,31 @@ function cleanHtml(html: string): string {
     console.error('HTML cleaning error:', error);
     return html; // Return original if cleaning fails
   }
+}
+
+
+/** Outbound policy for one browser request; verdicts are cached per origin (one DNS lookup per host:port). */
+function _isPageRequestAllowed(rawUrl: string, originVerdicts: Map<string, Promise<boolean>>): Promise<boolean> {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return Promise.resolve(false);
+  }
+  if (url.protocol === 'data:' || url.protocol === 'blob:' || url.protocol === 'about:')
+    return Promise.resolve(true); // no network
+  const kind = url.protocol === 'http:' || url.protocol === 'https:' ? 'page'
+    : url.protocol === 'ws:' || url.protocol === 'wss:' ? 'websocket'
+      : null;
+  if (!kind)
+    return Promise.resolve(false);
+
+  const origin = `${url.protocol}//${url.host}`;
+  let verdict = originVerdicts.get(origin);
+  if (!verdict) {
+    verdict = egressAssertClientUrlOrThrow(origin, { kind, label: 'Browse request', resolver: egressResolveNodeDns })
+      .then(() => true, () => false);
+    originVerdicts.set(origin, verdict);
+  }
+  return verdict;
 }
