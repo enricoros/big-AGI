@@ -85,6 +85,15 @@ export default defineConfig([{
             selector: "NewExpression[callee.object.name='Intl'][callee.property.name='Segmenter']",
             message: "Intl.Segmenter is absent on older engines and throws. Call textIsSingleEmoji() (which feature-detects + falls back), or guard with `if (Intl.Segmenter)` and provide a fallback.",
         }],
+        // bundle guard: the @mui/icons-material barrel re-exports ~10k icons, and Next's barrel optimizer
+        // does not cover the server compile on every version (15.5 pulled all of them into a 5.4 MB server
+        // chunk). Import icons by path: '@mui/icons-material/Send'.
+        "no-restricted-imports": ["error", {
+            paths: [{
+                name: "@mui/icons-material",
+                message: "Import the icon by path ('@mui/icons-material/Send'): the barrel pulls ~10k icons into the server bundle.",
+            }],
+        }],
     },
 }, {
     // browser API compatibility guard (reads `browserslist` from package.json) - catches
