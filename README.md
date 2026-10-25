@@ -43,7 +43,7 @@ It comes packed with **world-class features** like Beam, and is praised for its 
 
 ### What makes Big-AGI different:
 
-**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Opus 5, GPT 5.6, Gemini 3.7, Kimi K3 or Grok 4.6 -
+**Intelligence**: with [Beam & Merge](https://big-agi.com/beam) for multi-model de-hallucination, native search, and bleeding-edge AI models like Opus 5.5, GPT 6, Gemini 4 Argon, DeepSeek V4.1 or Grok 4.7 -
 **Control**: with personas, data ownership, requests inspection, unlimited usage with API keys, and *no vendor lock-in* -
 and **Speed**: with a local-first, over-powered, zero-latency, madly optimized web app.
 
@@ -144,6 +144,7 @@ NOTE: this is a powerful tool - if you need a toy UI or clone, this ain't it.
 ## Release Notes
 
 👉 **[See the Live Release Notes](https://big-agi.com/changes)**
+- Open 2.1.2: **Render Tree** **GPT-6**, **Opus 5.5**, **Fable 5.1**, **Gemini 4 Argon**, Meta AI, Edit session, Models changelog, Gemini key fix
 - Open 2.1.1: **Weights Dust** **Opus 5**, **GPT-5.6**, **Gemini 3.7**, **Kimi K3**, multi-vendor Transcription, Cerebras/NVIDIA NIM/Sakana/Cohere
 - Open 2.0.5: **Roberto** **Opus 4.7 1M**, **GPT-5.5**, **DeepSeek V4**, Anthropic Containers/Skills, resumable Deep Research, MiniMax & Arcee AI
 - Open 2.0.4: **Hyper Params** **Opus 4.6**, **GPT-5.4**, **Gemini 3.1 Pro**, AWS Bedrock, parameter accuracy, Anthropic continuation/Fast mode

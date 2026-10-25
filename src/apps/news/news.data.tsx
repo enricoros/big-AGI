@@ -73,6 +73,20 @@ export const DevNewsItem: NewsItem = {
 // news and feature surfaces
 export const NewsItems: NewsItem[] = [
   {
+    versionCode: '2.1.2',
+    versionName: 'Render Tree',
+    versionDate: new Date('2026-10-25T12:00:00Z'),
+    items: [
+      { text: <><B>Security</B>: server Gemini key fix, Next.js 15.5, Node 24.22 image. Rotate <B>GEMINI_API_KEY</B></> },
+      { text: <><B>GPT-6</B>, <B>Opus 5.5</B>, <B>Fable 5.1</B>, <B>Sonnet/Haiku 5.5</B>, <B>Gemini 4 Argon</B>, <B>DeepSeek V4.1</B>, Grok 4.7, Kimi K3.1</> },
+      { text: <>New vendor: <B>Meta AI</B> (Muse); BaseTen via Custom OpenAI</> },
+      { text: <><B>Edit session</B>: reorder blocks, edit documents, add attachments; <B issue={1234}>attachments placement</B></> },
+      { text: <>Rendering: <B issue={1086}>adaptive streaming markdown</B>, HTML blocks, task lists, timestamps, <B issue={1230}>user markdown</B></> },
+      { text: <><B issue={1204}>Models changelog and Update All</B>; OpenAI service tiers; <B issue={1210}>Retry-After</B>; pause_turn continuations</> },
+      { text: <>Beam merge fixes; Call pause; export chats for Claude Code; Gemini TTS</> },
+    ],
+  },
+  {
     versionCode: '2.1.1',
     versionName: 'Weights Dust',
     versionDate: new Date('2026-08-27T00:00:00Z'),
