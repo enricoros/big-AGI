@@ -74,7 +74,7 @@ export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLa
   }
 
   // relay audio only, never other upstream content
-  const contentType = response.headers.get('content-type') || '';
+  const contentType = (response.headers.get('content-type') || '').toLowerCase();
   if (!contentType.startsWith('audio/')) {
     await response.body?.cancel().catch(() => {});
     yield { t: 'error', e: `ElevenLabs audio error: unexpected content type '${contentType.slice(0, 64)}'` };
