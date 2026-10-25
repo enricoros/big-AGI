@@ -23,18 +23,33 @@ export function middleware(request: NextRequest) {
   if (!authHeader?.startsWith('Basic '))
     return new Response('Unauthorized', unauthResponse);
 
-  // Request authentication if credentials are invalid
-  const base64Credentials = authHeader.split(' ')[1];
-  const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
-  const [username, password] = credentials.split(':');
+  // Request authentication if credentials are invalid: split on the first ':' only (passwords may contain
+  // colons), decode as UTF-8, compare in constant time
+  const base64Credentials = authHeader.slice('Basic '.length).trim();
+  const credentials = Buffer.from(base64Credentials, 'base64').toString('utf8');
+  const separator = credentials.indexOf(':');
+  const username = separator > 0 ? credentials.slice(0, separator) : '';
+  const password = separator > 0 ? credentials.slice(separator + 1) : '';
   if (
     !username || !password ||
-    username !== process.env.HTTP_BASIC_AUTH_USERNAME ||
-    password !== process.env.HTTP_BASIC_AUTH_PASSWORD
+    !_constantTimeEqual(username, process.env.HTTP_BASIC_AUTH_USERNAME) ||
+    !_constantTimeEqual(password, process.env.HTTP_BASIC_AUTH_PASSWORD)
   )
     return new Response('Unauthorized', unauthResponse);
 
   return NextResponse.next();
+}
+
+
+/** Constant-time comparison, edge-runtime safe (no node:crypto). Length still leaks, as in every HTTP Basic implementation. */
+function _constantTimeEqual(a: string, b: string): boolean {
+  const ab = new TextEncoder().encode(a);
+  const bb = new TextEncoder().encode(b);
+  const n = Math.max(ab.length, bb.length);
+  let diff = ab.length ^ bb.length;
+  for (let i = 0; i < n; i++)
+    diff |= (ab[i] ?? 0) ^ (bb[i] ?? 0);
+  return diff === 0;
 }
 
 
