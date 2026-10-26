@@ -10,6 +10,7 @@ import { createPlaceholderVoidFragment, DMessageFragment, isContentFragment, isE
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getVndOaiBeamSandbox } from '~/common/stores/store-ai';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
+import { messageTerminalOutcome } from '~/common/stores/chat/chat.message.outcome';
 import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
 
 import type { GatherStoreSlice } from '../gather/beam.gather';
@@ -288,9 +289,9 @@ export const createScatterSlice: StateCreator<RootStoreSlice & ScatterStoreSlice
 
       const emptyRay = createBRayEmpty(raysLlmId);
 
-      // pre-fill the ray with the imported message
+      // pre-fill the ray with the imported message, keeping how it ended
       if (message.fragments.length) {
-        emptyRay.status = 'completed';
+        emptyRay.status = messageTerminalOutcome(message);
         emptyRay.message = duplicateDMessage(message, false); // [beam] import dmessage copy from chat
         emptyRay.message.updated = Date.now();
         emptyRay.imported = true;

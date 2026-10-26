@@ -45,7 +45,7 @@ The tables are private to `chat.message.outcome.ts`; `messageOutcomePolicy()`, `
 - Wire: `AixWire_Particles.gcStopReasonRow()` in `aix.wiretypes.ts` reads the private stop-reason table, one row per stop reason with three columns: `class` (edge analytics: `ok` | `truncated` | `error`), `stored` (the stop reason the client persists), `message` (error fragment text on a cut). A reason this build does not know returns undefined. The wire op `cg: 'end'` is unchanged.
 - Reassembler: `_storedTermination()` decides what the message carries, then `finalizeReassembly()` reads the outcome back with `messageTerminalOutcome`. `completed` and `truncated` are both vendor-ended: upstream handle cleared, metrics finalized the same way.
 - Presentation: `messageOutcomeColor()` and `messageOutcomeLabel()`. `messageBackground()` takes the palette key. Beam cards color all three non-success outcomes (`aborted` neutral, #1070). Chat bubbles tint truncation only: errors render inline, a stop in chat is usually deliberate.
-- Beam: `BeamStatus` in `beam.status.ts` is `'idle' | 'running' | AixChatGenerateTerminal_LL`, shared by `BRay.status` and `BFusion.stage`. `beamStatusColor()` colors the cards. Not persisted.
+- Beam: `BeamStatus` in `beam.status.ts` is `'idle' | 'running' | AixChatGenerateTerminal_LL`, shared by `BRay.status` and `BFusion.stage`. `beamStatusColor()` colors the cards. A message imported into Beam keeps its outcome. Not persisted.
 
 ## Stop reasons by dialect
 
