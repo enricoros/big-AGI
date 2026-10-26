@@ -11,6 +11,7 @@ import type { Immutable } from '~/common/types/immutable.types';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { optimaActions } from '~/common/layout/optima/useOptima';
 import { tooltipMetricsGridSx, prettyMessageMetrics, prettyShortChatModelName, prettyTokenStopReason } from '~/common/util/dMessageUtils';
 import { useLLMExists } from '~/common/stores/llms/llms.hooks';
@@ -30,6 +31,7 @@ const modelHeaderSx: SxProps = {
   minWidth: 0,
   borderRadius: 'sm',
   backgroundColor: 'background.level1',
+  boxShadow: 'inset 1px 1px 4px -2px rgba(0, 0, 0, 0.2)',
 };
 
 const timestampSx: SxProps = {
@@ -65,7 +67,7 @@ export function ChatMessageInfoPopup(props: {
     <GoodModal
       open={props.open}
       onClose={onClose}
-      title='Message Info'
+      title={`${capitalizeFirstLetter(role)} Message Info`}
       hideBottomClose
       unfilterBackdrop
       sx={{ minWidth: { xs: 300, sm: 400 }, maxWidth: 480 }}

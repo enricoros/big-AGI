@@ -30,7 +30,7 @@ export function ChatMessageTimestamp(props: {
       onDoubleClick={event => event.stopPropagation()}
       sx={{
         alignSelf: fromUser ? 'flex-end' : 'flex-start',
-        mx: 1.5, mt: 0.5, mb: 0.5, p: 0,
+        mx: 1.5, mt: 0.5, mb: -0.5, p: 0,
         border: 0, background: 'none',
         color: fromUser ? 'primary.softColor' : 'neutral.softColor',
         opacity: 0.7,
