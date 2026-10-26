@@ -29,7 +29,7 @@ jobs:
         run: npm ci
 
       - name: Type check (app, tools, tests)
-        run: npm run tscheck
+        run: npm --ignore-scripts run tscheck
 
       # LLM defs map: enable to fail PRs on a stale committed map (kept off: quick GitHub-side edits
       # can't run the generator, and Vercel/Docker builds regenerate it anyway via prebuild)
