@@ -3,6 +3,7 @@ import { aixChatGenerateContent_DMessage_orThrow, aixCreateChatGenerateContext }
 
 import { convert_Blob_To_Base64 } from '~/common/util/blobUtils';
 import { getDomainModelIdOrThrow } from '~/common/stores/llms/store-llms';
+import { isErrorContentFragment } from '~/common/stores/chat/chat.fragments';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 
 
@@ -70,6 +71,10 @@ export async function imageCaptionFromImageOrThrow(
         onProgress(Math.round(lastProgress = Math.min(90, lastProgress + 0.25)));
     },
   );
+
+  // a failed generation must not become the image description; one cut by the token cap still describes it
+  if (result.outcome !== 'completed' && result.outcome !== 'truncated')
+    throw new Error(result.fragments.findLast(isErrorContentFragment)?.part.error || `Captioning ${result.outcome}`);
 
   // extract text from the result
   onProgress?.(100);
