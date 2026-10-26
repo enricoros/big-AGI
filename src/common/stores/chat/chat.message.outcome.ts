@@ -38,11 +38,11 @@ export const messageOutcomePolicy = {
 
 // derivation
 
-// Avoid switch fall-through: SWC can drop the fragment scan (swc-project/swc#11970).
-const stopReasonOutcome = {
+/** Stored stop reason -> outcome. A table, not a switch: Next 15.5's SWC minifier dropped the code after a `case undefined: break` switch, and every clean reply read `undefined` in production builds. */
+const _outcomeByStopReason = {
   'out-of-tokens': 'truncated',
-  issue: 'failed',
-  filter: 'failed',
+  'issue': 'failed',
+  'filter': 'failed',
   'client-abort': 'aborted',
 } as const satisfies Record<NonNullable<DMessageGenerator['tokenStopReason']>, DMessageTerminalOutcome>;
 
@@ -53,7 +53,7 @@ export function messageOutcome(message: MessageOutcomeSource): DMessageOutcome {
 export function messageTerminalOutcome(message: Omit<MessageOutcomeSource, 'pendingIncomplete'>): DMessageTerminalOutcome {
   const stopReason = message.generator?.tokenStopReason;
   if (stopReason !== undefined)
-    return Object.hasOwn(stopReasonOutcome, stopReason) ? stopReasonOutcome[stopReason] : 'failed'; // forward-compat: a stop reason this build does not know is not a success
+    return Object.hasOwn(_outcomeByStopReason, stopReason) ? _outcomeByStopReason[stopReason] : 'failed'; // forward-compat: a stop reason this build does not know is not a success
   // no stop reason (pre-stop-reason messages, clean ends without a finish reason): the last content fragment decides; trailing void notices do not weigh in
   for (let i = message.fragments.length - 1; i >= 0; i--) {
     const fragment = message.fragments[i];
