@@ -25,7 +25,7 @@ import { useChatOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { DConversationId, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
-import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, DMetaReferenceItem } from '~/common/stores/chat/chat.message';
+import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageRole, DMessageUserFlag, DMetaReferenceItem } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { orderedUserFragments } from '~/common/stores/chat/chat.fragment-order';
 import { useChatStore } from '~/common/stores/chat/store-chats';
@@ -274,6 +274,10 @@ export function ChatMessageList(props: {
     conversationHandler?.messageFragmentsReplace(messageId, fragments);
   }, [conversationHandler]);
 
+  const handleMessageSetRole = React.useCallback((messageId: DMessageId, role: DMessageRole) => {
+    conversationHandler?.messageEdit(messageId, { role }, false, true);
+  }, [conversationHandler]);
+
   const handleMessageToggleUserFlag = React.useCallback((messageId: DMessageId, userFlag: DMessageUserFlag, _maxPerConversation?: number) => {
     conversationHandler?.messageToggleUserFlag(messageId, userFlag, true /* touch */);
     // Note: we don't support 'maxPerConversation' yet, which is supposed to turn off the flag from the beginning if it's too numerous
@@ -431,6 +435,7 @@ export function ChatMessageList(props: {
               upstreamResumeMode={resumeInFlight[message.id]}
               onMessageDelete={handleMessageDelete}
               onMessageFragmentsReplace={handleMessageReplaceFragments}
+              onMessageSetRole={handleMessageSetRole}
               onMessageToggleUserFlag={handleMessageToggleUserFlag}
               onMessageTruncate={handleMessageTruncate}
               onReattachAsFile={handleReattachAsFile}
