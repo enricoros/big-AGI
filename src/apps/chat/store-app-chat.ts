@@ -196,7 +196,7 @@ const useAppChatStore = create<AppChatStore>()(persist(
     storageWarningDismissed: false,
     dismissStorageWarning: () => _set({ storageWarningDismissed: true }),
 
-    messageTimestampMode: 'off',
+    messageTimestampMode: 'auto',
     setMessageTimestampMode: (messageTimestampMode: ChatMessageTimestampMode) => _set({ messageTimestampMode }),
 
     // Other chat-specific configuration
