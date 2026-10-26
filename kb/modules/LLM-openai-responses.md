@@ -4,9 +4,9 @@ Native OpenAI models carry `LLM_IF_OAI_Responses` and go to `/v1/responses` (`op
 
 ## Catalog
 
-- GPT-6: Astra (2026-09-03) > Sol > Luna (2026-09-22), plus GPT-6.1 Sol (2026-09-29) between Astra and 6 Sol. GPT-6.1 Astra was pulled before release and has no id. No Terra; `gpt-6` and `gpt-6-terra` 404. GPT-5.6: Sol > Terra > Luna. Tier names carry no rank across generations: Sol was the 5.6 flagship and is the GPT-6 middle tier.
-- Ids are stable tier pointers, no dated snapshots. All seven: 1,050,000 context (GPT-6 and 6.1: 922,000 max input), 128,000 output, text and image in.
-- Prices: 272K tier on total input (2x input and cache, 1.5x output above it), cache writes 1.25x input, cache reads 10% of input (5% on 6.1 Sol), web search $10/1K calls. See `LLM-pricing-pipeline.md`.
+- GPT-6: Astra (2026-09-03) > Sol > Luna (2026-09-22), plus GPT-6.1 Sol (2026-09-29) between Astra and 6 Sol, and GPT-6.1 Terra (2026-10-26) below 6.1 Sol. GPT-6.1 Astra was pulled before release and has no id; `gpt-6` and `gpt-6-terra` 404. GPT-5.6: Sol > Terra > Luna. Tier names carry no rank across generations: Sol was the 5.6 flagship and is the GPT-6 middle tier.
+- Ids are stable tier pointers, no dated snapshots. All eight: 1,050,000 context (GPT-6 and 6.1 Sol: 922,000 max input), 128,000 output, text and image in. Terra's limits and pricing follow its [model card](https://developers.openai.com/api/docs/models/gpt-6.1-terra).
+- Prices: 272K tier on total input (2x input and cache, 1.5x output above it), cache writes 1.25x input, cache reads 10% of input (5% on 6.1 Sol and Terra), web search $10/1K calls. See `LLM-pricing-pipeline.md`.
 
 ## Request contract
 
@@ -14,6 +14,7 @@ Native OpenAI models carry `LLM_IF_OAI_Responses` and go to `/v1/responses` (`op
 - `temperature`, `top_p`, logprobs: only at effort `none`, so never on Astra or 6.1 Sol. The client lifts `LLM_IF_HOTFIX_NoTemperature` there (`aix.client.ts`).
 - `reasoning.mode: 'pro'`: every tier, every effort, every service tier. The answer arrives as one delta; each request adds ~1.4K input tokens of scaffold (~35K with web search).
 - `service_tier`: `flex` and `fast` echo as served; `priority` is served as `fast`; `auto` serves `default`. Fast is 2x on every model we expose it for except GPT-5.5 (2.5x); the parser applies that per served model, the parameter's price preview stays at 2x.
+- GPT-6.1 Terra exposes Flex/Fast. Ultrafast is rejected, including through a streamed `response.failed` after HTTP 200.
 - `service_tier: 'ultrafast'` (2026-09-29): GPT-6 Astra and GPT-6.1 Sol (2026-10-08) on Responses only, 6x on every token class in both context tiers, echoed as `ultrafast` from `response.created`, usage shape unchanged. Every other model, GPT-6 Sol down to GPT-5.5 (GPT-5.6 Sol: preview access per docs), and Chat Completions 400 `Invalid service_tier argument`. Streaming and non-streaming both serve it (6 of 6 calls, 2026-10-05). Since 2026-10-21 the same 400 also signals a project or organization tier restriction (docs: suffix "The requested service tier is not allowed for this project."; covers default, flex and priority, with `fast` evaluated as `priority`). Models opt in through `enumValues` on `llmVndOaiServiceTier` (`gpt-6-astra` and its `::pro` variant, `gpt-6.1-sol`); the Chat Completions adapter throws on it for native OpenAI (OpenRouter serves it, see below); the parser prices 6x only on an `ultrafast` echo.
 - Caching is implicit with 24h retention forced: `prompt_cache_retention: 'in_memory'` 400s (AIX never sends it). Cold prompts report `input_tokens_details.cache_write_tokens`, warm ones `cached_tokens`.
 - Tools: `web_search`, `code_interpreter`, `image_generation`, functions (auto, required, round trip). Hosted loops stream strictly serial; output items are `reasoning`, `web_search_call`, `code_interpreter_call`, `function_call`, `message` (with `phase`).
@@ -30,11 +31,12 @@ Native OpenAI models carry `LLM_IF_OAI_Responses` and go to `/v1/responses` (`op
 
 ## Chat Completions
 
-The native definitions route GPT-5.x, GPT-6 and 6.1 over Responses. On Chat Completions (compatible hosts): effort up to xhigh (`max` 400s), from `low` on Astra and 6.1 Sol and from `none` elsewhere; function tools 400 unless effort is `none` on 6 Sol and Luna, and at every effort on Astra and 6.1 Sol ("Function tools with reasoning_effort are not supported ... use /v1/responses"). On the native and Azure dialects the adapter strips `temperature`/`top_p` from gpt-5/6 and o-family ids.
+The native definitions route GPT-5.x, GPT-6 and 6.1 over Responses. On Chat Completions (compatible hosts): effort up to xhigh (`max` 400s), from `low` on Astra and 6.1 Sol and from `none` elsewhere; function tools 400 unless effort is `none` on 6 Sol and Luna, and at every effort on Astra and 6.1 Sol ("Function tools with reasoning_effort are not supported ... use /v1/responses"). Docs also require Responses for Terra's tool calls. On the native and Azure dialects the adapter strips `temperature`/`top_p` from gpt-5/6 and o-family ids.
 
 ## OpenRouter
 
 - `openai/gpt-6-astra`, `-astra-pro`, `-sol`, `-sol-pro`, `-luna`, `-luna-pro`, `openai/gpt-6.1-sol` and `-pro` (plus `:batch`). A `-pro` id is the base model in pro mode; `llmOrtOaiLookup` maps it to the base definition with the mode pinned.
+- `openai/gpt-6.1-terra` and `:batch` inherit Terra's native parameter metadata. No Terra `-pro` id is listed.
 - Chat Completions on OpenRouter accepts every effort (including `minimal`) and `temperature` at any effort, normalizing upstream. Effort is honored (`max` spent 8x the reasoning tokens of `low` on Sol), `reasoning.mode: 'pro'` reroutes to the `-pro` id, and function tools work together with reasoning.
 - `service_tier` routes to the `openai/flex` and `openai/fast` endpoints on every model that exposes `llmVndOaiServiceTier` natively (GPT-5.4 through GPT-6): `flex` bills 0.5x, `fast` and `priority` 2x (2.5x on GPT-5.5), echoed as `priority`. `ultrafast` routes to `openai/ultrafast` on Astra and Astra Pro, both dialects, echoed as `ultrafast` at 6x (2026-10-06); 6.1 Sol and its Pro id list it too (6.1 Sol: echoed `ultrafast` at 6x). Wired through `_ORT_OAI_PARAM_ALLOWLIST`; the reported `cost` carries the tier.
 - Auto picks match the exact `llmRef` first: OpenRouter lists `-pro` ids before the base on same-day releases.

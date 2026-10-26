@@ -170,10 +170,10 @@ const OAI_PRICE_TOOLS: NonNullable<ModelDescriptionSchema['chatPrice']>['tools']
 
 export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 
-  /// GPT-6 series - Astra released September 3, 2026; Sol and Luna September 22, 2026; 6.1 Sol September 29, 2026 (DevDay)
-  // Tiers: Astra (flagship) > Sol > Luna, no Terra. Tier names carry no fixed rank across generations: Sol was the GPT-5.6
+  /// GPT-6 series - Astra September 3, 2026; Sol/Luna September 22; 6.1 Sol September 29; 6.1 Terra October 26
+  // Tiers: Astra (flagship) > Sol > Terra (6.1) > Luna. Tier names carry no fixed rank across generations: Sol was the GPT-5.6
   // flagship, here it is the middle tier. Ids are the stable pointers (no dated snapshots; bare 'gpt-6' and 'gpt-6-terra' 404).
-  // Reasoning items replay across the three tiers but not across generations: the API silently omits another family's items.
+  // Reasoning items replay within a family but not across generations: the API silently omits another family's items.
   // Astra (API-verified at launch: parameter sweep + raw probes):
   // - 1,050,000 context (922,000 max input) / 128,000 max output / knowledge cutoff Apr 30, 2026; text+image in (vision verified), text out
   // - reasoning.effort: low|medium|high|xhigh|max (default medium) - 'none' and 'minimal' 400, so no No-thinking variant; reasoning.mode 'pro' works
@@ -199,6 +199,8 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   // 6.1 Sol (API-verified 2026-09-29): Astra's contract at Sol prices - effort low..max ('none' and 'minimal' 400, so no temperature
   // at any effort), cached input 5% of input (vs 10% on 6 Sol), cutoff Apr 30, 2026; Chat Completions effort low..xhigh, function
   // tools 400 at every effort. Same reasoning family: items replay both ways with Astra and 6 Sol; 5.6 items are silently omitted.
+  // 6.1 Terra: effort none..max, temperature 0..2 at 'none', Pro mode, verbosity and function roundtrips verified 2026-10-26.
+  // Streaming, code interpreter and Flex/Fast work; Ultrafast fails inside the stream. Cache reads cost 5% of input.
   // Multi-agent (beta header `responses_multi_agent=v1`, also on GPT-5.6) - not adopted. GPT-6.1 Astra was pulled before launch.
   // Shipped with GPT-6, accepted on every tier but not adopted: async tool calling (`async: true` on tools; the function_call item
   // echoes `async: true` and the model answers before the result), `configuration_update` input items (change effort mid-conversation,
@@ -256,6 +258,34 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       input: [{ upTo: 272000, price: 2 }, { upTo: null, price: 4 }],
       output: [{ upTo: 272000, price: 10 }, { upTo: null, price: 15 }],
       cache: { read: [{ upTo: 272000, price: 0.1 }, { upTo: null, price: 0.2 }], write: [{ upTo: 272000, price: 2.5 }, { upTo: null, price: 5 }] },
+      tools: OAI_PRICE_TOOLS,
+    },
+    // benchmark: no arena data yet
+  },
+
+  // GPT-6.1 Terra - https://developers.openai.com/api/docs/models/gpt-6.1-terra
+  {
+    idPrefix: 'gpt-6.1-terra',
+    label: 'GPT-6.1 Terra',
+    pubDate: '20261026',
+    description: 'Fast visual reasoning, computer use, and writing at half the price of GPT-6.1 Sol. Reasoning can be turned off. 1M token context.',
+    contextWindow: 1050000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast'] },
+      { paramId: 'llmVndOaiReasoningMode' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: {
+      input: [{ upTo: 272000, price: 1 }, { upTo: null, price: 2 }],
+      output: [{ upTo: 272000, price: 5 }, { upTo: null, price: 7.5 }],
+      cache: { read: [{ upTo: 272000, price: 0.05 }, { upTo: null, price: 0.1 }], write: [{ upTo: 272000, price: 1.25 }, { upTo: null, price: 2.5 }] },
       tools: OAI_PRICE_TOOLS,
     },
     // benchmark: no arena data yet
@@ -1518,6 +1548,7 @@ const _manualOrderingIdPrefixes = [
   // GPT-6
   'gpt-6-astra',
   'gpt-6.1-sol',
+  'gpt-6.1-terra',
   'gpt-6-sol',
   'gpt-6-luna',
   'gpt-6.1-',
