@@ -236,7 +236,7 @@ export function CleanerMessage(props: {
       : messageText.startsWith('/react ') ? 'react'
         : false;
 
-  const backgroundColor = messageBackground(messageRole, userCommandApprox, !!messageUpdated, isAssistantError ? 'danger' : messageOutcomeColor[messageOutcome(props.message)] === 'warning' ? 'warning' : undefined /* truncation only, as in chat */);
+  const backgroundColor = messageBackground(messageRole, userCommandApprox, !!messageUpdated, isAssistantError ? 'danger' : messageOutcomeColor(messageOutcome(props.message)) === 'warning' ? 'warning' : undefined /* truncation only, as in chat */);
 
   const avatarIconEl: React.JSX.Element | null = React.useMemo(() => {
     return makeMessageAvatarIcon('pro', messageRole, messageGeneratorName, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, false, false);

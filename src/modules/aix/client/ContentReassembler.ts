@@ -1130,11 +1130,10 @@ export class ContentReassembler {
     // -- Dialect-set dispatch terminations (model responded with an explicit stop reason at the end) --
 
     if (dialectTokenStopReason) {
-      // one row per wire reason, shared with the edge: GC_STOP_REASONS in aix.wiretypes
-      if (dialectTokenStopReason in AixWire_Particles.GC_STOP_REASONS) {
-        const { stored, message }: AixWire_Particles.GCStopReasonRow = AixWire_Particles.GC_STOP_REASONS[dialectTokenStopReason];
-        return { tsr: stored, ...(message && { errorMessage: message }) };
-      }
+      // one row per wire reason, shared with the edge: gcStopReasonRow in aix.wiretypes
+      const stopRow = AixWire_Particles.gcStopReasonRow(dialectTokenStopReason);
+      if (stopRow)
+        return { tsr: stopRow.stored, ...(stopRow.message && { errorMessage: stopRow.message }) };
       console.warn(`[ContentReassembler] Unmapped dialectStopReason: ${dialectTokenStopReason}. Falling back to terminationReason.`);
     }
 

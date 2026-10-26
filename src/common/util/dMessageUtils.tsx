@@ -413,13 +413,13 @@ export function prettyTokenStopReason(reason: DMessageGenerator['tokenStopReason
   if (!reason) return null;
   switch (reason) {
     case 'client-abort':
-      return complexity !== 'minimal' ? messageOutcomeLabel.aborted : '';
+      return complexity !== 'minimal' ? messageOutcomeLabel('aborted') : '';
     case 'filter':
       return 'Filtered';
     case 'issue':
       return complexity === 'extra' ? 'Error' : '';
     case 'out-of-tokens':
-      return messageOutcomeLabel.truncated;
+      return messageOutcomeLabel('truncated');
     default:
       const _exhaustiveCheck: never = reason;
       return null;

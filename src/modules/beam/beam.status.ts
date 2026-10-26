@@ -13,5 +13,5 @@ export type BeamStatus = 'idle' | 'running' | AixChatGenerateTerminal_LL;
 
 /** Joy palette key for a status: terminal outcomes color through messageOutcomeColor, the phases stay uncolored. */
 export function beamStatusColor(status: BeamStatus): 'danger' | 'warning' | 'neutral' | undefined {
-  return status === 'idle' || status === 'running' ? undefined : messageOutcomeColor[status];
+  return status === 'idle' || status === 'running' ? undefined : messageOutcomeColor(status);
 }

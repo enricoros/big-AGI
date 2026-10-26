@@ -17,9 +17,9 @@ export function getMessageTimestamp(message: MessageTimestampSource) {
   if (!Number.isFinite(at) || at <= 0) return null;
 
   const outcome = messageTerminalOutcome(message);
-  const completionLabel = outcome === 'aborted' ? messageOutcomeLabel.aborted
+  const completionLabel = outcome === 'aborted' ? messageOutcomeLabel('aborted')
     : outcome === 'failed' ? 'Failed'
-      : outcome === 'truncated' ? messageOutcomeLabel.truncated
+      : outcome === 'truncated' ? messageOutcomeLabel('truncated')
         : generator?.metrics?.TsR ? 'Interrupted'
           : 'Done';
   const label = fromUser ? 'Sent' : hasEnd ? completionLabel : message.updated ? 'Updated' : 'Created';

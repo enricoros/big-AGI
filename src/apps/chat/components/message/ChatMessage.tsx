@@ -810,7 +810,7 @@ export function ChatMessage(props: {
 
 
   // style
-  const msgOutcomeColor = messageOutcomeColor[msgOutcome];
+  const msgOutcomeColor = messageOutcomeColor(msgOutcome);
   const backgroundColor = messageBackground(messageRole, userCommandApprox, messageHasBeenEdited, msgOutcomeColor === 'warning' ? 'warning' : undefined /* chat tints truncation only: errors render inline, a stop in chat is usually deliberate */);
 
   const listItemSx: SxProps = React.useMemo(() => ({

@@ -22,12 +22,12 @@ type MessageOutcomeSource = Pick<DMessage, 'generator' | 'pendingIncomplete'> & 
 // configuration
 
 /**
- * Policy per outcome, read by automation instead of re-decided per site:
+ * Policy per outcome, read by automation instead of re-decided per site (through messageOutcomePolicy):
  * - rerun:  an automatic re-run makes sense (Beam 'Start all', auto-retry, future chaining); a manual Retry is always available
  * - cost:   what a re-run buys: 'none' (nothing to run), 'repeat' (same cap, same cut, same bill), 'new' (a fresh attempt can end differently)
  * - usable: the output stands as a complete answer (Use, continue to chat); merge inputs still follow the content rule, see #1216
  */
-export const messageOutcomePolicy = {
+const _outcomePolicy = {
   completed: { rerun: false, cost: 'none', usable: true },
   truncated: { rerun: false, cost: 'repeat', usable: false },
   failed: { rerun: true, cost: 'new', usable: false },
@@ -67,7 +67,7 @@ export function messageTerminalOutcome(message: Omit<MessageOutcomeSource, 'pend
 // presentation
 
 /** Outcome -> Joy palette key. Truncation is an error typed apart: warning, not danger. A user stop is neutral on Beam cards (#1070); chat bubbles tint truncation only. Beam cards, chat backgrounds, notices and tables color from this. */
-export const messageOutcomeColor = {
+const _outcomeColor = {
   completed: undefined,
   truncated: 'warning',
   failed: 'danger',
@@ -76,10 +76,38 @@ export const messageOutcomeColor = {
 } as const satisfies Record<DMessageOutcome, 'danger' | 'warning' | 'neutral' | undefined>;
 
 /** Outcome -> user-facing label. One wording per outcome; null when there is nothing to say. */
-export const messageOutcomeLabel = {
+const _outcomeLabel = {
   completed: null,
   truncated: 'Out of tokens',
   failed: 'Error',
   aborted: 'Stopped',
   pending: null,
 } as const satisfies Record<DMessageOutcome, string | null>;
+
+
+// access - the only way to read the tables above
+
+export function messageOutcomePolicy(outcome: DMessageOutcome): (typeof _outcomePolicy)[DMessageOutcome] {
+  return _outcomePolicy[_knownOutcome(outcome)];
+}
+
+export function messageOutcomeColor(outcome: DMessageOutcome): (typeof _outcomeColor)[DMessageOutcome] {
+  return _outcomeColor[_knownOutcome(outcome)];
+}
+
+export function messageOutcomeLabel(outcome: DMessageOutcome): (typeof _outcomeLabel)[DMessageOutcome] {
+  return _outcomeLabel[_knownOutcome(outcome)];
+}
+
+let _unknownOutcomeWarned = false;
+
+/** An outcome outside the union (a miscompile or a bug) reads as 'pending' - no color, no label, no automation - never as a failure. */
+function _knownOutcome(outcome: DMessageOutcome): DMessageOutcome {
+  if (typeof outcome === 'string' && Object.hasOwn(_outcomePolicy, outcome))
+    return outcome;
+  if (!_unknownOutcomeWarned) {
+    _unknownOutcomeWarned = true;
+    console.warn('[DEV] message outcome outside the union, read as pending:', outcome);
+  }
+  return 'pending';
+}

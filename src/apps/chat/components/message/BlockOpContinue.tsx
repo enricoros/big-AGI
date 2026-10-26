@@ -42,7 +42,7 @@ export function BlockOpContinue(props: {
     <Box sx={containerSx}>
 
       <ScaledTextBlockRenderer
-        text={`🧱 ${messageOutcomeLabel.truncated}.`}
+        text={`🧱 ${messageOutcomeLabel('truncated')}.`}
         contentScaling={props.contentScaling}
         textRenderVariant='text'
         // showAsItalic

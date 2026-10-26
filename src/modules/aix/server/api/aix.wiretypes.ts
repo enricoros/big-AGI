@@ -805,8 +805,8 @@ export namespace AixWire_Particles {
   /** The projections of one wire stop reason: the class (edge analytics), the stored stop reason (DMessageGenerator.tokenStopReason, the client's persisted fact), the user-facing message appended on a cut */
   export type GCStopReasonRow = { class: GCStopClass; stored: DMessageGenerator['tokenStopReason']; message?: string };
 
-  /** One row per wire stop reason. Read a row through GCStopReasonRow: rows without `message` are a different literal type under `as const`. */
-  export const GC_STOP_REASONS = {
+  /** One row per wire stop reason, read through gcStopReasonRow() only: a wire value may be unknown to this build. */
+  const GC_STOP_REASONS = {
     'ok':                  { class: 'ok', stored: undefined },
     'ok-tool_invocations': { class: 'ok', stored: undefined },
     'out-of-tokens':       { class: 'truncated', stored: 'out-of-tokens' },
@@ -818,6 +818,15 @@ export namespace AixWire_Particles {
     // emitted by: Anthropic stop_reason=refusal, Gemini LANGUAGE (unsupported)
     'filter-refusal':      { class: 'error', stored: 'filter', message: 'Response refused by the provider\'s safety classifier.' },
   } as const satisfies Record<GCTokenStopReason, GCStopReasonRow>;
+
+  /** Row of a wire stop reason; undefined for a reason this build does not know (a newer server or peer). Own keys only: `in` passes 'toString'. */
+  export function gcStopReasonRow(reason: string): GCStopReasonRow | undefined {
+    return _isGCTokenStopReason(reason) ? GC_STOP_REASONS[reason] : undefined;
+  }
+
+  function _isGCTokenStopReason(reason: string): reason is GCTokenStopReason {
+    return Object.hasOwn(GC_STOP_REASONS, reason);
+  }
 
   /**
    * NOTE: break compatibility with this D-stored-type only when we'll
