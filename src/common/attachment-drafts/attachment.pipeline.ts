@@ -532,15 +532,16 @@ function _guessDocVDT(inputMimeType: string): DMessageDocPart['vdt'] {
     case 'code':
       return DVMimeType.VndAgiCode;
 
-    // these would have been converted - let's assume to code, but we don't return here as this code path won't happen
-    // case 'doc-pdf': // plain or OCR, or images
-    // case 'doc-msw': // code (html), or images
-    // case 'doc-msxl': // code (html), or images
-    // case 'doc-msppt': // code (html), or images
-    // case 'image': // images won't get in docs
-    // case 'audio': // same for audio
-    // case 'video': // and video
-    // case 'other': // and this even less
+    // converted before reaching here, so this path won't happen: plain text, as below
+    case 'doc-pdf': // plain or OCR, or images
+    case 'doc-msw': // code (html), or images
+    case 'doc-msxl': // code (html), or images
+    case 'doc-msppt': // code (html), or images
+    case 'image': // images won't get in docs
+    case 'audio': // same for audio
+    case 'video': // and video
+    case 'other': // and this even less
+      break;
   }
   return DVMimeType.TextPlain;
 }
@@ -600,6 +601,9 @@ export async function attachmentPerformConversion(
         let textContentMime = input.mimeType || 'text/plain';
 
         switch (converter.id) {
+          case 'text':
+            // as-is
+            break;
           case 'text-cleaner':
             textContent = _cleanPossibleHtmlText(textContent);
             break;
@@ -633,6 +637,9 @@ export async function attachmentPerformConversion(
 
         // html -> cleaner/html or markdown
         switch (converter.id) {
+          case 'rich-text':
+            // as-is
+            break;
           case 'rich-text-cleaner':
             richText = _cleanPossibleHtmlText(richText);
             richTextMimeType = 'text/html';

@@ -76,6 +76,10 @@ function analyzeMessageFragments(messageFragments: ReadonlyArray<DMessageFragmen
         case 'tool_response':
           result.toolCount++;
           break;
+        case 'hosted_resource':
+        case '_pt_sentinel':
+          // not counted
+          break;
       }
     } else if (isAttachmentFragment(fragment)) {
       if (isImagePart(fragment.part)) {

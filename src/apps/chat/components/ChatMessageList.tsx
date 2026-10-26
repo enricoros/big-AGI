@@ -122,6 +122,9 @@ export function ChatMessageList(props: {
           }
         });
         break;
+      case undefined:
+        // an example object without an action: nothing to run (string examples are handled above)
+        break;
     }
   }, [conversationHandler, conversationId, onConversationExecuteHistory, props.chatLLMSupportsImages]);
 

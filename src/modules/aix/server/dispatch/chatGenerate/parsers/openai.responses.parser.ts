@@ -1403,6 +1403,9 @@ function _imageGenerationMimeType(item: { output_format?: string, result?: strin
       return 'image/jpeg';
     case 'png':
       return 'image/png';
+    case undefined:
+      // no output_format: sniffed below
+      break;
   }
   const b64Head = item?.result?.slice(0, 5) ?? '';
   if (b64Head.startsWith('UklGR')) return 'image/webp'; // 'RIFF....WEBP'

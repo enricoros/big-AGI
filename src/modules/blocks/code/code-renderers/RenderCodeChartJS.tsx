@@ -212,6 +212,10 @@ export const RenderCodeChartJS = React.forwardRef(function RenderCodeChartJS(pro
           )}
         </Box>
       );
+
+    default:
+      // ready: the chart below
+      break;
   }
 
   // Render the chart

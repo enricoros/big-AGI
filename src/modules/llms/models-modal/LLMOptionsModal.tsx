@@ -130,6 +130,9 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
         const { llmTemperature: _, ...otherUserParameters } = { ...llm.userParameters };
         updates.userParameters = otherUserParameters;
         break;
+      default:
+        // other interfaces: no parameter side effects
+        break;
     }
 
     updateLLM(llm.id, updates);

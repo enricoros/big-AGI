@@ -77,6 +77,10 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
       case 'svgBlock':
         blocks.push({ bkt: 'code-bk', sourceStart: match.index, sourceEnd: match.index + match[0].length, title: 'svg', code: match[0], lines: countLines(match[0]), isPartial: false });
         break;
+
+      case null:
+        // no pattern matched: nothing to add
+        break;
     }
 
     // advance the pointer

@@ -174,6 +174,9 @@ export const ModelItem = React.memo(function ModelItem(props: {
         case LLM_IF_OAI_Fn:
         case LLM_IF_GEM_CodeExecution:
           return null;
+        default:
+          // other interfaces: no chip
+          return undefined;
       }
     }).reverse();
   }, [llm.interfaces]);

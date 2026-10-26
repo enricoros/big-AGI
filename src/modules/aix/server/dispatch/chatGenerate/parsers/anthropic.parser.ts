@@ -424,6 +424,9 @@ export function createAnthropicMessageParser(thinkingOrigins?: () => AnthropicTh
             // Re-send operation state with fully accumulated input (during streaming, content_block_start had empty input)
             _handleCBE_ServerToolUse_S(pt, stoppedBlock.id, stoppedBlock.name, stoppedBlock.input);
             break;
+          default:
+            // other blocks: no end handling
+            break;
         }
 
         // Signal that the tool is ready? (if it is...)

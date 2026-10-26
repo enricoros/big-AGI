@@ -48,7 +48,8 @@ export function explainServiceErrors(text: string, isAssistant: boolean) {
         choose a model with larger context, or submit a shorter new message.
         {!usedText && ` -- ${text}`}
       </>;
-  }
 
-  return null;
+    default:
+      return null;
+  }
 }

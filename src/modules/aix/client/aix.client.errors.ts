@@ -123,6 +123,10 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
        */
       case `Unexpected token '<', "<!DOCTYPE "... is not valid JSON`:
         return { errorType: 'response-captive', errorMessage: '**Network issue**: The network returned an HTML page instead of expected data. This can be a Wi‑Fi sign‑in page, a proxy or browser extension, or a temporary gateway error. Please **refresh and try again**, or check your connection and disable blockers. Additional details may be available in the browser console.' };
+
+      case undefined:
+        // no cause message: the generic presentation below
+        break;
     }
   }
 
