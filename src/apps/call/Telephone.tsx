@@ -350,7 +350,7 @@ export function Telephone(props: {
       setCallMessages(messages => [...messages, fullMessage]); // [state] append assistant:call_response
 
       // fire/forget - use 'fast' priority for real-time conversation
-      if (status.outcome === 'completed' && finalText?.length >= 1)
+      if ((status.outcome === 'completed' || status.outcome === 'truncated') && finalText?.length >= 1)
         void speakText(finalText,
           undefined,
           { label: 'Call', priority: 'fast' },
