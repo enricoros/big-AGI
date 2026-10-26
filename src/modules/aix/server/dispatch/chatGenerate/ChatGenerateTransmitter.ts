@@ -3,7 +3,7 @@ import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
 import { objectDeepCloneWithStringLimit, objectEstimateJsonSize, objectStringifyWithIndentDepth } from '~/common/util/objectUtils';
 
-import type { AixWire_Particles } from '../../api/aix.wiretypes';
+import { AixWire_Particles } from '../../api/aix.wiretypes';
 
 import type { IParticleTransmitter, ParticleCGDialectEndReason, ParticleServerLogLevel } from './parsers/IParticleTransmitter';
 
@@ -408,6 +408,22 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
     // queue the issue
     this.endMessagePart();
+
+    // after a clean or truncated stop reason the response content is final: a later issue is a notice, never content -
+    // an error fragment would make the stored outcome 'failed' (a clean stop is stored as no stop reason, so the trailing
+    // error decides) and be replayed to the model on the next turn. After an error stop reason, the issue is its explanation.
+    if (this.tokenStopReason !== undefined && AixWire_Particles.GC_STOP_REASONS[this.tokenStopReason].class !== 'error') {
+      this.transmissionQueue.push({
+        p: 'vnt',
+        nt: 'late-issue',
+        issueId,
+        text: 'Issue after the response ended',
+        detail: issueText.trim(),
+        level: 'warn',
+      });
+      return;
+    }
+
     this.transmissionQueue.push({
       cg: 'issue',
       issueId,

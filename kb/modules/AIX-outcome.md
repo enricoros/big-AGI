@@ -57,6 +57,10 @@ The stored fact is `DMessageGenerator.tokenStopReason`, four values, unchanged. 
 
 Completeness unknown, assumed complete: outcome `completed` plus a void notice (`pType: 'notice'`, `pNoticeKind: 'no-stop-reason'`, `pNoticeLevel: 'warn'`). Not an error fragment: error fragments are content and are replayed to the model as `[ERROR]` text. Gateways omitting `finish_reason` land here.
 
+## Issue after the stop reason
+
+Parsers set the stop reason after the content. After a clean or truncated stop reason, the transmitter sends a later issue (stream cut before the end marker, a trailing chunk that fails to parse, a late error event) as a warn notice (`pNoticeKind: 'late-issue'`), so the outcome keeps the stop reason. After an error stop reason, the issue is its explanation and stays an error fragment.
+
 ## Dev
 
 - Remove dialog: Clear All, or Filter with two toggles (Errored: keep or remove, Out of tokens: keep or remove) and then the length rule (keep or remove N longest or shortest by dimension) over what remains. No "successful" wording (#1217). Items carry one `outcome`, the ray or fusion status.

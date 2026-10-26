@@ -576,16 +576,6 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
         pt.endMessagePart();
       } // .choices.tool_calls[]
 
-      // Token Stop Reason - expected to be set
-      // [Z.ai, 2026-02-26] 'network_error' is an upstream error, not a normal stop reason
-      if (finish_reason === 'network_error')
-        pt.setDialectTerminatingIssue('Upstream network error.', IssueSymbols.Generic, 'srv-log');
-      else {
-        const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
-        if (tokenStopReason !== null)
-          pt.setTokenStopReason(tokenStopReason);
-      }
-
       // [OpenAI, 2025-03-11] message: Annotations[].url_citation
       if (message.annotations !== undefined) {
 
@@ -627,6 +617,16 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
             }
           }
         }
+      }
+
+      // Token Stop Reason - expected to be set; after the content above, which can still fail
+      // [Z.ai, 2026-02-26] 'network_error' is an upstream error, not a normal stop reason
+      if (finish_reason === 'network_error')
+        pt.setDialectTerminatingIssue('Upstream network error.', IssueSymbols.Generic, 'srv-log');
+      else {
+        const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
+        if (tokenStopReason !== null)
+          pt.setTokenStopReason(tokenStopReason);
       }
 
     } // .choices[]

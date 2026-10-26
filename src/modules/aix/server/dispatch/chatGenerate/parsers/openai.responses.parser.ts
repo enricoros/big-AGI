@@ -1010,9 +1010,6 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
         break;
     }
 
-    // Set the determined stop reason
-    pt.setTokenStopReason(tokenStopReason);
-
     // -> Output[]
     for (const oItem of response.output) {
 
@@ -1188,6 +1185,9 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
       }
 
     } // .output[]
+
+    // Set the determined stop reason - after the output, which can still fail to parse
+    pt.setTokenStopReason(tokenStopReason);
 
     // -> Status
     // .status: check for the status

@@ -191,8 +191,9 @@ export class ContentReassembler {
 
     // Fragment finalization heuristics:
 
-    // - remove placeholders for clean exits, leave them for issues or client-aborts
-    if (this.S.terminationReason === 'done-dialect')
+    // - remove placeholders for clean exits, leave them for issues or client-aborts; a vendor stop reason is a clean exit
+    //   even when the end reason is not (a late issue, or a stream closed after the stop chunk)
+    if (vendorEnded || this.S.terminationReason === 'done-dialect')
       this._removeAllVoidPlaceholders(); // [PH-LIFECYCLE]
 
     // - mark active operations as errored on non-clean terminations
