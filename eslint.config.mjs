@@ -9,6 +9,8 @@ import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 // SWC miscompile guard: shapes the Next 15.5 minifier can mis-transform (one entry below)
 import swcMiscompile from "./tools/eslint/swc-miscompile.mjs";
+// outcome guard: no casts to outcome types (one entry below)
+import outcomeTypes from "./tools/eslint/outcome-types.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -168,6 +170,7 @@ export default defineConfig([{
     },
 },
 swcMiscompile.configs.recommended,
+outcomeTypes.configs.recommended,
 // // module-cycle detection (`npm run lint:cycles`) - full import-graph traversal, too slow for the
 // // default lint; machine-checks what code comments enforce today ("value imports referenced only
 // // inside function bodies"). Deliberate lazy-value cycles get an eslint-disable with rationale.

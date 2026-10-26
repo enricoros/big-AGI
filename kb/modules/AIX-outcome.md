@@ -38,7 +38,7 @@ Production builds minify with SWC, which can miscompile some switch shapes (`too
 
 ## Access
 
-The tables are private to `chat.message.outcome.ts`; `messageOutcomePolicy()`, `messageOutcomeColor()` and `messageOutcomeLabel()` are their only readers. Each checks its argument at runtime: outcomes are derived in memory and never stored, so a value outside the union comes from a miscompile or a bug. It reads as `pending` (no color, no label, no automation) with one console warning, never as `failed`.
+The tables are private to `chat.message.outcome.ts`; `messageOutcomePolicy()`, `messageOutcomeColor()` and `messageOutcomeLabel()` are their only readers. Each checks its argument at runtime: outcomes are derived in memory and never stored, so a value outside the union comes from a miscompile or a bug. It reads as `pending` (no color, no label, no automation) with one console warning, never as `failed`. A cast to an outcome type is a lint error (`tools/eslint/outcome-types.mjs`).
 
 ## Homes
 
