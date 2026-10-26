@@ -1,5 +1,5 @@
 import { DMessageFragment, isContentFragment, isErrorPart } from './chat.fragments';
-import type { DMessage } from './chat.message';
+import type { DMessage, DMessageGenerator } from './chat.message';
 
 
 /**
@@ -38,24 +38,22 @@ export const messageOutcomePolicy = {
 
 // derivation
 
+// Avoid switch fall-through: SWC can drop the fragment scan (swc-project/swc#11970).
+const stopReasonOutcome = {
+  'out-of-tokens': 'truncated',
+  issue: 'failed',
+  filter: 'failed',
+  'client-abort': 'aborted',
+} as const satisfies Record<NonNullable<DMessageGenerator['tokenStopReason']>, DMessageTerminalOutcome>;
+
 export function messageOutcome(message: MessageOutcomeSource): DMessageOutcome {
   return message.pendingIncomplete ? 'pending' : messageTerminalOutcome(message);
 }
 
 export function messageTerminalOutcome(message: Omit<MessageOutcomeSource, 'pendingIncomplete'>): DMessageTerminalOutcome {
-  switch (message.generator?.tokenStopReason) {
-    case 'out-of-tokens':
-      return 'truncated';
-    case 'issue':
-    case 'filter':
-      return 'failed';
-    case 'client-abort':
-      return 'aborted';
-    case undefined:
-      break;
-    default:
-      return 'failed'; // forward-compat: a stop reason this build does not know is not a success
-  }
+  const stopReason = message.generator?.tokenStopReason;
+  if (stopReason !== undefined)
+    return Object.hasOwn(stopReasonOutcome, stopReason) ? stopReasonOutcome[stopReason] : 'failed'; // forward-compat: a stop reason this build does not know is not a success
   // no stop reason (pre-stop-reason messages, clean ends without a finish reason): the last content fragment decides; trailing void notices do not weigh in
   for (let i = message.fragments.length - 1; i >= 0; i--) {
     const fragment = message.fragments[i];
