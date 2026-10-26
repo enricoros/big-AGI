@@ -7,7 +7,7 @@ import type { DMessage, DMessageGenerator } from './chat.message';
  * The LL outcome (AixChatGenerateTerminal_LL) is this same type: the reassembler derives it from the final message.
  * - 'completed': success - the only one
  * - 'truncated': out of tokens - an error typed apart from 'failed', so it renders as warning rather than danger
- * - 'failed':    error - stop reason 'issue' or 'filter', or a trailing error fragment on a message without a stop reason
+ * - 'failed':    error - stop reason 'issue' or 'filter', or a trailing error fragment on a message without a known stop reason
  * - 'aborted':   stopped by the user - neither success nor error
  */
 export type DMessageTerminalOutcome = 'completed' | 'truncated' | 'failed' | 'aborted';
@@ -38,7 +38,7 @@ const _outcomePolicy = {
 
 // derivation
 
-/** Stored stop reason -> outcome. A table, not a switch: Next 15.5's SWC minifier dropped the code after a `case undefined: break` switch, and every clean reply read `undefined` in production builds. */
+/** Stored stop reason -> outcome. A table, not a switch: Next 15.5's SWC minifier drops the code after a `case undefined: break` switch (swc#11970). */
 const _outcomeByStopReason = {
   'out-of-tokens': 'truncated',
   'issue': 'failed',
@@ -52,9 +52,10 @@ export function messageOutcome(message: MessageOutcomeSource): DMessageOutcome {
 
 export function messageTerminalOutcome(message: Omit<MessageOutcomeSource, 'pendingIncomplete'>): DMessageTerminalOutcome {
   const stopReason = message.generator?.tokenStopReason;
-  if (stopReason !== undefined)
-    return Object.hasOwn(_outcomeByStopReason, stopReason) ? _outcomeByStopReason[stopReason] : 'failed'; // forward-compat: a stop reason this build does not know is not a success
-  // no stop reason (pre-stop-reason messages, clean ends without a finish reason): the last content fragment decides; trailing void notices do not weigh in
+  if (stopReason !== undefined && Object.hasOwn(_outcomeByStopReason, stopReason))
+    return _outcomeByStopReason[stopReason];
+  // no stop reason (pre-stop-reason messages, clean ends without a finish reason), or one this build does not know (a newer build or peer):
+  // the last content fragment decides - evidence, not absence; trailing void notices do not weigh in
   for (let i = message.fragments.length - 1; i >= 0; i--) {
     const fragment = message.fragments[i];
     if (isContentFragment(fragment))

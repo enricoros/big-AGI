@@ -17,7 +17,7 @@ One classification of how a generation ended, derived once from the stored messa
 
 ## Derivation
 
-`messageTerminalOutcome(message)`: stored stop reason first (`out-of-tokens`, `issue` and `filter`, `client-abort`), then, with no stop reason, the last content fragment decides (`error` part means failed). Void fragments do not weigh in. A stop reason this build does not know means failed. `messageOutcome()` returns `pending` while `pendingIncomplete`.
+`messageTerminalOutcome(message)`: stored stop reason first (`out-of-tokens`, `issue` and `filter`, `client-abort`), then, with no stop reason, the last content fragment decides (`error` part means failed). Void fragments do not weigh in. A stop reason this build does not know (a newer build or peer) is no evidence: the fragments decide, as with none. `messageOutcome()` returns `pending` while `pendingIncomplete`.
 
 The stored fact is `DMessageGenerator.tokenStopReason`, four values, unchanged. The outcome is never stored.
 
@@ -61,7 +61,7 @@ The tables are private to `chat.message.outcome.ts`; `messageOutcomePolicy()`, `
 
 ## Clean end without a finish reason
 
-Completeness unknown, assumed complete: outcome `completed` plus a void notice (`pType: 'notice'`, `pNoticeKind: 'no-stop-reason'`, `pNoticeLevel: 'warn'`). Not an error fragment: error fragments are content and are replayed to the model as `[ERROR]` text. Gateways omitting `finish_reason` land here.
+Completeness unknown, assumed complete: outcome `completed` plus a void notice (`pType: 'notice'`, `pNoticeKind: 'no-stop-reason'`, `pNoticeLevel: 'warn'`). Not an error fragment: error fragments are content and are replayed to the model as `[ERROR]` text. Gateways omitting `finish_reason` land here. An end reason or a particle this build does not know (a newer server) gets the same treatment: a warn notice, not an error fragment.
 
 ## Issue after the stop reason
 
