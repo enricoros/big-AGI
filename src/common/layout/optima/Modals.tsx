@@ -11,6 +11,7 @@ import { useModelsZeroState } from '~/common/stores/llms/hooks/useModelsZeroStat
 import { AixDebuggerDialog } from '~/modules/aix/client/debugger/AixDebuggerDialog';
 import { LogViewerDialog } from '~/common/logger/viewer/LoggerViewerDialog';
 import { ShortcutsModal } from '../../../apps/settings-modal/ShortcutsModal';
+import { NewsModals } from '~/modules/news/components/WhatsNewIndicators';
 
 // Lazy-loaded Modals
 const ModelsModalsLazy = React.lazy(() => import('~/modules/llms/models-modal/ModelsModals').then(module => ({ default: module.ModelsModals })));
@@ -59,6 +60,9 @@ export function Modals(props: { suspendAutoModelsSetup?: boolean }) {
 
     {/* Logger */}
     {showLogger && <LogViewerDialog onClose={closeLogger} />}
+
+    {/* What's New, Docs reader */}
+    <NewsModals />
 
     {/* AIX Debugger Dialog */}
     {showAIXDebugger && <AixDebuggerDialog onClose={closeAIXDebugger} />}

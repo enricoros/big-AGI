@@ -11,6 +11,7 @@ import type { AixReattachMode } from '~/modules/aix/client/aix.client';
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import { ERCDiffContextProvider } from '~/modules/blocks/enhanced-code/ERCDiffContext';
 import { speakText, speakTextSurfaceFailure } from '~/modules/speex/speex.client';
+import { WhatsNewEmptyChatLine } from '~/modules/news/components/WhatsNewIndicators';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
 import type { DLLMContextTokens } from '~/common/stores/llms/llms.types';
@@ -388,6 +389,7 @@ export function ChatMessageList(props: {
     return (
       <Box sx={{ ...props.sx }}>
         <PersonaSelector conversationId={conversationId} isMobile={props.isMobile} runExample={handleRunExample} />
+        <WhatsNewEmptyChatLine />
       </Box>
     );
 

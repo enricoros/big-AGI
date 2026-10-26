@@ -2,6 +2,8 @@
 
 Information you need to get started, configure, and use big-AGI productively.
 
+> **The current user documentation is at [big-agi.com/docs](https://big-agi.com/docs)**, also readable inside the app (Documentation). Pages in this folder can be out of date; they remain for self-hosting and deployment material not yet covered there.
+
 👉 **[Changelog](https://big-agi.com/changes)** - See what's new
 
 ## Getting Started

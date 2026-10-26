@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box, Drawer } from '@mui/joy';
 
 import type { NavItemApp } from '~/common/app.nav';
+import { WhatsNewPanelRow } from '~/modules/news/components/WhatsNewIndicators';
 
 import { OPTIMA_DRAWER_MOBILE_RADIUS, OPTIMA_PANEL_GROUPS_SPACING } from '../optima.config';
 import { OptimaPanelGroupedList } from './OptimaPanelGroupedList';
@@ -67,6 +68,8 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
 
         {/* [Mobile] Panel within the Drawer */}
         <PanelContentPortal />
+
+        <WhatsNewPanelRow />
 
       </Box>
 

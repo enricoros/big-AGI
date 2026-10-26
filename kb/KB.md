@@ -16,6 +16,9 @@ Architecture and system documentation is available in the `/kb/` knowledge base,
 #### Trade - Export and Import
 - **[TRADE-claude-code-export.md](modules/TRADE-claude-code-export.md)** - export for Claude Code: session and chat folder formats, measured Claude Code resume behavior, gaps
 
+#### News - What's New and the Docs Reader
+- **[NEWS.md](modules/NEWS.md)** - What's New (changelog, announcements), the per-user seen index, the build window, indicators, the docs reader and its search, the remote-feeds switch, the codeline seam, the dev rewind; open actions and the inventory of what it replaces
+
 #### AIX - AI Communication Framework
 - **[AIX.md](modules/AIX.md)** - AIX streaming architecture documentation
 - **[AIX-ingestion.md](modules/AIX-ingestion.md)** - lossless parse/reassembly rule, checklist of open conflicts

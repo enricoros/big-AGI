@@ -8,6 +8,8 @@ import { adjustContentScaling, themeScalingMap, themeZIndexDesktopPanel, } from 
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIContentScaling } from '~/common/stores/store-ui';
 
+import { WhatsNewPanelRow } from '~/modules/news/components/WhatsNewIndicators';
+
 import { PanelContentPortal } from './PanelContentPortal';
 import { optimaClosePanel, useOptimaPanelOpen } from '../useOptima';
 
@@ -111,6 +113,8 @@ export function DesktopPanel(props: { component: React.ElementType, currentApp?:
 
         {/* [Desktop] Portal in the Panel */}
         {!panelAsPopup && <PanelContentPortal />}
+
+        <WhatsNewPanelRow />
 
       </DesktopPanelTranslatingSheet>
 

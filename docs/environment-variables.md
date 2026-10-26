@@ -69,6 +69,7 @@ HTTP_BASIC_AUTH_PASSWORD=
 
 
 # Frontend variables 
+NEXT_PUBLIC_BIG_AGI_REMOTE_FEEDS=
 NEXT_PUBLIC_MOTD=
 NEXT_PUBLIC_GA4_MEASUREMENT_ID=
 NEXT_PUBLIC_GOOGLE_DRIVE_CLIENT_ID=
@@ -154,6 +155,7 @@ The value of these variables are passed to the frontend (Web UI) - make sure the
 
 | Variable                          | Description                                                                                                                                                                                                                                     |
 |:----------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `NEXT_PUBLIC_BIG_AGI_REMOTE_FEEDS` | `off` at build time stops every request the app makes to big-agi.com on its own: What's New is hidden and Documentation opens in a browser tab. Default: on (prebuilt Docker images included) |
 | `NEXT_PUBLIC_DEBUG_BREAKS`        | (optional, development) When set to 'true', enables automatic debugger breaks on DEV/error/critical logs in development builds                                                                                                                  |
 | `NEXT_PUBLIC_MOTD`                | Message of the Day - displays a dismissible banner at the top of the app (see [customizations](customizations.md) for the template variables). Example: 🔔 Welcome to our deployment! Version {{app_build_pkgver}} built on {{app_build_time}}. |
 | `NEXT_PUBLIC_GA4_MEASUREMENT_ID`  | (optional) The measurement ID for Google Analytics 4. (see [deploy-analytics](deploy-analytics.md))                                                                                                                                             |

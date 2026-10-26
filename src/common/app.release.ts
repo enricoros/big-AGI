@@ -68,6 +68,5 @@ export const BaseProduct = {
   NewsSite: 'https://big-agi.com/changes',
   OpenSupportDiscord: 'https://discord.gg/MkH4qj2Jp9',
   OpenSourceRepo: 'https://github.com/enricoros/big-agi',
-  ReleaseNotes: '',
   SupportForm: (_userId?: string) => 'https://github.com/enricoros/big-AGI/issues/new?template=ai-triage.yml',
 } as const;

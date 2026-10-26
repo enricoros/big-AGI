@@ -16,7 +16,7 @@ import { Box } from '@mui/joy';
  *   Browsers honor it only when the reveal follows a user interaction (e.g. expanding an
  *   accordion) - activation is delegated via allow="autoplay". Otherwise it loads paused.
  * - 'ambient': like 'auto' but MUTED - the autoplay browsers always allow. For
- *   demo/background loops (dev branch: Spotlight, Variform welcome).
+ *   demo/background loops (What's New announcements, Variform welcome).
  * Both immediate modes are visibility-gated (IntersectionObserver): nothing loads while
  * collapsed/offscreen.
  *
