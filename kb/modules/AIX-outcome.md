@@ -21,6 +21,8 @@ One classification of how a generation ended, derived once from the stored messa
 
 The stored fact is `DMessageGenerator.tokenStopReason`, four values, unchanged. The outcome is never stored.
 
+Production builds minify with SWC, which can miscompile some switch shapes (`tools/eslint/swc-miscompile.mjs` bans the known ones); unminified checks (`next dev`, tsc, tests) cannot see that, so a behavior the source cannot produce is checked against the deployed chunk.
+
 ## Policy
 
 `messageOutcomePolicy`, one row per outcome, read by automation instead of re-decided per site:

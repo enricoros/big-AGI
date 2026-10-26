@@ -111,6 +111,7 @@ Local-first: Zustand in memory with `persist` to localStorage, except chats, whi
 
 ### Testing & Quality
 - Browser floor: `eslint.config.mjs` hard-bans ES2023 `toSorted/toReversed/toSpliced/with` and `new Intl.Segmenter` via `no-restricted-syntax` (they crash Chrome <110 / Win7-8 holdouts); a separate `compat/compat` pass checks Web APIs against `browserslist`. Use `[...x].sort()` etc.; don't lower `browserslist` to "fix" the banned syntax - that rule doesn't read it, and SWC won't polyfill prototype methods
+- Production builds minify with SWC, which miscompiles some code shapes; `tools/eslint/swc-miscompile.mjs` bans the known ones
 
 ### Debugging Storage Issues
 - Chats: DevTools -> Application -> IndexedDB -> `keyval-store` -> `keyval` -> key `app-chats`
