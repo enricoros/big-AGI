@@ -113,7 +113,7 @@ const _slotProps = {
       } as const,
 
       // minWidth: '100%',
-      zIndex: 1300, // on top of ScratchChat
+      zIndex: 'var(--joy-zIndex-modal)', // floating windows leave the modal ceiling available to popups
     } as const,
   } as const,
   button: {
@@ -183,8 +183,9 @@ export function useLLMSelect(
 
   const listboxSlotPropsStable = React.useMemo(() => ({
     ..._slotProps,
-    listbox: { ..._slotProps.listbox, ref: listboxRef },
-  }), []);
+    // MUI can aria-hide this persistent portal when a dialog covers it; reset on reopen.
+    listbox: { ..._slotProps.listbox, ref: listboxRef, 'aria-hidden': !controlledOpen },
+  }), [controlledOpen]);
 
   React.useLayoutEffect(() => {
     // restore scroll after collapse/expand - snapshot before MUI scrolls, restore via double RAF

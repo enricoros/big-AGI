@@ -4,6 +4,7 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme } from '@mui/joy';
 
 import { animationEnterBelow, animationOpacityFadeIn } from '~/common/util/animUtils';
+import { joyWindowManagerDefaults } from '~/common/components/dnd-window/joyWindowManager';
 
 
 // Definitions
@@ -143,6 +144,7 @@ export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({
     // },
 
     JoyModal: {
+      defaultProps: joyWindowManagerDefaults,
       styleOverrides: {
         backdrop: uiComplexityMinimal ? {
           backdropFilter: 'none', // always un-blur on minimal
@@ -151,6 +153,9 @@ export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({
           animation: `${animationOpacityFadeIn} 0.16s ease-out`,
         },
       },
+    },
+    JoyDrawer: {
+      defaultProps: joyWindowManagerDefaults,
     },
     JoyModalDialog: {
       styleOverrides: {
