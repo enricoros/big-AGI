@@ -110,6 +110,7 @@ export function OpenRouterWebToolsConfig(props: {
         title={smaller ? 'Search' : 'Web Search'}
         tooltip={smaller ? undefined : 'Web search run by OpenRouter. The model decides when to search; results show as citations.'}
         disabled={disabled}
+        color={forcedOn ? 'accent' : undefined} // the same cue the other vendors' search selects carry under a forced-on override
         value={search ?? _UNSPECIFIED}
         onChange={value => {
           if (value === _UNSPECIFIED) onRemoveParameter('llmVndOrtWebSearch');
@@ -176,6 +177,7 @@ export function OpenRouterWebToolsConfig(props: {
         title={smaller ? 'Fetch' : 'Web Fetch'}
         tooltip={smaller ? undefined : 'Page fetching run by OpenRouter: the model reads the URLs it needs.'}
         disabled={disabled}
+        color={forcedOn ? 'accent' : undefined}
         value={fetch ?? _UNSPECIFIED}
         onChange={value => {
           if (value === _UNSPECIFIED) onRemoveParameter('llmVndOrtWebFetch');

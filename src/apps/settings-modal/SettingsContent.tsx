@@ -74,7 +74,7 @@ const _styles = {
     justifyContent: 'flex-start',
     borderRadius: '18px',
     pointerEvents: 'none',
-    '[data-joy-color-scheme="light"] &': { bgcolor: '#d5ec31' },
+    '[data-joy-color-scheme="light"] &': { bgcolor: 'accent.solidBg' },
     boxShadow: 'inset 0 2px 4px -1px rgba(0,0,0,0.15)',
     textWrap: 'nowrap',
   } as const,

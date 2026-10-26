@@ -2,8 +2,6 @@ import * as React from 'react';
 
 import { Chip, ChipProps } from '@mui/joy';
 
-import { brandLimeExtraBadge } from '~/common/app.theme';
-
 
 /**
  * Simple badge/label component for inline status indicators like "New", "Beta", etc.
@@ -28,7 +26,7 @@ export function GoodBadge(props: {
         py: 0.25,
         // default "new" color - lime/yellow-green
         ...(props.color === undefined && {
-          bgcolor: '#d5ec31',
+          bgcolor: 'accent.solidBg',
           color: 'primary.softColor',
         }),
         ...props.sx,
