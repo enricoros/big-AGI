@@ -27,7 +27,10 @@ export function MobilePanel(props: { component: React.ElementType, currentApp?: 
       open={panelShownAsPanel}
       onClose={optimaClosePanel}
       sx={{
-        '--Drawer-horizontalSize': 'round(clamp(30%, var(--AGI-Mobile-Panel-width), 100%), 1px)',
+        '--Drawer-horizontalSize': 'clamp(30%, var(--AGI-Mobile-Panel-width), 100%)', // unrounded where CSS round() is missing
+        '@supports (width: round(1px, 1px))': {
+          '--Drawer-horizontalSize': 'round(clamp(30%, var(--AGI-Mobile-Panel-width), 100%), 1px)',
+        },
         '--Drawer-transitionDuration': '0.2s',
         // '& .MuiDrawer-paper': {
         //   width: 256,
