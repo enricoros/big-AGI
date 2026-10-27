@@ -7,8 +7,10 @@ import type { SiteDocSlug } from '~/common/gen/com.site.docs.slug';
 
 export const NewsConfig = {
 
-  // feed: one fixed public address for every deployment (open, hosted, self-hosted)
-  feedBaseUrl: 'https://big-agi.com/api/app/v1', // canonical apex host (www redirects here)
+  // the website's app API (the news feed, the docs index): one fixed public address for every deployment (open, hosted, self-hosted)
+  apiBaseUrl: 'https://big-agi.com/api/app/v1', // canonical apex host (www redirects here)
+
+  // feed
   feedStaleTimeMs: 15 * 60 * 1000,   // mirrors the feed's CDN s-maxage
   feedPageLimit: 10 as 10 | 20 | 50, // items per page, whole days; older pages load on request ('Show earlier days')
   bootFetchDelayMs: 5000,            // indicators fetch when the app is idle after boot, never on the critical path
@@ -28,8 +30,8 @@ export const NewsConfig = {
   emptyChatLine: 'headlines' as 'headlines' | 'count', // 'New: Haiku 5.5, Claude Code, +3' or '5 changes since Oct 5'
   indicatorMaxCount: 99,             // shown as '99+' beyond
 
-  // docs reader: /docs/index.json and the /docs/<slug>.md twins under BaseProduct.DocsBaseSite, CORS-open
-  docsStaleTimeMs: 60 * 60 * 1000,   // mirrors the .md twins' CDN s-maxage
-  docsFallbackSlug: 'start-here' satisfies SiteDocSlug as SiteDocSlug, // offered when the index can't load
+  // docs reader: the index at <apiBaseUrl>/docs, the pages from the /docs/<slug>.md twins under BaseProduct.DocsBaseSite, CORS-open
+  docsStaleTimeMs: 60 * 60 * 1000,   // mirrors the index's and the .md twins' CDN s-maxage
+  docsStartSlug: 'start-here' satisfies SiteDocSlug as SiteDocSlug, // the Start Here page: its home block is tinted
 
 } as const;

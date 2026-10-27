@@ -10,12 +10,16 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import LaunchIcon from '@mui/icons-material/Launch';
 import SearchIcon from '@mui/icons-material/Search';
 
+import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 import { RenderMarkdownMemo } from '~/modules/blocks/markdown/RenderMarkdown';
+import { findOpenAIAutoProviderById } from '~/modules/llms/vendors/openai/OpenAIHostAutocomplete';
+import { hasVendorIcon, llmsGetVendorIcon } from '~/modules/llms/components/LLMVendorIcon';
 import { useScaledTypographySx } from '~/modules/blocks/blocks.styles';
 
 import type { SiteDocSlug } from '~/common/gen/com.site.docs.slug';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { BaseProduct } from '~/common/app.release';
+import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { PhHouse } from '~/common/components/icons/phosphor/PhHouse';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
@@ -300,6 +304,18 @@ const _styles = {
     flexDirection: 'column',
     gap: 1.5,
   },
+  pageBrand: {
+    // the docs site's vendor tile: the icon on a tint of the brand color
+    width: 56,
+    height: 56,
+    borderRadius: '14px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'neutral.softBg',
+    '--Icon-color': 'var(--joy-palette-text-secondary)',
+    '& svg': { width: 32, height: 32 },
+  },
   pageTitleChips: {
     display: 'inline-flex',
     gap: 1,
@@ -328,7 +344,7 @@ const _styles = {
 } as const;
 
 
-/// Docs index: the static big-agi.com /docs/index.json - every readable docs page, in nav order.
+/// Docs index: big-agi.com /api/app/v1/docs - every readable docs page, in nav order.
 /// Built by the website's docs generator from content dates only, so it changes only when the docs do.
 
 const docsIndexEntrySchema = z.object({
@@ -345,6 +361,9 @@ const docsIndexEntrySchema = z.object({
   indent: z.boolean().optional(),     // one level in, under the previous page
   setMember: z.boolean().optional(),  // in the provider set, folded under one row
   new: z.boolean().optional(),        // the docs site's "new" tag
+  // brand fields, optional: a malformed value is dropped, never fails the index
+  icon: z.string().optional().catch(undefined),                              // app icon key: a vendor id, an OpenAI-compatible preset id, or 'beam'
+  accent: z.string().regex(/^#[0-9a-f]{6}$/i).optional().catch(undefined),   // the vendor's brand color
 });
 
 const docsIndexSchema = z.object({
@@ -371,7 +390,7 @@ interface DocsSection {
 }
 
 async function _fetchDocsIndex(signal?: AbortSignal): Promise<DocsIndex> {
-  const response = await frontendSideFetch(`${BaseProduct.DocsBaseSite}/index.json`, { signal });
+  const response = await frontendSideFetch(`${NewsConfig.apiBaseUrl}/docs`, { signal });
   if (!response.ok)
     throw new Error(`Docs index: HTTP ${response.status}`);
   const index = docsIndexSchema.safeParse(await response.json());
@@ -449,8 +468,13 @@ function _parseDocsPage(slug: SiteDocSlug, text: string): DocsPage {
   return { slug, title, summary, markdown };
 }
 
+// the site answered but has no such page: not retried, and told apart from an unreachable site
+class DocsPageMissingError extends Error {}
+
 async function _fetchDocsPage(slug: SiteDocSlug, signal?: AbortSignal): Promise<DocsPage> {
   const response = await frontendSideFetch(`${BaseProduct.DocsBaseSite}/${slug}.md`, { signal });
+  if (response.status === 404)
+    throw new DocsPageMissingError(`Docs: no page '${slug}'`);
   if (!response.ok)
     throw new Error(`Docs: HTTP ${response.status}`);
   return _parseDocsPage(slug, await response.text());
@@ -547,7 +571,7 @@ function DocsHomeView(props: { sections: DocsSection[], onOpenSection: (title: s
       {props.sections.map(section => {
         const { picks, more } = _homePicks(section);
         return (
-          <Box key={section.title} sx={section.lead?.slug === NewsConfig.docsFallbackSlug ? _styles.homeBlockStart : _styles.homeBlock}>
+          <Box key={section.title} sx={section.lead?.slug === NewsConfig.docsStartSlug ? _styles.homeBlockStart : _styles.homeBlock}>
             <Link component='button' level='title-md' fontWeight='lg' textColor='text.primary' underline='hover' onClick={() => onOpenSection(section.title)}>
               {section.title}
             </Link>
@@ -808,6 +832,43 @@ function DocsSearchResults(props: { hits: DocsHit[], words: string[], enterTarge
 }
 
 
+/** The app's own icon for an index `icon` key - a vendor, an OpenAI-compatible preset, or Beam; null when the app has none */
+function _docsBrandIcon(key: string | undefined): React.ComponentType | null {
+  if (!key) return null;
+  if (key === 'beam') return ChatBeamIcon;
+  if (hasVendorIcon(key as ModelVendorId)) return llmsGetVendorIcon(key as ModelVendorId);
+  return findOpenAIAutoProviderById(key)?.icon ?? null;
+}
+
+/** The vendor tile in the brand color: a 12% tint, the icon in full - darkened on light surfaces when the color is itself light (lime) */
+function _brandTileSx(accent: string) {
+  const [r, g, b] = [1, 3, 5].map(i => parseInt(accent.slice(i, i + 2), 16));
+  const light = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.6;
+  const darkened = '#' + [r, g, b].map(c => Math.round(c * 0.5).toString(16).padStart(2, '0')).join('');
+  return {
+    ..._styles.pageBrand,
+    backgroundColor: accent + '1f',
+    '--Icon-color': light ? darkened : accent,
+    ...(light && { '[data-joy-color-scheme="dark"] &': { '--Icon-color': accent } }),
+  };
+}
+
+/** Why a view is empty, with its way out: the site unreachable, a page it no longer has, or another failure */
+function DocsFailure(props: { error: Error | null, onRetry: () => void, onHome?: () => void }) {
+  const missing = props.error instanceof DocsPageMissingError;
+  return (
+    <Box sx={_styles.message}>
+      <Typography level='body-sm'>
+        {missing ? 'This page is no longer on big-agi.com.' : props.error instanceof TypeError ? 'Can\'t reach big-agi.com.' : 'The docs could not be loaded.'}
+      </Typography>
+      {missing && props.onHome
+        ? <Button size='sm' variant='soft' color='neutral' onClick={props.onHome}>Docs home</Button>
+        : <Button size='sm' variant='soft' color='neutral' onClick={props.onRetry}>Try again</Button>}
+    </Box>
+  );
+}
+
+
 /** A page: title, summary as the lead, tier and update day, then the markdown */
 function DocsPageView(props: { page: DocsPage, entry: DocsIndexEntry | undefined }) {
   const { page, entry } = props;
@@ -817,8 +878,15 @@ function DocsPageView(props: { page: DocsPage, entry: DocsIndexEntry | undefined
   const contentScaling = useUIContentScaling();
   const scaledTypographySx = useScaledTypographySx(contentScaling, false, false);
 
+  const BrandIcon = _docsBrandIcon(entry?.icon);
+
   return <>
     <Box sx={_styles.pageHead}>
+      {!!BrandIcon && (
+        <Box sx={entry?.accent ? _brandTileSx(entry.accent) : _styles.pageBrand}>
+          <BrandIcon />
+        </Box>
+      )}
       <Typography level='h3'>
         {page.title || entry?.title}
         {!!entry && (entry.new || entry.tier !== 'open') && (
@@ -855,7 +923,7 @@ export function DocsReaderModal(props: { target: NewsDocsTarget }) {
 
   // external state
   const isMobile = useIsMobile();
-  const { data: index = null, isError: indexError } = useQuery({
+  const { data: index = null, isError: indexError, error: indexFailure, refetch: refetchIndex } = useQuery({
     queryKey: ['news-docs-index', 'v1'],
     queryFn: ({ signal }) => _fetchDocsIndex(signal),
     staleTime: NewsConfig.docsStaleTimeMs,
@@ -883,13 +951,13 @@ export function DocsReaderModal(props: { target: NewsDocsTarget }) {
   }, [docs, query]);
   const searching = words.length > 0;
 
-  const { data: pageData, isPlaceholderData, isError: pageError } = useQuery({
+  const { data: pageData, isPlaceholderData, isError: pageError, error: pageFailure, refetch: refetchPage } = useQuery({
     enabled: !!pageSlug,
     queryKey: ['news-docs-page', pageSlug],
     queryFn: ({ signal }) => _fetchDocsPage(pageSlug!, signal),
     placeholderData: keepPreviousData,
     staleTime: NewsConfig.docsStaleTimeMs,
-    retry: 1,
+    retry: (failureCount, error) => !(error instanceof DocsPageMissingError) && failureCount < 1,
     refetchOnWindowFocus: false,
   });
 
@@ -1056,16 +1124,11 @@ export function DocsReaderModal(props: { target: NewsDocsTarget }) {
   if (searching)
     content = docs && <DocsSearchResults hits={hits} words={words} enterTarget={searchFocused} onOpen={openPage} onExitUp={handleSearchFocus} />;
   else if (shownView.kind === 'page')
-    content = shownPage ? <DocsPageView page={shownPage} entry={docBySlug.get(shownPage.slug)} /> : (
-      <Typography level='body-sm' sx={_styles.message}>This page could not be loaded. Use Open in browser to read it on big-agi.com.</Typography>
-    );
+    content = shownPage
+      ? <DocsPageView page={shownPage} entry={docBySlug.get(shownPage.slug)} />
+      : <DocsFailure error={pageFailure} onRetry={() => void refetchPage()} onHome={handleHome} />;
   else if (indexError)
-    content = (
-      <Box sx={_styles.message}>
-        <Typography level='body-sm'>The contents could not be loaded.</Typography>
-        <Button size='sm' variant='soft' color='neutral' onClick={() => openPage(NewsConfig.docsFallbackSlug)}>Start here</Button>
-      </Box>
-    );
+    content = <DocsFailure error={indexFailure} onRetry={() => void refetchIndex()} />;
   else if (docs)
     content = shownSection
       ? <DocsSectionView docs={sections.find(section => section.title === shownSection)?.docs ?? []} onOpen={openPage} />

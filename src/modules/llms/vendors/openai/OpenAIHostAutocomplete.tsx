@@ -52,6 +52,11 @@ const OPENAI_COMPATIBLE_PROVIDERS: VerifiedProvider[] = [
   { id: 'cloudflare', label: 'Cloudflare AI Gateway', host: 'https://gateway.ai.cloudflare.com/v1/{account}/{gateway}/openai', hostMatch: 'gateway.ai.cloudflare.com', category: 'Example Proxies', description: 'Caching and analytics gateway', docsUrl: 'https://developers.cloudflare.com/ai-gateway/', icon: CloudflareIcon },
 ];
 
+// Find a provider by its id (the docs reader's icon keys use these ids)
+export function findOpenAIAutoProviderById(id: string): VerifiedProvider | undefined {
+  return OPENAI_COMPATIBLE_PROVIDERS.find(p => p.id === id);
+}
+
 // Find matching provider based on current host value
 export function findMatchingOpenAIAutoProvider(host: string): VerifiedProvider | undefined {
   if (!host) return undefined;

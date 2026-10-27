@@ -89,7 +89,7 @@ fold behind "Show N earlier days"; expanded, an "Already seen" divider marks the
 announcements day, no opened ids) and closes the hub, so every indicator shows its new state.
 
 **Docs reader.** The Preferences two-pane shape. Left: a search field, then the contents tree of
-the static docs index (`/docs/index.json`, nav order), shaped as the big-agi.com docs sidebar and
+the docs index (`/api/app/v1/docs`, nav order), shaped as the big-agi.com docs sidebar and
 showing only the active branch: a Docs row (house icon) that opens the home, every section header; pages by their nav `label` only in the
 section selected or holding the current page; `indent` pages one level in, only while their parent
 or one of them is current; the `setMember` pages under one "N providers" row, open unless folded by
@@ -105,13 +105,15 @@ label; the page view keeps the full title. Search filters on every keystroke: wo
 label and title, answers, summary and slug, ranked label and title > answer > summary; each result reads Section > Page
 and shows the best-matching question with the hits in bold; while the field has focus the first result is
 marked as the Enter target. `/` focuses search, ArrowDown enters the results (the tree when the field is empty), Enter opens the first,
-Esc clears the field before it closes the modal. A page is its markdown twin: the title (`h3`) one step
+Esc clears the field before it closes the modal. A page is its markdown twin: a vendor tile when the index `icon` names an icon the app has (a vendor,
+an OpenAI-compatible preset, or Beam), tinted with the page's `accent`; the title (`h3`) one step
 above the body's headings with the new and tier chips beside it, the summary as a lead at body size,
 a faint rule, the body in the app's markdown renderer at the chat text size (`contentScaling`), and the
 update day at the foot. Links between docs pages navigate in place;
 the title is back, forward, then breadcrumbs (Documentation > Section > Page, the root a house icon below the home); Alt+Left/Right go
-back and forward. A loading page keeps the previous view up under a progress bar. If the index
-fails, a button opens `start-here`. Mobile is fullscreen, with search and a page picker (pages grouped by section) stacked.
+back and forward. A loading page keeps the previous view up under a progress bar. A failure says why, with
+a way out: "Can't reach big-agi.com." with Try again (index or page), or "This page is no longer on
+big-agi.com." with Docs home (HTTP 404, not retried). Mobile is fullscreen, with search and a page picker (pages grouped by section) stacked.
 
 **Entry points.** `WhatsNewIndicators.tsx` holds them as self-contained components, so each
 codeline places one with one line: the nav dot (accent, unseen announcements only: the changelog is

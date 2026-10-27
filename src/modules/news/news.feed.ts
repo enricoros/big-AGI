@@ -88,7 +88,7 @@ function _newsFeedUrl(tier: NewsTier, channel: NewsChannel | null, before: strin
     ...(before ? [`before=${before}`] : []),
     `limit=${NewsConfig.feedPageLimit}`,
   ];
-  return `${NewsConfig.feedBaseUrl}/news?${params.join('&')}`;
+  return `${NewsConfig.apiBaseUrl}/news?${params.join('&')}`;
 }
 
 // Fetch one page and validate it - throws on HTTP or envelope mismatch (the query lands in error, surfaces hide)
