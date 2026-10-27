@@ -508,6 +508,9 @@ function cleanHtml(html: string): string {
       for (const node of Array.from(el.childNodes))
         if (node.nodeType === node.TEXT_NODE && node.nodeValue)
           node.nodeValue = node.nodeValue.replace(/\s+/g, ' ');
+    // line breaks in code become newlines: turndown reads a code block's text, where a <br> leaves no trace
+    for (const br of all('pre br'))
+      replaceNode(br, [doc.createTextNode('\n')]);
 
     // 8. format final output: doctype, top-level comments, <html>
     const serialized = Array.from(doc.childNodes, node =>
@@ -515,11 +518,15 @@ function cleanHtml(html: string): string {
         : node === doc.documentElement ? doc.documentElement.outerHTML
           : node.nodeType === node.COMMENT_NODE ? `<!--${node.nodeValue}-->` : '',
     ).join('');
+    // preformatted blocks sit out the whitespace pass behind tag-shaped placeholders, keeping code indentation
+    const preformatted: string[] = [];
     return serialized
+      .replace(/<(pre|textarea)\b[^>]*>[\s\S]*?<\/\1>/g, block => `<\u0000${preformatted.push(block) - 1}\u0000>`)
       .replace(/>\s+</g, '>\n<')
       .replace(/\n\s+/g, '\n')
       .split('\n').map(line => line.trim()).join('\n')
       .replace(/\n{3,}/g, '\n\n')
+      .replace(/<\u0000(\d+)\u0000>/g, (_, index: string) => preformatted[Number(index)])
       .trim();
 
   } catch (error) {
