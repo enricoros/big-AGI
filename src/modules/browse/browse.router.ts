@@ -2,13 +2,13 @@ import * as z from 'zod/v4';
 import { TRPCError } from '@trpc/server';
 
 import puppeteer, { Browser, BrowserContext, ScreenshotOptions } from 'puppeteer-core';
-import { default as TurndownService } from 'turndown';
 import { createDocument } from '@mixmark-io/domino';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.server';
 
 import { workerPuppeteerDownloadFileOrThrow } from './browse.files';
+import { documentToMarkdown, replaceNode, toAbsoluteUrl } from './browse.markdown';
 
 
 // configuration
@@ -275,7 +275,7 @@ async function workerPuppeteer(
           case 'markdown':
             const html = await page.content();
             const cleanedHtml = cleanHtml(html, page.url());
-            result.content.markdown = htmlToMarkdown(cleanedHtml);
+            result.content.markdown = documentToMarkdown(createDocument(cleanedHtml));
             break;
         }
       }
@@ -368,15 +368,6 @@ function _shortError(error: any): string {
 
 const CLEAN_HTML_MAX_CHARS = 5_000_000;
 
-// not domino's replaceWith(): it can drop the subtree when the replacement is the target's own descendant
-function replaceNode(target: Node, nodes: Node[]) {
-  const parent = target.parentNode;
-  if (!parent) return;
-  for (const node of nodes)
-    parent.insertBefore(node, target);
-  parent.removeChild(target);
-}
-
 function cleanHtml(html: string, pageUrl?: string): string {
   // bound parse/serialize cost on attacker-controlled pages
   if (html.length > CLEAN_HTML_MAX_CHARS)
@@ -385,15 +376,7 @@ function cleanHtml(html: string, pageUrl?: string): string {
   try {
     const doc = createDocument(html);
     const all = (selector: string) => Array.from(doc.querySelectorAll(selector));
-    // relative URLs resolve against the page, so links and media stay usable out of context; fragments stay
-    const toAbsolute = (url: string) => {
-      if (!pageUrl || url.startsWith('#') || /^[a-z][a-z\d+.-]*:/i.test(url)) return url;
-      try {
-        return new URL(url, pageUrl).href;
-      } catch {
-        return url;
-      }
-    };
+    const toAbsolute = (url: string) => toAbsoluteUrl(url, pageUrl);
 
     // 1. --unwanted elements
     const unwantedSelectors = [
@@ -561,6 +544,7 @@ function cleanHtml(html: string, pageUrl?: string): string {
       .replace(/\n\s+/g, '\n')
       .split('\n').map(line => line.trim()).join('\n')
       .replace(/\n{3,}/g, '\n\n')
+      // eslint-disable-next-line no-control-regex -- NUL never survives HTML parsing, so the placeholder cannot collide with page text
       .replace(/<\u0000(\d+)\u0000>/g, (_, index: string) => preformatted[Number(index)])
       .trim();
 
@@ -568,51 +552,4 @@ function cleanHtml(html: string, pageUrl?: string): string {
     console.error('HTML cleaning error:', error);
     return html; // Return original if cleaning fails
   }
-}
-
-// buttons with these labels are page chrome; other buttons can carry content (FAQ questions, accordion titles)
-const UI_ACTION_LABEL = /^(add a comment|cancel|close|copied!?|copy|copy code|copy link|copy to clipboard|follow|hide|log in|menu|reply|run|search|share|show more|sign in|subscribe)$/i;
-
-function htmlToMarkdown(cleanedHtml: string): string {
-
-  // prose-only cleanup, here and not in cleanHtml: the HTML output keeps the page structure and its actions
-  const doc = createDocument(cleanedHtml);
-  for (const button of Array.from(doc.querySelectorAll('button')))
-    if (UI_ACTION_LABEL.test((button.textContent || '').replace(/\s+/g, ' ').trim()))
-      button.remove();
-  for (const link of Array.from(doc.querySelectorAll('a'))) {
-    // -links with nothing to show (icon links whose svg is gone)
-    if (!link.textContent?.trim() && !link.querySelector('img, video, audio')) {
-      link.remove();
-      continue;
-    }
-    // a link around a single heading becomes a heading around the link
-    const heading = link.children.length === 1 && /^h[1-6]$/.test(link.children[0].localName) ? link.children[0] : null;
-    if (heading) {
-      replaceNode(link, [heading]);
-      for (const node of Array.from(heading.childNodes))
-        link.appendChild(node);
-      heading.appendChild(link);
-      continue;
-    }
-    // block wrappers would split the link text over lines
-    for (const block of Array.from(link.querySelectorAll('div, p, h1, h2, h3, h4, h5, h6, header, section, article, figure, figcaption, picture, ul, ol, li')))
-      replaceNode(block, [doc.createTextNode(' '), ...Array.from(block.childNodes), doc.createTextNode(' ')]);
-  }
-
-  const turndownService = new TurndownService({ headingStyle: 'atx' });
-
-  // every <pre> is a fenced code block, verbatim - turndown's own rule needs <pre><code> and indents instead
-  turndownService.addRule('preformatted', {
-    filter: 'pre',
-    replacement: (_content, node) => {
-      const code = (node.textContent || '').replace(/\n+$/, '');
-      const classes = `${node.getAttribute('class') || ''} ${node.querySelector('code')?.getAttribute('class') || ''}`;
-      const language = /(?:language|lang)-([\w+#-]+)/.exec(classes)?.[1] || '';
-      const fence = code.includes('```') ? '~~~' : '```';
-      return `\n\n${fence}${language}\n${code}\n${fence}\n\n`;
-    },
-  });
-
-  return turndownService.turndown(doc.documentElement.outerHTML);
 }
