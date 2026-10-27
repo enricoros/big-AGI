@@ -129,7 +129,7 @@ export function BlockEdit_TextFragment(props: {
   // shortcuts
   const isEdited = props.editedText !== undefined;
   useGlobalShortcuts('TextFragmentEditor', React.useMemo(() => (isControlled || !isFocused) ? [] : [
-    ...(!FORCE_ENTER_IS_NEWLINE ? [] : [{ key: ShortcutKey.Enter, shift: true, description: 'Save', disabled: !isEdited && props.enableRestart !== true, level: 3, action: () => null }]),
+    ...(!FORCE_ENTER_IS_NEWLINE ? [] : [{ key: ShortcutKey.Enter, shift: true, description: 'Save', disabled: !isEdited && props.enableRestart !== true, level: 3, action: () => onSubmit(false) }]),
     ...props.enableRestart ? [{ key: ShortcutKey.Enter, ctrl: true, shift: true, description: 'Save & Retry', disabled: !isEdited, level: 3, action: () => onSubmit(true) }] : [],
     { key: ShortcutKey.Esc, description: 'Cancel', level: 3, action: onEscapePressed },
   ], [isControlled, isEdited, isFocused, onEscapePressed, onSubmit, props.enableRestart]));
