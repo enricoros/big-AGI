@@ -2,7 +2,7 @@ import * as React from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import * as z from 'zod/v4';
 
-import { Box, Button, Chip, Divider, IconButton, Input, LinearProgress, List, ListItem, ListItemButton, ListItemContent, ListSubheader, modalDialogClasses, Option, Select, Tooltip, Typography } from '@mui/joy';
+import { Box, Button, Chip, Divider, IconButton, Input, LinearProgress, Link, List, ListItem, ListItemButton, ListItemContent, ListItemDecorator, ListSubheader, modalDialogClasses, Option, Select, Tooltip, Typography } from '@mui/joy';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -17,6 +17,7 @@ import type { SiteDocSlug } from '~/common/gen/com.site.docs.slug';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { BaseProduct } from '~/common/app.release';
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { PhHouse } from '~/common/components/icons/phosphor/PhHouse';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 import { useUIContentScaling } from '~/common/stores/store-ui';
@@ -25,6 +26,29 @@ import type { NewsDocsTarget } from '../useNews';
 import { NewsConfig } from '../news.config';
 import { newsCloseDocs, newsDocsLinkTarget, newsFormatDay } from '../useNews';
 
+
+// a tree row: transparent at rest, the selection as a 4px inset bar - accent on index rows (they list
+// pages), primary on rows that open a page; the row's own color= tints the selected background
+function _navRow(color: 'primary' | 'accent') {
+  return {
+    border: 0, // ListItemButton keeps a 1px border otherwise
+    backgroundColor: 'transparent',
+    '&.Mui-selected': {
+      boxShadow: `inset 4px 0 0 0 var(--joy-palette-${color === 'accent' ? 'accent-700' : 'primary-solidBg'})`,
+      color: `${color}.softColor`,
+    },
+  } as const;
+}
+
+const _homeBlock = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  gap: 1,
+  p: 2.5,
+  borderRadius: 'md',
+  backgroundColor: 'neutral.softBg',
+} as const;
 
 const _styles = {
 
@@ -40,8 +64,9 @@ const _styles = {
     },
   },
   body: {
-    flex: 1,
+    flex: '1 1 auto', // auto basis: the height below holds (a 0 basis would size the dialog to its content)
     minHeight: 0,
+    height: 'var(--DocsReader-paneHeight, min(72svh, 800px))', // on the grid, so a long tree scrolls instead of growing the row
     display: 'grid',
     gridTemplateColumns: '232px minmax(0, 1fr)',
     gridTemplateRows: 'minmax(0, 1fr)',
@@ -65,37 +90,27 @@ const _styles = {
     '--ListItem-minHeight': '2rem',
   },
 
-  // the tree: SettingsNavList's top-level and child items, plus one more level
+  // the tree: SettingsNavList's top-level and child items, plus one more level; index rows in accent
   navHeader: {
+    ..._navRow('primary'),
     pl: 2,
-    border: 0,
-    backgroundColor: 'transparent',
     fontWeight: 'md',
-    '&.Mui-selected': {
-      boxShadow: 'inset 4px 0 0 0 var(--joy-palette-primary-solidBg)',
-      color: 'primary.softColor',
-    },
+  },
+  navHeaderIndex: {
+    ..._navRow('accent'),
+    pl: 2,
+    fontWeight: 'md',
   },
   navSectionGap: {
     mt: 1.5,
   },
   navPage: {
+    ..._navRow('primary'),
     pl: 3.5,
-    border: 0,
-    backgroundColor: 'transparent',
-    '&.Mui-selected': {
-      boxShadow: 'inset 2px 0 0 0 var(--joy-palette-primary-solidBg)',
-      color: 'primary.softColor',
-    },
   },
   navPageNested: {
+    ..._navRow('primary'),
     pl: 5,
-    border: 0,
-    backgroundColor: 'transparent',
-    '&.Mui-selected': {
-      boxShadow: 'inset 2px 0 0 0 var(--joy-palette-primary-solidBg)',
-      color: 'primary.softColor',
-    },
   },
   navLabel: {
     overflow: 'hidden',
@@ -111,6 +126,7 @@ const _styles = {
   },
   newChip: {
     flexShrink: 0,
+    fontWeight: 'lg',
   },
   optionNested: {
     pl: 3.5,
@@ -119,10 +135,9 @@ const _styles = {
     position: 'relative',
     minWidth: 0,
     minHeight: 0,
-    height: 'var(--DocsReader-paneHeight, min(72svh, 800px))',
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: 'background.surface',
+    backgroundColor: 'background.popup',
     borderRadius: 'lg',
     borderTopRightRadius: 0,
     borderBottomRightRadius: 0,
@@ -166,7 +181,7 @@ const _styles = {
     display: 'flex',
     flexDirection: 'column',
     mx: 'calc(-1 * var(--Card-padding))',
-    backgroundColor: 'background.surface',
+    backgroundColor: 'background.popup',
     boxShadow: 'xs',
   },
 
@@ -176,14 +191,41 @@ const _styles = {
     alignItems: 'center',
     gap: 0.5,
     minWidth: 0,
+    // the tooltip spans around the history buttons: no inline line box, so the buttons center on the crumbs
+    '& > span': { display: 'flex' },
   },
   titleButton: {
     my: -0.5,
   },
+  titleHome: {
+    fontSize: 'xl',
+    my: -1, // out of the line box, so the title bar keeps its height
+    position: 'relative',
+    top: '0.3rem', // centered on the crumbs: the icon otherwise rides above their baseline
+  },
 
-  // section and search rows
-  rowButton: {
+  // section index: a soft block per page, as on the home; AI services as soft tiles
+  sectionPages: {
+    '--List-gap': '0.75rem',
     py: 1,
+  },
+  sectionPage: {
+    p: 2.5,
+    gap: 1.5,
+    borderRadius: 'md',
+  },
+  sectionServices: {
+    display: 'grid',
+    gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+    gap: 0.75,
+    pb: 1,
+  },
+  sectionServicesHead: {
+    gridColumn: '1 / -1',
+    mt: 1.5,
+  },
+  sectionService: {
+    borderRadius: 'sm',
   },
   clamp2: {
     display: '-webkit-box',
@@ -191,9 +233,11 @@ const _styles = {
     WebkitBoxOrient: 'vertical',
     overflow: 'hidden',
   },
-  servicesGrid: {
-    display: 'grid',
-    gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' },
+
+  // search results
+  hitButton: {
+    py: 1,
+    borderRadius: 'sm',
   },
   hits: {
     '& strong': {
@@ -203,17 +247,45 @@ const _styles = {
   },
   hitHead: {
     display: 'flex',
-    alignItems: 'baseline',
-    gap: 1,
+    alignItems: 'center',
+    gap: 0.5,
     minWidth: 0,
   },
   hitSection: {
     flexShrink: 0,
+  },
+  hitChevron: {
+    flexShrink: 0,
+    fontSize: 'md',
     color: 'text.tertiary',
   },
   hitEnter: {
     ml: 'auto',
     color: 'text.tertiary',
+  },
+
+  // home: a soft block per section, as on big-agi.com/docs
+  home: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 1.5,
+    py: 1,
+  },
+  homeBlock: _homeBlock,
+  homeBlockStart: {
+    ..._homeBlock,
+    backgroundColor: 'accent.softBg',
+  },
+  homeLinks: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 0.5,
+  },
+  homeLink: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1,
   },
 
   // every view: one reading column, centered when maximized
@@ -223,19 +295,27 @@ const _styles = {
   },
   pageHead: {
     px: '0.75rem', // RenderMarkdown's own inline margin
+    pt: 2,
     display: 'flex',
     flexDirection: 'column',
-    gap: 1,
+    gap: 1.5,
   },
-  pageMeta: {
-    display: 'flex',
-    alignItems: 'center',
+  pageTitleChips: {
+    display: 'inline-flex',
     gap: 1,
-    color: 'text.tertiary',
+    ml: 1.5,
+    my: -1, // riding the title's middle, out of its line box
+    verticalAlign: 'middle',
   },
   pageDivider: {
     mx: '0.75rem',
-    my: 2,
+    my: 3,
+    opacity: 0.4, // a hint, not a rule
+  },
+  pageFoot: {
+    px: '0.75rem',
+    mt: 4,
+    color: 'text.tertiary',
   },
   message: {
     p: 1.5,
@@ -455,30 +535,50 @@ function DocsTierChip(props: { tier: string }) {
 }
 
 function DocsNewChip() {
-  return <Chip size='sm' variant='soft' color='success' sx={_styles.newChip}>new</Chip>;
+  return <Chip size='sm' variant='solid' color='accent' sx={_styles.newChip}>new</Chip>;
 }
 
 
-/** Home: every section with an outline of its pages; a section opens its page list */
-function DocsHomeView(props: { sections: DocsSection[], onOpenSection: (title: string) => void }) {
-  const { onOpenSection } = props;
+/** Home: one block per section - title, the lead's summary, a few pages and the rest as a count; Start Here tinted */
+function DocsHomeView(props: { sections: DocsSection[], onOpenSection: (title: string) => void, onOpen: (slug: SiteDocSlug) => void }) {
+  const { onOpenSection, onOpen } = props;
   return (
-    <List size='sm'>
-      {props.sections.map(section => (
-        <ListItem key={section.title}>
-          <ListItemButton onClick={() => onOpenSection(section.title)} sx={_styles.rowButton}>
-            <ListItemContent>
-              <Typography level='title-sm' textColor='primary.plainColor'>{section.title}</Typography>
-              <Typography level='body-sm' sx={_styles.clamp2}>
-                {section.rows.map(row => row.kind === 'page' ? _docLabel(row.doc) : _setLabel(row.docs)).join(' · ')}
-              </Typography>
-            </ListItemContent>
-            <Typography level='body-xs'>{section.docs.length}</Typography>
-          </ListItemButton>
-        </ListItem>
-      ))}
-    </List>
+    <Box sx={_styles.home}>
+      {props.sections.map(section => {
+        const { picks, more } = _homePicks(section);
+        return (
+          <Box key={section.title} sx={section.lead?.slug === NewsConfig.docsFallbackSlug ? _styles.homeBlockStart : _styles.homeBlock}>
+            <Link component='button' level='title-md' fontWeight='lg' textColor='text.primary' underline='hover' onClick={() => onOpenSection(section.title)}>
+              {section.title}
+            </Link>
+            {!!section.lead?.summary && <Typography level='body-sm' textColor='text.tertiary'>{section.lead.summary}</Typography>}
+            <Box sx={_styles.homeLinks}>
+              {picks.map(doc => (
+                <Box key={doc.slug} sx={_styles.homeLink}>
+                  <Link component='button' level='body-sm' fontWeight='md' color='accent' underline='hover' onClick={() => onOpen(doc.slug)}>{_docLabel(doc)}</Link>
+                  {doc.new && <DocsNewChip />}
+                </Box>
+              ))}
+              {more > 0 && (
+                <Link component='button' level='body-sm' textColor='text.tertiary' underline='hover' onClick={() => onOpenSection(section.title)}>
+                  +{more} more
+                </Link>
+              )}
+            </Box>
+          </Box>
+        );
+      })}
+    </Box>
   );
+}
+
+/** A home block's pages: the first two plus any new ones, in nav order; a lone remainder joins them */
+function _homePicks(section: DocsSection): { picks: DocsIndexEntry[], more: number } {
+  const pages = section.rows.flatMap(row => row.kind === 'page' ? [row.doc] : []);
+  const total = section.docs.length - (section.lead ? 1 : 0);
+  let picks = pages.filter((doc, idx) => idx < 2 || doc.new);
+  if (total - picks.length === 1 && pages.length === picks.length + 1) picks = pages;
+  return { picks, more: total - picks.length };
 }
 
 
@@ -487,40 +587,40 @@ function DocsSectionView(props: { docs: DocsIndexEntry[], onOpen: (slug: SiteDoc
   const { onOpen } = props;
   const pages = props.docs.filter(doc => doc.kind !== 'provider');
   const services = props.docs.filter(doc => doc.kind === 'provider');
-  return (
-    <List size='sm'>
-      {pages.map(doc => (
-        <ListItem key={doc.slug}>
-          <ListItemButton onClick={() => onOpen(doc.slug)} sx={_styles.rowButton}>
-            <ListItemContent>
-              <Typography level='title-sm' textColor='primary.plainColor'>{_docLabel(doc)}</Typography>
-              <Typography level='body-sm' sx={_styles.clamp2}>{doc.summary}</Typography>
-            </ListItemContent>
-            {doc.new && <DocsNewChip />}
-            <DocsTierChip tier={doc.tier} />
-          </ListItemButton>
-        </ListItem>
-      ))}
-      {services.length > 0 && (
-        <ListItem nested sx={{ mt: pages.length ? 1.5 : 0 }}>
-          <ListSubheader>AI services</ListSubheader>
-          <List sx={_styles.servicesGrid}>
-            {services.map(doc => (
-              <ListItem key={doc.slug}>
-                <ListItemButton onClick={() => onOpen(doc.slug)}>
-                  <ListItemContent>
-                    <Typography level='body-sm' textColor='primary.plainColor'>{_docLabel(doc)}</Typography>
-                  </ListItemContent>
-                  {doc.new && <DocsNewChip />}
-                  <DocsTierChip tier={doc.tier} />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </ListItem>
-      )}
-    </List>
-  );
+  return <>
+    {pages.length > 0 && (
+      <List sx={_styles.sectionPages}>
+        {pages.map(doc => (
+          <ListItem key={doc.slug}>
+            <ListItemButton variant='soft' onClick={() => onOpen(doc.slug)} sx={_styles.sectionPage}>
+              <ListItemContent>
+                <Typography level='title-md' fontWeight='lg'>{_docLabel(doc)}</Typography>
+                <Typography level='body-sm' textColor='text.tertiary' sx={_styles.clamp2}>{doc.summary}</Typography>
+              </ListItemContent>
+              {doc.new && <DocsNewChip />}
+              <DocsTierChip tier={doc.tier} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+    )}
+    {services.length > 0 && (
+      <List size='sm' sx={_styles.sectionServices}>
+        <ListSubheader sx={_styles.sectionServicesHead}>AI services</ListSubheader>
+        {services.map(doc => (
+          <ListItem key={doc.slug}>
+            <ListItemButton variant='soft' onClick={() => onOpen(doc.slug)} sx={_styles.sectionService}>
+              <ListItemContent>
+                <Typography level='body-sm' fontWeight='md' color='accent'>{_docLabel(doc)}</Typography>
+              </ListItemContent>
+              {doc.new && <DocsNewChip />}
+              <DocsTierChip tier={doc.tier} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+    )}
+  </>;
 }
 
 
@@ -547,14 +647,16 @@ function DocsNavPage(props: { doc: DocsIndexEntry, nested: boolean, selected: bo
 /**
  * The contents tree, active branch only: every section header; the pages, by label, of the section
  * selected or holding the current page; `indent` pages one level in, while their parent or one of
- * them is current; the provider set folded under one row, open while it holds the current page.
+ * them is current; the provider set under one row, open unless folded by hand.
  * ArrowUp/ArrowDown move through the visible rows, up from the first returns to search; Enter opens.
  */
 function DocsNavTree(props: {
   sections: DocsSection[],
   currentSlug: SiteDocSlug | null,
   currentSection: string | null, // a section index on screen
+  atHome: boolean,
   listRef: React.RefObject<HTMLUListElement>,
+  onHome: () => void,
   onOpen: (slug: SiteDocSlug) => void,
   onOpenSection: (title: string) => void,
   onExitUp: () => void,
@@ -562,7 +664,7 @@ function DocsNavTree(props: {
 
   const { currentSlug, currentSection, listRef, onOpen, onOpenSection, onExitUp } = props;
 
-  // set toggles hold until the current page changes; then each set follows the page again
+  // a set folded by hand stays folded until the current page changes, then opens again
   const [toggles, setToggles] = React.useState<{ slug: SiteDocSlug | null, open: Readonly<Record<string, boolean>> }>({ slug: currentSlug, open: {} });
   const setsOpen = toggles.slug === currentSlug ? toggles.open : {};
 
@@ -582,7 +684,23 @@ function DocsNavTree(props: {
 
   return (
     <List ref={listRef} size='sm' onKeyDown={handleKeyDown} sx={_styles.navList}>
-      {props.sections.map((section, idx) => {
+
+      {/* the docs home, like the Documentation crumb */}
+      <ListItem>
+        <ListItemButton
+          data-docs-row
+          selected={props.atHome}
+          color={props.atHome ? 'accent' : undefined}
+          variant={props.atHome ? undefined : 'soft'}
+          onClick={props.onHome}
+          sx={_styles.navHeaderIndex}
+        >
+          <ListItemDecorator><PhHouse /></ListItemDecorator>
+          <ListItemContent sx={_styles.navLabel}>Docs</ListItemContent>
+        </ListItemButton>
+      </ListItem>
+
+      {props.sections.map(section => {
         const { lead } = section;
         const headerSelected = lead ? lead.slug === currentSlug : section.title === currentSection;
         const active = section.title === currentSection || section.docs.some(doc => doc.slug === currentSlug);
@@ -590,15 +708,15 @@ function DocsNavTree(props: {
           <React.Fragment key={section.title}>
 
             {/* header: the lead page, else the section index */}
-            <ListItem sx={idx ? _styles.navSectionGap : undefined}>
+            <ListItem sx={_styles.navSectionGap}>
               <ListItemButton
                 data-docs-row
                 selected={headerSelected}
-                color={headerSelected ? 'primary' : undefined}
+                color={!headerSelected ? undefined : lead ? 'primary' : 'accent'}
                 variant={headerSelected ? undefined : 'soft'}
                 title={lead?.title}
                 onClick={() => lead ? onOpen(lead.slug) : onOpenSection(section.title)}
-                sx={_styles.navHeader}
+                sx={lead ? _styles.navHeader : _styles.navHeaderIndex}
               >
                 <ListItemContent sx={_styles.navLabel}>{section.title}</ListItemContent>
                 {lead?.new && <DocsNewChip />}
@@ -617,7 +735,7 @@ function DocsNavTree(props: {
                   </React.Fragment>
                 );
               }
-              const open = setsOpen[section.title] ?? row.docs.some(doc => doc.slug === currentSlug);
+              const open = setsOpen[section.title] ?? true;
               return (
                 <React.Fragment key='set'>
                   <ListItem>
@@ -672,11 +790,12 @@ function DocsSearchResults(props: { hits: DocsHit[], words: string[], enterTarge
     <List size='sm' onKeyDown={handleKeyDown} sx={_styles.hits}>
       {props.hits.map(({ doc, answer }, idx) => (
         <ListItem key={doc.slug}>
-          <ListItemButton data-docs-hit variant={props.enterTarget && idx === 0 ? 'soft' : 'plain'} onClick={() => onOpen(doc.slug)} sx={_styles.rowButton}>
+          <ListItemButton data-docs-hit variant={props.enterTarget && idx === 0 ? 'soft' : 'plain'} onClick={() => onOpen(doc.slug)} sx={_styles.hitButton}>
             <ListItemContent>
               <Box sx={_styles.hitHead}>
+                <Typography level='title-sm' textColor='text.secondary' sx={_styles.hitSection}>{doc.section}</Typography>
+                <KeyboardArrowRightIcon sx={_styles.hitChevron} />
                 <Typography level='title-sm' textColor='primary.plainColor' noWrap>{_docLabel(doc)}</Typography>
-                <Typography level='body-xs' sx={_styles.hitSection}>{doc.section}</Typography>
                 {props.enterTarget && idx === 0 && <Typography level='body-xs' sx={_styles.hitEnter}>↵</Typography>}
               </Box>
               <Typography level='body-sm' sx={_styles.clamp2}>{_highlight(answer ?? doc.summary, props.words)}</Typography>
@@ -700,18 +819,20 @@ function DocsPageView(props: { page: DocsPage, entry: DocsIndexEntry | undefined
 
   return <>
     <Box sx={_styles.pageHead}>
-      <Typography level='h2' fontWeight='lg'>{page.title || entry?.title}</Typography>
-      {!!summary && <Typography level='body-lg' textColor='text.secondary'>{summary}</Typography>}
-      {!!entry && (
-        <Box sx={_styles.pageMeta}>
-          {entry.new && <DocsNewChip />}
-          <DocsTierChip tier={entry.tier} />
-          <Typography level='body-xs'>Updated {newsFormatDay(entry.updated)}</Typography>
-        </Box>
-      )}
+      <Typography level='h3'>
+        {page.title || entry?.title}
+        {!!entry && (entry.new || entry.tier !== 'open') && (
+          <Box component='span' sx={_styles.pageTitleChips}>
+            {entry.new && <DocsNewChip />}
+            <DocsTierChip tier={entry.tier} />
+          </Box>
+        )}
+      </Typography>
+      {!!summary && <Typography textColor='text.secondary' sx={scaledTypographySx}>{summary}</Typography>}
     </Box>
     <Divider sx={_styles.pageDivider} />
     <RenderMarkdownMemo key={page.slug} content={page.markdown} sx={scaledTypographySx} />
+    {!!entry && <Typography level='body-xs' sx={_styles.pageFoot}>Updated {newsFormatDay(entry.updated)}</Typography>}
   </>;
 }
 
@@ -921,7 +1042,7 @@ export function DocsReaderModal(props: { target: NewsDocsTarget }) {
       <Tooltip title='Forward (Alt+Right)'>
         <span><IconButton size='sm' disabled={!canForward} onClick={handleForward} sx={_styles.titleButton}><ArrowForwardRoundedIcon /></IconButton></span>
       </Tooltip>
-      <AppBreadcrumbs size='md' rootTitle='Documentation' onRootClick={atHome ? undefined : handleHome}>
+      <AppBreadcrumbs size='md' rootTitle={atHome ? 'Documentation' : <PhHouse titleAccess='Documentation' sx={_styles.titleHome} />} onRootClick={atHome ? undefined : handleHome}>
         {crumbs}
       </AppBreadcrumbs>
     </Box>
@@ -948,7 +1069,7 @@ export function DocsReaderModal(props: { target: NewsDocsTarget }) {
   else if (docs)
     content = shownSection
       ? <DocsSectionView docs={sections.find(section => section.title === shownSection)?.docs ?? []} onOpen={openPage} />
-      : <DocsHomeView sections={sections} onOpenSection={openSection} />;
+      : <DocsHomeView sections={sections} onOpenSection={openSection} onOpen={openPage} />;
 
   const contentPane = <>
     {loading && <LinearProgress size='sm' variant='plain' sx={_styles.progress} />}
@@ -979,7 +1100,7 @@ export function DocsReaderModal(props: { target: NewsDocsTarget }) {
       fullscreen={isMobile || 'button'}
       unfilterBackdrop
       startButton={
-        <Button variant='plain' color='neutral' endDecorator={<LaunchIcon />} component='a' href={pageUrl} target='_blank' rel='noopener'>
+        <Button variant='soft' color='neutral' endDecorator={<LaunchIcon />} component='a' href={pageUrl} target='_blank' rel='noopener'>
           Open in browser
         </Button>
       }
@@ -1018,7 +1139,9 @@ export function DocsReaderModal(props: { target: NewsDocsTarget }) {
               sections={sections}
               currentSlug={pageSlug}
               currentSection={view.kind === 'section' ? view.section : null}
+              atHome={atHome}
               listRef={treeRef}
+              onHome={handleHome}
               onOpen={openPage}
               onOpenSection={openSection}
               onExitUp={handleSearchFocus}

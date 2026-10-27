@@ -204,13 +204,6 @@ export function newsFormatDay(isoDay: string): string {
   return new Date(year, month - 1, day).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-/** "October 2026" from an ISO day or month; '' when undated */
-export function newsFormatMonth(isoDay: string): string {
-  const [year, month] = isoDay.split('-').map(part => parseInt(part, 10));
-  if (!year || !month) return '';
-  return new Date(year, month - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-}
-
 /** '5', or '20+' when the count is a floor or over the cap */
 export function newsFormatCount(count: number, more: boolean = false): string {
   return count > NewsConfig.indicatorMaxCount ? `${NewsConfig.indicatorMaxCount}+` : `${count}${more ? '+' : ''}`;

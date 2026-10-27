@@ -9,7 +9,7 @@ This doc is the system of record for both.
 ## Open actions
 
 - [ ] [P1] Plan chips in page bodies: `> **Pro:**` callouts get a plan chip on open builds (the page header and the section rows already show the page's tier)
-- [ ] [P2] Indicators: evaluate the three placements (nav dot, panel row, empty-chat line); turn off what does not earn its place in `NewsConfig`
+- [ ] [P2] Indicators: evaluate the two changelog placements (panel row, empty-chat line); turn off what does not earn its place in `NewsConfig`
 - [ ] [P2] Announcements: set `announcementsEnabled` once new ones are written in the website's `news-src/`
 - [ ] [P2] Feature gate: `useNewsGate(announcementId)` -> `{ gated, showGate(): Promise<boolean> }`, called as `if (gated && !await showGate()) return;` before the feature runs. Gated while the id is not in the seen index; the modal renders the feed's announcement and marks it seen, so the hub and the gate share one state. Non-blocking by default (dismiss proceeds); a `blocking` option for features that need consent. Never gates when feeds are off, announcements are off, or the id is not in the feed. The same `gated` drives a dot on the feature's control. First site: the Max Mode toggles (`Composer`, `BeamPanel`, dev), announcement `max-mode-2026-03`
 - [ ] [P2] Retire the systems marked "retire" in the inventory below
@@ -46,7 +46,7 @@ link. Announcements call for attention; the changelog never does.
 **Data.** One stream, `/api/app/v1/news`, fetched from the browser with React Query. The request
 names everything it wants - `kind=change` (`announcement,change` when announcements are on), `for=`
 the tier, `channel=alpha` when the codeline asks for previews - and gets nothing else. Pages are cut
-on whole days; the server's `more` cursor fetches older ones ("Load older"). URLs are canonical, so
+on whole days; the server's `more` cursor fetches older ones ("Show earlier days"). URLs are canonical, so
 every client with the same audience shares the CDN entries; a page is about 1-3 KB compressed.
 Nothing per-user goes to the server; "new since" is derived on the client. Indicators fetch when
 the app is idle after boot; an open surface fetches immediately. The wire contract is authoritative
@@ -64,7 +64,7 @@ plus its item count, so a same-day addition re-flags that day. Announcements are
 first-load day; older ones count as seen. The first load marks everything seen, so new users start
 with nothing flagged. The index only advances, so two copies merge without conflicts
 (`newsSeenMerge`, the contract for a future account sync). `newsChangelogSplit` gives every caller
-the same `{ fresh, seen, count, more }`; `more` marks the count as a floor ("20+").
+the same `{ fresh, seen, count, more }`; `more` marks the count as a floor ("10+").
 
 **Build window.** News dated after this build plus `buildGraceDays` is not in this build. It is
 listed apart - a folded neutral band on top of the changelog with the codeline's after-build hint -
@@ -72,14 +72,17 @@ and never badged or counted as new. The watermark advances only over what the bu
 an update those days count as new. Once the build is `buildBehindNudgeDays` old, the empty-chat
 line says how far behind it is.
 
-**What's New.** A dated ledger: sticky month headers, the day number in a narrow column, bulleted
-items with **bold** runs in the primary text color, a hairline between days. An item with `docs`
+**What's New.** A dated ledger in the big-agi.com/changes style: the date ("Oct 24") in a narrow
+column, items behind a dash with wrapped lines hanging, **bold** runs on the accent marker (`accent.solidBg`),
+a year header for past years, no rules between days. Pages are 10 items, whole days. The dialog sits on
+`level1` under a plain "What's new" title, the content one surface higher (`popup`) edge to edge;
+its menu and panel entries carry no icon. An item with `docs`
 ends with a "Docs" link that opens the reader at that page. The hub is one pane until there are
 announcements, then two, in the Preferences shape. On open the hub snapshots the watermark and
 renders against it; the changelog counts as seen as soon as it loads, so the indicators clear on
 open while the view stays put. The new count is a chip in the title; new days come first, seen days
 fold behind "Show N earlier days"; expanded, an "Already seen" divider marks the watermark, and
-"Load older" fetches the next page. The scroll pane takes the initial focus.
+"Show earlier days" fetches the next page. The scroll pane takes the initial focus.
 
 **Dev rewind.** In development builds the hub's title carries `-1d`, `-7d` and `-30d` chips:
 `newsSeenRewind(n)` moves the index back n days (changelog `{ day: today - n, count: 0 }`, the same
@@ -87,29 +90,32 @@ announcements day, no opened ids) and closes the hub, so every indicator shows i
 
 **Docs reader.** The Preferences two-pane shape. Left: a search field, then the contents tree of
 the static docs index (`/docs/index.json`, nav order), shaped as the big-agi.com docs sidebar and
-showing only the active branch: every section header; pages by their nav `label` only in the
+showing only the active branch: a Docs row (house icon) that opens the home, every section header; pages by their nav `label` only in the
 section selected or holding the current page; `indent` pages one level in, only while their parent
-or one of them is current; the `setMember` pages folded under one "N providers" row that opens while
-it holds the current page; a "new" chip on `new` pages; the current page selected. A header opens
+or one of them is current; the `setMember` pages under one "N providers" row, open unless folded by
+hand; a "new" chip on `new` pages; the current page selected. A header opens
 its `lead` page, not repeated as a row; without a lead it opens the section index.
 ArrowUp/ArrowDown move through the visible rows, Enter opens. The nav fields are optional: without
-them the tree is flat, by title. Home lists the sections with an outline of their pages. Every view sits in one 70ch column. A
-section lists its pages, names in the link color, with two-line summaries and a Free or Pro chip;
-`provider` pages list under "AI services" as a grid. Lists and breadcrumbs name a page by its
+them the tree is flat, by title. Home is a soft block per section, as on big-agi.com/docs: the title, the lead page's summary, the
+first two pages plus any new ones as accent links (a lone remainder joins them), the rest as "+N more";
+Start Here is tinted accent. Every view sits in one 70ch column. A
+section index is a soft block per page (title, two-line summary, new and Free/Pro chips), then its
+`provider` pages under "AI services" as a grid of soft tiles in the accent color. Lists and breadcrumbs name a page by its
 label; the page view keeps the full title. Search filters on every keystroke: words AND-matched over
-label and title, answers, summary and slug, ranked label and title > answer > summary; each result shows its section inline
-and the best-matching question with the hits in bold; while the field has focus the first result is
+label and title, answers, summary and slug, ranked label and title > answer > summary; each result reads Section > Page
+and shows the best-matching question with the hits in bold; while the field has focus the first result is
 marked as the Enter target. `/` focuses search, ArrowDown enters the results (the tree when the field is empty), Enter opens the first,
-Esc clears the field before it closes the modal. A page is its markdown twin: the title one step
-above the body's headings, summary as the lead, tier and update day from the index, then the app's
-markdown renderer at the chat text size (`contentScaling`). Links between docs pages navigate in place;
-the title is back, forward, then breadcrumbs (Documentation > Section > Page); Alt+Left/Right go
+Esc clears the field before it closes the modal. A page is its markdown twin: the title (`h3`) one step
+above the body's headings with the new and tier chips beside it, the summary as a lead at body size,
+a faint rule, the body in the app's markdown renderer at the chat text size (`contentScaling`), and the
+update day at the foot. Links between docs pages navigate in place;
+the title is back, forward, then breadcrumbs (Documentation > Section > Page, the root a house icon below the home); Alt+Left/Right go
 back and forward. A loading page keeps the previous view up under a progress bar. If the index
 fails, a button opens `start-here`. Mobile is fullscreen, with search and a page picker (pages grouped by section) stacked.
 
 **Entry points.** `WhatsNewIndicators.tsx` holds them as self-contained components, so each
-codeline places one with one line: the nav dot (neutral for the changelog, accent for
-announcements), the What's New and Documentation menu items, the side panel rows, and the empty-chat
+codeline places one with one line: the nav dot (accent, unseen announcements only: the changelog is
+passive), the What's New and Documentation menu items (no counts), the side panel rows, and the empty-chat
 line - headlines from the new lines' **bold** runs ("New: Haiku 5.5, Claude Code, +3"), or the
 count, per `NewsConfig.emptyChatLine`. The panel shows the What's New row on desktop only while
 something is new; on mobile, where the panel holds the only entry points, it always shows What's New

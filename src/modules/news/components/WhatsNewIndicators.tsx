@@ -3,7 +3,6 @@ import * as React from 'react';
 import { Badge, Box, Chip, Link, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
 import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
 import LaunchIcon from '@mui/icons-material/Launch';
-import NewReleasesOutlinedIcon from '@mui/icons-material/NewReleasesOutlined';
 
 import { BaseProduct } from '~/common/app.release';
 import { OptimaPanelGroupedList } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
@@ -50,40 +49,34 @@ export function NewsModals() {
 
 
 function NewCount(props: { changelog: number, changelogMore: boolean, announcements: number }) {
-  return props.announcements > 0 ? <Chip size='sm' color='primary' variant='solid'>{newsFormatCount(props.announcements)}</Chip>
+  return props.announcements > 0 ? <Chip size='sm' color='accent' variant='solid'>{newsFormatCount(props.announcements)}</Chip>
     : props.changelog > 0 ? <Typography level='body-xs'>{newsFormatCount(props.changelog, props.changelogMore)} new</Typography>
       : null;
 }
 
 
-/** Dot over a nav icon while anything is new: neutral for the changelog, accent for announcements */
+/** Accent dot over a nav icon while an announcement is unseen; the changelog is passive and never dots */
 export function WhatsNewNavDot(props: { children: React.ReactElement }) {
-  const { changelogNewCount, announcementsNewCount } = useNews(false);
-  if (!NewsConfig.indicatorNavDot || (!changelogNewCount && !announcementsNewCount))
+  const { announcementsNewCount } = useNews(false);
+  if (!NewsConfig.indicatorNavDot || !announcementsNewCount)
     return props.children;
   return (
-    <Badge
-      size='sm'
-      color={announcementsNewCount ? 'primary' : 'neutral'}
-      variant={announcementsNewCount ? 'solid' : 'soft'}
-      badgeInset='14%'
-    >
+    <Badge size='sm' color='accent' variant='solid' badgeInset='14%'>
       {props.children}
     </Badge>
   );
 }
 
 
-/** "What's New" menu item, with the count of new changes; hidden when the operator turned the feeds off */
+/** "What's New" menu item; hidden when the operator turned the feeds off */
 export function WhatsNewMenuItem() {
-  const { off, changelogNewCount, changelogNewMore, announcementsNewCount } = useNews(false);
+  const { off } = useNews(false);
   if (off)
     return null;
   return (
     <MenuItem onClick={newsOpenWhatsNew}>
-      <ListItemDecorator><NewReleasesOutlinedIcon /></ListItemDecorator>
+      <ListItemDecorator />
       <ListItemContent>What&apos;s New</ListItemContent>
-      <NewCount changelog={changelogNewCount} changelogMore={changelogNewMore} announcements={announcementsNewCount} />
     </MenuItem>
   );
 }
@@ -136,7 +129,7 @@ export function WhatsNewPanelRow() {
       {!off && (
         <ListItem>
           <ListItemButton onClick={handleOpenWhatsNew}>
-            <ListItemDecorator><NewReleasesOutlinedIcon /></ListItemDecorator>
+            <ListItemDecorator />
             <ListItemContent>What&apos;s New</ListItemContent>
             <NewCount changelog={changelogNewCount} changelogMore={changelogNewMore} announcements={announcementsNewCount} />
           </ListItemButton>

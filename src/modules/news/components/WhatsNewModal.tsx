@@ -7,7 +7,6 @@ import CircleIcon from '@mui/icons-material/Circle';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LaunchIcon from '@mui/icons-material/Launch';
-import NewReleasesOutlinedIcon from '@mui/icons-material/NewReleasesOutlined';
 
 import type { SiteDocSlug } from '~/common/gen/com.site.docs.slug';
 import { BaseProduct, Release } from '~/common/app.release';
@@ -18,29 +17,32 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 import type { NewsAnnouncement, NewsChangelogGroup } from '../news.feed';
 import { NewsPlatform } from '../news.platform';
 import { newsAnnouncementIsUnseen, newsChangelogSplit, newsSeenRewind, useNewsSeenStore } from '../store-news-seen';
-import { newsBuildDay, newsCloseWhatsNew, newsFormatChanges, newsFormatCount, newsFormatDay, newsFormatMonth, newsOpenDocs, useNews } from '../useNews';
+import { newsBuildDay, newsCloseWhatsNew, newsFormatChanges, newsFormatCount, newsFormatDay, newsOpenDocs, useNews } from '../useNews';
 
 
 const _styles = {
 
-  // desktop, changelog only: one pane, no inset card
+  // the dialog sits on level1; the content is one surface higher (popup) and scrolls
+
+  // desktop, changelog only: the dialog at its default size, the content edge to edge
   modalOnePane: {
-    width: 'min(680px, 94vw)',
-    minWidth: 'min(680px, 94vw)',
-    maxWidth: 'min(680px, 94vw)',
+    backgroundColor: 'background.level1',
   },
   pane: {
     mx: 'calc(-1 * var(--Card-padding))',
     px: 'var(--Card-padding)',
+    py: 1,
     minHeight: 'max(420px, 40svh)',
     maxHeight: 'min(72svh, 760px)',
     overflowY: 'auto',
     outline: 'none',
+    backgroundColor: 'background.popup',
+    borderRadius: 'lg',
+    boxShadow: 'md',
   },
 
-  // desktop, with announcements: the Preferences two-pane shape
+  // desktop, with announcements: the nav list, then the card running to the right edge
   modalTwoPane: {
-    boxShadow: 'none',
     backgroundColor: 'background.level1',
     width: 'min(780px, 94vw)',
     maxWidth: 'min(780px, 94vw)',
@@ -69,7 +71,7 @@ const _styles = {
     },
   },
   paneCard: {
-    backgroundColor: 'background.surface',
+    backgroundColor: 'background.popup',
     borderRadius: 'lg',
     borderTopRightRadius: 0,
     borderBottomRightRadius: 0,
@@ -83,8 +85,9 @@ const _styles = {
     zIndex: 1,
   },
 
-  // mobile: fullscreen, the pane scrolls
+  // mobile: fullscreen, the content fills
   modalMobile: {
+    backgroundColor: 'background.level1',
     minHeight: 0,
   },
   paneMobile: {
@@ -94,37 +97,64 @@ const _styles = {
     mx: 'calc(-1 * var(--Card-padding))',
     px: 'var(--Card-padding)',
     outline: 'none',
+    backgroundColor: 'background.popup',
+    boxShadow: 'xs',
   },
 
-  // the ledger: months, then days, then items
+  // **bold** runs: the accent marker, as on big-agi.com/changes
+  marked: {
+    '& strong': {
+      backgroundColor: 'accent.solidBg',
+      color: 'accent.solidColor',
+      fontWeight: 'xl',
+      px: 0.5,
+      boxDecorationBreak: 'clone',
+      WebkitBoxDecorationBreak: 'clone',
+    },
+  },
+
+  // the ledger: the date in a narrow column, then the day's items as plain lines
   ledger: {
-    '--ListItem-paddingX': '0px',
-    '--ListItem-stickyBackground': 'var(--joy-palette-background-surface)',
-    flexGrow: 0,
+    py: 0.5,
+  },
+  year: {
+    '--Divider-childPosition': '0%',
+    mt: 2,
+    mb: 1,
+    fontSize: 'md',
+    fontWeight: 'xl',
+    color: 'text.primary',
   },
   day: {
-    alignItems: 'flex-start',
-    gap: 1.5,
-    py: 1,
+    display: 'grid',
+    gridTemplateColumns: '3.75rem minmax(0, 1fr)',
+    columnGap: 2,
+    py: 1.25,
+    fontSize: 'sm',
+    lineHeight: 1.5,
   },
-  dayNumber: {
-    flex: '0 0 2.5rem',
-    pt: '0.125rem', // the first item's line
-    lineHeight: 'md',
+  dayDate: {
+    fontSize: 'inherit',
+    lineHeight: 'inherit',
     fontWeight: 'lg',
-    fontVariantNumeric: 'tabular-nums',
     color: 'text.tertiary',
+    whiteSpace: 'nowrap',
   },
   dayItems: {
-    flex: 1,
-    minWidth: 0,
-    '--ListItem-minHeight': '0px',
-    '--ListItem-paddingY': '0.125rem',
-    lineHeight: 'md',
-    color: 'text.secondary',
-    '& strong': {
-      color: 'text.primary',
-      fontWeight: 'lg',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 0.75,
+    color: 'text.primary',
+    // each item behind a dash, wrapped lines hanging under the text
+    '& > div': {
+      position: 'relative',
+      pl: '1em',
+    },
+    '& > div::before': {
+      content: '"-"',
+      position: 'absolute',
+      left: 0,
+      color: 'text.tertiary',
     },
   },
   seenDivider: {
@@ -178,7 +208,7 @@ function _renderInline(text: string): React.ReactNode {
 /** A body: `\n\n`-separated paragraphs; a paragraph whose lines are all list lines renders as a list */
 function NewsBody(props: { body: string }) {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, ..._styles.marked }}>
       {props.body.split('\n\n').map((paragraph, i) => {
         const lines = paragraph.split('\n');
         if (lines.every(line => _LIST_LINE_PATTERN.test(line)))
@@ -196,36 +226,18 @@ function NewsBody(props: { body: string }) {
 
 /// Changelog
 
-interface LedgerMonth {
-  label: string;
-  start: number; // index of its first day in the ledger
-  days: NewsChangelogGroup[];
-}
-
-function _ledgerMonths(days: NewsChangelogGroup[]): LedgerMonth[] {
-  const months: (LedgerMonth & { key: string })[] = [];
-  days.forEach((day, idx) => {
-    const key = day.date.slice(0, 7);
-    const last = months[months.length - 1];
-    if (last?.key === key) last.days.push(day);
-    else months.push({ key, label: newsFormatMonth(key), start: idx, days: [day] });
-  });
-  return months;
-}
-
-
 function ChangelogDay(props: { day: NewsChangelogGroup }) {
   const { day } = props;
   return (
-    <ListItem sx={_styles.day}>
-      <Typography component='time' dateTime={day.date} level='body-sm' sx={_styles.dayNumber}>
-        {parseInt(day.date.slice(8, 10), 10) || ''}
+    <Box sx={_styles.day}>
+      <Typography component='time' dateTime={day.date} sx={_styles.dayDate}>
+        {newsFormatDay(day.date)}
       </Typography>
-      <List size='sm' marker='disc' sx={_styles.dayItems}>
+      <Box sx={_styles.dayItems}>
         {day.items.map(item => {
           const docsSlug = item.docs?.[0];
           return (
-            <ListItem key={item.id}>
+            <div key={item.id}>
               {_renderInline(item.text)}
               {!!docsSlug && (
                 // the feed lists the website's slugs: the same set SiteDocSlug is generated from
@@ -233,39 +245,32 @@ function ChangelogDay(props: { day: NewsChangelogGroup }) {
                   Docs
                 </Link>
               )}
-            </ListItem>
+            </div>
           );
         })}
-      </List>
-    </ListItem>
+      </Box>
+    </Box>
   );
 }
 
 
-/** Days under month headers, a hairline between days; `seenFrom` is the first already-seen day */
-function ChangelogLedger(props: { days: NewsChangelogGroup[], seenFrom?: number, sticky?: boolean }) {
-  const { days, seenFrom = -1, sticky = false } = props;
-  const months = React.useMemo(() => _ledgerMonths(days), [days]);
-  const seenDivider = <Divider component='li' sx={_styles.seenDivider}>Already seen</Divider>;
+/** Days, newest first, with a year header for past years; `seenFrom` is the first already-seen day */
+function ChangelogLedger(props: { days: NewsChangelogGroup[], seenFrom?: number }) {
+  const { days, seenFrom = -1 } = props;
+  const thisYear = String(new Date().getFullYear());
   return (
-    <List size='sm' sx={_styles.ledger}>
-      {months.map(month => (
-        <React.Fragment key={month.start}>
-          {month.start === seenFrom && seenDivider}
-          <ListItem nested>
-            {!!month.label && <ListSubheader sticky={sticky}>{month.label}</ListSubheader>}
-            <List>
-              {month.days.map((day, idx) => (
-                <React.Fragment key={day.date || idx}>
-                  {idx > 0 && (month.start + idx === seenFrom ? seenDivider : <ListDivider />)}
-                  <ChangelogDay day={day} />
-                </React.Fragment>
-              ))}
-            </List>
-          </ListItem>
-        </React.Fragment>
-      ))}
-    </List>
+    <Box sx={{ ..._styles.ledger, ..._styles.marked }}>
+      {days.map((day, idx) => {
+        const year = day.date.slice(0, 4);
+        return (
+          <React.Fragment key={day.date || idx}>
+            {idx === seenFrom && <Divider sx={_styles.seenDivider}>Already seen</Divider>}
+            {!!year && year !== thisYear && year !== days[idx - 1]?.date.slice(0, 4) && <Divider sx={_styles.year}>{year}</Divider>}
+            <ChangelogDay day={day} />
+          </React.Fragment>
+        );
+      })}
+    </Box>
   );
 }
 
@@ -328,18 +333,18 @@ function ChangelogPane(props: {
       </Alert>
     )}
 
-    <ChangelogLedger days={days} seenFrom={seenFrom} sticky />
+    <ChangelogLedger days={days} seenFrom={seenFrom} />
 
     {collapsed && seen.length > 0 ? (
       <Box sx={_styles.buttons}>
-        <Button variant='soft' color='neutral' endDecorator={<ExpandMoreIcon />} onClick={() => setShowSeen(true)}>
+        <Button variant='plain' color='neutral' endDecorator={<ExpandMoreIcon />} onClick={() => setShowSeen(true)}>
           Show {seen.length} earlier {seen.length === 1 ? 'day' : 'days'}
         </Button>
       </Box>
     ) : props.hasOlder && (
       <Box sx={_styles.buttons}>
-        <Button variant='soft' color='neutral' loading={props.loadingOlder} onClick={() => props.onLoadOlder()}>
-          Load older
+        <Button variant='plain' color='neutral' loading={props.loadingOlder} onClick={() => props.onLoadOlder()}>
+          Show earlier days
         </Button>
       </Box>
     )}
@@ -482,14 +487,14 @@ export function WhatsNewModal() {
       open
       onClose={newsCloseWhatsNew}
       title={<>
-        What&apos;s New
+        What&apos;s new
         {changelogSplit.count > 0 && (
           <Chip size='sm' variant='soft' color='neutral' sx={{ ml: 1 }}>
             {newsFormatCount(changelogSplit.count, changelogSplit.more)} new
           </Chip>
         )}
       </>}
-      titleStartDecorator={<NewReleasesOutlinedIcon />}
+      strongerTitle
       titleEndDecorator={Release.IsNodeDevBuild && (
         <Box sx={{ display: 'flex', gap: 0.5 }}>
           {_DEV_REWIND_DAYS.map(days => (
@@ -503,11 +508,11 @@ export function WhatsNewModal() {
       unfilterBackdrop
       startButton={
         <Box sx={_styles.footer}>
-          <Button variant='plain' color='neutral' startDecorator={<AutoStoriesOutlinedIcon />} onClick={handleOpenDocs}>
+          <Button variant='soft' color='neutral' startDecorator={<AutoStoriesOutlinedIcon />} onClick={handleOpenDocs}>
             Documentation
           </Button>
           {!isMobile && (
-            <Button variant='plain' color='neutral' endDecorator={<LaunchIcon />} component='a' href={BaseProduct.NewsSite} target='_blank' rel='noopener'>
+            <Button variant='soft' color='neutral' endDecorator={<LaunchIcon />} component='a' href={BaseProduct.NewsSite} target='_blank' rel='noopener'>
               Full changelog
             </Button>
           )}
