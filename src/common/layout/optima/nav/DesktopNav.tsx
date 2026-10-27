@@ -2,7 +2,7 @@ import * as React from 'react';
 import Router from 'next/router';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Divider, Dropdown, FormHelperText, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
+import { Divider, Dropdown, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
 import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
 import HistoryIcon from '@mui/icons-material/History';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
@@ -14,7 +14,6 @@ import { DocsMenuItem, WhatsNewMenuItem, WhatsNewNavDot } from '~/modules/news/c
 
 import { BuildInfoCard } from '../../../../apps/news/AppNews';
 
-import { BaseProduct } from '~/common/app.release';
 import { BigAgiSquircleIcon } from '~/common/components/icons/big-agi/BigAgiSquircleIcon';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { PhSquaresFour } from '~/common/components/icons/phosphor/PhSquaresFour';
@@ -189,14 +188,6 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
               Support
             </Typography>
           </ListItem>
-          <MenuItem component='a' href={BaseProduct.SupportForm()} target='_blank'>
-            <ListItemDecorator>🔥</ListItemDecorator>
-            <div>
-              Improve Big-AGI
-              <FormHelperText>AI fixes what you report</FormHelperText>
-            </div>
-            <ArrowOutwardRoundedIcon sx={{ ml: 'auto' }} />
-          </MenuItem>
           <WhatsNewMenuItem />
           <DocsMenuItem />
           <MenuItem onClick={handleShowTechnologies}>
