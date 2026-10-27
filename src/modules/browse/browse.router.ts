@@ -14,6 +14,7 @@ import { workerPuppeteerDownloadFileOrThrow } from './browse.files';
 // configuration
 const DISABLE_FILE_DOWNLOADS = true;
 const WORKER_TIMEOUT = 20 * 1000; // 20 seconds
+const NEAR_EMPTY_TEXT_CHARS = 200; // less visible text after navigation: a bot challenge or an unrendered app shell
 const SCREENSHOT_TIMEOUT = 8 * 1000; // 8 seconds - a thumbnail is never worth the full protocol ceiling (WORKER_TIMEOUT + 2s)
 const MAX_REQUESTS_PER_CALL = 4; // the client sends 1
 const SCREENSHOT_MIN_SIDE = 16;
@@ -190,6 +191,7 @@ async function workerPuppeteer(
   page.setDefaultNavigationTimeout(WORKER_TIMEOUT);
 
   // open url
+  const navigationStart = Date.now();
   try {
     const response = await page.goto(targetUrl, {
       waitUntil: 'networkidle0', // Wait until network is idle
@@ -234,6 +236,19 @@ async function workerPuppeteer(
     if (!isTimeout) {
       result.error = '[Puppeteer] ' + (error?.message || error?.toString() || 'Unknown navigation error');
     }
+  }
+
+  // a near-empty page is a bot challenge or an unrendered app shell: wait for it to fill in (a challenge redirects to the real page),
+  // within what is left of the navigation budget, so the worker's worst case stays WORKER_TIMEOUT + SCREENSHOT_TIMEOUT
+  const budgetLeft = WORKER_TIMEOUT - (Date.now() - navigationStart);
+  if (result.stopReason !== 'error' && !result.file && budgetLeft > 0) {
+    const visibleTextLength = await page.evaluate(() => (document.body?.innerText || '').trim().length).catch(() => 0);
+    if (visibleTextLength < NEAR_EMPTY_TEXT_CHARS)
+      await page.waitForFunction(
+        (minChars: number) => (document.body?.innerText || '').trim().length >= minChars,
+        { timeout: budgetLeft, polling: 250 },
+        NEAR_EMPTY_TEXT_CHARS,
+      ).catch(() => { /* still empty: extract what is there */ });
   }
 
   // Get the page title after successful navigation
