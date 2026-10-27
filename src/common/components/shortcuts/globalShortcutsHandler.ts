@@ -13,8 +13,8 @@ export function ensureGlobalShortcutHandler() {
 
 function _handleGlobalShortcutKeyDown(event: KeyboardEvent) {
 
-  // Quicker-out: if the key is null, stop here
-  if (!event.key)
+  // Leave handled keys and IME composition to the focused control.
+  if (event.defaultPrevented || event.isComposing || !event.key)
     return;
 
   // Quick-out: either the key is escape/left/right, or we have a modifier key pressed -- otherwise we exit
