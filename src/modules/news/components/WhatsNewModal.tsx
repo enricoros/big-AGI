@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { Alert, Box, Button, Chip, Divider, Link, List, ListDivider, ListItem, ListItemButton, ListItemContent, ListItemDecorator, ListSubheader, Option, Select, Typography } from '@mui/joy';
-import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
 import CircleIcon from '@mui/icons-material/Circle';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -12,6 +11,7 @@ import type { SiteDocSlug } from '~/common/gen/com.site.docs.slug';
 import { BaseProduct, Release } from '~/common/app.release';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { LiteVideoEmbed } from '~/common/components/LiteVideoEmbed';
+import { PhBookOpenText } from '~/common/components/icons/phosphor/PhBookOpenText';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import type { NewsAnnouncement, NewsChangelogGroup } from '../news.feed';
@@ -508,7 +508,7 @@ export function WhatsNewModal() {
       unfilterBackdrop
       startButton={
         <Box sx={_styles.footer}>
-          <Button variant='soft' color='neutral' startDecorator={<AutoStoriesOutlinedIcon />} onClick={handleOpenDocs}>
+          <Button variant='soft' color='neutral' startDecorator={<PhBookOpenText />} onClick={handleOpenDocs}>
             Documentation
           </Button>
           {!isMobile && (

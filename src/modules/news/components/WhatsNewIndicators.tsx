@@ -1,10 +1,10 @@
 import * as React from 'react';
 
 import { Badge, Box, Chip, Link, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
-import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
 import LaunchIcon from '@mui/icons-material/Launch';
 
 import { BaseProduct } from '~/common/app.release';
+import { PhBookOpenText } from '~/common/components/icons/phosphor/PhBookOpenText';
 import { OptimaPanelGroupedList } from '~/common/layout/optima/panel/OptimaPanelGroupedList';
 import { optimaClosePanel } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
@@ -87,13 +87,13 @@ export function DocsMenuItem() {
   const { off } = useNewsAudience();
   return off ? (
     <MenuItem component='a' href={BaseProduct.DocsBaseSite} target='_blank' rel='noopener'>
-      <ListItemDecorator><AutoStoriesOutlinedIcon /></ListItemDecorator>
+      <ListItemDecorator><PhBookOpenText /></ListItemDecorator>
       Documentation
       <LaunchIcon sx={{ ml: 'auto', fontSize: 16, opacity: 0.7 }} />
     </MenuItem>
   ) : (
     <MenuItem onClick={() => newsOpenDocs()}>
-      <ListItemDecorator><AutoStoriesOutlinedIcon /></ListItemDecorator>
+      <ListItemDecorator><PhBookOpenText /></ListItemDecorator>
       Documentation
     </MenuItem>
   );
@@ -140,13 +140,13 @@ export function WhatsNewPanelRow() {
         <ListItem>
           {off ? (
             <ListItemButton component='a' href={BaseProduct.DocsBaseSite} target='_blank' rel='noopener'>
-              <ListItemDecorator><AutoStoriesOutlinedIcon /></ListItemDecorator>
+              <ListItemDecorator><PhBookOpenText /></ListItemDecorator>
               <ListItemContent>Documentation</ListItemContent>
               <LaunchIcon sx={{ fontSize: 16, opacity: 0.7 }} />
             </ListItemButton>
           ) : (
             <ListItemButton onClick={handleOpenDocs}>
-              <ListItemDecorator><AutoStoriesOutlinedIcon /></ListItemDecorator>
+              <ListItemDecorator><PhBookOpenText /></ListItemDecorator>
               <ListItemContent>Documentation</ListItemContent>
             </ListItemButton>
           )}

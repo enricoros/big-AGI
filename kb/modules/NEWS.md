@@ -123,6 +123,8 @@ and Documentation. `NewsModals` mounts both lazy modals once with the app modals
 is one small store (`newsOpenWhatsNew`, `newsOpenDocs`). It also routes a plain click on any
 big-agi.com/docs link in the app (`ExternalDocsLink`, raw `DocsBaseSite` links, links in chat) to
 the reader at the slug and #anchor, with one document listener; modified clicks keep the browser.
+Every docs entry and link carries the same icon, `PhBookOpenText` (Phosphor); an outward arrow marks
+only links that leave the app.
 
 **Remote-feeds switch.** `NEXT_PUBLIC_BIG_AGI_REMOTE_FEEDS=off`, set at build time, stops every
 request the app makes to big-agi.com on its own: no indicators, What's New hidden, Documentation

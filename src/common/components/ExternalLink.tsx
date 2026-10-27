@@ -1,10 +1,10 @@
 import * as React from 'react';
 
 import type { ColorPaletteProp, SxProps, TypographySystem } from '@mui/joy/styles/types';
-import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined';
 import LaunchIcon from '@mui/icons-material/Launch';
 
 import { Link } from './Link';
+import { PhBookOpenText } from './icons/phosphor/PhBookOpenText';
 
 
 const wowStyle: SxProps = {
@@ -28,7 +28,7 @@ export function ExternalLink(props: {
   return (
     <Link level={props.level} color={props.color} href={props.href} target='_blank' sx={props.highlight ? wowStyle : undefined}>
       {props.children} {(props.icon === 'issue' || props.icon === 'public-docs')
-      ? <AutoStoriesOutlinedIcon sx={{ mx: 0.5, fontSize: 16 }} />
+      ? <PhBookOpenText sx={{ mx: 0.5, fontSize: 16 }} />
       : <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
     }
     </Link>

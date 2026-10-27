@@ -4,7 +4,6 @@ import { useShallow } from 'zustand/react/shallow';
 import { Box, Button, Checkbox, CircularProgress, Divider, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Typography } from '@mui/joy';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import HistoryIcon from '@mui/icons-material/History';
-import LaunchIcon from '@mui/icons-material/Launch';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import RestoreIcon from '@mui/icons-material/Restore';
@@ -18,6 +17,7 @@ import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
 import { BaseProduct } from '~/common/app.release';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { GoodModal } from '~/common/components/modals/GoodModal';
+import { PhBookOpenText } from '~/common/components/icons/phosphor/PhBookOpenText';
 import { PhGift } from '~/common/components/icons/phosphor/PhGift';
 import { SubMenuHost, SubMenuItem, useSubMenuHost } from '~/common/components/SubMenu';
 import { isLLMChatFree_cached } from '~/common/stores/llms/llms.pricing';
@@ -345,10 +345,8 @@ export function ModelsConfiguratorModal(props: {
                 {/* Vendor Setup Guide (big-agi.com/docs) */}
                 {!!activeServiceDocsUrl && (
                   <MenuItem component='a' href={activeServiceDocsUrl} target='_blank'>
-                    {/*<ListItemDecorator><HelpOutlineRoundedIcon /></ListItemDecorator>*/}
-                    <ListItemDecorator />
+                    <ListItemDecorator><PhBookOpenText /></ListItemDecorator>
                     {activeService?.label ?? 'Service'} setup guide
-                    <LaunchIcon sx={{ ml: 'auto', fontSize: 16, opacity: 0.7 }} />
                   </MenuItem>
                 )}
 
