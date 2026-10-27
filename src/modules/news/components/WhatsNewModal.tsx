@@ -15,9 +15,9 @@ import { PhBookOpenText } from '~/common/components/icons/phosphor/PhBookOpenTex
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import type { NewsAnnouncement, NewsChangelogGroup } from '../news.feed';
-import { NewsPlatform } from '../news.platform';
+import { useNewsAfterBuild } from '../news.platform';
 import { newsAnnouncementIsUnseen, newsChangelogSplit, newsSeenRewind, useNewsSeenStore } from '../store-news-seen';
-import { newsBuildDay, newsCloseWhatsNew, newsFormatChanges, newsFormatCount, newsFormatDay, newsOpenDocs, useNews } from '../useNews';
+import { newsBuildDay, newsCloseWhatsNew, newsFormatChanges, newsFormatDay, newsOpenDocs, useNews } from '../useNews';
 
 
 const _styles = {
@@ -135,16 +135,13 @@ const _styles = {
   },
   dayDate: {
     fontSize: 'inherit',
-    lineHeight: 'inherit',
     fontWeight: 'lg',
-    color: 'text.tertiary',
     whiteSpace: 'nowrap',
   },
   dayItems: {
     display: 'flex',
     flexDirection: 'column',
     gap: 0.75,
-    color: 'text.primary',
     // each item behind a dash, wrapped lines hanging under the text
     '& > div': {
       position: 'relative',
@@ -299,7 +296,8 @@ function ChangelogPane(props: {
   const collapsed = fresh.length > 0 && !showSeen;
   const days = React.useMemo(() => collapsed ? fresh : [...fresh, ...seen], [collapsed, fresh, seen]);
   const seenFrom = !collapsed && fresh.length > 0 && seen.length > 0 ? fresh.length : -1;
-  const afterBuildCount = props.afterBuild.reduce((sum, group) => sum + group.items.length, 0);
+  const afterBuild = useNewsAfterBuild();
+  const afterBuildCount = !afterBuild.band ? 0 : props.afterBuild.reduce((sum, group) => sum + group.items.length, 0);
   const buildDay = newsBuildDay();
 
 
@@ -327,7 +325,8 @@ function ChangelogPane(props: {
           <Typography level='title-sm'>
             {newsFormatChanges(afterBuildCount)} since this build{buildDay && ` (${newsFormatDay(buildDay)})`}
           </Typography>
-          <Typography level='body-xs'>{NewsPlatform.afterBuildHint}</Typography>
+          {!!afterBuild.hint && <Typography level='body-xs'>{afterBuild.hint}</Typography>}
+          {!!afterBuild.action && <Button size='sm' variant='soft' color='neutral' onClick={afterBuild.action.onClick} sx={{ mt: 1 }}>{afterBuild.action.label}</Button>}
           {showAfterBuild && <ChangelogLedger days={props.afterBuild} />}
         </Box>
       </Alert>
@@ -463,7 +462,7 @@ export function WhatsNewModal() {
           <Typography level='inherit' noWrap fontWeight={unseen ? 'lg' : undefined}>{label}</Typography>
         </ListItemContent>
         {unseen && <ListItemDecorator sx={{ minInlineSize: 0 }}><CircleIcon color='primary' sx={{ fontSize: 8 }} /></ListItemDecorator>}
-        {newCount > 0 && <Typography level='body-xs'>{newsFormatCount(newCount, newMore)} new</Typography>}
+        {newCount > 0 && !newMore && <Typography level='body-xs'>{newCount} new</Typography>}
       </ListItemButton>
     </ListItem>
   );
@@ -488,9 +487,9 @@ export function WhatsNewModal() {
       onClose={newsCloseWhatsNew}
       title={<>
         What&apos;s new
-        {changelogSplit.count > 0 && (
+        {changelogSplit.count > 0 && !changelogSplit.more && (
           <Chip size='sm' variant='soft' color='neutral' sx={{ ml: 1 }}>
-            {newsFormatCount(changelogSplit.count, changelogSplit.more)} new
+            {changelogSplit.count} new
           </Chip>
         )}
       </>}

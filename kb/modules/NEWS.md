@@ -50,7 +50,7 @@ link. Announcements call for attention; the changelog never does.
 names everything it wants - `kind=change` (`announcement,change` when announcements are on), `for=`
 the tier, `channel=alpha` when the codeline asks for previews - and gets nothing else. Pages are cut
 on whole days; the server's `more` cursor fetches older ones ("Show earlier days"). URLs are canonical, so
-every client with the same audience shares the CDN entries; a page is about 1-3 KB compressed.
+every client with the same audience shares the CDN entries; a page is a few KB compressed.
 Nothing per-user goes to the server; "new since" is derived on the client. Indicators fetch when
 the app is idle after boot; an open surface fetches immediately. The wire contract is authoritative
 in the website repo (`kb/feature-app-news-api.md`); the client Zod schema validates each item on its
@@ -66,18 +66,22 @@ open list plus its own.
 plus its item count, so a same-day addition re-flags that day. Announcements are an id set plus the
 first-load day; older ones count as seen. The first load marks everything seen, so new users start
 with nothing flagged. The index only advances, so two copies merge without conflicts
-(`newsSeenMerge`, the contract for a future account sync). `newsChangelogSplit` gives every caller
-the same `{ fresh, seen, count, more }`; `more` marks the count as a floor ("10+").
+(`newsSeenMerge`, the contract for a future account sync). Days are local calendar days (`newsLocalDay`),
+as the feed dates them and `newsFormatDay` reads them, never UTC. `newsChangelogSplit` gives every caller
+the same `{ fresh, seen, count, more }`; `more` marks the count as uncountable: the new items run past the loaded page. The "N new" labels and
+the hub's count chip are then skipped, and the empty-chat row says "Many changes since Sep 27".
 
 **Build window.** News dated after this build plus `buildGraceDays` is not in this build. It is
-listed apart - a folded neutral band on top of the changelog with the codeline's after-build hint -
+listed apart - a folded neutral band on top of the changelog with the policy's hint and action (below) -
 and never badged or counted as new. The watermark advances only over what the build has, so after
-an update those days count as new. Once the build is `buildBehindNudgeDays` old, the empty-chat
-line says how far behind it is.
+an update those days count as new. Once the build is `buildBehindNudgeDays` old and at least
+`buildBehindNudgeMinChanges` changes are past it, the empty-chat line says so, where the policy nudges.
+The date is the only signal on the open codeline, so it is tamed: days dated past tomorrow are dropped on
+the client (a mis-dated entry cannot tell every build it is behind), and one stray entry never nudges.
 
 **What's New.** A dated ledger in the big-agi.com/changes style: the date ("Oct 24") in a narrow
 column, items behind a dash with wrapped lines hanging, **bold** runs on the accent marker (`accent.solidBg`),
-a year header for past years, no rules between days. Pages are 10 items, whole days. The dialog sits on
+a year header for past years, no rules between days. Pages are 20 items, whole days. The dialog sits on
 `level1` under a plain "What's new" title, the content one surface higher (`popup`) edge to edge;
 its menu and panel entries carry no icon. An item with `docs`
 ends with a "Docs" link that opens the reader at that page. The hub is one pane until there are
@@ -121,10 +125,16 @@ big-agi.com." with Docs home (HTTP 404, not retried). Mobile is fullscreen, with
 **Entry points.** `WhatsNewIndicators.tsx` holds them as self-contained components, so each
 codeline places one with one line: the nav dot (accent, unseen announcements only: the changelog is
 passive), the What's New and Documentation menu items (no counts), the side panel rows, and the empty-chat
-line - headlines from the new lines' **bold** runs ("New: Haiku 5.5, Claude Code, +3"), or the
-count, per `NewsConfig.emptyChatLine`. The panel shows the What's New row on desktop only while
-something is new; on mobile, where the panel holds the only entry points, it always shows What's New
-and Documentation. `NewsModals` mounts both modals once with the app modals, imported statically (a lazy chunk that fails to load, offline or after a deploy, takes the app down); their open state
+line, one link to the hub ("See 8 changes since Oct 20"; "See what changed since Sep 27" when uncountable;
+"5 changes since this build · Pull and rebuild" where the policy nudges), body-xs tertiary,
+at the bottom of the chat area: a sibling of the box that holds the persona view, in the chat scroller's
+flex column, so it takes the last row at full width while the box grows (`flexGrow: 1`) and the view's own
+height (min-height 90%; 100% on the hosted codeline's single view) stays inside the box. The row
+is sticky, so it stays in view when the view overflows, and always rendered, blank until the feed loads,
+so the view never shifts as the text comes or goes. The panel
+shows the What's New row on desktop only while something is new, with no icon gap; on mobile, where
+the panel holds the only entry points, it always shows What's New and Documentation, aligned on the
+book icon. `NewsModals` mounts both modals once with the app modals, imported statically (a lazy chunk that fails to load, offline or after a deploy, takes the app down); their open state
 is one small store (`newsOpenWhatsNew`, `newsOpenDocs`). It also routes a plain click on any
 big-agi.com/docs link in the app (`ExternalDocsLink`, raw `DocsBaseSite` links, links in chat) to
 the reader at the slug and #anchor, with one document listener; modified clicks keep the browser.
@@ -137,10 +147,21 @@ opens in a browser tab. Default on everywhere, prebuilt Docker images included (
 off at runtime); the hosted codeline does not read it.
 
 **Codeline seam.** `news.platform.ts` is the one file that differs between codelines:
-`NewsPlatform.afterBuildHint` (the after-build message) and `useNewsAudience()`, which returns
-`{ off, tier, channel }`. Open builds: `off` from the remote-feeds switch, tier `open`, no channel,
-"Pull the latest image" on Docker, else "Update your deployment". The hosted codeline: never off,
-`free` or `pro` by plan, `alpha` on staging and for alpha users, "Reload to get them".
+`useNewsAudience()`, which returns `{ off, tier, channel }`, and `useNewsAfterBuild()`, the after-build
+policy `{ band, hint, action?, nudge }`: whether the hub lists the changes this build does not have,
+the line under that band, an optional button on it, and whether the empty-chat row nudges. Both are
+hooks so the hosted codeline can follow live state. Open builds: `off` from the remote-feeds switch,
+tier `open`, no channel; the policy follows `NEXT_PUBLIC_DEPLOYMENT_TYPE`:
+
+| Deployment | Band | Hint | Nudge |
+|---|---|---|---|
+| `docker` | yes | none: images are cut every few months, nothing to do yet | no |
+| `vercel-*` | yes | "Sync your fork to redeploy" | yes |
+| `local` (and unknown) | yes | "Pull and rebuild" | yes |
+
+The hosted codeline overrides the file: never off, `free` or `pro` by plan, `alpha` on staging and for
+alpha users; the band only while a newer server build is known, with its gated reload as the action, and
+no nudge (the update notice is the one reload prompt; never lose work).
 
 ## Inventory
 

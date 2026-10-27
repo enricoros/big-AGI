@@ -386,12 +386,13 @@ export function ChatMessageList(props: {
 
 
   if (!filteredMessages.length)
-    return (
-      <Box sx={{ ...props.sx }}>
+    return <>
+      <Box sx={props.sx}>
         <PersonaSelector conversationId={conversationId} isMobile={props.isMobile} runExample={handleRunExample} />
-        <WhatsNewEmptyChatLine />
       </Box>
-    );
+      {/* next to the growing box, in the scroller's column: at the bottom, full width */}
+      <WhatsNewEmptyChatLine />
+    </>;
 
   return <ERCDiffContextProvider title='Compare Outputs' isMobile={props.isMobile} contentScaling={contentScaling}>
 

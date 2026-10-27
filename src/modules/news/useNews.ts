@@ -6,9 +6,9 @@ import type { SiteDocSlug } from '~/common/gen/com.site.docs.slug';
 import { BaseProduct, Release } from '~/common/app.release';
 import { runWhenIdle } from '~/common/util/pwaUtils';
 
-import type { NewsAnnouncement, NewsChangeItem } from './news.feed';
+import type { NewsAnnouncement } from './news.feed';
 import { NewsConfig } from './news.config';
-import { newsAnnouncementIsUnseen, newsChangelogSplit, useNewsSeenStore } from './store-news-seen';
+import { newsAnnouncementIsUnseen, newsChangelogSplit, newsLocalDay, useNewsSeenStore } from './store-news-seen';
 import { newsGroupChanges, useNewsFeed } from './news.feed';
 import { useNewsAudience } from './news.platform';
 
@@ -85,7 +85,7 @@ export function newsBuildDay(): string | null {
 
 /** True once this build is old enough that the empty-chat line says so */
 export function newsBuildIsBehind(): boolean {
-  return !!_buildDay && _isoDayPlus(_buildDay, NewsConfig.buildBehindNudgeDays) <= new Date().toISOString().slice(0, 10);
+  return !!_buildDay && _isoDayPlus(_buildDay, NewsConfig.buildBehindNudgeDays) <= newsLocalDay();
 }
 
 function _isoDayPlus(isoDay: string, days: number): string {
@@ -127,10 +127,12 @@ export function useNews(immediate: boolean) {
     announcementIds: state.announcementIds,
   })));
 
-  // derived: changelog days, split by this build
+  // derived: changelog days, split by this build; days dated past tomorrow are dropped (a mis-dated
+  // entry would otherwise tell every build it is behind; the day of slack covers time zones)
   const { changelogGroups, changelogAfterBuild } = React.useMemo(() => {
     if (!items) return { changelogGroups: null, changelogAfterBuild: [] };
-    const groups = newsGroupChanges(items);
+    const tomorrow = _isoDayPlus(newsLocalDay(), 1);
+    const groups = newsGroupChanges(items).filter(group => group.date <= tomorrow);
     const cutoff = _buildCutoffDay;
     if (!cutoff) return { changelogGroups: groups, changelogAfterBuild: [] };
     return {
@@ -142,7 +144,7 @@ export function useNews(immediate: boolean) {
   // [effect] first load: everything this build has counts as seen
   React.useEffect(() => {
     if (changelogGroups)
-      useNewsSeenStore.getState().initSeen(changelogGroups, new Date().toISOString().slice(0, 10));
+      useNewsSeenStore.getState().initSeen(changelogGroups, newsLocalDay());
   }, [changelogGroups]);
 
   // derived: what is new against the live watermark
@@ -169,29 +171,13 @@ export function useNews(immediate: boolean) {
     changelogMark,            // the live watermark (the hub snapshots it on open, so marking seen doesn't reshuffle the view)
     changelogNewItems,        // changelog items new since the watermark - passive
     changelogNewCount,
-    changelogNewMore,         // more new items than loaded: show the count as a floor ('20+')
+    changelogNewMore,         // new items run past the loaded page: the count is uncountable ('many')
     changelogHasOlder: hasMore,
     changelogLoadOlder: loadMore,
     changelogLoadingOlder: isLoadingMore,
     announcements,            // null until loaded, or when announcements are off
     announcementsNewCount,    // announcements not opened yet - calls for attention
   };
-}
-
-
-/** Short headlines for new items: each line's first **bold** run, else its lead (up to ':', ' - ' or ',') */
-export function newsHeadlines(items: NewsChangeItem[], max: number): string[] {
-  const headlines: string[] = [];
-  for (const item of items) {
-    if (headlines.length >= max) break;
-    const bold = item.text.match(/\*\*([^*]+)\*\*/)?.[1];
-    const plain = item.text.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\*\*/g, '');
-    const lead = plain.split(/:\s| - |,\s/)[0].trim();
-    const headline = (bold ?? (lead.length <= 40 ? lead : lead.split(/\s+/).slice(0, 5).join(' '))).trim();
-    if (headline && !headlines.includes(headline))
-      headlines.push(headline);
-  }
-  return headlines;
 }
 
 
@@ -204,11 +190,7 @@ export function newsFormatDay(isoDay: string): string {
   return new Date(year, month - 1, day).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-/** '5', or '20+' when the count is a floor or over the cap */
-export function newsFormatCount(count: number, more: boolean = false): string {
-  return count > NewsConfig.indicatorMaxCount ? `${NewsConfig.indicatorMaxCount}+` : `${count}${more ? '+' : ''}`;
-}
-
+/** '23 changes', '1 change', or 'many changes' when the new items run past the loaded page: uncountable, never a floor */
 export function newsFormatChanges(count: number, more: boolean = false): string {
-  return `${newsFormatCount(count, more)} ${count === 1 && !more ? 'change' : 'changes'}`;
+  return more ? 'many changes' : `${count} ${count === 1 ? 'change' : 'changes'}`;
 }

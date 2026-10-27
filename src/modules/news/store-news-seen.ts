@@ -70,9 +70,15 @@ export const useNewsSeenStore = create<NewsSeenStore>()(persist(
   },
 ));
 
+/** The local calendar day as 'YYYY-MM-DD': the feed's dates and the watermark are days in the user's zone, never UTC */
+export function newsLocalDay(ms: number = Date.now()): string {
+  const d = new Date(ms);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 /** Dev builds: moves the index back `days` days (against the only-forward rule), so those days show as new */
 export function newsSeenRewind(days: number): void {
-  const day = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const day = newsLocalDay(Date.now() - days * 24 * 60 * 60 * 1000);
   useNewsSeenStore.setState({ changelog: { day, count: 0 }, announcementsSince: day, announcementIds: [] });
 }
 

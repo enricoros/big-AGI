@@ -1,6 +1,7 @@
 import * as React from 'react';
 
-import { Badge, Box, Chip, Link, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
+import type { SxProps } from '@mui/joy/styles/types';
+import { Badge, Chip, Link, ListItem, ListItemButton, ListItemContent, ListItemDecorator, MenuItem, Typography } from '@mui/joy';
 import LaunchIcon from '@mui/icons-material/Launch';
 
 import { BaseProduct } from '~/common/app.release';
@@ -10,8 +11,8 @@ import { optimaClosePanel } from '~/common/layout/optima/useOptima';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { NewsConfig } from '../news.config';
-import { NewsPlatform, useNewsAudience } from '../news.platform';
-import { newsBuildIsBehind, newsFormatChanges, newsFormatCount, newsFormatDay, newsHeadlines, newsInterceptDocsLinks, newsOpenDocs, newsOpenWhatsNew, useNews, useNewsModals } from '../useNews';
+import { useNewsAfterBuild, useNewsAudience } from '../news.platform';
+import { newsBuildIsBehind, newsFormatChanges, newsFormatDay, newsInterceptDocsLinks, newsOpenDocs, newsOpenWhatsNew, useNews, useNewsModals } from '../useNews';
 
 import { DocsReaderModal } from './DocsReaderModal';
 import { WhatsNewModal } from './WhatsNewModal';
@@ -22,6 +23,20 @@ import { WhatsNewModal } from './WhatsNewModal';
  * Changelog news is passive (neutral, never animated); unseen announcements use the accent color.
  * Only what this build has is counted.
  */
+
+const _styles = {
+
+  // last row of the chat scroller's column, after the box the persona view fills: the bottom, full width,
+  // and sticky so it stays in view when the view overflows. Always rendered (blank until the feed loads),
+  // so the view above never shifts as the text comes or goes
+  emptyChatLine: {
+    position: 'sticky',
+    bottom: 0,
+    mx: 'auto',
+    mb: 1.5,
+  },
+
+} as const satisfies Record<string, SxProps>;
 
 
 /** What's New and the docs reader. Mount once with the app modals. */
@@ -39,9 +54,10 @@ export function NewsModals() {
 }
 
 
+/** The count; none while the changelog count is uncountable (new items run past the loaded page) */
 function NewCount(props: { changelog: number, changelogMore: boolean, announcements: number }) {
-  return props.announcements > 0 ? <Chip size='sm' color='accent' variant='solid'>{newsFormatCount(props.announcements)}</Chip>
-    : props.changelog > 0 ? <Typography level='body-xs'>{newsFormatCount(props.changelog, props.changelogMore)} new</Typography>
+  return props.announcements > 0 ? <Chip size='sm' color='accent' variant='solid'>{props.announcements}</Chip>
+    : (props.changelog > 0 && !props.changelogMore) ? <Typography level='body-xs'>{props.changelog} new</Typography>
       : null;
 }
 
@@ -125,7 +141,8 @@ export function WhatsNewPanelRow() {
       {!off && (
         <ListItem>
           <ListItemButton onClick={handleOpenWhatsNew}>
-            <ListItemDecorator />
+            {/* no icon; the gap only where the Documentation row below has one */}
+            {isMobile && <ListItemDecorator />}
             <ListItemContent>What&apos;s New</ListItemContent>
             <NewCount changelog={changelogNewCount} changelogMore={changelogNewMore} announcements={announcementsNewCount} />
           </ListItemButton>
@@ -154,29 +171,20 @@ export function WhatsNewPanelRow() {
 }
 
 
-/** Muted line under the persona selector of an empty chat: what's new, else how far behind this build is */
+/** Last row of an empty chat, 12px tertiary, one link to the hub: the changes since the last visit, else how far behind this build is */
 export function WhatsNewEmptyChatLine() {
-  const { changelogNewItems, changelogNewCount, changelogNewMore, changelogMark, changelogAfterBuildCount } = useNews(false);
-  if (!NewsConfig.indicatorEmptyChat)
+  const { off, changelogNewCount, changelogNewMore, changelogMark, changelogAfterBuildCount } = useNews(false);
+  const afterBuild = useNewsAfterBuild();
+  if (!NewsConfig.indicatorEmptyChat || off)
     return null;
 
-  let text: string | null = null;
-  if (changelogNewCount && changelogMark) {
-    // headlines: 'New: Haiku 5.5, Claude Code, +3' - the count when no line yields a headline
-    const headlines = NewsConfig.emptyChatLine === 'headlines' ? newsHeadlines(changelogNewItems, 2) : [];
-    const rest = changelogNewCount - headlines.length;
-    text = headlines.length ? `New: ${headlines.join(', ')}${changelogNewMore ? ', and more' : rest > 0 ? `, +${rest}` : ''}`
-      : `${newsFormatChanges(changelogNewCount, changelogNewMore)} since ${newsFormatDay(changelogMark.day)}`;
-  } else if (changelogAfterBuildCount && newsBuildIsBehind())
-    text = `${newsFormatChanges(changelogAfterBuildCount)} since this build. ${NewsPlatform.afterBuildHint}`;
-  if (!text)
-    return null;
+  const text = (changelogNewCount && changelogMark) ? (changelogNewMore ? `See what changed since ${newsFormatDay(changelogMark.day)}` : `See ${newsFormatChanges(changelogNewCount)} since ${newsFormatDay(changelogMark.day)}`)
+    : (afterBuild.nudge && changelogAfterBuildCount >= NewsConfig.buildBehindNudgeMinChanges && newsBuildIsBehind()) ? `${newsFormatChanges(changelogAfterBuildCount)} since this build${afterBuild.hint ? ` · ${afterBuild.hint}` : ''}`
+      : null;
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-      <Link component='button' level='body-sm' color='neutral' underline='hover' onClick={newsOpenWhatsNew}>
-        {text}
-      </Link>
-    </Box>
+    <Typography level='body-xs' sx={_styles.emptyChatLine}>
+      {!text ? '\u00A0' : <Link component='button' level='body-xs' color='neutral' underline='hover' onClick={newsOpenWhatsNew}>{text}</Link>}
+    </Typography>
   );
 }
