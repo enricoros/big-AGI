@@ -18,7 +18,6 @@
     "pretscheck": "npm install",
     "tscheck": "tsc --noEmit --pretty && tsc --noEmit --pretty -p tools/tsconfig.json",
     "test": "cross-env NODE_ENV=development tsx --test \"src/**/*.test.ts\"",
-    "postinstall": "prisma generate --no-hints",
     "gen:icon-sprites": "node tools/develop/gen-icon-sprites/generate-llm-sprites.ts",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
@@ -123,5 +122,16 @@
       "last 2 firefox versions",
       "last 2 safari versions"
     ]
+  },
+  "allowScripts": {
+    "@posthog/cli": false,
+    "@prisma/client": true,
+    "@prisma/engines": false,
+    "core-js": false,
+    "esbuild": false,
+    "fsevents": false,
+    "prisma": false,
+    "tesseract.js": false,
+    "unrs-resolver": false
   }
 }
