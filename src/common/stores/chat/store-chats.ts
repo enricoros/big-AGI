@@ -590,6 +590,7 @@ export const useConversation = (conversationId: DConversationId | null) => useCh
   return {
     title,
     isEmpty,
+    lastMessageRole: conversation?.messages.at(-1)?.role,
     isDeveloper,
     conversationIdx,
     hasConversations,
