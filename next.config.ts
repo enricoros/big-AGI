@@ -65,7 +65,7 @@ let nextConfig: NextConfig = {
   serverExternalPackages: ['puppeteer-core'],
 
   // WEBPACK ONLY: turbopack skips this hook (client mocks, wasm) - never run --turbopack
-  webpack: (config: any, { isServer, dev, webpack /*, nextRuntime*/ }: WebpackConfigContext) => {
+  webpack: (config: any, { isServer, dev, webpack, nextRuntime }: WebpackConfigContext) => {
     // @mui/joy: anything material gets redirected to Joy
     config.resolve.alias['@mui/material'] = '@mui/joy';
 
@@ -109,6 +109,23 @@ let nextConfig: NextConfig = {
 
       // cosmetic: fix warnings for (absent!) top-level awaits in the browser (https://github.com/vercel/next.js/issues/64792)
       config.output.environment = { ...config.output.environment, asyncFunction: true };
+    }
+
+    // server-side bundling, `next dev` only: the single-tab gate (ProviderSingleTab) renders a placeholder on the server, which never
+    // renders the chat app or the Optima layout - compile their server mocks instead of ~1k modules. Builds keep the real modules.
+    if (isServer && dev && nextRuntime === 'nodejs') {
+      const clientToServerMocks: ReadonlyArray<[RegExp, string]> = [
+        [/\/AppChat$/, '/AppChat.server-mock'],
+        [/\/OptimaLayout$/, '/OptimaLayout.server-mock'],
+      ];
+      config.plugins = [
+        ...config.plugins,
+        ...clientToServerMocks.map(([pattern, replacement]) =>
+          new webpack.NormalModuleReplacementPlugin(pattern, (resource: any) => {
+            resource.request = resource.request.replace(pattern, replacement);
+          }),
+        ),
+      ];
     }
 
     // prevent too many small chunks (40kb min) on 'client' packs (not 'server' or 'edge-server')
