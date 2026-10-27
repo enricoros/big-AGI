@@ -41,7 +41,7 @@ export interface ShortcutObject extends ShortcutDefinition {
 
 
 /**
- * Hook to register global shortcuts for a specific group.
+ * Register global shortcuts per hook instance. The group name is a debug label shared by instances.
  *
  * Important notes below:
  * - [MAC only] the Alt key is ignored even if defined in the shortcut
@@ -49,7 +49,10 @@ export interface ShortcutObject extends ShortcutDefinition {
  * - stabilize the shortcuts definition (e.g. React.useMemo()) to avoid re-registering the shortcuts at every render
  *
  */
-export const useGlobalShortcuts = (groupId: string, shortcuts: ShortcutObject[]) => {
+export const useGlobalShortcuts = (groupName: string, shortcuts: ShortcutObject[]) => {
+  const reactId = React.useId();
+  const groupId = `${groupName}.${reactId}`;
+
   React.useEffect(() => {
     const { setGroupShortcuts, removeGroup } = useGlobalShortcutsStore.getState();
 
