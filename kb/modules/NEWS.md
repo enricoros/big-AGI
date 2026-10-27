@@ -8,12 +8,15 @@ This doc is the system of record for both.
 
 ## Open actions
 
-- [ ] [P1] Plan chips in page bodies: `> **Pro:**` callouts get a plan chip on open builds (the page header and the section rows already show the page's tier)
-- [ ] [P2] Indicators: evaluate the two changelog placements (panel row, empty-chat line); turn off what does not earn its place in `NewsConfig`
-- [ ] [P2] Announcements: set `announcementsEnabled` once new ones are written in the website's `news-src/`
-- [ ] [P2] Feature gate: `useNewsGate(announcementId)` -> `{ gated, showGate(): Promise<boolean> }`, called as `if (gated && !await showGate()) return;` before the feature runs. Gated while the id is not in the seen index; the modal renders the feed's announcement and marks it seen, so the hub and the gate share one state. Non-blocking by default (dismiss proceeds); a `blocking` option for features that need consent. Never gates when feeds are off, announcements are off, or the id is not in the feed. The same `gated` drives a dot on the feature's control. First site: the Max Mode toggles (`Composer`, `BeamPanel`, dev), announcement `max-mode-2026-03`
-- [ ] [P2] Retire the systems marked "retire" in the inventory below
-- [ ] [P2] Landing: the future `/` landing reads `useNews` (latest days, new announcements, actionable new models)
+- [ ] [P1] Retire `/news`: the page (`src/apps/news/`, `news.data.tsx`), both nav entries (`app.nav.ts`, `MobileNavItems.tsx`), the boot redirect (`ProviderBootstrapLogic`, `store-logic-sherpa`), `Release.Monotonics.NewsVersion`, and steps 2-3 of `.claude/commands/rel/release-open.md` (2.1.2 bumped `NewsVersion` on 2026-10-24, so the redirect fires again on the next bump). First decide whether the page's Open/Pro welcome block moves to the landing or goes
+- [ ] [P1] Docs links at the moment of need: the Request Too Large and Connection Terminated cards, the "saved only in this browser" warning, the Direct Connection toggle and its CORS hint, the crash screen (a plain new-tab link: the reader is inside the crashed tree), the two links commented out since 2026-07-30 (AI Inspector, "Which provider should I use?"), and the chat error renderer keyed on the server prefixes (`[AIX Configuration Issue]`, `[Service Issue]` plus the status, `[Reading Issue]`, `[Streaming Issue]`)
+- [ ] [P2] Indicators: decide whether the panel row and the empty-chat line stay; turn off the ones that go in `NewsConfig`
+- [ ] [P2] Announcements (editorial): the two in the website's `news-src/` date from 2026-03 and 2026-06, so turning `announcementsEnabled` on now flags old launches; write new ones first (the Max Mode entry still needs its video)
+- [ ] [P2] Feature gate: `useNewsGate(announcementId)` -> `{ gated, showGate(): Promise<boolean> }`, called as `if (gated && !await showGate()) return;` before the feature runs. Gated while the id is not in the seen index; the modal renders the feed's announcement and marks it seen, so the hub and the gate share one state. Non-blocking by default (dismiss proceeds); a `blocking` option for features that need consent. Never gates when feeds are off or the id is not in the feed; independent of `announcementsEnabled`. The same `gated` drives a dot on the feature's control. First site: the Max Mode toggles (`Composer`, `BeamPanel`, dev), announcement `max-mode-2026-03` (in the feed)
+- [ ] [P3] Plan chips in page bodies: `> **Pro:**` callouts (one on each of 14 pages, shown as a quote today) get a plan chip on open builds; the page header and the section rows already show the page's tier
+- [ ] [P3] Docs reader: refetch on reconnect after "Can't reach big-agi.com" (`netStateSubscribeWake`) instead of waiting for Try again
+- [ ] [P3] Repo `docs/` folder: trim to self-host material (inventory)
+- [ ] [P3] Landing: the future `/` landing reads `useNews` (latest days, new announcements, actionable new models)
 - [ ] [P3] Build window: dates plus a grace approximate "in this build"; an additive version field on change items would make it exact
 
 ## Why
