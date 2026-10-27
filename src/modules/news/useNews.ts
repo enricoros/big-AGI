@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { SiteDocSlug } from '~/common/gen/com.site.docs.slug';
-import { Release } from '~/common/app.release';
+import { BaseProduct, Release } from '~/common/app.release';
 import { runWhenIdle } from '~/common/util/pwaUtils';
 
 import type { NewsAnnouncement, NewsChangeItem } from './news.feed';
@@ -43,6 +43,33 @@ export function newsOpenDocs(slug: SiteDocSlug | null = null, anchor?: string) {
 
 export function newsCloseDocs() {
   useNewsModalsStore.setState({ docsTarget: null });
+}
+
+// a big-agi.com docs link: the docs home, or a page with an optional #anchor
+const _docsLinkPattern = new RegExp('^' + BaseProduct.DocsBaseSite.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:/([a-z0-9-]+))?/?(?:#([\\w-]+))?$');
+
+/** Reader target of a big-agi.com docs link, or null for any other URL */
+export function newsDocsLinkTarget(href: string): NewsDocsTarget | null {
+  const match = href.match(_docsLinkPattern);
+  return !match ? null : { slug: (match[1] || null) as SiteDocSlug | null, anchor: match[2] };
+}
+
+/**
+ * Plain clicks on big-agi.com docs links anywhere in the app open the reader; modified clicks keep the
+ * browser, and the open reader handles its own links. Returns the cleanup.
+ */
+export function newsInterceptDocsLinks(): () => void {
+  const handleClick = (event: MouseEvent) => {
+    if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (useNewsModalsStore.getState().docsTarget) return;
+    const anchor = event.target instanceof Element ? event.target.closest('a') : null;
+    const target = anchor ? newsDocsLinkTarget(anchor.href) : null;
+    if (!target) return;
+    event.preventDefault();
+    useNewsModalsStore.setState({ docsTarget: target });
+  };
+  document.addEventListener('click', handleClick);
+  return () => document.removeEventListener('click', handleClick);
 }
 
 

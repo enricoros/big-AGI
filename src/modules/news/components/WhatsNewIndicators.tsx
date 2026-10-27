@@ -12,7 +12,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import { NewsConfig } from '../news.config';
 import { NewsPlatform, useNewsAudience } from '../news.platform';
-import { newsBuildIsBehind, newsFormatChanges, newsFormatCount, newsFormatDay, newsHeadlines, newsOpenDocs, newsOpenWhatsNew, useNews, useNewsModals } from '../useNews';
+import { newsBuildIsBehind, newsFormatChanges, newsFormatCount, newsFormatDay, newsHeadlines, newsInterceptDocsLinks, newsOpenDocs, newsOpenWhatsNew, useNews, useNewsModals } from '../useNews';
 
 
 /**
@@ -29,6 +29,11 @@ const DocsReaderModalLazy = React.lazy(() => import('./DocsReaderModal').then(mo
 /** What's New and the docs reader. Mount once with the app modals. */
 export function NewsModals() {
   const { whatsNewOpen, docsTarget } = useNewsModals();
+  const { off } = useNewsAudience();
+
+  // [effect] docs links anywhere in the app open the reader
+  React.useEffect(() => off ? undefined : newsInterceptDocsLinks(), [off]);
+
   return <>
     {whatsNewOpen && (
       <React.Suspense fallback={null}>

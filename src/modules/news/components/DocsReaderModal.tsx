@@ -11,6 +11,7 @@ import LaunchIcon from '@mui/icons-material/Launch';
 import SearchIcon from '@mui/icons-material/Search';
 
 import { RenderMarkdownMemo } from '~/modules/blocks/markdown/RenderMarkdown';
+import { useScaledTypographySx } from '~/modules/blocks/blocks.styles';
 
 import type { SiteDocSlug } from '~/common/gen/com.site.docs.slug';
 import { AppBreadcrumbs } from '~/common/components/AppBreadcrumbs';
@@ -18,10 +19,11 @@ import { BaseProduct } from '~/common/app.release';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 import { useIsMobile } from '~/common/components/useMatchMedia';
+import { useUIContentScaling } from '~/common/stores/store-ui';
 
 import type { NewsDocsTarget } from '../useNews';
 import { NewsConfig } from '../news.config';
-import { newsCloseDocs, newsFormatDay } from '../useNews';
+import { newsCloseDocs, newsDocsLinkTarget, newsFormatDay } from '../useNews';
 
 
 const _styles = {
@@ -345,9 +347,6 @@ interface DocsPage {
   summary: string | null;
   markdown: string;
 }
-
-// a link to another docs page, after _parseDocsPage made relative links absolute
-const DOCS_LINK_PATTERN = new RegExp('^' + BaseProduct.DocsBaseSite.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/([a-z0-9-]+)/?(?:#([\\w-]+))?$');
 
 /**
  * Parses a twin: `# Title`, `> summary`, then `- Key: value` metadata lines (Canonical, Minimum tier,
@@ -694,6 +693,11 @@ function DocsSearchResults(props: { hits: DocsHit[], words: string[], enterTarge
 function DocsPageView(props: { page: DocsPage, entry: DocsIndexEntry | undefined }) {
   const { page, entry } = props;
   const summary = page.summary || entry?.summary;
+
+  // the body follows the chat text size
+  const contentScaling = useUIContentScaling();
+  const scaledTypographySx = useScaledTypographySx(contentScaling, false, false);
+
   return <>
     <Box sx={_styles.pageHead}>
       <Typography level='h2' fontWeight='lg'>{page.title || entry?.title}</Typography>
@@ -707,7 +711,7 @@ function DocsPageView(props: { page: DocsPage, entry: DocsIndexEntry | undefined
       )}
     </Box>
     <Divider sx={_styles.pageDivider} />
-    <RenderMarkdownMemo key={page.slug} content={page.markdown} />
+    <RenderMarkdownMemo key={page.slug} content={page.markdown} sx={scaledTypographySx} />
   </>;
 }
 
@@ -847,16 +851,16 @@ export function DocsReaderModal(props: { target: NewsDocsTarget }) {
     setHistory(h => ({ ...h, idx: Math.min(h.stack.length - 1, h.idx + 1) }));
   }, []);
 
-  // links to other docs pages navigate in place; everything else keeps opening a new tab
+  // links to docs pages (made absolute by _parseDocsPage) navigate in place; everything else keeps opening a new tab
   const handleClickCapture = React.useCallback((event: React.MouseEvent) => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
     const anchor = event.target instanceof Element ? event.target.closest('a') : null;
-    const match = anchor?.href.match(DOCS_LINK_PATTERN);
-    if (!match) return;
+    const target = anchor ? newsDocsLinkTarget(anchor.href) : null;
+    if (!target) return;
     event.preventDefault();
     event.stopPropagation();
-    openPage(match[1] as SiteDocSlug, match[2]);
-  }, [openPage]);
+    navigate(_viewFromTarget(target));
+  }, [navigate]);
 
 
   // handlers - keys

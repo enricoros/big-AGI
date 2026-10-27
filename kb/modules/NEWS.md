@@ -8,11 +8,10 @@ This doc is the system of record for both.
 
 ## Open actions
 
-- [ ] [P1] Docs links in-app: `ExternalDocsLink` and the raw `DocsBaseSite` links open the reader at the slug and #anchor; ctrl/cmd-click keeps the browser
 - [ ] [P1] Plan chips in page bodies: `> **Pro:**` callouts get a plan chip on open builds (the page header and the section rows already show the page's tier)
 - [ ] [P2] Indicators: evaluate the three placements (nav dot, panel row, empty-chat line); turn off what does not earn its place in `NewsConfig`
 - [ ] [P2] Announcements: set `announcementsEnabled` once new ones are written in the website's `news-src/`
-- [ ] [P2] First-use callout: a second presentation of an announcement, keyed by its id where the feature lives; content from the feed, nothing blocks when it is missing
+- [ ] [P2] Feature gate: `useNewsGate(announcementId)` -> `{ gated, showGate(): Promise<boolean> }`, called as `if (gated && !await showGate()) return;` before the feature runs. Gated while the id is not in the seen index; the modal renders the feed's announcement and marks it seen, so the hub and the gate share one state. Non-blocking by default (dismiss proceeds); a `blocking` option for features that need consent. Never gates when feeds are off, announcements are off, or the id is not in the feed. The same `gated` drives a dot on the feature's control. First site: the Max Mode toggles (`Composer`, `BeamPanel`, dev), announcement `max-mode-2026-03`
 - [ ] [P2] Retire the systems marked "retire" in the inventory below
 - [ ] [P2] Landing: the future `/` landing reads `useNews` (latest days, new announcements, actionable new models)
 - [ ] [P3] Build window: dates plus a grace approximate "in this build"; an additive version field on change items would make it exact
@@ -103,7 +102,7 @@ and the best-matching question with the hits in bold; while the field has focus 
 marked as the Enter target. `/` focuses search, ArrowDown enters the results (the tree when the field is empty), Enter opens the first,
 Esc clears the field before it closes the modal. A page is its markdown twin: the title one step
 above the body's headings, summary as the lead, tier and update day from the index, then the app's
-markdown renderer. Links between docs pages navigate in place;
+markdown renderer at the chat text size (`contentScaling`). Links between docs pages navigate in place;
 the title is back, forward, then breadcrumbs (Documentation > Section > Page); Alt+Left/Right go
 back and forward. A loading page keeps the previous view up under a progress bar. If the index
 fails, a button opens `start-here`. Mobile is fullscreen, with search and a page picker (pages grouped by section) stacked.
@@ -115,7 +114,9 @@ line - headlines from the new lines' **bold** runs ("New: Haiku 5.5, Claude Code
 count, per `NewsConfig.emptyChatLine`. The panel shows the What's New row on desktop only while
 something is new; on mobile, where the panel holds the only entry points, it always shows What's New
 and Documentation. `NewsModals` mounts both lazy modals once with the app modals; their open state
-is one small store (`newsOpenWhatsNew`, `newsOpenDocs`).
+is one small store (`newsOpenWhatsNew`, `newsOpenDocs`). It also routes a plain click on any
+big-agi.com/docs link in the app (`ExternalDocsLink`, raw `DocsBaseSite` links, links in chat) to
+the reader at the slug and #anchor, with one document listener; modified clicks keep the browser.
 
 **Remote-feeds switch.** `NEXT_PUBLIC_BIG_AGI_REMOTE_FEEDS=off`, set at build time, stops every
 request the app makes to big-agi.com on its own: no indicators, What's New hidden, Documentation
