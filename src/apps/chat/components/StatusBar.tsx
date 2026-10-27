@@ -270,8 +270,8 @@ export function StatusBar(props: { toggleMinimized?: () => void, isMinimized?: b
       )}
 
       {/* Show all shortcuts */}
-      {shortcuts.map((shortcut, idx) => (
-        <ShortcutItemMemo key={shortcut.key + idx} shortcut={shortcut} />
+      {shortcuts.map(shortcut => (
+        <ShortcutItemMemo key={`${shortcut.key.toLowerCase()}|${!!shortcut.ctrl}|${!!shortcut.shift}`} shortcut={shortcut} />
       ))}
 
     </Box>
