@@ -144,6 +144,7 @@ NOTE: this is a powerful tool - if you need a toy UI or clone, this ain't it.
 ## Release Notes
 
 👉 **[See the Live Release Notes](https://big-agi.com/changes)**
+- Open 2.1.3: **Doxy Foxy** **GPT-6.1 Terra**, in-app Docs and What's New, out-of-tokens marking, role switcher, Next.js minifier fix
 - Open 2.1.2: **Render Tree** **GPT-6**, **Opus 5.5**, **Fable 5.1**, **Gemini 4 Argon**, Meta AI, Edit session, Models changelog, Gemini key fix
 - Open 2.1.1: **Weights Dust** **Opus 5**, **GPT-5.6**, **Gemini 3.7**, **Kimi K3**, multi-vendor Transcription, Cerebras/NVIDIA NIM/Sakana/Cohere
 - Open 2.0.5: **Roberto** **Opus 4.7 1M**, **GPT-5.5**, **DeepSeek V4**, Anthropic Containers/Skills, resumable Deep Research, MiniMax & Arcee AI
