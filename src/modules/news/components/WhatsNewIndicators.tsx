@@ -13,6 +13,9 @@ import { NewsConfig } from '../news.config';
 import { NewsPlatform, useNewsAudience } from '../news.platform';
 import { newsBuildIsBehind, newsFormatChanges, newsFormatCount, newsFormatDay, newsHeadlines, newsInterceptDocsLinks, newsOpenDocs, newsOpenWhatsNew, useNews, useNewsModals } from '../useNews';
 
+import { DocsReaderModal } from './DocsReaderModal';
+import { WhatsNewModal } from './WhatsNewModal';
+
 
 /**
  * Entry points to What's New and the docs, self-contained so each codeline places them with one line.
@@ -20,10 +23,6 @@ import { newsBuildIsBehind, newsFormatChanges, newsFormatCount, newsFormatDay, n
  * Only what this build has is counted.
  */
 
-
-// loaded on first open
-const WhatsNewModalLazy = React.lazy(() => import('./WhatsNewModal').then(module => ({ default: module.WhatsNewModal })));
-const DocsReaderModalLazy = React.lazy(() => import('./DocsReaderModal').then(module => ({ default: module.DocsReaderModal })));
 
 /** What's New and the docs reader. Mount once with the app modals. */
 export function NewsModals() {
@@ -34,16 +33,8 @@ export function NewsModals() {
   React.useEffect(() => off ? undefined : newsInterceptDocsLinks(), [off]);
 
   return <>
-    {whatsNewOpen && (
-      <React.Suspense fallback={null}>
-        <WhatsNewModalLazy />
-      </React.Suspense>
-    )}
-    {!!docsTarget && (
-      <React.Suspense fallback={null}>
-        <DocsReaderModalLazy target={docsTarget} />
-      </React.Suspense>
-    )}
+    {whatsNewOpen && <WhatsNewModal />}
+    {!!docsTarget && <DocsReaderModal target={docsTarget} />}
   </>;
 }
 
@@ -57,10 +48,15 @@ function NewCount(props: { changelog: number, changelogMore: boolean, announceme
 
 /** Accent dot over a nav icon while an announcement is unseen; the changelog is passive and never dots */
 export function WhatsNewNavDot(props: { children: React.ReactElement }) {
+  // build-time gate: with announcements off, the nav runs no news hooks at all
+  return NewsConfig.indicatorNavDot && NewsConfig.announcementsEnabled
+    ? <AnnouncementsNavDot>{props.children}</AnnouncementsNavDot>
+    : props.children;
+}
+
+function AnnouncementsNavDot(props: { children: React.ReactElement }) {
   const { announcementsNewCount } = useNews(false);
-  if (!NewsConfig.indicatorNavDot || !announcementsNewCount)
-    return props.children;
-  return (
+  return !announcementsNewCount ? props.children : (
     <Badge size='sm' color='accent' variant='solid' badgeInset='14%'>
       {props.children}
     </Badge>
@@ -70,7 +66,7 @@ export function WhatsNewNavDot(props: { children: React.ReactElement }) {
 
 /** "What's New" menu item; hidden when the operator turned the feeds off */
 export function WhatsNewMenuItem() {
-  const { off } = useNews(false);
+  const { off } = useNewsAudience();
   if (off)
     return null;
   return (

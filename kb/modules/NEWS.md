@@ -40,8 +40,8 @@ link. Announcements call for attention; the changelog never does.
 | `store-news-seen.ts` | The seen index, `newsSeenMerge`, `newsChangelogSplit`, `newsSeenRewind` |
 | `useNews.ts` | Build window, boot gate, `useNews`, headlines, formatters, the open state of both modals |
 | `components/WhatsNewIndicators.tsx` | Eager entry points and `NewsModals` |
-| `components/WhatsNewModal.tsx` | Lazy: the hub, changelog and announcement panes, the mini-format renderer |
-| `components/DocsReaderModal.tsx` | Lazy: the reader, contents tree, search, index and page fetch |
+| `components/WhatsNewModal.tsx` | The hub, changelog and announcement panes, the mini-format renderer |
+| `components/DocsReaderModal.tsx` | The reader, contents tree, search, index and page fetch |
 
 **Data.** One stream, `/api/app/v1/news`, fetched from the browser with React Query. The request
 names everything it wants - `kind=change` (`announcement,change` when announcements are on), `for=`
@@ -119,7 +119,7 @@ passive), the What's New and Documentation menu items (no counts), the side pane
 line - headlines from the new lines' **bold** runs ("New: Haiku 5.5, Claude Code, +3"), or the
 count, per `NewsConfig.emptyChatLine`. The panel shows the What's New row on desktop only while
 something is new; on mobile, where the panel holds the only entry points, it always shows What's New
-and Documentation. `NewsModals` mounts both lazy modals once with the app modals; their open state
+and Documentation. `NewsModals` mounts both modals once with the app modals, imported statically (a lazy chunk that fails to load, offline or after a deploy, takes the app down); their open state
 is one small store (`newsOpenWhatsNew`, `newsOpenDocs`). It also routes a plain click on any
 big-agi.com/docs link in the app (`ExternalDocsLink`, raw `DocsBaseSite` links, links in chat) to
 the reader at the slug and #anchor, with one document listener; modified clicks keep the browser.
