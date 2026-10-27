@@ -717,6 +717,7 @@ export function AppChat() {
                   chatLLMContextTokens={getLLMContextTokens(chatLLM) ?? null}
                   chatLLMSupportsImages={chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision) ?? false}
                   fitScreen={isMobile || isMultiPane}
+                  isFocused={_paneIsFocused}
                   isMobile={isMobile}
                   isMessageSelectionMode={isMessageSelectionMode}
                   setIsMessageSelectionMode={setIsMessageSelectionMode}
@@ -732,6 +733,7 @@ export function AppChat() {
               {_paneBeamIsOpen && (
                 <ChatBeamWrapper
                   beamStore={_paneBeamStoreApi}
+                  isFocused={_paneIsFocused}
                   isMobile={isMobile}
                   inlineSx={chatBeamWrapperSx}
                 />

@@ -40,6 +40,7 @@ const beamWrapperStyles = {
 
 export function ChatBeamWrapper(props: {
   beamStore: BeamStoreApi,
+  isFocused: boolean,
   isMobile: boolean,
   inlineSx?: SxProps,
 }) {
@@ -55,10 +56,11 @@ export function ChatBeamWrapper(props: {
   const beamView = React.useMemo(() => (
     <BeamView
       beamStore={props.beamStore}
+      isFocused={props.isFocused}
       isMobile={props.isMobile}
       showExplainer
     />
-  ), [props.beamStore, props.isMobile]);
+  ), [props.beamStore, props.isFocused, props.isMobile]);
 
   return isMaximized ? (
     <Modal open onClose={handleUnMaximize}>

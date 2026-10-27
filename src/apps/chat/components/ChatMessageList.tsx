@@ -52,6 +52,7 @@ export function ChatMessageList(props: {
   chatLLMContextTokens: DLLMContextTokens,
   chatLLMSupportsImages: boolean,
   fitScreen: boolean,
+  isFocused: boolean,
   isMobile: boolean,
   isMessageSelectionMode: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string, addSplitPane: boolean) => void,
@@ -330,9 +331,9 @@ export function ChatMessageList(props: {
 
   const { isMessageSelectionMode, setIsMessageSelectionMode } = props;
 
-  useGlobalShortcuts('ChatMessageList_Selection', React.useMemo(() => !isMessageSelectionMode ? [] : [
+  useGlobalShortcuts('ChatMessageList_Selection', React.useMemo(() => !props.isFocused || !isMessageSelectionMode ? [] : [
     { key: ShortcutKey.Esc, action: () => setIsMessageSelectionMode(false), description: 'Close Cleanup', level: 10 - 1 },
-  ], [isMessageSelectionMode, setIsMessageSelectionMode]));
+  ], [isMessageSelectionMode, props.isFocused, setIsMessageSelectionMode]));
 
 
   // text-diff functionality: only diff the last complete message, and they're similar in size

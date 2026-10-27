@@ -82,6 +82,7 @@ export function AppBeam() {
       {isOpen && (
         <BeamView
           beamStore={beamStoreApi}
+          isFocused
           isMobile={isMobile}
         />
       )}
