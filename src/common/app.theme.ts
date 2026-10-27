@@ -80,6 +80,9 @@ const _accentLimeScale = {
   900: '#242c03',  // dark-mode deep soft surface
 } as const;
 
+/** Brand lime (accent 400) as a hex string, for where a CSS variable cannot reach (canvas fills, hex-alpha suffixes); elsewhere use the Joy 'accent' palette */
+export const brandLime = _accentLimeScale[400];
+
 
 export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({
   fontFamily: {

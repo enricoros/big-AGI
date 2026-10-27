@@ -7,6 +7,7 @@ import SdCardOutlinedIcon from '@mui/icons-material/SdCardOutlined';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
+import { brandLimeExtraBadge } from '~/common/app.theme';
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { isLLMChatFree_cached } from '~/common/stores/llms/llms.pricing';
 import { DLLM, DLLMId, getLLMContextTokens, getLLMLabel, getLLMMaxOutputTokens, getLLMPubDate, isLLMCustomUserParameters, isLLMHidden, isLLMRecentlyPublished, LLM_IF_ANT_PromptCaching, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Tools_WebSearch } from '~/common/stores/llms/llms.types';
@@ -72,7 +73,7 @@ const styles = {
     opacity: 0.5,
   } as const,
   chipNew: {
-    bgcolor: '#d4ff3a',
+    bgcolor: brandLimeExtraBadge,
     color: 'black',
     fontWeight: 'lg',
   },
