@@ -252,16 +252,15 @@ async function workerPuppeteer(
       for (const transform of transforms) {
         switch (transform) {
           case 'html':
-            result.content.html = cleanHtml(await page.content());
+            result.content.html = cleanHtml(await page.content(), page.url());
             break;
           case 'text':
             result.content.text = await page.evaluate(() => document.body.innerText || document.textContent || '');
             break;
           case 'markdown':
             const html = await page.content();
-            const cleanedHtml = cleanHtml(html);
-            const turndownService = new TurndownService({ headingStyle: 'atx' });
-            result.content.markdown = turndownService.turndown(cleanedHtml);
+            const cleanedHtml = cleanHtml(html, page.url());
+            result.content.markdown = htmlToMarkdown(cleanedHtml);
             break;
         }
       }
@@ -354,7 +353,16 @@ function _shortError(error: any): string {
 
 const CLEAN_HTML_MAX_CHARS = 5_000_000;
 
-function cleanHtml(html: string): string {
+// not domino's replaceWith(): it can drop the subtree when the replacement is the target's own descendant
+function replaceNode(target: Node, nodes: Node[]) {
+  const parent = target.parentNode;
+  if (!parent) return;
+  for (const node of nodes)
+    parent.insertBefore(node, target);
+  parent.removeChild(target);
+}
+
+function cleanHtml(html: string, pageUrl?: string): string {
   // bound parse/serialize cost on attacker-controlled pages
   if (html.length > CLEAN_HTML_MAX_CHARS)
     html = html.slice(0, CLEAN_HTML_MAX_CHARS);
@@ -362,13 +370,14 @@ function cleanHtml(html: string): string {
   try {
     const doc = createDocument(html);
     const all = (selector: string) => Array.from(doc.querySelectorAll(selector));
-    // not domino's replaceWith(): it can drop the subtree when the replacement is the target's own descendant
-    const replaceNode = (target: Node, nodes: Node[]) => {
-      const parent = target.parentNode;
-      if (!parent) return;
-      for (const node of nodes)
-        parent.insertBefore(node, target);
-      parent.removeChild(target);
+    // relative URLs resolve against the page, so links and media stay usable out of context; fragments stay
+    const toAbsolute = (url: string) => {
+      if (!pageUrl || url.startsWith('#') || /^[a-z][a-z\d+.-]*:/i.test(url)) return url;
+      try {
+        return new URL(url, pageUrl).href;
+      } catch {
+        return url;
+      }
     };
 
     // 1. --unwanted elements
@@ -427,10 +436,19 @@ function cleanHtml(html: string): string {
         ...commonAttrs,
       ]);
 
+      // code blocks keep their language-* class, which names the markdown fence
+      const codeLanguage = (tagName === 'pre' || tagName === 'code') ? el.getAttribute('class')?.match(/\b(?:language|lang)-[\w+#-]+/)?.[0] : undefined;
+
       // -all non-allowed attributes
       for (const attr of el.getAttributeNames())
         if (!allowedAttrs.has(attr.toLowerCase()))
           el.removeAttribute(attr);
+
+      if (codeLanguage)
+        el.setAttribute('class', codeLanguage);
+      const src = el.getAttribute('src');
+      if (src)
+        el.setAttribute('src', toAbsolute(src));
 
       // cleanup href attributes on anchors
       if (tagName === 'a') {
@@ -442,7 +460,7 @@ function cleanHtml(html: string): string {
           // -tracking parameters
           else if (href.includes('?')) {
             try {
-              const url = new URL(href);
+              const url = new URL(toAbsolute(href));
               const cleanParams = new URLSearchParams();
               url.searchParams.forEach((value, key) => {
                 // keep only essential query parameters
@@ -457,6 +475,8 @@ function cleanHtml(html: string): string {
               // If URL parsing fails, keep original href
             }
           }
+          else
+            el.setAttribute('href', toAbsolute(href));
         }
       }
     }
@@ -533,4 +553,51 @@ function cleanHtml(html: string): string {
     console.error('HTML cleaning error:', error);
     return html; // Return original if cleaning fails
   }
+}
+
+// buttons with these labels are page chrome; other buttons can carry content (FAQ questions, accordion titles)
+const UI_ACTION_LABEL = /^(add a comment|cancel|close|copied!?|copy|copy code|copy link|copy to clipboard|follow|hide|log in|menu|reply|run|search|share|show more|sign in|subscribe)$/i;
+
+function htmlToMarkdown(cleanedHtml: string): string {
+
+  // prose-only cleanup, here and not in cleanHtml: the HTML output keeps the page structure and its actions
+  const doc = createDocument(cleanedHtml);
+  for (const button of Array.from(doc.querySelectorAll('button')))
+    if (UI_ACTION_LABEL.test((button.textContent || '').replace(/\s+/g, ' ').trim()))
+      button.remove();
+  for (const link of Array.from(doc.querySelectorAll('a'))) {
+    // -links with nothing to show (icon links whose svg is gone)
+    if (!link.textContent?.trim() && !link.querySelector('img, video, audio')) {
+      link.remove();
+      continue;
+    }
+    // a link around a single heading becomes a heading around the link
+    const heading = link.children.length === 1 && /^h[1-6]$/.test(link.children[0].localName) ? link.children[0] : null;
+    if (heading) {
+      replaceNode(link, [heading]);
+      for (const node of Array.from(heading.childNodes))
+        link.appendChild(node);
+      heading.appendChild(link);
+      continue;
+    }
+    // block wrappers would split the link text over lines
+    for (const block of Array.from(link.querySelectorAll('div, p, h1, h2, h3, h4, h5, h6, header, section, article, figure, figcaption, picture, ul, ol, li')))
+      replaceNode(block, [doc.createTextNode(' '), ...Array.from(block.childNodes), doc.createTextNode(' ')]);
+  }
+
+  const turndownService = new TurndownService({ headingStyle: 'atx' });
+
+  // every <pre> is a fenced code block, verbatim - turndown's own rule needs <pre><code> and indents instead
+  turndownService.addRule('preformatted', {
+    filter: 'pre',
+    replacement: (_content, node) => {
+      const code = (node.textContent || '').replace(/\n+$/, '');
+      const classes = `${node.getAttribute('class') || ''} ${node.querySelector('code')?.getAttribute('class') || ''}`;
+      const language = /(?:language|lang)-([\w+#-]+)/.exec(classes)?.[1] || '';
+      const fence = code.includes('```') ? '~~~' : '```';
+      return `\n\n${fence}${language}\n${code}\n${fence}\n\n`;
+    },
+  });
+
+  return turndownService.turndown(doc.documentElement.outerHTML);
 }
