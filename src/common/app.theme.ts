@@ -396,9 +396,15 @@ const isBrowser = typeof document !== 'undefined';
 const emotionStylisPlugins: StylisPlugin[] = [
 
   /**
-   * 1. remove the default prefixer plugin: probably not needed and bloating
+   * 1. not the stock prefixer plugin (bloating): only the -webkit- prefixes the browser floor still needs -
+   * backdrop-filter until Safari 18, mask-image until Chrome 120, user-select on every Safari.
+   * Also covers Joy's own styles, e.g. the Modal backdrop blur and userSelect: 'none' on Button.
    */
   // prefixer,
+  function prefixFloorDeclarations(element: StylisElement) {
+    if (element.type === 'decl' && (element.props === 'backdrop-filter' || element.props === 'mask-image' || element.props === 'user-select'))
+      element.return = `-webkit-${element.value}${element.value}`; // a declaration's value is the whole 'prop:value;'
+  },
 
   /**
    * 2. add a function to remove wide-matching CSS rules from Joy UI.
