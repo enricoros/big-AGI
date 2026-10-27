@@ -8,6 +8,7 @@ import MinimizeIcon from '@mui/icons-material/Minimize';
 // import { isMacUser } from '~/common/util/pwaUtils';
 import { ShortcutKey, ShortcutObject } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { dontBlurTextareaOnMouseDown } from '~/common/components/dontBlurTextarea';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { useGlobalShortcutsStore } from '~/common/components/shortcuts/store-global-shortcuts';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
@@ -149,6 +150,7 @@ function ShortcutItem(props: { shortcut: ShortcutObject }) {
 
   return (
     <Box
+      onMouseDown={dontBlurTextareaOnMouseDown}
       onClick={!props.shortcut.disabled ? handleClicked : undefined}
       aria-disabled={props.shortcut.disabled}
       sx={_styles.shortcut}
