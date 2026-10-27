@@ -3,7 +3,7 @@ import { TRPCError } from '@trpc/server';
 
 import puppeteer, { Browser, BrowserContext, ScreenshotOptions } from 'puppeteer-core';
 import { default as TurndownService } from 'turndown';
-import { load as cheerioLoad } from 'cheerio';
+import { createDocument } from '@mixmark-io/domino';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.server';
@@ -360,7 +360,16 @@ function cleanHtml(html: string): string {
     html = html.slice(0, CLEAN_HTML_MAX_CHARS);
 
   try {
-    const _C = cheerioLoad(html);
+    const doc = createDocument(html);
+    const all = (selector: string) => Array.from(doc.querySelectorAll(selector));
+    // not domino's replaceWith(): it can drop the subtree when the replacement is the target's own descendant
+    const replaceNode = (target: Node, nodes: Node[]) => {
+      const parent = target.parentNode;
+      if (!parent) return;
+      for (const node of nodes)
+        parent.insertBefore(node, target);
+      parent.removeChild(target);
+    };
 
     // 1. --unwanted elements
     const unwantedSelectors = [
@@ -389,7 +398,7 @@ function cleanHtml(html: string): string {
       // meta elements except essential ones
       'meta:not([charset], [name="viewport"], [name="description"])',
     ].join(', ');
-    _C(unwantedSelectors).remove();
+    all(unwantedSelectors).forEach(el => el.remove());
 
     // 2. --unwanted attributes tag-specific
     const tagSpecificAttrs: Record<string, string[]> = {
@@ -409,10 +418,8 @@ function cleanHtml(html: string): string {
       figcaption: [],
     };
     const commonAttrs = ['id', 'lang'];
-    _C('*').each(function() {
-      const el = _C(this);
-      if (!('tagName' in this)) return;
-      const tagName = this.tagName?.toLowerCase() || '';
+    for (const el of all('*')) {
+      const tagName = el.localName.toLowerCase();
 
       // Get allowed attributes for this tag
       const allowedAttrs = new Set([
@@ -421,19 +428,17 @@ function cleanHtml(html: string): string {
       ]);
 
       // -all non-allowed attributes
-      const attribs = Object.keys(this.attribs || {});
-      attribs.forEach(attr => {
+      for (const attr of el.getAttributeNames())
         if (!allowedAttrs.has(attr.toLowerCase()))
-          el.removeAttr(attr);
-      });
+          el.removeAttribute(attr);
 
       // cleanup href attributes on anchors
       if (tagName === 'a') {
-        const href = el.attr('href');
+        const href = el.getAttribute('href');
         if (href) {
           // -javascript: links
           if (href.toLowerCase().startsWith('javascript:'))
-            el.removeAttr('href');
+            el.removeAttribute('href');
           // -tracking parameters
           else if (href.includes('?')) {
             try {
@@ -447,62 +452,70 @@ function cleanHtml(html: string): string {
               const cleanHref = `${url.origin}${url.pathname}${
                 cleanParams.toString() ? '?' + cleanParams.toString() : ''
               }${url.hash}`;
-              el.attr('href', cleanHref);
+              el.setAttribute('href', cleanHref);
             } catch (e) {
               // If URL parsing fails, keep original href
             }
           }
         }
       }
-    });
+    }
 
     // 3. --comments
-    _C('*').contents().filter(function() {
-      return this.type === 'comment';
-    }).remove();
+    for (const el of all('*'))
+      for (const node of Array.from(el.childNodes))
+        if (node.nodeType === node.COMMENT_NODE)
+          node.remove();
 
     // 4. --empty element
     const preserveTags = new Set([
       'img', 'br', 'hr', 'input', 'source', 'meta', 'link',
       'area', 'base', 'col', 'embed', 'param', 'track', 'wbr',
     ]);
-    _C('*').each(function() {
-      const $el = _C(this);
-      if (!('tagName' in this)) return;
-      const tagName = this.tagName?.toLowerCase() || '';
+    for (const el of all('*')) {
+      const tagName = el.localName.toLowerCase();
       const hasContent =
-        $el.text().trim() ||
-        $el.find('img, video, audio, iframe, canvas, svg').length ||
+        el.textContent?.trim() ||
+        el.querySelector('img, video, audio, iframe, canvas, svg') ||
         preserveTags.has(tagName) ||
-        (tagName === 'a' && $el.attr('href'));
+        (tagName === 'a' && el.getAttribute('href'));
 
-      if (!hasContent && !$el.children().length)
-        $el.remove();
-    });
+      if (!hasContent && !el.children.length)
+        el.remove();
+    }
 
     // 5. simplify nested structure
-    _C('div > div:only-child, section > section:only-child').each(function() {
-      const $parent = _C(this).parent();
-      if ($parent.children().length === 1)
-        $parent.replaceWith(_C(this));
-    });
+    for (const el of all('div > div:only-child, section > section:only-child')) {
+      const parent = el.parentElement;
+      if (parent?.children.length === 1)
+        replaceNode(parent, [el]);
+    }
 
     // 6. div to paragraph conversion
-    _C('div').each(function() {
-      const $div = _C(this);
-      const hasBlockElements = $div.children('div, p, section, article, aside, header, footer, nav').length > 0;
-      if (!hasBlockElements && $div.text().trim())
-        $div.replaceWith(`<p>${$div.html()}</p>`);
-    });
+    const blockTags = new Set(['div', 'p', 'section', 'article', 'aside', 'header', 'footer', 'nav']);
+    for (const div of all('div')) {
+      const hasBlockElements = Array.from(div.children).some(child => blockTags.has(child.localName));
+      if (!hasBlockElements && div.textContent?.trim()) {
+        // re-parse as markup rather than moving nodes: the parser closes the <p> around block-level content
+        const template = doc.createElement('template');
+        template.innerHTML = `<p>${div.innerHTML}</p>`;
+        replaceNode(div, Array.from(template.content.childNodes));
+      }
+    }
 
     // 7. clean up whitespace (text nodes, outside preformatted content)
-    _C('*:not(pre, pre *, textarea)').contents().each(function() {
-      if (this.type === 'text')
-        this.data = this.data.replace(/\s+/g, ' ');
-    });
+    for (const el of all('*:not(pre, pre *, textarea)'))
+      for (const node of Array.from(el.childNodes))
+        if (node.nodeType === node.TEXT_NODE && node.nodeValue)
+          node.nodeValue = node.nodeValue.replace(/\s+/g, ' ');
 
-    // 8. format final output
-    return _C.html()
+    // 8. format final output: doctype, top-level comments, <html>
+    const serialized = Array.from(doc.childNodes, node =>
+      node === doc.doctype ? `<!DOCTYPE ${doc.doctype.name}>`
+        : node === doc.documentElement ? doc.documentElement.outerHTML
+          : node.nodeType === node.COMMENT_NODE ? `<!--${node.nodeValue}-->` : '',
+    ).join('');
+    return serialized
       .replace(/>\s+</g, '>\n<')
       .replace(/\n\s+/g, '\n')
       .split('\n').map(line => line.trim()).join('\n')
