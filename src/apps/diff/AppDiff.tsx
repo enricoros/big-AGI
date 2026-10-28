@@ -53,6 +53,10 @@ export function AppDiff() {
   const w2 = countWords(text2);
 
 
+  // stable handlers, so the memoized attach buttons hold across keystrokes
+  const handleAttachOriginal = React.useCallback((files: FileWithHandle[]) => files[0]?.text().then((text) => setText1(text)), []);
+  const handleAttachModified = React.useCallback((files: FileWithHandle[]) => files[0]?.text().then((text) => setText2(text)), []);
+
   return (
     <AppSmallContainer
       title={isMobile ? 'Text Diff' : 'Text Comparison'}
@@ -73,7 +77,7 @@ export function AppDiff() {
           <FormControl sx={{ alignSelf: 'flex-start' }}>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 1, mb: 1 }}>
               <FormLabelStart title='Original' />
-              <ButtonAttachFilesMemo noToolTip onAttachFiles={(files: FileWithHandle[]) => files[0]?.text().then((text) => setText1(text))} />
+              <ButtonAttachFilesMemo noToolTip onAttachFiles={handleAttachOriginal} />
             </Box>
             <Textarea
               variant='outlined'
@@ -120,7 +124,7 @@ export function AppDiff() {
           <FormControl sx={{ alignSelf: 'flex-start' }}>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 1, mb: 1 }}>
               <FormLabelStart title='Modified' />
-              <ButtonAttachFilesMemo noToolTip onAttachFiles={(files: FileWithHandle[]) => files[0]?.text().then((text) => setText2(text))} />
+              <ButtonAttachFilesMemo noToolTip onAttachFiles={handleAttachModified} />
             </Box>
             <Textarea
               variant='outlined'

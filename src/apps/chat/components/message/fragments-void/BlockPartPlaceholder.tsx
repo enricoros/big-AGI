@@ -418,6 +418,9 @@ function ModelOperationChip(props: {
     fontSize: themeScalingMap[props.contentScaling]?.blockFontSize ?? undefined,
   }), [isFinished, isError, hasDetails, props.contentScaling]);
 
+  // stable sx, so RenderCodeMemo holds across the chip's own re-renders
+  const inputCodeSx: SxProps = React.useMemo(() => ({ m: -1.5, fontSize: props.contentScaling }), [props.contentScaling]);
+
   const chipElement = (
     <Chip
       size='sm'
@@ -449,7 +452,7 @@ function ModelOperationChip(props: {
             title=''
             isPartial={false}
             renderHideTitle={true}
-            sx={{ m: -1.5, fontSize: props.contentScaling }}
+            sx={inputCodeSx}
           />
         ) : iText}
 
