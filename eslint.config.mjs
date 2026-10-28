@@ -30,6 +30,7 @@ export default defineConfig([{
       ".claude/**",                     // agent tooling, own runtime
       "electron/**",                    // excluded from the type program (root tsconfig)
       "tools/video/**",                 // self-contained package, own toolchain
+      "kb/**",                          // docs and repro scripts (python); excluded from the type program (root tsconfig)
     ],
 }, {
 //     // eslint's own base layer (no-dupe-keys, no-cond-assign, no-fallthrough, ...) - next/core-web-vitals

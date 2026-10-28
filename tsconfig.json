@@ -49,6 +49,7 @@
     "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx",
     "electron",
     "tools",
+    "kb", // docs and repro scripts (python), never part of the type program
     "dist",
     "node_modules"
   ]
