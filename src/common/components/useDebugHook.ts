@@ -69,7 +69,7 @@ export function useDebugHookChanges(debugLocation: string, deps: React.Dependenc
       );
 
     if (changedDeps.length > 0)
-      console.log(debugLocation, 'deps changed:', changedDeps);
+      console.log(debugLocation, 'deps changed:', changedDeps.length === 1 ? changedDeps[0] : changedDeps);
 
     prevDeps.current = deps;
   }, deps);
