@@ -3,7 +3,7 @@ import * as z from 'zod/v4';
 import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixParts_DocPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { GeminiWire_API_Generate_Content, GeminiWire_ContentParts, GeminiWire_Messages, GeminiWire_Safety, GeminiWire_ToolDeclarations } from '../../wiretypes/gemini.wiretypes';
 
-import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString } from './adapters.common';
+import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillSystemToUser, approxDocPart_To_String, approxImageLabel_To_String, approxInReferenceTo_To_XMLString } from './adapters.common';
 
 
 // configuration
@@ -407,6 +407,11 @@ function _toGeminiContents(chatSequence: AixMessages_ChatMessage[], apiRequiresS
 
         case 'inline_audio':
         case 'inline_image':
+          if (part.pt === 'inline_image') {
+            const imageLabelText = approxImageLabel_To_String(part.label);
+            if (imageLabelText)
+              parts.push(GeminiWire_ContentParts.TextPart(imageLabelText)); // name the image, right before it
+          }
           parts.push(GeminiWire_ContentParts.InlineDataPart(part.mimeType, part.base64));
           if (apiRequiresSignatures)
             partRequiresSignature = true;

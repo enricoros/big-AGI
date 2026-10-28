@@ -93,6 +93,16 @@ export function approxDocPart_To_String({ ref, data }: AixParts_DocPart /*, wrap
 }
 
 /**
+ * Text line that names an image, sent right before the image itself, so that the model can refer to
+ * multiple attached images by name. Returns null if the label is missing or empty.
+ * Only the base name is kept, as a dropped folder may give a relative path.
+ */
+export function approxImageLabel_To_String(label: string | undefined): string | null {
+  const baseName = label?.trim().split(/[\\/]/).pop()?.trim();
+  return baseName ? `${baseName}:` : null;
+}
+
+/**
  * Text degradation for URL-referenced media on dialects without native video input.
  * Honest by design: tells the model a video was attached and that it cannot watch it,
  * so multi-model runs (Beam) don't fail and don't hallucinate having seen it.
