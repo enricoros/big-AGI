@@ -1,12 +1,12 @@
 /**
  * Live SVG Animator - SVG extraction, sanitization, size enforcement, and model auto-pick.
  *
- * These are the small gaps the inventory surfaced: no SVG sanitizer exists in the repo, and the
- * existing rasterizer (renderSVGToPNGBlob) needed a fixed-output-size argument (added there).
+ * The existing rasterizer (renderSVGToPNGBlob) needed a fixed-output-size argument (added there).
  */
 
 import { llmsStoreState } from '~/common/stores/llms/store-llms';
 import { LLM_IF_OAI_Vision, type DLLM } from '~/common/stores/llms/llms.types';
+import { sanitizeSvgMarkup } from '~/common/util/svgSanitizeUtils';
 
 import { LIVESVG_FRAME_SIZE } from './livesvg.types';
 
@@ -29,21 +29,9 @@ export function extractAllSvgs(text: string): string[] {
 }
 
 
-/**
- * Strip dangerous constructs before live DOM injection / rasterization.
- * No DOMPurify in this repo; we do a conservative string-level scrub:
- * remove <script>, <foreignObject>, event handlers, and external/script URLs.
- */
+/** Strip active content (scripts, handlers, SMIL, non-fragment URLs) before live DOM injection / rasterization. */
 export function sanitizeSvg(svg: string): string {
-  return svg
-    // drop script and foreignObject blocks entirely
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '')
-    // drop inline event handlers (onload, onclick, ...)
-    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-    // neutralize javascript: and external http(s) references in href/xlink:href/src/url()
-    .replace(/((?:xlink:)?href|src)\s*=\s*("|')\s*(?:javascript:|https?:|\/\/)[^"']*\2/gi, '$1=$2#$2')
-    .replace(/url\(\s*(?:javascript:|https?:|\/\/)[^)]*\)/gi, 'none');
+  return sanitizeSvgMarkup(svg);
 }
 
 

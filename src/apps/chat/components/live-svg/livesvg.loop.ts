@@ -172,7 +172,7 @@ export async function runLiveSvgLoop(llmId: DLLMId, abortSignal: AbortSignal): P
       consecutiveFailures = 0;
       if (liveSvgActions().error) liveSvgActions()._setError(null);
 
-      // process each returned frame: sanitize -> enforce 512 -> rasterize 512 PNG -> push bounded
+      // process each returned frame: enforce 512 -> sanitize -> rasterize 512 PNG -> push bounded
       let pushed = 0;
       for (let k = 0; k < svgs.length; k++) {
         if (abortSignal.aborted) break;
