@@ -49,14 +49,14 @@ function _handleGlobalShortcutKeyDown(event: KeyboardEvent) {
 }
 
 // focus moves change read-time eligibility (focusWithin/skipIfInput): tick the store so
-// displays re-resolve; microtask-coalesced (a click fires focusout+focusin - one recheck)
-let _focusTickQueued = false;
+// displays re-resolve. Per frame, not per event: the events fire mid-move (focusout sees the
+// body as activeElement) and a move can end without a focusin; the frame reads the settled state.
+let _focusTickFrame: number | null = null;
 
 function _handleFocusChanged() {
-  if (_focusTickQueued) return;
-  _focusTickQueued = true;
-  queueMicrotask(() => {
-    _focusTickQueued = false;
+  if (_focusTickFrame !== null) return;
+  _focusTickFrame = requestAnimationFrame(() => {
+    _focusTickFrame = null;
     useGlobalShortcutsStore.getState().focusTick();
   });
 }
@@ -77,6 +77,10 @@ function _uninstallGlobalShortcutHandler() {
     window.removeEventListener('keydown', _handleGlobalShortcutKeyDown);
     document.removeEventListener('focusin', _handleFocusChanged);
     document.removeEventListener('focusout', _handleFocusChanged);
+    if (_focusTickFrame !== null) {
+      cancelAnimationFrame(_focusTickFrame);
+      _focusTickFrame = null;
+    }
     isHandlerInstalled = false;
   }
 }
