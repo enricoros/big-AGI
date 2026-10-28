@@ -7,7 +7,7 @@ For the separate editorial axis covering per-model metadata (`pubDate`, pricing,
 
 ## Resolution layers
 
-`llmsAssignmentsAutoModelId()` in `src/common/stores/llms/store-llms-domains_slice.ts` resolves a domain's model through three layers, tried in order:
+`llmsAuto_ModelIdForDomain_SLOW()` in `src/common/stores/llms/store-llms-domains_slice.ts` resolves a domain's model through three layers, tried in order:
 
 ### 1. Pin
 
@@ -17,7 +17,7 @@ Absent entry = Auto mode (proceed to layer 2).
 
 ### 2. Editorial pick
 
-`llmsEditorialPickForDomain(domainId, filteredLlms)` walks the editorial table and returns the first `(vendor, modelId)` pair that matches a model in the user's local LLM list.
+`llmsEditorial_ModelIdForDomain_SLOW(domainIds, universe)` walks the editorial table for the domain, then for its registry `editorialFallbackDomain` when set, and returns the first `(vendor, modelId)` pair that matches a model in the user's local LLM list.
 
 See [Editorial table](#editorial-table) below.
 
@@ -60,13 +60,12 @@ export const EditorialDefaults = {
 
 ### Matching logic
 
-`llmsEditorialPickForDomain` first looks for an exact `llmRef` match among the candidates, then falls back to `_editorialMatch`. Without the exact pass the prefix rule takes OpenRouter's `openai/gpt-6-luna-pro` (listed before the base on same-day releases) for the pick `openai/gpt-6-luna`.
+For each pick, `llmsEditorial_ModelIdForDomain_SLOW` scans the candidates once: an exact `llm.initialParameters.llmRef` match wins, otherwise the first tolerant match in list order. Without the exact-first rule the prefix rule takes OpenRouter's `openai/gpt-6-luna-pro` (listed before the base on same-day releases) for the pick `openai/gpt-6-luna`.
 
-`_editorialMatch(llm, editorialId)` uses tolerant matching to handle dated suffixes and OpenRouter's dotted ids:
+Tolerant matches on `llmRef`:
 
-1. Exact match on `llm.initialParameters.llmRef`
-2. Prefix match on `llmRef` (handles vendor-appended date suffixes like `-20250514`)
-3. Dot/dash-equivalent match on `llmRef` (OpenRouter lists `anthropic/claude-fable-5.1`; the typed pick is `anthropic/claude-fable-5-1`)
+1. Prefix (vendor-appended date suffixes like `-20250514`)
+2. Dot/dash equivalence via `textEqualsDotDashInsensitive` (OpenRouter lists `anthropic/claude-fable-5.1`; the typed pick is `anthropic/claude-fable-5-1`)
 
 
 ## Type-safety chain
@@ -127,7 +126,7 @@ MiniMax and Perplexity use `ModelDescriptionSchema[]` arrays keyed by `id` inste
 | File | Role |
 |---|---|
 | `src/common/stores/llms/model.domains.editorial.ts` | Editorial table + picker function |
-| `src/common/stores/llms/store-llms-domains_slice.ts` | 3-layer resolver (`llmsAssignmentsAutoModelId`) |
+| `src/common/stores/llms/store-llms-domains_slice.ts` | 3-layer resolver (`llmsAuto_ModelIdForDomain_SLOW`) |
 | `src/common/stores/llms/model.domains.types.ts` | `DModelDomainId` union |
 | `src/common/stores/llms/model.domains.registry.ts` | Domain specs (`autoStrategy`, `requiredInterfaces`) |
 | `src/modules/llms/server/models.mappings.ts` | `llmsDefineModels` / `llmsDefineManualMappings` helpers |

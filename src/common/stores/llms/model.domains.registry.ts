@@ -16,7 +16,7 @@ type ModelDomainSpec = {
   requiredInterfaces?: DModelInterfaceV1[];
   autoStrategy: 'topVendorTopLlm' | 'topVendorLowestCost';
   fallbackDomain?: DModelDomainId;
-  editorialFallbackDomain?: DModelDomainId; // for editorial use only, in case of empty editorials
+  editorialFallbackDomain?: DModelDomainId; // for editorial use only, when this domain's picks are empty or none match
 };
 
 
@@ -59,6 +59,8 @@ export const ModelDomainsRegistry: Record<DModelDomainId, ModelDomainSpec> = {
     fallbackDomain: 'primaryChat',
   },
 };
+
+export const ModelDomains_MaxFallbackHops = 1;
 
 
 // NOTE: the following is not ready and is even misleading.

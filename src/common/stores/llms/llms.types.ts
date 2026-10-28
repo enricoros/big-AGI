@@ -94,11 +94,11 @@ export function getLLMLabel(llm: DLLM): string {
  * This allows users to override vendor defaults while still adopting new vendor visibility changes
  * for models they haven't explicitly shown/hidden.
  */
-export function isLLMHidden(llm: DLLM): boolean {
+export function isLLMHidden(llm: Pick<DLLM, 'userHidden' | 'hidden'>): boolean {
   return llm.userHidden ?? llm.hidden ?? false;
 }
 
-export function isLLMVisible(llm: DLLM): boolean {
+export function isLLMVisible(llm: Pick<DLLM, 'userHidden' | 'hidden'>): boolean {
   return !(llm.userHidden ?? llm.hidden ?? false);
 }
 

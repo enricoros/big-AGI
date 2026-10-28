@@ -234,9 +234,9 @@ export const ModelItem = React.memo(function ModelItem(props: {
             {chipsComponentsMemo}
           </Box>
         )) : <>
-          {/*{domains['primaryChat']?.resolvedModelId === llm.id && <Chip size='sm' variant={domains['primaryChat']?.resolvedModelIsAuto ? undefined : 'solid'} sx={styles.chipPreferred}>Chat</Chip>}*/}
-          {domains['codeApply']?.resolvedModelId === llm.id && <Chip size='sm' variant={domains['codeApply']?.resolvedModelIsAuto ? undefined : 'solid'} sx={styles.chipPreferred}>Code</Chip>}
-          {domains['fastUtil']?.resolvedModelId === llm.id && <Chip size='sm' variant={domains['fastUtil']?.resolvedModelIsAuto ? undefined : 'solid'} sx={styles.chipPreferred}>Fast</Chip>}
+          {/*{domains['primaryChat']?.config?.modelId === llm.id && <Chip size='sm' variant={domains['primaryChat']?.isAuto ? undefined : 'solid'} sx={styles.chipPreferred}>Chat</Chip>}*/}
+          {domains['codeApply']?.config?.modelId === llm.id && <Chip size='sm' variant={domains['codeApply']?.isAuto ? undefined : 'solid'} sx={styles.chipPreferred}>Code</Chip>}
+          {domains['fastUtil']?.config?.modelId === llm.id && <Chip size='sm' variant={domains['fastUtil']?.isAuto ? undefined : 'solid'} sx={styles.chipPreferred}>Fast</Chip>}
         </>}
 
         {/* Features Chips - sync with `useLLMSelect.tsx` */}

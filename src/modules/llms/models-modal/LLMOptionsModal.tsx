@@ -423,8 +423,8 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
             {ModelDomainsList.filter(dId => !['imageCaption'].includes(dId)).map(domainId => {
               const domainSpec = ModelDomainsRegistry[domainId];
               const domainEntry = domainAssignments[domainId];
-              const isActive = domainEntry?.resolvedModelId === llm.id;
-              const isAuto = domainEntry?.resolvedModelIsAuto;
+              const isActive = domainEntry?.config?.modelId === llm.id;
+              const isAuto = domainEntry?.isAuto;
               return (
                 // Note: use Tooltip instead of GoodTooltip here, because GoodTooltip is not working well with ButtonGroup
                 <Tooltip arrow placement='top' key={domainId} title={isActive && isAuto ? `${domainSpec.confTooltip} (currently Auto - click to pin this model)` : domainSpec.confTooltip}>

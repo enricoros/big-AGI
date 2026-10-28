@@ -138,8 +138,8 @@ interface LLMSelectOptions {
   placeholder?: string;
   isHorizontal?: boolean;
   setLlmToAuto?: () => void; // caller-supplied strategy to reset to Auto (e.g. assignDomainModelAuto for domain-backed, or undefined for backends with no Auto concept). When provided, the Auto option/indicator are surfaced.
-  isLlmAuto?: boolean; // when true, render the selected label as "Auto (<resolved name>)" and surface the AutoMode indicator (requires setLlmToAuto)
-  autoModelLabel?: string; // display label of the model Auto resolves to, regardless of the current pin; used to label the Auto option
+  isLlmAuto?: boolean; // when true, render the selected label as "Auto: <resolved name>" and surface the AutoMode indicator (requires setLlmToAuto)
+  autoModelLabel?: string; // caller-controlled label for the Auto option (e.g. what Auto would pick while pinned); when omitted, derived from the resolved model only while in Auto
   appendConfigureModels?: boolean; // appends a bottom option to open the Models panel
   showStarFilter?: boolean; // show a button to filter starred models only
 }
@@ -160,7 +160,7 @@ export function useLLMSelect(
 ): [DLLM | null, React.JSX.Element | null] {
 
   // options
-  const { label, larger = false, disabled = false, placeholder = LLM_TEXT_PLACEHOLDER, isHorizontal = false, isLlmAuto = false, setLlmToAuto, autoModelLabel, appendConfigureModels = false, showStarFilter = false } = options;
+  const { label, larger = false, disabled = false, placeholder = LLM_TEXT_PLACEHOLDER, isHorizontal = false, isLlmAuto = false, setLlmToAuto, appendConfigureModels = false, showStarFilter = false } = options;
 
   // state
   const [controlledOpen, setControlledOpen] = React.useState(false);
@@ -174,6 +174,7 @@ export function useLLMSelect(
   // derived state
   const noIcons = false; //smaller;
   const llm = !llmId ? null : _filteredLLMs.find(llm => llm.id === llmId) ?? null;
+  const autoModelLabel = options.autoModelLabel ?? (isLlmAuto && llm ? getLLMLabel(llm) : undefined); // in Auto the resolved model is the Auto pick; no preview of it while pinned unless the caller provides one
   const isReasoning = !LLM_SELECT_SHOW_REASONING_ICON ? false : llm?.interfaces?.includes(LLM_IF_OAI_Reasoning) ?? false;
 
 

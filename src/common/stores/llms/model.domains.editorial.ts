@@ -8,6 +8,8 @@ import type { LlmsXAIModelId } from '~/modules/llms/server/openai/models/xai.mod
 import type { LlmsZAIModelId } from '~/modules/llms/server/openai/models/zai.models';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
+import { textEqualsDotDashInsensitive } from '~/common/util/textUtils';
+
 import type { DLLM, DLLMId } from './llms.types';
 import type { DModelDomainId } from './model.domains.types';
 import { getLLMPubDate, isLLMHidden, LLM_IF_Inputs_Video } from './llms.types';
@@ -213,24 +215,37 @@ export const EditorialDefaults = {
 /**
  * Pick the editor's favorite for a domain, given pre-filtered candidates.
  *
- * Walks `EditorialDefaults[domainId]` in declared order and returns the first DLLMId
- * matching a (vendor, modelId) pair. Returns undefined when nothing matches; the
- * caller (auto-resolver) falls through to the ELO/cost strategy.
+ * Walks `EditorialDefaults[domainId]` for each of `domainIds` in order, each in declared
+ * order, and returns the first DLLMId matching a (vendor, modelId) pair. Returns undefined
+ * when nothing matches; the caller (auto-resolver) falls through to the ELO/cost strategy.
  */
-export function llmsEditorialPickForDomain(
-  domainId: DModelDomainId,
-  filteredLlms: ReadonlyArray<DLLM>,
-  fallbackEditorialDomainId?: DModelDomainId, // optional secondary domain to check when the primary domain has no picks or no matches
+export function llmsEditorial_ModelIdForDomain_SLOW<Tllm extends Pick<DLLM, 'id' | 'vId' | 'initialParameters'>>(
+  domainIds: ReadonlyArray<DModelDomainId>,
+  universe: ReadonlyArray<Tllm>,
 ): DLLMId | undefined {
-  const entries = EditorialDefaults[domainId]?.length ? EditorialDefaults[domainId]
-    : fallbackEditorialDomainId && EditorialDefaults[fallbackEditorialDomainId]?.length ? EditorialDefaults[fallbackEditorialDomainId]
-      : undefined;
-  if (!entries) return undefined;
-  for (const { vendor, modelId } of entries) {
-    // exact first: the prefix rule would otherwise take OpenRouter's 'openai/gpt-6-luna-pro' (listed first) for 'openai/gpt-6-luna'
-    const hit = filteredLlms.find(llm => llm.vId === vendor && llm.initialParameters?.llmRef === modelId)
-      ?? filteredLlms.find(llm => llm.vId === vendor && _editorialMatch(llm, modelId));
-    if (hit) return hit.id;
+  for (const domainId of domainIds) {
+    for (const { vendor, modelId } of EditorialDefaults[domainId] ?? []) {
+
+      // exact first: match by (vendor, id)
+      let relaxedLlm: Tllm | undefined;
+      const exactLlm = universe.find((llm) => {
+        if (llm.vId !== vendor) return false;
+
+        const llmRef = llm.initialParameters?.llmRef;
+        if (!llmRef || typeof llmRef !== 'string') return false;
+
+        // exact match
+        if (llmRef === modelId) return true;
+
+        // relaxed after: the prefix rule would otherwise take OpenRouter's 'openai/gpt-6-luna-pro' (listed first) for 'openai/gpt-6-luna';
+        // first relaxed hit wins: dated-suffix prefix, or dot/dash-equivalent (OpenRouter's 'claude-opus-4.8' vs our 'claude-opus-4-8')
+        if (!relaxedLlm && (llmRef.startsWith(modelId) || textEqualsDotDashInsensitive(llmRef, modelId)))
+          relaxedLlm = llm;
+        return false; // keep looking for an exact match
+      });
+      if (exactLlm) return exactLlm.id;
+      if (relaxedLlm) return relaxedLlm.id;
+    }
   }
   return undefined;
 }
@@ -268,13 +283,4 @@ function _isGeminiFamily(llm: DLLM): boolean {
   if (llm.vId === 'googleai') return true;
   const llmRef = llm.initialParameters?.llmRef;
   return typeof llmRef === 'string' && llmRef.toLowerCase().includes('gemini');
-}
-
-
-/** Tolerant id match: exact `llmRef`, dated-suffix prefix on `llmRef`, or dot/dash-equivalent (OpenRouter's 'claude-opus-4.8' vs our 'claude-opus-4-8'). */
-function _editorialMatch(llm: DLLM, editorialId: string): boolean {
-  const llmRef = llm.initialParameters?.llmRef;
-  return typeof llmRef === 'string' && (llmRef === editorialId || llmRef.startsWith(editorialId) || llmRef.replace(/\./g, '-') === editorialId.replace(/\./g, '-'));
-  // this would match the mdoel in alternative services I guess - but also notice we use the llmRef correctly, not the DLLMId
-  // return llm.id === editorialId || llm.id.endsWith(`-${editorialId}`);
 }

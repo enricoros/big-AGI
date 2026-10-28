@@ -1,37 +1,38 @@
-import * as React from 'react';
-
-import type { DLLMId } from '../llms.types';
 import type { DModelDomainId } from '../model.domains.types';
+import { LlmsAssignmentsInput, llmsResolvedModelDomain, ModelDomainResolution } from './useModelDomain';
 import { ModelDomainsList } from '../model.domains.registry';
-import { llmsResolveDomainModel } from './useModelDomain';
 import { useModelsStore } from '../store-llms';
 
 
-/**
- * All current model domains, with pinned and resolved model IDs. Reactive to changes in the store.
- *
- * Entry shape (inlined; consumers can use `ReturnType<typeof useModelDomains>[DModelDomainId]` if needed):
- * - `pinnedModelId`: what the user stored - undefined for Auto, null for no-model, '<id>' for pinned (kept even when stale).
- * - `resolvedModelId`: currently-effective id - undefined for zero state, null for no-model, '<id>' for a valid set or auto-resolved model.
- * - `resolvedModelIsAuto`: true when `resolvedModelId` came from the Auto heuristic rather than a user pin (missing entries and broken pins).
- */
-export function useModelDomains(): Record<DModelDomainId, {
-  pinnedModelId: undefined | (DLLMId | null);
-  resolvedModelId: undefined | (DLLMId | null);
-  resolvedModelIsAuto: boolean;
-}> {
-  const { llms, modelAssignments } = useModelsStore();
+// cache
+let _cached: undefined | (LlmsAssignmentsInput & {
+  out: Record<DModelDomainId, ModelDomainResolution>,
+});
 
-  return React.useMemo(() => {
-    const out = {} as Record<DModelDomainId, { pinnedModelId: undefined | (DLLMId | null); resolvedModelId: undefined | (DLLMId | null); resolvedModelIsAuto: boolean }>;
-    for (const domainId of ModelDomainsList) {
-      const resolved = llmsResolveDomainModel({ llms, modelAssignments }, domainId, true, false);
-      out[domainId] = {
-        pinnedModelId: modelAssignments[domainId]?.modelId, // raw stored: undefined if absent, null for no-model, '<id>' for pin (even if stale)
-        resolvedModelId: resolved.config?.modelId,
-        resolvedModelIsAuto: resolved.isAuto,
-      };
-    }
-    return out;
-  }, [llms, modelAssignments]);
+function _llmsResolvedModelDomains(state: LlmsAssignmentsInput) {
+
+  // hit: same inputs, same record
+  const { llms, modelAssignments } = state;
+  if (_cached && _cached.llms === llms && _cached.modelAssignments === modelAssignments)
+    return _cached.out;
+
+  // miss: collect the per-domain resolutions, recycling the previous record when every domain kept its identity
+  const prev = _cached?.out;
+  const next = {} as Record<DModelDomainId, ModelDomainResolution>;
+  let changed = false;
+  for (const domainId of ModelDomainsList) {
+    next[domainId] = llmsResolvedModelDomain(domainId, modelAssignments, llms);
+    if (next[domainId] !== prev?.[domainId])
+      changed = true;
+  }
+  _cached = { llms, modelAssignments, out: prev && !changed ? prev : next };
+  return _cached.out;
+}
+
+
+/**
+ * All current model domains, each the cached resolution of llmsResolvedModelDomain. Reactive to changes in the store.
+ */
+export function useModelDomains(): Record<DModelDomainId, ModelDomainResolution> {
+  return useModelsStore(_llmsResolvedModelDomains);
 }

@@ -328,7 +328,7 @@ export function attachmentDefineConverters(source: AttachmentDraftSource, input:
     // Images (Known/Unknown)
     case input.mimeType.startsWith('image/'):
       const inputImageMimeSupported = mimeTypeIsSupportedImage(input.mimeType);
-      const visionModelMissing = !getDomainModelConfiguration('imageCaption', true, true);
+      const visionModelMissing = !getDomainModelConfiguration('imageCaption');
       converters.push({ id: 'image-resized-high', name: 'Image (high detail)', disabled: !inputImageMimeSupported });
       converters.push({ id: 'image-resized-low', name: 'Image (low detail)', disabled: !inputImageMimeSupported });
       converters.push({ id: 'image-original', name: 'Image (original quality)', disabled: !inputImageMimeSupported });

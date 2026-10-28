@@ -590,14 +590,14 @@ export function findModelsServiceOrNull<TServiceSettings extends object>(service
 }
 
 export function getChatLLMId(): DLLMId | null {
-  return getDomainModelConfiguration('primaryChat', true, true)?.modelId ?? null;
+  return getDomainModelConfiguration('primaryChat')?.modelId ?? null;
 }
 
 
 export function getDomainModelIdOrThrow(tryDomains: DModelDomainId[], requireFunctionCallTools: boolean, requireImageInput: boolean, useCaseLabel: string): DLLMId {
   for (const domain of tryDomains) {
     const isLastTry = domain === tryDomains[tryDomains.length - 1];
-    const llmId = getDomainModelConfiguration(domain, true, true)?.modelId;
+    const llmId = getDomainModelConfiguration(domain)?.modelId;
     if (!llmId) continue;
     try {
       const llm = findLLMOrThrow(llmId);

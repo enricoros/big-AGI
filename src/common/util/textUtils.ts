@@ -126,6 +126,21 @@ export function textIsSingleEmoji(text: string): boolean {
 
 
 /**
+ * Equality with '.' and '-' interchangeable, e.g. 'claude-opus-4.8' equals 'claude-opus-4-8'.
+ * Length-gated and allocation-free, for hot loops over model ids.
+ */
+export function textEqualsDotDashInsensitive(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const ca = a.charCodeAt(i), cb = b.charCodeAt(i);
+    if (ca !== cb && !((ca === 46 || ca === 45) && (cb === 46 || cb === 45))) // 46 '.', 45 '-'
+      return false;
+  }
+  return true;
+}
+
+
+/**
  * Simple hash generation for a string - used in the Frontend! For backend see `sdbmHash` in `backend.router.ts`.
  */
 export function frontendHashString(str: string): string {
