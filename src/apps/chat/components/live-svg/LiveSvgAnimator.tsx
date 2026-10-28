@@ -221,7 +221,7 @@ function TpsSparkline(props: { values: number[] }) {
   return (
     <Box sx={_styles.chart}>
       {props.values.map((v, i) => (
-        <Box key={i} title={`gen ${i + 1}: ${v.toFixed(0)} tok/s`} sx={{ ..._styles.chartBar, height: `${Math.max(3, (v / max) * 100)}%` }} />
+        <Box key={i} title={`gen ${i + 1}: ${v.toFixed(0)} tok/s`} sx={_styles.chartBar} style={{ height: `${Math.max(3, (v / max) * 100)}%` }} />
       ))}
     </Box>
   );

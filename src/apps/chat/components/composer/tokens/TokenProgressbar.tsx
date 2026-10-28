@@ -66,28 +66,29 @@ function TokenProgressbar(props: {
       }}>
 
         {/* History */}
+        {/* geometry in style, not sx: every distinct percentage would otherwise add a CSS rule for the session */}
         {historyPct > 0 && <Box sx={{
           background: historyColor,
-          position: 'absolute', left: 0, bottom: 0, width: historyPct + '%', height,
-        }} />}
+          position: 'absolute', left: 0, bottom: 0, height,
+        }} style={{ width: historyPct + '%' }} />}
 
         {/* Direct */}
         {directPct > 0 && <Box sx={{
           background: directColor,
-          position: 'absolute', left: historyPct + '%', bottom: 0, width: directPct + '%', height,
-        }} />}
+          position: 'absolute', bottom: 0, height,
+        }} style={{ left: historyPct + '%', width: directPct + '%' }} />}
 
         {/* Response */}
         {responsePct > 0 && <Box sx={{
           background: responseColor,
-          position: 'absolute', left: (totalPct > 100 ? (historyPct + directPct) : (100 - responsePct)) + '%', bottom: 0, width: responsePct + '%', height,
-        }} />}
+          position: 'absolute', bottom: 0, height,
+        }} style={{ left: (totalPct > 100 ? (historyPct + directPct) : (100 - responsePct)) + '%', width: responsePct + '%' }} />}
 
         {/* Overflow */}
         {isOverflow && <Box sx={{
           background: overflowColor,
-          position: 'absolute', left: (historyPct + directPct + responsePct) + '%', right: 0, bottom: 0, height,
-        }} />}
+          position: 'absolute', right: 0, bottom: 0, height,
+        }} style={{ left: (historyPct + directPct + responsePct) + '%' }} />}
 
       </Box>
 
