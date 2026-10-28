@@ -358,7 +358,7 @@ export async function createChatGenerateResumeDispatch(access: AixAPI_Access, re
       // ASSUME the OpenAI Responses API - https://platform.openai.com/docs/api-reference/responses/get
       if (resumeHandle.uht !== 'vnd.oai.responses')
         throw new Error(`Resume handle mismatch for ${dialect}: expected 'vnd.oai.responses', got '${resumeHandle.uht}'`);
-      const { url, headers } = openAIAccess(access, '', `${OPENAI_API_PATHS.responses}/${resumeHandle.runId /* OpenAI response.id */}`);
+      const { url, headers } = openAIAccess(access, '', `${OPENAI_API_PATHS.responses}/${encodeURIComponent(resumeHandle.runId) /* OpenAI response.id */}`);
       const queryParams = new URLSearchParams({
         stream: streaming ? 'true' : 'false',
         ...(!!resumeHandle.startingAfter && { starting_after: resumeHandle.startingAfter.toString() }),
@@ -477,7 +477,7 @@ export async function executeChatGenerateDelete(access: AixAPI_Access, handle: A
     case 'openrouter':
       if (handle.uht !== 'vnd.oai.responses')
         throw new Error(`Delete handle mismatch for ${dialect}: expected 'vnd.oai.responses', got '${handle.uht}'`);
-      ({ url, headers } = openAIAccess(access, '', `${OPENAI_API_PATHS.responses}/${handle.runId}`));
+      ({ url, headers } = openAIAccess(access, '', `${OPENAI_API_PATHS.responses}/${encodeURIComponent(handle.runId)}`));
       name = `Aix.${dialect}.Responses.delete`;
       break;
 

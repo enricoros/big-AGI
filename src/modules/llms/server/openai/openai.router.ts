@@ -15,7 +15,7 @@ import { heartbeatsWhileAwaiting } from '~/modules/aix/server/dispatch/heartbeat
 import { wireLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './wiretypes/localai.wiretypes';
 import { WireOpenRouterCreateImagesRequest, wireOpenRouterCreateImagesResponseSchema } from './wiretypes/openrouter.wiretypes';
 
-import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
+import { ListModelsResponse_schema, ModelDescriptionSchema, VendorResourceId_schema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
 import { OPENAI_API_PATHS, openAIAccess, openAIAccessSchema, OpenAIAccessSchema, OPENROUTER_API_PATHS } from './openai.access';
@@ -142,11 +142,11 @@ export const llmOpenAIRouter = createTRPCRouter({
   containerFileDownload: edgeProcedure
     .input(z.object({
       access: openAIAccessSchema,
-      containerId: z.string(),
-      fileId: z.string(),
+      containerId: VendorResourceId_schema,
+      fileId: VendorResourceId_schema,
     }))
     .query(async ({ input: { access, containerId, fileId } }) => {
-      const { headers, url } = openAIAccess(access, null, `/v1/containers/${containerId}/files/${fileId}/content`);
+      const { headers, url } = openAIAccess(access, null, `/v1/containers/${encodeURIComponent(containerId)}/files/${encodeURIComponent(fileId)}/content`);
       const response = await fetchResponseOrTRPCThrow({ url, headers, name: 'OpenAI' });
 
       // Guard against excessively large files (10 MB limit) - mirrors the Anthropic file download endpoint
@@ -169,11 +169,11 @@ export const llmOpenAIRouter = createTRPCRouter({
   containerFileDelete: edgeProcedure
     .input(z.object({
       access: openAIAccessSchema,
-      containerId: z.string(),
-      fileId: z.string(),
+      containerId: VendorResourceId_schema,
+      fileId: VendorResourceId_schema,
     }))
     .mutation(async ({ input: { access, containerId, fileId } }) => {
-      const { headers, url } = openAIAccess(access, null, `/v1/containers/${containerId}/files/${fileId}`);
+      const { headers, url } = openAIAccess(access, null, `/v1/containers/${encodeURIComponent(containerId)}/files/${encodeURIComponent(fileId)}`);
       try {
         await fetchTextOrTRPCThrow({ url, headers, method: 'DELETE', name: 'OpenAI' });
         return { success: true, alreadyGone: false };
