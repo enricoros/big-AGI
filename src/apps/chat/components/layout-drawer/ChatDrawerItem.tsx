@@ -319,8 +319,8 @@ function ChatDrawerItem(props: {
     progress > 0 && (
       <Box sx={{
         backgroundColor: 'neutral.softHoverBg',
-        position: 'absolute', left: 0, bottom: 0, width: progress + '%', height: 4,
-      }} />
+        position: 'absolute', left: 0, bottom: 0, height: 4,
+      }} style={{ width: progress + '%' /* per search keystroke: style, not sx */ }} />
     ), [progress]);
 
   return (isActive || isAlsoOpen) ? (

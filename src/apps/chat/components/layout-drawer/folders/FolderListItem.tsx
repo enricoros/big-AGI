@@ -20,6 +20,18 @@ import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 
 const _styles = {
 
+  item: {
+    userSelect: 'none',
+
+    // we had this before, but it wasn't working properly, so we reduced to a handle (folder icon) on mobile
+    // touchAction: 'none', // DnD prevent scrolling on mobile
+
+    // shows the menu icon on hover
+    '&:hover .menu-icon': {
+      visibility: 'visible',
+    },
+  } as const,
+
   menuButton: {
     visibility: 'hidden',
   } as const,
@@ -136,20 +148,13 @@ export function FolderListItem(props: {
   return (
     <ListItem
       ref={setNodeRef}
-      sx={{
+      // drag geometry changes every frame: inline style, not sx (each sx value mints a CSS rule)
+      style={{
         transform: CSS.Translate.toString(transform),
         transition: transition,
-        userSelect: 'none',
         zIndex: isDragging ? 1 : undefined,
-
-        // we had this before, but it wasn't working properly, so we reduced to a handle (folder icon) on mobile
-        // touchAction: 'none', // DnD prevent scrolling on mobile
-
-        // shows the menu icon on hover
-        '&:hover .menu-icon': {
-          visibility: 'visible',
-        },
       }}
+      sx={_styles.item}
       endAction={!isEditing &&
         <IconButton
           size='sm'
