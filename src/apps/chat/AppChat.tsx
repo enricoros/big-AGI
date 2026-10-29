@@ -34,12 +34,10 @@ import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
 import { useUIComplexityIsMinimal } from '~/common/stores/store-ui';
-import { ChatBarBeam } from './components/layout-bar/ChatBarBeam';
-import { ChatBarAltTitle } from './components/layout-bar/ChatBarAltTitle';
-import { ChatBarChat } from './components/layout-bar/ChatBarChat';
 import { ChatDrawerMemo } from './components/layout-drawer/ChatDrawer';
 import { ChatPaneMemo } from './components/ChatPane';
 import { ChatPanelMemo } from './components/layout-panel/ChatPanel';
+import { ChatToolbarMemo } from './components/layout-bar/ChatToolbar';
 import { ComposerMemo } from './components/composer/Composer';
 import { ComposerDock } from './components/composer/ComposerDock';
 import { LiveSvgAnimator } from './components/live-svg/LiveSvgAnimator';
@@ -427,17 +425,6 @@ export function AppChat() {
 
   // Pluggable Optima components
 
-  const barAltTitle = null;
-
-  const focusedBarContent = React.useMemo(() => beamOpenStoreInFocusedPane
-      ? <ChatBarBeam conversationTitle={focusedChatTitle ?? 'No Chat'} beamStore={beamOpenStoreInFocusedPane} isMobile={isMobile} />
-      : (barAltTitle === null)
-        ? <ChatBarChat conversationId={focusedPaneConversationId} llmDropdownRef={llmDropdownRef} personaDropdownRef={personaDropdownRef} />
-        : <ChatBarAltTitle conversationId={focusedPaneConversationId} conversationTitle={barAltTitle} />
-    , [barAltTitle, beamOpenStoreInFocusedPane, focusedChatTitle, focusedPaneConversationId, isMobile],
-  );
-
-
   // Disabled by default, as it lags the opening of the drawer and immediately vanishes during the closing animation
   const isDrawerOpen = true; // useOptimaDrawerOpen();
 
@@ -564,7 +551,14 @@ export function AppChat() {
   return <>
 
     {/* -> Toolbar, -> Drawer, -> Panel*/}
-    <OptimaToolbarIn>{focusedBarContent}</OptimaToolbarIn>
+    <OptimaToolbarIn>
+      <ChatToolbarMemo
+        conversationId={focusedPaneConversationId}
+        isMobile={isMobile}
+        llmDropdownRef={llmDropdownRef}
+        personaDropdownRef={personaDropdownRef}
+      />
+    </OptimaToolbarIn>
     <OptimaDrawerIn>{drawerContent}</OptimaDrawerIn>
     <OptimaPanelIn>
       <ChatPanelMemo
