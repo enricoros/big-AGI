@@ -1,7 +1,12 @@
 #!/bin/bash
 
-# Create Development Worktree Script
-# This script creates a new git worktree with a new branch at HEAD or a selected ref
+# wt - development worktrees: create (at HEAD or a selected ref), list, materialize, remove
+
+# Bash-only: under `zsh script.sh`, BASH_REMATCH stays empty and unquoted
+# variables do not word-split (the protected-branch loop matches nothing)
+if [ -z "${BASH_VERSION:-}" ]; then
+    exec bash "$0" "$@"
+fi
 
 set -eo pipefail  # Exit on error, pipe failure
 
@@ -56,7 +61,7 @@ file_mtime() {
 # Header function
 print_header() {
     printf "%b%s%b\n" "$BLUE" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" "$NC"
-    printf "%b%s%b\n" "$BLUE" "       Create Development Worktree" "$NC"
+    printf "%b%s%b\n" "$BLUE" "       Development Worktrees" "$NC"
     printf "%b%s%b\n" "$BLUE" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" "$NC"
     echo
 }
@@ -69,14 +74,27 @@ list_worktrees() {
     # Get the main worktree path and current directory
     MAIN_WORKTREE=$(git worktree list | head -1 | awk '{print $1}')
     CURRENT_DIR=$(pwd)
-    
+
+    # Claude Code agent worktrees live in the session scratchpad:
+    # <tmp>/claude-<uid>/<project>/<session-uuid>/scratchpad/[wt/]<name>
+    CLAUDE_WT_RE='/claude-[0-9]+/[^/]+/([0-9a-f]{8})-[0-9a-f-]+/scratchpad/(wt/)?(.+)$'
+
+    # Branch column fits the longest branch name; 10 = "(detached)"
+    BRANCH_W=$(git worktree list | sed -n 's/.*\[\([^]]*\)\].*/\1/p' | awk '{ if (length > m) m = length } END { print (m > 10 ? m : 10) }')
+
     git worktree list | while IFS= read -r line; do
         WORKTREE_PATH=$(echo "$line" | awk '{print $1}')
         COMMIT_HASH=$(echo "$line" | awk '{print $2}')
-        # Extract branch name and remove brackets
-        BRANCH_NAME=$(echo "$line" | grep -o '\[.*\]' | tr -d '[]')
+        # Extract branch name and remove brackets; `|| true` because a detached
+        # HEAD has no [branch], and a failed grep under `set -eo pipefail` ends the listing
+        BRANCH_NAME=$(echo "$line" | grep -o '\[.*\]' | tr -d '[]' || true)
         # Get any additional info (like 'prunable')
-        ADDITIONAL_INFO=$(echo "$line" | sed 's/.*\[\([^]]*\)\]//' | xargs)
+        if [ -n "$BRANCH_NAME" ]; then
+            ADDITIONAL_INFO=$(echo "$line" | sed 's/.*\[\([^]]*\)\]//' | xargs)
+        else
+            BRANCH_NAME="(detached)"
+            ADDITIONAL_INFO=$(echo "$line" | sed 's/.*(detached HEAD)//' | xargs)
+        fi
 
         # Worktree creation time: the admin dir's `gitdir` file is written once
         # at `git worktree add` (only move/repair rewrite it); main worktree has none
@@ -102,23 +120,22 @@ list_worktrees() {
         if [ "$WORKTREE_PATH" = "$CURRENT_DIR" ]; then
             # Show full path for current directory
             DISPLAY_PATH="$WORKTREE_PATH"
+        elif [[ "$WORKTREE_PATH" =~ $CLAUDE_WT_RE ]]; then
+            # Claude Code agent worktree: claude:<session-id prefix>/<name>
+            DISPLAY_PATH="claude:${BASH_REMATCH[1]}/${BASH_REMATCH[3]}"
+        elif DISPLAY_PATH=$(realpath --relative-to="$CURRENT_DIR" "$WORKTREE_PATH" 2>/dev/null); then
+            # GNU realpath (Linux, Git-Bash)
+            :
+        elif [[ "$WORKTREE_PATH" == "$(dirname "$CURRENT_DIR")"/* ]]; then
+            # Fallback (macOS realpath has no --relative-to): siblings of the current dir
+            DISPLAY_PATH="../${WORKTREE_PATH#$(dirname "$CURRENT_DIR")/}"
         else
-            # Show relative path for others
-            if command -v realpath >/dev/null 2>&1; then
-                DISPLAY_PATH=$(realpath --relative-to="$CURRENT_DIR" "$WORKTREE_PATH" 2>/dev/null || echo "$WORKTREE_PATH")
-            else
-                # Simple fallback: if path starts with current dir's parent, make it relative
-                if [[ "$WORKTREE_PATH" == "$(dirname "$CURRENT_DIR")"* ]]; then
-                    DISPLAY_PATH="../${WORKTREE_PATH#$(dirname "$CURRENT_DIR")/}"
-                else
-                    DISPLAY_PATH="$WORKTREE_PATH"
-                fi
-            fi
+            DISPLAY_PATH="$WORKTREE_PATH"
         fi
         
         # Print with formatted output
         printf "  • %-55s" "$DISPLAY_PATH"
-        printf " %b%-24s%b" "$BOLD_WHITE" "$BRANCH_NAME" "$NC"
+        printf " %b%-${BRANCH_W}s%b" "$BOLD_WHITE" "$BRANCH_NAME" "$NC"
         printf " %b%-10s%b" "$CYAN" "$CREATED_AT" "$NC"
         printf " %b%s%b" "$GRAY" "${COMMIT_HASH:0:7}" "$NC"
         printf "%b%s%b" "$YELLOW" "$DIRTY_MARK" "$NC"
@@ -250,7 +267,9 @@ materialize_worktree() {
     if [ -f "$target_path/package.json" ]; then
         echo
         print_color "$BLUE" "Installing npm dependencies..."
-        (cd "$target_path" && npm install --optional > /dev/null 2> /dev/null)
+        if ! (cd "$target_path" && npm install > /dev/null 2> /dev/null); then
+            print_color "$RED" "✗ npm install failed - run it manually in $target_path"
+        fi
     else
         echo -n "Installing npm dependencies... "
         printf "%b⊘ %b(no package.json)%b\n" "$YELLOW" "$GRAY" "$NC"
@@ -368,7 +387,7 @@ if [ "$1" = "--materialize" ] || [ "$1" = "-m" ]; then
             [ -z "$wt_line" ] && continue
             wt_path=$(echo "$wt_line" | awk '{print $1}')
             wt_base=$(basename "$wt_path")
-            wt_branch=$(echo "$wt_line" | sed 's/.*\[\([^]]*\)\].*/\1/')
+            wt_branch=$(echo "$wt_line" | sed -n 's/.*\[\([^]]*\)\].*/\1/p')
             if [ "$wt_branch" = "$MATERIALIZE_TARGET" ] \
                 || [ "$wt_base" = "big-agi_$MATERIALIZE_TARGET" ] \
                 || [ "$wt_base" = "big-agi-$MATERIALIZE_TARGET" ] \
@@ -427,13 +446,12 @@ if [ "$1" = "--remove" ]; then
     fi
     
     BRANCH_TO_REMOVE=$2
-    WORKTREE_TO_REMOVE="../big-agi_$BRANCH_TO_REMOVE"
-    
+
     print_header
-    
+
     # Get the main worktree to prevent its removal
     MAIN_WORKTREE=$(git worktree list 2>/dev/null | head -1 | awk '{print $1}')
-    MAIN_BRANCH=$(git worktree list 2>/dev/null | head -1 | sed 's/.*\[\([^]]*\)\].*/\1/')
+    MAIN_BRANCH=$(git worktree list 2>/dev/null | head -1 | sed -n 's/.*\[\([^]]*\)\].*/\1/p')
     
     # Check if trying to remove the main branch
     if [ "$BRANCH_TO_REMOVE" = "$MAIN_BRANCH" ]; then
@@ -465,7 +483,7 @@ if [ "$1" = "--remove" ]; then
         [ -z "$wt_line" ] && continue
         wt_path=$(echo "$wt_line" | awk '{print $1}')
         wt_base=$(basename "$wt_path")
-        wt_branch=$(echo "$wt_line" | sed 's/.*\[\([^]]*\)\].*/\1/')
+        wt_branch=$(echo "$wt_line" | sed -n 's/.*\[\([^]]*\)\].*/\1/p')
         if [ "$wt_branch" = "$BRANCH_TO_REMOVE" ] \
             || [ "$wt_base" = "big-agi_$BRANCH_TO_REMOVE" ] \
             || [ "$wt_base" = "big-agi-$BRANCH_TO_REMOVE" ] \
@@ -521,7 +539,7 @@ if [ "$1" = "--remove" ]; then
         fi
         
         # Verify worktree is gone
-        if git worktree list | grep -q "$WORKTREE_PATH"; then
+        if git worktree list --porcelain | grep -qxF "worktree $WORKTREE_PATH"; then
             print_color "$RED" "  Warning: Worktree still appears in list"
         fi
     else
@@ -584,7 +602,7 @@ if [ "$1" = "--remove" ]; then
     FINAL_WORKTREE_EXISTS=false
     FINAL_BRANCH_EXISTS=false
     
-    if [ -n "$WORKTREE_PATH" ] && git worktree list | grep -q "$WORKTREE_PATH"; then
+    if [ -n "$WORKTREE_PATH" ] && git worktree list --porcelain | grep -qxF "worktree $WORKTREE_PATH"; then
         FINAL_WORKTREE_EXISTS=true
     fi
     
@@ -718,8 +736,13 @@ echo
 # git would otherwise record that remote as the branch upstream and make it the
 # default push target; pushes must default to remote.pushDefault
 echo -n "Creating git worktree... "
-git worktree add "$WORKTREE_PATH" --no-track -b "$NEW_BRANCH_NAME" "$SOURCE_REF" >/dev/null 2>&1
-print_color "$GREEN" "✓"
+if ADD_OUTPUT=$(git worktree add "$WORKTREE_PATH" --no-track -b "$NEW_BRANCH_NAME" "$SOURCE_REF" 2>&1); then
+    print_color "$GREEN" "✓"
+else
+    print_color "$RED" "✗ Failed"
+    echo "  Error: $ADD_OUTPUT"
+    exit 1
+fi
 
 # Materialize: .idea dirs, .env* files, run configurations, npm install
 materialize_worktree "$WORKTREE_PATH" "$COPY_ENV"
