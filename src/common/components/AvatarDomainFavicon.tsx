@@ -27,9 +27,6 @@ export function AvatarDomainFavicon(props: {
         mx: 0.5,
         borderRadius: noShadow ? 0 : 'xs',
         boxShadow: noShadow ? 'none' : 'xs',
-        width: size,
-        height: size,
-        fontSize: size * 0.8,
         // bgcolor: 'neutral.softBg',
         // outline: noShadow ? undefined : '1px solid',
         // outlineColor: noShadow ? undefined : 'neutral.outlinedBorder',
@@ -40,6 +37,7 @@ export function AvatarDomainFavicon(props: {
           boxShadow: 'md',
         },
       }}
+      style={{ width: size, height: size, fontSize: size * 0.8 }} // numeric props: style, not sx (a rule per size)
       src={faviconUrl}
     >
       {(domain || '').charAt(0).toUpperCase()}

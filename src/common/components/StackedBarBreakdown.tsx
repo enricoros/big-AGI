@@ -56,10 +56,10 @@ export function StackedBarBreakdown({ segments, title, showValues = false, value
               key={key}
               title={`${valueFormatter(value)} (${percentage.toFixed(0)}%)`}
               sx={{
-                width: `${percentage}%`,
                 backgroundColor: color,
                 // transition: 'width 0.3s ease-in-out',
               }}
+              style={{ width: `${percentage}%` }}
             />
           );
         })}

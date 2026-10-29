@@ -271,8 +271,8 @@ export function DataStreamViz(props: { height: number, speed?: number }) {
   return (
     <Box
       ref={containerRef}
+      style={{ height: props.height }}
       sx={{
-        height: `${props.height}px`,
         overflow: 'hidden',
         position: 'relative',
         width: '100%', // Ensure the canvas fits horizontally

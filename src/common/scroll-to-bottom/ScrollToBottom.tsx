@@ -42,10 +42,9 @@ function DebugBorderBox(props: { heightPx: number, color: string }) {
   return (
     <Box sx={{
       position: 'absolute', bottom: 0, right: 0, left: 0,
-      height: `${props.heightPx}px`,
       border: `1px solid ${props.color}`,
       pointerEvents: 'none',
-    }} />
+    }} style={{ height: props.heightPx }} />
   );
 }
 
