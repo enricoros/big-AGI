@@ -24,8 +24,9 @@ const _styles = {
 
 /**
  * Shared label part (left side)
+ * Not memoized: callers pass element literals (description, tooltip) by design, so a memo could never hold.
  */
-export const FormLabelStart = React.memo(function FormLabelStartBase(props: {
+export function FormLabelStart(props: {
   title: React.ReactNode,
   description?: React.ReactNode,
   tooltip?: React.ReactNode,
@@ -64,4 +65,4 @@ export const FormLabelStart = React.memo(function FormLabelStartBase(props: {
       </FormHelperText>
     )}
   </div>;
-});
+}

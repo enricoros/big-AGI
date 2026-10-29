@@ -29,8 +29,21 @@ export const LLMSearchFilterInput = React.memo(function LLMSearchFilterInput(pro
 }) {
 
   // reset the search on unmount (e.g. dropdown closed while typed) - the input restarts empty, so the filter must too
-  const { onSearch } = props;
+  const { onSearch, onStarredToggle, showStarredOnly } = props;
   React.useEffect(() => () => onSearch(null), [onSearch]);
+
+  // stable element, so the memoized input holds across our re-renders
+  const starredDecorator = React.useMemo(() => !onStarredToggle ? undefined : (
+    <IconButton
+      size='sm'
+      variant='plain'
+      aria-label='Filter starred models'
+      onClick={onStarredToggle}
+    >
+      <StarredState isStarred={!!showStarredOnly} />
+      {/*<StarIconUnstyled isStarred={showStarredOnly} />*/}
+    </IconButton>
+  ), [onStarredToggle, showStarredOnly]);
 
   return (
     <DebouncedInputMemo
@@ -39,17 +52,7 @@ export const LLMSearchFilterInput = React.memo(function LLMSearchFilterInput(pro
       debounceTimeout={300}
       onDebounce={props.onSearch}
       placeholder={`Search ${props.llmsCount} models...`}
-      startDecorator={props.onStarredToggle ? (
-        <IconButton
-          size='sm'
-          variant='plain'
-          aria-label='Filter starred models'
-          onClick={props.onStarredToggle}
-        >
-          <StarredState isStarred={!!props.showStarredOnly} />
-          {/*<StarIconUnstyled isStarred={showStarredOnly} />*/}
-        </IconButton>
-      ) : undefined}
+      startDecorator={starredDecorator}
       sx={_styles.filterBox}
     />
   );
