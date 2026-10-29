@@ -22,4 +22,9 @@ export type DModelDomainId =
    * Image Captioning model - used to generate detailed text descriptions of images before sending to primary chat model
    */
   'imageCaption'
+  |
+  /**
+   * ScratchChat model: quick chats
+   */
+  'scratchChat'
   ;

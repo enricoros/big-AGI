@@ -58,6 +58,14 @@ export const ModelDomainsRegistry: Record<DModelDomainId, ModelDomainSpec> = {
     autoStrategy: 'topVendorTopLlm',
     fallbackDomain: 'primaryChat',
   },
+  scratchChat: {
+    label: 'Scratch Chat',
+    confLabel: 'Scratch',
+    confTooltip: 'Model for quick chats',
+    description: 'Quick chat model for fast responses',
+    autoStrategy: 'topVendorLowestCost',
+    editorialFallbackDomain: 'fastUtil',
+  },
 };
 
 export const ModelDomains_MaxFallbackHops = 1;

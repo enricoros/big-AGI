@@ -207,6 +207,8 @@ export const EditorialDefaults = {
     { vendor: 'nvidianim',  modelId: 'meta/muse-glimmer-30b' }, // replaces mistral-medium-3.5-128b (410 Gone on NVIDIA since 2026-08-17)
   ],
 
+  scratchChat: [],
+
 } as const satisfies _EditorialDefaultsTable;
 
 
