@@ -4,6 +4,7 @@ import { fetchWithAbortableConnectionRetry, RetryAttempt } from '~/server/trpc/t
 
 import { llmAppIdentityHeaders } from '~/modules/llms/shared/llm.appIdentity';
 
+import { isBrowserNetworkError, isNodeStreamTerminated } from '~/common/util/fetchFailures';
 import { objectDeepCloneWithStringLimit } from '~/common/util/objectUtils';
 
 import { AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../../api/aix.security';
@@ -28,6 +29,17 @@ function promiseWithResolvers<T>(): { promise: Promise<T>, resolve: (value: T | 
   let reject!: (reason?: any) => void;
   const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; });
   return { promise, resolve, reject };
+}
+
+/**
+ * Text for a failure while reading the service response, shared by the streaming and non-streaming consumers.
+ * A dropped connection says so and keeps the runtime's own text: [CSF] a browser drop (e.g. Firefox 'Error in input stream', #1211),
+ * [server] a Node fetch drop ('terminated').
+ */
+function _describeReadFailure(error: any, prettyDialect: string): string {
+  if (isBrowserNetworkError(error) || isNodeStreamTerminated(error))
+    return `the connection to ${prettyDialect} dropped mid-response (${error.message}).`;
+  return safeErrorString(error) || 'Unknown stream reading error';
 }
 
 
@@ -246,7 +258,7 @@ async function* _consumeDispatchUnified(
     if (error instanceof OperationRetrySignal) throw error;
 
     if (dispatchBody === undefined)
-      chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-read', `**[Reading Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, 'srv-warn');
+      chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-read', `**[Reading Issue] ${_d.prettyDialect}**: ${_describeReadFailure(error, _d.prettyDialect)}`, 'srv-warn');
     else
       chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-parse', ` **[Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\n\nInput data: ${objectDeepCloneWithStringLimit(dispatchBody, 'aix.parsing-issue', 2048)}.\n\nPlease open a support ticket on GitHub.`, 'srv-warn');
   }
@@ -329,7 +341,7 @@ async function* _consumeDispatchStream(
       }
 
       // Handle abnormal stream termination; print to the server console as well (important to debug)
-      chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-read', `**[Streaming Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream reading error'}`, 'srv-warn');
+      chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-read', `**[Streaming Issue] ${_d.prettyDialect}**: ${_describeReadFailure(error, _d.prettyDialect)}`, 'srv-warn');
       break; // outer do {}
     }
 

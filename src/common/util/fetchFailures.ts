@@ -33,6 +33,12 @@ export function isBrowserNetworkError(error: unknown): error is TypeError {
 }
 
 
+// Node fetch (undici) - TypeError('terminated'), from undici's fetch (lib/web/fetch, `terminate()`): the socket closed mid-body.
+export function isNodeStreamTerminated(error: unknown): error is TypeError {
+  return error instanceof TypeError && error.message === 'terminated';
+}
+
+
 // tRPC client (httpBatchStreamLink) - errors reach the caller bare while the stream is read, or wrapped in a TRPCClientError
 // (same message, the original on `.cause`) before the result envelope arrives.
 
