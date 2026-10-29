@@ -12,14 +12,13 @@ import * as React from 'react';
 
 import { Box, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 // import AutoModeIcon from '@mui/icons-material/AutoMode';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import GraphicEqRoundedIcon from '@mui/icons-material/GraphicEqRounded';
 import KeyIcon from '@mui/icons-material/Key';
 import LinkIcon from '@mui/icons-material/Link';
 
 import { ButtonServiceAdd } from '~/common/components/ButtonServiceAdd';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
-import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { ConfirmIconButton } from '~/common/components/ConfirmIconButton';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GeminiIcon } from '~/common/components/icons/vendors/GeminiIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
@@ -132,7 +131,6 @@ function _sourceIcon(engine: DASRxEngineAny): React.ElementType | null {
 export function ASRxConfigureEngines(props: { isMobile: boolean }) {
 
   // state
-  const [confirmDeleteEngine, setConfirmDeleteEngine] = React.useState<DASRxEngineAny | null>(null);
   const [addMenuAnchor, setAddMenuAnchor] = React.useState<HTMLElement | null>(null);
 
   // external state - module
@@ -177,25 +175,10 @@ export function ASRxConfigureEngines(props: { isMobile: boolean }) {
       useASRxStore.getState().updateEngine(activeEngineId, updates);
   }, [activeEngineId]);
 
-  const handleDeleteActive = React.useCallback((event: React.MouseEvent) => {
+  const handleDeleteActive = React.useCallback(() => {
     if (!activeEngine || activeEngine.isAutoDetected || activeEngine.isAutoLinked) return;
-
-    // shift+click skips confirmation
-    if (event.shiftKey)
-      return useASRxStore.getState().deleteEngine(activeEngine.engineId);
-
-    setConfirmDeleteEngine(activeEngine);
+    useASRxStore.getState().deleteEngine(activeEngine.engineId);
   }, [activeEngine]);
-
-  const handleConfirmDelete = React.useCallback(() => {
-    if (!confirmDeleteEngine) return;
-    useASRxStore.getState().deleteEngine(confirmDeleteEngine.engineId);
-    setConfirmDeleteEngine(null);
-  }, [confirmDeleteEngine]);
-
-  const handleCancelDelete = React.useCallback(() => {
-    setConfirmDeleteEngine(null);
-  }, []);
 
 
   return <>
@@ -221,17 +204,9 @@ export function ASRxConfigureEngines(props: { isMobile: boolean }) {
 
       <Box sx={_styles.selectGroup}>
 
-        {/* Delete - only shown for manually-added engines */}
+        {/* Delete - only shown for manually-added engines; keyed so switching engines disarms it */}
         {activeEngine && !activeEngine.isAutoLinked && !activeEngine.isAutoDetected && (
-          <TooltipOutlined title={`Remove ${activeEngine.label}`}>
-            <IconButton
-              variant='plain'
-              color='neutral'
-              onClick={handleDeleteActive}
-            >
-              <DeleteOutlineIcon />
-            </IconButton>
-          </TooltipOutlined>
+          <ConfirmIconButton key={activeEngine.engineId} tooltip={`Remove ${activeEngine.label}`} onConfirm={handleDeleteActive} />
         )}
 
         <Select
@@ -339,19 +314,6 @@ export function ASRxConfigureEngines(props: { isMobile: boolean }) {
     {/*    No services configured.*/}
     {/*  </Typography>*/}
     {/*)}*/}
-
-    {/* Delete confirmation */}
-    {!!confirmDeleteEngine && (
-      <ConfirmationModal
-        open
-        onClose={handleCancelDelete}
-        onPositive={handleConfirmDelete}
-        lowStakes
-        noTitleBar
-        confirmationText={<>Remove <strong>{confirmDeleteEngine.label}</strong>? This cannot be undone.</>}
-        positiveActionText='Remove'
-      />
-    )}
 
   </>;
 }

@@ -11,14 +11,13 @@ import * as React from 'react';
 
 import { Box, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 // import AutoModeIcon from '@mui/icons-material/AutoMode';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import KeyIcon from '@mui/icons-material/Key';
 import LinkIcon from '@mui/icons-material/Link';
 import RecordVoiceOverRoundedIcon from '@mui/icons-material/RecordVoiceOverRounded';
 
 import { ButtonServiceAdd } from '~/common/components/ButtonServiceAdd';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
-import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
+import { ConfirmIconButton } from '~/common/components/ConfirmIconButton';
 import { ElevenLabsIcon } from '~/common/components/icons/vendors/ElevenLabsIcon';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GeminiIcon } from '~/common/components/icons/vendors/GeminiIcon';
@@ -115,7 +114,6 @@ function _sourceIcon(engine: DSpeexEngineAny): React.ElementType | null {
 export function SpeexConfigureEngines(props: { isMobile: boolean }) {
 
   // state
-  const [confirmDeleteEngine, setConfirmDeleteEngine] = React.useState<DSpeexEngineAny | null>(null);
   const [addMenuAnchor, setAddMenuAnchor] = React.useState<HTMLElement | null>(null);
   const [showSystemTest, setShowSystemTest] = React.useState(false);
 
@@ -161,27 +159,10 @@ export function SpeexConfigureEngines(props: { isMobile: boolean }) {
       useSpeexStore.getState().updateEngine(activeEngineId, updates);
   }, [activeEngineId]);
 
-  const handleDeleteActive = React.useCallback((event: React.MouseEvent) => {
+  const handleDeleteActive = React.useCallback(() => {
     if (!activeEngine || activeEngine.isAutoDetected || activeEngine.isAutoLinked) return;
-
-    // shift+click skips confirmation
-    if (event.shiftKey)
-      return useSpeexStore.getState().deleteEngine(activeEngine.engineId);
-
-    setConfirmDeleteEngine(activeEngine);
+    useSpeexStore.getState().deleteEngine(activeEngine.engineId);
   }, [activeEngine]);
-
-  const handleConfirmDelete = React.useCallback(() => {
-    if (!confirmDeleteEngine) return;
-
-    useSpeexStore.getState().deleteEngine(confirmDeleteEngine.engineId);
-
-    setConfirmDeleteEngine(null);
-  }, [confirmDeleteEngine]);
-
-  const handleCancelDelete = React.useCallback(() => {
-    setConfirmDeleteEngine(null);
-  }, []);
 
 
   return <>
@@ -208,17 +189,9 @@ export function SpeexConfigureEngines(props: { isMobile: boolean }) {
 
       <Box sx={_styles.selectGroup}>
 
-        {/* Delete - only shown for manually-added engines */}
+        {/* Delete - only shown for manually-added engines; keyed so switching engines disarms it */}
         {activeEngine && !activeEngine.isAutoLinked && !activeEngine.isAutoDetected && (
-          <TooltipOutlined title={`Remove ${activeEngine.label}`}>
-            <IconButton
-              variant='plain'
-              color='neutral'
-              onClick={handleDeleteActive}
-            >
-              <DeleteOutlineIcon />
-            </IconButton>
-          </TooltipOutlined>
+          <ConfirmIconButton key={activeEngine.engineId} tooltip={`Remove ${activeEngine.label}`} onConfirm={handleDeleteActive} />
         )}
 
         <Select
@@ -313,19 +286,6 @@ export function SpeexConfigureEngines(props: { isMobile: boolean }) {
         engine={activeEngine}
         isMobile={props.isMobile}
         onUpdate={handleEngineUpdate}
-      />
-    )}
-
-    {/* Delete confirmation */}
-    {!!confirmDeleteEngine && (
-      <ConfirmationModal
-        open
-        onClose={handleCancelDelete}
-        onPositive={handleConfirmDelete}
-        lowStakes
-        noTitleBar
-        confirmationText={<>Remove <strong>{confirmDeleteEngine.label}</strong>? This cannot be undone.</>}
-        positiveActionText='Remove'
       />
     )}
 
