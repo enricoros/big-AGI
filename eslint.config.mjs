@@ -11,6 +11,7 @@ import tsPlugin from "@typescript-eslint/eslint-plugin";
 import swcMiscompile from "./tools/eslint/swc-miscompile.mjs";
 // outcome guard: no casts to outcome types (one entry below)
 import outcomeTypes from "./tools/eslint/outcome-types.mjs";
+import memoProps from "./tools/eslint/memo-props.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +32,7 @@ export default defineConfig([{
       "electron/**",                    // excluded from the type program (root tsconfig)
       "tools/video/**",                 // self-contained package, own toolchain
       "kb/**",                          // docs and repro scripts (python); excluded from the type program (root tsconfig)
+      "docs/**",                        // brainstorms and notes (md/json/png/py); nothing lintable, kept out explicitly
     ],
 }, {
 //     // eslint's own base layer (no-dupe-keys, no-cond-assign, no-fallthrough, ...) - next/core-web-vitals
@@ -171,6 +173,7 @@ export default defineConfig([{
 },
 swcMiscompile.configs.recommended,
 outcomeTypes.configs.recommended,
+memoProps.configs.recommended, // typed: fresh literals into React.memo components (found by type, not by name)
 // // module-cycle detection (`npm run lint:cycles`) - full import-graph traversal, too slow for the
 // // default lint; machine-checks what code comments enforce today ("value imports referenced only
 // // inside function bodies"). Deliberate lazy-value cycles get an eslint-disable with rationale.
