@@ -17,7 +17,6 @@ import { PhImageSquare } from '~/common/components/icons/phosphor/PhImageSquare'
 import { makeMessageAvatarIcon, messageBackground } from '~/common/util/dMessageUtils';
 
 import { TokenBadgeMemo } from '../composer/tokens/TokenBadge';
-import { isErrorChatMessage } from './explainServiceErrors';
 import { messageSkippedSx } from './ChatMessage';
 
 
@@ -217,14 +216,13 @@ export function CleanerMessage(props: {
 
   const isUserMessageSkipped = messageHasUserFlag(props.message, MESSAGE_FLAG_AIX_SKIP);
 
-  const isAssistantError = fromAssistant && isErrorChatMessage(messageText);
-
   const userCommandApprox = messageRole !== 'user' ? false
     : messageText.startsWith('/draw ') ? 'draw'
       : messageText.startsWith('/react ') ? 'react'
         : false;
 
-  const backgroundColor = messageBackground(messageRole, userCommandApprox, !!messageUpdated, isAssistantError ? 'danger' : messageOutcomeColor(messageOutcome(props.message)) === 'warning' ? 'warning' : undefined /* truncation only, as in chat */);
+  const outcomeColor = messageOutcomeColor(messageOutcome(props.message));
+  const backgroundColor = messageBackground(messageRole, userCommandApprox, !!messageUpdated, outcomeColor === 'danger' || outcomeColor === 'warning' ? outcomeColor : undefined /* the cleaner tints failures too, to pick them out */);
 
   const avatarIconEl: React.JSX.Element | null = React.useMemo(() => {
     return makeMessageAvatarIcon('pro', messageRole, messageGeneratorName, messagePurposeId, !!messagePendingIncomplete, isUserMessageSkipped, false, false);
