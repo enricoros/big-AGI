@@ -31,6 +31,7 @@ export const noBackdropSlotProps = {
 export function GoodModal(props: {
   title?: React.ReactNode,
   titleStartDecorator?: React.JSX.Element,
+  titleAfter?: React.ReactNode, // rendered right after the title, outside its ellipsis clip
   titleEndDecorator?: React.ReactNode, // rendered in the title bar's button cluster, before the fullscreen/close buttons
   strongerTitle?: boolean,
   noTitleBar?: boolean,
@@ -153,6 +154,9 @@ export function GoodModal(props: {
             <Typography component='h3' level={props.strongerTitle !== true ? 'title-md' : 'title-lg'} startDecorator={props.titleStartDecorator} className='agi-ellipsize'>
               {props.title || ''}
             </Typography>
+
+            {/* optional controls right after the title; the auto margin keeps the buttons cluster at the end */}
+            {!!props.titleAfter && <Box sx={{ ml: 1, mr: 'auto' }}>{props.titleAfter}</Box>}
 
             {/* buttons */}
             {(hasFullscreenButton || !!props.onClose || !!props.titleEndDecorator) && (
