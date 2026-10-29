@@ -3,13 +3,17 @@
 // inline, measured), so memoized components are found by type - React.memo returns MemoExoticComponent /
 // NamedExoticComponent - with no naming convention. Children are checked for our own components only: a library
 // container that is memoized and takes children (dnd-kit's DndContext) can't hold for anyone.
-// Prior art: eslint-plugin-react-perf and eslint-plugin-react-usememo flag the same shapes on every component.
+// Context providers are the same boundary, stronger: a fresh `value` re-renders every consumer, and memo can't
+// stop it. Found by type too (Provider / ProviderExoticComponent / Context), so `const XProvider = X.Provider` counts.
+// Prior art: eslint-plugin-react-perf and eslint-plugin-react-usememo flag the same shapes on every component;
+// react/jsx-no-constructed-context-values flags providers, by name (`X.Provider`) only.
 
 import ts from 'typescript';
 
 const LITERALS = new Set(['ObjectExpression', 'ArrayExpression', 'ArrowFunctionExpression', 'FunctionExpression', 'JSXElement', 'JSXFragment', 'NewExpression']);
 const PRODUCERS = /^(map|filter|slice|concat|flat|flatMap|sort|toSorted|keys|values|entries|from)$/; // .map(...), Object.keys(...), Array.from(...)
 const MEMO_TYPES = /^(Memo|Named)ExoticComponent$/;
+const PROVIDER_TYPES = /^(Provider|ProviderExoticComponent|Context)$/; // Context: React 19 renders <Ctx value> directly
 
 // a new identity on every evaluation: a literal, also behind `as const`/`satisfies`/`!`, a producer call, or a branch holding one
 const isFresh = (e) => !!e && (LITERALS.has(e.type)
@@ -25,16 +29,18 @@ function isCreatedOnce(node) {
   return !fn || (call?.type === 'CallExpression' && call.arguments[0] === fn && /useMemo$/.test(call.callee.property?.name ?? call.callee.name ?? ''));
 }
 
-const isMemoType = (type) => MEMO_TYPES.test(type.aliasSymbol?.name ?? type.symbol?.name ?? '') || (type.types ?? []).some(isMemoType);
+const isType = (re) => function test(type) { return re.test(type.aliasSymbol?.name ?? type.symbol?.name ?? '') || (type.types ?? []).some(test); };
+const isMemoType = isType(MEMO_TYPES), isProviderType = isType(PROVIDER_TYPES);
 
 const freshProps = {
   meta: {
     type: 'suggestion',
-    docs: { description: 'Disallow values created on every render as props or children of a React.memo component' },
+    docs: { description: 'Disallow values created on every render as props or children of a React.memo component, or as a context value' },
     schema: [],
     messages: {
       literal: '`{{prop}}` of memoized <{{component}}> is created on every render, so the memo never holds. Hoist it if static, useMemo/useCallback it if derived, or drop the memo.',
       children: 'Children of memoized <{{component}}> are created on every render, so the memo never holds. Memoize the element, or drop the memo.',
+      context: '`value` of <{{component}}> is created on every render, so every consumer re-renders with it (memo does not stop context). useMemo it.',
     },
   },
   create(context) {
@@ -54,8 +60,14 @@ const freshProps = {
         if (!attrs.length && !children.length) return; // the type checker is asked only for candidates
         if (isCreatedOnce(node)) return;
         const tsNode = services.esTreeNodeToTSNodeMap.get(node.name);
-        if (!isMemoType(checker.getTypeAtLocation(tsNode))) return;
+        const type = checker.getTypeAtLocation(tsNode);
         const component = context.sourceCode.getText(node.name);
+        if (isProviderType(type)) { // only the value matters: a provider is not memoized, its children are the parent's
+          for (const attr of attrs.filter((a) => a.name.name === 'value'))
+            context.report({ node: attr.value, messageId: 'context', data: { component } });
+          return;
+        }
+        if (!isMemoType(type)) return;
         for (const attr of attrs)
           context.report({ node: attr.value, messageId: 'literal', data: { component, prop: attr.name.name } });
         if (children.length && !isExternal(tsNode))
