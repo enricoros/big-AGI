@@ -86,7 +86,7 @@ For each vendor (prioritize High > Medium > Low):
 
 4. **Fix issues found** - update parsers, filters, deny lists as needed.
 
-5. Run `tsc --noEmit` after changes.
+5. Run `npm run tscheck` after changes.
 
 **Live endpoint (extra signal):** If `.env.api-keys` has a key for one of these vendors (e.g. `FIREWORKSAI_API_KEY`, `TOGETHERAI_API_KEY`), hit its live models endpoint (authenticating with the key; path varies - e.g. Together `/v1/models`, Fireworks `/inference/v1/models`) to get the real, current response shape - the fastest way to catch parser drift, new capability fields, or changed field names. Never commit or echo the key.
 

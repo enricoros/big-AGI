@@ -4,7 +4,7 @@ argument-hint: specific feature to check
 ---
 
 Review the OpenRouter implementation:
-- Models list: `src/modules/llms/server/openai/openrouter.wiretypes.ts` (list API response schema)
+- Models list: `src/modules/llms/server/openai/wiretypes/openrouter.wiretypes.ts` (list API response schema)
 - Chat wire types: `src/modules/aix/server/dispatch/wiretypes/openai.wiretypes.ts` (OpenAI-compatible)
 - Request adapter: `src/modules/aix/server/dispatch/chatGenerate/adapters/openai.chatCompletions.ts` ('openrouter' dialect)
 - Response parser: `src/modules/aix/server/dispatch/chatGenerate/parsers/openai.parser.ts` (shared OpenAI parser)

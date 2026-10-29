@@ -39,11 +39,11 @@ The `gh` command is available to interact with GitHub from the terminal, but **N
 - Cloud/auth/sync code stays on `dev`; non-cloud improvements (UX, AIX, model support, bug fixes) can land on either branch
 
 **Branch workflow:**
-- `dev` is rebased on top of `main` (never merged) - `main` changes flow into `dev` on the next rebase, no manual forward-port needed
-- Never `git merge` between the two branches - breaks the linear topology
-- Backporting `dev` -> `main` is a re-implementation, never a cherry-pick - keep `main`-side edits minimal/additive so the existing `dev` version lands cleanly on rebase; split into small commits when natural
-- Rebasing `dev` onto `main`: work on a scratch branch (never `private/dev` directly); only files `main` changed since the merge-base can conflict - forecast with `git diff --name-only $(git merge-base private/dev opensource/main) opensource/main`
-- Resolve that rebase per-conflict: keep `dev` where it diverges, UNION where `main` only added (never blanket `-X theirs`/`-X ours` - they drop `main`'s additions). Check no `<<<<<<<` markers survive before each `--continue`
+- `dev` is rebased on top of `main`, never merged; never port `main` -> `dev` by hand
+- Backporting `dev` -> `main`: exact cherry-picks for self-contained commits (the rebase drops them by patch-id), minimal re-implementation for cloud-tainted ones. Land `dev` data that touches shared files (type unions, registry and editorial rows) on `main` early
+- Rebasing `dev` onto `main`: on a scratch branch in a worktree, moving `dev` to it only once verified. Trial runs with mechanical resolutions need `-c rerere.enabled=false`, or `rerere.autoupdate` records and replays them silently
+- Forecast: `git diff --name-only $(git merge-base private/dev opensource/main) opensource/main` lists the files that can conflict; `git log -G'<old symbol or signature>' opensource/main..private/dev` finds the `dev` commits that break without conflicting. Fix those at their origin commit (`edit` in `rebase -i`); later commits touching adjacent lines, or renaming the file, will stop too
+- Resolve at marker level, `dev`'s intent on `main`'s API; never blanket `-X theirs`/`-X ours` or whole-file takes. Before each `--continue`: no `<<<<<<<`, no old-signature call left. Typecheck a stop only against the same commit on the original `dev`; verify the tip with `git range-diff` and `npm run tscheck`
 
 ### Repository Layout
 

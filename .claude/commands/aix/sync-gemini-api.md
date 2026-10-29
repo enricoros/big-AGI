@@ -5,7 +5,7 @@ argument-hint: specific feature to check
 
 Please take a look at my API code for Google Gemini: message wire types `src/modules/aix/server/dispatch/wiretypes/gemini.wiretypes.ts`, assembly of the request messages (adapters) `src/modules/aix/server/dispatch/chatGenerate/adapters/gemini.generateContent.ts`, and parsing of the response in streaming or not `src/modules/aix/server/dispatch/chatGenerate/parsers/gemini.parser.ts`.
 
-IMPORTANT: we only support the generateContent API, not other Gemini APIs such as embeddings, etc.
+IMPORTANT: we support the generateContent API and the Interactions API (`adapters/gemini.interactionsCreate.ts`, `parsers/gemini.interactions.parser.ts`) on both paths: agents (Deep Research, Antigravity) and models (Omni video) - see `kb/modules/LLM-gemini-interactions.md`. Not other Gemini APIs such as embeddings, etc.
 Caching is only supported when implicit, we do not explicitly manage Gemini Caches. Same for file uploads and other systems.
 Image generation happens through models, i.e. 'Gemini 2.5 Flash - Nano Banana' generates images using AIX from generateContent (chat input).
 
@@ -18,7 +18,7 @@ Then take a look at the newest API information available. Try these sources, and
 
 **Alternative Sources if primary blocked:**
 - Google AI JavaScript SDK: https://github.com/googleapis/js-genai (check latest commits, README, type definitions)
-  Recent news and announcements: Web Search for "gemini api changelog" or "nwe gemini api updates" or "new gemini api pricing"
+  Recent news and announcements: Web Search for "gemini api changelog" or "new gemini api updates" or "new gemini api pricing"
 
 **If all blocked:** Explain what you attempted and ask user to provide documentation manually.
 

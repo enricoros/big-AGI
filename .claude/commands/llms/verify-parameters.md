@@ -7,7 +7,7 @@ argument-hint: openai | anthropic | gemini | xai | metaai (or empty for all)
 
 Compare model `parameterSpecs` in definition files against API-validated sweep data.
 
-If `$ARGUMENTS` provided, verify only that dialect, which includes reading the pair of sweep results and model defintions. Otherwise verify all five, and read the pairs in sequence.
+If `$ARGUMENTS` provided, verify only that dialect, which includes reading the pair of sweep results and model definitions. Otherwise verify all five, and read the pairs in sequence.
 
 ## Files
 
@@ -15,7 +15,7 @@ If `$ARGUMENTS` provided, verify only that dialect, which includes reading the p
 - `tools/develop/llm-parameter-sweep/llm-{dialect}-parameters-sweep.json`
   By the time you see these files, the repo owner has already updated them via `tools/develop/llm-parameter-sweep/sweep.sh` (very long running, 15 min per vendor).
 
-**Model definitions (source of truth for model defintions for the user and application, including constants, interfaces, supported parameters and sometimes allowed parameter values)**:
+**Model definitions (source of truth for model definitions for the user and application, including constants, interfaces, supported parameters and sometimes allowed parameter values)**:
 - OpenAI: `src/modules/llms/server/openai/models/openai.models.ts`
 - Anthropic: `src/modules/llms/server/anthropic/anthropic.models.ts`
 - Gemini: `src/modules/llms/server/gemini/gemini.models.ts`

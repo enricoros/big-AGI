@@ -6,7 +6,7 @@ Audit and sync LLM parameter configurations between the two UI editors. Goal: id
 
 **Files to Compare:**
 1. **Full Model Dialog**: `src/modules/llms/models-modal/LLMParametersEditor.tsx` (main branch)
-2. **Chat Side Panel**: `src/apps/chat/components/layout-panel/ChatPanelModelParameters.tsx` (main derived branches only)
+2. **Chat Side Panel**: `src/apps/chat/components/layout-panel/ChatPanelModelParameters.tsx` (`dev` only)
 
 **Reference Documentation:**
 - Parameter system: `kb/systems/LLM-parameters-system.md`
@@ -14,7 +14,7 @@ Audit and sync LLM parameter configurations between the two UI editors. Goal: id
 
 **Task: Perform a comprehensive audit**
 
-1. **Read both files** and extract all option arrays (e.g., `_reasoningEffortOptions`, `_antEffortOptions`, `_geminiThinkingLevelOptions`, etc.)
+1. **Read both files** and extract all `_*Options` arrays
 
 2. **Check for missing parameters:**
    - Parameters handled in `LLMParametersEditor.tsx` but NOT in `ChatPanelModelParameters.tsx`
@@ -57,7 +57,6 @@ Audit and sync LLM parameter configurations between the two UI editors. Goal: id
 
 **Notes:**
 - Side panel uses shorter descriptions (space-constrained) - that's fine
-- Variable names may differ (e.g., `_anthropicEffortOptions` vs `_antEffortOptions`) - that's fine, but same is better
 - `value` fields must be identical sets
 - `_UNSPECIFIED` must mean the same thing in both
 - onChange: remove on `_UNSPECIFIED`, set explicit value otherwise

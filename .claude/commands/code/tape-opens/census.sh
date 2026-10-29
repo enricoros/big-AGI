@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# /opens census - resolve the session transcript, measure its shape, compute the
+# /code:tape-opens census - resolve the session transcript, measure its shape, compute the
 # node budget, and extract a compact text spine for the writer subagent.
 #
 # Usage: census.sh [session-id] [override]

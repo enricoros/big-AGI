@@ -31,4 +31,4 @@ This merges 4 sources (see the tool's README): live `/v1/models` ids, build.nvid
 - Reasoning params: gpt-oss models use `_PS_OaiEffort`; other thinking models use `_PS_Thinking` (wired to `chat_template_kwargs` in the adapter)
 - Preserve comments and table order (flagships first, hidden tail last); minimize whitespace churn
 
-**Verify:** `tsc --noEmit --pretty && npm run lint`, then `NVIDIANIM_API_KEY=... npm test` (the nvidianim tests do a live listing; a `[DEV]` stale warning fails the test - that is the drift alarm).
+**Verify:** `npm run tscheck && npm run lint`, then `NVIDIANIM_API_KEY=... npm test` (the nvidianim tests do a live listing; a `[DEV]` stale warning fails the test - that is the drift alarm).

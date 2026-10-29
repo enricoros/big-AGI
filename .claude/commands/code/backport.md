@@ -1,5 +1,5 @@
 ---
-description: Backport a feature across branch lines (e.g. dev -> main) as a re-implementation, then prove it with a trial rebase of the source line
+description: Backport a feature across branch lines (e.g. dev -> main) - exact cherry-picks where the commits are self-contained, a re-implementation where they are not - then prove it with a trial rebase of the source line
 argument-hint: "<source-branch> <target-branch> [feature scope, e.g. 'Voice framework']"
 ---
 
@@ -13,7 +13,7 @@ If the scope or branches are unclear, ask before doing anything. If source and t
 
 ## The invariant
 
-`dev` is rebased on top of `main`, never merged. A backport is a **re-implementation on the target line** (never a cherry-pick), and success is measured twice:
+`dev` is rebased on top of `main`, never merged. A self-contained source commit is backported as an **exact cherry-pick** - the rebase then drops it by patch-id; everything else is a **re-implementation on the target line**, never a loose cherry-pick that gets edited (that is a re-implementation hiding inside a larger commit, and it conflicts instead of dropping). Success is measured twice:
 
 1. The port works and builds on the target line standalone - no dependencies on anything that stays on the source line (see "What crosses the line"), and the feature degrades gracefully where something was excluded.
 2. When the source line is later rebased on top of it, the source's own feature commits land cleanly: they replay as empties (dropped) or as small deltas re-adding the source-only parts.

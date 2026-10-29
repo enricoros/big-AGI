@@ -3,7 +3,7 @@ description: Sync OpenAI API implementation with latest upstream documentation
 argument-hint: specific feature to check
 ---
 
-Please take a look at my API code for OpenAI: message wire types `src/modules/aix/server/dispatch/wiretypes/openai.wiretypes.ts`, assembly of the request messages (adapters) `src/modules/aix/server/dispatch/chatGenerate/adapters/openai.chatCompletions.ts`, and parsing of the response in streaming or not `src/modules/aix/server/dispatch/chatGenerate/parsers/openai.parser.ts`.
+Please take a look at my API code for OpenAI: message wire types `src/modules/aix/server/dispatch/wiretypes/openai.wiretypes.ts`, assembly of the request messages (adapters) `src/modules/aix/server/dispatch/chatGenerate/adapters/openai.responsesCreate.ts` (legacy: `openai.chatCompletions.ts`), and parsing of the response in streaming or not `src/modules/aix/server/dispatch/chatGenerate/parsers/openai.responses.parser.ts` (legacy: `openai.parser.ts`).
 
 IMPORTANT: we prioritize the new Responses API, while Chat Completions is still supported but legacy.
 We do NOT support other APIs such as Realtime (incl. websockets), etc.
