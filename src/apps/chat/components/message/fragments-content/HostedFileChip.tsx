@@ -2,17 +2,15 @@ import * as React from 'react';
 
 import { Box, CircularProgress, Dropdown, IconButton, ListDivider, ListItemDecorator, Menu, MenuButton, MenuItem, Sheet, Typography } from '@mui/joy';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DownloadIcon from '@mui/icons-material/Download';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import UnfoldMoreIcon from '@mui/icons-material/UnfoldMore';
 
+import { ConfirmMenuItem } from '~/common/components/ConfirmMenuItem';
 import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { joyKeepPopup } from '~/common/components/CloseablePopup';
 
 
 export type HostedFileChipBusy = false | 'download' | 'copy' | 'play' | 'delete' | 'inline';
@@ -90,17 +88,6 @@ export function HostedFileChip(props: {
 
   const { title, subtitle, tooltip, error, busy, disabled, gone, leading, onCopy, onDownload, onInline, canInline, menuExtras, onDelete, deleteFrom, onRemove } = props;
 
-  // two-step deletion inside the menu: 'Delete' arms, 'Confirm Deletion' acts, closing the menu disarms
-  const [deleteArmed, setDeleteArmed] = React.useState(false);
-  const handleMenuOpenChange = React.useCallback((_event: unknown, open: boolean) => {
-    if (!open) setDeleteArmed(false);
-  }, []);
-  const handleDeleteConfirmed = React.useCallback(() => {
-    if (!deleteArmed) return;
-    setDeleteArmed(false);
-    onDelete?.();
-  }, [deleteArmed, onDelete]);
-
   const isBusy = !!busy || !!disabled;
   const hasMenu = !!onDownload || !!onInline || !!menuExtras || !!onDelete;
 
@@ -138,7 +125,7 @@ export function HostedFileChip(props: {
         {!!onDownload && <HostedFileChipButton title='Download file' icon={<DownloadIcon sx={{ fontSize: 'lg' }} />} busy={busy === 'download'} disabled={isBusy} onClick={onDownload} />}
 
         {hasMenu && (
-          <Dropdown onOpenChange={handleMenuOpenChange}>
+          <Dropdown>
             <MenuButton slots={{ root: IconButton }} slotProps={{ root: { variant: 'soft', color: 'primary', size: 'sm', disabled: isBusy, sx: { bgcolor: 'transparent' } } }}>
               {(busy === 'inline' || busy === 'delete') ? <CircularProgress size='sm' /> : <MoreVertIcon sx={{ fontSize: 'lg' }} />}
             </MenuButton>
@@ -160,21 +147,9 @@ export function HostedFileChip(props: {
               )}
               {menuExtras}
               {!!onDelete && <ListDivider />}
-              {!!onDelete && (!deleteArmed ? (
-                <MenuItem color='danger' disabled={isBusy} onClick={joyKeepPopup(() => setDeleteArmed(true)) /* keep open to show the confirm step */}>
-                  <ListItemDecorator><DeleteOutlineIcon /></ListItemDecorator>
-                  Delete
-                </MenuItem>
-              ) : <>
-                <MenuItem onClick={joyKeepPopup(() => setDeleteArmed(false))}>
-                  <ListItemDecorator><CloseRoundedIcon /></ListItemDecorator>
-                  Cancel
-                </MenuItem>
-                <MenuItem color='danger' disabled={isBusy} onClick={handleDeleteConfirmed}>
-                  <ListItemDecorator><DeleteForeverIcon /></ListItemDecorator>
-                  {deleteFrom ? `Delete from ${deleteFrom}` : 'Confirm Deletion'}
-                </MenuItem>
-              </>)}
+              {!!onDelete && (
+                <ConfirmMenuItem label='Delete' confirmLabel={deleteFrom ? `Delete from ${deleteFrom}` : 'Confirm Deletion'} disabled={isBusy} onConfirm={onDelete} />
+              )}
             </Menu>
           </Dropdown>
         )}

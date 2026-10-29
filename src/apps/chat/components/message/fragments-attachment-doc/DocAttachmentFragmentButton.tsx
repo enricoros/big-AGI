@@ -1,12 +1,9 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, Button, ColorPaletteProp, IconButton, Tooltip } from '@mui/joy';
+import { Box, Button, ColorPaletteProp } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
 import CodeIcon from '@mui/icons-material/Code';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import TextFieldsIcon from '@mui/icons-material/TextFields';
@@ -15,6 +12,7 @@ import TextureIcon from '@mui/icons-material/Texture';
 import { ContentScaling, themeScalingMap } from '~/common/app.theme';
 import { attachmentFragmentDocTitle, DMessageAttachmentFragment, DMessageFragmentId, DVMimeType, isDocPart } from '~/common/stores/chat/chat.fragments';
 import { LiveFileIcon } from '~/common/livefile/liveFile.icons';
+import { ConfirmIconButton } from '~/common/components/ConfirmIconButton';
 import { PhImageSquare } from '~/common/components/icons/phosphor/PhImageSquare';
 import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
@@ -109,51 +107,10 @@ export function buttonIconForFragment(part: DMessageAttachmentFragment['part']):
 
 
 function DocAttachmentDeleteButton(props: { fragmentId: DMessageFragmentId, color: ColorPaletteProp, onFragmentDelete: (fragmentId: DMessageFragmentId) => void }) {
-
-  const [deleteArmed, setDeleteArmed] = React.useState(false);
-
-  // [effect] auto-disarm after timeout
-  React.useEffect(() => {
-    if (!deleteArmed) return;
-    const timer = setTimeout(() => setDeleteArmed(false), 5000);
-    return () => clearTimeout(timer);
-  }, [deleteArmed]);
-
-  const handleConfirm = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    setDeleteArmed(false);
-    props.onFragmentDelete(props.fragmentId);
-  };
-
-  const handleToggle = (event: React.MouseEvent) => {
-    event.stopPropagation();
-    if (!deleteArmed && event.shiftKey) return handleConfirm(event);
-    setDeleteArmed(armed => !armed);
-  };
-
   return (
-    <Box
-      onKeyDown={event => {
-        if (event.key === 'Escape' && deleteArmed) {
-          event.stopPropagation();
-          setDeleteArmed(false);
-        }
-      }}
-      sx={{ position: 'relative', display: 'flex', alignItems: 'center', px: 0.5, borderLeft: '1px solid', borderColor: `${props.color}.outlinedDisabledBorder`, '& svg': { fontSize: '1.25rem' } }}
-    >
-      {/* Overlay the confirm button to the left so arming never moves the cancel target or wraps the chip. */}
-      {deleteArmed && (
-        <Tooltip title='Confirm Deletion' color='danger' arrow disableInteractive>
-          <IconButton size='sm' variant='outlined' color='danger' aria-label='Confirm Deletion' onClick={handleConfirm} sx={{ position: 'absolute', right: '100%', zIndex: 2, bgcolor: 'background.surface' }}>
-            <DeleteForeverIcon sx={{ color: 'danger.solidBg' }} />
-          </IconButton>
-        </Tooltip>
-      )}
-      <Tooltip title={deleteArmed ? 'Cancel Deletion' : 'Delete Document'} color='warning' arrow disableInteractive>
-        <IconButton size='sm' variant={deleteArmed ? 'solid' : 'plain'} color='warning' aria-label={deleteArmed ? 'Cancel Deletion' : 'Delete Document'} onClick={handleToggle} sx={{ my: -1 }}>
-          {deleteArmed ? <CloseRoundedIcon /> : <DeleteOutlineIcon />}
-        </IconButton>
-      </Tooltip>
+    <Box sx={{ display: 'flex', alignItems: 'center', px: 0.5, borderLeft: '1px solid', borderColor: `${props.color}.outlinedDisabledBorder`, '& svg': { fontSize: '1.25rem' } }}>
+      {/* the confirm floats to the left, so arming never moves the cancel target or wraps the chip */}
+      <ConfirmIconButton color='warning' side='start' tooltip='Delete Document' onConfirm={() => props.onFragmentDelete(props.fragmentId)} />
     </Box>
   );
 }
