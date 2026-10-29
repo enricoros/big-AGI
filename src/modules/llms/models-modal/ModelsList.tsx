@@ -4,8 +4,6 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Chip, IconButton, List, ListItem, ListItemButton, Typography } from '@mui/joy';
 import PsychologyOutlinedIcon from '@mui/icons-material/PsychologyOutlined';
 import SdCardOutlinedIcon from '@mui/icons-material/SdCardOutlined';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import StarIcon from '@mui/icons-material/Star';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 
@@ -47,16 +45,8 @@ const styles = {
       md: 1,
     } as const,
 
-    // agi-star
-    ['& .agi-star']: {
-      opacity: 0.4,
-      fontSize: 'md',
-    },
-    ['& .agi-star[aria-checked="true"]']: {
-      opacity: 1,
-      color: '#fad857',
-      fontSize: 'xl2',
-    },
+    // StarIcons.tsx exported styles to color and resize the toggle stars
+    ...starredToggleStyle,
   } as const,
   modelText: {
     flex: 1,
@@ -223,7 +213,7 @@ export const ModelItem = React.memo(function ModelItem(props: {
 
         {/* Star Toggle */}
         {(ENABLE_STARRING_ICON || llm.userStarred) && <IconButton size='sm' onClick={handleLLMToggleStar} sx={absorbListPadding}>
-          {llm.userStarred ? <StarIcon aria-checked={true} className='agi-star' /> : <StarBorderIcon aria-checked={false} className='agi-star' />}
+          <StarredToggle isStarred={!!llm.userStarred} />
         </IconButton>}
 
         {/* Model Name */}

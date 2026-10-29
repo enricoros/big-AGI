@@ -7,8 +7,6 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import RestoreIcon from '@mui/icons-material/Restore';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import StarIcon from '@mui/icons-material/Star';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
@@ -16,6 +14,7 @@ import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 import { type DPricingChatGenerate, isLLMChatFree_cached, llmChatPricing_adjusted } from '~/common/stores/llms/llms.pricing';
 import type { ModelOptionsContext } from '~/common/layout/optima/store-layout-optima';
 import { DLLMId, DModelInterfaceV1, getLLMContextTokens, getLLMLabel, getLLMMaxOutputTokens, getLLMPubDate, isLLMVisible, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
+import { StarredState } from '~/common/components/StarIcons';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
 import { LLMImplicitParametersRuntimeFallback } from '~/common/stores/llms/llms.parameters';
@@ -297,7 +296,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0, md: 1 } }} onClick={event => event.shiftKey && console.log({ llm })}>
             {ENABLE_STARRING_ICON && <TooltipOutlined title={llm.userStarred ? 'Unstar this model' : 'Star this model for quick access'}>
               <IconButton size='sm' onClick={handleLlmStarredToggle} sx={{ ml: -0.5 }}>
-                {llm.userStarred ? <StarIcon sx={{ color: '#fad857', fontSize: 'xl2' }} /> : <StarBorderIcon />}
+                <StarredState isStarred={!!llm.userStarred} />
               </IconButton>
             </TooltipOutlined>}
             {ENABLE_HIDING_ICON && <TooltipOutlined title={visible ? 'Show this model in the app' : 'Hide this model from the app'}>
@@ -449,7 +448,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
           <FormLabelStart title='Starred' sx={{ minWidth: 80 }} />
           <Tooltip title={llm.userStarred ? 'Unstar this model' : 'Star this model for quick access'}>
             <Switch checked={!!llm.userStarred} onChange={handleLlmStarredToggle}
-                    endDecorator={llm.userStarred ? <StarIcon sx={{ color: '#fad857' }} /> : <StarBorderIcon />}
+                    endDecorator={<StarredState isStarred={!!llm.userStarred} />}
                     slotProps={{ endDecorator: { sx: { minWidth: 26 } } }}
             />
           </Tooltip>
