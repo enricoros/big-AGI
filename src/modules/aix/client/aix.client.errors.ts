@@ -1,6 +1,6 @@
 import { TRPCClientError } from '@trpc/client';
 
-import { isTRPCStreamClosedEarly } from '~/common/util/fetchFailures';
+import { isTRPCNetworkError, isTRPCStreamClosedEarly } from '~/common/util/fetchFailures';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 
@@ -50,10 +50,12 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
   if (AIX_CLIENT_DEV_ASSERTS) console.error('[DEV] Aix streaming Error:', { error });
 
 
-  // Browser-level network connection drops (TypeError, happens below tRPC error wrapping layer), such as terminating the `npm run dev` process while streaming
-  // Network errors - when the client is disconnected (Vercel 5min timeout, Mobile timeout / disconnect, etc) - they show up as TypeErrors
+  // Browser-level connection failures (engine-specific TypeError texts - see isBrowserNetworkError): offline, Wi-Fi/mobile drops,
+  // DNS, a reset connection, the `npm run dev` process killed while streaming. Reads of the stream throw them bare; failures before
+  // the result envelope arrives come wrapped in a TRPCClientError (on `.cause`) - e.g. requests still queued by the browser
+  // (> 6 connections) when the Wi-Fi goes off. isTRPCNetworkError matches both.
   // IMPORTANT: we will differentiate between the 2 'net-disconnected' cases in the UI, checking for the errorMessage '**network error**' vs '**connection terminated**'
-  if (error instanceof TypeError && error.message === 'network error')
+  if (isTRPCNetworkError(error))
     return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **network error**.' /* DO NOT CHANGE '**network error**' - usually client-side broken */ };
 
   // Remote termination of the tRPC stream (e.g. the Vercel 300s function limit = a graceful HTTP EOF inside the
@@ -97,13 +99,6 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
       return { errorType: 'request-exceeded', errorMessage: MSG_REQUEST_EXCEEDED };
 
     switch (error.cause?.message) {
-      /**
-       * When network is disconnected while a request hasn't started (is queued by the browser).
-       * - repro: queue up > 6 connections, then turn WiFi off (no CSF).
-       */
-      case 'Failed to Fetch':
-        return { errorType: 'net-disconnected', errorMessage: 'An issue occurred: **network error**' };
-
       /**
        * The body of the response was "Request Entity Too Large" (Vercel edge limit ~4.5MB).
        * - this caused trpc, in ...stream/jsonl.ts, function createConsumerStream, to throw an error due to parsing the line as JSON
