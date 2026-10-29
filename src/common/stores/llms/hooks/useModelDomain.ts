@@ -2,8 +2,8 @@ import * as React from 'react';
 
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
-import type { DLLMId } from '../llms.types';
 import type { DModelDomainId } from '../model.domains.types';
+import { DLLMId, getLLMLabel } from '../llms.types';
 import { LlmsAssignmentsState, llmsAuto_ModelIdForDomain_SLOW } from '../store-llms-domains_slice';
 import { LlmsRootState, llmsStoreActions, llmsStoreState, useModelsStore } from '../store-llms';
 import { ModelDomains_MaxFallbackHops, ModelDomainsRegistry } from '../model.domains.registry';
@@ -160,4 +160,17 @@ export function useModelDomain(modelDomainId: DModelDomainId): {
     assignDomainModelAuto,
 
   }), [resolved, assignDomainModelId, assignDomainModelAuto]);
+}
+
+/**
+ * Label of the model Auto would pick for the domain, independent of the pin: the "Auto: <name>" entry of model
+ * pickers while pinned. Runs the heuristic on every `llms` change, so mount it only where that entry is shown.
+ */
+export function useModelDomainAutoModelLabel(modelDomainId: DModelDomainId): string | undefined {
+  const llms = useModelsStore(state => state.llms);
+  return React.useMemo(() => {
+    const autoModelId = llmsAuto_ModelIdForDomain_SLOW(modelDomainId, llms);
+    const autoLLM = autoModelId ? llms.find(llm => llm.id === autoModelId) : undefined;
+    return autoLLM ? getLLMLabel(autoLLM) : undefined;
+  }, [modelDomainId, llms]);
 }

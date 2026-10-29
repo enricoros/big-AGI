@@ -10,7 +10,7 @@ import { AIVndAntInlineFilesPolicy, AIVndGeminiVertexLinksPolicy, useAIPreferenc
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { FormSelectControl, FormSelectOption } from '~/common/components/forms/FormSelectControl';
 import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
-import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
+import { useModelDomain, useModelDomainAutoModelLabel } from '~/common/stores/llms/hooks/useModelDomain';
 
 import type { ChatThinkingPolicy, TokenCountingMethod } from '../chat/store-app-chat';
 import { useChatAutoAI } from '../chat/store-app-chat';
@@ -69,10 +69,12 @@ function FormControlDomainModel(props: {
 
   // external state
   const { domainModelId, assignDomainModelId, assignDomainModelAuto, resolvedModelIsAuto } = useModelDomain(props.domainId);
+  const autoModelLabel = useModelDomainAutoModelLabel(props.domainId);
   const [_llm, llmComponent] = useLLMSelect(domainModelId, assignDomainModelId, {
     label: '',
     setLlmToAuto: assignDomainModelAuto,
     isLlmAuto: resolvedModelIsAuto,
+    autoModelLabel,
   });
 
   return (
