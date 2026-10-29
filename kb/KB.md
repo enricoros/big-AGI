@@ -24,6 +24,7 @@ Architecture and system documentation is available in the `/kb/` knowledge base,
 - **[AIX-ingestion.md](modules/AIX-ingestion.md)** - lossless parse/reassembly rule, checklist of open conflicts
 - **[AIX-callers-analysis.md](modules/AIX-callers-analysis.md)** - Analysis of AIX entry points, call chains, common and different rendering, error handling, etc.
 - **[AIX-outcome.md](modules/AIX-outcome.md)** - how a generation ended: the four outcomes (completed, truncated, failed, aborted), one derivation from the stored message, the wire stop-reason table, colors, Beam status, what is not done
+- **[AIX-transport-errors.md](modules/AIX-transport-errors.md)** - how a broken connection surfaces on the tRPC and CSF paths: measured browser texts, classification per event, Vercel's 300s kill and the Stop leak, tRPC stream-close history, open issues
 - **[AIX-anthropic-code-execution.md](modules/AIX-anthropic-code-execution.md)** - Anthropic code execution: the three triggers + one container, the #1087 single-environment history, empirically-verified behavior (version-pin/400, coexist, container continuity), the shipped standalone Sandbox toggle + container decoupling, and the forward Sandbox/execution-environment direction
 
 #### CSF - Client-Side Fetch

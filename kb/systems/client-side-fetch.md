@@ -35,7 +35,7 @@ A non-safelisted request header forces a CORS preflight, so on CSF every added h
 
 Consequence: a uniform app-identity header applied to every vendor is a CSF outage on the six allowlist hosts. Identity headers belong on the server path by default; on the CSF path only per-vendor allowlisted names may be added. `User-Agent` is settable server-side only - browsers refuse to set it, whatever the allowlist says. Adding these headers does not change CORS on the actual response anywhere; the preflight is the only risk surface.
 
-Unrelated CSF trap found in the same pass: a wrong OpenAI key (and any Cerebras 401) returns no `access-control-allow-origin`, so the browser surfaces an opaque CORS `TypeError` instead of the readable 401.
+Unrelated CSF trap found in the same pass: a wrong OpenAI key (and any Cerebras 401) returns no `access-control-allow-origin`, so the browser surfaces an opaque CORS `TypeError` instead of the readable 401; the CSF connect-failure message lists this among its possible causes (AIX-transport-errors.md).
 
 ## UI
 

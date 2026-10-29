@@ -65,7 +65,7 @@ Completeness unknown, assumed complete: outcome `completed` plus a void notice (
 
 ## Issue after the stop reason
 
-Parsers set the stop reason after the content. After a clean or truncated stop reason, the transmitter sends a later issue (stream cut before the end marker, a trailing chunk that fails to parse, a late error event) as a warn notice (`pNoticeKind: 'late-issue'`), so the outcome keeps the stop reason. After an error stop reason, the issue is its explanation and stays an error fragment.
+Parsers set the stop reason after the content. After a clean or truncated stop reason, the transmitter sends a later issue (stream cut before the end marker, a trailing chunk that fails to parse, a late error event) as a warn notice (`pNoticeKind: 'late-issue'`), so the outcome keeps the stop reason. After an error stop reason, the issue is its explanation and stays an error fragment. The client applies the same rule to its own transport errors (`ContentReassembler.setClientExcepted`): after a clean or truncated stop reason, a connection error (e.g. the stream dropping before tRPC's closing chunk) is only logged to the console - no fragment, and the outcome keeps the stop reason.
 
 ## Dev
 
