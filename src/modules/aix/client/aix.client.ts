@@ -1014,7 +1014,7 @@ async function _aixChatGenerateContent_LL_unlocked(
   // Retry/Reconnect - LL state machine
   // - reconnect: for server overload/busy (429, 503, 502) and transient errors
   // - reattach: for network disconnects with uptream handles
-  const rsm = new AixStreamRetry(0, 0); // sensible: 3, 2
+  const rsm = new AixStreamRetry(0, 0); // keep off: latent bugs - the status is read from error.status (a TRPCClientError has none), and an abort during the backoff ends 'failed', not 'aborted'
 
   while (true) {
 

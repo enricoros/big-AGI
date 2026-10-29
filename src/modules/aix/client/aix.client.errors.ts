@@ -98,6 +98,8 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
     if (error.data?.httpStatus === 413)
       return { errorType: 'request-exceeded', errorMessage: MSG_REQUEST_EXCEEDED };
 
+    // MAGIC CONSTANTS - V8's JSON.parse texts (Chromium only; older V8 and other engines word them differently), thrown by tRPC's
+    // JSONL head parse on a non-JSON body. Fallback only: streamingTransportFetch tags 413 and text/html responses before the parser runs.
     switch (error.cause?.message) {
       /**
        * The body of the response was "Request Entity Too Large" (Vercel edge limit ~4.5MB).
@@ -112,7 +114,7 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
        * This happened many times in the past with captive portals and alike. Jet's just improve the messaging here.
        */
       case `Unexpected token '<', "<!DOCTYPE "... is not valid JSON`:
-        return { errorType: 'response-captive', errorMessage: '**Network issue**: The network returned an HTML page instead of expected data. This can be a Wi‑Fi sign‑in page, a proxy or browser extension, or a temporary gateway error. Please **refresh and try again**, or check your connection and disable blockers. Additional details may be available in the browser console.' };
+        return { errorType: 'response-captive', errorMessage: MSG_RESPONSE_CAPTIVE };
 
       case undefined:
         // no cause message: the generic presentation below
