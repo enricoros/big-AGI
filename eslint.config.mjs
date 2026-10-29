@@ -12,6 +12,7 @@ import swcMiscompile from "./tools/eslint/swc-miscompile.mjs";
 // outcome guard: no casts to outcome types (one entry below)
 import outcomeTypes from "./tools/eslint/outcome-types.mjs";
 import memoProps from "./tools/eslint/memo-props.mjs";
+import sxComputed from "./tools/eslint/sx-computed.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -174,6 +175,7 @@ export default defineConfig([{
 swcMiscompile.configs.recommended,
 outcomeTypes.configs.recommended,
 memoProps.configs.recommended, // typed: fresh literals into React.memo components (found by type, not by name)
+sxComputed.configs.recommended, // typed: render-computed geometry in sx (a CSS rule per value) -> style
 // // module-cycle detection (`npm run lint:cycles`) - full import-graph traversal, too slow for the
 // // default lint; machine-checks what code comments enforce today ("value imports referenced only
 // // inside function bodies"). Deliberate lazy-value cycles get an eslint-disable with rationale.
