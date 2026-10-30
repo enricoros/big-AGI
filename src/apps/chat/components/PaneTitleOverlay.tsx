@@ -11,7 +11,7 @@ import { InlineTextarea } from '~/common/components/InlineTextarea';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { useConversationTitle } from '~/common/stores/chat/hooks/useConversationTitle';
 
-import { panesManagerActions } from './panes/store-panes-manager';
+import { chatPanesActions } from './panes/store-panes-manager';
 
 
 // configuration
@@ -88,11 +88,11 @@ export function PaneTitleOverlay(props: {
   // close tabs handlers
 
   const handleCloseThis = React.useCallback(() => {
-    panesManagerActions().removePane(props.paneIdx);
+    chatPanesActions().removePane(props.paneIdx);
   }, [props.paneIdx]);
 
   const handleCloseOthers = React.useCallback(() => {
-    panesManagerActions().removeOtherPanes(props.paneIdx);
+    chatPanesActions().removeOtherPanes(props.paneIdx);
   }, [props.paneIdx]);
 
 
@@ -192,3 +192,7 @@ export function PaneTitleOverlay(props: {
     </Sheet>
   );
 }
+
+
+/** Re-renders on its own props and title subscription, not on every pane render. */
+export const PaneTitleOverlayMemo = React.memo(PaneTitleOverlay);

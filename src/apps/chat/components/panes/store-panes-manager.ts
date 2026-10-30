@@ -416,7 +416,7 @@ function _duplicateChatPane(pane: ChatPane): ChatPane {
 
 // Instant getters
 
-export function panesManagerActions(): AppChatPanesActions {
+export function chatPanesActions(): AppChatPanesActions {
   return useAppChatPanesStore.getState();
 }
 
@@ -484,7 +484,7 @@ export function usePanesManager() {
 
   // [Effect] Ensure all Panes have a valid Conversation ID
   React.useEffect(() => {
-    panesManagerActions()._onConversationsChanged(conversationIDs);
+    chatPanesActions()._onConversationsChanged(conversationIDs);
   }, [conversationIDs]);
 
   return panesData;

@@ -8,7 +8,7 @@ import { CodiconSplitHorizontalRemove } from '~/common/components/icons/CodiconS
 import { CodiconSplitVertical } from '~/common/components/icons/CodiconSplitVertical';
 import { CodiconSplitVerticalRemove } from '~/common/components/icons/CodiconSplitVerticalRemove';
 
-import { panesManagerActions, usePaneDuplicateOrClose } from '../panes/store-panes-manager';
+import { chatPanesActions, usePaneDuplicateOrClose } from '../panes/store-panes-manager';
 
 
 export function WindowSplitControls(props: {
@@ -28,7 +28,7 @@ export function WindowSplitControls(props: {
     // duplicateFocusedPane();
 
     // create a new empty pane
-    panesManagerActions().insertEmptyAfterFocusedPane(true);
+    chatPanesActions().insertEmptyAfterFocusedPane(true);
 
     // load a brand new conversation inside
     // FIXME: still testing this
@@ -37,7 +37,7 @@ export function WindowSplitControls(props: {
 
   const handleToggleMultiPane = React.useCallback((_event: React.MouseEvent) => {
     if (isMultiPane)
-      panesManagerActions().removeNonFocusedPanes();
+      chatPanesActions().removeNonFocusedPanes();
     else
       handleIncreaseMultiPane(undefined);
   }, [handleIncreaseMultiPane, isMultiPane]);

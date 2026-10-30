@@ -1,32 +1,26 @@
 import * as React from 'react';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+
+import { PanelGroup } from 'react-resizable-panels';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box, useTheme } from '@mui/joy';
+import { Box } from '@mui/joy';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import type { TradeConfig } from '~/modules/trade/TradeModal';
 import { downloadSingleChat, importConversationsFromFilesAtRest, openConversationsAtRestPicker } from '~/modules/trade/trade.client';
 import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imaginePromptFromText';
-import { useAreBeamsOpen } from '~/modules/beam/store-beam.hooks';
+import { useIsBeamOpenForConversation } from '~/modules/beam/store-module-beam';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 import type { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
-import { ErrorBoundary } from '~/common/components/ErrorBoundary';
 import { getLLMContextTokens, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { OptimaDrawerIn, OptimaPanelIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
-import { PanelResizeInset } from '~/common/components/PanelResizeInset';
 import { Release } from '~/common/app.release';
-import { RenderDecayZone } from '~/common/render-decay/RenderDecayZone';
-import { ScrollToBottom } from '~/common/scroll-to-bottom/ScrollToBottom';
-import { ScrollToBottomButton } from '~/common/scroll-to-bottom/ScrollToBottomButton';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
-import { WorkspaceIdProvider } from '~/common/stores/workspace/WorkspaceIdProvider';
 import { addSnackbar, removeSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
-import { themeMinWidthChatPane } from '~/common/app.theme';
 import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, DMessageMetadata, duplicateDMessageMetadata } from '~/common/stores/chat/chat.message';
 import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
@@ -35,22 +29,20 @@ import { getConversation, getConversationSystemPurposeId, useConversation } from
 import { optimaActions, optimaOpenModels, optimaOpenPreferences, useOptimaChromeless } from '~/common/layout/optima/useOptima';
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { useChatFolderValidateId } from '~/common/stores/folders/hooks/useChatFolderValidateId';
-import { useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
+import { getIsMobile, useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
 import { useLLM } from '~/common/stores/llms/llms.hooks';
 import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
 import { useUIComplexityIsMinimal } from '~/common/stores/store-ui';
-import { ChatPanelMemo } from './components/layout-panel/ChatPanel';
 import { ChatBarBeam } from './components/layout-bar/ChatBarBeam';
 import { ChatBarAltTitle } from './components/layout-bar/ChatBarAltTitle';
 import { ChatBarChat } from './components/layout-bar/ChatBarChat';
-import { ChatBeamWrapper } from './components/ChatBeamWrapper';
 import { ChatDrawerMemo } from './components/layout-drawer/ChatDrawer';
-import { ChatMessageList } from './components/ChatMessageList';
+import { ChatPaneMemo } from './components/ChatPane';
+import { ChatPanelMemo } from './components/layout-panel/ChatPanel';
 import { Composer } from './components/composer/Composer';
 import { LiveSvgAnimator } from './components/live-svg/LiveSvgAnimator';
-import { PaneTitleOverlay } from './components/PaneTitleOverlay';
 import { useComposerAutoHide } from './components/composer/useComposerAutoHide';
 import { getOtherPanesConversationIds, usePanesManager } from './components/panes/store-panes-manager';
 
@@ -67,32 +59,6 @@ export interface AppChatIntent {
   initialConversationId?: string;
   newChat?: 'voiceInput';
 }
-
-const scrollToBottomSx = {
-  display: 'flex',
-  flexDirection: 'column',
-};
-
-const chatMessageListSx: SxProps = {
-  flexGrow: 1,
-};
-
-/*const chatMessageListBrandedSx: SxProps = {
-  flexGrow: 1,
-  backgroundBlendMode: 'soft-light',
-  backgroundColor: themeBgApp,
-  backgroundImage: 'url(https://...)',
-  backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat',
-  backgroundSize: 'contain',
-} as const;*/
-
-const chatBeamWrapperSx: SxProps = {
-  flexGrow: 1,
-  // we added these after removing the minSize={20} (%) from the containing panel.
-  minWidth: themeMinWidthChatPane,
-  // minHeight: 'calc(100vh - 69px - var(--AGI-Nav-width))',
-};
 
 const composerOpenSx: SxProps = {
   // NOTE: disabled on 2025-03-05: conflicts with the GlobalDragOverlay's
@@ -142,7 +108,6 @@ export function AppChat() {
   const [liveSvgModeActive, setLiveSvgModeActive] = React.useState(false);
 
   // external state
-  const theme = useTheme();
   const [composerHasContent, setComposerHasContent] = React.useState(false);
 
   const isMobile = useIsMobile();
@@ -164,26 +129,15 @@ export function AppChat() {
     navigateHistoryInFocusedPane,
     openConversationInFocusedPane,
     openConversationInSplitPane,
-    removePane,
-    setFocusedPaneIndex,
   } = usePanesManager();
 
-  const { paneUniqueConversationIds, paneHandlers, paneBeamStores } = React.useMemo(() => {
-    const paneConversationIds: (DConversationId | null)[] = chatPanes.map(pane => pane.conversationId || null);
-    const paneHandlers = paneConversationIds.map(cId => cId ? ConversationsManager.getHandler(cId) : null);
-    const paneBeamStores = paneHandlers.map(handler => handler?.getBeamStore() ?? null);
-    const paneUniqueConversationIds = Array.from(new Set(paneConversationIds.filter(Boolean))) as DConversationId[];
-    return {
-      paneHandlers: paneHandlers,
-      paneBeamStores: paneBeamStores,
-      paneUniqueConversationIds: paneUniqueConversationIds,
-    };
+  const chatPaneUniqueIds = React.useMemo(() => {
+    return Array.from(new Set(chatPanes.map(pane => pane.conversationId).filter(Boolean))) as DConversationId[];
   }, [chatPanes]);
 
-  const beamsOpens = useAreBeamsOpen(paneBeamStores);
-  const beamOpenStoreInFocusedPane = focusedPaneIndex === null ? null
-    : !beamsOpens?.[focusedPaneIndex] ? null
-      : paneBeamStores?.[focusedPaneIndex] ?? null;
+  // beam-open of the focused chat, for the shortcuts (panes derive their own)
+  const isFocusedBeamOpen = useIsBeamOpenForConversation(focusedPaneConversationId);
+  const beamOpenStoreInFocusedPane = (isFocusedBeamOpen && focusedPaneConversationId) ? ConversationsManager.getHandler(focusedPaneConversationId).getBeamStore() : null;
 
   const {
     // focused
@@ -220,7 +174,7 @@ export function AppChat() {
 
   const isMultiPane = chatPanes.length >= 2;
   const isMultiAddable = chatPanes.length < 4;
-  const isMultiConversationId = paneUniqueConversationIds.length >= 2;
+  const isMultiConversationId = chatPaneUniqueIds.length >= 2;
   const willMulticast = isComposerMulticast && isMultiConversationId;
   const disableNewButton = isFocusedChatEmpty && !isMultiPane;
 
@@ -259,7 +213,7 @@ export function AppChat() {
 
     // [multicast] send the message to all the panes
     const uniqueConversationIds = willMulticast
-      ? Array.from(new Set([conversationId, ...paneUniqueConversationIds]))
+      ? Array.from(new Set([conversationId, ...chatPaneUniqueIds]))
       : [conversationId];
 
     // validate conversation existence
@@ -283,7 +237,7 @@ export function AppChat() {
     }
 
     return true;
-  }, [paneUniqueConversationIds, handleExecuteAndOutcome, willMulticast]);
+  }, [chatPaneUniqueIds, handleExecuteAndOutcome, willMulticast]);
 
   const handleConversationExecuteHistory = React.useCallback(async (conversationId: DConversationId) => {
     await handleExecuteAndOutcome('generate-content', conversationId, 'chat-execute-history'); // replace with 'history', then 'generate-content'
@@ -362,10 +316,10 @@ export function AppChat() {
       useFolderStore.getState().addConversationToFolder(activeFolderId, conversationId);
 
     // focus the composer
-    if (!isMobile)
+    if (!getIsMobile())
       composerTextAreaRef.current?.focus();
 
-  }, [activeFolderId, focusedPaneConversationId, handleOpenConversationInFocusedPane, isMobile, prependNewConversation, recycleNewConversationId]);
+  }, [activeFolderId, focusedPaneConversationId, handleOpenConversationInFocusedPane, prependNewConversation, recycleNewConversationId]);
 
   const handleConversationImportDialog = React.useCallback(() => setTradeConfig({ dir: 'import' }), []);
 
@@ -406,7 +360,8 @@ export function AppChat() {
       });
   }, []);
 
-  const handleConversationBranch = React.useCallback((srcConversationId: DConversationId, messageId: string | null, addSplitPane: boolean): DConversationId | null => {
+  // identity changes with the active folder and the pane count only (both rare, the latter a layout change), so the memoized panes and side panel take it directly
+  const handleConversationBranchAndFocus = React.useCallback((srcConversationId: DConversationId, messageId: string | null, addSplitPane: boolean): DConversationId | null => {
     // clone data
     const branchedConversationId = branchConversation(srcConversationId, messageId);
 
@@ -463,6 +418,7 @@ export function AppChat() {
   }, [showPromisedOverlay, deleteConversations, handleOpenConversationInFocusedPane]);
 
 
+
   // Pluggable Optima components
 
   const barAltTitle = null;
@@ -484,17 +440,17 @@ export function AppChat() {
         isMobile={isMobile}
         activeConversationId={focusedPaneConversationId}
         activeFolderId={activeFolderId}
-        chatPanesConversationIds={paneUniqueConversationIds}
+        chatPanesConversationIds={chatPaneUniqueIds}
         disableNewButton={disableNewButton}
         onConversationActivate={handleOpenConversationInFocusedPane}
-        onConversationBranch={handleConversationBranch}
+        onConversationBranch={handleConversationBranchAndFocus}
         onConversationNew={handleConversationNewInFocusedPane}
         onConversationsDelete={handleDeleteConversations}
         onConversationsExportDialog={handleConversationExport}
         onConversationsImportDialog={handleConversationImportDialog}
         setActiveFolderId={setActiveFolderId}
       />,
-    [activeFolderId, disableNewButton, focusedPaneConversationId, handleConversationBranch, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleDeleteConversations, handleOpenConversationInFocusedPane, isDrawerOpen, isMobile, paneUniqueConversationIds],
+    [activeFolderId, chatPaneUniqueIds, disableNewButton, focusedPaneConversationId, handleConversationBranchAndFocus, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleDeleteConversations, handleOpenConversationInFocusedPane, isDrawerOpen, isMobile],
   );
 
 
@@ -612,7 +568,7 @@ export function AppChat() {
         hasConversations={hasConversations}
         isMessageSelectionMode={isMessageSelectionMode}
         isVerticalSplit={isMobile || isTallScreen}
-        onConversationBranch={handleConversationBranch}
+        onConversationBranch={handleConversationBranchAndFocus}
         onConversationClear={handleConversationReset}
         onConversationFlatten={handleConversationFlatten}
         // onConversationNew={handleConversationNewInFocusedPane}
@@ -628,133 +584,32 @@ export function AppChat() {
       id='app-chat-panels'
     >
 
-      {chatPanes.map((pane, idx) => {
-        const _paneIsFocused = idx === focusedPaneIndex;
-        const _paneConversationId = pane.conversationId;
-        const _paneChatHandler = paneHandlers[idx] ?? null;
-        const _paneIsIncognito = _paneChatHandler?.isIncognito() ?? false;
-        const _paneBeamStoreApi = paneBeamStores[idx] ?? null;
-        const _paneBeamIsOpen = !!beamsOpens?.[idx] && !!_paneBeamStoreApi;
-        const _panesCount = chatPanes.length;
-        const _keyAndId = `chat-pane-${pane.paneId}`;
-        const _sepId = `sep-pane-${idx}`;
-        return <WorkspaceIdProvider conversationId={_paneIsFocused ? _paneConversationId : null} key={_keyAndId}><ErrorBoundary>
-
-          <Panel
-            id={_keyAndId}
-            order={idx}
-            collapsible={chatPanes.length === 2}
-            defaultSize={(_panesCount === 3 && idx === 1) ? 34 : Math.round(100 / _panesCount)}
-            // minSize={20 /* IMPORTANT: this forces a reflow even on a simple on hover */}
-            onClick={(event) => {
-              // Alt + Click: undocumented feature to clear focus
-              if (event.altKey && chatPanes.length > 1)
-                return setFocusedPaneIndex(-1);
-              setFocusedPaneIndex(idx);
-            }}
-            onCollapse={() => {
-              // NOTE: despite the delay to try to let the dragging settle, there seems to be an issue with the Pane locking the screen
-              // setTimeout(() => removePane(idx), 50);
-              // more than 2 will result in an assertion from the framework
-              if (chatPanes.length === 2) removePane(idx);
-            }}
-            style={{
-              // for anchoring the scroll button in place
-              position: 'relative',
-              ...(isMultiPane ? {
-                marginBottom: '1px', // compensates for the -1px in `composerOpenSx` for the Composer offset
-                borderRadius: '0.375rem',
-                borderStyle: 'solid',
-                borderColor: _paneIsFocused
-                  ? ((willMulticast || !isMultiConversationId) ? theme.palette.primary.solidBg : theme.palette.primary.solidBg)
-                  : ((willMulticast || !isMultiConversationId) ? theme.palette.primary.softActiveBg : theme.palette.divider),
-                borderWidth: '2px',
-                // borderBottomWidth: '3px',
-                // DISABLED on 2024-03-13, it gets in the way quite a lot
-                // filter: (!willMulticast && !_paneIsFocused)
-                //   ? (!isMultiConversationId ? 'grayscale(66.67%)' /* clone of the same */ : 'grayscale(66.67%)')
-                //   : undefined,
-                // 2025-02-27: didn't try, here's another version
-                // filter: _paneIsFocused ? 'none' : 'brightness(0.94) saturate(0.9)',
-              } : {
-                // NOTE: this is a workaround for the 'stuck-after-collapse-close' issue. We will collapse the 'other' pane, which
-                // will get it removed (onCollapse), and somehow this pane will be stuck with a pointerEvents: 'none' style, which de-facto
-                // disables further interaction with the chat. This is a workaround to re-enable the pointer events.
-                // The root cause seems to be a Drag state not being reset properly, however the pointerEvents has been set since 0.0.56 while
-                // it was optional before: https://github.com/bvaughn/react-resizable-panels/issues/241
-                pointerEvents: 'auto',
-              }),
-              ...((_paneIsIncognito && {
-                backgroundColor: theme.palette.background.level3,
-                backgroundImage: 'repeating-linear-gradient(45deg, rgba(0,0,0,0.03), rgba(0,0,0,0.03) 10px, transparent 10px, transparent 20px)',
-              })),
-            }}
-          >
-
-            {isMultiPane && !isZenMode && (
-              <PaneTitleOverlay
-                paneIdx={idx}
-                conversationId={_paneConversationId}
-                isFocused={_paneIsFocused}
-                isIncognito={_paneIsIncognito}
-                onConversationDelete={handleDeleteConversations}
-              />
-            )}
-
-            <ScrollToBottom
-              bootToBottom
-              stickToBottomInitial
-              disableAutoStick={isMobile && _paneBeamIsOpen}
-              sx={scrollToBottomSx}
-            >
-
-              {!_paneBeamIsOpen && (<RenderDecayZone>
-                <ChatMessageList
-                  conversationId={_paneConversationId}
-                  conversationHandler={_paneChatHandler}
-                  capabilityHasT2I={capabilityHasT2I}
-                  chatLLMAntPromptCaching={chatLLM?.interfaces?.includes(LLM_IF_ANT_PromptCaching) ?? false}
-                  chatLLMContextTokens={getLLMContextTokens(chatLLM) ?? null}
-                  chatLLMSupportsImages={chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision) ?? false}
-                  fitScreen={isMobile || isMultiPane}
-                  isFocused={_paneIsFocused}
-                  isMobile={isMobile}
-                  isMessageSelectionMode={isMessageSelectionMode}
-                  setIsMessageSelectionMode={setIsMessageSelectionMode}
-                  onConversationBranch={handleConversationBranch}
-                  onConversationExecuteHistory={handleConversationExecuteHistory}
-                  onConversationNew={handleConversationNewInFocusedPane}
-                  onTextDiagram={handleTextDiagram}
-                  onTextImagine={handleImagineFromText}
-                  sx={chatMessageListSx}
-                />
-              </RenderDecayZone>)}
-
-              {_paneBeamIsOpen && (
-                <ChatBeamWrapper
-                  beamStore={_paneBeamStoreApi}
-                  isFocused={_paneIsFocused}
-                  isMobile={isMobile}
-                  inlineSx={chatBeamWrapperSx}
-                />
-              )}
-
-              {/* Visibility and actions are handled via Context */}
-              <ScrollToBottomButton />
-
-            </ScrollToBottom>
-
-          </Panel>
-
-          {/* Panel Separators & Resizers */}
-          {idx < _panesCount - 1 && (
-            <PanelResizeHandle id={_sepId}>
-              <PanelResizeInset />
-            </PanelResizeHandle>
-          )}
-
-        </ErrorBoundary></WorkspaceIdProvider>;
-      })}
+      {/* Render each sub-app in Chat (right now it's either CML or Beam */}
+      {chatPanes.map((pane, idx) => (
+        <ChatPaneMemo
+          key={`chat-pane-${pane.paneId}`}
+          paneId={pane.paneId}
+          paneIdx={idx}
+          panesCount={chatPanes.length}
+          conversationId={pane.conversationId}
+          isFocused={idx === focusedPaneIndex}
+          composerReachesAll={willMulticast || !isMultiConversationId}
+          isMobile={isMobile}
+          isZenMode={isZenMode}
+          capabilityHasT2I={capabilityHasT2I}
+          chatLLMAntPromptCaching={chatLLM?.interfaces?.includes(LLM_IF_ANT_PromptCaching) ?? false}
+          chatLLMContextTokens={getLLMContextTokens(chatLLM) ?? null}
+          chatLLMSupportsImages={chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision) ?? false}
+          isMessageSelectionMode={isMessageSelectionMode}
+          setIsMessageSelectionMode={setIsMessageSelectionMode}
+          onConversationBranch={handleConversationBranchAndFocus}
+          onConversationDelete={handleDeleteConversations}
+          onConversationExecuteHistory={handleConversationExecuteHistory}
+          onConversationNew={handleConversationNewInFocusedPane}
+          onTextDiagram={handleTextDiagram}
+          onTextImagine={handleImagineFromText}
+        />
+      ))}
 
     </PanelGroup>
     )}
@@ -800,7 +655,7 @@ export function AppChat() {
       <React.Suspense fallback={null}>
         <FlattenerModalLazy
           conversationId={flattenConversationId}
-          onConversationBranch={handleConversationBranch}
+          onConversationBranch={handleConversationBranchAndFocus}
           onClose={() => setFlattenConversationId(null)}
         />
       </React.Suspense>

@@ -475,3 +475,10 @@ export function ChatMessageList(props: {
 
   </ERCDiffContextProvider>;
 }
+
+
+/**
+ * The pane re-renders on focus and layout changes; the list re-renders on its own props and subscriptions only.
+ * Props passed to it must stay stable (primitives, constant sx, stable handlers), or the memo breaks silently.
+ */
+export const ChatMessageListMemo = React.memo(ChatMessageList);
