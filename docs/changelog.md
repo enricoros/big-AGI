@@ -154,7 +154,7 @@ https://github.com/enricoros/big-AGI/assets/1590910/a6b8e172-0726-4b03-a5e5-10cf
 - **Model Options Shortcut**: Quick adjust with `Ctrl+Shift+O`
 - Optimized Voice Input and Performance
 - Latest Ollama models
-- For developers: **Password Protection**: HTTP Basic Auth. [Learn How](https://github.com/enricoros/big-agi/blob/main/docs/deploy-authentication.md)
+- For developers: **Password Protection**: HTTP Basic Auth. [Learn How](https://big-agi.com/docs/self-host-configuration#keys-and-access-control)
 
 ### What's New in 1.6.0 - Nov 28, 2023 · Surf's Up
 

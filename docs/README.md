@@ -66,7 +66,7 @@ For deploying a custom big-AGI instance:
 
 - **Advanced Setup**:
   - **[Source Code Customization](customizations.md)**: Modify the source code
-  - **[Access Control](deploy-authentication.md)**: Optional, add basic user authentication
+  - **[Access Control](https://big-agi.com/docs/self-host-configuration#keys-and-access-control)**: Optional, authentication in front of the app or HTTP Basic Auth in your build
   - **[Reverse Proxy](deploy-reverse-proxy.md)**: Optional, enables custom domains and SSL
   - **[Docker Deployment](deploy-docker.md)**: Deploy with Docker containers
   - **[Kubernetes](deploy-k8s.md)**: Deploy on Kubernetes clusters

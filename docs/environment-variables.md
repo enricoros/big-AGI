@@ -63,7 +63,7 @@ ELEVENLABS_API_KEY=
 ELEVENLABS_API_HOST=
 ELEVENLABS_VOICE_ID=
 
-# Backend HTTP Basic Authentication (see `deploy-authentication.md` for turning on authentication)
+# Backend HTTP Basic Authentication (the middleware to add to your build: https://big-agi.com/docs/self-host-configuration#basic-auth-in-the-app)
 HTTP_BASIC_AUTH_USERNAME=
 HTTP_BASIC_AUTH_PASSWORD=
 
@@ -146,7 +146,7 @@ Enable the app to Talk, Draw, and Google things up.
 | **Browse**                 |                                                                                                                         |
 | `PUPPETEER_WSS_ENDPOINT`   | Puppeteer WebSocket endpoint - used for browsing (pade downloadeing), etc.                                              |
 | **Backend**                |                                                                                                                         |
-| `HTTP_BASIC_AUTH_USERNAME` | See the [Authentication](deploy-authentication.md) guide. Username for HTTP Basic Authentication.                       |
+| `HTTP_BASIC_AUTH_USERNAME` | Username for HTTP Basic Authentication - the middleware to add to your build is on the website: [Keys and access control](https://big-agi.com/docs/self-host-configuration#keys-and-access-control) |
 | `HTTP_BASIC_AUTH_PASSWORD` | Password for HTTP Basic Authentication.                                                                                 |
 
 ### Frontend Variables

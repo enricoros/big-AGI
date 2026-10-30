@@ -349,7 +349,7 @@ export const NewsItems: NewsItem[] = [
       { text: <>Desktop <B issue={253}>webcam access</B> for direct image capture (Labs option)</> },
       { text: <>Independent browsing with <B code='/docs/config-feature-browse.md'>Browserless</B> support</> },
       { text: <><B issue={256}>Overheat</B> LLMs with higher temperature limits</> },
-      { text: <>Enhanced security via <B code='/docs/deploy-authentication.md'>password protection</B></> },
+      { text: <>Enhanced security via <B href={Brand.Docs.Public('self-host-configuration')}>password protection</B></> },
       { text: <>{platformAwareKeystrokes('Ctrl+Shift+O')}: quick access to model options</> },
       { text: <>Optimized voice input and performance</> },
       { text: <>Latest Ollama models</> },

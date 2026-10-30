@@ -20,7 +20,7 @@ Understand the Architecture: big-AGI uses Next.js, React for the front end, and 
 
 ### Add Authentication
 
-This necessitates a code change (file renaming) before build initiation, detailed in [deploy-authentication.md](deploy-authentication.md).
+See [Keys and access control](https://big-agi.com/docs/self-host-configuration#keys-and-access-control) on the website: platform or proxy authentication needs no rebuild; the HTTP Basic Auth middleware is a file you add before building.
 
 ### Increase Vercel Functions Timeout
 

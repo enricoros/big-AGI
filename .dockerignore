@@ -12,7 +12,6 @@
 
 !*.mjs
 !tools/develop/gen-llms-defs/
-!middleware_BASIC_AUTH.ts
 !middleware.ts
 !next.config.ts
 !package*.json
