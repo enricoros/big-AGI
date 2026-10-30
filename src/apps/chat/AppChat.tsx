@@ -8,7 +8,6 @@ import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import type { TradeConfig } from '~/modules/trade/TradeModal';
 import { downloadSingleChat, importConversationsFromFilesAtRest, openConversationsAtRestPicker } from '~/modules/trade/trade.client';
 import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imaginePromptFromText';
-import { useIsBeamOpenForConversation } from '~/modules/beam/store-module-beam';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
 import { conversationTitle, DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
@@ -23,7 +22,7 @@ import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, DMess
 import { createErrorContentFragment, createTextContentFragment, DMessageAttachmentFragment, DMessageContentFragment, duplicateDMessageFragments } from '~/common/stores/chat/chat.fragments';
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
-import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
+import { getConversation, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { useChatFolderValidateId } from '~/common/stores/folders/hooks/useChatFolderValidateId';
@@ -34,6 +33,7 @@ import { useUIComplexityIsMinimal } from '~/common/stores/store-ui';
 import { ChatDrawerMemo } from './components/layout-drawer/ChatDrawer';
 import { ChatPaneMemo } from './components/ChatPane';
 import { ChatPanelMemo } from './components/layout-panel/ChatPanel';
+import { ChatShortcutsMemo } from './components/ChatShortcuts';
 import { ChatToolbarMemo } from './components/layout-bar/ChatToolbar';
 import { ComposerMemo } from './components/composer/Composer';
 import { ComposerDock } from './components/composer/ComposerDock';
@@ -133,24 +133,6 @@ export function AppChat() {
     return Array.from(new Set(chatPanes.map(pane => pane.conversationId).filter(Boolean))) as DConversationId[];
   }, [chatPanes]);
 
-  // beam-open of the focused chat, for the shortcuts (panes derive their own)
-  const isFocusedBeamOpen = useIsBeamOpenForConversation(focusedPaneConversationId);
-  const beamOpenStoreInFocusedPane = (isFocusedBeamOpen && focusedPaneConversationId) ? ConversationsManager.getHandler(focusedPaneConversationId).getBeamStore() : null;
-
-  const {
-    // focused
-    isEmpty: isFocusedChatEmpty,
-    lastMessageRole: focusedLastMessageRole,
-    // all
-    recycleNewConversationId,
-    // actions
-    prependNewConversation,
-    branchConversation,
-    deleteConversations,
-  } = useConversation(focusedPaneConversationId);
-
-  const canRegenerateFocusedChat = focusedLastMessageRole === 'user' || focusedLastMessageRole === 'assistant';
-
   // this will be used for the side panel
   // const focusedConversationWorkspaceId = workspaceForConversationIdentity(focusedPaneConversationId);
   //// const focusedConversationWorkspace = useWorkspaceIdForConversation(focusedPaneConversationId);
@@ -164,11 +146,10 @@ export function AppChat() {
 
   // Window actions
 
-  const isMultiPane = chatPanes.length >= 2;
   const isMultiAddable = chatPanes.length < 4;
   const isMultiConversationId = chatPaneUniqueIds.length >= 2;
   const willMulticast = isMultiConversationId && multicastEnabled;
-  const disableNewButton = isFocusedChatEmpty && !isMultiPane;
+  const disableNewButton = false; // isFocusedChatEmpty && !isMultiPane;
 
   const handleOpenConversationInFocusedPane = React.useCallback((conversationId: DConversationId | null) => {
     conversationId && openConversationInFocusedPane(conversationId);
@@ -306,6 +287,8 @@ export function AppChat() {
 
     // create conversation (or recycle the existing top-of-stack empty conversation)
     // never recycle a chat shown in another pane: both panes would end up on the same chat
+    const { conversations, prependNewConversation } = useChatStore.getState();
+    const recycleNewConversationId = (conversations.length && !conversations[0].messages.length) ? conversations[0].id : null;
     const recycleShownElsewhere = !!recycleNewConversationId && getOtherPanesConversationIds().includes(recycleNewConversationId);
     const conversationId = (recycleNewConversationId && !forceNoRecycle && !isIncognito && !recycleShownElsewhere)
       ? recycleNewConversationId
@@ -322,7 +305,7 @@ export function AppChat() {
     if (!getIsMobile())
       composerTextAreaRef.current?.focus();
 
-  }, [activeFolderId, handleOpenConversationInFocusedPane, prependNewConversation, recycleNewConversationId]);
+  }, [activeFolderId, handleOpenConversationInFocusedPane]);
 
   const handleConversationImportDialog = React.useCallback(() => setTradeConfig({ dir: 'import' }), []);
 
@@ -366,7 +349,7 @@ export function AppChat() {
   // identity changes with the active folder and the pane count only (both rare, the latter a layout change), so the memoized panes and side panel take it directly
   const handleConversationBranchAndFocus = React.useCallback((srcConversationId: DConversationId, messageId: string | null, addSplitPane: boolean): DConversationId | null => {
     // clone data
-    const branchedConversationId = branchConversation(srcConversationId, messageId);
+    const branchedConversationId = useChatStore.getState().branchConversation(srcConversationId, messageId);
 
     // if a folder is active, add the new conversation to the folder
     if (activeFolderId && branchedConversationId)
@@ -380,7 +363,7 @@ export function AppChat() {
     showFocusedChatTitle();
 
     return branchedConversationId;
-  }, [activeFolderId, branchConversation, handleOpenConversationInFocusedPane, handleOpenConversationInSplitPane, isMultiAddable, showFocusedChatTitle]);
+  }, [activeFolderId, handleOpenConversationInFocusedPane, handleOpenConversationInSplitPane, isMultiAddable, showFocusedChatTitle]);
 
   const handleConversationFlatten = React.useCallback((conversationId: DConversationId) => setFlattenConversationId(conversationId), []);
 
@@ -409,7 +392,7 @@ export function AppChat() {
     )) return;
 
     // perform deletion, and return the next (or a new) conversation
-    const nextConversationId = deleteConversations(conversationIds, /*focusedSystemPurposeId ??*/ undefined);
+    const nextConversationId = useChatStore.getState().deleteConversations(conversationIds, /*focusedSystemPurposeId ??*/ undefined);
 
     // switch the focused pane to the new conversation - NOTE: this makes the assumption that deletion had impact on the focused pane
     // unless another pane shows it (the panes store then re-targets to a distinct chat, or unsplits) - two panes must not share a chat
@@ -418,7 +401,7 @@ export function AppChat() {
 
     // run GC for dblobs in this conversation
     void gcChatImageAssets(); // fire/forget
-  }, [showPromisedOverlay, deleteConversations, handleOpenConversationInFocusedPane]);
+  }, [showPromisedOverlay, handleOpenConversationInFocusedPane]);
 
 
 
@@ -510,34 +493,37 @@ export function AppChat() {
   }, []);
 
   useGlobalShortcuts('AppChat', React.useMemo(() => [
-    // focused conversation (excluded without a chat head or when Beam is open)
-    ...(beamOpenStoreInFocusedPane || !canRegenerateFocusedChat ? [] : [
-      { key: 'z', ctrl: true, shift: true, action: handleFocusedConversationRegenerateHead, description: 'Retry' },
-      { key: 'b', ctrl: true, shift: true, action: handleMessageBeamLastInFocusedPane, description: 'Beam Edit' },
-    ]),
-    { key: 'o', ctrl: true, action: handleConversationsImportFormFilePicker },
-    { key: 's', ctrl: true, action: () => handleFileSaveConversation(focusedPaneConversationId) },
+    // focused conversation: content-gated entries are in ChatShortcuts
+    // change apps to llm Options overlay
+    { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
+    // window management
     { key: 'n', ctrl: true, shift: true, action: () => handleConversationNewInFocusedPane(false, false) },
-    { key: 'x', ctrl: true, shift: true, action: () => isFocusedChatEmpty || (focusedPaneConversationId && handleConversationReset(focusedPaneConversationId)) },
     { key: 'd', ctrl: true, shift: true, action: () => focusedPaneConversationId && handleDeleteConversations([focusedPaneConversationId], false) },
     { key: '[', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('back') },
     { key: ']', ctrl: true, action: () => handleNavigateHistoryInFocusedPane('forward') },
-    // change active message (in any possible panel)
+    // change active message (in any possible panel, works in Beam too)
     { key: ShortcutKey.Up, ctrl: true, action: () => handleMoveFocus(-1) },
     { key: ShortcutKey.Down, ctrl: true, action: () => handleMoveFocus(1) },
     { key: ShortcutKey.Up, ctrl: true, shift: true, action: () => handleMoveFocus(-1, true) },
     { key: ShortcutKey.Down, ctrl: true, shift: true, action: () => handleMoveFocus(1, true) },
-    // open the dropdowns
-    { key: 'l', ctrl: true, action: () => llmDropdownRef.current?.openListbox() /*, description: 'Open Models Dropdown'*/ },
-    { key: 'p', ctrl: true, action: () => personaDropdownRef.current?.openListbox() /*, description: 'Open Persona Dropdown'*/ },
-    // focused conversation llm
-    { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
     // fun modes (live svg)
     { key: 's', ctrl: true, shift: true, action: () => liveSvgModeActive ? liveSvgActions().exitMode() : liveSvgActions().enterMode(getChatLLMId()) },
-  ], [beamOpenStoreInFocusedPane, canRegenerateFocusedChat, focusedPaneConversationId, handleConversationNewInFocusedPane, handleConversationReset, handleConversationsImportFormFilePicker, handleDeleteConversations, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleFocusedConversationRegenerateHead, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty, liveSvgModeActive]));
+  ], [focusedPaneConversationId, handleConversationNewInFocusedPane, handleDeleteConversations, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, liveSvgModeActive]));
 
 
   return <>
+
+    {/* Shortcuts gated on the focused chat */}
+    <ChatShortcutsMemo
+      conversationId={focusedPaneConversationId}
+      llmDropdownRef={llmDropdownRef}
+      personaDropdownRef={personaDropdownRef}
+      onConversationReset={handleConversationReset}
+      onConversationSave={handleFileSaveConversation}
+      onConversationsImport={handleConversationsImportFormFilePicker}
+      onMessageBeamLast={handleMessageBeamLastInFocusedPane}
+      onMessageRegenerateLast={handleFocusedConversationRegenerateHead}
+    />
 
     {/* -> Toolbar, -> Drawer, -> Panel*/}
     <OptimaToolbarIn>
