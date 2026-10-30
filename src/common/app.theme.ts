@@ -1,9 +1,9 @@
 import createCache, { StylisElement, StylisPlugin } from '@emotion/cache';
 
-import { Inter, JetBrains_Mono } from 'next/font/google';
 import { extendTheme, PaletteRange } from '@mui/joy';
 
 import { animationEnterBelow, animationOpacityFadeIn } from '~/common/util/animUtils';
+import { fontFamilyInterCss, fontFamilyJetBrainsMonoCss } from '~/common/styles/fonts/app.fonts';
 import { joyWindowManagerDefaults } from '~/common/components/dnd-window/joyWindowManager';
 
 
@@ -30,23 +30,10 @@ export type ContentScaling = 'xs' | 'sm' | 'md';
 export const hideOnMobile = { display: { xs: 'none', md: 'flex' } };
 
 
-// Theme & Fonts
+// Theme & Fonts - weights 400 (default), 500 (md), 600 (lg), 700 (xl); 300 (sm) is not loaded
 
-const font = Inter({
-  weight: [ /* '300', sm */ '400' /* (undefined, default) */, '500' /* md */, '600' /* lg */, '700' /* xl */],
-  subsets: ['latin'],
-  display: 'swap',
-  fallback: ['Helvetica', 'Arial', 'sans-serif'],
-});
-export const themeFontFamilyCss = font.style.fontFamily;
-
-const jetBrainsMono = JetBrains_Mono({
-  weight: ['400', '500', '600', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  fallback: ['monospace'],
-});
-export const themeCodeFontFamilyCss = jetBrainsMono.style.fontFamily;
+export const themeFontFamilyCss = fontFamilyInterCss;
+export const themeCodeFontFamilyCss = fontFamilyJetBrainsMonoCss;
 
 /**
  * Hotter lime for 'New'/'Beta' badges - intentionally brighter than the 400 brand anchor

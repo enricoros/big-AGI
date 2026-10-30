@@ -79,9 +79,9 @@ function _loadMermaidFromCDN() {
 }
 
 /**
- * Pass the current font families at loading time. Note that the font families will be compiled by next to something like this:
- * - code: "'__JetBrains_Mono_dc2b2d', '__JetBrains_Mono_Fallback_dc2b2d', monospace",
- * - text: "'__Inter_1870e5', '__Inter_Fallback_1870e5', Helvetica, Arial, sans-serif"
+ * Pass the current font families at loading time (see ~/common/styles/fonts/app.fonts.ts):
+ * - code: "'JetBrains Mono', 'JetBrains Mono Fallback', monospace",
+ * - text: "'Inter', 'Inter Fallback', Helvetica, Arial, sans-serif"
  */
 function _initializeMermaid(mermaidAPI: MermaidAPI): MermaidAPI {
   mermaidAPI.initialize({

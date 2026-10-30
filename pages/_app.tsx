@@ -18,6 +18,7 @@ import '~/common/styles/GithubMarkdown.css';
 import '~/common/styles/NProgress.css';
 import '~/common/styles/agi.effects.css';
 import '~/common/styles/app.styles.css';
+import '~/common/styles/fonts/app.fonts.css';
 
 import { ErrorBoundary } from '~/common/components/ErrorBoundary';
 import { Is } from '~/common/util/pwaUtils';

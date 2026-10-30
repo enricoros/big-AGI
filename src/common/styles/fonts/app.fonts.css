@@ -1,0 +1,22 @@
+/*
+ * Size-adjusted Arial, used for text the font files don't cover: until they load, and permanently for symbols outside
+ * Google's subsets (Unicode arrows, math, box drawing). Values from next/font's Google metrics table, which measured
+ * closer to real chat and code text than next/font/local's own estimate - see README.md to recompute them.
+ */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local("Arial");
+  ascent-override: 90.44%;
+  descent-override: 22.52%;
+  line-gap-override: 0.00%;
+  size-adjust: 107.12%;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono Fallback';
+  src: local("Arial");
+  ascent-override: 75.79%;
+  descent-override: 22.29%;
+  line-gap-override: 0.00%;
+  size-adjust: 134.59%;
+}
