@@ -14,7 +14,7 @@ import { speakText, speakTextSurfaceFailure } from '~/modules/speex/speex.client
 import { WhatsNewEmptyChatLine } from '~/modules/news/components/WhatsNewIndicators';
 
 import type { ConversationHandler } from '~/common/chat-overlay/ConversationHandler';
-import type { DLLMContextTokens } from '~/common/stores/llms/llms.types';
+import { getLLMContextTokens, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { clipboardInterceptCtrlCForCleanup } from '~/common/util/clipboardUtils';
 import { convertFilesToDAttachmentFragments } from '~/common/attachment-drafts/attachment.pipeline';
@@ -31,6 +31,8 @@ import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from 
 import { messagePatchPresentation } from '~/common/stores/chat/chat.message.presentation';
 import { orderedUserFragments } from '~/common/stores/chat/chat.fragment-order';
 import { useChatStore } from '~/common/stores/chat/store-chats';
+import { useLLM } from '~/common/stores/llms/llms.hooks';
+import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 
 import { CMLZeroConversation } from './messages-list/CMLZeroConversation';
 import { ChatCleanupControls } from './ChatCleanupList';
@@ -49,9 +51,6 @@ export function ChatMessageList(props: {
   conversationId: DConversationId | null,
   conversationHandler: ConversationHandler | null,
   capabilityHasT2I: boolean,
-  chatLLMAntPromptCaching: boolean,
-  chatLLMContextTokens: DLLMContextTokens,
-  chatLLMSupportsImages: boolean,
   fitScreen: boolean,
   isFocused: boolean,
   isMobile: boolean,
@@ -82,6 +81,8 @@ export function ChatMessageList(props: {
       historyTokenCount: conversation ? conversation.tokenCount : 0,
     };
   }));
+  const { domainModelId: chatLLMId } = useModelDomain('primaryChat');
+  const chatLLM = useLLM(chatLLMId) ?? null;
   const { _composerInReferenceToCount, ephemerals } = useChatOverlayStore(props.conversationHandler?.conversationOverlayStore ?? null, useShallow(state => ({
     _composerInReferenceToCount: state.inReferenceTo?.length ?? 0,
     ephemerals: state.ephemerals?.length ? state.ephemerals : null,
@@ -89,6 +90,9 @@ export function ChatMessageList(props: {
 
   // derived state
   const { conversationHandler, conversationId, capabilityHasT2I, onConversationBranch, onConversationExecuteHistory, onTextDiagram, onTextImagine } = props;
+  const chatLLMAntPromptCaching = chatLLM?.interfaces?.includes(LLM_IF_ANT_PromptCaching) ?? false;
+  const chatLLMContextTokens = getLLMContextTokens(chatLLM) ?? null;
+  const chatLLMSupportsImages = chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision) ?? false;
   const composerCanAddInReferenceTo = _composerInReferenceToCount < 5;
   const composerHasInReferenceTo = _composerInReferenceToCount > 0;
 
@@ -114,7 +118,7 @@ export function ChatMessageList(props: {
 
           // Retrieve fully-fledged Attachment Fragments (converted/extracted, with sources, mimes, etc.) from the selected files
           const attachmentFragments = await convertFilesToDAttachmentFragments('file-open', filesWithHandle, {
-            hintAddImages: props.chatLLMSupportsImages,
+            hintAddImages: chatLLMSupportsImages,
           });
 
           // Create a User message with the prompt and the attachment fragments
@@ -129,7 +133,7 @@ export function ChatMessageList(props: {
         // an example object without an action: nothing to run (string examples are handled above)
         break;
     }
-  }, [conversationHandler, conversationId, onConversationExecuteHistory, props.chatLLMSupportsImages]);
+  }, [conversationHandler, conversationId, onConversationExecuteHistory, chatLLMSupportsImages]);
 
   const handleMessageContinue = React.useCallback(async (_messageId: DMessageId /* Ignored for now */, continueText: null | string) => {
     if (conversationId && conversationHandler) {
@@ -412,7 +416,7 @@ export function ChatMessageList(props: {
           conversationMessages={conversationMessages}
           filteredMessages={filteredMessages}
           historyTokenCount={historyTokenCount}
-          remainingTokens={props.chatLLMContextTokens ? (props.chatLLMContextTokens - historyTokenCount) : undefined}
+          remainingTokens={chatLLMContextTokens ? (chatLLMContextTokens - historyTokenCount) : undefined}
           selectedMessages={selectedMessages}
           setSelectedMessages={setSelectedMessages}
           onClose={() => props.setIsMessageSelectionMode(false)}
@@ -432,7 +436,7 @@ export function ChatMessageList(props: {
               isBottom={idx === filteredMessages.length - 1}
               isImagining={isImagining}
               isSpeaking={isSpeaking}
-              showAntPromptCaching={props.chatLLMAntPromptCaching}
+              showAntPromptCaching={chatLLMAntPromptCaching}
               htmlRenderVariant={getRenderHTMLInitial() ? 'render-at-end' : 'show-code'}
               onAddInReferenceTo={!composerCanAddInReferenceTo ? undefined : handleAddInReferenceTo}
               onMessageAssistantFrom={handleMessageAssistantFrom}

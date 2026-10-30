@@ -8,7 +8,6 @@ import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import { useIsBeamOpenForConversation } from '~/modules/beam/store-module-beam';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import type { DLLMContextTokens } from '~/common/stores/llms/llms.types';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { ErrorBoundary } from '~/common/components/ErrorBoundary';
 import { PanelResizeInset } from '~/common/components/PanelResizeInset';
@@ -72,9 +71,6 @@ function ChatPane(props: {
   isMobile: boolean,
   isZenMode: boolean,
   capabilityHasT2I: boolean,
-  chatLLMAntPromptCaching: boolean,
-  chatLLMContextTokens: DLLMContextTokens,
-  chatLLMSupportsImages: boolean,
   isMessageSelectionMode: boolean,
   setIsMessageSelectionMode: (isMessageSelectionMode: boolean) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string, addSplitPane: boolean) => void,
@@ -182,9 +178,6 @@ function ChatPane(props: {
             conversationId={conversationId}
             conversationHandler={chatHandler}
             capabilityHasT2I={props.capabilityHasT2I}
-            chatLLMAntPromptCaching={props.chatLLMAntPromptCaching}
-            chatLLMContextTokens={props.chatLLMContextTokens}
-            chatLLMSupportsImages={props.chatLLMSupportsImages}
             fitScreen={isMobile || isMultiPane}
             isFocused={isFocused}
             isMobile={isMobile}

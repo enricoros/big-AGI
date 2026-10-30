@@ -15,7 +15,6 @@ import { conversationTitle, DConversation, DConversationId } from '~/common/stor
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
-import { getLLMContextTokens, LLM_IF_ANT_PromptCaching, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 import { OptimaDrawerIn, OptimaPanelIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
 import { Release } from '~/common/app.release';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
@@ -29,8 +28,6 @@ import { optimaActions, optimaOpenModels, optimaOpenPreferences } from '~/common
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { useChatFolderValidateId } from '~/common/stores/folders/hooks/useChatFolderValidateId';
 import { getIsMobile, useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
-import { useLLM } from '~/common/stores/llms/llms.hooks';
-import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
 import { useUIComplexityIsMinimal } from '~/common/stores/store-ui';
@@ -121,9 +118,6 @@ export function AppChat() {
 
   const intent = useRouterQuery<Partial<AppChatIntent>>();
 
-  const { domainModelId: chatLLMId } = useModelDomain('primaryChat');
-  const chatLLM = useLLM(chatLLMId) ?? null;
-
   const {
     // state
     chatPanes,
@@ -147,7 +141,6 @@ export function AppChat() {
     // focused
     isEmpty: isFocusedChatEmpty,
     lastMessageRole: focusedLastMessageRole,
-    isDeveloper: isFocusedChatDeveloper,
     // all
     recycleNewConversationId,
     // actions
@@ -591,9 +584,6 @@ export function AppChat() {
           isMobile={isMobile}
           isZenMode={isZenMode}
           capabilityHasT2I={capabilityHasT2I}
-          chatLLMAntPromptCaching={chatLLM?.interfaces?.includes(LLM_IF_ANT_PromptCaching) ?? false}
-          chatLLMContextTokens={getLLMContextTokens(chatLLM) ?? null}
-          chatLLMSupportsImages={chatLLM?.interfaces?.includes(LLM_IF_OAI_Vision) ?? false}
           isMessageSelectionMode={isMessageSelectionMode}
           setIsMessageSelectionMode={setIsMessageSelectionMode}
           onConversationBranch={handleConversationBranchAndFocus}
@@ -613,13 +603,11 @@ export function AppChat() {
       {(setComposerHasContent) => (
         <ComposerMemo
           isMobile={isMobile}
-          chatLLM={chatLLM}
           composerTextAreaRef={composerTextAreaRef}
           targetConversationId={focusedPaneConversationId}
           capabilityHasT2I={capabilityHasT2I}
           capabilityHasT2IEdit={capabilityHasT2IEdit}
           isMulticast={!isMultiConversationId ? null : multicastEnabled}
-          isDeveloperMode={isFocusedChatDeveloper}
           onAction={handleComposerAction}
           onConversationBeamEdit={handleMessageBeamLastInFocusedPane}
           onConversationsImportFromFiles={handleConversationsImportFromFiles}
