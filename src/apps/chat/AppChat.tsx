@@ -11,7 +11,7 @@ import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imagineProm
 import { useIsBeamOpenForConversation } from '~/modules/beam/store-module-beam';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
-import type { DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
+import { conversationTitle, DConversation, DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaBarDropdown';
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
@@ -107,7 +107,7 @@ export function AppChat() {
   const [diagramConfig, setDiagramConfig] = React.useState<DiagramConfig | null>(null);
   const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
   const [flattenConversationId, setFlattenConversationId] = React.useState<DConversationId | null>(null);
-  const showNextTitleChange = React.useRef(false);
+  const focusedTitleSnackbarIdRef = React.useRef<string | null>(null);
   const llmDropdownRef = React.useRef<OptimaBarControlMethods>(null);
   const personaDropdownRef = React.useRef<OptimaBarControlMethods>(null);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -145,13 +145,10 @@ export function AppChat() {
 
   const {
     // focused
-    title: focusedChatTitle,
     isEmpty: isFocusedChatEmpty,
     lastMessageRole: focusedLastMessageRole,
     isDeveloper: isFocusedChatDeveloper,
-    conversationIdx: focusedChatNumber,
     // all
-    hasConversations,
     recycleNewConversationId,
     // actions
     prependNewConversation,
@@ -188,10 +185,19 @@ export function AppChat() {
     conversationId && openConversationInSplitPane(conversationId);
   }, [openConversationInSplitPane]);
 
+  /** Snackbar with the title of the focused chat, after a navigation changed it; replaces the previous one. */
+  const showFocusedChatTitle = React.useCallback(() => {
+    if (focusedTitleSnackbarIdRef.current)
+      removeSnackbar(focusedTitleSnackbarIdRef.current);
+    const focusedConversation = getConversation(getFocusedPaneConversationId());
+    const title = focusedConversation ? conversationTitle(focusedConversation) : null;
+    focusedTitleSnackbarIdRef.current = !title ? null : addSnackbar({ key: 'focused-title', message: title, type: 'center-title' });
+  }, []);
+
   const handleNavigateHistoryInFocusedPane = React.useCallback((direction: 'back' | 'forward') => {
     if (navigateHistoryInFocusedPane(direction))
-      showNextTitleChange.current = true;
-  }, [navigateHistoryInFocusedPane]);
+      showFocusedChatTitle();
+  }, [navigateHistoryInFocusedPane, showFocusedChatTitle]);
 
 
   // Execution
@@ -337,14 +343,14 @@ export function AppChat() {
         .then((outcome) => {
           // activate the last (most recent) imported conversation
           if (outcome.activateConversationId) {
-            showNextTitleChange.current = true;
             handleOpenConversationInFocusedPane(outcome.activateConversationId);
+            showFocusedChatTitle();
           }
         })
         .catch(() => {
           addSnackbar({ key: 'chat-import-fail', message: 'Could not open file.', type: 'issue' });
         }),
-    [handleOpenConversationInFocusedPane],
+    [handleOpenConversationInFocusedPane, showFocusedChatTitle],
   );
 
   const handleConversationsImportFormFilePicker = React.useCallback(
@@ -374,14 +380,14 @@ export function AppChat() {
       useFolderStore.getState().addConversationToFolder(activeFolderId, branchedConversationId);
 
     // replace/open a new pane with this
-    showNextTitleChange.current = true;
     if (addSplitPane && isMultiAddable)
       handleOpenConversationInSplitPane(branchedConversationId);
     else
       handleOpenConversationInFocusedPane(branchedConversationId);
+    showFocusedChatTitle();
 
     return branchedConversationId;
-  }, [activeFolderId, branchConversation, handleOpenConversationInFocusedPane, handleOpenConversationInSplitPane, isMultiAddable]);
+  }, [activeFolderId, branchConversation, handleOpenConversationInFocusedPane, handleOpenConversationInSplitPane, isMultiAddable, showFocusedChatTitle]);
 
   const handleConversationFlatten = React.useCallback((conversationId: DConversationId) => setFlattenConversationId(conversationId), []);
 
@@ -461,16 +467,6 @@ export function AppChat() {
     else if (intent.newChat !== undefined)
       handleConversationNewInFocusedPane(false, false);
   }, [handleConversationNewInFocusedPane, intent.initialConversationId, intent.newChat, openConversationInFocusedPane]);
-
-  // [effect] Show snackbar with the focused chat title after a history navigation in focused pane
-  React.useEffect(() => {
-    if (showNextTitleChange.current) {
-      showNextTitleChange.current = false;
-      const title = (focusedChatNumber >= 0 ? `#${focusedChatNumber + 1} · ` : '') + (focusedChatTitle || 'New Chat');
-      const id = addSnackbar({ key: 'focused-title', message: title, type: 'center-title' });
-      return () => removeSnackbar(id);
-    }
-  }, [focusedChatNumber, focusedChatTitle]);
 
 
   // Shortcuts
@@ -564,8 +560,6 @@ export function AppChat() {
       <ChatPanelMemo
         isMobile={isMobile}
         conversationId={focusedPaneConversationId}
-        disableItems={!focusedPaneConversationId || isFocusedChatEmpty}
-        hasConversations={hasConversations}
         isMessageSelectionMode={isMessageSelectionMode}
         isVerticalSplit={isMobile || isTallScreen}
         onConversationBranch={handleConversationBranchAndFocus}

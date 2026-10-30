@@ -38,8 +38,6 @@ export const ChatPanelMemo = React.memo(ChatPanel);
 function ChatPanel(props: {
   isMobile: boolean,
   conversationId: DConversationId | null,
-  disableItems: boolean,
-  hasConversations: boolean,
   isMessageSelectionMode: boolean,
   isVerticalSplit: boolean,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null, addSplitPane: boolean) => void,
@@ -52,13 +50,17 @@ function ChatPanel(props: {
   // external state
   const [showSystemMessages, setShowSystemMessages] = useChatShowSystemMessages();
 
-  const { isArchived, setArchived } = useChatStore(useShallow((state) => {
+  const { isArchived, isEmpty, setArchived } = useChatStore(useShallow((state) => {
     const conversation = state.conversations.find(_c => _c.id === props.conversationId);
     return {
       isArchived: !conversation ? undefined : !!conversation.isArchived,
+      isEmpty: !conversation?.messages.length,
       setArchived: state.setArchived,
     };
   }));
+
+  // derived state
+  const disableActions = !props.conversationId || isEmpty;
 
 
   // Actions
@@ -109,7 +111,7 @@ function ChatPanel(props: {
           {/* [PROD] Not comfortable with Archive yet, so let's just give the option to 'unarchive' chats, and have that as the alternative to the Folder button */}
           {isArchived ? (
             // Archive / Unarchive button
-            <MenuItem disabled={props.disableItems} onClick={handleToggleArchive}>
+            <MenuItem disabled={disableActions} onClick={handleToggleArchive}>
               <ListItemDecorator>{isArchived ? <UnarchiveOutlinedIcon /> : <ArchiveOutlinedIcon />}</ListItemDecorator>
               {isArchived ? <b>Unarchive</b> : 'Archive'}
             </MenuItem>
@@ -117,7 +119,7 @@ function ChatPanel(props: {
             <ActionFolder conversationId={props.conversationId} disabled={!props.conversationId} /* folder actions work on any existing conversation, unlike other actions that need non-empty chats */ />
           )}
 
-          <MenuItem disabled={props.disableItems} onClick={handleConversationBranch}>
+          <MenuItem disabled={disableActions} onClick={handleConversationBranch}>
             <ListItemDecorator><ForkRightIcon /></ListItemDecorator>
             Branch
           </MenuItem>
@@ -127,16 +129,16 @@ function ChatPanel(props: {
         {/* Right column */}
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
 
-          <MenuItem disabled={props.disableItems} onClick={handleConversationFlatten}>
+          <MenuItem disabled={disableActions} onClick={handleConversationFlatten}>
             <ListItemDecorator><CompressIcon /></ListItemDecorator>
             Compact
           </MenuItem>
 
-          <MenuItem disabled={props.disableItems} onClick={handleConversationRestart}>
+          <MenuItem disabled={disableActions} onClick={handleConversationRestart}>
             <ListItemDecorator><RestartAltIcon /></ListItemDecorator>
             <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'space-between', gap: 1 }}>
               Restart
-              {/*{!props.disableItems && <KeyStroke combo='Ctrl + Shift + X' />}*/}
+              {/*{!disableActions && <KeyStroke combo='Ctrl + Shift + X' />}*/}
             </Box>
           </MenuItem>
 
@@ -145,7 +147,7 @@ function ChatPanel(props: {
 
       {/* Spans both columns */}
       <MenuItem
-        disabled={props.disableItems}
+        disabled={disableActions}
         color={props.isMessageSelectionMode ? 'warning' : 'neutral'}
         variant={props.isMessageSelectionMode ? 'solid' : 'plain'}
         onClick={handleToggleMessageSelectionMode}
@@ -159,12 +161,12 @@ function ChatPanel(props: {
 
     {/* ... how do we name this? ... */}
     <OptimaPanelGroupedList title='Persona' hideExpandedCheckbox persistentCollapsibleId='chat-persona'>
-      <ListItemButton disabled={props.disableItems} onClick={handleToggleSystemMessages}>
+      <ListItemButton disabled={disableActions} onClick={handleToggleSystemMessages}>
         <ListItemDecorator><SettingsSuggestOutlinedIcon /></ListItemDecorator>
         Show Instruction
         {/*<FormLabelStart title='View System Instruction' />*/}
-        <Switch size='sm' checked={showSystemMessages} disabled={props.disableItems} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
-        {/*<Checkbox size='md' checked={showSystemMessages} disabled={props.disableItems} sx={{ ml: 'auto' }} />*/}
+        <Switch size='sm' checked={showSystemMessages} disabled={disableActions} onChange={handleToggleSystemMessages} sx={{ ml: 'auto' }} />
+        {/*<Checkbox size='md' checked={showSystemMessages} disabled={disableActions} sx={{ ml: 'auto' }} />*/}
       </ListItemButton>
     </OptimaPanelGroupedList>
 
