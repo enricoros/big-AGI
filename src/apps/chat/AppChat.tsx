@@ -3,7 +3,6 @@ import * as React from 'react';
 import { PanelGroup } from 'react-resizable-panels';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Box } from '@mui/joy';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import type { TradeConfig } from '~/modules/trade/TradeModal';
@@ -26,7 +25,7 @@ import { createErrorContentFragment, createTextContentFragment, DMessageAttachme
 import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 import { getConversation, getConversationSystemPurposeId, useConversation } from '~/common/stores/chat/store-chats';
-import { optimaActions, optimaOpenModels, optimaOpenPreferences, useOptimaChromeless } from '~/common/layout/optima/useOptima';
+import { optimaActions, optimaOpenModels, optimaOpenPreferences } from '~/common/layout/optima/useOptima';
 import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 import { useChatFolderValidateId } from '~/common/stores/folders/hooks/useChatFolderValidateId';
 import { getIsMobile, useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
@@ -41,10 +40,11 @@ import { ChatBarChat } from './components/layout-bar/ChatBarChat';
 import { ChatDrawerMemo } from './components/layout-drawer/ChatDrawer';
 import { ChatPaneMemo } from './components/ChatPane';
 import { ChatPanelMemo } from './components/layout-panel/ChatPanel';
-import { Composer } from './components/composer/Composer';
+import { ComposerMemo } from './components/composer/Composer';
+import { ComposerDock } from './components/composer/ComposerDock';
 import { LiveSvgAnimator } from './components/live-svg/LiveSvgAnimator';
-import { useComposerAutoHide } from './components/composer/useComposerAutoHide';
 import { getOtherPanesConversationIds, usePanesManager } from './components/panes/store-panes-manager';
+import { liveSvgActions, useLiveSvgStore } from './components/live-svg/store-livesvg';
 
 import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
 
@@ -60,29 +60,38 @@ export interface AppChatIntent {
   newChat?: 'voiceInput';
 }
 
-const composerOpenSx: SxProps = {
-  // NOTE: disabled on 2025-03-05: conflicts with the GlobalDragOverlay's
-  // zIndex: 21, // just to allocate a surface, and potentially have a shadow
-  minWidth: { md: 460 }, // don't get compresses too much on desktop
-  // backgroundColor: themeBgAppChatComposer, // inlined in the Composer
-  transition: 'background-color 0.5s ease-out',
-  borderTop: `1px solid`,
-  borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
-  // hack: eats the bottom of the last message (as it has a 1px divider)
-  // NOTE: commented on 2024-05-13, as other content was stepping on the border due to it and missing zIndex
-  // mt: '-1px',
-} as const;
+const _styles = {
 
-const composerOpenMobileSx: SxProps = {
-  zIndex: 21, // allocates the surface, possibly enables shadow if we like
-  py: 0.5, // have some breathing room
-  // boxShadow: '0px -1px 8px -2px rgba(0, 0, 0, 0.4)',
-  ...composerOpenSx,
-} as const;
+  composerOpenSx: {
+    // NOTE: disabled on 2025-03-05: conflicts with the GlobalDragOverlay's
+    // zIndex: 21, // just to allocate a surface, and potentially have a shadow
+    minWidth: { md: 460 }, // don't get compresses too much on desktop
+    // backgroundColor: themeBgAppChatComposer, // inlined in the Composer
+    transition: 'background-color 0.5s ease-out',
+    borderTop: `1px solid`,
+    borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
+    // hack: eats the bottom of the last message (as it has a 1px divider)
+    // NOTE: commented on 2024-05-13, as other content was stepping on the border due to it and missing zIndex
+    // mt: '-1px',
+  } as const,
 
-// const composerClosedSx: SxProps = {
-//   display: 'none',
-// };
+  composerOpenMobileSx: {
+    // Mobile composer:
+    zIndex: 21, // allocates the surface, possibly enables shadow if we like
+    py: 0.5, // have some breathing room
+    // boxShadow: '0px -1px 8px -2px rgba(0, 0, 0, 0.4)',
+
+    // ...composerOpenSx:
+    transition: 'background-color 0.5s ease-out',
+    borderTop: `1px solid`,
+    borderTopColor: 'rgba(var(--joy-palette-neutral-mainChannel, 99 107 116) / 0.4)',
+  } as const,
+
+  // composerClosedSx: {
+  //   display: 'none',
+  // } as const,
+
+} as const satisfies Record<string, SxProps>;
 
 
 // Lazy-loaded Modals
@@ -95,7 +104,7 @@ export function AppChat() {
 
   // state
   const { showPromisedOverlay } = useOverlayComponents();
-  const [isComposerMulticast, setIsComposerMulticast] = React.useState(false);
+  const [multicastEnabled, setMulticastEnabled] = React.useState(false);
   const [isMessageSelectionMode, setIsMessageSelectionMode] = React.useState(false);
   const [diagramConfig, setDiagramConfig] = React.useState<DiagramConfig | null>(null);
   const [tradeConfig, setTradeConfig] = React.useState<TradeConfig | null>(null);
@@ -105,11 +114,8 @@ export function AppChat() {
   const personaDropdownRef = React.useRef<OptimaBarControlMethods>(null);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
   const [_activeFolderId, setActiveFolderId] = React.useState<string | null>(null);
-  const [liveSvgModeActive, setLiveSvgModeActive] = React.useState(false);
 
   // external state
-  const [composerHasContent, setComposerHasContent] = React.useState(false);
-
   const isMobile = useIsMobile();
   const isTallScreen = useIsTallScreen();
 
@@ -165,17 +171,15 @@ export function AppChat() {
 
   const activeFolderId = useChatFolderValidateId(_activeFolderId);
 
-  // Composer Auto-hiding
-  const isChromeless = useOptimaChromeless() && isMobile; // auto-hide on Chromeless too
-  const forceComposerHide = liveSvgModeActive || isChromeless || !!beamOpenStoreInFocusedPane /* || !focusedPaneConversationId */; // auto-hide when no chat (the 'please select a conversation...' state) doesn't feel good
-  const composerAutoHide = useComposerAutoHide(forceComposerHide, composerHasContent);
+    // Live SVG Animator: when active, this mode takes over the main panel (and hides the composer)
+  const liveSvgModeActive = useLiveSvgStore((s) => s.modeActive);
 
   // Window actions
 
   const isMultiPane = chatPanes.length >= 2;
   const isMultiAddable = chatPanes.length < 4;
   const isMultiConversationId = chatPaneUniqueIds.length >= 2;
-  const willMulticast = isComposerMulticast && isMultiConversationId;
+  const willMulticast = isMultiConversationId && multicastEnabled;
   const disableNewButton = isFocusedChatEmpty && !isMultiPane;
 
   const handleOpenConversationInFocusedPane = React.useCallback((conversationId: DConversationId | null) => {
@@ -551,8 +555,8 @@ export function AppChat() {
     // focused conversation llm
     { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
     // fun modes (live svg)
-    { key: 's', ctrl: true, shift: true, action: () => setLiveSvgModeActive(prev => !prev) },
-  ], [beamOpenStoreInFocusedPane, canRegenerateFocusedChat, focusedPaneConversationId, handleConversationNewInFocusedPane, handleConversationReset, handleConversationsImportFormFilePicker, handleDeleteConversations, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty]));
+    { key: 's', ctrl: true, shift: true, action: () => liveSvgModeActive ? liveSvgActions().exitMode() : liveSvgActions().enterMode(getChatLLMId()) },
+  ], [beamOpenStoreInFocusedPane, canRegenerateFocusedChat, focusedPaneConversationId, handleConversationNewInFocusedPane, handleConversationReset, handleConversationsImportFormFilePicker, handleDeleteConversations, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty, liveSvgModeActive]));
 
 
   return <>
@@ -615,30 +619,27 @@ export function AppChat() {
     )}
 
     {/* Composer with auto-hide */}
-    <Box {...composerAutoHide.compressorProps}>
-      <div style={composerAutoHide.compressibleStyle}>
-        <Composer
+    <ComposerDock conversationId={focusedPaneConversationId} isMobile={isMobile}>
+      {(setComposerHasContent) => (
+        <ComposerMemo
           isMobile={isMobile}
           chatLLM={chatLLM}
           composerTextAreaRef={composerTextAreaRef}
           targetConversationId={focusedPaneConversationId}
           capabilityHasT2I={capabilityHasT2I}
           capabilityHasT2IEdit={capabilityHasT2IEdit}
-          isMulticast={!isMultiConversationId ? null : isComposerMulticast}
+          isMulticast={!isMultiConversationId ? null : multicastEnabled}
           isDeveloperMode={isFocusedChatDeveloper}
           onAction={handleComposerAction}
           onConversationBeamEdit={handleMessageBeamLastInFocusedPane}
           onConversationsImportFromFiles={handleConversationsImportFromFiles}
           onTextImagine={handleImagineFromText}
-          setIsMulticast={setIsComposerMulticast}
+          setIsMulticast={setMulticastEnabled}
           onComposerHasContent={setComposerHasContent}
-          sx={isMobile ? composerOpenMobileSx : composerOpenSx}
+          sx={isMobile ? _styles.composerOpenMobileSx : _styles.composerOpenSx}
         />
-      </div>
-    </Box>
-
-    {/* Hover zone for auto-hide */}
-    {!isChromeless && !forceComposerHide && composerAutoHide.isHidden && <Box {...composerAutoHide.detectorProps} />}
+      )}
+    </ComposerDock>
 
     {/* Diagrams */}
     {!!diagramConfig && (

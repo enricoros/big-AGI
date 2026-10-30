@@ -103,9 +103,14 @@ const minimizedSx: SxProps = {
 
 
 /**
+ * Memoized: AppChat passes primitives, refs, constant sx and stable handlers, so its renders skip the Composer.
+ */
+export const ComposerMemo = React.memo(Composer);
+
+/**
  * A React component for composing messages, with attachments and different modes.
  */
-export function Composer(props: {
+function Composer(props: {
   isMobile: boolean;
   chatLLM: DLLM | null;
   composerTextAreaRef: React.RefObject<HTMLTextAreaElement>;
