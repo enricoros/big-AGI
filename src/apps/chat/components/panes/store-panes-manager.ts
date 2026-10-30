@@ -424,6 +424,11 @@ export function getInstantAppChatPanesCount() {
   return useAppChatPanesStore.getState().chatPanes.length;
 }
 
+export function getFocusedPaneConversationId(): DConversationId | null {
+  const { chatPanes, chatPaneFocusIndex } = useAppChatPanesStore.getState();
+  return chatPaneFocusIndex !== null ? chatPanes[chatPaneFocusIndex]?.conversationId ?? null : null;
+}
+
 /** Chats shown in panes other than the focused one. Never recycle these, or two panes end up on the same chat. */
 export function getOtherPanesConversationIds(): DConversationId[] {
   const { chatPanes, chatPaneFocusIndex } = useAppChatPanesStore.getState();

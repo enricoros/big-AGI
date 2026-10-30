@@ -43,7 +43,7 @@ import { ChatPanelMemo } from './components/layout-panel/ChatPanel';
 import { ComposerMemo } from './components/composer/Composer';
 import { ComposerDock } from './components/composer/ComposerDock';
 import { LiveSvgAnimator } from './components/live-svg/LiveSvgAnimator';
-import { getOtherPanesConversationIds, usePanesManager } from './components/panes/store-panes-manager';
+import { getFocusedPaneConversationId, getOtherPanesConversationIds, usePanesManager } from './components/panes/store-panes-manager';
 import { liveSvgActions, useLiveSvgStore } from './components/live-svg/store-livesvg';
 
 import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
@@ -247,10 +247,11 @@ export function AppChat() {
     await handleExecuteAndOutcome('generate-content', conversationId, 'chat-execute-history'); // replace with 'history', then 'generate-content'
   }, [handleExecuteAndOutcome]);
 
-  const handleMessageRegenerateLastInFocusedPane = React.useCallback(async () => {
+  const handleFocusedConversationRegenerateHead = React.useCallback(async (): Promise<void> => {
     // Ctrl + Shift + Z
-    if (!focusedPaneConversationId) return;
-    const cHandler = ConversationsManager.getHandler(focusedPaneConversationId);
+    const conversationId = getFocusedPaneConversationId();
+    if (!conversationId) return;
+    const cHandler = ConversationsManager.getHandler(conversationId);
     if (!cHandler.isValid()) return;
     const inputHistory = cHandler.historyViewHeadOrThrow('chat-regenerate-shortcut');
     const lastMessage = inputHistory.at(-1);
@@ -261,13 +262,14 @@ export function AppChat() {
       cHandler.historyTruncateTo(lastMessage.id, -1);
 
     // generate: NOTE: this will replace the system message correctly
-    await handleExecuteAndOutcome('generate-content', focusedPaneConversationId, 'chat-regenerate-last'); // truncate if assistant, then gen-text
-  }, [focusedPaneConversationId, handleExecuteAndOutcome]);
+    await handleExecuteAndOutcome('generate-content', conversationId, 'chat-regenerate-last'); // truncate if assistant, then gen-text
+  }, [handleExecuteAndOutcome]);
 
   const handleMessageBeamLastInFocusedPane = React.useCallback(async () => {
     // Ctrl + Shift + B
-    if (!focusedPaneConversationId) return;
-    const cHandler = ConversationsManager.getHandler(focusedPaneConversationId);
+    const conversationId = getFocusedPaneConversationId();
+    if (!conversationId) return;
+    const cHandler = ConversationsManager.getHandler(conversationId);
     if (!cHandler.isValid()) return;
     const inputHistory = cHandler.historyViewHeadOrThrow('chat-beam-shortcut');
     if (!inputHistory.length) return;
@@ -280,7 +282,7 @@ export function AppChat() {
       cHandler.beamInvoke(inputHistory.slice(0, -1), [lastMessage], lastMessage.id);
     else if (lastMessage.role === 'user')
       cHandler.beamInvoke(inputHistory, [], null);
-  }, [focusedPaneConversationId]);
+  }, []);
 
   const handleTextDiagram = React.useCallback((diagramConfig: DiagramConfig | null) => setDiagramConfig(diagramConfig), []);
 
@@ -310,7 +312,7 @@ export function AppChat() {
     const recycleShownElsewhere = !!recycleNewConversationId && getOtherPanesConversationIds().includes(recycleNewConversationId);
     const conversationId = (recycleNewConversationId && !forceNoRecycle && !isIncognito && !recycleShownElsewhere)
       ? recycleNewConversationId
-      : prependNewConversation(getConversationSystemPurposeId(focusedPaneConversationId) ?? undefined, isIncognito);
+      : prependNewConversation(getConversationSystemPurposeId(getFocusedPaneConversationId()) ?? undefined, isIncognito);
 
     // switch the focused pane to the new conversation
     handleOpenConversationInFocusedPane(conversationId);
@@ -323,7 +325,7 @@ export function AppChat() {
     if (!getIsMobile())
       composerTextAreaRef.current?.focus();
 
-  }, [activeFolderId, focusedPaneConversationId, handleOpenConversationInFocusedPane, prependNewConversation, recycleNewConversationId]);
+  }, [activeFolderId, handleOpenConversationInFocusedPane, prependNewConversation, recycleNewConversationId]);
 
   const handleConversationImportDialog = React.useCallback(() => setTradeConfig({ dir: 'import' }), []);
 
@@ -534,7 +536,7 @@ export function AppChat() {
   useGlobalShortcuts('AppChat', React.useMemo(() => [
     // focused conversation (excluded without a chat head or when Beam is open)
     ...(beamOpenStoreInFocusedPane || !canRegenerateFocusedChat ? [] : [
-      { key: 'z', ctrl: true, shift: true, action: handleMessageRegenerateLastInFocusedPane, description: 'Retry' },
+      { key: 'z', ctrl: true, shift: true, action: handleFocusedConversationRegenerateHead, description: 'Retry' },
       { key: 'b', ctrl: true, shift: true, action: handleMessageBeamLastInFocusedPane, description: 'Beam Edit' },
     ]),
     { key: 'o', ctrl: true, action: handleConversationsImportFormFilePicker },
@@ -556,7 +558,7 @@ export function AppChat() {
     { key: 'o', ctrl: true, shift: true, action: handleOpenChatLlmOptions },
     // fun modes (live svg)
     { key: 's', ctrl: true, shift: true, action: () => liveSvgModeActive ? liveSvgActions().exitMode() : liveSvgActions().enterMode(getChatLLMId()) },
-  ], [beamOpenStoreInFocusedPane, canRegenerateFocusedChat, focusedPaneConversationId, handleConversationNewInFocusedPane, handleConversationReset, handleConversationsImportFormFilePicker, handleDeleteConversations, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleMessageRegenerateLastInFocusedPane, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty, liveSvgModeActive]));
+  ], [beamOpenStoreInFocusedPane, canRegenerateFocusedChat, focusedPaneConversationId, handleConversationNewInFocusedPane, handleConversationReset, handleConversationsImportFormFilePicker, handleDeleteConversations, handleFileSaveConversation, handleMessageBeamLastInFocusedPane, handleFocusedConversationRegenerateHead, handleMoveFocus, handleNavigateHistoryInFocusedPane, handleOpenChatLlmOptions, isFocusedChatEmpty, liveSvgModeActive]));
 
 
   return <>
