@@ -2,6 +2,8 @@ import { TRPCError } from '@trpc/server';
 
 import { debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE } from '~/server/wire';
 
+import { isBrowserNetworkError } from '~/common/util/fetchFailures';
+
 
 // configuration
 const SERVER_LOG_FETCHERS_ERRORS = !process.env.SUPPRESS_FETCHER_LOGS; // default: true - log all fetcher errors to the console
@@ -157,10 +159,11 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
   const body = 'body' in config ? config.body : undefined;
 
   // Cleaner url without query
-  let debugCleanUrl;
+  let debugCleanUrl, debugHost;
   try {
-    const { origin, pathname } = new URL(url);
+    const { origin, pathname, host } = new URL(url);
     debugCleanUrl = decodeURIComponent(origin + pathname);
+    debugHost = host;
   } catch {
     // ...ignore
   }
@@ -262,13 +265,22 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     }
 
     // -> throw Connection error: will be a 400 (BAD_REQUEST), with preserved cause
+    let connectionMessage: string;
+    if (isBrowserNetworkError(error)) {
+      // [CSF] a browser fetch failure carries no cause (offline, an extension, CORS, an opaque 401 look the same): name the host and the candidates
+      connectionMessage = `Could not connect to ${debugHost || 'the service'}: ${_period(errorString)}`
+        + ' The browser hides the cause: offline, a blocking extension, or the service refusing browser requests (CORS; some services do this for an invalid API key).';
+    } else {
+      connectionMessage = `Could not connect: ${_period(errorString)}`;
+      if (causeMessage)
+        connectionMessage += ` \nTechnical cause: ${_period(causeMessage)}`;
+      if (prettyShowUrl)
+        connectionMessage += ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}`;
+    }
     throw new TRPCFetcherError({
       category: 'connection',
       connErrorName: connErrorName,
-      message: (!throwWithoutName ? `[${moduleName} network issue]: ` : '')
-        + `Could not connect: ${_period(errorString)}`
-        + (causeMessage ? ` \nTechnical cause: ${_period(causeMessage)}` : '')
-        + (prettyShowUrl ? ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}` : ''),
+      message: (!throwWithoutName ? `[${moduleName} network issue]: ` : '') + connectionMessage,
       // cause: _cause,
     });
   }
