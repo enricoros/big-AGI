@@ -2,7 +2,7 @@ import { TRPCError } from '@trpc/server';
 
 import { debugGenerateCurlCommand, safeErrorString, SERVER_DEBUG_WIRE } from '~/server/wire';
 
-import { isBrowserNetworkError } from '~/common/util/fetchFailures';
+import { isBrowserNetworkError, isBrowserOffline } from '~/common/util/fetchFailures';
 
 
 // configuration
@@ -269,7 +269,8 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     if (isBrowserNetworkError(error)) {
       // [CSF] a browser fetch failure carries no cause (offline, an extension, CORS, an opaque 401 look the same): name the host and the candidates
       connectionMessage = `Could not connect to ${debugHost || 'the service'}: ${_period(errorString)}`
-        + ' The browser hides the cause: offline, a blocking extension, or the service refusing browser requests (CORS; some services do this for an invalid API key).';
+        + (isBrowserOffline() ? ' You appear to be offline.'
+          : ' The browser hides the cause: offline, a blocking extension, or the service refusing browser requests (CORS; some services do this for an invalid API key).');
     } else {
       connectionMessage = `Could not connect: ${_period(errorString)}`;
       if (causeMessage)

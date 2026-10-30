@@ -1,6 +1,6 @@
 import { TRPCClientError } from '@trpc/client';
 
-import { isTRPCNetworkError, isTRPCStreamClosedEarly } from '~/common/util/fetchFailures';
+import { isBrowserOffline, isTRPCNetworkError, isTRPCStreamClosedEarly } from '~/common/util/fetchFailures';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 
@@ -56,7 +56,7 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
   // (> 6 connections) when the Wi-Fi goes off. isTRPCNetworkError matches both.
   // IMPORTANT: we will differentiate between the 2 'net-disconnected' cases in the UI, checking for the errorMessage '**network error**' vs '**connection terminated**'
   if (isTRPCNetworkError(error))
-    return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **network error**.' /* DO NOT CHANGE '**network error**' - usually client-side broken */ };
+    return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **network error**.' + (isBrowserOffline() ? ' You appear to be offline.' : '') /* DO NOT CHANGE '**network error**' - usually client-side broken */ };
 
   // Remote termination of the tRPC stream (e.g. the Vercel 300s function limit = a graceful HTTP EOF inside the
   // httpBatchStreamLink async-iterable). tRPC has thrown a DIFFERENT shape for this SAME event in each era (upstream #6989):

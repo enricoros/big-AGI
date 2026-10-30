@@ -4,7 +4,7 @@ import { fetchWithAbortableConnectionRetry, RetryAttempt } from '~/server/trpc/t
 
 import { llmAppIdentityHeaders } from '~/modules/llms/shared/llm.appIdentity';
 
-import { isBrowserNetworkError, isNodeStreamTerminated } from '~/common/util/fetchFailures';
+import { isBrowserNetworkError, isBrowserOffline, isNodeStreamTerminated } from '~/common/util/fetchFailures';
 import { objectDeepCloneWithStringLimit } from '~/common/util/objectUtils';
 
 import { AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../../api/aix.security';
@@ -38,7 +38,7 @@ function promiseWithResolvers<T>(): { promise: Promise<T>, resolve: (value: T | 
  */
 function _describeReadFailure(error: any, prettyDialect: string): string {
   if (isBrowserNetworkError(error) || isNodeStreamTerminated(error))
-    return `the connection to ${prettyDialect} dropped mid-response (${error.message}).`;
+    return `the connection to ${prettyDialect} dropped mid-response (${error.message}).` + (isBrowserOffline() ? ' You appear to be offline.' : '');
   return safeErrorString(error) || 'Unknown stream reading error';
 }
 

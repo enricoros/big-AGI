@@ -32,6 +32,11 @@ export function isBrowserNetworkError(error: unknown): error is TypeError {
   return error instanceof TypeError && BROWSER_FETCH_FAILURE_TEXTS.has(error.message.trim().replace(/\.$/, '').toLowerCase());
 }
 
+/** The browser reports no network. Reliable when true (`navigator.onLine === false`); otherwise it proves nothing. Always false outside a browser. */
+export function isBrowserOffline(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
 
 // Node fetch (undici) - TypeError('terminated'), from undici's fetch (lib/web/fetch, `terminate()`): the socket closed mid-body.
 export function isNodeStreamTerminated(error: unknown): error is TypeError {
