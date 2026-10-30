@@ -171,16 +171,18 @@ export function WhatsNewPanelRow() {
 }
 
 
-/** Last row of an empty chat, 12px tertiary, one link to the hub: the changes since the last visit, else how far behind this build is */
+/** Last row of an empty chat, 12px tertiary, one link to the hub: the changes since the last visit, else plain What's New until the hub first opens, else how far behind this build is */
 export function WhatsNewEmptyChatLine() {
-  const { off, changelogNewCount, changelogNewMore, changelogMark, changelogAfterBuildCount } = useNews(false);
+  const { off, changelogGroups, changelogNewCount, changelogNewMore, changelogMark, changelogAfterBuildCount } = useNews(false);
   const afterBuild = useNewsAfterBuild();
   if (!NewsConfig.indicatorEmptyChat || off)
     return null;
 
-  const text = (changelogNewCount && changelogMark) ? (changelogNewMore ? `See what changed since ${newsFormatDay(changelogMark.day)}` : `See ${newsFormatChanges(changelogNewCount)} since ${newsFormatDay(changelogMark.day)}`)
-    : (afterBuild.nudge && changelogAfterBuildCount >= NewsConfig.buildBehindNudgeMinChanges && newsBuildIsBehind()) ? `${newsFormatChanges(changelogAfterBuildCount)} since this build${afterBuild.hint ? ` · ${afterBuild.hint}` : ''}`
-      : null;
+  const text =
+    (changelogNewCount && changelogMark) ? (changelogNewMore ? `See what changed since ${newsFormatDay(changelogMark.day)}` : `See ${newsFormatChanges(changelogNewCount)} since ${newsFormatDay(changelogMark.day)}`)
+      : (!changelogMark && changelogGroups?.length) ? 'What\'s new'
+        : (afterBuild.nudge && changelogAfterBuildCount >= NewsConfig.buildBehindNudgeMinChanges && newsBuildIsBehind()) ? `${newsFormatChanges(changelogAfterBuildCount)} since this build${afterBuild.hint ? ` · ${afterBuild.hint}` : ''}`
+          : null;
 
   return (
     <Typography level='body-xs' sx={_styles.emptyChatLine}>

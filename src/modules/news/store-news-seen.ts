@@ -11,7 +11,7 @@ import type { NewsAnnouncement, NewsChangelogGroup } from './news.feed';
  * copies (e.g. two devices) merge with `newsSeenMerge` and never conflict.
  */
 export interface NewsSeenIndex {
-  changelog: NewsChangelogMark | null;  // null until the first changelog load
+  changelog: NewsChangelogMark | null;  // null until the hub first shows the changelog: nothing counts as new, the empty-chat line offers What's New
   announcementsSince: string | null;    // ISO day of the first load: announcements dated before it count as seen
   announcementIds: string[];            // announcements opened
 }
@@ -24,8 +24,8 @@ export interface NewsChangelogMark {
 
 interface NewsSeenStore extends NewsSeenIndex {
 
-  /** First load: everything published so far counts as seen, so new users start with nothing flagged */
-  initSeen: (groups: NewsChangelogGroup[], today: string) => void;
+  /** First load: announcements published so far count as seen, so new users start with nothing flagged */
+  initSeen: (today: string) => void;
   markChangelogSeen: (groups: NewsChangelogGroup[]) => void;
   markAnnouncementSeen: (id: string) => void;
 
@@ -39,14 +39,9 @@ export const useNewsSeenStore = create<NewsSeenStore>()(persist(
     announcementsSince: null,
     announcementIds: [],
 
-    initSeen: (groups, today) => {
-      const { changelog, announcementsSince } = get();
-      const newest = _changelogNewestMark(groups);
-      if ((changelog || !newest) && announcementsSince) return;
-      set({
-        ...(!changelog && newest ? { changelog: newest } : {}),
-        ...(!announcementsSince ? { announcementsSince: today } : {}),
-      });
+    initSeen: (today) => {
+      if (!get().announcementsSince)
+        set({ announcementsSince: today });
     },
 
     markChangelogSeen: (groups) => {

@@ -141,10 +141,10 @@ export function useNews(immediate: boolean) {
     };
   }, [items]);
 
-  // [effect] first load: everything this build has counts as seen
+  // [effect] first load: the announcements published so far count as seen
   React.useEffect(() => {
     if (changelogGroups)
-      useNewsSeenStore.getState().initSeen(changelogGroups, newsLocalDay());
+      useNewsSeenStore.getState().initSeen(newsLocalDay());
   }, [changelogGroups]);
 
   // derived: what is new against the live watermark
@@ -168,7 +168,7 @@ export function useNews(immediate: boolean) {
     changelogError: isError && !changelogGroups, // the first page failed
     changelogAfterBuild,      // days newer than this build (plus grace)
     changelogAfterBuildCount, // their items - informational, never badged
-    changelogMark,            // the live watermark (the hub snapshots it on open, so marking seen doesn't reshuffle the view)
+    changelogMark,            // the live watermark, null until the hub first shows the changelog (the hub snapshots it on open, so marking seen doesn't reshuffle the view)
     changelogNewItems,        // changelog items new since the watermark - passive
     changelogNewCount,
     changelogNewMore,         // new items run past the loaded page: the count is uncountable ('many')

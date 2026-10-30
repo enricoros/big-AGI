@@ -64,8 +64,8 @@ open list plus its own.
 
 **Seen index** (`store-news-seen.ts`, localStorage). The changelog watermark is the newest seen day
 plus its item count, so a same-day addition re-flags that day. Announcements are an id set plus the
-first-load day; older ones count as seen. The first load marks everything seen, so new users start
-with nothing flagged. The index only advances, so two copies merge without conflicts
+first-load day; older ones count as seen. The watermark stays unset until the hub first shows the
+changelog, and an unset watermark counts nothing as new, so new users start with nothing flagged. The index only advances, so two copies merge without conflicts
 (`newsSeenMerge`, the contract for a future account sync). Days are local calendar days (`newsLocalDay`),
 as the feed dates them and `newsFormatDay` reads them, never UTC. `newsChangelogSplit` gives every caller
 the same `{ fresh, seen, count, more }`; `more` marks the count as uncountable: the new items run past the loaded page. The "N new" labels and
@@ -126,6 +126,7 @@ big-agi.com." with Docs home (HTTP 404, not retried). Mobile is fullscreen, with
 codeline places one with one line: the nav dot (accent, unseen announcements only: the changelog is
 passive), the What's New and Documentation menu items (no counts), the side panel rows, and the empty-chat
 line, one link to the hub ("See 8 changes since Oct 20"; "See what changed since Sep 27" when uncountable;
+"What's new", no count, until the hub first opens;
 "5 changes since this build · Pull and rebuild" where the policy nudges), body-xs tertiary,
 at the bottom of the chat area: a sibling of the box that holds the persona view, in the chat scroller's
 flex column, so it takes the last row at full width while the box grows (`flexGrow: 1`) and the view's own
