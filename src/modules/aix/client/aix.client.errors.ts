@@ -1,6 +1,6 @@
 import { TRPCClientError } from '@trpc/client';
 
-import { isNodeStreamTerminated, isTRPCNetworkError, isTRPCStreamClosedEarly } from '~/common/util/fetchFailures';
+import { isTRPCNetworkError, isTRPCStreamClosedEarly } from '~/common/util/fetchFailures';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 
@@ -71,10 +71,6 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
   if (isTRPCStreamClosedEarly(error) /* || (hasFragments && error === undefined) - intentionally disabled, too broad (#6989) */)
     return { errorType: 'net-disconnected', errorMessage: 'An unexpected issue occurred: **connection terminated**.' /* DO NOT CHANGE '**connection terminated**' - usually server (Vercel) side broken */ };
 
-  // Undici (Node fetch) mid-stream TLS or socket drop (isNodeStreamTerminated). Only a node-backed client could throw it here:
-  // browsers (incl. CSF) never do, and server-side drops arrive in-band from the executor ('... dropped mid-response (terminated).').
-  if (isNodeStreamTerminated(error))
-    return { errorType: 'net-disconnected', errorMessage: 'The AI provider interrupted mid-stream: **upstream dropped**.' /* DO NOT CHANGE '**upstream dropped**' - matched in BlockPartError */ };
 
 
   // Engine-independent transport signals tagged by the streaming fetch wrapper (trpc.client.ts streamingTransportFetch),

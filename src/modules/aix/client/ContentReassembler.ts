@@ -1169,7 +1169,7 @@ export class ContentReassembler {
       case 'done-dispatch-aborted':
         // BROKEN - Infrastructure abort (not user-initiated) - dispatch connection severed
         console.warn(`⚠️ [ContentReassembler] done-dispatch-aborted - connection lost, not user-initiated.`);
-        return { tsr: 'issue', errorMessage: 'Response interrupted - the AI provider connection was lost.' };
+        return { tsr: 'issue', errorMessage: 'Response interrupted - the server cancelled the request.' };
 
       case 'issue-dialect':
       case 'issue-dispatch-rpc':
