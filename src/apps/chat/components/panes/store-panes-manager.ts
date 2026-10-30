@@ -446,20 +446,36 @@ export function subscribeAppChatPanes(listener: () => void): () => void {
 
 // Reactive hooks
 
+/** What AppChat lays out per pane: no history, no view state. */
+export type ChatPaneLayout = Readonly<Pick<ChatPane, 'paneId' | 'conversationId'>>;
+
+/** Returns `prev` while every pane keeps its id and chat, so view flags and history do not reach layout readers. */
+function _stablePanesLayout(chatPanes: readonly ChatPane[], prev: readonly ChatPaneLayout[]): readonly ChatPaneLayout[] {
+  if (chatPanes.length === prev.length && chatPanes.every((pane, idx) => pane.paneId === prev[idx].paneId && pane.conversationId === prev[idx].conversationId))
+    return prev;
+  return chatPanes.map(({ paneId, conversationId }) => ({ paneId, conversationId }));
+}
+
 export function usePanesManager() {
+  // the layout is stabilized inside the selector: a render-time memo would run after the re-render it is meant to skip
+  const layoutRef = React.useRef<readonly ChatPaneLayout[]>([]);
+
   // use Panes - Note: before we had { _onConversationsChanged, ...panesFunctions } = ... but we don't need the internal function anymore
-  const panesData = useAppChatPanesStore(useShallow(state => ({
-    // state
-    chatPanes: state.chatPanes as Readonly<ChatPane[]>,
-    focusedPaneIndex: state.chatPaneFocusIndex,
-    focusedPaneConversationId: state.chatPaneFocusIndex !== null ? state.chatPanes[state.chatPaneFocusIndex]?.conversationId ?? null : null,
-    // methods
-    openConversationInFocusedPane: state.openConversationInFocusedPane,
-    openConversationInSplitPane: state.openConversationInSplitPane,
-    navigateHistoryInFocusedPane: state.navigateHistoryInFocusedPane,
-    removePane: state.removePane,
-    setFocusedPaneIndex: state.setFocusedPaneIndex,
-  })));
+  const panesData = useAppChatPanesStore(useShallow(state => {
+    layoutRef.current = _stablePanesLayout(state.chatPanes, layoutRef.current);
+    return {
+      // state
+      chatPanes: layoutRef.current,
+      focusedPaneIndex: state.chatPaneFocusIndex,
+      focusedPaneConversationId: state.chatPaneFocusIndex !== null ? state.chatPanes[state.chatPaneFocusIndex]?.conversationId ?? null : null,
+      // methods
+      openConversationInFocusedPane: state.openConversationInFocusedPane,
+      openConversationInSplitPane: state.openConversationInSplitPane,
+      navigateHistoryInFocusedPane: state.navigateHistoryInFocusedPane,
+      removePane: state.removePane,
+      setFocusedPaneIndex: state.setFocusedPaneIndex,
+    };
+  }));
 
   // use changes in Conversation IDs[] to trigger the existence check
   const conversationIDs: DConversationId[] = useChatStore(useShallow(state =>
