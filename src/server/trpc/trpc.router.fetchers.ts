@@ -40,6 +40,7 @@ type _RequestConfig<TBody extends object | undefined | FormData> = {
   name: string;
   throwWithoutName?: boolean; // when throwing, do not add the module name (the caller will improve the output)
   onHeaders?: (headers: Headers, status: number) => void; // optional callback to receive response headers
+  redirect?: RequestRedirect; // 'error' for client-supplied hosts, so a redirect can't bounce to an internal address
 } & (
   | { method?: 'GET' /* in case of GET, the method is optional, and no body */ }
   | { method: 'POST'; body: TBody }
@@ -155,7 +156,7 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
   parserName: 'json' | 'text' | 'response',
 ): Promise<TOut> {
 
-  const { url, method = 'GET', headers: configHeaders, name: moduleName, signal, throwWithoutName = false, onHeaders } = config;
+  const { url, method = 'GET', headers: configHeaders, name: moduleName, signal, throwWithoutName = false, onHeaders, redirect } = config;
   const body = 'body' in config ? config.body : undefined;
 
   // Cleaner url without query
@@ -194,6 +195,7 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
       headers,
       body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
       signal,
+      ...(redirect && { redirect }),
     };
 
     // upstream FETCH

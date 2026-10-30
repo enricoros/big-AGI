@@ -54,6 +54,9 @@ XAI_API_KEY=
 # Browse
 PUPPETEER_WSS_ENDPOINT=
 
+# Outbound policy for client-supplied hosts
+SERVER_ALLOWED_PRIVATE_HOSTS=
+
 # Search
 GOOGLE_CLOUD_API_KEY=
 GOOGLE_CSE_ID=
@@ -145,6 +148,8 @@ Enable the app to Talk, Draw, and Google things up.
 | `GOOGLE_CSE_ID`            | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)               |
 | **Browse**                 |                                                                                                                         |
 | `PUPPETEER_WSS_ENDPOINT`   | Puppeteer WebSocket endpoint - used for browsing (pade downloadeing), etc.                                              |
+| **Outbound policy**        |                                                                                                                         |
+| `SERVER_ALLOWED_PRIVATE_HOSTS` | Client-supplied hosts the server fetches (LLM API hosts, TTS `apiHost`, Browse endpoint and page URLs set in the UI) are blocked from loopback, private, link-local and metadata addresses. An LLM host equal to the vendor's server endpoint (its env host, else the default, e.g. Ollama `127.0.0.1:11434`, LM Studio `localhost:1234`, LocalAI `127.0.0.1:8080`) is always allowed. Comma-separated `host` or `host:port` entries to exempt (e.g. `localhost:8080,127.0.0.1:9222,localai`), or `*` to disable the block on trusted single-user deployments |
 | **Backend**                |                                                                                                                         |
 | `HTTP_BASIC_AUTH_USERNAME` | See the [Authentication](deploy-authentication.md) guide. Username for HTTP Basic Authentication.                       |
 | `HTTP_BASIC_AUTH_PASSWORD` | Password for HTTP Basic Authentication.                                                                                 |

@@ -10,6 +10,7 @@ import { TRPCError } from '@trpc/server';
 
 import { env } from '~/server/env.server';
 
+import type { RequestAccessValues } from '../llm.server.types';
 import { llmsFixupHost, llmsServerKeyForHost } from '../../shared/llm.isomorphic';
 
 
@@ -109,7 +110,7 @@ export const anthropicAccessSchema = z.object({
   anthropicInferenceGeo: z.string().trim().nullable().optional(), // [Anthropic, 2026-02-01] e.g. "us" for US-only inference, optional: for server backward-comp, and can be removed
 });
 
-export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, options?: AnthropicHostedFeatures): { headers: HeadersInit, url: string } {
+export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, options?: AnthropicHostedFeatures): RequestAccessValues {
   // API key
   const anthropicKey = access.anthropicKey || llmsServerKeyForHost(access.anthropicHost, env.ANTHROPIC_API_KEY, env.ANTHROPIC_API_HOST || DEFAULT_ANTHROPIC_HOST); // server key: server endpoint only
 
@@ -136,6 +137,7 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, 
       'X-API-Key': anthropicKey,
     },
     url: anthropicHost + apiPath,
+    ...(access.anthropicHost && { redirect: 'error' as const }), // no redirects for a client-set host: a redirect could bounce the server-side fetch past the outbound policy
   };
 }
 

@@ -9,13 +9,15 @@ import { FileMetadataResponse_schema, ListModelsResponse_schema } from '../llm.s
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
 import { ANTHROPIC_API_PATHS, anthropicAccess, AnthropicAccessSchema, anthropicAccessSchema, AnthropicHostedFeatures } from './anthropic.access';
+import { llmsAssertClientHostOrThrow } from '../llm.server.egress';
 
 
 // Mappers
 
 async function anthropicGETOrThrow<TOut extends object>(access: AnthropicAccessSchema, apiPath: string, options?: AnthropicHostedFeatures, signal?: AbortSignal): Promise<TOut> {
-  const { headers, url } = anthropicAccess(access, apiPath, options);
-  return await fetchJsonOrTRPCThrow<TOut>({ url, headers, name: 'Anthropic', signal });
+  await llmsAssertClientHostOrThrow(access);
+  const { headers, url, redirect } = anthropicAccess(access, apiPath, options);
+  return await fetchJsonOrTRPCThrow<TOut>({ url, headers, redirect, name: 'Anthropic', signal });
 }
 
 
@@ -65,8 +67,9 @@ export const llmAnthropicRouter = createTRPCRouter({
       fileId: z.string(),
     }))
     .mutation(async ({ input: { access, fileId } }) => {
-      const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.files}/${fileId}`, { enableSkills: true, enableCodeExecution: true });
-      await fetchTextOrTRPCThrow({ url, headers, method: 'DELETE', name: 'Anthropic' });
+      await llmsAssertClientHostOrThrow(access);
+      const { headers, url, redirect } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.files}/${fileId}`, { enableSkills: true, enableCodeExecution: true });
+      await fetchTextOrTRPCThrow({ url, headers, redirect, method: 'DELETE', name: 'Anthropic' });
       return { success: true };
     }),
 
@@ -77,8 +80,9 @@ export const llmAnthropicRouter = createTRPCRouter({
       fileId: z.string(),
     }))
     .query(async ({ input: { access, fileId } }) => {
-      const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.files}/${fileId}/content`, { enableSkills: true, enableCodeExecution: true });
-      const response = await fetchResponseOrTRPCThrow({ url, headers, name: 'Anthropic' });
+      await llmsAssertClientHostOrThrow(access);
+      const { headers, url, redirect } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.files}/${fileId}/content`, { enableSkills: true, enableCodeExecution: true });
+      const response = await fetchResponseOrTRPCThrow({ url, headers, redirect, name: 'Anthropic' });
 
       // Guard against excessively large files (10 MB limit)
       const MAX_FILE_BYTES = 10 * 1024 * 1024;

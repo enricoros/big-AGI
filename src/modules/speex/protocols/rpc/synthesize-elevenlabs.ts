@@ -66,9 +66,18 @@ export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLa
       body,
       signal,
       name: 'ElevenLabs',
+      ...(!!access.apiHost && { redirect: 'error' as const }),
     });
   } catch (error: any) {
     yield { t: 'error', e: `ElevenLabs fetch failed: ${error.message || 'Unknown error'}` };
+    return;
+  }
+
+  // relay audio only, never other upstream content
+  const contentType = (response.headers.get('content-type') || '').toLowerCase();
+  if (!contentType.startsWith('audio/')) {
+    await response.body?.cancel().catch(() => {});
+    yield { t: 'error', e: `ElevenLabs audio error: unexpected content type '${contentType.slice(0, 64)}'` };
     return;
   }
 
@@ -92,6 +101,7 @@ export async function listVoicesElevenLabs(access: SpeexWire_Access_ElevenLabs):
       url,
       headers,
       name: 'ElevenLabs',
+      ...(!!access.apiHost && { redirect: 'error' as const }),
     }),
   );
 

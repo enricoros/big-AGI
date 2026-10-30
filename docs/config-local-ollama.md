@@ -16,6 +16,7 @@ _Last updated Dec 16, 2023_
    [Ollama download page](https://ollama.ai/download) and [instructions for linux](https://github.com/jmorganca/ollama/blob/main/docs/linux.md).
 2. **Add Ollama as a Model Source**: In `big-AGI`, navigate to the **Models** section, select **Add a model source**, and choose **Ollama**
 3. **Enter Ollama Host URL**: Provide the Ollama Host URL where the API server is accessible (e.g., `http://localhost:11434`)
+   - The default `http://localhost:11434` (or the server's `OLLAMA_API_HOST`) always works. Other private or LAN hosts entered in the UI are blocked by the server's outbound policy unless listed in `SERVER_ALLOWED_PRIVATE_HOSTS` (e.g. `192.168.1.10:11434`)
 4. **Refresh Model List**: Once connected, refresh the list of available models to include the Ollama models
    > Optional: use the Ollama Admin interface to see which models are available and 'Pull' them in your local machine. Note
    that this operation will likely timeout due to Edge Functions timeout on the big-AGI server while pulling, and

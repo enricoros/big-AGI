@@ -102,14 +102,14 @@ export function createAnthropicFileInlineTransform(fileApiRequest: ReturnType<ty
 
     const fileId = particle.fileId; // capture before particle is potentially reassigned to a replacement
     const fileUrl = `${fileApiRequest.url}/${fileId}`;
-    const headers = fileApiRequest.headers;
+    const { headers, redirect } = fileApiRequest;
 
     // Discard: delete without fetching content; the filename is only for the note, so its lookup is best-effort
     if (policy === 'discard') {
-      const filename = await fetchJsonOrTRPCThrow({ url: fileUrl, headers, name: 'Anthropic.fileInline.meta', throwWithoutName: true })
+      const filename = await fetchJsonOrTRPCThrow({ url: fileUrl, headers, redirect, name: 'Anthropic.fileInline.meta', throwWithoutName: true })
         .then(json => FileMetadataResponse_schema.parse(json).filename)
         .catch(() => undefined);
-      await fetchResponseOrTRPCThrow({ url: fileUrl, headers, method: 'DELETE', name: 'Anthropic.fileInline.delete', throwWithoutName: true });
+      await fetchResponseOrTRPCThrow({ url: fileUrl, headers, redirect, method: 'DELETE', name: 'Anthropic.fileInline.delete', throwWithoutName: true });
       return {
         p: 'vnt', nt: 'hres-discarded', kind: 'vnd.ant.file', fileId, ...(filename ? { filename } : {}),
         text: `Export discarded: ${filename || fileId}`,
@@ -119,7 +119,7 @@ export function createAnthropicFileInlineTransform(fileApiRequest: ReturnType<ty
 
     // 1. Fetch metadata to check MIME type and size
     //    Errors (connection, 4xx/5xx, JSON parse) throw; the executor's transform safety net falls back to the original particle.
-    const { filename, mime_type: mimeType, size_bytes, downloadable } = FileMetadataResponse_schema.parse(await fetchJsonOrTRPCThrow({ url: fileUrl, headers, name: 'Anthropic.fileInline.meta', throwWithoutName: true }));
+    const { filename, mime_type: mimeType, size_bytes, downloadable } = FileMetadataResponse_schema.parse(await fetchJsonOrTRPCThrow({ url: fileUrl, headers, redirect, name: 'Anthropic.fileInline.meta', throwWithoutName: true }));
     if (!downloadable) return particle;
 
     // only Text / Images
@@ -135,7 +135,7 @@ export function createAnthropicFileInlineTransform(fileApiRequest: ReturnType<ty
     if (isText) {
 
       // 2. Text path: fetch as string
-      const text = await fetchTextOrTRPCThrow({ url: `${fileUrl}/content`, headers, name: 'Anthropic.fileInline.text', throwWithoutName: true });
+      const text = await fetchTextOrTRPCThrow({ url: `${fileUrl}/content`, headers, redirect, name: 'Anthropic.fileInline.text', throwWithoutName: true });
       if (text.length > INLINE_TEXT_MAX_BYTES) return particle;
 
       // 3. particle with adaptive fence depth (extra backticks if content contains ```)
@@ -149,7 +149,7 @@ export function createAnthropicFileInlineTransform(fileApiRequest: ReturnType<ty
     } else {
 
       // 2. Image path: fetch as bytes, encode base64, build inline image particle
-      const imageResponse = await fetchResponseOrTRPCThrow({ url: `${fileUrl}/content`, headers, name: 'Anthropic.fileInline.image', throwWithoutName: true });
+      const imageResponse = await fetchResponseOrTRPCThrow({ url: `${fileUrl}/content`, headers, redirect, name: 'Anthropic.fileInline.image', throwWithoutName: true });
       const imageBuffer = await imageResponse.arrayBuffer();
       if (imageBuffer.byteLength > INLINE_IMAGE_MAX_BYTES) return particle; // defensive size guard
 
@@ -170,7 +170,7 @@ export function createAnthropicFileInlineTransform(fileApiRequest: ReturnType<ty
 
     // 4. Fire-and-forget delete if policy requires (raw fetch - we don't care about result/errors)
     if (policy === 'inline-file-and-delete')
-      fetchResponseOrTRPCThrow({ url: fileUrl, headers, method: 'DELETE', name: 'Anthropic.fileInline.delete', throwWithoutName: true })
+      fetchResponseOrTRPCThrow({ url: fileUrl, headers, redirect, method: 'DELETE', name: 'Anthropic.fileInline.delete', throwWithoutName: true })
         .catch(error => console.log(`[AnthropicFileInlineTransform] Failed to delete file ${fileId} after inlining:`, { error }));
 
     return particle;

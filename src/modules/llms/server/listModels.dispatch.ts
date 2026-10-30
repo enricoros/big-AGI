@@ -62,6 +62,7 @@ import { perplexityHardcodedModelDescriptions, perplexityInjectVariants } from '
 import { togetherAIModelsToModelDescriptions } from './openai/models/together.models';
 import { xaiFetchModelDescriptions, xaiModelSort } from './openai/models/xai.models';
 import { zaiCuratedModelDescriptions, zaiDiscoverModels, zaiModelSort } from './openai/models/zai.models';
+import { llmsAssertClientHostOrThrow } from './llm.server.egress';
 
 
 // -- Dispatch types --
@@ -83,6 +84,7 @@ function createListModelsDispatch<T>(dispatch: ListModelsDispatch<T>): ListModel
 // -- Specialized Implementations -- Core of Server-side LLM Model Listing abstraction --
 
 export async function listModelsRunDispatch(access: AixAPI_Access, signal?: AbortSignal): Promise<ModelDescriptionSchema[]> {
+  await llmsAssertClientHostOrThrow(access);
   const dispatch = _listModelsCreateDispatch(access, signal);
   const wireModels = await dispatch.fetchModels();
   const models = dispatch.convertToDescriptions(wireModels)
@@ -134,9 +136,9 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'anthropic': {
       return createListModelsDispatch({
         fetchModels: async () => {
-          const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.models}?limit=1000`, {/* ... no options for list ... */ });
+          const { headers, url, redirect } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.models}?limit=1000`, {/* ... no options for list ... */ });
           _wire?.logRequest('GET', url, headers);
-          const wireModels = await fetchJsonOrTRPCThrow({ url, headers, name: 'Anthropic', signal });
+          const wireModels = await fetchJsonOrTRPCThrow({ url, headers, redirect, name: 'Anthropic', signal });
           _wire?.logResponse(wireModels);
           return AnthropicWire_API_Models_List.Response_schema.parse(wireModels);
         },
@@ -260,16 +262,16 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'ollama': {
       return createListModelsDispatch({
         fetchModels: async () => {
-          const { headers, url } = ollamaAccess(access, '/api/tags');
+          const { headers, url, redirect } = ollamaAccess(access, '/api/tags');
           _wire?.logRequest('GET', url, headers);
-          const wireModels = await fetchJsonOrTRPCThrow({ url, headers, name: 'Ollama', signal });
+          const wireModels = await fetchJsonOrTRPCThrow({ url, headers, redirect, name: 'Ollama', signal });
           _wire?.logResponse(wireModels);
           const models = wireOllamaListModelsSchema.parse(wireModels).models;
 
           // retrieve info for each of the models (don't fail all if a single /api/show fails)
           const results = await Promise.allSettled(models.map(async (model) => {
-            const { headers, url } = ollamaAccess(access, '/api/show');
-            const wireModelInfo = await fetchJsonOrTRPCThrow({ url, method: 'POST', headers, body: { 'name': model.name }, name: 'Ollama', signal });
+            const { headers, url, redirect } = ollamaAccess(access, '/api/show');
+            const wireModelInfo = await fetchJsonOrTRPCThrow({ url, method: 'POST', headers, redirect, body: { 'name': model.name }, name: 'Ollama', signal });
 
             const modelInfo = wireOllamaModelInfoSchema.parse(wireModelInfo);
             return { ...model, ...modelInfo };
@@ -372,9 +374,9 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
       return createListModelsDispatch({
         fetchModels: async (): Promise<string[]> => {
           const wireModels = await _fetchModelsListCuratedFirst('Z.ai', async () => {
-            const { headers, url } = openAIAccess(access, null, OPENAI_API_PATHS.models); // throws without a key: falls back too
+            const { headers, url, redirect } = openAIAccess(access, null, OPENAI_API_PATHS.models); // throws without a key: falls back too
             _wire?.logRequest('GET', url, headers);
-            const wireModels = await fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ url, headers, name: 'OpenAI/Zai', signal });
+            const wireModels = await fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ url, headers, redirect, name: 'OpenAI/Zai', signal });
             _wire?.logResponse(wireModels);
             return wireModels;
           });
@@ -411,7 +413,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'togetherai':
 
       // Effective URL and headers - respects OPENAI_API_HOST server env and default hosts
-      const { headers: oaiHeaders, url: oaiUrl } = openAIAccess(access, null, OPENAI_API_PATHS.models);
+      const { headers: oaiHeaders, url: oaiUrl, redirect: oaiRedirect } = openAIAccess(access, null, OPENAI_API_PATHS.models);
 
       return createListModelsDispatch({
 
@@ -423,6 +425,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
             const wireModels = await fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({
               url: oaiUrl,
               headers: oaiHeaders,
+              redirect: oaiRedirect,
               name: `OpenAI/${_capitalize(dialect)}`,
               signal,
             });

@@ -78,7 +78,7 @@ export const synthesizeGemini: SynthesizeBackendFn<SpeexWire_Access_Gemini> = as
   let response: Response;
   try {
     if (SPEEX_DEBUG) console.log(`[Speex][Gemini] POST ${model}`, { body });
-    response = await fetchResponseOrTRPCThrow({ url, method: 'POST', headers, body, signal, name: 'Gemini' });
+    response = await fetchResponseOrTRPCThrow({ url, method: 'POST', headers, body, signal, name: 'Gemini', ...(!!access.apiHost && { redirect: 'error' as const }) });
   } catch (error: any) {
     yield { t: 'error', e: `Gemini fetch failed: ${error.message || 'Unknown error'}` };
     return;
@@ -114,7 +114,7 @@ export async function listVoicesGemini(access: SpeexWire_Access_Gemini): Promise
   let pageToken: string | undefined;
   for (let page = 0; page < MAX_VOICE_PAGES; page++) {
     const { headers, url } = geminiAccess(gemini, null, `/v1beta/voices?page_size=1000${pageToken ? `&page_token=${encodeURIComponent(pageToken)}` : ''}`, false);
-    const json = GeminiVoices_Response_schema.parse(await fetchJsonOrTRPCThrow({ url, headers, name: 'Gemini' }));
+    const json = GeminiVoices_Response_schema.parse(await fetchJsonOrTRPCThrow({ url, headers, name: 'Gemini', ...(!!access.apiHost && { redirect: 'error' as const }) }));
     wireVoices.push(...(json.voices ?? []));
     pageToken = json.next_page_token;
     if (!pageToken) break;
