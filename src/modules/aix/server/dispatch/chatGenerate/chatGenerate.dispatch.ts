@@ -18,6 +18,7 @@ import { aixToGeminiGenerateContent } from './adapters/gemini.generateContent';
 import { aixToGeminiInteractionsCreate } from './adapters/gemini.interactionsCreate';
 import { aixToOpenAIChatCompletions } from './adapters/openai.chatCompletions';
 import { aixToOpenAIResponses, openAIDialectToRspVendor } from './adapters/openai.responsesCreate';
+import { OpenAIContainerKeepAlive } from './adapters/openai.companion-containerKeepAlive';
 import { aixToXAIResponses } from './adapters/xai.responsesCreate';
 
 import type { IParticleTransmitter } from './parsers/IParticleTransmitter';
@@ -300,23 +301,23 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
       if (isResponsesAPI) {
         // parser namespace for the reasoning continuity blobs (vendor-private keys + server-side ids), see the note below
         const responsesVendor = openAIDialectToRspVendor(dialect);
+        /**
+         * xAI uses its own Responses API adapter.
+         *
+         * Key differences from OpenAI Responses API:
+         * - No 'instructions' field - system content prepended to first user message
+         * - xAI-native tools: web_search, x_search, code_execution
+         * - Tool calls come in single chunks
+         *
+         * Note: Response format is compatible with OpenAI parser.
+         */
+        const openAIResponsesBody = dialect !== 'xai' ? aixToOpenAIResponses(dialect, model, chatGenerate, streaming, enableResumability) : null;
+        const responsesBody = openAIResponsesBody ?? aixToXAIResponses(model, chatGenerate, streaming, enableResumability); // xAI has its own Responses adapter
         return {
           request: {
             ...openAIAccess(access, model.id, OPENAI_API_PATHS.responses),
             method: 'POST',
-            /**
-             * xAI uses its own Responses API adapter.
-             *
-             * Key differences from OpenAI Responses API:
-             * - No 'instructions' field - system content prepended to first user message
-             * - xAI-native tools: web_search, x_search, code_execution
-             * - Tool calls come in single chunks
-             *
-             * Note: Response format is compatible with OpenAI parser.
-             */
-            body: dialect === 'xai' // xAI has its own Responses adapter
-              ? aixToXAIResponses(model, chatGenerate, streaming, enableResumability)
-              : aixToOpenAIResponses(dialect, model, chatGenerate, streaming, enableResumability),
+            body: responsesBody,
           },
           demuxerFormat: streaming ? 'fast-sse' : null,
           // IMPORTANT: tag the parser with the actual vendor so reasoning continuity blobs
@@ -325,6 +326,8 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
           chatGenerateParse: streaming
             ? createOpenAIResponsesEventParser(responsesVendor)
             : createOpenAIResponseParserNS(responsesVendor),
+          // [OpenAI] a pro-mode run with the sandbox declared outlives its containers' 20 minute idle expiry: keep them alive (#1211) - native dialect only, the others serve no containers API
+          ...(dialect === 'openai' && openAIResponsesBody && OpenAIContainerKeepAlive.applies(openAIResponsesBody) ? { companions: [OpenAIContainerKeepAlive.companion(access)] } : {}),
         };
       }
 

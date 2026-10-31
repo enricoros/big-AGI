@@ -54,6 +54,8 @@ export const OPENAI_API_PATHS = {
 
   responses: '/v1/responses',
 
+  containers: '/v1/containers', // code-interpreter containers: `/${id}` reads one (and refreshes its idle clock), `/${id}/files/...` serves its files
+
   models: '/v1/models',
 
   images: '/v1/images/generations',
