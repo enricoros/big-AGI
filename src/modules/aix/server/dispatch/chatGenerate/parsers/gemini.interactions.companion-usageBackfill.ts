@@ -3,7 +3,7 @@ import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 import { geminiAccess, GeminiAccessSchema } from '~/modules/llms/server/gemini/gemini.access';
 
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
-import type { ChatGenerateParticleTransformFunction } from '../chatGenerate.dispatch';
+import type { ChatGenerateDispatchCompanion } from '../chatGenerate.dispatch';
 import { GeminiInteractionsWire_API_Interactions } from '../../wiretypes/gemini.interactions.wiretypes';
 import { geminiInteractionsUsageToTokenMetrics } from './gemini.interactions.parser';
 
@@ -18,7 +18,7 @@ import { geminiInteractionsUsageToTokenMetrics } from './gemini.interactions.par
  * (the same source the "Recover" button reads) returns the full token counts. Without this, a perfectly
  * successful Deep Research run lands with zero token/cost metrics (only the local runtime).
  *
- * WHAT: a 1:1 particle transform (see `anthropic.transform-fileInline.ts` for the pattern) that:
+ * WHAT: a 1:1 particle transform (see `anthropic.companion-fileInline.ts` for the pattern) that:
  *  1. captures the interaction id from the `set-upstream-handle` particle (Deep Research only),
  *  2. on the terminal `set-metrics` particle, IF token counts are missing, fires ONE GET of the stored
  *     interaction, maps its `usage` to token metrics, and MERGES them into the metrics particle
@@ -37,7 +37,7 @@ import { geminiInteractionsUsageToTokenMetrics } from './gemini.interactions.par
  * original (timing-only) particle through unchanged - so a transient GET failure or a future CORS
  * regression degrades gracefully to runtime-only metrics.
  */
-export function createGeminiInteractionsUsageBackfillTransform(access: GeminiAccessSchema): ChatGenerateParticleTransformFunction {
+export function createGeminiInteractionsUsageBackfillCompanion(access: GeminiAccessSchema): ChatGenerateDispatchCompanion {
 
   let interactionId: string | null = null;
   let cachedTokenMetrics: Pick<AixWire_Particles.CGSelectMetrics, 'TIn' | 'TCacheRead' | 'TOut' | 'TOutR'> | null = null;
@@ -45,7 +45,7 @@ export function createGeminiInteractionsUsageBackfillTransform(access: GeminiAcc
 
   // NOT csfUnsafe: the Interactions GET is CORS-open (see header doc above), so this runs on CSF too -
   // browser->Google direct, no server round-trip. A future CORS regression is caught by the safety net.
-  return async (particle) => {
+  const onParticle = async (particle: AixWire_Particles.ChatGenerateOp): Promise<AixWire_Particles.ChatGenerateOp> => {
 
     // only interested in control ops
     if (!('cg' in particle)) return particle;
@@ -82,4 +82,6 @@ export function createGeminiInteractionsUsageBackfillTransform(access: GeminiAcc
       merged.vTOutInner = Math.round(100 * 1000 /*ms/s*/ * merged.TOut / merged.dtInner) / 100;
     return { cg: 'set-metrics', metrics: merged };
   };
+
+  return { name: 'gemini-interactions-usage-backfill', onParticle };
 }

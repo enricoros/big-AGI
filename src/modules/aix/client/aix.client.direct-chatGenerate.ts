@@ -32,8 +32,8 @@ export async function* clientSideChatGenerate(
   const _d: AixDebugObject = _createClientDebugConfig(access, connectionOptions, context.name);
   const dispatchCreator = () => createChatGenerateDispatch(access, model, chatGenerate, streaming, context.ref, !!connectionOptions?.enableResumability)
     .then(dispatch => {
-      // [CSF-Only] Client-side transform stripping - remove any dispatch transforms that are tagged as csfUnsafe (e.g. for CORS reasons)
-      if (dispatch.particleTransform?.csfUnsafe) dispatch.particleTransform = undefined;
+      // [CSF-Only] strip the companions the browser cannot run (csfUnsafe, e.g. for CORS reasons)
+      if (dispatch.companions?.some(companion => companion.csfUnsafe)) dispatch.companions = dispatch.companions.filter(companion => !companion.csfUnsafe);
       return dispatch;
     });
 

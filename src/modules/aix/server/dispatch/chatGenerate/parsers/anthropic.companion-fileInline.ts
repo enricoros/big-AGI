@@ -3,8 +3,8 @@ import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow, fetchTextOrTRPCThrow } 
 import { anthropicAccess } from '~/modules/llms/server/anthropic/anthropic.access';
 import { convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
 
-import type { AixAPI_Model } from '../../../api/aix.wiretypes';
-import type { ChatGenerateParticleTransformFunction } from '../chatGenerate.dispatch';
+import type { AixAPI_Model, AixWire_Particles } from '../../../api/aix.wiretypes';
+import type { ChatGenerateDispatchCompanion } from '../chatGenerate.dispatch';
 import { FileMetadataResponse_schema } from '~/modules/llms/server/llm.server.types';
 
 
@@ -92,9 +92,9 @@ function _isInlineableImageMimeType(mimeType: string): boolean {
  *    (#1201: drafts written to files then re-printed in the reply). A failed delete keeps the
  *    hosted-resource particle, so the user still has the chip to act on.
  */
-export function createAnthropicFileInlineTransform(fileApiRequest: ReturnType<typeof anthropicAccess>, policy: AnthropicFileInlinePolicy): ChatGenerateParticleTransformFunction {
+export function createAnthropicFileInlineCompanion(fileApiRequest: ReturnType<typeof anthropicAccess>, policy: AnthropicFileInlinePolicy): ChatGenerateDispatchCompanion {
 
-  const transform: ChatGenerateParticleTransformFunction = async (particle) => {
+  const transform = async (particle: AixWire_Particles.ChatGenerateOp): Promise<AixWire_Particles.ChatGenerateOp> => {
     // pass-through any non-Anthropic-file particle
     if (!('p' in particle) || particle.p !== 'hres' || particle.kind !== 'vnd.ant.file')
       return particle;
@@ -176,8 +176,6 @@ export function createAnthropicFileInlineTransform(fileApiRequest: ReturnType<ty
     return particle;
   };
 
-  // Tag: this transform fetches from the Anthropic File API which blocks browser CORS
-  transform.csfUnsafe = true;
-
-  return transform;
+  // csfUnsafe: this transform fetches from the Anthropic File API which blocks browser CORS
+  return { name: 'anthropic-file-inline', csfUnsafe: true, onParticle: transform };
 }
