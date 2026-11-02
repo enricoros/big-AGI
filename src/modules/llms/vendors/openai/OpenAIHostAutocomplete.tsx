@@ -40,6 +40,7 @@ interface VerifiedProvider {
 const OPENAI_COMPATIBLE_PROVIDERS: VerifiedProvider[] = [
   // Example Providers
   { id: 'arcee', label: 'Arcee AI', host: 'https://api.arcee.ai/api', hostMatch: 'arcee.ai', category: 'Example Providers', description: 'Open-weight MoE models', docsUrl: 'https://docs.arcee.ai/', icon: ArceeAIIcon },
+  { id: 'atlascloud', label: 'Atlas Cloud', host: 'https://api.atlascloud.ai', hostMatch: 'atlascloud.ai', category: 'Example Providers', description: 'Multi-model API gateway', docsUrl: 'https://www.atlascloud.ai/docs' },
   { id: 'baseten', label: 'Baseten', host: 'https://inference.baseten.co', hostMatch: 'inference.baseten.co', category: 'Example Providers', description: 'Curated open models, production inference', docsUrl: 'https://docs.baseten.co/inference/model-apis/overview', icon: BasetenIcon },
   { id: 'chutes', label: 'Chutes AI', host: 'https://llm.chutes.ai', hostMatch: '.chutes.ai', category: 'Example Providers', description: 'Serverless open model inference', docsUrl: 'https://chutes.ai/docs', icon: ChutesAIIcon },
   { id: 'empiriolabs', label: 'EmpirioLabs AI', host: 'https://api.empiriolabs.ai', hostMatch: 'empiriolabs.ai', category: 'Example Providers', description: 'Multi-model API platform', docsUrl: 'https://docs.empiriolabs.ai' },
