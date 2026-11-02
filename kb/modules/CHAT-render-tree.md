@@ -36,6 +36,17 @@
 
 Host data (tool names, the visibility predicate, the options switch) goes through `CMBuildOptions` instead.
 
+## Message presentation
+
+`DMessage.presentation` stores optional display overrides. Absent fields inherit each renderer's defaults; removing the object resets all choices.
+
+- `textMode: 'plain' | 'markdown'`: body prose across roles. Attachments, reasoning, and specialized fenced renderers keep their own policies.
+- `fragmentGrouping: 'grouped' | 'ungrouped'`: fragment fusion, tool pairing, and citation placement. Its menu control requires Extra detail mode.
+
+Only message overrides are stored. Future fragment overrides take precedence over message choices. AutoBlocks receives applicable choices through its text fragment; generated block IDs are not storage keys.
+
+Chat edits completed messages through `messagePatchPresentation`, without changing visible timestamps. Beam and shared-link views honor saved choices without exposing presentation controls.
+
 ## Edit session
 
 `useCMEditSession.tsx` (beside `ChatMessage`), no effects:

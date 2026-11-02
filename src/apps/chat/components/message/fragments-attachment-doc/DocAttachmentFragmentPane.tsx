@@ -397,7 +397,7 @@ export const DocAttachmentFragmentPane = React.memo(function DocAttachmentFragme
             inputAsWordsDiff={undefined}
             codeRenderVariant='embedded-plain' // for embedding in this pane
             htmlRenderVariant='show-code'
-            textRenderVariant={props.disableMarkdownText ? 'text' : 'markdown'}
+            textRenderVariant={props.disableMarkdownText || props.messageRole === 'system' ? 'text' : 'markdown'}
             disableTextCollapser // the pane is opened on purpose: show the whole document
             setText={!props.onFragmentReplace ? undefined : handleSetTextFromBlocks}
           />

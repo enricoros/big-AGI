@@ -90,6 +90,8 @@ export function AutoBlocksRenderer(props: {
   // props-derived state
   const fromAssistant = props.fromRole === 'assistant';
   const fromSystem = props.fromRole === 'system';
+  // System text is literal by default; the caller can explicitly request Markdown parsing.
+  const systemAsPlainText = fromSystem && props.textRenderVariant === 'text';
   const fromUser = props.fromRole === 'user';
   const userMarkdown = props.textRenderVariant === 'markdown-user';
   const userCommandAsText = userMarkdown && isTextChatCommand(props.text); // plain text renders the command chip
@@ -103,7 +105,7 @@ export function AutoBlocksRenderer(props: {
   const autoBlocksStable = useAutoBlocksMemoSemiStable(
     text,
     props.inputAsCodeWithTitle || (fixUserHtmlPaste ? 'HTML' : undefined),
-    fromSystem,
+    systemAsPlainText,
     props.inputAsWordsDiff,
     props.blocksProcessor === 'diagram',
   );
@@ -169,7 +171,7 @@ export function AutoBlocksRenderer(props: {
         switch (bkInput.bkt) {
 
           case 'md-bk':
-            return (props.textRenderVariant === 'text' || fromSystem || (index === 0 && userCommandAsText)) ? (
+            return (props.textRenderVariant === 'text' || (index === 0 && userCommandAsText)) ? (
               // Keep in sync with ScaledPlainTextRenderer
               <RenderPlainText
                 key={'txt-bk-' + index}

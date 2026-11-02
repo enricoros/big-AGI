@@ -40,6 +40,9 @@ export interface DMessage {
   // TODO: add a Beam JSON state load/store
   // volatileBeamRestore?: object;
 
+  /** Optional display overrides. Omit to follow defaults; remove to reset all. */
+  presentation?: DMessagePresentation;
+
   created: number;                    // created timestamp
   updated: number | null;             // updated timestamp - null means incomplete - TODO: disambiguate vs pendingIncomplete
 }
@@ -156,6 +159,18 @@ export type DMessageGenerator = ({
 };
 
 
+// Message > Presentation
+
+export interface DMessagePresentation {
+  /** Body prose across roles; excludes attachments, reasoning, and fenced blocks. */
+  textMode?: 'plain' | 'markdown';
+  /** Controls fragment fusion, tool pairing, and citation placement. */
+  fragmentGrouping?: 'grouped' | 'ungrouped';
+
+  // Future: markdownSingleDollarMath?: 'literal' | 'math';
+}
+
+
 // helpers - creation
 
 export function createDMessageEmpty(role: DMessageRole) {
@@ -219,6 +234,8 @@ export function duplicateDMessage(message: Immutable<DMessage>, skipVoid: boolea
     userFlags: message.userFlags ? [...message.userFlags] : undefined,
 
     tokenCount: message.tokenCount,
+
+    ...(message.presentation ? { presentation: { ...message.presentation } } : {}),
 
     created: message.created,
     updated: message.updated,

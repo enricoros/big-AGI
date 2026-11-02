@@ -26,8 +26,9 @@ import { useChatOverlayStore } from '~/common/chat-overlay/store-perchat_vanilla
 import { useScrollToBottom } from '~/common/scroll-to-bottom/useScrollToBottom';
 
 import { DConversationId, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
-import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageRole, DMessageUserFlag, DMetaReferenceItem } from '~/common/stores/chat/chat.message';
+import { createDMessageFromFragments, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessagePresentation, DMessageRole, DMessageUserFlag, DMetaReferenceItem } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { messagePatchPresentation } from '~/common/stores/chat/chat.message.presentation';
 import { orderedUserFragments } from '~/common/stores/chat/chat.fragment-order';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 
@@ -276,6 +277,11 @@ export function ChatMessageList(props: {
     conversationHandler?.messageFragmentsReplace(messageId, fragments);
   }, [conversationHandler]);
 
+  const handleMessagePresentationChange = React.useCallback((messageId: DMessageId, update: Partial<DMessagePresentation> | null) => {
+    // The helper rejects pending messages. Persist the change without touching visible timestamps.
+    conversationHandler?.messageEdit(messageId, message => messagePatchPresentation(message, update), true, false);
+  }, [conversationHandler]);
+
   const handleMessageSetRole = React.useCallback((messageId: DMessageId, role: DMessageRole) => {
     conversationHandler?.messageEdit(messageId, { role }, false, true);
   }, [conversationHandler]);
@@ -439,6 +445,7 @@ export function ChatMessageList(props: {
               upstreamResumeMode={resumeInFlight[message.id]}
               onMessageDelete={handleMessageDelete}
               onMessageFragmentsReplace={handleMessageReplaceFragments}
+              onMessagePresentationChange={handleMessagePresentationChange}
               onMessageSetRole={handleMessageSetRole}
               onMessageToggleUserFlag={handleMessageToggleUserFlag}
               onMessageTruncate={handleMessageTruncate}

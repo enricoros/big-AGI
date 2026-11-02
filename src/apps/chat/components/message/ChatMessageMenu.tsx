@@ -26,7 +26,7 @@ import { ChatBeamIcon } from '~/common/components/icons/ChatBeamIcon';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { ConfirmMenuItem } from '~/common/components/ConfirmMenuItem';
 import { SubMenuHost, SubMenuItem, useSubMenuHost } from '~/common/components/SubMenu';
-import { DMessageUserFlag, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_USER } from '~/common/stores/chat/chat.message';
+import { DMessagePresentation, DMessageUserFlag, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_USER } from '~/common/stores/chat/chat.message';
 import { KeyStroke } from '~/common/components/KeyStroke';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { PhTreeStructure } from '~/common/components/icons/phosphor/PhTreeStructure';
@@ -56,6 +56,7 @@ export function ChatMessageMenu(props: {
 
   isMobile: boolean,
   isBottom: boolean,
+  isExtra: boolean,
   fromAssistant: boolean,
   fromSystem: boolean,
   // canTextChart: boolean,
@@ -70,6 +71,7 @@ export function ChatMessageMenu(props: {
   userNotifyCompleteLlmId: DLLMId | null,
   isUserStarred: boolean,
   isViewMarkdown: boolean,
+  isViewUngrouped: boolean,
   isVndAndCacheAuto: boolean,
   isVndAndCacheUser: boolean,
   showVndAntCaching: boolean,
@@ -82,8 +84,8 @@ export function ChatMessageMenu(props: {
   onOpsBranchFrom?: (event: React.MouseEvent) => void,
   onOpsMessageCopySrc?: (event: React.MouseEvent) => void,
   onOpsMessageEditToggle?: (event: React.MouseEvent) => void,
+  onOpsMessagePresentationChange?: (event: React.MouseEvent, update: Partial<DMessagePresentation> | null) => void,
   onOpsMessageTruncate?: (event: React.MouseEvent) => void,
-  onOpsMessageViewToggle?: (event: React.MouseEvent) => void,
   onOpsShowInfo?: () => void,
   // onOpsTextChart?: (event: React.MouseEvent) => void,
   onOpsTextDiagram?: (event: React.MouseEvent) => void,
@@ -113,8 +115,8 @@ export function ChatMessageMenu(props: {
     onOpsBranchFrom,
     onOpsMessageCopySrc,
     onOpsMessageEditToggle,
+    onOpsMessagePresentationChange,
     onOpsMessageTruncate,
-    onOpsMessageViewToggle,
     onOpsShowInfo,
     onOpsTextDiagram,
     onOpsTextImagine,
@@ -248,11 +250,17 @@ export function ChatMessageMenu(props: {
       )}
 
       {!pending && <ListDivider />}
-      {/* User text: markdown or plain text, for this message only (not saved) */}
-      {!pending && onOpsMessageViewToggle && (
-        <MenuItem onClick={onOpsMessageViewToggle}>
+      {/* Saved presentation of this message */}
+      {!pending && !fromAssistant && !fromSystem && onOpsMessagePresentationChange && (
+        <MenuItem onClick={event => onOpsMessagePresentationChange(event, { textMode: props.isViewMarkdown ? 'plain' : 'markdown' })}>
           <ListItemDecorator><TextFieldsIcon /></ListItemDecorator>
           {props.isViewMarkdown ? 'View as text' : 'View as markdown'}
+        </MenuItem>
+      )}
+      {props.isExtra && !pending && onOpsMessagePresentationChange && (
+        <MenuItem onClick={event => onOpsMessagePresentationChange(event, { fragmentGrouping: props.isViewUngrouped ? 'grouped' : 'ungrouped' })}>
+          <ListItemDecorator><PhTreeStructure /></ListItemDecorator>
+          {props.isViewUngrouped ? 'Group fragments' : 'Ungroup fragments'}
         </MenuItem>
       )}
       {/* Aix Skip Message */}
