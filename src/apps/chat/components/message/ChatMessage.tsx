@@ -1130,7 +1130,6 @@ export function ChatMessage(props: {
 
           isMobile={props.isMobile}
           isBottom={!!props.isBottom}
-          isExtra={uiComplexityMode === 'extra'}
           fromAssistant={fromAssistant}
           fromSystem={fromSystem}
           canTextDiagram={couldDiagram}

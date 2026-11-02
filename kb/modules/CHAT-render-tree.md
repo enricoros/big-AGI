@@ -40,8 +40,8 @@ Host data (tool names, the visibility predicate, the options switch) goes throug
 
 `DMessage.presentation` stores optional display overrides. Absent fields inherit each renderer's defaults; removing the object resets all choices.
 
-- `textMode: 'plain' | 'markdown'`: body prose across roles. Attachments, reasoning, and specialized fenced renderers keep their own policies.
-- `fragmentGrouping: 'grouped' | 'ungrouped'`: fragment fusion, tool pairing, and citation placement. Its menu control requires Extra detail mode.
+- `textMode: 'plain' | 'markdown'`: body prose across roles. Markdown uses the typed-text flavor for user and system messages. Attachments, reasoning, and specialized fenced renderers keep their own policies.
+- `fragmentGrouping: 'grouped' | 'ungrouped'`: fragment fusion, tool pairing, and citation placement.
 
 Only message overrides are stored. Future fragment overrides take precedence over message choices. AutoBlocks receives applicable choices through its text fragment; generated block IDs are not storage keys.
 

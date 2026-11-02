@@ -31,6 +31,7 @@ import { KeyStroke } from '~/common/components/KeyStroke';
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { PhTreeStructure } from '~/common/components/icons/phosphor/PhTreeStructure';
 import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
+import { Release } from '~/common/app.release';
 import { StarredState } from '~/common/components/StarIcons';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
@@ -56,7 +57,6 @@ export function ChatMessageMenu(props: {
 
   isMobile: boolean,
   isBottom: boolean,
-  isExtra: boolean,
   fromAssistant: boolean,
   fromSystem: boolean,
   // canTextChart: boolean,
@@ -251,13 +251,13 @@ export function ChatMessageMenu(props: {
 
       {!pending && <ListDivider />}
       {/* Saved presentation of this message */}
-      {!pending && !fromAssistant && !fromSystem && onOpsMessagePresentationChange && (
+      {!pending && onOpsMessagePresentationChange && (
         <MenuItem onClick={event => onOpsMessagePresentationChange(event, { textMode: props.isViewMarkdown ? 'plain' : 'markdown' })}>
           <ListItemDecorator><TextFieldsIcon /></ListItemDecorator>
           {props.isViewMarkdown ? 'View as text' : 'View as markdown'}
         </MenuItem>
       )}
-      {props.isExtra && !pending && onOpsMessagePresentationChange && (
+      {Release.IsNodeDevBuild && !pending && onOpsMessagePresentationChange && (
         <MenuItem onClick={event => onOpsMessagePresentationChange(event, { fragmentGrouping: props.isViewUngrouped ? 'grouped' : 'ungrouped' })}>
           <ListItemDecorator><PhTreeStructure /></ListItemDecorator>
           {props.isViewUngrouped ? 'Group fragments' : 'Ungroup fragments'}

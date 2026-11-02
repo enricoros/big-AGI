@@ -93,8 +93,8 @@ export function AutoBlocksRenderer(props: {
   // System text is literal by default; the caller can explicitly request Markdown parsing.
   const systemAsPlainText = fromSystem && props.textRenderVariant === 'text';
   const fromUser = props.fromRole === 'user';
-  const userMarkdown = props.textRenderVariant === 'markdown-user';
-  const userCommandAsText = userMarkdown && isTextChatCommand(props.text); // plain text renders the command chip
+  const userTextFlavor = props.textRenderVariant === 'markdown-user';
+  const userCommandAsText = fromUser && userTextFlavor && isTextChatCommand(props.text); // plain text renders the command chip
 
   // state
   const isPureHTML = heuristicIsBlockPureHTML(props.text);
@@ -185,7 +185,7 @@ export function AutoBlocksRenderer(props: {
                 key={'md-bk-' + index}
                 content={bkInput.content}
                 disablePreprocessor={deferPreprocessor}
-                userTextFlavor={userMarkdown}
+                userTextFlavor={userTextFlavor}
                 lite={lastBlockInFlux && decayActive}
                 onParseCost={lastBlockInFlux ? decayOnParseCost : undefined}
                 replaceContent={!setText ? undefined : handleReplaceCode}
