@@ -1,5 +1,6 @@
 /// <reference types="node" />
 
+// Run: `NODE_ENV=development npx tsx --test src/modules/blocks/blocks.textparser.test.ts`
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
