@@ -26,7 +26,9 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
     // codeBlock: /`{3,}([^\n`]*)\n([\s\S]*?)(`{3,}(?=[ *\n]|$)|$)/g, // length-agnostic close: broke nested fences (any >=3 close)
     // capture the opening fence (g1) and require the close to be at least as long (\1`*), per CommonMark.
     // no-op for 3-backtick fences (the norm); only activates to keep nested fences (````md ... ``` ... ````) together.
-    codeBlock: /(`{3,})([^\n`]*)\n([\s\S]*?)(\1`*(?=[ *\n]|$)|$)/g,
+    // the opening fence must start a line (only whitespace before it), so ``` inside paragraph text stays text (#1280).
+    // whitespace of any width is allowed to keep fences nested in list items working.
+    codeBlock: /(?<=^|\n)([ \t]*)(`{3,})([^\n`]*)\n([\s\S]*?)(\2`*(?=[ *\n]|$)|$)/g,
     htmlCodeBlock: /<!DOCTYPE html>([\s\S]*?)<\/html>/gi,
     svgBlock: /<svg (xmlns|width|viewBox)=([\s\S]*?)<\/svg>/g,
   };
@@ -61,11 +63,11 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
     // add the block
     switch (matchType) {
       case 'codeBlock':
-        // groups: [1]=opening fence, [2]=title/info, [3]=code, [4]=closing fence (or '' when unterminated)
-        const blockTitle: string = (match[2] || '').trim();
+        // groups: [1]=indent, [2]=opening fence, [3]=title/info, [4]=code, [5]=closing fence (or '' when unterminated)
+        const blockTitle: string = (match[3] || '').trim();
         // note: we don't trim blockCode to preserve leading spaces, however if the last line is only made of spaces or tabs, we trim that
-        const blockCode: string = match[3].replace(/[\t ]+$/, '');
-        const blockEnd: string = match[4];
+        const blockCode: string = match[4].replace(/[\t ]+$/, '');
+        const blockEnd: string = match[5];
         blocks.push({ bkt: 'code-bk', sourceStart: match.index, sourceEnd: match.index + match[0].length, title: blockTitle, code: blockCode, lines: countLines(blockCode), isPartial: !blockEnd.startsWith('```') });
         break;
 
