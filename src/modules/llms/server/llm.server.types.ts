@@ -176,6 +176,12 @@ export const ListModelsResponse_schema = z.object({
 });
 
 
+/// Vendor Resource IDs
+
+// Client-supplied ids of upstream resources (files, skills, containers, responses) that get interpolated into upstream URL paths
+export const VendorResourceId_schema = z.string().regex(/^[A-Za-z0-9_-]{1,256}$/, 'invalid resource id');
+
+
 /// File Metadata Response
 
 export const FileMetadataResponse_schema = z.object({
