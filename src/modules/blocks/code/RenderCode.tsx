@@ -440,7 +440,15 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
     // lots more style, incl font, background, embossing, radius, etc.
     ...props.sx,
 
-  }), [isBorderless, isFullscreen, isRenderingDiagram, props.sx, showSoftWrap]);
+    // Markdown preview uses prose styling while keeping the fullscreen element stable.
+    ...renderMarkdown && {
+      fontFamily: 'body',
+      fontWeight: 'normal',
+      fontVariantLigatures: 'normal',
+      whiteSpace: 'normal',
+    },
+
+  }), [isBorderless, isFullscreen, isRenderingDiagram, props.sx, renderMarkdown, showSoftWrap]);
 
 
   // Keep the overlay stable across streamed code updates. Copy reads the latest code through codeRef.
@@ -641,6 +649,7 @@ function RenderCodeImpl(props: RenderCodeBaseProps & {
         ref={fullScreenElementRef}
         component='code'
         className={`language-${inferredCodeLanguage || 'unknown'}${renderLineNumbers ? ' line-numbers' : ''}`}
+        data-render-markdown={renderMarkdown || undefined}
         sx={codeSx}
       >
 

@@ -26,6 +26,10 @@ export function useScaledCodeSx(fromAssistant: boolean, contentScaling: ContentS
     borderRadius: 'sm',
     fontFamily: 'code',
     fontSize: themeScalingMap[contentScaling]?.blockCodeFontSize ?? '0.875rem',
+    // Preview text uses the prose size; source keeps the smaller code size.
+    '&[data-render-markdown]': {
+      fontSize: themeScalingMap[contentScaling]?.blockFontSize ?? undefined,
+    },
     fontWeight: 'md', // JetBrains Mono has a lighter weight, so we need that extra bump
     fontVariantLigatures: 'none',
     lineHeight: themeScalingMap[contentScaling]?.blockLineHeight ?? 1.75,

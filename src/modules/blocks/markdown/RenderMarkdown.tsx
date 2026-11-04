@@ -47,6 +47,8 @@ export interface RenderMarkdownRendererProps {
 const RenderMarkdownBox = styled(Box, { name: 'RenderMarkdownBox' })({
   // same look as the other RenderComponents
   marginInline: '0.75rem !important',                             // margin: 1.5 like other blocks
+  // Embedded previews get their inset from the containing panel.
+  '&[data-no-gutter]': { marginInline: '0 !important' },
   // this is here for usage outside of the Blocks (which set it in `sx`)
   lineHeight: lineHeightChatTextMd,
 
@@ -59,14 +61,15 @@ const RenderMarkdownBox = styled(Box, { name: 'RenderMarkdownBox' })({
 
 const DynamicMarkdownRenderer = React.lazy(() => import('./CustomMarkdownRenderer'));
 
-export function RenderMarkdown(props: RenderMarkdownRendererProps & { lite?: boolean | 'debug', sx?: SxProps }) {
-  const { lite, sx, ...rendererProps } = props;
+export function RenderMarkdown(props: RenderMarkdownRendererProps & { lite?: boolean | 'debug', noGutter?: boolean, sx?: SxProps }) {
+  const { lite, noGutter, sx, ...rendererProps } = props;
   return (
     <RenderMarkdownBox
       // NOTE: we moved the `className='markdown-body'` to the CustomMarkdownRenderer, as we have an extra div,
       // which would require to change CSS rules
       // className='markdown-body' /* NOTE: see GithubMarkdown.css for the dark/light switch, synced with Joy's */
-      sx={props.sx}
+      data-no-gutter={noGutter || undefined}
+      sx={sx}
       style={lite === 'debug' ? _liteDebugStyle : undefined}
     >
       {lite ? (
