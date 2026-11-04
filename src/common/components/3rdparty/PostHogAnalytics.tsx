@@ -175,6 +175,7 @@ export function OptionalPostHogAnalytics() {
           // capture_pageview: false, // we used to handle this manually, but changed to the 'defaults' option which captures pageviews automatically
           // capture_pageleave: true, // we used to track goodbyes, now included in 'defaults'
           person_profiles: 'identified_only',
+          session_recording: { maskAllInputs: true, maskTextSelector: '*' }, // replay is gated server-side (sampled first sessions); a recording holds structure, clicks and navigation only: every text node and input is masked before it leaves the browser
           remote_config_refresh_interval_ms: 0, // no background refreshes. Flags only update on page load or manual `reloadFeatureFlags()` calls.
           disable_surveys: true, // disable surveys
           debug: Release.IsNodeDevBuild, // enable debug mode in development (was: `loaded: (ph) => if (Release.IsNodeDevBuild) ph.debug();`)
