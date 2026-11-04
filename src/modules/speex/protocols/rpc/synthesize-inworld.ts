@@ -141,7 +141,7 @@ export const synthesizeInworld: SynthesizeBackendFn<SpeexWire_Access_Inworld> = 
   let response: Response;
   try {
     if (SPEEX_DEBUG) console.log(`[Speex][Inworld] POST (stream=${streaming})`, { url, headers: { ...headers, Authorization: '[REDACTED]' }, body });
-    response = await fetchResponseOrTRPCThrow({ url, method: 'POST', headers, body, signal, name: 'Inworld' });
+    response = await fetchResponseOrTRPCThrow({ url, method: 'POST', headers, body, signal, name: 'Inworld', ...(!!access.apiHost && { redirect: 'error' as const }) });
   } catch (error: any) {
     yield { t: 'error', e: `Inworld fetch failed: ${error.message || 'Unknown error'}` };
     return;
@@ -240,7 +240,7 @@ export async function listVoicesInworld(access: SpeexWire_Access_Inworld): Promi
   const { headers, url } = _inworldAccess(access, '/voices/v1/voices');
 
   const voicesResponse = InworldWire_TTS_ListVoices.Response_schema.parse(
-    await fetchJsonOrTRPCThrow({ url, headers, name: 'Inworld' }),
+    await fetchJsonOrTRPCThrow({ url, headers, name: 'Inworld', ...(!!access.apiHost && { redirect: 'error' as const }) }),
   );
 
   const voices = voicesResponse.voices.map(voice => ({
