@@ -17,7 +17,7 @@ import { useComposerAutoHide } from './useComposerAutoHide';
  * forced-hide conditions (Beam open in the focused chat, live SVG mode, mobile chromeless) by itself, so none
  * of them re-renders the parent.
  *
- * `children` receives the has-content setter to wire into the Composer's `onComposerHasContent`.
+ * `children` is a render function: it receives the has-content setter to wire into the Composer's `onComposerHasContent`.
  */
 export function ComposerDock(props: {
   conversationId: DConversationId | null; // the focused chat: a Beam open in it hides the composer
@@ -33,22 +33,27 @@ export function ComposerDock(props: {
   const liveSvgModeActive = useLiveSvgStore((s) => s.modeActive);
   const isChromeless = useOptimaChromeless() && props.isMobile; // auto-hide on Chromeless too
 
-  // not forced when there is no chat: auto-hiding the 'please select a conversation...' state doesn't feel good
-  const forceHide = liveSvgModeActive || isChromeless || isBeamOpen;
-  const composerAutoHide = useComposerAutoHide(forceHide, composerHasContent);
+  // destructure
+  const { children: renderComposer } = props;
 
-  // the composer element changes with the parent's render function only, so the dock's own state changes skip it
-  const { children } = props;
-  const composer = React.useMemo(() => children(setComposerHasContent), [children]);
+  // not forced when there is no chat: auto-hiding the 'please select a conversation...' state doesn't feel good
+  const shallHide = liveSvgModeActive || isChromeless || isBeamOpen;
+  const { isHidden, compressibleStyle, compressorProps, detectorProps } = useComposerAutoHide(shallHide, composerHasContent);
+
+  // rebuilt only when the parent passes a new render function, so the dock's own state changes reuse the element
+  const composerElement = React.useMemo(() => {
+    return renderComposer(setComposerHasContent);
+  }, [renderComposer]);
 
   return <>
-    <Box {...composerAutoHide.compressorProps}>
-      <div style={composerAutoHide.compressibleStyle}>
-        {composer}
+    {/* Compressor/compressible structure around the composer */}
+    <Box {...(compressorProps)}>
+      <div style={compressibleStyle}>
+        {composerElement}
       </div>
     </Box>
 
     {/* Hover zone for auto-hide */}
-    {!forceHide && composerAutoHide.isHidden && <Box {...composerAutoHide.detectorProps} />}
+    {!shallHide && isHidden && <Box {...(detectorProps)} />}
   </>;
 }

@@ -404,31 +404,6 @@ export function AppChat() {
   }, [showPromisedOverlay, handleOpenConversationInFocusedPane]);
 
 
-
-  // Pluggable Optima components
-
-  // Disabled by default, as it lags the opening of the drawer and immediately vanishes during the closing animation
-  const isDrawerOpen = true; // useOptimaDrawerOpen();
-
-  const drawerContent = React.useMemo(() => !isDrawerOpen ? null :
-      <ChatDrawerMemo
-        isMobile={isMobile}
-        activeConversationId={focusedPaneConversationId}
-        activeFolderId={activeFolderId}
-        chatPanesConversationIds={chatPaneUniqueIds}
-        disableNewButton={disableNewButton}
-        onConversationActivate={handleOpenConversationInFocusedPane}
-        onConversationBranch={handleConversationBranchAndFocus}
-        onConversationNew={handleConversationNewInFocusedPane}
-        onConversationsDelete={handleDeleteConversations}
-        onConversationsExportDialog={handleConversationExport}
-        onConversationsImportDialog={handleConversationImportDialog}
-        setActiveFolderId={setActiveFolderId}
-      />,
-    [activeFolderId, chatPaneUniqueIds, disableNewButton, focusedPaneConversationId, handleConversationBranchAndFocus, handleConversationExport, handleConversationImportDialog, handleConversationNewInFocusedPane, handleDeleteConversations, handleOpenConversationInFocusedPane, isDrawerOpen, isMobile],
-  );
-
-
   // Effects
 
   // [effect] Handle the conversation intent
@@ -534,7 +509,23 @@ export function AppChat() {
         personaDropdownRef={personaDropdownRef}
       />
     </OptimaToolbarIn>
-    <OptimaDrawerIn>{drawerContent}</OptimaDrawerIn>
+    <OptimaDrawerIn>
+      {/* always mounted: gating on the drawer-open state lags the opening and vanishes during the closing animation */}
+      <ChatDrawerMemo
+        isMobile={isMobile}
+        activeConversationId={focusedPaneConversationId}
+        activeFolderId={activeFolderId}
+        chatPanesConversationIds={chatPaneUniqueIds}
+        disableNewButton={disableNewButton}
+        onConversationActivate={handleOpenConversationInFocusedPane}
+        onConversationBranch={handleConversationBranchAndFocus}
+        onConversationNew={handleConversationNewInFocusedPane}
+        onConversationsDelete={handleDeleteConversations}
+        onConversationsExportDialog={handleConversationExport}
+        onConversationsImportDialog={handleConversationImportDialog}
+        setActiveFolderId={setActiveFolderId}
+      />
+    </OptimaDrawerIn>
     <OptimaPanelIn>
       <ChatPanelMemo
         isMobile={isMobile}
