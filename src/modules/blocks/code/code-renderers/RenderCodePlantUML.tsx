@@ -9,6 +9,7 @@ import { useAgiFixupCode } from '~/modules/aifn/agicodefixup/useAgiFixupCode';
 
 import { frontendSideFetch } from '~/common/util/clientFetchers';
 import { renderSVGToPNGBlob } from '~/common/util/imageUtils';
+import { sanitizeSvgMarkup } from '~/common/util/svgSanitizeUtils';
 
 import { encodeWithCompressionStream } from './plantuml.utils';
 import type { IRenderHandle } from './IRenderHandle';
@@ -190,8 +191,11 @@ async function fetchPlantUmlSvg(plantUmlCode: string): Promise<{ svg: string | n
     };
   }
 
-  // success case
-  return { svg, errorText: null, errorCause: null };
+  // success case - the server output is untrusted, sanitize before DOM injection
+  const safeSvg = sanitizeSvgMarkup(svg, { allowExternalLinks: true });
+  if (!safeSvg)
+    return { svg: null, errorText: 'Could not convert the PlantUML to SVG', errorCause: null };
+  return { svg: safeSvg, errorText: null, errorCause: null };
 }
 
 

@@ -4,6 +4,7 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box } from '@mui/joy';
 
 import { renderSVGToPNGBlob } from '~/common/util/imageUtils';
+import { sanitizeSvgMarkup } from '~/common/util/svgSanitizeUtils';
 
 import type { IRenderHandle } from './IRenderHandle';
 
@@ -54,8 +55,9 @@ export const RenderCodeSVG = React.forwardRef(function RenderCodeSVG(props: {
   fitScreen: boolean;
 }, ref: React.Ref<IRenderHandle>) {
 
-  // state
-  const patchedSvgCode = useFittedSvgString(props.svgCode, props.fitScreen);
+  // state - code blocks are untrusted (LLM output, shared chats), sanitize before DOM injection
+  const safeSvgCode = React.useMemo(() => sanitizeSvgMarkup(props.svgCode) || null, [props.svgCode]);
+  const patchedSvgCode = useFittedSvgString(safeSvgCode, props.fitScreen);
 
 
   // Expose control methods
