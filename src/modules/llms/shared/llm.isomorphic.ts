@@ -30,20 +30,28 @@ export function llmsHostnameMatches(hostUrl: string | undefined, expectedHostnam
 }
 
 /**
- * The server key, only for requests to the server's own endpoint: no client host, or a client host with the same origin as
- * one of `serverHosts` (the env host, else the vendor default). A client-set host elsewhere owns the whole request and must
- * bring its own key - otherwise any caller could point the host at its own server and receive the deployment's key.
+ * The server key, only for requests to the server's own endpoint: no client host, or a client host equal to one of
+ * `serverHosts` (the env host, else the vendor default) after normalization - same origin AND same path, no query,
+ * fragment or credentials. The request URL is `clientHost + apiPath`, so matching the origin alone would let a caller
+ * steer the deployment's key to any path on the vendor API; a client-set host elsewhere must bring its own key.
  */
 export function llmsServerKeyForHost(clientHost: string | null | undefined, serverKey: string | undefined, ...serverHosts: string[]): string {
   if (!serverKey) return '';
   if (!clientHost) return serverKey;
-  const clientOrigin = _hostOrigin(clientHost);
-  return clientOrigin && serverHosts.some(host => _hostOrigin(host) === clientOrigin) ? serverKey : '';
+  const clientBase = _hostNormalizedBase(clientHost);
+  return clientBase && serverHosts.some(host => _hostNormalizedBase(host) === clientBase) ? serverKey : '';
 }
 
-function _hostOrigin(host: string): string | null {
+/** `origin + path` (one trailing slash dropped, as llmsFixupHost does), or null for anything that could alter the request URL. */
+function _hostNormalizedBase(host: string): string | null {
+  // only printable ASCII, and no '?', '#', '@', '\\', '%': those would change how `host + apiPath` resolves
+  if (/[^\x21-\x7e]|[?#@\\%]/.test(host)) return null;
   try {
-    return new URL(host.startsWith('http') ? host : `https://${host}`).origin;
+    const url = new URL(host.startsWith('http') ? host : `https://${host}`);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+    if (url.username || url.password || url.search || url.hash) return null;
+    const path = url.pathname.endsWith('/') ? url.pathname.slice(0, -1) : url.pathname;
+    return url.origin + path;
   } catch {
     return null;
   }
