@@ -26,6 +26,7 @@ import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { getIsMobile } from '~/common/components/useMatchMedia';
 import { optimaCloseDrawer } from '~/common/layout/optima/useOptima';
 import { themeScalingMap, themeZIndexOverMobileDrawer } from '~/common/app.theme';
+import { chatFoldersActions } from '~/common/stores/folders/store-chat-folders';
 import { useChatFolderActive } from '~/common/stores/folders/hooks/useChatFolderActive';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
@@ -51,8 +52,7 @@ export const ChatDrawerMemo = React.memo(ChatDrawer);
 function ChatDrawer(props: {
   isMobile: boolean,
   activeConversationId: DConversationId | null,
-  activeFolderId: string | null,
-  chatPanesConversationIds: DConversationId[],
+  chatPanesConversationIds: (DConversationId | null)[],
   disableNewButton: boolean,
   onConversationActivate: (conversationId: DConversationId) => void,
   onConversationBranch: (conversationId: DConversationId, messageId: string | null, addSplitPane: boolean) => void,
@@ -60,7 +60,6 @@ function ChatDrawer(props: {
   onConversationsDelete: (conversationIds: DConversationId[], bypassConfirmation: boolean) => void,
   onConversationsExportDialog: (conversationId: DConversationId | null, exportAll: boolean) => void,
   onConversationsImportDialog: () => void,
-  setActiveFolderId: (folderId: string | null) => void,
 }) {
 
   const { onConversationActivate, onConversationBranch, onConversationNew, onConversationsDelete, onConversationsExportDialog } = props;
@@ -86,7 +85,7 @@ function ChatDrawer(props: {
     showPersonaIcons, toggleShowPersonaIcons,
     showRelativeSize, toggleShowRelativeSize,
   } = useChatDrawerFilters();
-  const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useChatFolderActive(props.activeFolderId);
+  const { activeFolder, allFolders, enableFolders, toggleEnableFolders } = useChatFolderActive();
   const { filteredChatsCount, filteredChatIDs, filteredChatsAreEmpty, filteredChatsBarBasis, filteredChatsIncludeActive, renderNavItems } = useChatDrawerRenderItems(
     props.activeConversationId, props.chatPanesConversationIds, debouncedSearchQuery, activeFolder, allFolders, filterHasBeamOpen, filterHasStars, filterHasImageAssets, filterHasDocFragments, filterIsArchived, filterOlderThanDays, navGrouping, searchSorting, showRelativeSize, searchDepth, searchInArchived,
   );
@@ -342,8 +341,8 @@ function ChatDrawer(props: {
         folders={allFolders}
         // folderChatCounts={folderChatCounts}
         contentScaling={contentScaling}
-        activeFolderId={props.activeFolderId}
-        onFolderSelect={props.setActiveFolderId}
+        activeFolderId={activeFolder?.id ?? null}
+        onFolderSelect={chatFoldersActions().setActiveFolderId}
         sx={{
           // shrink this at twice the rate as the Titles list
           flexGrow: 0, flexShrink: 2, overflow: 'hidden',

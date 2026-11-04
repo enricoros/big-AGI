@@ -24,8 +24,7 @@ import { gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 import { getConversation, getConversationSystemPurposeId, useChatStore } from '~/common/stores/chat/store-chats';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences } from '~/common/layout/optima/useOptima';
-import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
-import { useChatFolderValidateId } from '~/common/stores/folders/hooks/useChatFolderValidateId';
+import { chatFoldersActions, getChatActiveFolderId } from '~/common/stores/folders/store-chat-folders';
 import { getIsMobile, useIsMobile, useIsTallScreen } from '~/common/components/useMatchMedia';
 import { useOverlayComponents } from '~/common/layout/overlays/useOverlayComponents';
 import { useRouterQuery } from '~/common/app.routes';
@@ -38,7 +37,7 @@ import { ChatToolbarMemo } from './components/layout-bar/ChatToolbar';
 import { ComposerMemo } from './components/composer/Composer';
 import { ComposerDock } from './components/composer/ComposerDock';
 import { LiveSvgAnimator } from './components/live-svg/LiveSvgAnimator';
-import { getFocusedPaneConversationId, getOtherPanesConversationIds, usePanesManager } from './components/panes/store-panes-manager';
+import { chatPanesActions, getFocusedPaneConversationId, getOtherPanesConversationIds, usePanesManager } from './components/panes/store-panes-manager';
 import { liveSvgActions, useLiveSvgStore } from './components/live-svg/store-livesvg';
 
 import type { ChatExecuteMode } from './execute-mode/execute-mode.types';
@@ -108,7 +107,6 @@ export function AppChat() {
   const llmDropdownRef = React.useRef<OptimaBarControlMethods>(null);
   const personaDropdownRef = React.useRef<OptimaBarControlMethods>(null);
   const composerTextAreaRef = React.useRef<HTMLTextAreaElement>(null);
-  const [_activeFolderId, setActiveFolderId] = React.useState<string | null>(null);
 
   // external state
   const isMobile = useIsMobile();
@@ -119,27 +117,19 @@ export function AppChat() {
   const intent = useRouterQuery<Partial<AppChatIntent>>();
 
   const {
-    // state
     chatPanes,
-    focusedPaneConversationId, // <-- key
+    chatPaneIds,
+    chatPaneUniqueIds, // NOTE: does not contain nulls, for which we will patch the drawer render items (cardinality)
+    /** key of most of the derived 'focused' states */
+    focusedPaneConversationId,
     focusedPaneIndex,
-    // actions
-    navigateHistoryInFocusedPane,
-    openConversationInFocusedPane,
-    openConversationInSplitPane,
   } = usePanesManager();
-
-  const chatPaneUniqueIds = React.useMemo(() => {
-    return Array.from(new Set(chatPanes.map(pane => pane.conversationId).filter(Boolean))) as DConversationId[];
-  }, [chatPanes]);
 
   // this will be used for the side panel
   // const focusedConversationWorkspaceId = workspaceForConversationIdentity(focusedPaneConversationId);
   //// const focusedConversationWorkspace = useWorkspaceIdForConversation(focusedPaneConversationId);
 
   const { mayWork: capabilityHasT2I, mayEdit: capabilityHasT2IEdit } = useCapabilityTextToImage();
-
-  const activeFolderId = useChatFolderValidateId(_activeFolderId);
 
     // Live SVG Animator: when active, this mode takes over the main panel (and hides the composer)
   const liveSvgModeActive = useLiveSvgStore((s) => s.modeActive);
@@ -152,12 +142,12 @@ export function AppChat() {
   const disableNewButton = false; // isFocusedChatEmpty && !isMultiPane;
 
   const handleOpenConversationInFocusedPane = React.useCallback((conversationId: DConversationId | null) => {
-    conversationId && openConversationInFocusedPane(conversationId);
-  }, [openConversationInFocusedPane]);
+    conversationId && chatPanesActions().openConversationInFocusedPane(conversationId);
+  }, []);
 
   const handleOpenConversationInSplitPane = React.useCallback((conversationId: DConversationId | null) => {
-    conversationId && openConversationInSplitPane(conversationId);
-  }, [openConversationInSplitPane]);
+    conversationId && chatPanesActions().openConversationInSplitPane(conversationId);
+  }, []);
 
   /** Snackbar with the title of the focused chat, after a navigation changed it; replaces the previous one. */
   const showFocusedChatTitle = React.useCallback(() => {
@@ -169,9 +159,9 @@ export function AppChat() {
   }, []);
 
   const handleNavigateHistoryInFocusedPane = React.useCallback((direction: 'back' | 'forward') => {
-    if (navigateHistoryInFocusedPane(direction))
+    if (chatPanesActions().navigateHistoryInFocusedPane(direction))
       showFocusedChatTitle();
-  }, [navigateHistoryInFocusedPane, showFocusedChatTitle]);
+  }, [showFocusedChatTitle]);
 
 
   // Execution
@@ -298,14 +288,15 @@ export function AppChat() {
     handleOpenConversationInFocusedPane(conversationId);
 
     // if a folder is active, add the new conversation to the folder
+    const activeFolderId = getChatActiveFolderId();
     if (activeFolderId && conversationId)
-      useFolderStore.getState().addConversationToFolder(activeFolderId, conversationId);
+      chatFoldersActions().addConversationToFolder(activeFolderId, conversationId);
 
     // focus the composer
     if (!getIsMobile())
       composerTextAreaRef.current?.focus();
 
-  }, [activeFolderId, handleOpenConversationInFocusedPane]);
+  }, [handleOpenConversationInFocusedPane]);
 
   const handleConversationImportDialog = React.useCallback(() => setTradeConfig({ dir: 'import' }), []);
 
@@ -346,14 +337,15 @@ export function AppChat() {
       });
   }, []);
 
-  // identity changes with the active folder and the pane count only (both rare, the latter a layout change), so the memoized panes and side panel take it directly
+  // identity changes with the pane count only (a layout change), so the memoized panes and side panel take it directly
   const handleConversationBranchAndFocus = React.useCallback((srcConversationId: DConversationId, messageId: string | null, addSplitPane: boolean): DConversationId | null => {
     // clone data
     const branchedConversationId = useChatStore.getState().branchConversation(srcConversationId, messageId);
 
     // if a folder is active, add the new conversation to the folder
+    const activeFolderId = getChatActiveFolderId();
     if (activeFolderId && branchedConversationId)
-      useFolderStore.getState().addConversationToFolder(activeFolderId, branchedConversationId);
+      chatFoldersActions().addConversationToFolder(activeFolderId, branchedConversationId);
 
     // replace/open a new pane with this
     if (addSplitPane && isMultiAddable)
@@ -363,7 +355,7 @@ export function AppChat() {
     showFocusedChatTitle();
 
     return branchedConversationId;
-  }, [activeFolderId, handleOpenConversationInFocusedPane, handleOpenConversationInSplitPane, isMultiAddable, showFocusedChatTitle]);
+  }, [handleOpenConversationInFocusedPane, handleOpenConversationInSplitPane, isMultiAddable, showFocusedChatTitle]);
 
   const handleConversationFlatten = React.useCallback((conversationId: DConversationId) => setFlattenConversationId(conversationId), []);
 
@@ -410,14 +402,14 @@ export function AppChat() {
   React.useEffect(() => {
     // Debug: open a null chat
     if (Release.IsNodeDevBuild && intent.initialConversationId === 'null')
-      openConversationInFocusedPane(null! /* for debugging purpose */);
+      chatPanesActions().openConversationInFocusedPane(null! /* for debugging purpose */);
     // Open the initial conversation if set
     else if (intent.initialConversationId)
-      openConversationInFocusedPane(intent.initialConversationId);
+      chatPanesActions().openConversationInFocusedPane(intent.initialConversationId);
     // Create a new chat if requested
     else if (intent.newChat !== undefined)
       handleConversationNewInFocusedPane(false, false);
-  }, [handleConversationNewInFocusedPane, intent.initialConversationId, intent.newChat, openConversationInFocusedPane]);
+  }, [handleConversationNewInFocusedPane, intent.initialConversationId, intent.newChat]);
 
 
   // Shortcuts
@@ -514,8 +506,7 @@ export function AppChat() {
       <ChatDrawerMemo
         isMobile={isMobile}
         activeConversationId={focusedPaneConversationId}
-        activeFolderId={activeFolderId}
-        chatPanesConversationIds={chatPaneUniqueIds}
+        chatPanesConversationIds={chatPaneIds}
         disableNewButton={disableNewButton}
         onConversationActivate={handleOpenConversationInFocusedPane}
         onConversationBranch={handleConversationBranchAndFocus}
@@ -523,7 +514,6 @@ export function AppChat() {
         onConversationsDelete={handleDeleteConversations}
         onConversationsExportDialog={handleConversationExport}
         onConversationsImportDialog={handleConversationImportDialog}
-        setActiveFolderId={setActiveFolderId}
       />
     </OptimaDrawerIn>
     <OptimaPanelIn>

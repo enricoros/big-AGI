@@ -57,11 +57,13 @@ function messageHasStarredFragments(message: DMessage): boolean {
   return messageHasUserFlag(message, MESSAGE_FLAG_STARRED);
 }
 
-// Returns a string with the pane indices where the conversation is also open, or false if it's not
-function findOpenInViewIndices(chatPanesConversationIds: DConversationId[], ourId: DConversationId): string | false {
+/**
+ * Returns a string with the pane indices where the conversation is also open, or false if it's not
+ */
+function _findViewIndices(viewConversationId: DConversationId, chatPanesConversationIds: (DConversationId | null)[]): string | false {
   if (chatPanesConversationIds.length <= 1) return false;
   return chatPanesConversationIds.reduce((acc: string[], id, idx) => {
-    if (id === ourId)
+    if (id === viewConversationId)
       acc.push((idx + 1).toString());
     return acc;
   }, []).join(', ') || false;
@@ -82,7 +84,7 @@ export function isDrawerSearching(filterByQuery: string): { isSearching: boolean
  */
 export function useChatDrawerRenderItems(
   activeConversationId: DConversationId | null,
-  chatPanesConversationIds: DConversationId[],
+  chatPanesConversationIds: (DConversationId | null)[],
   filterByQuery: string,
   activeFolder: DFolder | null,
   allFolders: DFolder[],
@@ -161,7 +163,7 @@ export function useChatDrawerRenderItems(
 
           // rich properties
           const title = conversationTitle(_c);
-          const isAlsoOpen = findOpenInViewIndices(chatPanesConversationIds, _c.id);
+          const isAlsoOpen = _findViewIndices(_c.id, chatPanesConversationIds);
 
           // set the frequency counters if filtering is enabled
           let searchFrequency: number = 0;

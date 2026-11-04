@@ -6,6 +6,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { agiUuid } from '~/common/util/idUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
+import { useMemoShallowStable } from '~/common/util/hooks/useShallowObject';
 
 
 // change this to increase/decrease the number history steps per pane
@@ -465,22 +466,19 @@ export function usePanesManager() {
   // the layout is stabilized inside the selector: a render-time memo would run after the re-render it is meant to skip
   const layoutRef = React.useRef<readonly ChatPaneLayout[]>([]);
 
-  // use Panes - Note: before we had { _onConversationsChanged, ...panesFunctions } = ... but we don't need the internal function anymore
-  const panesData = useAppChatPanesStore(useShallow(state => {
+  // use Panes
+  const { chatPanes, focusedPaneConversationId, focusedPaneIndex } = useAppChatPanesStore(useShallow((state) => {
     layoutRef.current = _stablePanesLayout(state.chatPanes, layoutRef.current);
-    return {
-      // state
+    return ({
       chatPanes: layoutRef.current,
       focusedPaneIndex: state.chatPaneFocusIndex,
       focusedPaneConversationId: state.chatPaneFocusIndex !== null ? state.chatPanes[state.chatPaneFocusIndex]?.conversationId ?? null : null,
-      // methods
-      openConversationInFocusedPane: state.openConversationInFocusedPane,
-      openConversationInSplitPane: state.openConversationInSplitPane,
-      navigateHistoryInFocusedPane: state.navigateHistoryInFocusedPane,
-      removePane: state.removePane,
-      setFocusedPaneIndex: state.setFocusedPaneIndex,
-    };
+    });
   }));
+
+  // memo IDs
+  const chatPaneIds = useMemoShallowStable(() => chatPanes.map(pane => pane.conversationId || null), [chatPanes]);
+  const chatPaneUniqueIds = useMemoShallowStable(() => Array.from(new Set(chatPaneIds.filter(id => !!id))) as DConversationId[], [chatPaneIds]);
 
   // use changes in Conversation IDs[] to trigger the existence check
   const conversationIDs: DConversationId[] = useChatStore(useShallow(state =>
@@ -492,7 +490,13 @@ export function usePanesManager() {
     chatPanesActions()._onConversationsChanged(conversationIDs);
   }, [conversationIDs]);
 
-  return panesData;
+  return {
+    chatPanes,
+    chatPaneIds,
+    chatPaneUniqueIds,
+    focusedPaneConversationId,
+    focusedPaneIndex,
+  };
 }
 
 export function usePaneDuplicateOrClose() {

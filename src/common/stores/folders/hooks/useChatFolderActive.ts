@@ -6,8 +6,8 @@ import { DFolder, useFolderStore } from '../store-chat-folders';
 const _stableNoFolders: DFolder[] = [];
 
 
-export function useChatFolderActive(activeFolderId: string | null) {
-  return useFolderStore(useShallow(({ enableFolders, folders, toggleEnableFolders }) => {
+export function useChatFolderActive() {
+  return useFolderStore(useShallow(({ activeFolderId, enableFolders, folders, toggleEnableFolders }) => {
 
     // finds the active folder if any
     const activeFolder = (enableFolders && activeFolderId)
