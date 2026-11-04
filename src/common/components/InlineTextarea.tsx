@@ -1,13 +1,16 @@
 import * as React from 'react';
 
 import type { SxProps } from '@mui/joy/styles/types';
-import { Textarea, TextareaProps } from '@mui/joy';
+import { Box, Button, Textarea, TextareaProps } from '@mui/joy';
 
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
-/**
- * TODO: P3: use Buttons when possible instead of the Blur action. Should add them to the bottom? See `ContentPartTextEdit` for a newer impl.
- */
+export interface InlineTextareaDraft {
+  text: string;
+  /** Replace through the browser's editing command to preserve native undo. Returns whether it succeeded. */
+  replaceText: (text: string) => boolean;
+}
+
 export function InlineTextarea(props: {
   initialText: string,
   disableAutoSaveOnBlur?: boolean // NOTE: this will disable the enter=newline as well
@@ -21,13 +24,16 @@ export function InlineTextarea(props: {
   syncWithInitialText?: boolean, // optional. if set, the text will be reset to initialText when the prop changes
   selectAllOnFocus?: boolean, // optional. if set to false, text won't be selected on focus (default: true)
   blurOnDone?: boolean, // optional. release focus from the textarea as editing ends via keyboard (Enter/Escape), so a focusable ancestor (e.g. a ListItemButton) doesn't inherit a stuck focus-visible ring
+  explicitSave?: boolean, // Save/Cancel buttons; Enter inserts a newline, Ctrl/Cmd+Enter saves, blur does nothing
+  renderStartDecorator?: (draft: InlineTextareaDraft) => React.ReactNode,
+  ariaLabel?: string,
   onEdit: (text: string) => void,
   onCancel?: () => void,
   sx?: SxProps,
 }) {
 
   const [text, setText] = React.useState(props.initialText);
-  const enterIsNewline = useUIPreferencesStore(state => (!props.disableAutoSaveOnBlur && state.enterIsNewline));
+  const enterIsNewline = useUIPreferencesStore(state => props.explicitSave || (!props.disableAutoSaveOnBlur && state.enterIsNewline));
 
   // refs
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -45,6 +51,26 @@ export function InlineTextarea(props: {
 
   const handleEditTextChanged = (e: React.ChangeEvent<HTMLTextAreaElement>) => setText(e.target.value);
 
+  const replaceText = React.useCallback((nextText: string): boolean => {
+    const el = textareaRef.current;
+    if (!el) return false;
+    if (el.value === nextText) return true;
+    const { selectionStart, selectionEnd, scrollTop } = el;
+    el.focus({ preventScroll: true });
+    el.select();
+    try {
+      // Unlike assigning value/setRangeText, insertText preserves native undo.
+      document.execCommand('insertText', false, nextText);
+      setText(el.value);
+      return el.value === nextText;
+    } catch {
+      return false;
+    } finally {
+      el.setSelectionRange(Math.min(selectionStart, el.value.length), Math.min(selectionEnd, el.value.length));
+      el.scrollTop = scrollTop;
+    }
+  }, []);
+
   // release focus from our own textarea before the parent unmounts us (on keyboard commit/cancel),
   // so the browser doesn't hand focus to the nearest focusable ancestor and leave a stuck ring there
   const releaseFocusIfEnabled = () => {
@@ -61,8 +87,10 @@ export function InlineTextarea(props: {
     if (e.key === 'Enter') {
       if (e.nativeEvent.isComposing)
         return;
-      if (enterIsNewline ? e.shiftKey : !e.shiftKey) {
+      if (props.explicitSave ? (e.ctrlKey || e.metaKey) : enterIsNewline ? e.shiftKey : !e.shiftKey) {
         e.preventDefault();
+        e.stopPropagation();
+        if (props.explicitSave && !text.trim()) return;
         releaseFocusIfEnabled();
         props.onEdit(text);
       }
@@ -83,8 +111,8 @@ export function InlineTextarea(props: {
   return (
     <Textarea
       size={props.size}
-      variant={props.invertedColors ? 'plain' : 'soft'}
-      color={props.decolor ? undefined : props.invertedColors ? 'primary' : 'warning'}
+      variant={props.explicitSave ? 'outlined' : props.invertedColors ? 'plain' : 'soft'}
+      color={props.explicitSave ? 'neutral' : props.decolor ? undefined : props.invertedColors ? 'primary' : 'warning'}
       autoFocus={!props.decolor}
       minRows={props.minRows !== undefined ? props.minRows : 1}
       maxRows={props.maxRows}
@@ -92,10 +120,18 @@ export function InlineTextarea(props: {
       value={text}
       onChange={handleEditTextChanged}
       onKeyDown={handleEditKeyDown}
-      onBlur={props.disableAutoSaveOnBlur ? undefined : handleEditBlur}
+      onBlur={props.explicitSave || props.disableAutoSaveOnBlur ? undefined : handleEditBlur}
+      startDecorator={props.renderStartDecorator?.({ text, replaceText })}
+      endDecorator={props.explicitSave ? (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, width: '100%' }}>
+          <Button size='sm' variant='plain' color='neutral' onClick={props.onCancel} sx={{ minHeight: 36, minWidth: 72 }}>Cancel</Button>
+          <Button size='sm' disabled={!text.trim()} onClick={() => props.onEdit(text)} sx={{ minHeight: 36, minWidth: 72 }}>Save</Button>
+        </Box>
+      ) : undefined}
       slotProps={{
         textarea: {
           ref: textareaRef,
+          'aria-label': props.ariaLabel,
           enterKeyHint: enterIsNewline ? 'enter' : 'done',
           ...(props.centerText && {
             sx: { textAlign: 'center' },
