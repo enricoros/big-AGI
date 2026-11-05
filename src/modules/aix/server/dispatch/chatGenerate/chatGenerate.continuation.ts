@@ -63,6 +63,7 @@ function _sumContinuationMetrics(base: AixWire_Particles.CGSelectMetrics, turn: 
 export interface AixChatGenerateCompletionStats {
   metrics?: AixWire_Particles.CGSelectMetrics;       // token counts (TIn/TCacheRead/TOut/...), duration (dtAll), cost
   terminationReason?: AixWire_Particles.CGEndReason; // how generation ended ('done-dialect' = clean)
+  tokenStopReason?: AixWire_Particles.GCTokenStopReason; // the model's stop reason, when the dialect reported one (class: ok | truncated | error)
   lastIssueId?: AixWire_Particles.CGIssueId;         // where the last issue arose ('dispatch-fetch', 'dialect-issue', ...)
   lastIssueCause?: AixWire_Particles.CGIssueCause;   // [dispatch-fetch] its machine-readable cause, when known
 }
@@ -74,6 +75,7 @@ function _captureCompletionStats(stats: AixChatGenerateCompletionStats, particle
     stats.metrics = particle.metrics;
   } else if (particle.cg === 'end') {
     stats.terminationReason = particle.terminationReason;
+    stats.tokenStopReason = particle.tokenStopReason;
   } else if (particle.cg === 'issue') {
     stats.lastIssueId = particle.issueId;
     stats.lastIssueCause = particle.issueCause;
