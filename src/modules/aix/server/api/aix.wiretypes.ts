@@ -761,7 +761,7 @@ export namespace AixWire_Particles {
   export type ChatControlOp =
   // | { cg: 'start' } // not really used for now
     | { cg: 'end', terminationReason: CGEndReason /* we know why we're sending 'end' */, tokenStopReason?: GCTokenStopReason /* we may or not have gotten a logical token stop reason from the dispatch */, tokenStopError?: string /* optional vendor-composed human-readable detail paired with tokenStopReason */ }
-    | { cg: 'issue', issueId: CGIssueId, issueText: string }
+    | { cg: 'issue', issueId: CGIssueId, issueText: string, issueCause?: CGIssueCause }
     | { cg: 'aix-info', ait: 'flow-cont' /* important: establishes a checkpoint */, text: string }
     | { cg: 'aix-retry-reset', rScope: 'srv-dispatch' | 'srv-op' | 'cli-ll', rClearStrategy: 'none' | 'since-checkpoint' | 'all', reason: string, attempt: number, maxAttempts: number, delayMs: number, causeHttp?: number, causeConn?: string }
     | { cg: 'set-metrics', metrics: CGSelectMetrics }
@@ -784,6 +784,13 @@ export namespace AixWire_Particles {
     | 'dispatch-fetch'          // [2] "
     | 'dispatch-read'           // [2] "
     | 'dispatch-parse';         // [2] "
+
+  export type CGIssueCause = _CGIssueCause_DispatchFetch;
+  type _CGIssueCause_DispatchFetch = {
+    causeConn?: string;         // [dispatch-fetch] system error name of a failed connection
+    causeHttpStatus?: number;   // [dispatch-fetch] upstream HTTP status
+    causeVendorCode?: string;   // [dispatch-fetch] vendor error code from the HTTP body
+  }
 
 
   // Token stop reasons, grouped by class. The class is the one grouping shared by the edge (analytics) and the

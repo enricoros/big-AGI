@@ -1,4 +1,5 @@
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
+import type { TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
 import { objectDeepCloneWithStringLimit, objectEstimateJsonSize, objectStringifyWithIndentDepth } from '~/common/util/objectUtils';
@@ -43,6 +44,21 @@ export const IssueSymbols = {
   Recitation: '🦜',
   Language: '🌐',
 };
+
+/** [dispatch-fetch] TRPCFetcherError -> issue cause: system error name (connection), or HTTP status and vendor body code (http) */
+export function trpcFetcherError_to_IssueCause(error: unknown): AixWire_Particles.CGIssueCause | undefined {
+  const fe = error as Partial<TRPCFetcherError> | undefined;
+  if (fe?.name !== 'TRPCFetcherError') return undefined;
+  const causeConn = fe.category === 'connection' ? _machineShaped(fe.connErrorName) : undefined;
+  const causeHttpStatus = fe.category === 'http' ? fe.httpStatus : undefined;
+  const causeVendorCode = fe.category === 'http' ? _machineShaped(fe.httpErrorCode) : undefined;
+  return (causeConn || causeHttpStatus || causeVendorCode) ? { ...(causeConn && { causeConn }), ...(causeHttpStatus && { causeHttpStatus }), ...(causeVendorCode && { causeVendorCode }) } : undefined;
+}
+
+/** codes only, never prose: these may leave the server (analytics) */
+function _machineShaped(value: unknown): string | undefined {
+  return typeof value === 'string' && /^[\w.:-]{1,64}$/.test(value) ? value : undefined;
+}
 
 
 /**
@@ -196,8 +212,8 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     | 'dispatch-fetch'
     | 'dispatch-read'
     | 'dispatch-parse'
-  >, issueText: string, serverLog: ParticleServerLogLevel) {
-    this._addIssue(issueId, issueText, serverLog);
+  >, issueText: string, serverLog: ParticleServerLogLevel, issueCause?: AixWire_Particles.CGIssueCause) {
+    this._addIssue(issueId, issueText, serverLog, issueCause);
     this.setDispatchEnded('issue-dispatch-rpc');
   }
 
@@ -400,7 +416,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   /**
    * Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead
    */
-  private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, serverLog: ParticleServerLogLevel) {
+  private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, serverLog: ParticleServerLogLevel, issueCause?: AixWire_Particles.CGIssueCause) {
     if (serverLog || ENABLE_EXTRA_DEV_MESSAGES || SERVER_DEBUG_WIRE) {
       const logLevel = serverLog === 'srv-warn' ? 'warn' as const : 'log' as const;
       console[logLevel](`Aix.${this.prettyDialect} ${issueId}: ${issueText}`);
@@ -428,6 +444,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
       cg: 'issue',
       issueId,
       issueText,
+      ...(issueCause && { issueCause }),
     });
   }
 

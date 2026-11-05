@@ -13,7 +13,7 @@ import { AixWire_Particles } from '../../api/aix.wiretypes';
 import { AixDebugObject } from './chatGenerate.debug';
 import { AixDemuxers } from '../stream.demuxers';
 import { ChatGenerateDispatch, ChatGenerateDispatchRequest, ChatGenerateParseContext, ChatGenerateParseFunction } from './chatGenerate.dispatch';
-import { ChatGenerateTransmitter } from './ChatGenerateTransmitter';
+import { ChatGenerateTransmitter, trpcFetcherError_to_IssueCause } from './ChatGenerateTransmitter';
 import { DispatchContinuationSignal } from './chatGenerate.continuation';
 import { OperationRetrySignal } from './chatGenerate.operation-retry';
 import { heartbeatsWhileAwaiting } from '../heartbeatsWhileAwaiting';
@@ -238,7 +238,7 @@ async function* _connectToDispatch(
     const isUpstreamUserError = error?.name === 'TRPCFetcherError' && error.category === 'http' && demoteToLog.includes(error.httpStatus);
     const serverLogLevel = _d.consoleLogErrors === 'srv-warn' && isUpstreamUserError ? 'srv-log' : _d.consoleLogErrors;
 
-    chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${_d.prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, serverLogLevel);
+    chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${_d.prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, serverLogLevel, trpcFetcherError_to_IssueCause(error));
     yield* chatGenerateTx.flushParticles();
     return null; // signal caller to exit
   }
