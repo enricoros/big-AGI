@@ -142,6 +142,10 @@ function selectRetryProfile(error: TRPCFetcherError | unknown): RetryProfile | n
           console.log(`[fetchers.retrier] 429 not retryable: ${denyMatch.label}`);
         return null;
       }
+      // [OpenAI] flex capacity shortage wearing a 429 (#1211): not a per-minute window, so 3 quick retries and then the user picks
+      // the standard tier - the class its in-band form gets in the parsers, see openAITransientErrorToHttpStatus
+      if (error.httpErrorCode === 'resource_unavailable')
+        return RETRY_PROFILES.transient;
       return RETRY_PROFILES.rateLimited; // Retry temporary rate limits
     }
 

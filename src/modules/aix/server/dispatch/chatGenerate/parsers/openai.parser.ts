@@ -10,7 +10,7 @@ import { convert_Base64_To_UInt8Array, convert_UInt8Array_To_Base64 } from '~/co
 
 import { OpenAIWire_API_Chat_Completions } from '../../wiretypes/openai.wiretypes';
 import { calculateDurationMs, createWAVFromPCM } from './gemini.audioutils';
-import { openAIUpstreamErrorLogLevel } from './openai.error-severity';
+import { openAITransientErrorToHttpStatus, openAIUpstreamErrorLogLevel } from './openai.error-severity';
 
 import { OperationRetrySignal } from '../chatGenerate.operation-retry';
 
@@ -133,9 +133,10 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
       pt.setModelName(json.model);
     }
 
-    // [OpenAI] an upstream error will be handled gracefully and transmitted as text (throw to transmit as 'error')
+    // [OpenAI] an upstream error without a `message` (the ones with it were forwarded above): retry if transient, else transmit as text
     if (json.error) {
       // FIXME: potential point for throwing OperationRetrySignal
+      // return _transmitOrRetryUpstreamError(json.error, safeErrorString(json.error) || 'unknown.', pt, hasStreamedOutput ? undefined : context);
       return pt.setDialectTerminatingIssue(safeErrorString(json.error) || 'unknown.', IssueSymbols.Generic, openAIUpstreamErrorLogLevel(json.error));
     }
 
@@ -787,18 +788,27 @@ function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usa
 }
 
 /**
- * HTTP-equivalent status of a transient in-band error worth an operation retry, or undefined.
+ * In-band upstream error: unwind to the operation retrier when transient and attempts remain, else transmit it as text
+ * (throw to transmit as 'error' instead).
+ *
+ * Transient, by HTTP-equivalent status:
  * [OpenRouter] after the 200, errors arrive as a chunk with a top-level `error` whose numeric `code` mirrors the HTTP status:
  * 429 rate limited (platform or upstream provider), 502 model down or invalid upstream response. A provider dropping
  * mid-stream carries code 'server_error'.
  * Not retried: 503 is "no provider meets your routing requirements" (an outcome of the request, not a blip), 408 timed out
  * (a retry repeats the wait), and the 4xx family (credits, moderation, bad request).
  * https://openrouter.ai/docs/api-reference/errors - https://openrouter.ai/docs/api-reference/streaming
+ * [OpenAI and compatible] the named codes ('server_error', 'rate_limit_exceeded', 'resource_unavailable', ...) are the
+ * shared table, with the reasoning on each row and on the retry loops around this parser: openAITransientErrorToHttpStatus.
+ *
+ * @param retryContext only when a whole-operation retry is harmless: nothing has been streamed to the user yet
  */
-function _transientOpenRouterErrorToHttpStatus(code: unknown): 429 | 500 | 502 | undefined {
-  if (code === 'server_error') return 500;
-  const status = typeof code === 'number' ? code : typeof code === 'string' ? Number(code) : NaN;
-  return status === 429 ? 429 : status === 502 ? 502 : undefined;
+function _transmitOrRetryUpstreamError(error: { type?: string | null, code?: string | number | null, message?: string | null }, errorText: string, pt: IParticleTransmitter, retryContext: ChatGenerateParseContext | undefined): void {
+  const status = typeof error.code === 'number' ? error.code : typeof error.code === 'string' ? Number(error.code) : NaN;
+  const retryHttpStatus: 429 | 500 | 502 | 529 | undefined = status === 429 ? 429 : status === 502 ? 502 : openAITransientErrorToHttpStatus(error);
+  if (retryHttpStatus && retryContext?.hasRetriesForHttpStatus(retryHttpStatus))
+    throw new OperationRetrySignal(errorText, { causeHttp: retryHttpStatus, causeConn: typeof error.code === 'string' ? error.code : undefined });
+  pt.setDialectTerminatingIssue(errorText, IssueSymbols.Generic, openAIUpstreamErrorLogLevel(error));
 }
 
 /**
@@ -820,13 +830,8 @@ function _forwardOpenRouterDataError(parsedData: any, pt: IParticleTransmitter, 
   // prepare the text message - safeErrorString unwraps the [OpenRouter] 'metadata' upstream cause
   const errorMessage = safeErrorString(error) || 'unknown.';
 
-  // Transient and retries left: unwind to the operation retrier
-  const retryHttpStatus = _transientOpenRouterErrorToHttpStatus(error.code);
-  if (retryHttpStatus && retryContext?.hasRetriesForHttpStatus(retryHttpStatus))
-    throw new OperationRetrySignal(errorMessage, { causeHttp: retryHttpStatus, causeConn: typeof error.code === 'string' ? error.code : undefined });
-
-  // Transmit the error as text - note: throw if you want to transmit as 'error'
-  pt.setDialectTerminatingIssue(errorMessage, IssueSymbols.Generic, openAIUpstreamErrorLogLevel(error));
+  // Transient and retries left: unwind to the operation retrier, else transmit the error as text
+  _transmitOrRetryUpstreamError(error, errorMessage, pt, retryContext);
   return true;
 }
 

@@ -9,7 +9,7 @@ import type { IParticleTransmitter } from './IParticleTransmitter';
 import { AIX_OAI_DEFAULT_IMAGE_GEN_MODEL } from '../adapters/openai.responsesCreate';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
-import { openAIUpstreamErrorLogLevel } from './openai.error-severity';
+import { openAITransientErrorToHttpStatus, openAIUpstreamErrorLogLevel } from './openai.error-severity';
 import { stripXAIDefectiveCitations, XAIDefectiveCitationsFilter } from './xai.transform-citationsLeak';
 
 import { OpenAIWire_API_Responses, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
@@ -94,24 +94,6 @@ function _isSalvageableFailedOutput(output: TResponse['output']): boolean {
   const lastItem = output[output.length - 1];
   return lastItem.type === 'message' && lastItem.status === 'completed';
 }
-
-/**
- * HTTP-equivalent status of a transient in-band error worth an operation retry (like Anthropic's overloaded_error), or undefined.
- * #1210 shape: { type: 'invalid_request_error', code: 'rate_limit_exceeded', message: "We're currently processing too many requests - please try again later." }
- * No denylist: in-band errors on a 200 stream are past admission (auth, quota, size); HTTP-level ones are retried before the parser runs.
- *
- * The name of the failure sits in `code` or in `type` depending on the carrier: the 'response.failed' error object
- * is { code, message } (code: 'server_error'), the 'error' event and the HTTP bodies also have a `type`.
- */
-function _transientErrorToHttpStatus(error: null | undefined | { type?: string | null, code?: string | number | null, message?: string | null }): 429 | 500 | 529 | undefined {
-  const names = [error?.code, error?.type];
-  if (names.includes('rate_limit_exceeded') || /processing too many requests/i.test(error?.message || '')) return 429;
-  // OpenAI's overload pair, documented as an HTTP 503: reported as 529, our status for the 'overloaded' retry class (a bare 503 reads as transient)
-  if (names.includes('server_is_overloaded') || names.includes('service_unavailable_error')) return 529;
-  if (names.includes('server_error')) return 500;
-  return undefined;
-}
-
 
 /**
  * We need this just to ensure events are not out of order, as out streaming is progressive
@@ -468,7 +450,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
           : `${safeErrorString(failedError.code) || 'Error'}: ${safeErrorString(failedError.message) || 'unknown.'}`;
 
         // Genuine failure: retry if transient (the deferred mid-stream 'error' lands here when the message didn't complete), else surface the error
-        const failedRetryHttpStatus = _transientErrorToHttpStatus(failedError);
+        const failedRetryHttpStatus = openAITransientErrorToHttpStatus(failedError);
         if (failedRetryHttpStatus && context?.hasRetriesForHttpStatus(failedRetryHttpStatus))
           throw new OperationRetrySignal(failedText, { causeHttp: failedRetryHttpStatus, causeConn: failedError?.code });
 
@@ -862,7 +844,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
         }
 
         // Transient and retries left: unwind to the operation retrier (#1210)
-        const retryHttpStatus = _transientErrorToHttpStatus(event.error ?? event);
+        const retryHttpStatus = openAITransientErrorToHttpStatus(event.error ?? event);
         if (retryHttpStatus && context?.hasRetriesForHttpStatus(retryHttpStatus))
           throw new OperationRetrySignal(errorText, { causeHttp: retryHttpStatus, causeConn: errorCode });
 
@@ -1322,7 +1304,7 @@ function _forwardResponseErrorNS(parsedData: any, pt: IParticleTransmitter, cont
   const errorText = safeErrorString(error) || 'unknown.';
 
   // Transient and retries left: unwind to the operation retrier (#1210)
-  const retryHttpStatus = _transientErrorToHttpStatus(error);
+  const retryHttpStatus = openAITransientErrorToHttpStatus(error);
   if (retryHttpStatus && context?.hasRetriesForHttpStatus(retryHttpStatus))
     throw new OperationRetrySignal(errorText, { causeHttp: retryHttpStatus, causeConn: typeof error.code === 'string' ? error.code : undefined });
 
