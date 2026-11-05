@@ -1,6 +1,6 @@
 # Blocks: fenced code pre-pass
 
-Status: SHIPPED (opener rule, corpus). OPEN: the close side (#983), CRLF, container prefixes.
+Status: SHIPPED (opener rule, corpus, single-scan loop, CRLF). OPEN: the close side (#983), container prefixes.
 
 `parseBlocksFromText` splits message text into markdown and code blocks before react-markdown sees
 it, so code blocks get their own renderer. It runs on every streaming update of every message, over
@@ -16,12 +16,17 @@ on purpose: models emit `Here:```python` and `Here: ```python`, and the maintain
 (2026-02-24) is that the lenient forms exist for non-conformant output.
 
 The close side is unchanged: a fence at least as long as the opener, followed by a space, asterisk,
-newline or end of text; a block with no close is partial, which is what a streaming message looks like
+carriage return, newline or end of text; a block with no close is partial, which is what a streaming message looks like
 until its close arrives. Two close-side behaviors are pinned as is and not endorsed: a close followed
 directly by text is content (CommonMark agrees), a close followed by a space and text closes (CommonMark
 disagrees). Their asymmetry is #983, still open.
 
 The rule is a predicate in the loop, not a lookbehind in the regex. See the measurements.
+
+The loop keeps each pattern's next match and re-runs a pattern only once the cursor passes it, so the
+three regexes scan the text once each. Before that, every block rescanned the rest of the text for the
+HTML and SVG patterns: 200KB with 240 fences cost 7 ms per parse, 2000 fences 31 ms in Node and 109 ms
+on Safari, against 0.2 and 0.8 ms now. The parse runs on every streaming update.
 
 ## The corpus
 
@@ -65,8 +70,6 @@ Consequence for the streaming path: no lookbehind in a regex that runs per updat
 - #983: the close side. The CommonMark close measured above costs two kept rows; the stack-based parser
   explored in the issue was not adopted. Trigger to revisit: a report where a close followed by text
   swallows prose, with a sample.
-- CRLF: every CRLF fence renders partial because the close lookahead does not accept `\r`. Reaches the
-  parser only through imports, since textareas normalize line endings.
 - Container prefixes: a fence inside a blockquote comes out with the `> ` markers inside the code. Leaving
   it to the markdown renderer loses the code chrome. Fences inside list items work because any
   indentation is accepted and kept in the code.

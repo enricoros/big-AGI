@@ -319,10 +319,15 @@ const FENCE_CASES: FenceCase[] = [
 
   {
     name: 'CRLF line endings',
-    origin: 'CommonMark 2.1: CRLF is a line ending',
+    origin: 'CommonMark 2.1: CRLF is a line ending; reaches the parser through imports',
     input: 'a\r\n```js\r\nx\r\n```\r\nb',
     expect: [{ md: 'a\r\n' }, { code: 'x\r\n', title: 'js' }, { md: '\r\nb' }],
-    open: 'the close lookahead does not accept \\r, so every CRLF fence is partial',
+  },
+  {
+    name: 'CRLF untitled fence glued to prose',
+    origin: 'CommonMark 2.1 with the glued-opener leniency',
+    input: 'Here:```\r\nx\r\n```\r\nb',
+    expect: [{ md: 'Here:' }, { code: 'x\r\n' }, { md: '\r\nb' }],
   },
   {
     name: 'tilde fences',

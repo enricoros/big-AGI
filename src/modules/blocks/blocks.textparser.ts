@@ -29,7 +29,7 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
     // The opener rule (a fence opens at the start of its line, or mid-line only when glued) is a predicate in the loop
     // below, not part of this regex: a lookbehind-led form measured 10-40x slower on Safari, whose regex JIT skips
     // lookbehind. Corpus: blocks.textparser.test.ts. Rule, alternatives, measurements: kb/modules/BLOCKS-fence-parser.md
-    codeBlock: /(`{3,})([^\n`]*)\n([\s\S]*?)(\1`*(?=[ *\n]|$)|$)/g,
+    codeBlock: /(`{3,})([^\n`]*)\n([\s\S]*?)(\1`*(?=[ *\r\n]|$)|$)/g, // close followed by \r too: CRLF text
     htmlCodeBlock: /<!DOCTYPE html>([\s\S]*?)<\/html>/gi,
     svgBlock: /<svg (xmlns|width|viewBox)=([\s\S]*?)<\/svg>/g,
   };
@@ -38,21 +38,27 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
   let lastIndex = 0;
   let fenceSearchFrom = 0; // fence candidates rejected by the opener rule are skipped, not consumed
 
+  // per pattern, the leftmost match ahead of the cursor, re-run only once the cursor passes it: each pattern scans the text once
+  const nextMatch: { [T in keyof typeof regexPatterns]?: RegExpExecArray | null } = {};
+
   while (true) {
 
-    // find the first match (if any) trying all the regexes
+    // find the first match (if any) across the patterns
     let match: RegExpExecArray | null = null;
     let matchType: keyof typeof regexPatterns | null = null;
-    let earliestMatchIndex: number | null = null;
 
     for (const type in regexPatterns) {
-      const regex = regexPatterns[type as keyof typeof regexPatterns];
-      regex.lastIndex = type === 'codeBlock' ? Math.max(lastIndex, fenceSearchFrom) : lastIndex;
-      const currentMatch = regex.exec(text);
-      if (currentMatch && (earliestMatchIndex === null || currentMatch.index < earliestMatchIndex)) {
-        match = currentMatch;
-        matchType = type as keyof typeof regexPatterns;
-        earliestMatchIndex = currentMatch.index;
+      const patternType = type as keyof typeof regexPatterns;
+      const searchFrom = patternType === 'codeBlock' ? Math.max(lastIndex, fenceSearchFrom) : lastIndex;
+      let patternMatch = nextMatch[patternType];
+      if (patternMatch === undefined || (patternMatch !== null && patternMatch.index < searchFrom)) {
+        const regex = regexPatterns[patternType];
+        regex.lastIndex = searchFrom;
+        patternMatch = nextMatch[patternType] = regex.exec(text);
+      }
+      if (patternMatch && (match === null || patternMatch.index < match.index)) {
+        match = patternMatch;
+        matchType = patternType;
       }
     }
     if (match === null)
@@ -60,7 +66,7 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
 
     // opener rule: a fence opens a block at the start of its line (indent and list marker allowed), or mid-line only
     // when glued (newline or the info string right after the ticks). A mid-line fence followed by a space is prose (#1280).
-    if (matchType === 'codeBlock' && /^\s/.test(match[2] || '')) {
+    if (matchType === 'codeBlock' && /^[ \t]/.test(match[2] || '')) {
       const linePrefix = text.slice(text.lastIndexOf('\n', match.index - 1) + 1, match.index);
       if (!/^[ \t]*(?:(?:[-*+]|\d{1,9}[.)])[ \t]+)?$/.test(linePrefix)) {
         fenceSearchFrom = match.index + 1;
