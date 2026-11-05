@@ -15,7 +15,7 @@ export type VertexLinkResolution =
 export type VertexLinkUnresolved = { url: string, outcome: 'dead' | 'unknown', reason: string };
 
 /*
- * What the resolver relies on, measured in tools/develop/vertex-links-probe (README there, with the retake):
+ * What the resolver relies on, measured 2026-11-05:
  * - a complete link answers 302 in about 0.2s from the moment it streams: no warm-up
  * - 404 is final: expired (302 at 8 days, 404 by 58) or malformed; no throttling seen, failures are connection-level
  * - links stream in grounding chunks (final event), URL Context tool calls (mid-stream), and the text when the model lists
