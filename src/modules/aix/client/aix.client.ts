@@ -1,7 +1,7 @@
 import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers';
 import { ortWebToolsToAixModel } from '~/modules/llms/vendors/openrouter/openrouter.webtools';
 
-import { vertexAILinks } from '~/modules/google/vertexai.client';
+import { vertexLinksResolveFragments } from '~/modules/google/vertexai.client';
 
 import type { Immutable } from '~/common/types/immutable.types';
 import type { MaybePromise } from '~/common/types/useful.types';
@@ -13,7 +13,7 @@ import type { DMessageTerminalOutcome } from '~/common/stores/chat/chat.message.
 import { DMetricsChatGenerate_Lg, DMetricsChatGenerate_Md, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd, } from '~/common/stores/metrics/metrics.chatgenerate';
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { apiAsync, apiStream } from '~/common/util/trpc.client';
-import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, isContentFragment, isErrorPart, isVoidAnnotationsFragment } from '~/common/stores/chat/chat.fragments';
+import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import type { AIVndOaiBeamSandboxPolicy } from '~/common/stores/store-ai';
 import { getAixInspectorEnabled } from '~/common/stores/store-ui';
@@ -712,12 +712,11 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   if (metrics) dMessage.generator = { ...dMessage.generator, metrics };
   dMessage.pendingIncomplete = false;
 
-  // [#1114] Gemini/Vertex AI grounding redirect links: up to three bounded rounds before the final 'done' update, so every
-  // caller (chat, Beam scatter/fusion, reattach) gets the destinations atomically with completion; the chip resolves the
-  // rest on click (#1270). Truncated counts too: its partial content is shown, so its links resolve.
+  // [#1114] resolve Gemini/Vertex AI grounding redirect links before the final update, so every caller (chat, Beam, reattach)
+  // gets them with completion; truncated too, as its partial content is shown
   if ((outcome === 'completed' || outcome === 'truncated') && getVndGeminiVertexLinks() === 'resolve') {
-    const { replacements } = await vertexAILinks.resolveCitations(dMessage.fragments.filter(isVoidAnnotationsFragment));
-    if (replacements.size) dMessage.fragments = dMessage.fragments.map(fragment => replacements.get(fragment.fId) ?? fragment);
+    const { rewritten } = await vertexLinksResolveFragments(dMessage.fragments, clientOptions.abortSignal);
+    if (rewritten.length) dMessage.fragments = dMessage.fragments.map(fragment => rewritten.find(({ fId }) => fId === fragment.fId) ?? fragment);
   }
 
   // final update

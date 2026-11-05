@@ -24,12 +24,6 @@ const COLOR = 'neutral';
 const ENABLE_FAVICON_FIX_FOR_VERTEX = true; // Gemini returns links to VertexAiSearchCloud.com
 
 
-/** The destination once resolved, the redirect url until then. */
-function _citationUrl(citation: Immutable<DVoidWebCitation>): string {
-  return citation.resolvedUrl ?? citation.url;
-}
-
-/** Favicon source for an unresolved redirect link: its title is usually the domain. */
 function fixCitationUrl(url: string, title: string | undefined): string {
   if (!url) return '';
   if (ENABLE_FAVICON_FIX_FOR_VERTEX && url.startsWith('https://vertexaisearch') && title)
@@ -131,12 +125,11 @@ export function BlockPartModelAnnotations(props: {
     event.stopPropagation();
     const citationsText = annotationsRef.current
       .map((citation, index) => {
-        const url = _citationUrl(citation);
-        const domain = urlExtractDomain(url);
+        const domain = urlExtractDomain(citation.url);
         const refNumber = citation.refNumber ? `[${citation.refNumber}]` : `${index + 1}`;
         const title = citation.title || domain;
         const date = citation.pubTs ? ` (${new Date(citation.pubTs).toLocaleDateString()})` : '';
-        return `${refNumber} ${title}${date}\n${url}`;
+        return `${refNumber} ${title}${date}\n${citation.url}`;
       })
       .join('\n\n');
     copyToClipboard(citationsText, 'Citations');
@@ -148,10 +141,10 @@ export function BlockPartModelAnnotations(props: {
       '| # | Title | URL | Date |',
       '|---|-------|-----|------|',
       ...annotationsRef.current.map((citation, index) => {
-        const domain = urlExtractDomain(_citationUrl(citation));
+        const domain = urlExtractDomain(citation.url);
         const refNumber = citation.refNumber ? citation.refNumber : index + 1;
         const title = (citation.title || domain).replace(/\|/g, '\\|');
-        const url = _citationUrl(citation).replace(/\|/g, '\\|');
+        const url = citation.url.replace(/\|/g, '\\|');
         const date = citation.pubTs ? new Date(citation.pubTs).toLocaleDateString() : '';
         return `| ${refNumber} | ${title} | ${url} | ${date} |`;
       })
@@ -198,7 +191,7 @@ export function BlockPartModelAnnotations(props: {
 
         {/* Icons */}
         {!expanded && props.annotations.slice(0, MAX_ICONS).map((citation, index) => {
-          const citationUrl = citation.resolvedUrl ?? fixCitationUrl(citation.url, citation.title);
+          const citationUrl = fixCitationUrl(citation.url, citation.title);
           return (
             <TooltipOutlined key={index} title={citation.title || urlExtractDomain(citationUrl)}>
               <div>
@@ -260,14 +253,13 @@ export function BlockPartModelAnnotations(props: {
 
         <List sx={scaledStyles.citationsList}>
           {props.annotations.map((citation, index) => {
-            const url = _citationUrl(citation);
-            const domain = urlExtractDomain(url);
+            const domain = urlExtractDomain(citation.url);
 
             return (
               <ListItem key={index}>
                 <ListItemButton
                   component='a'
-                  href={url}
+                  href={citation.url}
                   target='_blank'
                   rel='noopener noreferrer'
                   sx={index < annotationsCount - 1 ? _styles.citationItem : _styles.citationItemLast}
@@ -277,13 +269,13 @@ export function BlockPartModelAnnotations(props: {
                   </Box>
 
                   <Box sx={_styles.line}>
-                    <AvatarDomainFavicon url={!expanded ? '' : citation.resolvedUrl ?? fixCitationUrl(citation.url, citation.title)} size={24} iconRes={64} />
+                    <AvatarDomainFavicon url={!expanded ? '' : fixCitationUrl(citation.url, citation.title)} size={24} iconRes={64} />
                     <Box sx={_styles.lineContent}>
                       <Box className='agi-ellipsize'>
                         {citation.title || domain}
                       </Box>
                       <Box sx={_styles.lineLink} className='agi-ellipsize'>
-                        {urlPrettyHref(url, true, true)}
+                        {urlPrettyHref(citation.url, true, true)}
                         {citation.pubTs && (
                           <span style={{ marginLeft: '0.5em' }}>
                             · {new Date(citation.pubTs).toLocaleDateString()}

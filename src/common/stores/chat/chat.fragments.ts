@@ -298,7 +298,7 @@ type DVoidModelAnnotationsPart = {
 export type DVoidWebCitation = {
   type: 'citation',
   url: string,
-  resolvedUrl?: string, // destination of a redirect url (Gemini grounding), resolved after generation; shown and copied in place of url
+  vndGemVertexUrl?: string, // the Gemini grounding redirect that url replaced once resolved, kept for a faithful replay
   title: string,
   refNumber?: number,
   pubTs?: number, // publication timestamp

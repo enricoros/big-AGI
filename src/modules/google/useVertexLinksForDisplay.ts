@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import type { DVoidPlaceholderMOp } from '~/common/stores/chat/chat.fragments';
 import { useAIPreferencesStore } from '~/common/stores/store-ai';
 
-import { vertexAILinks } from './vertexai.client';
+import { vertexLinksResolveUrls } from './vertexai.client';
 import { VERTEX_GROUNDING_REDIRECT_REGEX } from './vertexai.types';
 
 
@@ -26,8 +26,7 @@ export function useVertexLinksForDisplay(op: DVoidPlaceholderMOp): DVoidPlacehol
   const { data: destinations } = useQuery({
     queryKey: ['vertex-links-display', redirectUrls],
     enabled: redirectUrls.length > 0,
-    // one round through the session cache shared with the message resolver: a status that grows re-asks only for its new links
-    queryFn: async ({ signal }): Promise<ReadonlyMap<string, string>> => (await vertexAILinks.resolveUrls(redirectUrls, { maxRounds: 1, signal })).resolved,
+    queryFn: async ({ signal }) => (await vertexLinksResolveUrls(redirectUrls, signal)).destinations, // all rounds: the answer is kept for good
     placeholderData: keepPreviousData, // earlier destinations stay shown while a grown status loads
     staleTime: Infinity,
     gcTime: 5 * 60 * 1000,

@@ -77,27 +77,39 @@ export const googleSearchRouter = createTRPCRouter({
   /// Vertex AI - grounding redirect links - https://github.com/enricoros/big-AGI/issues/1114 ///
 
   /**
-   * Batch-resolves 'vertexaisearch.cloud.google.com/grounding-api-redirect/...' URLs (302 + Location).
-   * Server-side because the redirect host sends no CORS headers, so a browser cannot read the Location header.
-   * One deadline for the whole call: what is not answered by then comes back 'unknown' and the client asks again for
-   * just that, so a queued connection (the Edge runtime caps them per invocation) costs a round, never the batch.
+   * Batch-resolves grounding redirect links: the redirect host sends no CORS headers, so only a server can read the Location.
+   * One deadline per call: links without an answer by then come back 'unknown', for the client to ask again.
    */
   resolveGroundingRedirects: authedProcedure
     .input(z.object({
       urls: z.array(z.string().startsWith(VERTEX_GROUNDING_REDIRECT_PREFIX)).min(1).max(GROUNDING_MAX_URLS_PER_CALL),
       deadlineMs: z.number().int().max(GROUNDING_MAX_DEADLINE_MS).optional(),
     }))
-    .mutation(async ({ input }): Promise<{ resolutions: VertexLinkResolution[] }> => {
+    .mutation(async ({ input }) => {
+      const startMs = Date.now();
       const signal = AbortSignal.timeout(input.deadlineMs ?? GROUNDING_DEFAULT_DEADLINE_MS);
       const resolutions = await Promise.all(input.urls.map(async (url): Promise<VertexLinkResolution> => {
         try {
           const response = await fetch(url, { method: 'HEAD', redirect: 'manual', signal });
-          const location = (response.status >= 300 && response.status < 400) ? response.headers.get('location') : null;
-          return location?.startsWith('http') ? { url, outcome: 'resolved', resolved: location } : { url, outcome: 'dead' };
-        } catch {
-          return { url, outcome: 'unknown' }; // deadline or network
+          const location = response.headers.get('location');
+          if (response.status >= 300 && response.status < 400 && location?.startsWith('http'))
+            return { url, outcome: 'resolved', resolved: location };
+          return { url, outcome: response.status === 404 || response.status === 410 ? 'dead' : 'unknown', reason: `HTTP ${response.status}` };
+        } catch (error) {
+          return { url, outcome: 'unknown', reason: signal.aborted ? 'no answer in time' : String((error instanceof Error && error.cause) || error) };
         }
       }));
+
+      // server log: why links did not resolve, by reason
+      const reasons: Record<string, number> = {};
+      for (const answer of resolutions) {
+        if (answer.outcome === 'resolved') continue;
+        const reason = `${answer.outcome}: ${answer.reason}`;
+        reasons[reason] = (reasons[reason] ?? 0) + 1;
+      }
+      if (Object.keys(reasons).length)
+        console.log(`[Vertex AI links] unresolved in ${Date.now() - startMs}ms, of ${input.urls.length}:`, reasons);
+
       return { resolutions };
     }),
 
