@@ -196,8 +196,8 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     | 'dispatch-fetch'
     | 'dispatch-read'
     | 'dispatch-parse'
-  >, issueText: string, serverLog: ParticleServerLogLevel) {
-    this._addIssue(issueId, issueText, serverLog);
+  >, issueText: string, serverLog: ParticleServerLogLevel, httpStatus?: number /* [dispatch-fetch] upstream HTTP status, rides the issue particle for analytics */) {
+    this._addIssue(issueId, issueText, serverLog, httpStatus);
     this.setDispatchEnded('issue-dispatch-rpc');
   }
 
@@ -400,7 +400,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   /**
    * Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead
    */
-  private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, serverLog: ParticleServerLogLevel) {
+  private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, serverLog: ParticleServerLogLevel, httpStatus?: number) {
     if (serverLog || ENABLE_EXTRA_DEV_MESSAGES || SERVER_DEBUG_WIRE) {
       const logLevel = serverLog === 'srv-warn' ? 'warn' as const : 'log' as const;
       console[logLevel](`Aix.${this.prettyDialect} ${issueId}: ${issueText}`);
@@ -428,6 +428,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
       cg: 'issue',
       issueId,
       issueText,
+      ...(httpStatus && { issueHttpStatus: httpStatus }),
     });
   }
 
