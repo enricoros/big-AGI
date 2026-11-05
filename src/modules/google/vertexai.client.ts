@@ -1,151 +1,147 @@
 // Origin: https://github.com/enricoros/big-AGI/issues/1114
-// Client-side orchestration to resolve Gemini/Vertex AI grounding redirect links inside message fragments.
+// Client-side orchestration to resolve Gemini/Vertex AI grounding redirect links.
+//
+// The server only reads destinations (the redirect host sends no CORS headers, so a browser cannot). This module asks in
+// rounds for what is still unknown, remembers the answers for the session, and writes destinations into the citations,
+// never into the text the model produced: Gemini signs text parts (thoughtSignature on Argon's last text part, measured
+// 2026-11-04) and a signed part must replay byte-identical (#1270).
 
 import { apiAsync } from '~/common/util/trpc.client';
 
-import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
-import { getVndGeminiVertexLinks } from '~/common/stores/store-ai';
-import { isTextContentFragment, isVoidAnnotationsFragment } from '~/common/stores/chat/chat.fragments';
+import type { DMessageFragmentId, DVoidFragmentModelAnnotations } from '~/common/stores/chat/chat.fragments';
+import type { Immutable } from '~/common/types/immutable.types';
 
-import { VERTEX_GROUNDING_REDIRECT_PREFIX, VERTEX_GROUNDING_REDIRECT_REGEX } from './vertexai.types';
+import type { VertexLinkResolution } from './vertexai.types';
+import { VERTEX_GROUNDING_REDIRECT_PREFIX } from './vertexai.types';
 
 
 // configuration
-const MAX_URLS_PER_CALL = 64; // mirrors the server-side input limit
-const DEFAULT_TIMEOUT_MS = 5000; // generation pipelines (chat, Beam) are never blocked longer than this
+const MAX_URLS_PER_CALL = 32; // half the server limit (64): two calls in parallel keep each invocation's queue short
+const ROUNDS = [ // each round asks only for what is still unknown; a generation awaits them all, the chip runs them again on click
+  { delayMs: 0, deadlineMs: 3000 },
+  { delayMs: 1000, deadlineMs: 4000 },
+  { delayMs: 3000, deadlineMs: 4000 },
+] as const;
+const CALL_MARGIN_MS = 1500; // past the server deadline; the server has answered with partials by then, so this only covers a lost connection
+const EXPIRED_LINK_RECHECK_MS = 10 * 60 * 1000; // an expired link is not asked again before this
 
 
-export interface VertexLinksResolution {
-  /** Same array shape as the input; changed fragments are new objects with the same fId. */
-  newFragments: DMessageFragment[];
-  /** Only the fragments that changed, for per-fragment store replacement. */
-  changedFragments: { fragmentId: DMessageFragmentId; newFragment: DMessageFragment }[];
+// answers outlive the message: shared by the live search tooltips, the completion pass and the chip
+const _sessionCache = new Map<string, { destination: string } | { expiredUntil: number }>();
+
+interface _ResolveOptions {
+  maxRounds?: number;
+  signal?: AbortSignal; // cancels the server calls, e.g. a superseded display query
 }
 
-/**
- * Outcome of a resolve attempt. 'unresolved' (links present, but the redirect host no longer 302s -
- * typically because the links have aged out; confirmed to expire within ~8-58 days) is deliberately
- * distinct from 'failed' (the resolve request itself errored/timed out - transient, worth a retry).
- */
-export type VertexLinksOutcome =
-  | { status: 'resolved'; resolution: VertexLinksResolution }
-  | { status: 'none' }        // no redirect links present in the fragments
-  | { status: 'unresolved' }  // links present, but none could be resolved (likely expired)
-  | { status: 'failed' };     // resolve request failed or timed out (transient)
-
-
-/** Counts the unique unresolved redirect links in a message's fragments (text parts + citation annotations). */
-export function vertexLinksCountInFragments(fragments: readonly DMessageFragment[]): number {
-  return _collectRedirectUrls(fragments).size;
+interface _LinksResolution {
+  resolved: Map<string, string>;  // redirect url -> destination
+  expired: Set<string>;           // no redirect anymore
+  unknown: Set<string>;           // no answer within the rounds
 }
 
 
-/**
- * Policy-gated auto-resolution for the generation pipelines (chat, Beam rays, Beam merges, reattach):
- * no-op unless the 'Vertex AI Links' policy is 'resolve'.
- * Returns the rewritten fragments array, or null to keep the originals.
- */
-export async function vertexLinksAutoResolveFragments<TFragment extends DMessageFragment>(fragments: readonly TFragment[]): Promise<TFragment[] | null> {
-  if (getVndGeminiVertexLinks() !== 'resolve') return null;
-  const outcome = await vertexLinksResolveFragments(fragments);
-  // cast: the rewrite preserves each fragment's kind, only URL strings change
-  return outcome.status === 'resolved' ? outcome.resolution.newFragments as TFragment[] : null;
-}
+export const vertexAILinks = {
 
+  /** Redirect links in the citations fragments without a destination yet. */
+  unresolvedUrls(citations: Immutable<DVoidFragmentModelAnnotations[]>) {
+    const urls = new Set<string>();
+    for (const { part } of citations)
+      for (const { url, resolvedUrl } of part.annotations)
+        if (!resolvedUrl && url.startsWith(VERTEX_GROUNDING_REDIRECT_PREFIX))
+          urls.add(url);
+    return urls;
+  },
 
-/**
- * Resolves all Vertex AI grounding redirect links found in the given fragments, rewriting both
- * in-text markdown links and citation annotation URLs to their real destinations.
- *
- * Never throws. Reports its outcome via the discriminated VertexLinksOutcome - on anything other
- * than 'resolved' the caller proceeds with the original fragments (links that fail stay as-is and
- * remain detectable). Idempotent by construction: resolved links no longer match the redirect pattern.
- */
-export async function vertexLinksResolveFragments(fragments: readonly DMessageFragment[], timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<VertexLinksOutcome> {
+  /**
+   * Resolves the redirect links of citations fragments: one set of rounds for all their unknown links, then each fragment
+   * that gained destinations is rebuilt under its fId, the text untouched. `replacements` holds the rebuilt fragments only.
+   */
+  async resolveCitations(citations: readonly DVoidFragmentModelAnnotations[], options: _ResolveOptions = {}): Promise<{ replacements: Map<DMessageFragmentId, DVoidFragmentModelAnnotations>, resolution: _LinksResolution }> {
+    const resolution = await vertexAILinks.resolveUrls(vertexAILinks.unresolvedUrls(citations), options);
+    const replacements = new Map<DMessageFragmentId, DVoidFragmentModelAnnotations>();
+    for (const fragment of citations) {
+      const replacement = _applyResolutionsToCitationsFragment(fragment, resolution.resolved);
+      if (replacement !== fragment) replacements.set(fragment.fId, replacement);
+    }
+    return { replacements, resolution };
+  },
 
-  const redirectUrls = Array.from(_collectRedirectUrls(fragments));
-  if (!redirectUrls.length) return { status: 'none' };
+  /**
+   * Resolves redirect links in rounds: each round asks the server only for what is still unknown, with one deadline per
+   * call, and stops when a round makes no progress, a systemic failure another round would repeat.
+   * Never throws. Destinations the session already knows come back without a round.
+   */
+  async resolveUrls(redirectUrls: Iterable<string>, options: _ResolveOptions = {}): Promise<_LinksResolution> {
+    const now = Date.now();
 
-  const resolvedMap = await vertexLinksResolveUrls(redirectUrls, timeoutMs);
-  if (!resolvedMap) return { status: 'failed' };
-  // links present but none came back resolved: the redirect host no longer 302s, typically expiry
-  if (!resolvedMap.size) return { status: 'unresolved' };
-
-  // rewrite the fragments - new objects (same fId) only where something changed
-  const changedFragments: VertexLinksResolution['changedFragments'] = [];
-  const newFragments = fragments.map((fragment): DMessageFragment => {
-
-    // in-text markdown links: swap each redirect URL for its destination, leaving labels and the rest of the text intact
-    if (isTextContentFragment(fragment)) {
-      const newText = fragment.part.text.replace(VERTEX_GROUNDING_REDIRECT_REGEX, (url) => resolvedMap.get(url) || url);
-      if (newText === fragment.part.text) return fragment;
-      const newFragment: DMessageFragment = { ...fragment, part: { ...fragment.part, text: newText } };
-      changedFragments.push({ fragmentId: fragment.fId, newFragment });
-      return newFragment;
+    // initialize from the cache
+    const resolution: _LinksResolution = { resolved: new Map(), expired: new Set(), unknown: new Set() };
+    for (const url of redirectUrls) {
+      const cached = _sessionCache.get(url);
+      if (cached && 'destination' in cached) resolution.resolved.set(url, cached.destination);
+      else if (cached && cached.expiredUntil > now) resolution.expired.add(url);
+      else resolution.unknown.add(url);
     }
 
-    // citation annotations: swap the url, keep title/refNumber/ranges
-    if (isVoidAnnotationsFragment(fragment)) {
-      let anyChanged = false;
-      const annotations = fragment.part.annotations.map(annotation => {
-        const resolved = resolvedMap.get(annotation.url);
-        if (!resolved) return annotation;
-        anyChanged = true;
-        return { ...annotation, url: resolved };
-      });
-      if (!anyChanged) return fragment;
-      const newFragment: DMessageFragment = { ...fragment, part: { ...fragment.part, annotations } };
-      changedFragments.push({ fragmentId: fragment.fId, newFragment });
-      return newFragment;
+    for (const { delayMs, deadlineMs } of ROUNDS.slice(0, options.maxRounds ?? ROUNDS.length)) {
+      if (!resolution.unknown.size || options.signal?.aborted) break;
+      if (delayMs) await new Promise(resolve => setTimeout(resolve, delayMs));
+
+      let progressed = false;
+      for (const answer of await _askServerBatched([...resolution.unknown], MAX_URLS_PER_CALL, deadlineMs, options.signal)) {
+        if (answer.outcome === 'resolved') {
+          resolution.resolved.set(answer.url, answer.resolved);
+          _sessionCache.set(answer.url, { destination: answer.resolved });
+        } else if (answer.outcome === 'dead') {
+          resolution.expired.add(answer.url);
+          _sessionCache.set(answer.url, { expiredUntil: Date.now() + EXPIRED_LINK_RECHECK_MS });
+        } else
+          continue;
+        resolution.unknown.delete(answer.url);
+        progressed = true;
+      }
+      if (!progressed) break;
     }
 
-    return fragment;
+    return resolution;
+  },
+
+};
+
+
+function _applyResolutionsToCitationsFragment(fragment: Immutable<DVoidFragmentModelAnnotations>, resolvedMap: _LinksResolution['resolved']): Immutable<DVoidFragmentModelAnnotations> {
+  let changed = false;
+  const annotations = fragment.part.annotations.map(citation => {
+    const destination = resolvedMap.get(citation.url);
+    if (!destination || citation.resolvedUrl === destination) return citation;
+    changed = true;
+    return { ...citation, resolvedUrl: destination };
   });
-
-  return { status: 'resolved', resolution: { newFragments, changedFragments } };
+  return changed ? { ...fragment, part: { ...fragment.part, annotations } } : fragment;
 }
 
+async function _askServerBatched(urls: readonly string[], chunkSize: number, deadlineMs: number, signal?: AbortSignal): Promise<VertexLinkResolution[]> {
+  // join the signal with a timeout
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  const timer = setTimeout(abort, deadlineMs + CALL_MARGIN_MS);
+  signal?.addEventListener('abort', abort, { once: true });
 
-/** Shared by saved-message resolution and live status displays. Null means the request failed; an empty map means no links resolved. */
-export async function vertexLinksResolveUrls(redirectUrls: readonly string[], timeoutMs: number = DEFAULT_TIMEOUT_MS): Promise<Map<string, string> | null> {
-  // The redirect host sends no CORS headers, so the browser cannot read the redirects itself.
-  const resolvedMap = new Map<string, string>();
-  const timeoutController = new AbortController();
-  const timeout = setTimeout(() => timeoutController.abort(), timeoutMs);
   try {
+    // create chunks
     const chunks: string[][] = [];
-    for (let i = 0; i < redirectUrls.length; i += MAX_URLS_PER_CALL)
-      chunks.push(redirectUrls.slice(i, i + MAX_URLS_PER_CALL));
-    const responses = await Promise.all(chunks.map(urls =>
-      apiAsync.googleSearch.resolveGroundingRedirects.mutate({ urls }, { signal: timeoutController.signal }),
+    for (let i = 0; i < urls.length; i += chunkSize)
+      chunks.push(urls.slice(i, i + chunkSize));
+
+    // parallelize chunks
+    const calls = await Promise.allSettled(chunks.map(chunk =>
+      apiAsync.googleSearch.resolveGroundingRedirects.mutate({ urls: chunk, deadlineMs }, { signal: controller.signal }),
     ));
-    for (const { resolutions } of responses)
-      for (const { url, resolved } of resolutions)
-        if (resolved)
-          resolvedMap.set(url, resolved);
-    return resolvedMap;
-  } catch (error) {
-    console.warn('[DEV] vertexLinksResolveUrls: resolution failed', { error });
-    return null;
+
+    return calls.flatMap(call => call.status === 'fulfilled' ? call.value.resolutions : [] /* a lost chunk stays unknown */);
   } finally {
-    clearTimeout(timeout);
+    clearTimeout(timer);
+    signal?.removeEventListener('abort', abort);
   }
-}
-
-
-function _collectRedirectUrls(fragments: readonly DMessageFragment[]): Set<string> {
-  const urls = new Set<string>();
-  for (const fragment of fragments) {
-    if (isTextContentFragment(fragment)) {
-      // fast-path the common (no-link) case: a literal substring check before the regex walk
-      if (!fragment.part.text.includes('vertexaisearch')) continue;
-      for (const match of fragment.part.text.matchAll(VERTEX_GROUNDING_REDIRECT_REGEX))
-        urls.add(match[0]);
-    } else if (isVoidAnnotationsFragment(fragment)) {
-      for (const annotation of fragment.part.annotations)
-        if (annotation.url.startsWith(VERTEX_GROUNDING_REDIRECT_PREFIX))
-          urls.add(annotation.url);
-    }
-  }
-  return urls;
 }

@@ -6,13 +6,31 @@ export const VERTEX_GROUNDING_REDIRECT_PREFIX = 'https://vertexaisearch.cloud.go
 // matches the full redirect URL: prefix + base64url-ish token (e.g. 'AUZIYQH...xx7==')
 export const VERTEX_GROUNDING_REDIRECT_REGEX = /https:\/\/vertexaisearch\.cloud\.google\.com\/grounding-api-redirect\/[A-Za-z0-9_=-]+/g;
 
+/**
+ * One answer per URL from the server resolver:
+ * - resolved: the destination, in `resolved` for clients from before this shape
+ * - dead: no redirect anymore, the link expired (lifetime note below)
+ * - unknown: no answer before the call's deadline, or a network error - ask again
+ */
+export type VertexLinkResolution =
+  | { url: string, outcome: 'resolved', resolved: string }
+  | { url: string, outcome: 'dead' }
+  | { url: string, outcome: 'unknown' };
+
 /*
+ * MEASURED 2026-11-04, 94 fresh links from gemini-2.5-flash and gemini-4-argon, residential connection: HEAD answers in
+ * 0.2s (p50) to 0.37s (p99), always 302; a 272-request burst at 64-way concurrency drew no throttling. Neither the redirect
+ * hop nor the destinations send CORS headers, so only a server can read the Location. Hence the budgets: a 3-4s call
+ * deadline covers 64 links even through a 6-connection queue (11 waves of 0.2s), and what a queue leaves unanswered costs
+ * one more round, never the batch. In the captured streams grounding arrives on the final event only, chunks carry
+ * web.title and web.uri only, no URI repeats, and the body text holds no redirect links.
+ *
  * MAINTENANCE - redirect link lifetime is UNDOCUMENTED by Google, re-verify periodically.
  * CONFIRMED: links DO expire. Observed window (as of 2026-06-19): alive at ~8d, dead (404) by ~58d.
  *
- * If these links expire, resolution of OLD messages silently degrades: the server returns null
+ * If these links expire, resolution of OLD messages silently degrades: the server answers 'dead'
  * (non-302 response) and the links are kept as-is, so the manual 'Resolve N Vertex AI links'
- * button on aged chats would always fail. Resolution at generation time (policy 'resolve') is
+ * button on aged chats reports expired links. Resolution at generation time (policy 'resolve') is
  * unaffected, as it runs while links are seconds old.
  *
  * To test, HEAD a dated sample below and expect '302' with the matching 'location:' header:

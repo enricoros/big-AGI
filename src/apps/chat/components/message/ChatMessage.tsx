@@ -13,7 +13,6 @@ import type { AixReattachMode } from '~/modules/aix/client/aix.client';
 import type { AutoBlocksHtmlRenderVariant } from '~/modules/blocks/AutoBlocksRenderer';
 import { ModelVendorAnthropic } from '~/modules/llms/vendors/anthropic/anthropic.vendor';
 import { useERCDiffActions } from '~/modules/blocks/enhanced-code/ERCDiffContext';
-import { vertexLinksCountInFragments, vertexLinksResolveFragments } from '~/modules/google/vertexai.client';
 
 import { DMessage, DMessageGenerator, DMessageId, DMessagePresentation, DMessageRole, DMessageUserFlag, DMetaReferenceItem, MESSAGE_FLAG_AIX_SKIP, MESSAGE_FLAG_NOTIFY_COMPLETE, MESSAGE_FLAG_STARRED, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageFragmentsInFluxId, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { messageOutcome, messageOutcomeColor } from '~/common/stores/chat/chat.message.outcome';
@@ -22,7 +21,7 @@ import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { adjustContentScaling, themeScalingMap } from '~/common/app.theme';
 import { avatarIconSx, makeMessageAvatarIcon, messageBackground, useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 import { clipboardCopyDOMSelectionOrFallback, copyToClipboard } from '~/common/util/clipboardUtils';
-import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isTextContentFragment, reorderFragmentsInSlots, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageFragment, DMessageFragmentId, isContentFragment, isTextContentFragment, isVoidAnnotationsFragment, reorderFragmentsInSlots, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 import { findFirstUserPromptFragment } from '~/common/stores/chat/chat.fragment-order';
 import { resolveMessagePresentation } from '~/common/stores/chat/chat.message.presentation';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
@@ -30,7 +29,7 @@ import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 import { BlockOpContinue } from './BlockOpContinue';
 import { BlockOpOptions } from './BlockOpOptions';
-import { BlockOpResolveLinks } from './BlockOpResolveLinks';
+import { BlockOpResolveVertexAILinks } from './BlockOpResolveVertexAILinks';
 import { BlockOpUpstreamResume } from './BlockOpUpstreamResume';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { ChatMessageInfoPopup } from './ChatMessageInfoPopup';
@@ -438,12 +437,8 @@ export function ChatMessage(props: {
   const fragmentFlattenedText = React.useMemo(() => messageFragmentsReduceText(messageFragments), [messageFragments]);
   const userPromptText = React.useMemo(() => findFirstUserPromptFragment(messageFragments)?.part.text ?? '', [messageFragments]);
   const contentFragments = React.useMemo(() => messageFragments.filter(isContentFragment), [messageFragments]);
+  const citationsFragments = React.useMemo(() => messageFragments.filter(isVoidAnnotationsFragment), [messageFragments]);
   const handleHighlightSelText = useSelHighlighterMemo(messageId, selText, contentFragments, fromAssistant, onMessageFragmentReplace);
-
-  // [#1114] Vertex AI grounding redirect links present in this message (skip the scan while streaming - the button is gated on completion anyway)
-  const vertexLinksCount = React.useMemo(() => {
-    return fromAssistant && !messagePendingIncomplete ? vertexLinksCountInFragments(messageFragments) : 0;
-  }, [fromAssistant, messagePendingIncomplete, messageFragments]);
 
   const textSubject = selText ? selText : fragmentFlattenedText;
   const t2iSubject = selText ?? userPromptText;
@@ -487,22 +482,6 @@ export function ChatMessage(props: {
   const handleFragmentsReorder = React.useCallback((reorderedIds: DMessageFragmentId[]) => {
     editFragments(fragments => reorderFragmentsInSlots(fragments, reorderedIds));
   }, [editFragments]);
-
-  const handleResolveVertexLinks = React.useCallback(async () => {
-    const outcome = await vertexLinksResolveFragments(messageFragments);
-    switch (outcome.status) {
-      case 'resolved':
-        for (const { fragmentId, newFragment } of outcome.resolution.changedFragments)
-          onMessageFragmentReplace?.(messageId, fragmentId, newFragment);
-        return undefined; // success
-      case 'unresolved':
-        return 'Links may have expired'; // aged out (no retry hint - retrying won't help)
-      case 'failed':
-        return 'Could not resolve - retry'; // transient: network/timeout
-      case 'none':
-        return undefined; // nothing to resolve (button shouldn't be showing)
-    }
-  }, [messageFragments, messageId, onMessageFragmentReplace]);
 
   const handleMessageContinue = React.useCallback((continueText: null | string) => {
     onMessageContinue?.(messageId, continueText);
@@ -1037,12 +1016,12 @@ export function ChatMessage(props: {
             onReattachAsFile={props.onReattachAsFile}
           />
 
-          {/* [#1114] Resolve Vertex AI grounding redirect links in place */}
-          {vertexLinksCount >= 1 && !messagePendingIncomplete && !isEditingText && !!onMessageFragmentsReplace && (
-            <BlockOpResolveLinks
+          {/* [#1114] Resolve the Vertex AI grounding redirect links left by the completion pass, into the citations */}
+          {citationsFragments.length > 0 && fromAssistant && !messagePendingIncomplete && !isEditingText && !!onMessageFragmentsReplace && (
+            <BlockOpResolveVertexAILinks
               contentScaling={adjContentScaling}
-              linksCount={vertexLinksCount}
-              onResolve={handleResolveVertexLinks}
+              citations={citationsFragments}
+              onFragmentReplace={handleFragmentReplace}
             />
           )}
 

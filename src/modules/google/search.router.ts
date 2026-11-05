@@ -6,12 +6,14 @@ import { env } from '~/server/env.server';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
 import type { Search } from './search.types';
+import type { VertexLinkResolution } from './vertexai.types';
 import { VERTEX_GROUNDING_REDIRECT_PREFIX } from './vertexai.types';
 
 
 // configuration (Vertex AI grounding links)
 const GROUNDING_MAX_URLS_PER_CALL = 64;
-const GROUNDING_PER_URL_TIMEOUT_MS = 4000;
+const GROUNDING_DEFAULT_DEADLINE_MS = 4000;
+const GROUNDING_MAX_DEADLINE_MS = 8000;
 
 
 export const googleSearchRouter = createTRPCRouter({
@@ -77,20 +79,23 @@ export const googleSearchRouter = createTRPCRouter({
   /**
    * Batch-resolves 'vertexaisearch.cloud.google.com/grounding-api-redirect/...' URLs (302 + Location).
    * Server-side because the redirect host sends no CORS headers, so a browser cannot read the Location header.
-   * Failed/expired/timed-out links resolve to null and are kept as-is by the client.
+   * One deadline for the whole call: what is not answered by then comes back 'unknown' and the client asks again for
+   * just that, so a queued connection (the Edge runtime caps them per invocation) costs a round, never the batch.
    */
   resolveGroundingRedirects: authedProcedure
     .input(z.object({
       urls: z.array(z.string().startsWith(VERTEX_GROUNDING_REDIRECT_PREFIX)).min(1).max(GROUNDING_MAX_URLS_PER_CALL),
+      deadlineMs: z.number().int().max(GROUNDING_MAX_DEADLINE_MS).optional(),
     }))
-    .mutation(async ({ input }): Promise<{ resolutions: { url: string, resolved: string | null }[] }> => {
-      const resolutions = await Promise.all(input.urls.map(async (url) => {
+    .mutation(async ({ input }): Promise<{ resolutions: VertexLinkResolution[] }> => {
+      const signal = AbortSignal.timeout(input.deadlineMs ?? GROUNDING_DEFAULT_DEADLINE_MS);
+      const resolutions = await Promise.all(input.urls.map(async (url): Promise<VertexLinkResolution> => {
         try {
-          const response = await fetch(url, { method: 'HEAD', redirect: 'manual', signal: AbortSignal.timeout(GROUNDING_PER_URL_TIMEOUT_MS) });
+          const response = await fetch(url, { method: 'HEAD', redirect: 'manual', signal });
           const location = (response.status >= 300 && response.status < 400) ? response.headers.get('location') : null;
-          return { url, resolved: location?.startsWith('http') ? location : null };
+          return location?.startsWith('http') ? { url, outcome: 'resolved', resolved: location } : { url, outcome: 'dead' };
         } catch {
-          return { url, resolved: null };
+          return { url, outcome: 'unknown' }; // deadline or network
         }
       }));
       return { resolutions };
