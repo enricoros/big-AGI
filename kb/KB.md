@@ -10,6 +10,9 @@ Architecture and system documentation is available in the `/kb/` knowledge base,
 
 ### Modules Documentation
 
+#### Blocks - Fenced code pre-pass
+- **[BLOCKS-fence-parser.md](modules/BLOCKS-fence-parser.md)** - the opener rule and why it is a loop predicate (WebKit lookbehind cost), the corpus and its promotion rule, measured alternatives, open rows (#983 close side, CRLF, containers)
+
 #### Chat - Message rendering
 - **[CHAT-render-tree.md](modules/CHAT-render-tree.md)** - the render tree behind ChatMessage: rules in force (citation hoist, fused runs, tool pairing, edit mode shape, key continuity, layout), open work (attachments editor, edit session, block reordering, citation-split text), known limits
 

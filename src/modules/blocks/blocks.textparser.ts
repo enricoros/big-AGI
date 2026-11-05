@@ -26,6 +26,9 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
     // codeBlock: /`{3,}([^\n`]*)\n([\s\S]*?)(`{3,}(?=[ *\n]|$)|$)/g, // length-agnostic close: broke nested fences (any >=3 close)
     // capture the opening fence (g1) and require the close to be at least as long (\1`*), per CommonMark.
     // no-op for 3-backtick fences (the norm); only activates to keep nested fences (````md ... ``` ... ````) together.
+    // The opener rule (a fence opens at the start of its line, or mid-line only when glued) is a predicate in the loop
+    // below, not part of this regex: a lookbehind-led form measured 10-40x slower on Safari, whose regex JIT skips
+    // lookbehind. Corpus: blocks.textparser.test.ts. Rule, alternatives, measurements: kb/modules/BLOCKS-fence-parser.md
     codeBlock: /(`{3,})([^\n`]*)\n([\s\S]*?)(\1`*(?=[ *\n]|$)|$)/g,
     htmlCodeBlock: /<!DOCTYPE html>([\s\S]*?)<\/html>/gi,
     svgBlock: /<svg (xmlns|width|viewBox)=([\s\S]*?)<\/svg>/g,
@@ -33,6 +36,7 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
 
   const blocks: RenderBlockInputs = [];
   let lastIndex = 0;
+  let fenceSearchFrom = 0; // fence candidates rejected by the opener rule are skipped, not consumed
 
   while (true) {
 
@@ -43,7 +47,7 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
 
     for (const type in regexPatterns) {
       const regex = regexPatterns[type as keyof typeof regexPatterns];
-      regex.lastIndex = lastIndex;
+      regex.lastIndex = type === 'codeBlock' ? Math.max(lastIndex, fenceSearchFrom) : lastIndex;
       const currentMatch = regex.exec(text);
       if (currentMatch && (earliestMatchIndex === null || currentMatch.index < earliestMatchIndex)) {
         match = currentMatch;
@@ -53,6 +57,16 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
     }
     if (match === null)
       break;
+
+    // opener rule: a fence opens a block at the start of its line (indent and list marker allowed), or mid-line only
+    // when glued (newline or the info string right after the ticks). A mid-line fence followed by a space is prose (#1280).
+    if (matchType === 'codeBlock' && /^\s/.test(match[2] || '')) {
+      const linePrefix = text.slice(text.lastIndexOf('\n', match.index - 1) + 1, match.index);
+      if (!/^[ \t]*(?:(?:[-*+]|\d{1,9}[.)])[ \t]+)?$/.test(linePrefix)) {
+        fenceSearchFrom = match.index + 1;
+        continue;
+      }
+    }
 
     // anything leftover before the match is text
     if (match.index > lastIndex)
