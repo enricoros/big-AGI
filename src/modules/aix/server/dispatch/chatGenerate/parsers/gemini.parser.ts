@@ -42,7 +42,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
   let timeToFirstEvent: number;
   let collapsedTextPartForReasoning = false;
   let skipComputingTotalsOnce = isStreaming;
-  let groundingIndexNumber = 0;
+  const groundingRefNumbers = new Map<string, number>(); // citation number per URI, first appearance
   let nCodeExec = 0;
 
   // this can throw, it's caught by the caller
@@ -339,7 +339,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
          * - follow up Google Search queries (.webSearchQueries) for suggested refinements
          */
         for (const { web } of candidate0.groundingMetadata.groundingChunks)
-          pt.appendUrlCitation(web.title, web.uri, ++groundingIndexNumber, undefined, undefined, undefined, undefined);
+          pt.appendUrlCitation(web.title, web.uri, _citationRefNumber(groundingRefNumbers, web.uri), undefined, undefined, undefined, undefined);
       }
 
       // -> Candidates[0] -> URL Context Metadata
@@ -347,7 +347,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
         for (const urlMeta of candidate0.urlContextMetadata.urlMetadata) {
           // Only add URLs that were successfully retrieved
           if (urlMeta.urlRetrievalStatus === 'URL_RETRIEVAL_STATUS_SUCCESS')
-            pt.appendUrlCitation('', urlMeta.retrievedUrl, ++groundingIndexNumber, undefined, undefined, undefined, undefined);
+            pt.appendUrlCitation('', urlMeta.retrievedUrl, _citationRefNumber(groundingRefNumbers, urlMeta.retrievedUrl), undefined, undefined, undefined, undefined);
           else if (urlMeta.urlRetrievalStatus !== 'URL_RETRIEVAL_STATUS_UNSPECIFIED')
             console.warn(`[Gemini] URL retrieval ${urlMeta.urlRetrievalStatus}: ${urlMeta.retrievedUrl}`); // log for debugging
         }
@@ -580,4 +580,17 @@ function _gemPriceMultiplier(serviceTier: string | null | undefined): number | u
     default:
       return undefined;
   }
+}
+
+
+/**
+ * Citation numbers follow first appearance, one per URI: grounding chunks repeat across stream events (and a page across
+ * chunks), the client coalesces citations by URL, so a running counter left gaps and a top number above the count (#1270).
+ */
+function _citationRefNumber(refNumbers: Map<string, number>, uri: string): number {
+  const existing = refNumbers.get(uri);
+  if (existing !== undefined) return existing;
+  const refNumber = refNumbers.size + 1;
+  refNumbers.set(uri, refNumber);
+  return refNumber;
 }
