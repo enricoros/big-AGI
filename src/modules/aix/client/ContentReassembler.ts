@@ -1214,7 +1214,7 @@ export class ContentReassembler {
     }));
   }
 
-  private onAixRetryReset({ rScope, rClearStrategy, attempt, maxAttempts, delayMs, reason, causeHttp, causeConn }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'aix-retry-reset' }>): void {
+  private onAixRetryReset({ rScope, rClearStrategy, attempt, maxAttempts, delayMs, reason, causeHttp, causeConn, calm }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'aix-retry-reset' }>): void {
     const _prevFragments = DEBUG_FLOW ? this.S.fragments.length : 0;
     switch (rClearStrategy) {
       case 'none':
@@ -1223,9 +1223,8 @@ export class ContentReassembler {
         break;
 
       case 'since-checkpoint':
-        // atomic restore to checkpoint (fall back to initial state if no checkpoint)
-        if (!this.checkpointState)
-          console.warn('[ContentReassembler] since-checkpoint restore with no checkpoint - falling back to full clear');
+        // atomic restore: to the last continuation checkpoint ('flow-cont'), keeping the turns before the failed one; with no
+        // checkpoint this is the first turn, and restarting the answer from the initial state is the intended reset
         Object.assign(this.S, structuredClone(this.checkpointState ?? this.initialState));
         this.wireParticlesBacklog.length = 0; // should have been drained/completed already
         if (DEBUG_FLOW) console.log(`[DEV] [flow] retry-reset ${rScope}: since-checkpoint (${_prevFragments} -> ${this.S.fragments.length} fragments) - ${reason}`);
@@ -1259,6 +1258,7 @@ export class ContentReassembler {
       rAttempt: attempt,
       ...(causeHttp ? { rCauseHttp: causeHttp } : undefined),
       ...(causeConn ? { rCauseConn: causeConn } : undefined),
+      ...(calm && { rCalm: true }),
     }));
   }
 

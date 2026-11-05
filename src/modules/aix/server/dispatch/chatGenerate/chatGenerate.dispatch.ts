@@ -59,8 +59,9 @@ export type ChatGenerateDispatchRequest =
   | { url: string, headers: HeadersInit, method: 'GET' };
 
 export type ChatGenerateParseContext = {
-  // whether the operation retrier has attempts left for an error of this HTTP(-equivalent) class - parsers throw OperationRetrySignal only if true
-  hasRetriesForHttpStatus: (httpStatus?: number) => boolean;
+  // whether the operation retrier has attempts left for an error of this class: the HTTP(-equivalent) status, or the upstream code when
+  // one has a profile of its own (upstreamRetryProfile) - parsers throw OperationRetrySignal only if true, carrying the same status and code
+  hasRetriesForHttpStatus: (httpStatus?: number, upstreamCode?: string) => boolean;
 };
 
 export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, eventData: string, eventName?: string, context?: ChatGenerateParseContext) => void;

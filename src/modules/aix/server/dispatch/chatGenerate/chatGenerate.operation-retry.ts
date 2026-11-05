@@ -45,7 +45,7 @@ export class OperationRetrySignal extends Error {
  * Retries entire operation when OperationRetrySignal is thrown (e.g., Anthropic overloaded_error).
  *
  * The attempt budget depends on the class of the error (see RETRY_PROFILES), which is only
- * known when the parser classifies it: hence parsers ask `hasRetriesForHttpStatus(causeHttp)` before throwing, and otherwise
+ * known when the parser classifies it: hence parsers ask `hasRetriesForHttpStatus(causeHttp, causeConn)` before throwing, and otherwise
  * surface the error themselves, with their own wording and log level.
  */
 export async function* executeChatGenerateWithOperationRetry(
@@ -55,9 +55,9 @@ export async function* executeChatGenerateWithOperationRetry(
 ): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
 
   let attemptNumber = 1;
-  const maxAttemptsFor = (causeHttp?: number) => AIX_DISABLE_OPERATION_RETRY ? 1 : upstreamRetryProfile(causeHttp).maxAttempts;
+  const maxAttemptsFor = (causeHttp?: number, causeConn?: string) => AIX_DISABLE_OPERATION_RETRY ? 1 : upstreamRetryProfile(causeHttp, causeConn).maxAttempts;
   const parseContext: ChatGenerateParseContext = {
-    hasRetriesForHttpStatus: (causeHttp) => attemptNumber < maxAttemptsFor(causeHttp),
+    hasRetriesForHttpStatus: (causeHttp, causeConn) => attemptNumber < maxAttemptsFor(causeHttp, causeConn),
   };
 
   while (true) {
@@ -87,8 +87,8 @@ export async function* executeChatGenerateWithOperationRetry(
       }
 
       // sanity: exhausted attempts - must be a Parser error - as it shall have not thrown in this case (hasRetriesForHttpStatus was false)
-      const profile = upstreamRetryProfile(error.causeHttp);
-      const maxAttempts = maxAttemptsFor(error.causeHttp);
+      const profile = upstreamRetryProfile(error.causeHttp, error.causeConn);
+      const maxAttempts = maxAttemptsFor(error.causeHttp, error.causeConn);
       if (attemptNumber >= maxAttempts) {
         if (AIX_DEBUG_OPERATION_RETRY)
           console.warn(`[operation.retrier] ⚠️ Retry error on final attempt (parser bug?) - ${error?.message || error}`);
@@ -110,6 +110,7 @@ export async function* executeChatGenerateWithOperationRetry(
         attempt: attemptNumber, maxAttempts: maxAttempts, delayMs: delayMs,
         ...(error.causeHttp ? { causeHttp: error.causeHttp } : undefined),
         ...(error.causeConn ? { causeConn: error.causeConn } : undefined),
+        ...(profile.calm && { calm: true }),
       };
 
       // If aborted during delay, let next attempt detect it and create proper terminating particle

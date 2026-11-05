@@ -48,11 +48,12 @@ export function openAIUpstreamErrorLogLevel(error: null | undefined | { code?: s
  *  Above both, AixStreamRetry covers transport drops only and runs with 0 attempts: what this stack gives up on is final.
  *
  * What the status does. The retrier does not decide on it, it picks the schedule by it (upstreamRetryProfile, one table
- * shared with the connect retrier):
+ * shared with the connect retrier), unless the upstream code names a condition with a profile of its own:
  *    429  -> rateLimited: 6 attempts, ~2s..20s between them, ~50s in all (a per-minute window has to roll)
  *    529  -> overloaded:  6 attempts, ~1s..15s, ~30s in all (load shedding clears in tens of seconds)
  *    else -> transient:   4 attempts, ~1s, 2s, 4s, ~7s in all (a blip clears in seconds, or it is not clearing)
- * The parser asks context.hasRetriesForHttpStatus(status) before throwing: on the last attempt the answer is false and
+ *    code 'resource_unavailable' -> flexBusy: 4 attempts, ~2s, 4s, 8s, ~14s in all, shown calmly (the row below)
+ * The parser asks context.hasRetriesForHttpStatus(status, code) before throwing: on the last attempt the answer is false and
  * the parser surfaces the vendor text itself, at openAIUpstreamErrorLogLevel - so a classified code also needs its row
  * in the log-level table above, or the final failure logs as a suspected adapter bug. The status also rides the particle
  * as causeHttp, the code as causeConn, for analytics.
@@ -72,22 +73,23 @@ export function openAIUpstreamErrorLogLevel(error: null | undefined | { code?: s
  *    6 to 15+ minutes into an open stream: https://github.com/enricoros/big-AGI/issues/1211#issuecomment-6655396725.
  *    OpenAI documents it as an HTTP 429 Resource Unavailable, not billed, to be handled with "exponential backoff, or
  *    retry with service_tier auto/default"; on a streaming request it arrives in-band instead, an 'error' event with
- *    code 'resource_unavailable', since the 200 was committed at admission. Classified 500, the transient class, on purpose:
- *      - it is not a rate limit on the key. The rateLimited budget (~50s) is sized for a per-minute window to roll,
- *        which has no bearing on a capacity shortage, and would hold a Beam of N rays for most of a minute.
- *      - the overloaded class (~30s) fits the mechanics but not the tier: flex is best effort by contract, and the
- *        vendor text names the way out (standard processing). Three quick retries over ~7s catch a momentary gap,
- *        then the user reads that text and decides.
+ *    code 'resource_unavailable', since the 200 was committed at admission. Reported as 429, the documented status, as
+ *    the analytics cause. The retry class is not the status's: the code selects a profile of its own, 'flexBusy' in the
+ *    shared table - a busy best-effort tier is expected, not a fault, so a few spaced retries, a calm status named after
+ *    the tier, then the vendor text, which names the way out. It is not a rate limit on the key (the rateLimited budget
+ *    waits for a per-minute window to roll, which has no bearing on a capacity shortage, and would hold a Beam of N rays
+ *    for most of a minute), and not an overload either (flex is best effort by contract).
+ *    Hence the OpenAI call sites pass the code along with the status, to hasRetriesForHttpStatus and as the signal's
+ *    causeConn: the parser and the retrier must size the attempts from the same profile. At admission the same shortage
+ *    is an HTTP 429 with the same body code: the connect retrier matches it by httpErrorCode onto the same profile.
  *    Not done here: falling back to the standard tier by ourselves. The retrier re-runs the same dispatch; a tier switch
  *    is a different request at a different price, the user's call through the per-model service tier setting.
- *    At admission the same shortage is an HTTP 429 with the same body code: the connect retrier below matches it by
- *    httpErrorCode and gives it the same transient class, so both forms retry 3 times.
  */
 export function openAITransientErrorToHttpStatus(error: null | undefined | { type?: string | null, code?: string | number | null, message?: string | null }): 429 | 500 | 529 | undefined {
   const names = [error?.code, error?.type];
   if (names.includes('rate_limit_exceeded') || /processing too many requests/i.test(error?.message || '')) return 429;
   if (names.includes('server_is_overloaded') || names.includes('service_unavailable_error')) return 529;
   if (names.includes('server_error')) return 500;
-  if (names.includes('resource_unavailable')) return 500;
+  if (names.includes('resource_unavailable')) return 429;
   return undefined;
 }

@@ -806,8 +806,9 @@ function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usa
 function _transmitOrRetryUpstreamError(error: { type?: string | null, code?: string | number | null, message?: string | null }, errorText: string, pt: IParticleTransmitter, retryContext: ChatGenerateParseContext | undefined): void {
   const status = typeof error.code === 'number' ? error.code : typeof error.code === 'string' ? Number(error.code) : NaN;
   const retryHttpStatus: 429 | 500 | 502 | 529 | undefined = status === 429 ? 429 : status === 502 ? 502 : openAITransientErrorToHttpStatus(error);
-  if (retryHttpStatus && retryContext?.hasRetriesForHttpStatus(retryHttpStatus))
-    throw new OperationRetrySignal(errorText, { causeHttp: retryHttpStatus, causeConn: typeof error.code === 'string' ? error.code : undefined });
+  const retryUpstreamCode = typeof error.code === 'string' ? error.code : undefined;
+  if (retryHttpStatus && retryContext?.hasRetriesForHttpStatus(retryHttpStatus, retryUpstreamCode))
+    throw new OperationRetrySignal(errorText, { causeHttp: retryHttpStatus, causeConn: retryUpstreamCode });
   pt.setDialectTerminatingIssue(errorText, IssueSymbols.Generic, openAIUpstreamErrorLogLevel(error));
 }
 

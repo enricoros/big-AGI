@@ -451,7 +451,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
 
         // Genuine failure: retry if transient (the deferred mid-stream 'error' lands here when the message didn't complete), else surface the error
         const failedRetryHttpStatus = openAITransientErrorToHttpStatus(failedError);
-        if (failedRetryHttpStatus && context?.hasRetriesForHttpStatus(failedRetryHttpStatus))
+        if (failedRetryHttpStatus && context?.hasRetriesForHttpStatus(failedRetryHttpStatus, failedError?.code))
           throw new OperationRetrySignal(failedText, { causeHttp: failedRetryHttpStatus, causeConn: failedError?.code });
 
         pt.setTokenStopReason('cg-issue');
@@ -845,8 +845,9 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
 
         // Transient and retries left: unwind to the operation retrier (#1210)
         const retryHttpStatus = openAITransientErrorToHttpStatus(event.error ?? event);
-        if (retryHttpStatus && context?.hasRetriesForHttpStatus(retryHttpStatus))
-          throw new OperationRetrySignal(errorText, { causeHttp: retryHttpStatus, causeConn: errorCode });
+        const retryUpstreamCode = [event.error?.code, event.code].find((c): c is string => typeof c === 'string'); // the machine code (errorText leads with the type, as OpenAI's own messages do)
+        if (retryHttpStatus && context?.hasRetriesForHttpStatus(retryHttpStatus, retryUpstreamCode))
+          throw new OperationRetrySignal(errorText, { causeHttp: retryHttpStatus, causeConn: retryUpstreamCode ?? errorCode });
 
         // Nothing to salvage - fail now (and seal, so the trailing 'response.failed' echo doesn't re-report)
         R.markResponseSealed();
@@ -1305,8 +1306,9 @@ function _forwardResponseErrorNS(parsedData: any, pt: IParticleTransmitter, cont
 
   // Transient and retries left: unwind to the operation retrier (#1210)
   const retryHttpStatus = openAITransientErrorToHttpStatus(error);
-  if (retryHttpStatus && context?.hasRetriesForHttpStatus(retryHttpStatus))
-    throw new OperationRetrySignal(errorText, { causeHttp: retryHttpStatus, causeConn: typeof error.code === 'string' ? error.code : undefined });
+  const retryUpstreamCode = typeof error.code === 'string' ? error.code : undefined;
+  if (retryHttpStatus && context?.hasRetriesForHttpStatus(retryHttpStatus, retryUpstreamCode))
+    throw new OperationRetrySignal(errorText, { causeHttp: retryHttpStatus, causeConn: retryUpstreamCode });
 
   // Transmit the error as text - note: throw if you want to transmit as 'error'
   pt.setDialectTerminatingIssue(errorText, IssueSymbols.Generic, openAIUpstreamErrorLogLevel(error));
