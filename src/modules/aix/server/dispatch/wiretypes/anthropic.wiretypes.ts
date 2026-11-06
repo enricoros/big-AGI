@@ -349,13 +349,12 @@ export namespace AnthropicWire_Blocks {
       z.string(), // forward-compatibility parsing
     ]),
     input: z.union([
-      z.object({ query: z.string() }), // web_search
+      z.object({ query: z.string(), limit: z.number().optional() }), // web_search, tool_search_tool_bm25 (limit: the result cap, 1-10000, default 5)
       z.object({ url: z.string(), use_cache: z.boolean().optional() }), // web_fetch (use_cache: the model's per-call cache bypass, seen 2026-09-24 on the _20260318 tool)
       z.object({ code: z.string() }), // code_execution
-      z.object({ command: z.string() }), // bash_code_execution
+      z.looseObject({ command: z.string() }), // bash_code_execution (loose: text_editor inputs match here first and keep their keys)
       z.object({ command: z.string(), path: z.string() }), // text_editor_code_execution (+ file_text, old_str, new_str, view_range, etc.)
-      z.object({ pattern: z.string() }), // tool_search_tool_regex
-      z.object({ query: z.string() }), // tool_search_tool_bm25
+      z.object({ pattern: z.string(), limit: z.number().optional() }), // tool_search_tool_regex (limit: as bm25)
     ]).or(z.any()), // see the comment on ToolUseBlock_schema.input
     caller: _ToolUseCaller_schema.optional(),
   });
