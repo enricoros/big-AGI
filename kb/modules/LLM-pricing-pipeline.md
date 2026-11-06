@@ -43,7 +43,9 @@ Streaming specifics: OpenAI usage sits only on the terminal event, the tier alre
 
 OpenRouter (Chat Completions) reports hosted calls in `usage.server_tool_use_details` only, never in the stream. `web_search_requests` are the searches, whoever runs them, calls refused by `max_uses` included. `tool_calls_executed` counts the calls OpenRouter runs itself, of any server tool (search, fetch, datetime, image generation), and none the provider runs natively. Fetches have no counter: they are `tool_calls_executed` minus the searches only when the request carried the fetch tool and no server tool other than search, which the dispatch tells the parser. Fetches the provider runs natively (Anthropic with Claude 5.x) are reported nowhere, the generation record included (`num_fetches` stays null). Its `cost` includes the engine fees.
 
-Continuation turns (Anthropic `pause_turn`) each start a fresh transmitter and the last turn's `set-metrics` wins, so a chained generation reports the final turn only. Folding turns server-side is a direction item, not shipped.
+No vendor reports container or run time. Anthropic bills code execution by container time and sends only `container { id, expires_at }` (the documented `server_tool_use.code_execution_requests` is not on the wire); OpenAI bills per container and sends only `container_id` on each call (several runs share one container); Gemini bills code execution as tokens.
+
+Continuation turns (Anthropic `pause_turn`) are summed server-side: tokens, counts and durations add up across the chained requests. A call in flight at the pause is in the next request's usage, so the sum matches the calls made.
 
 ## Cost computation
 
