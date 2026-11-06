@@ -1555,6 +1555,11 @@ export namespace OpenAIWire_Responses_Tools {
     action: z.enum(['generate', 'edit', 'auto']).or(z.string()).optional(),
     background: z.enum(['transparent', 'opaque', 'auto']).optional(), // defaults to 'auto'
     /**
+     * Planning effort of the image model (gpt-image-2.6+), independent of quality. Defaults to 'high'. Overrides the outer reasoning.effort:
+     * when omitted, an explicit reasoning.effort is passed as complexity, which gpt-image-2 and 2.5 reject at any value, 2.6 outside low|medium|high.
+     */
+    complexity: z.enum(['low', 'medium', 'high']).optional(),
+    /**
      * Control how much effort the model will exert to match the style and features, especially facial features, of input images.
      * Only gpt-image-1 and gpt-image-1.5 accept it - gpt-image-2 and gpt-image-2.5 return 400 `invalid_input_fidelity_model`
      * (verified 2026-09-09, despite the docs saying "1.5 and later"). Defaults to 'low'.
@@ -1573,7 +1578,7 @@ export namespace OpenAIWire_Responses_Tools {
     output_format: z.enum(['png', 'webp', 'jpeg']).optional(),
     /** Number of partial images to generate in streaming mode, from 0 (default) to 3. */
     partial_images: z.number().int().min(0).max(3).optional(),
-    /** Quality of the generated image. Defaults to 'auto' - which resolves to 'low' on simple prompts (verified 2026-09-09). 'xhigh'/'max' are gpt-image-2.5 only. */
+    /** Quality of the generated image. Defaults to 'auto' - which resolves to 'low' on simple prompts (verified 2026-09-09). 'xhigh'/'max' are gpt-image-2.5 and 2.6 only. */
     quality: z.enum(['low', 'medium', 'high', 'xhigh', 'max', 'auto']).optional(),
     /** Default: auto */
     size: z.enum(['1024x1024', '1024x1536', '1536x1024', 'auto']).or(z.string()).optional(),

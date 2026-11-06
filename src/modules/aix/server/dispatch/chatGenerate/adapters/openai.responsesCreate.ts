@@ -11,7 +11,7 @@ import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser,
 
 // configuration
 const OPENAI_RESPONSES_DEFAULT_TRUNCATION: TRequest['truncation'] = undefined;
-export const AIX_OAI_DEFAULT_IMAGE_GEN_MODEL: Exclude<Extract<TRequestTool, { type: 'image_generation' }>['model'], undefined> = 'gpt-image-2.5-flare';
+export const AIX_OAI_DEFAULT_IMAGE_GEN_MODEL: Exclude<Extract<TRequestTool, { type: 'image_generation' }>['model'], undefined> = 'gpt-image-2.6-flare';
 
 
 type TRequest = OpenAIWire_API_Responses.Request;
@@ -305,12 +305,14 @@ export function aixToOpenAIResponses(
 
     // Map enum values to tool configuration. Quality is always explicit: omitting it means 'auto', which
     // resolves to 'low' on simple prompts (verified 2026-09-09 on gpt-image-2 and 2.5). No input_fidelity: gpt-image-2+ reject it.
-    // gpt-image-2.5-flare @1024x1024 output tokens: medium 439, high 1756, max 7024 ($30/M).
+    // [OpenAI, 2026-11-05, hypothesis: observed, undocumented] Complexity follows the effort: omitted, the tool passes an explicit reasoning.effort to the image model, which accepts only low|medium|high.
+    // gpt-image-2.6-flare output tokens at size auto (~1254x1254): medium 1700, high 2059, max 8232 ($30/M), the same at every complexity.
     const imageMode = model.vndOaiImageGeneration;
     const imageGenerationTool: Extract<TRequestTool, { type: 'image_generation' }> = {
       type: 'image_generation',
       ...(AIX_OAI_DEFAULT_IMAGE_GEN_MODEL && { model: AIX_OAI_DEFAULT_IMAGE_GEN_MODEL }),
       quality: imageMode === 'max' ? 'max' : imageMode === 'mq' ? 'medium' : 'high', // 'hq' and the legacy 'hq_edit'/'hq_png' -> high
+      complexity: reasoningEffort === 'none' || reasoningEffort === 'minimal' ? 'low' : reasoningEffort === 'xhigh' || reasoningEffort === 'max' ? 'high' : reasoningEffort, // unset: the image model default (high)
       ...(!noWebPImageOutput && { output_format: 'webp' }),
       moderation: 'low',
     };
