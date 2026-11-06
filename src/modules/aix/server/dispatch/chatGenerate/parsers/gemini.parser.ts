@@ -56,6 +56,13 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
     // Throws on malformed event data
     const eventData = JSON.parse(rawEventData);
 
+    // In-band error after HTTP 200, a google.rpc.Status: {"error":{"code":503,"message":"...","status":"UNAVAILABLE"}}
+    // [Gemini, 2026-11-09, hypothesis] a bare-string error was never observed: it is surfaced as the message rather than dropped
+    if (eventData?.error) {
+      const { code, message, status } = typeof eventData.error === 'object' ? eventData.error : { code: undefined, message: `${eventData.error}`, status: undefined };
+      return pt.setDialectTerminatingIssue(`${status || 'Error'}${code ? ` (${code})` : ''}: ${message || 'Upstream error.'}`, IssueSymbols.Generic, 'srv-warn');
+    }
+
     // [Gemini, 2025-10-22] Early detection of proxy errors - being sent as an assistant message
     if (eventData?.candidates?.length === 1) {
       const finishReason = eventData.candidates[0]?.finishReason;
