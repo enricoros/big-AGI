@@ -780,7 +780,7 @@ function _toOpenAIResponsesTools(itds: AixTools_ToolDefinition[], strictToolInvo
             required: input_schema?.required,
             ...(strictToolInvocations ? { additionalProperties: false } : {}), // required for strict tool invocations
           },
-          ...(strictToolInvocations ? { strict: true } : {}), // enable strict (grammar-constrained) tool invocation inputs
+          strict: strictToolInvocations, // explicit: [OpenAI, 2026-11-05, hypothesis: observed on the wire] Responses normalizes an omitted 'strict' into strict mode (optional properties become required)
         };
 
       case 'code_execution':

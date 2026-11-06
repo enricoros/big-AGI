@@ -20,6 +20,7 @@ Native OpenAI models carry `LLM_IF_OAI_Responses` and go to `/v1/responses` (`op
 - Tools: `web_search`, `code_interpreter`, `image_generation`, functions (auto, required, round trip). Hosted loops stream strictly serial; output items are `reasoning`, `web_search_call`, `code_interpreter_call`, `function_call`, `message` (with `phase`).
 - `image_generation`: when the tool sets no `complexity`, the server passes an explicit `reasoning.effort` to the image model as its complexity. gpt-image-2 and 2.5 reject every value, 2.6 anything outside low, medium, high. AIX sends gpt-image-2.6-flare with the effort clamped into that range, and no complexity when the effort is unset. A blocked image is a `failed` item with `error { code: 'moderation_blocked', message }` and no result; the response still completes.
 - `web_search`: an omitted or null `user_location` is served as the United States. A type-only `approximate` location removes that default but leaves the model without one (gpt-6-luna then reports a made-up place), so AIX sends none; OpenAI models expose no geolocation parameter.
+- Function tools: an omitted `strict` is normalized into strict mode, where every property becomes required. AIX sends `strict` explicitly, false unless strict tool invocations are requested.
 
 ## Reasoning continuity
 
