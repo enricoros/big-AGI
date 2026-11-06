@@ -72,7 +72,8 @@ export function aixRequireSingleFunctionCallInvocation(fragments: (DMessageConte
   // Positional logic over CONTENT fragments only: void fragments (e.g. 'ma' reasoning, which always-on
   // adaptive thinking models like Fable/Mythos 5 prepend) must not shift the expected invocation position
   const contentFragments = fragments.filter(isContentFragment);
-  const toolIdx = allowThinkPart ? contentFragments.length - 1 : 0;
+  // leading text is skipped: a model that cannot be forced to call (tools policy degraded to 'auto') may write a line before the call
+  const toolIdx = allowThinkPart ? contentFragments.length - 1 : contentFragments.findIndex(f => f.part.pt !== 'text');
   const toolFragment = contentFragments[toolIdx];
   if (!toolFragment || toolFragment.part.pt !== 'tool_invocation') {
     if (AIX_DEBUG_CLIENT_TOOLS)
