@@ -4,7 +4,7 @@ import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage,
 import { XAIWire_API_Responses, XAIWire_Responses_Tools } from '../../wiretypes/xai.wiretypes';
 
 import { aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixTexts_to_OpenAIInstructionText } from './openai.chatCompletions';
-import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxMediaUrlPart_To_String } from './adapters.common';
+import { aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxImageLabel_To_String, approxMediaUrlPart_To_String } from './adapters.common';
 
 
 // configuration
@@ -262,6 +262,9 @@ function _toXAIResponsesInput(
               // xAI supports images via data URL
               const { mimeType, base64 } = part;
               const base64DataUrl = `data:${mimeType};base64,${base64}`;
+              const imageLabelText = approxImageLabel_To_String(part.label);
+              if (imageLabelText)
+                getUserMessage().content.push({ type: 'input_text', text: imageLabelText }); // name the image, right before it
               (getUserMessage().content as any[]).push({
                 type: 'input_image',
                 detail: 'high',

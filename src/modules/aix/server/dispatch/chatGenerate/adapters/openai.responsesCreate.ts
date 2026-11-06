@@ -6,7 +6,7 @@ import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixM
 import { OpenAIWire_API_Responses, OpenAIWire_Responses_Items, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
 
 import { AIX_OPENAI_MAX_ID_LENGTH, aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixOpenAICallId, aixTexts_to_OpenAIInstructionText } from './openai.chatCompletions';
-import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxMediaUrlPart_To_String } from './adapters.common';
+import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxImageLabel_To_String, approxMediaUrlPart_To_String } from './adapters.common';
 
 
 // configuration
@@ -561,6 +561,9 @@ function _toOpenAIResponsesRequestInput(systemMessage: AixMessages_SystemMessage
               // create a new OpenAIWire_ImageContentPart
               const { mimeType, base64 } = userPart;
               const base64DataUrl = `data:${mimeType};base64,${base64}`;
+              const imageLabelText = approxImageLabel_To_String(userPart.label);
+              if (imageLabelText)
+                userMessage().content.push({ type: 'input_text', text: imageLabelText }); // name the image, right before it
               userMessage().content.push({
                 type: 'input_image',
                 detail: 'high', // TODO: check if user images shall always be 'high' detail

@@ -5,7 +5,7 @@ import type { AnthropicHostedFeatures } from '~/modules/llms/server/anthropic/an
 import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks } from '../../wiretypes/anthropic.wiretypes';
 
-import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxInReferenceTo_To_XMLString, approxMediaUrlPart_To_String } from './adapters.common';
+import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxImageLabel_To_String, approxInReferenceTo_To_XMLString, approxMediaUrlPart_To_String } from './adapters.common';
 
 
 // configuration
@@ -572,6 +572,9 @@ function* _generateAnthropicMessagesContentBlocks({ parts, role }: AixMessages_C
             break;
 
           case 'inline_image':
+            const imageLabelText = approxImageLabel_To_String(part.label);
+            if (imageLabelText)
+              yield { role: 'user', content: AnthropicWire_Blocks.TextBlock(imageLabelText, 'user.image_label') }; // name the image, right before it
             yield { role: 'user', content: AnthropicWire_Blocks.ImageBlock(part.mimeType, part.base64) };
             break;
 

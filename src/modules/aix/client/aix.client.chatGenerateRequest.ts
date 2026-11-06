@@ -356,7 +356,11 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
           case 'image_ref':
             // note, we don't resize, as the user image is resized following the user's preferences
             try {
-              uMsg.parts.push(await aixConvertImageRefToInlineImageOrThrow(uFragment.part, false));
+              const imagePart = await aixConvertImageRefToInlineImageOrThrow(uFragment.part, false);
+              // name the image after the attachment (e.g. the file name), so the model can tell multiple images apart
+              if (uFragment.ft === 'attachment' && uFragment.title)
+                imagePart.label = uFragment.title;
+              uMsg.parts.push(imagePart);
             } catch (error: any) {
               if (IGNORE_CGR_NO_IMAGE_DEREFERENCE) console.warn(`Image from the user missing in the chat generation request because: ${error?.message || error?.toString() || 'Unknown error'} - continuing without`);
               else throw error;

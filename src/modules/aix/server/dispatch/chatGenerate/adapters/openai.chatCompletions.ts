@@ -5,7 +5,7 @@ import type { OpenAIDialects } from '~/modules/llms/server/openai/openai.access'
 import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_SystemMessage, AixParts_DocPart, AixParts_InlineAudioPart, AixParts_MetaInReferenceToPart, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../../../api/aix.wiretypes';
 import { OpenAIWire_API_Chat_Completions, OpenAIWire_ContentParts, OpenAIWire_Messages } from '../../wiretypes/openai.wiretypes';
 
-import { AIX_MISSING_TOOL_RESULT_TEXT, aixFnv1aHex, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxMediaUrlPart_To_String } from './adapters.common';
+import { AIX_MISSING_TOOL_RESULT_TEXT, aixFnv1aHex, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxImageLabel_To_String, approxMediaUrlPart_To_String } from './adapters.common';
 
 
 //
@@ -723,11 +723,15 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
               const base64DataUrl = `data:${mimeType};base64,${base64}`;
               const imageContentPart = OpenAIWire_ContentParts.ImageContentPart(base64DataUrl, hotFixForceImageContentPartOpenAIDetail);
 
+              // name the image, right before it
+              const imageLabelText = approxImageLabel_To_String(part.label);
+              const imageContentParts = imageLabelText ? [OpenAIWire_ContentParts.TextContentPart(imageLabelText), imageContentPart] : [imageContentPart];
+
               // Append to existing content[], or new message
               if (allowAppend && currentMessage?.role === 'user' && Array.isArray(currentMessage.content))
-                currentMessage.content.push(imageContentPart);
+                currentMessage.content.push(...imageContentParts);
               else
-                chatMessages.push({ role: 'user', content: [imageContentPart] });
+                chatMessages.push({ role: 'user', content: imageContentParts });
               allowAppend = true;
               break;
 
