@@ -821,6 +821,10 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     chatPrice: gemini25FlashPricing,
     interfaces: IF_25,
     parameterSpecs: [
+      // TODO 2026-12-01: this id is then served by gemini-3.5-flash-lite, which answers thinkingBudget 0 with a 400.
+      // From then, a stored budget of 0 must go out as no thinkingConfig (Flash-Lite then thinks at its 'minimal' default).
+      // OpenRouter google/gemini-2.5-flash (AI Studio only) inherits this spec and is routed too. OR already sends Auto there as thinking off,
+      // and its google/gemini-3.5-flash-lite slug 400s our Off (reasoning max_tokens 0) as 'Reasoning is mandatory': re-probe both through OR then.
       { paramId: 'llmVndGeminiThinkingBudget' },
       { paramId: 'llmVndGeminiGoogleSearch' },
       { paramId: 'llmVndGeminiUrlContext' },
