@@ -389,6 +389,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
             break;
 
           case 'MAX_TOKENS':
+          case 'CONTINUATION': // Per-request token limit reached before the end; we do not resume with continuationToken, so the output is cut
             pt.setTokenStopReason('out-of-tokens');
             // NOTE: we call setDialectEnded instead of setDialectTerminatingIssue, because we don't want an extra message appended,
             // as we know that 'out-of-tokens' will likely append a brick wall (simple/universal enough).
@@ -412,6 +413,9 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           case 'UNEXPECTED_TOOL_CALL': // Model generated a tool call but no tools were enabled in the request
           case 'TOO_MANY_TOOL_CALLS': // Model called too many tools consecutively, execution limit exceeded
           case 'MISSING_THOUGHT_SIGNATURE': // [Gemini 3] Thinking model validation failed - thoughtSignature missing
+          case 'MALFORMED_RESPONSE': // Finished due to malformed response
+          case 'ESCALATION': // Request was filtered by an escalation rule
+          case 'PUP_LIMITED_DISABLED': // User account limited or disabled for Prohibited Use Policy (PUP) violations
           case 'FINISH_REASON_UNSPECIFIED':
             const reasonMap: Record<typeof candidate0.finishReason, [AixWire_Particles.GCTokenStopReason, string, string | null]> = {
               'SAFETY': ['filter-content', `Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`, null],
@@ -430,6 +434,9 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
               'UNEXPECTED_TOOL_CALL': ['cg-issue', 'Generation stopped: tool call made but no tools enabled', null],
               'TOO_MANY_TOOL_CALLS': ['cg-issue', 'Generation stopped: too many consecutive tool calls', null],
               'MISSING_THOUGHT_SIGNATURE': ['cg-issue', 'Generation stopped: request has at least one Gemini thought signature missing', null],
+              'MALFORMED_RESPONSE': ['cg-issue', 'Generation stopped: malformed response', null],
+              'ESCALATION': ['filter-content', 'Generation stopped: request filtered by an escalation rule', null],
+              'PUP_LIMITED_DISABLED': ['cg-issue', 'Generation stopped: account limited or disabled for Prohibited Use Policy (PUP) violations', null],
               'FINISH_REASON_UNSPECIFIED': ['cg-issue', 'Generation stopped and no reason was given', null],
             } as const;
             const reason = reasonMap[candidate0.finishReason] || ['cg-issue', `Generation stopped due to unknown reason: ${candidate0.finishReason || 'reason unknown'}`, null];
@@ -443,7 +450,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
             const _exhaustiveCheck: never = candidate0.finishReason as Exclude<typeof candidate0.finishReason, string>;
             aixResilientUnknownValue('Gemini', 'finishReason', candidate0.finishReason);
             pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`unexpected Gemini finish reason: ${candidate0?.finishReason})`, null, 'srv-warn');
+            return pt.setDialectTerminatingIssue(`unexpected Gemini finish reason: ${candidate0?.finishReason}`, null, 'srv-warn');
         }
       }
     } /* end of .candidates */

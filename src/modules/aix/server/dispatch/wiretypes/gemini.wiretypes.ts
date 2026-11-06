@@ -744,7 +744,7 @@ export namespace GeminiWire_API_Generate_Content {
 
   // Response
 
-  /** Last synced from https://ai.google.dev/api/generate-content#candidate on 2025-10-13 */
+  /** Last synced from https://ai.google.dev/api/generate-content#candidate on 2026-11-05 */
   const FinishReason_enum = z.enum([
     'FINISH_REASON_UNSPECIFIED',  // unused
     'STOP',                       // Natural stop point of the model or provided stop sequence.
@@ -765,6 +765,10 @@ export namespace GeminiWire_API_Generate_Content {
     'UNEXPECTED_TOOL_CALL',       // Model generated a tool call but no tools were enabled in the request.
     'TOO_MANY_TOOL_CALLS',        // Model called too many tools consecutively, thus the system exited execution.
     'MISSING_THOUGHT_SIGNATURE',  // [Gemini 3, 2025-11] Thinking model validation failed - thoughtSignature missing or invalid.
+    'MALFORMED_RESPONSE',         // Finished due to malformed response.
+    'ESCALATION',                 // Request was filtered by an escalation rule.
+    'PUP_LIMITED_DISABLED',       // Token generation stopped because the user account is limited or disabled due to Prohibited Use Policy (PUP) violations.
+    'CONTINUATION',               // Per-request token limit reached, generation not complete; resumable with Candidate.continuationToken (not used).
   ]);
 
   /** A citation to a source for a portion of a specific response. **/

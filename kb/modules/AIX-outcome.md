@@ -55,7 +55,7 @@ The tables are private to `chat.message.outcome.ts`; `messageOutcomePolicy()`, `
 | Bedrock Converse | `max_tokens` | truncated |
 | OpenAI Chat | `length` | truncated |
 | OpenAI Responses | `incomplete`, reason `max_output_tokens` | truncated |
-| Gemini | `MAX_TOKENS` | truncated (ends with `issue-dialect`, the others with `done-dialect`) |
+| Gemini | `MAX_TOKENS`, `CONTINUATION` | truncated (ends with `issue-dialect`, the others with `done-dialect`) |
 | Gemini | `TOO_MANY_TOOL_CALLS` | error today; see Open: tool-budget stops |
 | Gemini Interactions | `incomplete`, `budget_exceeded` | truncated, with an inline body note |
 | all | `refusal`, `content_filter`, `SAFETY`, `RECITATION`, ... | error |
