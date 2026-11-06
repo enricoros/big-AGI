@@ -13,11 +13,21 @@
  */
 export const OLLAMA_BASE_MODELS: { [key: string]: { pulls: number, contextWindow?: number, hasTools?: true, hasVision?: true, isEmbeddings?: true, tags?: string[], added?: string } } = {
   // Sorted by "newest" from https://ollama.com/library?sort=newest
+  'kimi-k3.1-pro': { pulls: 6000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20261105' },
+  'lfm3': { pulls: 49000, tags: ['thinking', '1.7b'], hasTools: true, added: '20261105' },
+  'minimax-m3.1-flash': { pulls: 48000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20261105' },
+  'bonsai-2': { pulls: 117000, tags: ['thinking', '2b', '4b', '9b', '27b'], hasVision: true, hasTools: true, added: '20261105' },
+  'beam': { pulls: 68000, tags: ['thinking'], hasTools: true, added: '20261105' },
+  'muse-spark-open': { pulls: 19000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20261105' },
+  'nemotron-3.5-bolt': { pulls: 55000, tags: ['thinking', 'audio', 'e4b'], hasVision: true, hasTools: true, added: '20261105' },
   'mistral-large-4': { pulls: 5000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20261011' },
+  'nemotron-3.5-super': { pulls: 25000, tags: ['thinking', '120b'], hasVision: true, hasTools: true, added: '20261105' },
+  'mimo-v2.6-pro': { pulls: 3000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20261105' },
+  'mimo-v2.6-flash': { pulls: 3000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20261105' },
   'deepseek-v4.1-flash': { pulls: 162000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260912' }, // cloud-only tags (763B): 'cloud' (GA), '1017-cloud' (2026-10-17 checkpoint)
   'qwen3.8-flash-next': { pulls: 102000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260831' },
   'glm-5.3-flash': { pulls: 136000, tags: ['thinking'], hasVision: true, hasTools: true, added: '20260831' },
-  'ornith-1.5': { pulls: 315000, tags: ['9b', '35b', '397b'], hasVision: true, added: '20260824' },
+  'ornith-1.5': { pulls: 315000, tags: ['thinking', '9b', '35b', '122b', '397b'], hasVision: true, hasTools: true, added: '20260824' },
   'glm-5.3': { pulls: 47000, tags: ['thinking'], hasTools: true, added: '20260831' },
   'granite4.2': { pulls: 60000, tags: ['3b', '8b', '30b'], added: '20260831' },
   'qwen3.8': { pulls: 2000000, tags: ['thinking', '27b'], hasVision: true, hasTools: true, added: '20260817' },
@@ -74,7 +84,7 @@ export const OLLAMA_BASE_MODELS: { [key: string]: { pulls: number, contextWindow
   'gpt-oss': { pulls: 12800000, tags: ['thinking', '20b', '120b'], hasTools: true, added: '20251015' },
   'qwen3-coder': { pulls: 9200000, tags: ['30b', '480b'], hasTools: true, added: '20251015' },
   'mistral-small3.2': { pulls: 2500000, tags: ['24b'], hasVision: true, hasTools: true, added: '20251015' },
-  'gemma3n': { pulls: 2200000, tags: ['e2b', 'e4b'], added: '20251015' },
+  'gemma3n': { pulls: 2200000, tags: ['e2b', 'e4b'], hasVision: true, added: '20251015' },
   'magistral': { pulls: 1500000, tags: ['thinking', '24b'], hasTools: true, added: '20251015' },
   'devstral': { pulls: 1000000, tags: ['24b'], hasTools: true, added: '20251015' },
   'qwen2.5vl': { pulls: 4900000, tags: ['3b', '7b', '32b', '72b'], hasVision: true, added: '20251015' },
@@ -241,5 +251,5 @@ export const OLLAMA_BASE_MODELS: { [key: string]: { pulls: number, contextWindow
   'everythinglm': { pulls: 568000, tags: ['13b'], added: '20251015' },
   'codeup': { pulls: 598000, tags: ['13b'], added: '20251015' },
 };
-export const OLLAMA_LAST_UPDATE: string = '20261011';
-export const OLLAMA_PREV_UPDATE: string = '20260914';
+export const OLLAMA_LAST_UPDATE: string = '20261105';
+export const OLLAMA_PREV_UPDATE: string = '20261011';

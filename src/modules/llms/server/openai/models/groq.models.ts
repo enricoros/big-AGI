@@ -18,13 +18,28 @@ const DEV_DEBUG_GROQ_MODELS = Release.IsNodeDevBuild; // not in staging to reduc
  * - models list: https://console.groq.com/docs/models
  * - pricing: the per-model card PRICING block, e.g. https://console.groq.com/docs/model/openai/gpt-oss-120b (groq.com/pricing is JS-rendered, no table)
  * - deprecations (shutdown dates + replacements): https://console.groq.com/docs/deprecations
- * - updated: 2026-10-11
+ * - updated: 2026-11-05
  */
 type _GroqModelDef = (KnownModel & { pubDate: string }) | KnownLink;
 
 const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
 
   // Preview Models
+  {
+    isPreview: true,
+    idPrefix: 'meta-models/muse-spark-open',
+    label: 'Muse Spark Open (Preview)',
+    pubDate: '20261015', // upstream Muse Spark Open release (as in metaai.models.ts), not the Groq listing date
+    description: 'Meta open-weight MoE (816B total, 42B active). Always reasons, tool use, structured outputs, vision (max 5 images). 131K context, 131K max output. ~350 t/s on Groq. Enterprise-only: pricing on request.',
+    contextWindow: 131072,
+    maxCompletionTokens: 131072,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] }, // per docs/reasoning: always reasons ('none' unsupported), default xhigh
+    ],
+    initialTemperature: 1.0, // Meta-recommended (dev.meta.ai/docs/muse-spark-open/settings)
+    // Limited preview on Groq (contact sales): standard API keys do not list it and 400 'model_terms_required' until the org admin accepts its terms
+  },
   {
     isPreview: true,
     idPrefix: 'qwen/qwen3.8-27b',
@@ -38,6 +53,7 @@ const _knownGroqModels = llmsDefineModels<_GroqModelDef>()([
       { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high'] }, // full ladder per docs/reasoning + live-accepted
     ],
     chatPrice: { input: 0.80, output: 4.00 }, // no cache: prompt caching is gpt-oss-only, despite the list API advertising an input_cache_read rate here
+    benchmark: { cbaElo: 1436 }, // lmarena: qwen3.8-27b
   },
   {
     isPreview: true,
@@ -165,7 +181,7 @@ export function groqValidateModelDefs_DEV(apiModelIds: string[]): void {
   if (DEV_DEBUG_GROQ_MODELS) {
     llmDevCheckModels_DEV('Groq', apiModelIds, _knownGroqModels.map(m => m.idPrefix), {
       checkUnknown: false,
-      ignoreStale: ['minimaxai/minimax-m2.7'], // enterprise-only, never lists for standard keys
+      ignoreStale: ['minimaxai/minimax-m2.7', 'meta-models/muse-spark-open'], // enterprise-only, never lists for standard keys
     });
   }
 }

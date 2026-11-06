@@ -75,7 +75,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     parameterSpecs: _PS_Reasoning_Compulsory,
     chatPrice: { input: 0.15, output: 0.5, cache: { read: 0.03 } }, // list price (the 50% launch promo ended 2026-09-09)
     initialTemperature: 1.0, // HF generation_config
-    // benchmark: not on lmarena as of 2026-08-27
+    benchmark: { cbaElo: 1477 }, // lmarena: glm-5.3-flash
   },
 
   // GLM-5.3-FlashX - latency-optimized serving tier of GLM-5.3-Flash (~200 tokens/s per the docs), not on the GLM Coding Plan

@@ -29,7 +29,7 @@ const IF_CHAT_FN = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
  * Cerebras models - fast OpenAI-compatible inference (wafer-scale).
  * - models list: https://inference-docs.cerebras.ai/models/overview
  * - pricing: https://www.cerebras.ai/pricing (per-token rates from /public/v1/models)
- * - updated: 2026-10-11
+ * - updated: 2026-11-05
  *
  * EDITORIAL OVERRIDES: the /public/v1/models catalog carries pricing/limits/capabilities, but its
  * metadata lags for new models (it used to report gemma-4-31b with all caps false and an 8K context -
@@ -73,7 +73,7 @@ const _knownCerebrasModels = llmsDefineModels<_CerebrasModelDef>()([
     ],
     // cache: no discount - cached input bills at the standard input rate (rate must still be declared, or cached tokens would price at 0)
     chatPrice: { input: 0.99, output: 1.49, cache: { read: 0.99 } },
-    // no benchmark: lmarena has no qwen3.8-27b entry we've captured (alibaba.models.ts carries none either)
+    benchmark: { cbaElo: 1436 }, // lmarena: qwen3.8-27b
   },
 
   // retired: 'zai-glm-4.7' (2026-08-17, no replacement), 'gemma-4-31b' (2026-09-03, Dedicated-only -> 'qwen-3.8-27b')

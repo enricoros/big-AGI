@@ -42,20 +42,20 @@ const _PS_MiniMaxThinking: ModelDescriptionSchema['parameterSpecs'] = [
 // noted: the server silently clamps oversized max_tokens instead of erroring, so an over-large value is
 // never observable as a failure. Context windows ARE observable (oversized prompt -> 400 with the limit).
 // pubDate is the upstream creator's release date, not the day Modular listed the model (host rule).
-// Not added: GLM 5.3 Flash and Inkling (marketing pages only, 404 on the shared endpoint); deepseek/deepseek-v4.1-flash
-// (listed, still 503 'no endpoints available' on 2026-10-21, no 1017 id - uncurated fallback until it serves).
+// Not added: GLM 5.3 Flash and Inkling (marketing pages only, 404 on the shared endpoint).
 const _modularKnownModels = llmsDefineManualMappings([
   {
     idPrefix: 'MiniMaxAI/MiniMax-M3.1-Flash',
     label: 'MiniMax M3.1 Flash',
     pubDate: '20260927', // first vendor release, as the retired 'MiniMax-M3.1-Flash-Preview' (GA 20261019)
-    description: '1M-context multimodal MoE for agentic coding and tool use, successor to M3. Reasoning on by default (switchable off).',
+    description: '1M-context multimodal MoE for agentic coding and tool use, successor to M3. Reasoning always on.',
     contextWindow: 1048576, // enforced by the shared endpoint (400 'exceeds the configured maximum context length of 1048576 tokens')
     maxCompletionTokens: 131072, // unverified
     // no Json: json_object returns '{}' or drops keys, json_schema strict once ran away into garbage
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
-    parameterSpecs: _PS_MiniMaxThinking,
-    // no benchmark: no arena row; chatPrice: not on modular.com/pricing yet - add when published
+    // no effort control: 'none' 400s ('this model requires adaptive thinking'); low..max accepted, measured no consistent effect
+    chatPrice: { input: 0.15, output: 0.60, cache: { read: 0.02 } }, // modular.com/models/minimax-m3-1-flash-public (not in the /pricing table)
+    // no benchmark: no arena row
   },
   {
     idPrefix: 'minimax/minimax-m3',
@@ -68,6 +68,19 @@ const _modularKnownModels = llmsDefineManualMappings([
     parameterSpecs: _PS_MiniMaxThinking,
     benchmark: { cbaElo: 1444 }, // lmarena: minimax-m3
     chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.06 } },
+  },
+  {
+    idPrefix: 'deepseek/deepseek-v4.1-flash-1017',
+    label: 'DeepSeek V4.1 Flash 1017',
+    pubDate: '20261017', // = deepseek.models.ts 'deepseek-flash' (1017 checkpoint)
+    description: 'DeepSeek V4.1 Flash 1017 checkpoint: 1M-context multimodal MoE (552B) with stronger agentic coding and shorter outputs. Reasoning on by default (effort control, switchable off).',
+    contextWindow: 1048576, // enforced by the shared endpoint (400 'exceeds the configured maximum context length of 1048576 tokens')
+    maxCompletionTokens: 131072, // unverified
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_PromptCaching],
+    // family ladder: 'none' = off (0 reasoning tokens), 'max' the deep tier; 'minimal'/'medium' 400, 'xhigh' measures as 'high'
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
+    benchmark: { cbaElo: 1476 }, // lmarena: DeepSeek-V4.1-Flash-20260910 (Max); no 1017 row yet
+    chatPrice: { input: 0.17, output: 1.20, cache: { read: 0.02 } }, // modular.com/models/deepseek-v4-1-flash-1017-public (not in the /pricing table)
   },
   {
     idPrefix: 'google/gemma-4-31b-it',
@@ -92,7 +105,8 @@ const _modularKnownModels = llmsDefineManualMappings([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching],
     // model-card ladder (xhigh = default) + 'none' = off; the template groups high/xhigh/max/unset into one tier
     parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'xhigh'] }],
-    // no benchmark: no arena row for qwen3.8-27b; chatPrice: not on modular.com/pricing yet - add when published
+    benchmark: { cbaElo: 1436 }, // lmarena: qwen3.8-27b
+    // chatPrice: not on modular.com/pricing yet - add when published
   },
   {
     idPrefix: 'zai-org/glm-5.3',

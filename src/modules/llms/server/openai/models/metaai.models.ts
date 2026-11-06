@@ -122,6 +122,7 @@ const _knownMetaAIModels = llmsDefineManualMappings([
     interfaces: _sparkInterfaces,
     parameterSpecs: _maxEffortParamSpecs,
     chatPrice: _wonderStandardPrice,
+    benchmark: { cbaElo: 1507 }, // Muse Wonder (Max)
     initialTemperature: _SPARK_INITIAL_TEMPERATURE,
     pubDate: '20261012',
   },
@@ -134,6 +135,7 @@ const _knownMetaAIModels = llmsDefineManualMappings([
     interfaces: _sparkInterfaces,
     parameterSpecs: _maxEffortParamSpecs,
     chatPrice: _sparkStandardPrice,
+    benchmark: { cbaElo: 1495 }, // Muse Spark 1.3 (Max)
     initialTemperature: _SPARK_INITIAL_TEMPERATURE,
     pubDate: '20260902',
   },
@@ -146,6 +148,7 @@ const _knownMetaAIModels = llmsDefineManualMappings([
     interfaces: _sparkInterfaces,
     parameterSpecs: _sparkParamSpecs,
     chatPrice: _sparkStandardPrice,
+    benchmark: { cbaElo: 1492 }, // Muse Spark 1.2 (xHigh)
     initialTemperature: _SPARK_INITIAL_TEMPERATURE,
     pubDate: '20260805',
   },
@@ -158,6 +161,7 @@ const _knownMetaAIModels = llmsDefineManualMappings([
     interfaces: _sparkInterfaces,
     parameterSpecs: _sparkParamSpecs,
     chatPrice: _sparkStandardPrice,
+    benchmark: { cbaElo: 1490 }, // Muse Spark 1.1
     initialTemperature: _SPARK_INITIAL_TEMPERATURE,
     pubDate: '20260709',
   },

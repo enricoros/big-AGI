@@ -104,7 +104,7 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
     ],
     maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
     chatPrice: { input: 0.3, output: 1.2, cache: { read: 0.006 } }, // peak card; images billed as input tokens by dimensions
-    // no benchmark: not on lmarena yet (released 2026-09-10)
+    benchmark: { cbaElo: 1476 }, // lmarena: DeepSeek-V4.1-Flash-20260910 (Max); no 1017 row yet
   },
   {
     idPrefix: 'deepseek-v4-pro',

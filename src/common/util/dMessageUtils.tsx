@@ -577,7 +577,7 @@ export function prettyShortChatModelName(model: string | undefined): string {
     return model
       .replace(/^cohere[/-]/, '')                // strip aggregator prefix (e.g. openrouter 'cohere/...')
       .replace(/-\d{2}-20\d{2}$/, '')            // strip -MM-YYYY snapshot date (e.g. -05-2026)
-      .replace('north-mini-code-1-0', 'North Mini Code')
+      .replace(/north-mini-code-1[.-]0/, 'North Mini Code')
       .replace('c4ai-', '')                      // Aya research prefix
       .replace('command-r-plus', 'Command R+')
       .replace('command-r7b', 'Command R7B')

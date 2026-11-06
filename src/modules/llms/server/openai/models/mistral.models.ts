@@ -12,11 +12,11 @@ const DEV_DEBUG_MISTRAL_MODELS = Release.IsNodeDevBuild; // not in staging to re
 
 
 // [Mistral]
-// Updated 2026-10-11
+// Updated 2026-11-05
 // - models on: https://docs.mistral.ai/models/overview (redirects to /models; cards at /models/<slug>)
 // - pricing on: https://docs.mistral.ai/inference/pricing (now server-rendered; cards carry the same numbers)
 // - benchmark elo on CBA
-// - prompt caching: the pricing table publishes a 'Cached input' rate (10% of input) for every priced row, modeled below as cache.read;
+// - prompt caching: the pricing table publishes a 'Cached input' rate (mostly 10% of input) for every priced row, modeled below as cache.read;
 //   it is opt-in, not automatic (2026-08-17 probe on mistral-small-latest, 32617-token prompt: 3 identical requests without
 //   'prompt_cache_key' all returned cached_tokens=0, the same prompt with the key returned cached_tokens=32592), and AIX does not
 //   send 'prompt_cache_key' yet - so the rate is inert until it does, and correct the moment it starts
@@ -32,9 +32,14 @@ type _MistralModelDef = {
 
 // [Mistral, 2026-08-17] reasoning_effort: Medium 3.5 (2604) and Small 4 (2603) accept exactly none|high (probed), every
 // other Mistral-built model rejects the field. Alias rows carry their own defs, so each repeats the spec.
-// [Mistral, 2026-10-07] Large 4 accepts the same none|high (probed; it thinks when the field is omitted).
 const _PS_MistralEffort: _MistralModelDef['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
+];
+
+// [Mistral, 2026-11-05] Large 4 takes low|medium|high and cannot turn thinking off (none|minimal|xhigh|max 400
+// "supported values: [high, low, medium]"; it thinks when the field is omitted).
+const _PS_MistralLarge4Effort: _MistralModelDef['parameterSpecs'] = [
+  { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] },
 ];
 
 // [Mistral, 2026-08-24] the third-party GLM 5.2 takes the full API-wide effort enum instead (probed: none|low|high|max
@@ -49,11 +54,17 @@ const _PS_MistralGlm53Effort: _MistralModelDef['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['low', 'high', 'max'] },
 ];
 
+// [Mistral, 2026-11-05] DeepSeek V4.1 Flash takes none|low|high|xhigh|max (minimal|medium 400; 'xhigh' is outside our enum),
+// and answers without thinking when the field is omitted.
+const _PS_MistralDeepSeekEffort: _MistralModelDef['parameterSpecs'] = [
+  { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
+];
+
 const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
 
-  // Mistral Large 4 (Oct 2026, Public Preview) - list price; launch sale -50% (0.68 / 0.07 / 2.09) for 2 weeks from 2026-10-06
-  'mistral-large-4-0': { pubDate: '20261006', chatPrice: { input: 1.36, output: 4.18, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralEffort }, // MoE 52B active / 1.05T total + 1.6B vision encoder, open weights announced
-  'mistral-large-4': { pubDate: '20261006', chatPrice: { input: 1.36, output: 4.18, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // symlink
+  // Mistral Large 4 (Oct 2026, Public Preview) - list price
+  'mistral-large-4-0': { pubDate: '20261006', chatPrice: { input: 0.7, output: 2.1, cache: { read: 0.07 } }, parameterSpecs: _PS_MistralLarge4Effort, benchmark: { cbaElo: 1432 } }, // MoE 52B active / 1.05T total + 1.6B vision encoder, open weights announced (leaderboard: mistral-large-4 = 1432)
+  'mistral-large-4': { pubDate: '20261006', chatPrice: { input: 0.7, output: 2.1, cache: { read: 0.07 } }, parameterSpecs: _PS_MistralLarge4Effort, hidden: true }, // symlink
 
   // Premier models - Mistral 3 (Dec 2025)
   'mistral-large-2512': { pubDate: '20251202', chatPrice: { input: 0.5, output: 1.5, cache: { read: 0.05 } }, benchmark: { cbaElo: 1415 } }, // Mistral Large 3 - MoE 41B active / 675B total (leaderboard: mistral-large-3 = 1415)
@@ -104,8 +115,10 @@ const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
   'zai-glm-5-3': { label: 'Z.ai GLM 5.3', pubDate: '20260814', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlm53Effort, benchmark: { cbaElo: 1487 - 2 } }, // 1M ctx, 128k max output, text-only; GA on Mistral 2026-09-28 (lmarena: glm-5.3-max - 2, yield to native vendor)
   'zai-glm-5': { pubDate: '20260814', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlm53Effort, hidden: true }, // -> zai-glm-5-3
   'zai-glm-latest': { pubDate: '20260814', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlm53Effort, hidden: true }, // -> zai-glm-5-3
+  'zai-glm-5-3-flash': { label: 'Z.ai GLM 5.3 Flash', pubDate: '20260825', chatPrice: { input: 0.15, output: 0.5, cache: { read: 0.03 } }, parameterSpecs: _PS_MistralGlm53Effort, benchmark: { cbaElo: 1477 - 2 } }, // 320B MoE (18B active), 1M ctx, 128k max output, image input; GA on Mistral 2026-10-22 (lmarena: glm-5.3-flash - 2, yield to native vendor)
   'zai-glm-5-2': { label: 'Z.ai GLM 5.2', pubDate: '20260616', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlmEffort, benchmark: { cbaElo: 1471 - 2 }, hidden: true }, // DEPRECATED 2026-09-29, retires 2026-10-31 -> GLM 5.3; 1M ctx, 128k max output (lmarena: glm-5.2-max - 2, yield to native vendor)
   'glm-5-2': { pubDate: '20260616', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlmEffort, hidden: true }, // -> zai-glm-5-2
+  'deepseek-v4-1-flash-1017': { label: 'DeepSeek V4.1 Flash (1017)', pubDate: '20261017', chatPrice: { input: 0.3, output: 1.2, cache: { read: 0.007 } }, parameterSpecs: _PS_MistralDeepSeekEffort, benchmark: { cbaElo: 1476 - 2 } }, // 1M ctx, 128k max output, image input; Public Preview on Mistral (lmarena: DeepSeek-V4.1-Flash-20260910 (Max) - 2, no 1017 row; yield to native vendor)
 
   // Legacy (kept for reference, no longer in API)
   'open-mistral-7b': { pubDate: '20230927', chatPrice: { input: 0.25, output: 0.25 }, hidden: true },
@@ -151,6 +164,7 @@ const mistralModelFamilyOrder = [
   // Third-party hosted
   'zai-glm',
   'glm-',
+  'deepseek-',
   // Legacy (no longer in API, kept for fallback)
   'open-mistral-7b',
   // Deprecated

@@ -1,4 +1,4 @@
-import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
+import { LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
@@ -7,7 +7,7 @@ import { fromManualMapping, llmsDefineManualMappings, llmsLabelUncurated } from 
 // --- Alibaba Model ID inference (auto-derived from _knownAlibabaChatModels) ---
 export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefix'];
 
-// Sources (verified 2026-10-21 against the live /v1/models list + docs):
+// Sources (verified 2026-11-05 against the live /v1/models list + docs):
 // - Models:  https://www.alibabacloud.com/help/en/model-studio/models
 // - Pricing: https://www.alibabacloud.com/help/en/model-studio/model-pricing (International/Singapore, USD per 1M tokens)
 // - Per-model pages carry the authoritative caps + cache-hit price, e.g. https://www.alibabacloud.com/help/en/model-studio/qwen3-8-max
@@ -170,6 +170,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K (max_tokens range live-probed)
     chatPrice: { input: 0.50, output: 3.00, cache: { read: 0.10 } },
+    benchmark: { cbaElo: 1436 }, // lmarena: qwen3.8-27b
   },
   {
     // Latest Flash tier (listed 2026-08-26). Flat pricing - no input-length tiers, unlike qwen3.7-flash. Caps from the
@@ -402,6 +403,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
     chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.03 } }, // peak card, same as deepseek-v4.1-flash (Intl table + model page)
+    benchmark: { cbaElo: 1476 }, // lmarena: deepseek-v4.1-flash-20260910-max (0910 checkpoint; no 1017 row)
   },
   {
     // V4.1-Flash on DashScope (DeepSeek GA 2026-09-10): 552B MoE, native image input. Same probe results as the 1017 snapshot
@@ -416,7 +418,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     maxCompletionTokens: 131072, // 128K house cap; the model page states 393216 (384K)
     chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.03 } }, // peak card (Singapore: busy 0.3/1.2 hit 0.03, idle half); in/out match DeepSeek-direct, the cache-hit is Alibaba's own 10%
-    // no benchmark: not on lmarena yet (released 2026-09-10)
+    benchmark: { cbaElo: 1476 }, // lmarena: deepseek-v4.1-flash-20260910-max
   },
   {
     idPrefix: 'deepseek-v4-pro',
@@ -520,6 +522,19 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     chatPrice: { input: 1.40, output: 4.40, cache: { read: 0.28 } }, // cache = 20% implicit-hit rate per the model page (0.165 on 0.825, all regions)
   },
   {
+    // K3 with scaled-up post-training. Model page + Intl price table: Singapore $2/$10, cache hit 0.20, 1,048,576 in / out.
+    // Answers on the Intl endpoint but is not on /v1/models yet; curated so the listed id cannot prefix-match kimi-k3 ($3/$15).
+    idPrefix: 'kimi-k3.1-pro',
+    label: 'Kimi K3.1 Pro (Alibaba)',
+    parameterSpecs: _PS_KimiEffort, // same Off / Low / Max buckets as kimi-k3
+    pubDate: '20261023', // = moonshot.models.ts 'kimi-k3.1-pro' (Moonshot release, not the DashScope listing)
+    description: 'Moonshot Kimi K3.1 Pro served via Alibaba Model Studio. K3 with scaled-up post-training: stronger coding and long-horizon agentic work. Multimodal, thinking on by default, 1M context.',
+    contextWindow: 1048576, // 1M (live-probed: 'Range of input length should be [1, 1048576]')
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature], // temperature: same 400 as kimi-k3
+    maxCompletionTokens: 131072, // house cap; live ceiling is 1,048,576 (= context window)
+    chatPrice: { input: 2.00, output: 10.00, cache: { read: 0.20 } },
+  },
+  {
     // Live on DashScope since the 08-17 pass; model page published 2026-08-24. Singapore $3/$15 with implicit cache 0.30
     // (10% of input here, not the usual Kimi 20%); Intl price-table row added by 2026-10-13. Unlike K2.7 Code, thinking can be turned off.
     idPrefix: 'kimi-k3',
@@ -528,9 +543,10 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     pubDate: '20260716', // = moonshot.models.ts 'kimi-k3' (Moonshot release, not the DashScope listing)
     description: 'Moonshot Kimi K3 flagship served via Alibaba Model Studio. Multimodal, thinking on by default, 1M context.',
     contextWindow: 1048576, // 1M (live-probed: 'Range of input length should be [1, 1048576]')
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature], // temperature other than 0 / 0.6 / 1 400s: "Parameter 'temperature'=0.5 is not supported for kimi-k3 model"
     maxCompletionTokens: 131072, // house cap; live ceiling is 1,048,576 (= context window)
     chatPrice: { input: 3.00, output: 15.00, cache: { read: 0.30 } },
+    benchmark: { cbaElo: 1489 }, // lmarena: kimi-k3-max
   },
   {
     idPrefix: 'kimi-k2.7-code',

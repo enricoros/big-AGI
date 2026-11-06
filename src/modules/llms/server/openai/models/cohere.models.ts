@@ -102,7 +102,7 @@ const _knownCohereModels = llmsDefineModels<_CohereModelDef>()([
 
   // North Mini Code - agentic coding (North platform)
   {
-    idPrefix: 'north-mini-code-1-0',
+    idPrefix: 'north-mini-code-1.0', // the listed id; 'north-mini-code-1-0' also resolves
     label: 'North Mini Code',
     pubDate: '20260609',
     description: 'Compact agentic coding MoE (30B total, 3B active, Apache 2.0) from Cohere\'s North platform. Reasoning and tool use over very long context (436K).',
@@ -184,10 +184,10 @@ const _knownCohereModels = llmsDefineModels<_CohereModelDef>()([
     hidden: true,
   },
 
-  // North Small Translate - specialized translation (North platform, hidden by default). Docs name it
-  // 'north-small-translate-1-0', but only this dated id resolves on the API.
+  // North Small Translate - specialized translation (North platform, hidden by default). The listed id;
+  // the dated 'north-small-translate-09-2026' also resolves, 'north-small-translate-1-0' 404s.
   {
-    idPrefix: 'north-small-translate-09-2026',
+    idPrefix: 'north-small-translate-1.0',
     label: 'North Small Translate',
     pubDate: '20260910',
     description: 'Translation MoE (218B total, 25B active, CC BY-NC 4.0) from Cohere\'s North platform, covering 50+ languages and locales. 32K context, 16K output. Text only, no tool use.',

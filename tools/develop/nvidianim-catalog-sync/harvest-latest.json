@@ -1,18 +1,18 @@
 {
-  "harvestedAt": "2026-10-21T20:54:20.273Z",
+  "harvestedAt": "2026-11-06T05:14:22.538Z",
   "counts": {
-    "total": 91,
+    "total": 86,
     "dead-entitlement": 47,
     "no-chat-route": 11,
-    "alive": 14,
-    "slow-or-dead": 7,
+    "slow-or-dead": 3,
+    "alive": 19,
     "probe-error": 4,
-    "retired": 8,
-    "withCatalogCard": 75,
-    "withPubDate": 75,
-    "withDeprecation": 1,
-    "withCtxMeasured": 10,
-    "ngcUnmatched": 81
+    "retired": 2,
+    "withCatalogCard": 69,
+    "withPubDate": 69,
+    "withDeprecation": 5,
+    "withCtxMeasured": 14,
+    "ngcUnmatched": 83
   },
   "models": [
     {
@@ -189,66 +189,8 @@
       ]
     },
     {
-      "id": "deepseek-ai/deepseek-v4-flash-0731",
-      "alive": "retired",
-      "label": "deepseek-v4-flash-0731",
-      "description": "284B MoE (13B active) model ideal for long-context workloads optimized for coding, chat, and agentic workflows",
-      "publisher": "deepseek-ai",
-      "ctxMeasured": null,
-      "ctxAdvertised": 1048576,
-      "capabilities": {
-        "tools": true,
-        "structuredOutput": true,
-        "reasoning": true
-      },
-      "modalitiesIn": [
-        "text"
-      ],
-      "modalitiesOut": [
-        "text"
-      ],
-      "pubDate": "20260819",
-      "catalogUpdated": "2026-08-19T01:03:08.022Z",
-      "deprecationDate": null,
-      "lastMonthInvocations": null,
-      "notes": [
-        "NOT in /v1/models this run (unlisted carryover/extra probe)",
-        "no NGC endpoint matched",
-        "410 Gone, retired 2026-09-21"
-      ]
-    },
-    {
-      "id": "deepseek-ai/deepseek-v4-pro-0813",
-      "alive": "retired",
-      "label": "deepseek-v4-pro-0813",
-      "description": "DeepSeek V4 scales to 262K-token context windows with efficient MoE architecture for coding tasks.",
-      "publisher": "deepseek-ai",
-      "ctxMeasured": null,
-      "ctxAdvertised": 262144,
-      "capabilities": {
-        "tools": true,
-        "structuredOutput": true,
-        "reasoning": true
-      },
-      "modalitiesIn": [
-        "text"
-      ],
-      "modalitiesOut": [
-        "text"
-      ],
-      "pubDate": "20260826",
-      "catalogUpdated": "2026-08-26T22:41:56.191Z",
-      "deprecationDate": null,
-      "lastMonthInvocations": null,
-      "notes": [
-        "NOT in /v1/models this run (unlisted carryover/extra probe)",
-        "no NGC endpoint matched",
-        "410 Gone, retired 2026-09-14"
-      ]
-    },
-    {
       "id": "deepseek-ai/deepseek-v4.1-flash",
-      "alive": "alive",
+      "alive": "slow-or-dead",
       "label": "deepseek-v4.1-flash",
       "description": "552B MoE, 8B active params with native multimodal support and lower API cost using smaller KV cache",
       "publisher": "deepseek-ai",
@@ -269,10 +211,9 @@
       "pubDate": "20260918",
       "catalogUpdated": "2026-09-18T18:55:17.986Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
+      "lastMonthInvocations": 2793940,
       "notes": [
-        "ctx probe HTTP 400, no limit in body: {\"message\":\"Bad Request\",\"type\":\"Bad Request\",\"code\":400}",
-        "ctxProbe: no-match"
+        "timed out at 45s and again at 120s"
       ]
     },
     {
@@ -351,11 +292,11 @@
     },
     {
       "id": "google/diffusiongemma-26b-a4b-it",
-      "alive": "slow-or-dead",
+      "alive": "alive",
       "label": "diffusiongemma-26b-a4b-it",
       "description": "Diffusion-based 26B parameter LLM enabling parallel token generation for real-time text apps",
       "publisher": "google",
-      "ctxMeasured": null,
+      "ctxMeasured": 250000,
       "ctxAdvertised": 262144,
       "capabilities": {
         "tools": true,
@@ -373,10 +314,8 @@
       "pubDate": "20260610",
       "catalogUpdated": "2026-06-10T18:07:50.386Z",
       "deprecationDate": null,
-      "lastMonthInvocations": 4303686,
-      "notes": [
-        "timed out at 45s and again at 120s"
-      ]
+      "lastMonthInvocations": 910230,
+      "notes": []
     },
     {
       "id": "google/gemma-2b",
@@ -454,11 +393,11 @@
     },
     {
       "id": "google/gemma-4-31b-it",
-      "alive": "slow-or-dead",
+      "alive": "alive",
       "label": "gemma-4-31b-it",
       "description": "Dense 31B model delivering frontier reasoning for coding, agentic workflows, and fine-tuning.",
       "publisher": "google",
-      "ctxMeasured": null,
+      "ctxMeasured": 131072,
       "ctxAdvertised": 262144,
       "capabilities": {
         "tools": true,
@@ -476,10 +415,8 @@
       "pubDate": "20260402",
       "catalogUpdated": "2026-04-02T16:23:29.660Z",
       "deprecationDate": null,
-      "lastMonthInvocations": 5711134,
-      "notes": [
-        "timed out at 45s and again at 120s"
-      ]
+      "lastMonthInvocations": 406635,
+      "notes": []
     },
     {
       "id": "google/recurrentgemma-2b",
@@ -627,7 +564,7 @@
     },
     {
       "id": "meta/llama-3.2-11b-vision-instruct",
-      "alive": "slow-or-dead",
+      "alive": "retired",
       "label": "llama-3.2-11b-vision-instruct",
       "description": "Cutting-edge vision-language model exceling in high-quality reasoning from images.",
       "publisher": "meta",
@@ -648,18 +585,20 @@
       "pubDate": "20240925",
       "catalogUpdated": "2025-05-30T20:06:54.722Z",
       "deprecationDate": null,
-      "lastMonthInvocations": 3334103,
+      "lastMonthInvocations": null,
       "notes": [
-        "timed out at 45s and again at 120s"
+        "NOT in /v1/models this run (unlisted carryover/extra probe)",
+        "no NGC endpoint matched",
+        "410 Gone, retired 2026-11-05"
       ]
     },
     {
       "id": "meta/llama-3.2-90b-vision-instruct",
-      "alive": "slow-or-dead",
+      "alive": "alive",
       "label": "llama-3.2-90b-vision-instruct",
       "description": "Cutting-edge vision-Language model exceling in high-quality reasoning from images.",
       "publisher": "meta",
-      "ctxMeasured": null,
+      "ctxMeasured": 32768,
       "ctxAdvertised": 131072,
       "capabilities": {
         "tools": false,
@@ -675,19 +614,17 @@
       ],
       "pubDate": "20240925",
       "catalogUpdated": "2025-05-30T20:09:09.139Z",
-      "deprecationDate": null,
-      "lastMonthInvocations": 4343903,
-      "notes": [
-        "timed out at 45s and again at 120s"
-      ]
+      "deprecationDate": "11/15/2026",
+      "lastMonthInvocations": 233342,
+      "notes": []
     },
     {
       "id": "meta/llama-guard-4-12b",
-      "alive": "slow-or-dead",
+      "alive": "alive",
       "label": "llama-guard-4-12b",
       "description": "Multi-modal model to classify safety for input prompts as well output responses.",
       "publisher": "meta",
-      "ctxMeasured": null,
+      "ctxMeasured": 65536,
       "ctxAdvertised": 163840,
       "capabilities": {
         "tools": false,
@@ -704,10 +641,8 @@
       "pubDate": "20250628",
       "catalogUpdated": "2025-07-01T03:52:04.752Z",
       "deprecationDate": null,
-      "lastMonthInvocations": 357040,
-      "notes": [
-        "timed out at 45s and again at 120s"
-      ]
+      "lastMonthInvocations": 158397,
+      "notes": []
     },
     {
       "id": "meta/llama2-70b",
@@ -756,7 +691,7 @@
       "pubDate": "20260810",
       "catalogUpdated": "2026-08-10T12:58:58.470Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
+      "lastMonthInvocations": 1301166,
       "notes": [
         "ctx probe HTTP 500, no limit in body: {\"message\":\"Internal server error\",\"type\":\"Internal Server Error\",\"code\":500}",
         "ctxProbe: no-match"
@@ -842,13 +777,13 @@
       ]
     },
     {
-      "id": "minimaxai/minimax-m3",
-      "alive": "retired",
-      "label": "minimax-m3",
-      "description": "MiniMax M3 Preview is a multimodal MoE vision-language model with strong reasoning, coding, and tool-calling capabilities.",
+      "id": "minimaxai/minimax-m3.1-flash",
+      "alive": "alive",
+      "label": "minimax-m3.1-flash",
+      "description": "MiniMax-M3.1-Flash is a native multimodal mixture-of-experts model for coding, agentic workflows, computer use, and cybersecurity.",
       "publisher": "minimaxai",
       "ctxMeasured": null,
-      "ctxAdvertised": 1048576,
+      "ctxAdvertised": 262144,
       "capabilities": {
         "tools": true,
         "structuredOutput": true,
@@ -862,14 +797,13 @@
       "modalitiesOut": [
         "text"
       ],
-      "pubDate": "20260612",
-      "catalogUpdated": "2026-06-12T14:01:30.878Z",
+      "pubDate": "20261020",
+      "catalogUpdated": "2026-10-20T21:53:35.696Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
+      "lastMonthInvocations": 4054834,
       "notes": [
-        "NOT in /v1/models this run (unlisted carryover/extra probe)",
-        "no NGC endpoint matched",
-        "410 Gone, retired 2026-09-09"
+        "ctx probe HTTP 400, no limit in body: {\"message\":\"Invalid request\",\"type\":\"Bad Request\",\"code\":400,\"details\":{\"type\":\"context_length\",\"limit\":1048576,\"actual\":1200179}}",
+        "ctxProbe: no-match"
       ]
     },
     {
@@ -973,28 +907,32 @@
       ]
     },
     {
-      "id": "mistralai/mistral-nemotron",
-      "alive": "retired",
-      "label": "mistral-nemotron",
-      "description": "Built for agentic workflows, this model excels in coding, instruction following, and function calling",
+      "id": "mistralai/mistral-large-4-1t-a52b",
+      "alive": "alive",
+      "label": "Mistral Large 4",
+      "description": "Mistral Large 4 from Mistral AI, a 1T-total / 52B-active granular MoE for text and image input with reasoning, function calling and structured outputs, served in NVFP4 with DSpark speculative decoding.",
       "publisher": "mistralai",
       "ctxMeasured": null,
-      "ctxAdvertised": null,
+      "ctxAdvertised": 262144,
       "capabilities": {
         "tools": true,
-        "structuredOutput": false,
+        "structuredOutput": true,
         "reasoning": true
       },
-      "modalitiesIn": null,
-      "modalitiesOut": null,
-      "pubDate": "20250611",
-      "catalogUpdated": "2025-06-12T03:42:45.008Z",
+      "modalitiesIn": [
+        "text",
+        "image"
+      ],
+      "modalitiesOut": [
+        "text"
+      ],
+      "pubDate": "20261029",
+      "catalogUpdated": "2026-10-29T14:10:58.920Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
+      "lastMonthInvocations": 1277246,
       "notes": [
-        "NOT in /v1/models this run (unlisted carryover/extra probe)",
-        "no NGC endpoint matched",
-        "410 Gone, retired 2026-09-28"
+        "ctx probe HTTP 400, no limit in body: {\"message\":\"Invalid request\",\"type\":\"Bad Request\",\"code\":400,\"details\":{\"type\":\"context_length\",\"limit\":1048576,\"actual\":1200016}}",
+        "ctxProbe: no-match"
       ]
     },
     {
@@ -1045,36 +983,6 @@
         "no NGC endpoint matched",
         "no build.nvidia.com card (legacy or unlisted endpoint)",
         "404 Not found for account (function removed)"
-      ]
-    },
-    {
-      "id": "moonshotai/kimi-k3",
-      "alive": "retired",
-      "label": "kimi-k3",
-      "description": "~2.8T hybrid KDA+MLA multimodal MoE for long-horizon coding, agentic tool use, and image understanding.",
-      "publisher": "moonshotai",
-      "ctxMeasured": null,
-      "ctxAdvertised": 1048576,
-      "capabilities": {
-        "tools": true,
-        "structuredOutput": true,
-        "reasoning": true
-      },
-      "modalitiesIn": [
-        "text",
-        "image"
-      ],
-      "modalitiesOut": [
-        "text"
-      ],
-      "pubDate": "20260827",
-      "catalogUpdated": "2026-08-27T20:40:37.796Z",
-      "deprecationDate": null,
-      "lastMonthInvocations": null,
-      "notes": [
-        "NOT in /v1/models this run (unlisted carryover/extra probe)",
-        "no NGC endpoint matched",
-        "410 Gone, retired 2026-10-15"
       ]
     },
     {
@@ -1198,7 +1106,7 @@
       "pubDate": "20260723",
       "catalogUpdated": "2026-07-23T15:28:05.216Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
+      "lastMonthInvocations": 180978,
       "notes": []
     },
     {
@@ -1222,8 +1130,8 @@
       ],
       "pubDate": "20250116",
       "catalogUpdated": "2025-03-25T01:22:42.822Z",
-      "deprecationDate": null,
-      "lastMonthInvocations": 341916,
+      "deprecationDate": "11/15/2026",
+      "lastMonthInvocations": 50115,
       "notes": [
         "timed out at 45s and again at 120s"
       ]
@@ -1250,9 +1158,9 @@
       "pubDate": "20250116",
       "catalogUpdated": "2025-03-25T01:16:40.059Z",
       "deprecationDate": null,
-      "lastMonthInvocations": 490532,
+      "lastMonthInvocations": 47541,
       "notes": [
-        "HTTP 500: {\"error\":\"Error during inference of request chat-4aea6701ea474e189b98fa42a9db479e -- Encountered an error in forwardAsync function: [TensorRT-LLM][ERR"
+        "HTTP 500: {\"error\":\"Error during inference of request chat-a380ff7e8956458aa94afc6b5f0473a6 -- Encountered an error in forwardAsync function: [TensorRT-LLM][ERR"
       ]
     },
     {
@@ -1325,7 +1233,7 @@
       "pubDate": "20251028",
       "catalogUpdated": "2025-10-28T17:54:39.054Z",
       "deprecationDate": null,
-      "lastMonthInvocations": 344220,
+      "lastMonthInvocations": 368105,
       "notes": []
     },
     {
@@ -1409,7 +1317,7 @@
       "ctxMeasured": null,
       "ctxAdvertised": 16384,
       "capabilities": {
-        "tools": null,
+        "tools": false,
         "structuredOutput": null,
         "reasoning": null
       },
@@ -1417,8 +1325,8 @@
       "modalitiesOut": null,
       "pubDate": "20260210",
       "catalogUpdated": "2026-02-10T04:49:01.412Z",
-      "deprecationDate": null,
-      "lastMonthInvocations": 16478487,
+      "deprecationDate": "11/15/2026",
+      "lastMonthInvocations": 404379,
       "notes": [
         "plain-text 404 page not found (no chat route: embedding/rerank class)"
       ]
@@ -1490,38 +1398,9 @@
       "pubDate": "20260716",
       "catalogUpdated": "2026-07-16T19:07:19.287Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
+      "lastMonthInvocations": 6100414,
       "notes": [
         "plain-text 404 page not found (no chat route: embedding/rerank class)"
-      ]
-    },
-    {
-      "id": "nvidia/nemotron-3-nano-30b-a3b",
-      "alive": "retired",
-      "label": "nemotron-3-nano-30b-a3b",
-      "description": "Open, efficient MoE model with 1M context, excelling in coding, reasoning, instruction following, tool calling, and more",
-      "publisher": "nvidia",
-      "ctxMeasured": null,
-      "ctxAdvertised": 262144,
-      "capabilities": {
-        "tools": true,
-        "structuredOutput": false,
-        "reasoning": true
-      },
-      "modalitiesIn": [
-        "text"
-      ],
-      "modalitiesOut": [
-        "text"
-      ],
-      "pubDate": "20251215",
-      "catalogUpdated": "2025-12-15T14:22:38.215Z",
-      "deprecationDate": null,
-      "lastMonthInvocations": null,
-      "notes": [
-        "NOT in /v1/models this run (unlisted carryover/extra probe)",
-        "no NGC endpoint matched",
-        "410 Gone, retired 2026-09-01"
       ]
     },
     {
@@ -1549,7 +1428,7 @@
       "pubDate": "20260428",
       "catalogUpdated": "2026-04-28T15:37:00.315Z",
       "deprecationDate": null,
-      "lastMonthInvocations": 8456415,
+      "lastMonthInvocations": 3915588,
       "notes": []
     },
     {
@@ -1602,16 +1481,41 @@
       "pubDate": "20260604",
       "catalogUpdated": "2026-06-04T11:22:41.002Z",
       "deprecationDate": null,
-      "lastMonthInvocations": 52410950,
+      "lastMonthInvocations": 28900765,
+      "notes": []
+    },
+    {
+      "id": "nvidia/nemotron-3.5-bolt-e4b",
+      "alive": "alive",
+      "label": "Nemotron 3.5 Bolt E4B",
+      "description": "Compact text model for reasoning, tool calling, and agentic chat.",
+      "publisher": "nvidia",
+      "ctxMeasured": 131072,
+      "ctxAdvertised": 65536,
+      "capabilities": {
+        "tools": true,
+        "structuredOutput": true,
+        "reasoning": true
+      },
+      "modalitiesIn": [
+        "text"
+      ],
+      "modalitiesOut": [
+        "text"
+      ],
+      "pubDate": "20261022",
+      "catalogUpdated": "2026-10-22T21:51:25.171Z",
+      "deprecationDate": null,
+      "lastMonthInvocations": 2616724,
       "notes": []
     },
     {
       "id": "nvidia/nemotron-3.5-content-safety",
-      "alive": "alive",
+      "alive": "probe-error",
       "label": "nemotron-3.5-content-safety",
       "description": "Multilingual, multimodal model for detecting unsafe and toxic content.",
       "publisher": "nvidia",
-      "ctxMeasured": 131072,
+      "ctxMeasured": null,
       "ctxAdvertised": 131072,
       "capabilities": {
         "tools": true,
@@ -1628,8 +1532,10 @@
       "pubDate": "20260602",
       "catalogUpdated": "2026-06-02T16:37:26.248Z",
       "deprecationDate": null,
-      "lastMonthInvocations": 1882644,
-      "notes": []
+      "lastMonthInvocations": 0,
+      "notes": [
+        "404: {\"status\":404,\"title\":\"Not Found\",\"detail\":\"Function id '3e84ff75-527b-4491-8647-530406876074' version 'null': Specified function in account 's0vzvOzh"
+      ]
     },
     {
       "id": "nvidia/nemotron-3.5-embed-1b",
@@ -1649,7 +1555,7 @@
       "pubDate": "20261020",
       "catalogUpdated": "2026-10-20T23:06:34.068Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
+      "lastMonthInvocations": 398043,
       "notes": [
         "plain-text 404 page not found (no chat route: embedding/rerank class)"
       ]
@@ -1672,7 +1578,7 @@
       "pubDate": "20261020",
       "catalogUpdated": "2026-10-20T23:06:32.594Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
+      "lastMonthInvocations": 4063265,
       "notes": [
         "plain-text 404 page not found (no chat route: embedding/rerank class)"
       ]
@@ -1699,7 +1605,7 @@
       "pubDate": "20260811",
       "catalogUpdated": "2026-08-11T12:16:36.092Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
+      "lastMonthInvocations": 5008225,
       "notes": []
     },
     {
@@ -1726,7 +1632,7 @@
       "pubDate": "20261015",
       "catalogUpdated": "2026-10-15T14:13:52.977Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
+      "lastMonthInvocations": 22574659,
       "notes": []
     },
     {
@@ -1819,19 +1725,19 @@
       "modalitiesOut": null,
       "pubDate": "20251028",
       "catalogUpdated": "2025-10-28T18:51:38.495Z",
-      "deprecationDate": null,
-      "lastMonthInvocations": 1249231,
+      "deprecationDate": "11/15/2026",
+      "lastMonthInvocations": 839565,
       "notes": [
         "HTTP 400: {\"object\":\"error\",\"message\":\"Content cannot be a plain string. The model does not support text input. Content cannot be a plain string. The model does"
       ]
     },
     {
       "id": "nvidia/nemotron-parse-2.0",
-      "alive": "probe-error",
+      "alive": "alive",
       "label": "nemotron-parse-2.0",
       "description": "Cutting-edge vision-language model excelling in retrieving text and metadata from images.",
       "publisher": "nvidia",
-      "ctxMeasured": null,
+      "ctxMeasured": 4096,
       "ctxAdvertised": 9000,
       "capabilities": {
         "tools": true,
@@ -1842,11 +1748,9 @@
       "modalitiesOut": null,
       "pubDate": "20260911",
       "catalogUpdated": "2026-09-11T21:29:41.274Z",
-      "deprecationDate": null,
-      "lastMonthInvocations": null,
-      "notes": [
-        "HTTP 502: <html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</h1></center> <hr><center>nginx/1.31.2</center> </body> </"
-      ]
+      "deprecationDate": "11/15/2026",
+      "lastMonthInvocations": 111968,
+      "notes": []
     },
     {
       "id": "nvidia/neva-22b",
@@ -1945,31 +1849,6 @@
       ]
     },
     {
-      "id": "nvidia/riva-translate-4b-instruct-v1.1",
-      "alive": "retired",
-      "label": "riva-translate-4b-instruct-v1_1",
-      "description": "Translation model in 12 languages with few-shots example prompts capability.",
-      "publisher": "nvidia",
-      "ctxMeasured": null,
-      "ctxAdvertised": null,
-      "capabilities": {
-        "tools": false,
-        "structuredOutput": null,
-        "reasoning": null
-      },
-      "modalitiesIn": null,
-      "modalitiesOut": null,
-      "pubDate": "20251212",
-      "catalogUpdated": "2025-12-12T18:02:51.590Z",
-      "deprecationDate": null,
-      "lastMonthInvocations": null,
-      "notes": [
-        "NOT in /v1/models this run (unlisted carryover/extra probe)",
-        "no NGC endpoint matched",
-        "410 Gone, retired 2026-10-05"
-      ]
-    },
-    {
       "id": "nvidia/riva-translate-4b-instruct-v2",
       "alive": "alive",
       "label": "riva-translate-4b-instruct-v2",
@@ -1987,7 +1866,7 @@
       "pubDate": "20260727",
       "catalogUpdated": "2026-07-27T17:35:59.075Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
+      "lastMonthInvocations": 689538,
       "notes": []
     },
     {
@@ -2015,35 +1894,6 @@
       ]
     },
     {
-      "id": "openai/gpt-oss-120b",
-      "alive": "retired",
-      "label": "gpt-oss-120b",
-      "description": "Mixture of Experts (MoE) reasoning LLM (text-only) designed to fit within 80GB GPU.",
-      "publisher": "openai",
-      "ctxMeasured": null,
-      "ctxAdvertised": 131072,
-      "capabilities": {
-        "tools": true,
-        "structuredOutput": false,
-        "reasoning": true
-      },
-      "modalitiesIn": [
-        "text"
-      ],
-      "modalitiesOut": [
-        "text"
-      ],
-      "pubDate": "20250805",
-      "catalogUpdated": "2025-08-05T16:46:08.985Z",
-      "deprecationDate": null,
-      "lastMonthInvocations": null,
-      "notes": [
-        "NOT in /v1/models this run (unlisted carryover/extra probe)",
-        "no NGC endpoint matched",
-        "410 Gone, retired 2026-09-03"
-      ]
-    },
-    {
       "id": "openai/gpt-oss-20b",
       "alive": "slow-or-dead",
       "label": "gpt-oss-20b",
@@ -2065,7 +1915,7 @@
       "pubDate": "20250805",
       "catalogUpdated": "2025-08-05T16:46:10.339Z",
       "deprecationDate": null,
-      "lastMonthInvocations": 18938429,
+      "lastMonthInvocations": 1575223,
       "notes": [
         "timed out at 45s and again at 120s"
       ]
@@ -2076,7 +1926,7 @@
       "label": "laguna-xs-2.1",
       "description": "Efficient 33B MoE for local, long-horizon agentic coding and terminal tasks",
       "publisher": "poolside",
-      "ctxMeasured": 262144,
+      "ctxMeasured": null,
       "ctxAdvertised": 262144,
       "capabilities": {
         "tools": true,
@@ -2092,8 +1942,11 @@
       "pubDate": "20260715",
       "catalogUpdated": "2026-07-15T23:10:20.283Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
-      "notes": []
+      "lastMonthInvocations": 2381973,
+      "notes": [
+        "ctx probe HTTP 400, no limit in body: {\"message\":\"Invalid request\",\"type\":\"Bad Request\",\"code\":400,\"details\":{\"type\":\"context_length\",\"limit\":262144,\"actual\":1200042}}",
+        "ctxProbe: no-match"
+      ]
     },
     {
       "id": "snowflake/arctic-embed-l",
@@ -2142,7 +1995,7 @@
       "pubDate": "20261015",
       "catalogUpdated": "2026-10-15T01:44:30.728Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
+      "lastMonthInvocations": 1446099,
       "notes": [
         "ctx probe HTTP 400, no limit in body: {\"message\":\"Bad Request\",\"type\":\"Bad Request\",\"code\":400}",
         "ctxProbe: no-match"
@@ -2246,30 +2099,28 @@
     },
     {
       "id": "z-ai/glm-5.3",
-      "alive": "alive",
-      "label": "glm-5-3",
-      "description": "753B-parameter text MoE with DeepSeek-style sparse attention, native FP8 weights, reasoning and tool calling.",
+      "alive": "retired",
+      "label": null,
+      "description": null,
       "publisher": "z-ai",
       "ctxMeasured": null,
-      "ctxAdvertised": 1048576,
+      "ctxAdvertised": null,
       "capabilities": {
-        "tools": true,
-        "structuredOutput": true,
-        "reasoning": true
+        "tools": null,
+        "structuredOutput": null,
+        "reasoning": null
       },
-      "modalitiesIn": [
-        "text"
-      ],
-      "modalitiesOut": [
-        "text"
-      ],
-      "pubDate": "20260915",
-      "catalogUpdated": "2026-09-15T19:47:58.961Z",
-      "deprecationDate": "10/27/2026",
+      "modalitiesIn": null,
+      "modalitiesOut": null,
+      "pubDate": null,
+      "catalogUpdated": null,
+      "deprecationDate": null,
       "lastMonthInvocations": null,
       "notes": [
-        "ctx probe HTTP 400, no limit in body: {\"message\":\"Invalid request\",\"type\":\"Bad Request\",\"code\":400,\"details\":{\"type\":\"context_length\",\"limit\":1048576,\"actual\":1200013}}",
-        "ctxProbe: no-match"
+        "NOT in /v1/models this run (unlisted carryover/extra probe)",
+        "no NGC endpoint matched",
+        "no build.nvidia.com card (legacy or unlisted endpoint)",
+        "410 Gone, retired 2026-10-28"
       ]
     },
     {
@@ -2295,8 +2146,11 @@
       "pubDate": "20260915",
       "catalogUpdated": "2026-09-15T19:46:42.256Z",
       "deprecationDate": null,
-      "lastMonthInvocations": null,
-      "notes": []
+      "lastMonthInvocations": 4830729,
+      "notes": [
+        "alive on retry (first attempt failed, needed the escalated 120s timeout)",
+        "ctx probe needed the escalated 120s timeout"
+      ]
     },
     {
       "id": "zyphra/zamba2-7b-instruct",
