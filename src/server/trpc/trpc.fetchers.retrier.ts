@@ -108,7 +108,7 @@ const _429_RETRY_DENYLIST: { test: string | RegExp; label: string }[] = [
   // [OpenAI] Request too large for model's TPM limit - e.g. "Request too large for o3 ... Limit 30000, Requested 56108"
   { test: /request too large|limit \d+, requested \d+/i, label: 'request-too-large' },
   // [Anthropic research preview] Zero rate limit - org doesn't have access to the model
-  { test: 'rate limit of 0 input tokens per minute', label: 'zero-rate-limit (no model access)' },
+  { test: /rate limit of 0 (?:fast mode )?input tokens per minute/, label: 'zero-rate-limit (no model access)' },
   // [Z.ai] Insufficient balance - prepaid credits exhausted
   { test: 'Insufficient balance or no resource package', label: 'insufficient-balance (Z.ai)' },
   // [Sakana.ai / OpenAI-compat] Prepaid credit balance exhausted - user must add credits.
