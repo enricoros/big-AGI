@@ -17,6 +17,7 @@ Vendor `metaai` ("Meta AI"; the product is the Meta Model API at dev.meta.ai) se
 - `tool_choice`: only `auto` (`none`, `required`, named 400). Tools policy `any` degrades to `auto` for this dialect.
 - Under `auto`, every Muse model writes one commentary line before a function call; `reasoning.summary` moves it into a reasoning item on Wonder 1.0, Spark 1.2 and 1.1, not on Spark 1.3. Callers that expect a single call skip leading text.
 - Spark 1.1 can leak its call markup as text instead of a `function_call` item.
+- Through OpenRouter, the Meta-served ids reject `tool_choice: 'required'` as well; the Chat Completions adapter sends `auto` for every OpenRouter model.
 - `truncation`: only `disabled` (`auto` 400, schema notwithstanding).
 - `reasoning.effort`: `minimal|low|medium|high|xhigh`, plus `max` on `muse-wonder-1.0`, `muse-spark-1.3` and `1.3-contributor` (the docs exclude the latter, but it honors `max`: 2026-10-15, ~4x the reasoning tokens of `xhigh`). 1.1, 1.2 and 1.2-contributor 400 on it. `none` parses but 400s on every Spark and Wonder. Omitted = `high` - expensive on trivial prompts (95-250 reasoning tokens for "pong"). `reasoning.summary` `auto|concise|detailed` accepted; summaries are often `[]`. No raw reasoning text ever.
 - `max_output_tokens` >= 16 (the adapter floors it); reasoning shares the budget - a tight cap returns `status: incomplete` with an EMPTY `output[]`. No enforced ceiling below 1M.

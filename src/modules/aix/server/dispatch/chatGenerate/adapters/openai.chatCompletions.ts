@@ -81,9 +81,9 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
   if (openAIDialect === 'openrouter')
     _capTrailingCacheBreakpoints(chatMessages, 4);
 
-  // [OpenRouter -> Anthropic, 2026-09-01] Fable/Mythos 5.x reject forced tool use upstream: _toOpenAIToolChoice degrades
-  // 'required' to 'auto', and this steering hint keeps the call rate at forced level (mirrors the native adapter's downgrade)
-  if (openAIDialect === 'openrouter' && chatGenerate.toolsPolicy?.type === 'any' && chatGenerate.tools?.length && _isOrtForcedToolRejectingAnt(model.id)) {
+  // [OpenRouter] tool_choice is always 'auto' there (see _toOpenAIToolChoice): this steering hint keeps the call rate of the
+  // single-tool callers at forced level (mirrors the native Anthropic adapter's downgrade)
+  if (openAIDialect === 'openrouter' && chatGenerate.toolsPolicy?.type === 'any' && chatGenerate.tools?.length) {
     const mustUseHint = 'IMPORTANT: You MUST respond by calling one of the provided tools. Do not respond with text.';
     const firstMessage = chatMessages[0];
     if (firstMessage?.role === 'system' && typeof firstMessage.content === 'string')
@@ -989,10 +989,10 @@ function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsP
       if (openAIDialect === 'moonshot' && model.reasoningEffort !== 'none'
         && !(model.id === 'k3' || model.id.startsWith('kimi-k3')))
         return 'auto';
-      // [OpenRouter -> Anthropic, 2026-09-01] Fable/Mythos 5.x reject forced tool use and OR relays the 400 ('tool_choice: type "tool"
-      // and "any" are not supported for this model.', probed on claude-fable-5.1; Fable 5 400s with the older wording). Degrade to
-      // 'auto' - the steering hint injected into the system message above keeps our single-tool callers calling the tool.
-      if (openAIDialect === 'openrouter' && _isOrtForcedToolRejectingAnt(model.id))
+      // [OpenRouter] 'auto' for every model: whether a forced call is accepted depends on the upstream provider, and OR relays its 400
+      // (Anthropic Fable/Mythos 5.x, Opus 5.5, Sonnet 5.5: 'tool_choice: type "tool" and "any" are not supported for this model.';
+      // the Muse models served by Meta: 'only "auto" is supported'). The steering hint in the system message keeps the callers calling.
+      if (openAIDialect === 'openrouter')
         return 'auto';
       return 'required';
     // DISABLED 2026-07-17 - forced named tool, see ToolsPolicy_schema. [Moonshot] probe-verified: named tool_choice
@@ -1004,15 +1004,6 @@ function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsP
 }
 
 
-/**
- * OpenRouter ids of Anthropic models that reject forced tool_choice upstream: Fable/Mythos 5 and 5.x, Opus 5.5, Sonnet 5.5, and the '~' router
- * aliases resolving to them. '~anthropic/claude-opus-latest' (-> Opus 5.5 since 2026-09-22) silently falls back to Opus 5 on a forced
- * call (probed), so it's degraded too, to stay on the aliased model. '~anthropic/claude-sonnet-latest' still resolves to Sonnet 5 (2026-09-28,
- * forced call 200), so it's not listed.
- */
-function _isOrtForcedToolRejectingAnt(modelId: string): boolean {
-  return /^~?anthropic\/claude-((fable|mythos)-(5|latest)|opus-(5\.5|latest)|sonnet-5\.5)/.test(modelId);
-}
 
 
 // Approximate conversions
