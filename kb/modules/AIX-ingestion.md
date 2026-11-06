@@ -58,6 +58,7 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **P28** (low) Interactions: synthetic markdown in text (`[Image: uri]`, `[Document: uri]`, `[Video: uri]`, status lines) (synthetic)
 - [ ] **P29** (low) Interactions: citations disabled - `DISABLE_CITATIONS`
 - [ ] **P23** (low) Consecutive text parts carry no boundary and merge (T1). Not reproduced (0/12 2.5 URL-context runs, 0/21 3.x NS)
+- [ ] **P54** (low) A 0-byte code-execution file (`inlineData` without `data`) is skipped; Gemini fails its own continuation right after (in-band 400)
 
 ### Parse: Chat Completions (`P/openai.parser.ts`)
 

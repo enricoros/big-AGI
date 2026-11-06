@@ -90,7 +90,8 @@ export namespace GeminiWire_ContentParts {
   const InlineDataPart_schema = z.object({
     inlineData: z.object({
       mimeType: z.union([z.string(), ianaStandardMimeType_schema]),
-      data: z.string(), // base64-encoded string
+      data: z.string().default(''), // base64-encoded string; absent for a 0-byte code-execution file
+      displayName: z.string().optional(), // code-execution output files: the sandbox path, e.g. 'out/report.xlsx'
     }),
   });
 

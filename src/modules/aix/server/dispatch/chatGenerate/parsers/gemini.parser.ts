@@ -201,6 +201,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
 
           // <- InlineDataPart
           case 'inlineData' in mPart:
+            if (!mPart.inlineData.data) break; // 0-byte code-execution file: no bytes to deliver
             // [Gemini, 2025-03-14] Experimental Image generation: Response
             if (mPart.inlineData.mimeType.startsWith('image/')) {
               pt.appendImageInline(
@@ -237,6 +238,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
                 kind: 'inline-download',
                 mimeType: mPart.inlineData.mimeType,
                 b64: mPart.inlineData.data,
+                ...(mPart.inlineData.displayName ? { filename: mPart.inlineData.displayName } : {}),
               });
             }
             break;
