@@ -1202,6 +1202,13 @@ function _fromResponseMetrics(response: Pick<OpenAIWire_API_Responses.Response, 
   if (nCodeExec > 0)
     metricsUpdate.nCodeExec = nCodeExec;
 
+  // Page fetches: one web_search_call item with an 'open_page' action per page (find_in_page works on an opened page). Counted where the
+  // search counter leaves them out: OpenAI's tool_usage counts 'search' actions only, while xAI's web_search_calls includes its page opens (#1283)
+  const nWebFetch = !response?.tool_usage?.web_search ? 0
+    : response.output?.filter(item => item.type === 'web_search_call' && item.action?.type === 'open_page').length ?? 0;
+  if (nWebFetch > 0)
+    metricsUpdate.nWebFetch = nWebFetch;
+
   // Token Metrics - only when the upstream usage block carries completion tokens
   if (usage?.output_tokens === undefined) {
     // Warn (dev) when usage is present but lacks completion tokens, so we may adjust for Non-OpenAI APIs

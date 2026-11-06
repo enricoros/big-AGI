@@ -37,7 +37,7 @@ type MetricsChatGenerateTokens = {
 
   // n = Counts (per-call billed server tools)
   nWebSearch?: number,  // web searches executed - OpenAI tool_usage, Anthropic server_tool_use, xAI server-side tools, Gemini grounding queries
-  nWebFetch?: number,   // web fetches executed - Anthropic server_tool_use
+  nWebFetch?: number,   // web fetches executed - Anthropic server_tool_use, OpenAI open_page actions
   nCodeExec?: number,   // hosted code executions - Anthropic code_execution and its container sub-tools, Gemini executableCode, OpenAI/xAI code_interpreter_call
 
   // If set, indicates unreliability or Stop Reason (sR)
