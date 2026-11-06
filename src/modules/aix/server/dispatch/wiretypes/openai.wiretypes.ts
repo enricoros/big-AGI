@@ -928,12 +928,13 @@ export namespace OpenAIWire_API_Images_Generations {
 
   /** GPT Image family models - shared between this namespace, Images_Edits, and the Responses image_generation tool. */
   export const GptImageModels_schema = z.enum([
-    'gpt-image-2.5-flare', // 2026-09-08 - fast, default; +'xhigh'/'max' quality, arbitrary WxH sizes (mult of 16, 1:3..3:1, <=3840)
+    'gpt-image-2.6-flare', // 2026-11-04 - fast iteration; +'complexity' (low|medium|high, default high, not sent); ~4x/3x the 2.5 tokens at 'low'/'medium', same from 'high' up
+    'gpt-image-2.6-sunburst', // 2026-11-04 - same price/tokens as flare, 2-4x latency, for detailed visual work
+    'gpt-image-2.5-flare', // 2026-09-08 - fast, the T2I default; +'xhigh'/'max' quality, arbitrary WxH sizes (mult of 16, 1:3..3:1, <=3840)
     'gpt-image-2.5-sunburst', // 2026-09-08 - same price/tokens as flare, ~2x latency, tuned for edit precision
     'gpt-image-2',
-    'gpt-image-1.5',
-    'gpt-image-1',
-    'gpt-image-1-mini',
+    'gpt-image-1.5', // leaves OpenAI on 2026-12-01 (Azure: 2027)
+    'gpt-image-1-mini', // leaves OpenAI on 2026-12-01 (Azure: 2027)
   ]);
 
   export type Request = z.infer<typeof Request_schema>;
@@ -951,7 +952,7 @@ export namespace OpenAIWire_API_Images_Generations {
     // Image quality
     quality: z.enum([
       'auto',                   // default
-      'max', 'xhigh',           // gpt-image-2.5 only (400 on older)
+      'max', 'xhigh',           // gpt-image-2.5 and 2.6 only (400 on older)
       'high', 'medium', 'low',
     ]).optional(),
 
@@ -1040,7 +1041,7 @@ export namespace OpenAIWire_API_Images_Edits {
     // Image quality
     quality: z.enum([
       'auto',                   // default
-      'max', 'xhigh',           // gpt-image-2.5 only (400 on older)
+      'max', 'xhigh',           // gpt-image-2.5 and 2.6 only (400 on older)
       'high', 'medium', 'low',
     ]).optional(),
 

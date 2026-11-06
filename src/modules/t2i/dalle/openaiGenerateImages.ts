@@ -10,7 +10,7 @@ import { findServiceAccessOrThrow } from '~/modules/llms/vendors/vendor.helpers'
 // IMPORTANT: Import TYPE (!)
 import type { T2iCreateImageOutput, T2iGenerateOptions } from '../t2i.server';
 import type { DalleImageQualityGI, DalleModelId, DalleModelSelection, DalleSizeGI, DProfileDalle } from '../t2i.types';
-import { clampGPTImageQuality, isGPTImage25ModelId, resolveDalleModelId } from '../t2i.config';
+import { clampGPTImageQuality, isGPTImage25ModelId, isGPTImage26ModelId, resolveDalleModelId } from '../t2i.config';
 
 
 /**
@@ -40,11 +40,12 @@ export async function openAIGenerateImagesOrThrow(
   // Resolve the actual model to use (null = latest)
   let dalleModelId = resolveDalleModelId(dalleModelSelection);
 
-  // [special] Profile pic generation mode: force gpt-image-1-mini, square, low resolution, low quality
+  // [special] Profile pic generation mode: force a cheap model, square, low resolution, low quality
   if (agiProfilePic) {
-    dalleModelId = 'gpt-image-1-mini';
+    const onOpenAI = modelVendor === 'openai'; // gpt-image-1-mini leaves OpenAI on 2026-12-01; Azure keeps it into 2027, LocalAI maps it to 'dreamshaper'
+    dalleModelId = onOpenAI ? 'gpt-image-2.5-flare' : 'gpt-image-1-mini';
     dalleSizeGI = '1024x1024'; // square
-    dalleQualityGI = 'medium'; // we're rescaling to 256x256 anyway - low is $0.005, medium is $0.011 (2x)
+    dalleQualityGI = onOpenAI ? 'low' : 'medium'; // we're rescaling to 256x256 anyway - 2.5-flare low is $0.006, 1-mini medium is $0.011
   }
 
   // [Azure, 2025-11-18] WebP is not supported
@@ -166,37 +167,47 @@ export async function openAIGenerateImagesOrThrow(
 
 export function openAIImageModelsGeneratorName(dalleModelSelection: DalleModelSelection) {
   const dalleModelId = resolveDalleModelId(dalleModelSelection);
+  if (dalleModelId === 'gpt-image-2.6-flare') return 'GPT Image 2.6 Flare';
+  if (dalleModelId === 'gpt-image-2.6-sunburst') return 'GPT Image 2.6 Sunburst';
   if (dalleModelId === 'gpt-image-2.5-flare') return 'GPT Image 2.5 Flare';
   if (dalleModelId === 'gpt-image-2.5-sunburst') return 'GPT Image 2.5 Sunburst';
   if (dalleModelId === 'gpt-image-2') return 'GPT Image 2';
   if (dalleModelId === 'gpt-image-1.5') return 'GPT Image 1.5';
-  if (dalleModelId === 'gpt-image-1') return 'GPT Image 1';
   if (dalleModelId === 'gpt-image-1-mini') return 'GPT Image Mini';
   return 'OpenAI Image generator';
 }
 
 /**
  * Pricing data for the GPT Image family, per $1M tokens. Source: https://platform.openai.com/docs/pricing
- * Cached-input discounts exist (gpt-image-2.5/2/1.5: $2/img $1.25/txt, gpt-image-1: $2.50/img $1.25/txt,
- * gpt-image-1-mini: $0.25/img $0.20/txt) but are not tracked here yet - add when the usage field is wired up.
+ * Cached-input discounts exist (gpt-image-2.6/2.5/2/1.5: $2/img $1.25/txt, gpt-image-1-mini: $0.25/img $0.20/txt)
+ * but are not tracked here yet - add when the usage field is wired up.
  */
 const IMAGE_MODEL_PRICING = {
+  'gpt-image-2.6-flare':    { inputText: 5.00, inputImage:  8.00, outputImage: 30.00 },
+  'gpt-image-2.6-sunburst': { inputText: 5.00, inputImage:  8.00, outputImage: 30.00 },
   'gpt-image-2.5-flare':    { inputText: 5.00, inputImage:  8.00, outputImage: 30.00 },
   'gpt-image-2.5-sunburst': { inputText: 5.00, inputImage:  8.00, outputImage: 30.00 },
   'gpt-image-2':            { inputText: 5.00, inputImage:  8.00, outputImage: 30.00 },
   'gpt-image-1.5':          { inputText: 5.00, inputImage:  8.00, outputImage: 32.00 },
-  'gpt-image-1':            { inputText: 5.00, inputImage: 10.00, outputImage: 40.00 },
   'gpt-image-1-mini':       { inputText: 2.00, inputImage:  2.50, outputImage:  8.00 },
 } as const satisfies Record<DalleModelId, { inputText: number, inputImage: number, outputImage: number }>;
 
 /**
  * Output image tokens per quality and size - the billing basis for the GPT Image family (x outputImage price).
- * OpenAI only publishes the gpt-image-1 table; the 2.5 and 2 rows are `usage.output_tokens` measured on 2026-09-09.
- * Each generation re-ladders: gpt-image-2 'medium' = gpt-image-2.5 'high', gpt-image-2 'high' = gpt-image-2.5 'max'.
+ * OpenAI only publishes the gpt-image-1 table; the 2.6, 2.5 and 2 rows are measured `usage.output_tokens`.
+ * Each generation re-ladders: gpt-image-2 'medium' = gpt-image-2.5 'high', gpt-image-2 'high' = gpt-image-2.5 'max';
+ * gpt-image-2.6 keeps the 2.5 ladder from 'high' up and spends about 4x at 'low' and 3x at 'medium'.
  */
 type _GITokensBySize = Record<DalleSizeGI, number>; // [1024x1024, 1536x1024, 1024x1536]
 const _giTok = (square: number, landscape: number, portrait: number): _GITokensBySize => ({ '1024x1024': square, '1536x1024': landscape, '1024x1536': portrait });
-const GPT_IMAGE_OUTPUT_TOKENS: Record<'gpt-image-2.5' | 'gpt-image-2' | 'gpt-image-1', Partial<Record<DalleImageQualityGI, _GITokensBySize>>> = {
+const GPT_IMAGE_OUTPUT_TOKENS: Record<'gpt-image-2.6' | 'gpt-image-2.5' | 'gpt-image-2' | 'gpt-image-1', Partial<Record<DalleImageQualityGI, _GITokensBySize>>> = {
+  'gpt-image-2.6': { // flare; sunburst bills the same, within 2% at 'high' (1756, 1372)
+    low: _giTok(824, 664, 664),
+    medium: _giTok(1449, 1132, 1132),
+    high: _giTok(1758, 1353, 1353),
+    xhigh: _giTok(3122, 2459, 2459),
+    max: _giTok(7024, 5488, 5488),
+  },
   'gpt-image-2.5': { // flare and sunburst bill the same
     low: _giTok(196, 158, 158),
     medium: _giTok(439, 343, 343),
@@ -209,7 +220,7 @@ const GPT_IMAGE_OUTPUT_TOKENS: Record<'gpt-image-2.5' | 'gpt-image-2' | 'gpt-ima
     medium: _giTok(1756, 1372, 1372),
     high: _giTok(7024, 5488, 5488),
   },
-  'gpt-image-1': { // https://platform.openai.com/docs/guides/image-generation?image-generation-model=gpt-image-1 - also 1.5 and mini
+  'gpt-image-1': { // the published gpt-image-1 table, used for 1.5 and mini
     low: _giTok(272, 400, 408),
     medium: _giTok(1056, 1568, 1584),
     high: _giTok(4160, 6208, 6240),
@@ -219,10 +230,10 @@ const GPT_IMAGE_OUTPUT_TOKENS: Record<'gpt-image-2.5' | 'gpt-image-2' | 'gpt-ima
 /** Estimated output-image cost for one image, from the measured token table and the per-model output price. */
 export function openAIImageModelsPricing(modelId: DalleModelId, quality: DalleImageQualityGI, size: DalleSizeGI): string {
 
-  // per-model quality tiers (e.g. gpt-image-1-mini has no 'high', 'xhigh'/'max' are 2.5 only)
+  // per-model quality tiers (e.g. gpt-image-1-mini is clamped below 'high', 'xhigh'/'max' are 2.5 and 2.6 only)
   const qualityGI = clampGPTImageQuality(modelId, quality);
 
-  const tokensTable = GPT_IMAGE_OUTPUT_TOKENS[isGPTImage25ModelId(modelId) ? 'gpt-image-2.5' : modelId === 'gpt-image-2' ? 'gpt-image-2' : 'gpt-image-1'];
+  const tokensTable = GPT_IMAGE_OUTPUT_TOKENS[isGPTImage26ModelId(modelId) ? 'gpt-image-2.6' : isGPTImage25ModelId(modelId) ? 'gpt-image-2.5' : modelId === 'gpt-image-2' ? 'gpt-image-2' : 'gpt-image-1'];
   const outTokens = tokensTable[qualityGI]?.[size] ?? 0;
   if (!outTokens) {
     console.log('[DEV] No GPT Image token mapping for', modelId, qualityGI, size);

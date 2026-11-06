@@ -9,19 +9,20 @@ import { modelPickOrAuto } from '~/common/util/modelPickUtils';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import type { DalleModelSelection, DalleSizeGI, DProfileDalle } from '../t2i.types';
-import { DALLE_DEFAULT_IMAGE_SIZE, DALLE_MODEL_IDS, clampGPTImageQuality, isGPTImage25ModelId, resolveDalleModelId, t2iDefaultDalleProfile } from '../t2i.config';
+import { DALLE_DEFAULT_IMAGE_SIZE, DALLE_MODEL_IDS, clampGPTImageQuality, isGPTImage25ModelId, isGPTImage26ModelId, resolveDalleModelId, t2iDefaultDalleProfile } from '../t2i.config';
 import { openAIImageModelsPricing } from './openaiGenerateImages';
 
 
 const CONF = {
 
   MODEL_OPTS: [
+    { value: 'gpt-image-2.6-flare', label: 'GPT Image 2.6 Flare' },
+    { value: 'gpt-image-2.6-sunburst', label: 'GPT Image 2.6 Sunburst', description: 'Detailed work, slower' },
     { value: 'gpt-image-2.5-flare', label: 'GPT Image 2.5 Flare' },
     { value: 'gpt-image-2.5-sunburst', label: 'GPT Image 2.5 Sunburst', description: 'Edit precision, slower' },
     { value: 'gpt-image-2', label: 'GPT Image 2' },
-    { value: 'gpt-image-1.5', label: 'GPT Image 1.5' },
-    { value: 'gpt-image-1', label: 'GPT Image 1' },
-    { value: 'gpt-image-1-mini', label: 'GPT Image Mini' },
+    { value: 'gpt-image-1.5', label: 'GPT Image 1.5', description: 'Leaves OpenAI on Dec 1, 2026' },
+    { value: 'gpt-image-1-mini', label: 'GPT Image Mini', description: 'Leaves OpenAI on Dec 1, 2026' },
     { value: null, label: 'Auto' },
   ] as { value: DalleModelSelection; label: string, description?: string }[],
 
@@ -32,7 +33,7 @@ const CONF = {
     { value: 'medium', label: 'Medium' },
     { value: 'high', label: 'High' },
   ],
-  QUALITY_GI_25: [ // gpt-image-2.5 adds two tiers
+  QUALITY_GI_25: [ // gpt-image-2.5 and 2.6 add two tiers
     { value: 'low', label: 'Low' },
     { value: 'medium', label: 'Medium' },
     { value: 'high', label: 'High' },
@@ -86,7 +87,7 @@ export function DallESettings(props: {
 
   // derived state
   const resolvedDalleModelId = resolveDalleModelId(dalleModelId);
-  const isGI25 = isGPTImage25ModelId(resolvedDalleModelId);
+  const isGI25 = isGPTImage25ModelId(resolvedDalleModelId) || isGPTImage26ModelId(resolvedDalleModelId);
   const effectiveQualityGI = clampGPTImageQuality(resolvedDalleModelId, dalleQualityGI); // what the request will send
 
   const isGICompressible = dalleOutputFormatGI === 'webp' || dalleOutputFormatGI === 'jpeg';

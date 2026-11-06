@@ -39,7 +39,7 @@ const createImageConfigGI = _createImageConfigBase.extend({
   model: OpenAIWire_API_Images_Generations.GptImageModels_schema,
   prompt: z.string().max(32000),
   size: z.enum([/*'auto',*/ '1024x1024', '1536x1024', '1024x1536']),
-  quality: z.enum(['max', 'xhigh', 'high', 'medium', 'low']).optional(), // 'max'/'xhigh': gpt-image-2.5 only - the client clamps
+  quality: z.enum(['max', 'xhigh', 'high', 'medium', 'low']).optional(), // 'max'/'xhigh': gpt-image-2.5 and 2.6 only - the client clamps
   background: z.enum(['auto', 'transparent', 'opaque']).optional(),
   output_format: z.enum(['png', 'jpeg', 'webp']).optional(),
   output_compression: z.number().min(0).max(100).int().optional(),

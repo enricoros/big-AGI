@@ -19,7 +19,7 @@ export function resolveDalleModelId(selection: DalleModelSelection): DalleModelI
   return modelPickOrAuto(selection, DALLE_MODEL_IDS) ?? DALLE_DEFAULT_MODEL_ID;
 }
 
-export const DALLE_MODEL_IDS: readonly DalleModelId[] = ['gpt-image-2.5-flare', 'gpt-image-2.5-sunburst', 'gpt-image-2', 'gpt-image-1.5', 'gpt-image-1', 'gpt-image-1-mini'];
+export const DALLE_MODEL_IDS: readonly DalleModelId[] = ['gpt-image-2.6-flare', 'gpt-image-2.6-sunburst', 'gpt-image-2.5-flare', 'gpt-image-2.5-sunburst', 'gpt-image-2', 'gpt-image-1.5', 'gpt-image-1-mini'];
 
 /** Persisted profiles may carry retired ids (e.g. dall-e-3) - the store migration nulls them, this is the runtime guard. */
 export function isDalleModelId(modelId: unknown): modelId is DalleModelId {
@@ -31,12 +31,17 @@ export function isGPTImage25ModelId(modelId: DalleModelId): boolean {
   return modelId === 'gpt-image-2.5-flare' || modelId === 'gpt-image-2.5-sunburst';
 }
 
+/** gpt-image-2.6 (flare, sunburst): the 2.5 quality tiers, more output tokens at 'low' and 'medium' */
+export function isGPTImage26ModelId(modelId: DalleModelId): boolean {
+  return modelId === 'gpt-image-2.6-flare' || modelId === 'gpt-image-2.6-sunburst';
+}
+
 /**
  * Clamp a GPT Image quality to what the model accepts - the API returns 400 otherwise.
  * Verified 2026-09-09: 'xhigh'/'max' rejected by gpt-image-2 and older; gpt-image-1-mini has no 'high'.
  */
 export function clampGPTImageQuality(modelId: DalleModelId, quality: DalleImageQualityGI): DalleImageQualityGI {
-  if ((quality === 'xhigh' || quality === 'max') && !isGPTImage25ModelId(modelId))
+  if ((quality === 'xhigh' || quality === 'max') && !isGPTImage25ModelId(modelId) && !isGPTImage26ModelId(modelId))
     return 'high';
   if (quality === 'high' && modelId === 'gpt-image-1-mini')
     return 'medium';
