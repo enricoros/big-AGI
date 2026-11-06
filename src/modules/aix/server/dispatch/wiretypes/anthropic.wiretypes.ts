@@ -1194,7 +1194,8 @@ export namespace AnthropicWire_API_Message_Create {
     /**
      * [Anthropic, 2026-09-01] Thinking blocks dropped from the request, only with the `thinking-binding-controls-2026-08-01` header.
      * reason: 'model_binding_mismatch' (an older model can't read a newer block) | 'prefix_binding_mismatch' (history edited, with
-     * block_binding 'drop_block'). Streaming: on the message_start message. Loosely typed for forward-compat.
+     * block_binding 'drop_block') | 'organization_binding_mismatch' (a block from another organization: Anthropic org, AWS account
+     * or GCP project). Streaming: on the message_start message. Loosely typed for forward-compat.
      */
     input_transformations: z.array(z.object({
       type: z.string(), // 'thinking_dropped'

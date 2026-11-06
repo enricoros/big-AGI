@@ -833,15 +833,16 @@ function _sendInputTransforms(pt: IParticleTransmitter, transforms: NonNullable<
     pathsByReason.set(reason, [...(pathsByReason.get(reason) ?? []), path]);
   }
   const origins = pathsByReason.size ? thinkingOrigins?.() : undefined;
+  const droppedAll = new Set([...pathsByReason.values()].flat()); // every reason's drops: none of them is kept
   for (const [reason, paths] of pathsByReason) {
     // NOTE: Anthropic's 'prefix_binding_mismatch' fires identically for an edited/deleted message, a changed
     // tool selection, or a changed system prompt (e.g. our own {{LocaleNow}} ticking to a new hour) - it does
     // NOT tell us which. Empirically verified live (2026-09-21): a pure tool toggle and a pure system-prompt
     // change both return this exact reason with zero message edits. Don't claim "History edited" here, it's
     // provably wrong in those cases - stay cause-neutral instead.
-    const cause = reason === 'prefix_binding_mismatch' ? 'prefix-changed' : reason === 'model_binding_mismatch' ? 'model-switch' : reason;
-    const why = cause === 'prefix-changed' ? 'Reasoning reset' : cause === 'model-switch' ? 'Model changed' : cause;
-    const replies = origins && _describeDroppedReplies(paths, origins, cause === 'prefix-changed');
+    const cause = reason === 'prefix_binding_mismatch' ? 'prefix-changed' : reason === 'model_binding_mismatch' ? 'model-switch' : reason === 'organization_binding_mismatch' ? 'account-switch' : reason;
+    const why = cause === 'prefix-changed' ? 'Reasoning reset' : cause === 'model-switch' ? 'Model changed' : cause === 'account-switch' ? 'Account changed' : cause;
+    const replies = origins && _describeDroppedReplies(paths, droppedAll, origins, cause === 'prefix-changed');
     const what = replies?.what ?? (paths.length > 1 ? `ignored ${paths.length} reasoning blocks` : 'ignored 1 reasoning block');
     const where = paths.map(p => p.replace(/^messages\.(\d+)\.content\.(\d+).*$/, '$1.$2')).join(', '); // wire positions: message.block
     const harmless = cause !== 'prefix-changed' ? '**Harmless**: the model rethinks from the messages as they are now.'
@@ -861,7 +862,7 @@ function _sendInputTransforms(pt: IParticleTransmitter, transforms: NonNullable<
  * kept block just before it (measured: system, tool set and tool-result edits drop every later block; moved cache_control, a
  * changed effort and omitted earlier thinking drop none; a deleted user message drops only the blocks after it).
  */
-function _describeDroppedReplies(paths: string[], origins: AnthropicThinkingOrigins, bracketChange: boolean): { what: string, paragraphs: string[] } | undefined {
+function _describeDroppedReplies(paths: string[], droppedAll: Set<string>, origins: AnthropicThinkingOrigins, bracketChange: boolean): { what: string, paragraphs: string[] } | undefined {
   if (!paths.every(p => origins.has(p))) return undefined; // e.g. a block of a paused turn sent back by the continuation: plain notice
   const dropped = new Set(paths);
   const perReply = new Map<number, { opening: string, dropped: number, total: number }>();
@@ -872,7 +873,8 @@ function _describeDroppedReplies(paths: string[], origins: AnthropicThinkingOrig
     perReply.set(reply, r);
   }
   const droppedReplies = [...perReply].filter(([, r]) => r.dropped);
-  const keptReplies = [...perReply].filter(([, r]) => !r.dropped).map(([reply]) => reply); // partly kept replies show their counts in the list
+  const lostReplies = new Set([...origins].filter(([path]) => droppedAll.has(path)).map(([, { reply }]) => reply)); // dropped for this or another reason
+  const keptReplies = [...perReply.keys()].filter(reply => !lostReplies.has(reply)); // partly kept replies show their counts in the list
 
   // the detail is the notice markdown subset (see RenderNoticeDetail): '- ' bullets, **label**, *excerpt*, `code`
   const list = ['**Ignored reasoning**'];
@@ -887,7 +889,7 @@ function _describeDroppedReplies(paths: string[], origins: AnthropicThinkingOrig
   const paragraphs = [list.join('\n')];
 
   if (bracketChange) {
-    const order = [...origins.keys()];
+    const order = [...origins.keys()].filter(p => dropped.has(p) || !droppedAll.has(p)); // a block dropped for another reason passed no prefix check
     const firstIndex = order.findIndex(p => dropped.has(p));
     const firstReply = origins.get(order[firstIndex])?.reply;
     const keptReply = firstIndex > 0 ? origins.get(order[firstIndex - 1])?.reply : undefined;
