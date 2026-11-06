@@ -1,7 +1,7 @@
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
 
 import type { DModelParameterId } from '~/common/stores/llms/llms.parameters';
-import { DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio } from '~/common/stores/llms/llms.types';
+import { DModelInterfaceV1, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Responses, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
@@ -232,7 +232,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       cache: { read: [{ upTo: 272000, price: 1 }, { upTo: null, price: 2 }], write: [{ upTo: 272000, price: 12.5 }, { upTo: null, price: 25 }] },
       tools: OAI_PRICE_TOOLS,
     },
-    // benchmark: no arena data yet
+    benchmark: { cbaElo: 1476 }, // gpt-6-astra-max
   },
 
   // GPT-6.1 Sol - balanced, near-Astra
@@ -260,7 +260,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       cache: { read: [{ upTo: 272000, price: 0.1 }, { upTo: null, price: 0.2 }], write: [{ upTo: 272000, price: 2.5 }, { upTo: null, price: 5 }] },
       tools: OAI_PRICE_TOOLS,
     },
-    // benchmark: no arena data yet
+    benchmark: { cbaElo: 1481 }, // gpt-6.1-sol-max
   },
 
   // GPT-6.1 Terra - https://developers.openai.com/api/docs/models/gpt-6.1-terra
@@ -316,7 +316,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       cache: { read: [{ upTo: 272000, price: 0.2 }, { upTo: null, price: 0.4 }], write: [{ upTo: 272000, price: 2.5 }, { upTo: null, price: 5 }] },
       tools: OAI_PRICE_TOOLS,
     },
-    // benchmark: no arena data yet
+    benchmark: { cbaElo: 1458 }, // gpt-6-sol-max
   },
 
   // GPT-6 Luna - fast & affordable
@@ -344,7 +344,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       cache: { read: [{ upTo: 272000, price: 0.01 }, { upTo: null, price: 0.02 }], write: [{ upTo: 272000, price: 0.125 }, { upTo: null, price: 0.25 }] },
       tools: OAI_PRICE_TOOLS,
     },
-    // benchmark: no arena data yet
+    benchmark: { cbaElo: 1441 }, // gpt-6-luna-max
   },
 
 
@@ -393,7 +393,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       cache: { read: [{ upTo: 272000, price: 0.4 }, { upTo: null, price: 0.8 }], write: [{ upTo: 272000, price: 5 }, { upTo: null, price: 10 }] },
       tools: OAI_PRICE_TOOLS,
     },
-    benchmark: { cbaElo: 1481 }, // gpt-5.6-sol-xhigh
+    benchmark: { cbaElo: 1485 }, // gpt-5.6-sol-xhigh
   },
 
   // GPT-5.6 Terra - balanced
@@ -990,26 +990,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 
   // o4-mini-deep-research: removed, shut down July 23, 2026
 
-  /// o4-mini
-  {
-    hidden: true, // deprecated, shutdown 2026-10-23
-    idPrefix: 'o4-mini-2025-04-16',
-    label: 'o4 Mini [Deprecated]',
-    pubDate: '20250416',
-    isLegacy: true,
-    description: '[Use: GPT-5.6 Terra - Shut down: 2026-10-23] Latest o4-mini model. Optimized for fast, effective reasoning with exceptionally efficient performance in coding and visual tasks.',
-    contextWindow: 200000,
-    maxCompletionTokens: 100000,
-    interfaces: IFS_CHAT_CACHE_REASON,
-    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] }],
-    chatPrice: { input: 1.1, cache: { read: 0.275 }, output: 4.4 },
-    benchmark: { cbaElo: 1390 }, // o4-mini-2025-04-16
-  },
-  {
-    idPrefix: 'o4-mini',
-    label: 'o4 Mini',
-    symLink: 'o4-mini-2025-04-16',
-  },
+  // o4-mini: removed, shut down October 23, 2026 (dead on OpenRouter too)
 
   // o3-deep-research: removed, shut down July 23, 2026
 
@@ -1055,67 +1036,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     symLink: 'o3-2025-04-16',
   },
 
-  // o3-mini
-  {
-    hidden: true, // deprecated, shutdown 2026-10-23
-    idPrefix: 'o3-mini-2025-01-31',
-    label: 'o3 Mini [Deprecated]',
-    pubDate: '20250131',
-    isLegacy: true,
-    description: '[Use: GPT-5.6 Sol - Shut down: 2026-10-23] Latest o3-mini model snapshot. High intelligence at the same cost and latency targets of o1-mini. Excels at science, math, and coding tasks.',
-    contextWindow: 200000,
-    maxCompletionTokens: 100000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_StripImages],
-    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] }],
-    chatPrice: { input: 1.1, cache: { read: 0.55 }, output: 4.4 },
-    benchmark: { cbaElo: 1348 }, // o3-mini
-  },
-  {
-    idPrefix: 'o3-mini',
-    label: 'o3 Mini',
-    symLink: 'o3-mini-2025-01-31',
-  },
-
-  // o1-pro - (v1/responses API) 💎💰
-  {
-    hidden: true,
-    idPrefix: 'o1-pro-2025-03-19',
-    label: 'o1 Pro [Deprecated]',
-    pubDate: '20250319',
-    isLegacy: true,
-    description: '[Use: GPT-5.6 Sol with Pro reasoning - Shut down: 2026-10-23] A version of o1 with more compute for better responses. Provides consistently better answers for complex tasks.',
-    contextWindow: 200000,
-    maxCompletionTokens: 100000,
-    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
-    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }, { paramId: 'llmForceNoStream' }],
-    chatPrice: { input: 150, output: 600 },
-    // benchmark: has not been measured yet by third parties
-  },
-  {
-    idPrefix: 'o1-pro',
-    label: 'o1 Pro',
-    symLink: 'o1-pro-2025-03-19',
-  },
-
-  // o1
-  {
-    idPrefix: 'o1-2024-12-17',
-    label: 'o1 [Deprecated]',
-    pubDate: '20241217',
-    isLegacy: true,
-    description: '[Use: GPT-5.6 Sol - Shut down: 2026-10-23] Previous full o-series reasoning model.',
-    contextWindow: 200000,
-    maxCompletionTokens: 100000,
-    interfaces: IFS_CHAT_CACHE_REASON,
-    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] }, { paramId: 'llmVndOaiRestoreMarkdown' }],
-    chatPrice: { input: 15, cache: { read: 7.5 }, output: 60 },
-    benchmark: { cbaElo: 1402 }, // o1-2024-12-17
-  },
-  {
-    idPrefix: 'o1',
-    label: 'o1',
-    symLink: 'o1-2024-12-17',
-  },
+  // o3-mini, o1-pro, o1: removed, shut down October 23, 2026 (dead on OpenRouter too)
 
 
   /// GPT-4.1 series
@@ -1313,25 +1234,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 
   // GPT-4o Mini Search Preview: removed, same as gpt-4o-search-preview above (dead on OpenAI and OpenRouter - probed 2026-08-24)
 
-  // GPT-4 Turbo
-  {
-    idPrefix: 'gpt-4-turbo-2024-04-09',
-    label: 'GPT-4 Turbo [Deprecated]',
-    pubDate: '20240409',
-    hidden: true, // OLD
-    isLegacy: true,
-    description: '[Use: GPT-5.6 Sol - Shut down: 2026-10-23] GPT-4 Turbo with Vision model. Vision requests can now use JSON mode and function calling. gpt-4-turbo currently points to this version.',
-    contextWindow: 128000,
-    maxCompletionTokens: 4096,
-    interfaces: IFS_CHAT_MIN,
-    chatPrice: { input: 10, output: 30 },
-    benchmark: { cbaElo: 1324 }, // gpt-4-turbo-2024-04-09
-  },
-  {
-    idPrefix: 'gpt-4-turbo',
-    label: 'GPT-4 Turbo',
-    symLink: 'gpt-4-turbo-2024-04-09',
-  },
+  // GPT-4 Turbo: removed, shut down October 23, 2026 (dead on OpenRouter too)
   // gpt-4-0125-preview / gpt-4-1106-preview / gpt-4-turbo-preview: removed, no longer returned by API
 
   // GPT4's
@@ -1356,27 +1259,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   },
 
 
-  // 3.5
-  // Note: As of July 2024, gpt-4o-mini should be used in place of gpt-3.5-turbo, as it is cheaper, more capable, multimodal, and just as fast.
-  // As such, many 3.5 models are in the 'deny list' below, and not even returned to the UI.
-  {
-    idPrefix: 'gpt-3.5-turbo-0125',
-    label: '3.5-Turbo [Deprecated]',
-    pubDate: '20240125',
-    hidden: true, // deprecated Apr 22, 2026, shutdown 2026-10-23
-    isLegacy: true,
-    description: '[Use: GPT-5.6 Terra - Shut down: 2026-10-23] The latest GPT-3.5 Turbo model with higher accuracy at responding in requested formats.',
-    contextWindow: 16385,
-    maxCompletionTokens: 4096,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.5, output: 1.5 },
-    benchmark: { cbaElo: 1225 }, // gpt-3.5-turbo-0125
-  },
-  {
-    idPrefix: 'gpt-3.5-turbo',
-    label: '3.5-Turbo',
-    symLink: 'gpt-3.5-turbo-0125',
-  },
+  // GPT-3.5 Turbo: removed, shut down October 23, 2026 (dead on OpenRouter too)
 
 ]);
 
@@ -1479,10 +1362,10 @@ const openAIModelsDenyList: string[] = [
   'sora-2-pro', 'sora-2',
 
   // Specialized domain models - cybersecurity, gated behind the Daybreak program ('does not exist or you do not have access', probed 2026-08-17)
-  'gpt-5.4-cyber' /* shut down 2026-10-01 */, 'gpt-5.5-cyber', 'gpt-5.6-cyber',
+  'gpt-5.4-cyber' /* shut down 2026-10-01 */, 'gpt-5.5-cyber', 'gpt-5.6-cyber', 'gpt-6-cyber',
   'daybreak-blue-latest', 'daybreak-red-latest', // deprecated 'gpt-daybreak-*' program aliases -> gpt-5.6-sol / gpt-5.6-cyber
   // Specialized domain models - life sciences, gated behind the GPT-Rosalind trusted-access program (probed 2026-10-21)
-  'gpt-rosalind-research', 'gpt-rosalind-discovery',
+  'gpt-rosalind-research', 'gpt-rosalind-discovery', 'gpt-6-rosalind',
 
   // Safety/moderation models
   'gpt-oss-safeguard',
@@ -1517,6 +1400,16 @@ const openAIModelsShutdownDenyList: string[] = [
   'gpt-5.2-chat-latest',
   'gpt-5.3-chat-latest',
   'gpt-3.5-turbo-1106', // shut down September 28, 2026 - not on OpenRouter
+  // shut down October 23, 2026 - defs removed (dead on OpenRouter too)
+  'o1', // catches o1-2024-12-17 and o1-pro too
+  'o3-mini', // alias + snapshot
+  'o4-mini', // alias + snapshot
+  'gpt-4-turbo', // alias + snapshot
+  'gpt-3.5-turbo', // alias + snapshot
+  // shut down October 23, 2026 - defs kept above (OpenRouter serves them via Azure)
+  'gpt-4.1-nano', // alias + snapshot
+  'gpt-4o-2024-05-13',
+  'gpt-4-0613', // OpenRouter serves it as 'gpt-4'
 ];
 
 export function openAIModelFilter(model: OpenAIWire_API_Models_List.Model, isNativeOpenAI: boolean) {
@@ -1720,7 +1613,12 @@ export function openaiValidateModelDefs_DEV(apiModels: unknown, parsedModels: ob
     // 1 & 2: Check stale and unknown definitions
     llmDevCheckModels_DEV('OpenAI', apiIds, knownIds, {
       apiFilter: id => openAIModelFilter({ id } as any, isNativeOpenAI),
-      ignoreStale: ['gpt-5.6'], // docs-official alias: generates but never lists (see the symlink def)
+      ignoreStale: [
+        'gpt-5.6', // docs-official alias: generates but never lists (see the symlink def)
+        // shut down and delisted on OpenAI, defs kept for OpenRouter (served via Azure)
+        'gpt-5.2-codex', 'gpt-5.1-codex-max', 'gpt-5.1-codex-mini', 'gpt-5.1-codex',
+        'gpt-4.1-nano-2025-04-14', 'gpt-4.1-nano', 'gpt-4o-2024-05-13', 'gpt-4-0613', 'gpt-4',
+      ],
     });
 
     // 3: Check for parsing gaps (models lost during filter/map pipeline)
@@ -1766,6 +1664,7 @@ export function llmOrtOaiLookup(orModelName: string): OrtVendorLookupResult | un
     // [2026-09-14] 'gpt-6-astra-pro' is not an OpenAI id (404 model_not_found): it's Astra with reasoning.mode=pro, priced identically
     'gpt-6-astra-pro': 'gpt-6-astra',
     'gpt-6.1-sol-pro': 'gpt-6.1-sol',
+    'gpt-6.1-terra-pro': 'gpt-6.1-terra',
     'gpt-6-sol-pro': 'gpt-6-sol',
     'gpt-6-luna-pro': 'gpt-6-luna',
     // [2026-07-11] OR materializes GPT-5.6 Pro mode as standalone '-pro' ids - map to the tier entries (OR supplies label + pricing)

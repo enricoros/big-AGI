@@ -254,7 +254,8 @@
     "tools": ["oai-web-search"]
   },
   "gpt-5-search-api-2025-10-14": {
-    "temperature-range": [0,2]
+    "temperature-range": [0,2],
+    "tools": ["oai-web-search"]
   },
   "o4-mini-deep-research-2025-06-26": {
     "temperature": [1],

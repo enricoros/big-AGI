@@ -1,11 +1,23 @@
 {
   "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
   "_evaluated": "Evaluated: fn, gemini-thinking-budget, gemini-thinking-level, temperature. If missing, the parameter is not supported by that model.",
-  "_modelFilter": "models/gemini-3, models/gemini-2, models/gemma",
+  "_modelFilter": "^models/(gemini-[234]|gemini-nano-banana|gemini-robotics|gemma)",
+  "models/gemini-4-argon": {
+    "fn": ["auto","required","roundtrip"],
+    "gemini-thinking-budget-range": [0,65535],
+    "gemini-thinking-level": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
   "models/gemini-3.8-flash": {
     "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget-range": [0,65535],
     "gemini-thinking-level": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-3.8-flash-lite-tts": {
+    "temperature-range": [0,2]
+  },
+  "models/gemini-3.8-flash-tts": {
     "temperature-range": [0,2]
   },
   "models/gemini-3.7-flash": {
@@ -16,7 +28,7 @@
   },
   "models/gemini-3.6-flash": {
     "fn": ["auto","required","roundtrip"],
-    "gemini-thinking-budget": [1024,16384,24576,32768,65535],
+    "gemini-thinking-budget-range": [0,65535],
     "gemini-thinking-level": ["minimal","low","medium","high"],
     "temperature-range": [0,2]
   },
@@ -44,6 +56,12 @@
     "gemini-thinking-level": ["low","medium","high"],
     "temperature-range": [0,2]
   },
+  "models/gemini-nano-banana-2.1": {
+    "fn": ["auto","required"],
+    "gemini-thinking-budget-range": [0,65535],
+    "gemini-thinking-level": ["minimal","medium","high"],
+    "temperature-range": [0,2]
+  },
   "models/gemini-3.1-flash-image": {
     "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget-range": [0,65535],
@@ -57,7 +75,7 @@
     "temperature-range": [0,2]
   },
   "models/gemini-3.1-flash-lite-image": {
-    "fn": ["auto","roundtrip"],
+    "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget-range": [0,65535],
     "gemini-thinking-level": ["minimal","high"],
     "temperature-range": [0,2]
@@ -117,6 +135,12 @@
   "models/gemini-2.5-flash-lite": {
     "fn": ["auto","required","roundtrip"],
     "gemini-thinking-budget-range": [0,24576],
+    "temperature-range": [0,2]
+  },
+  "models/gemini-robotics-er-2-preview": {
+    "fn": ["auto","required","roundtrip"],
+    "gemini-thinking-budget-range": [0,65535],
+    "gemini-thinking-level": ["minimal","low","medium","high"],
     "temperature-range": [0,2]
   },
   "models/gemma-4-31b-it": {

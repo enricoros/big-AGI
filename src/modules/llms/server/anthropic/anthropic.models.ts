@@ -43,7 +43,8 @@ const IF_47_R = [...IF_4_R, LLM_IF_HOTFIX_NoTemperature];
 // - llmVndAntEffort             Anthropic effort: each model declares its subset via enumValues. 4.7 adds `xhigh`.
 // - llmVndAnt1MContext         RETIRED 2026-04-30 on the Anthropic API. Was required for Sonnet 4.5 / Sonnet 4 (beta, tiered pricing).
 //                              Not needed for Opus 4.8/4.7/4.6 and Sonnet 4.6 (1M GA at standard pricing since 2026-03-13).
-//                              Kept on Bedrock models (Bedrock may still honor the header).
+//                              Dropped from Sonnet 4.5: past 200K both APIs 400 with the header ('prompt is too long',
+//                              Bedrock 'Input is too long for requested model.'). Sonnet 4 keeps it (retired, 404 on Bedrock).
 // - llmVndAntSkills            2026-02-06: seems GA to any model now: a parameter spec for user/UI configurability
 // - llmVndAntThinkingBudget    2026-02-06: deprecated since 4.6 in favor of adaptive thinking; 4.7 REMOVES manual budgets
 //                              entirely (adaptive-only). We keep the param (hidden, initialValue -1) as our "force adaptive"
@@ -152,7 +153,7 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
       // Toggle dropped here so the UI doesn't advertise a dead control. If Anthropic restores it, re-add 'fast_6x'.
       ...ANT_TOOLS_DYNAMIC,
     ],
-    benchmark: { cbaElo: 1505 }, // claude-opus-4-6-high
+    benchmark: { cbaElo: 1503 }, // claude-opus-4-6-high
   },
 
   'claude-sonnet-4-6': {
@@ -191,7 +192,6 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     interfaces: [...IF_4_R, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntThinkingBudget' },
-      { paramId: 'llmVndAnt1MContext' },
       ...ANT_TOOLS,
     ],
     benchmark: { cbaElo: 1456 }, // claude-sonnet-4-5-20250929-thinking-32k
@@ -289,7 +289,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
       },
       tools: ANT_PRICE_TOOLS,
     },
-    benchmark: { cbaElo: 1462 - 7 }, // (no arena data yet - launched 2026-10-07) assuming: claude-sonnet-5-high - 7 (vendor evals: far above Haiku 4.5 and GPT-6 Luna, below Sonnet 5.5)
+    benchmark: { cbaElo: 1425 }, // claude-haiku-5-5-high
   },
 
   // Claude Sonnet 5.5 - single entry with a user-facing Thinking switch, as Opus 5 (no base + '(Adaptive)' split as on Sonnet 5):
@@ -314,7 +314,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // only Opus 5.5 also reads; it reads Sonnet 5 / Opus 4.8 / Haiku 4.5 / Haiku 5.5 blocks, not Opus 5.x / Fable / Mythos.
     // Cache reads $0.10 (0.05x) since 2026-10-07, down from $0.20.
     chatPrice: { input: 2, output: 10, cache: { read: 0.10, write: 2.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
-    benchmark: { cbaElo: 1462 + 4 }, // (no arena data yet - launched 2026-09-28) assuming: claude-sonnet-5-high + 4
+    benchmark: { cbaElo: 1477 }, // claude-sonnet-5-5-xhigh
   },
 
   // Claude Opus 5.5 - SINGLE always-thinking entry: unlike Opus 5, thinking cannot be disabled at all
@@ -337,7 +337,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // computer_20251124 400 (toolset only). Preserved thinking: blocks replay onto Opus 5.5 and Fable/Mythos 5.1 only.
     // Same tokenizer as Opus 4.8/5, 512-token min cacheable prompt, cache reads 0.05x, knowledge cutoff Jun 2026.
     chatPrice: { input: 4, output: 20, cache: { read: 0.20, write: 5, duration: 300 }, tools: ANT_PRICE_TOOLS },
-    benchmark: { cbaElo: 1493 + 4 }, // (no arena data yet - launched 2026-09-22) assuming: claude-opus-5-high + 4
+    benchmark: { cbaElo: 1509 }, // claude-opus-5-5-high
   },
 
   // Claude 5.1 models (Fable/Mythos) - NOTE: no thinking variants, adaptive thinking is always on (as Fable 5)
@@ -358,7 +358,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // forced tool_choice 400, refusals, 30-day retention), same tokenizer; cache reads $0.25 (0.025x, vs 0.1x elsewhere),
     // knowledge cutoff Jun 2026. New: preserved thinking (replayed thinking blocks bound to model + prefix) - handled in AIX.
     chatPrice: { input: 10, output: 50, cache: { read: 0.25, write: 12.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
-    benchmark: { cbaElo: 1506 + 4 }, // (no arena data yet - launched 2026-09-01) assuming: claude-fable-5 + 4
+    benchmark: { cbaElo: 1504 }, // claude-fable-5-1-max
   },
   {
     id: 'claude-mythos-5-1', // Limited availability (Project Glasswing) - 2026-09-01
@@ -376,7 +376,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // Mythos 5.1: same specs/pricing/constraints as Fable 5.1; invitation-only (404 elsewhere, not on OpenRouter; gated preview on Bedrock).
     // Skips the history-editing check on replayed thinking blocks (model binding only).
     chatPrice: { input: 10, output: 50, cache: { read: 0.25, write: 12.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
-    benchmark: { cbaElo: 1506 + 5 }, // (no arena data yet) assuming: claude-fable-5-1 + 1
+    benchmark: { cbaElo: 1504 + 1 }, // (no arena data yet) assuming: claude-fable-5-1 + 1
   },
 
   // Claude 5 models (Fable/Mythos) - NOTE: no thinking variants, adaptive thinking is always on
@@ -399,7 +399,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     // safety classifiers (stop_reason 'refusal' + stop_details.category incl. 'reasoning_extraction', opt-in `fallbacks` beta),
     // 512-token min cacheable prompt, requires 30-day data retention (no ZDR). No fast mode at launch.
     chatPrice: { input: 10, output: 50, cache: { read: 1.00, write: 12.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
-    benchmark: { cbaElo: 1506 }, // claude-fable-5
+    benchmark: { cbaElo: 1504 }, // claude-fable-5
   },
   {
     id: 'claude-mythos-5', // Limited availability (Project Glasswing) - 2026-06-09
@@ -416,7 +416,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     ],
     // Mythos 5: same specs/pricing/constraints as Fable 5; invitation-only, /v1/models lists it only for approved orgs
     chatPrice: { input: 10, output: 50, cache: { read: 1.00, write: 12.50, duration: 300 }, tools: ANT_PRICE_TOOLS },
-    benchmark: { cbaElo: 1506 + 1 }, // (no arena data yet) assuming: claude-fable-5 + 1
+    benchmark: { cbaElo: 1504 + 1 }, // (no arena data yet) assuming: claude-fable-5 + 1
   },
 
   // Claude Opus 5 - single entry with a user-facing Thinking switch (no base + '(Adaptive)' split): thinking is ON by
@@ -583,7 +583,6 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     maxCompletionTokens: 64000,
     interfaces: [...IF_4, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
-      { paramId: 'llmVndAnt1MContext' }, // 1M context beta retires 2026-04-30 for this model
       ...ANT_TOOLS,
     ],
     // Note: Tiered pricing - ≤200K: $3/$15, >200K: $6/$22.50 (with 1M context enabled)

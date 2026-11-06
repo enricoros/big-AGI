@@ -90,7 +90,7 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
       cache: { read: [{ upTo: 200000, price: 0.50 }, { upTo: null, price: 1.00 }] },
       tools: XAI_PRICE_TOOLS,
     },
-    // benchmark: no CBA entry yet
+    benchmark: { cbaElo: 1441 }, // grok-4.7-xhigh (CBA name)
   },
 
   // Grok 4.6 (flagship, August 2026) - post-training refresh extending 4.5 (same base, context, $2/$6 price); always-on reasoning, effort low/medium/high/xhigh (default high)
