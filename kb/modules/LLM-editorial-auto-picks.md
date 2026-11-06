@@ -42,9 +42,9 @@ Each domain maps to an ordered array of `{ vendor, modelId }` picks:
 ```ts
 export const EditorialDefaults = {
   primaryChat: [
-    { vendor: 'anthropic',  modelId: 'claude-opus-4-7' },
-    { vendor: 'openai',     modelId: 'gpt-5.5' },
-    { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash' },
+    { vendor: 'anthropic',  modelId: 'claude-opus-5-5' },
+    { vendor: 'googleai',   modelId: 'models/gemini-4-argon' },
+    { vendor: 'openai',     modelId: 'gpt-6.1-sol' },
     // ...
   ],
   codeApply: [ /* ... */ ],
@@ -57,6 +57,15 @@ export const EditorialDefaults = {
 - **Array order is cross-vendor precedence.** The picker returns the first match - no external ELO ranking is consulted. A Gemini model can sit between two Anthropic picks or vice versa.
 - **Per-domain lists.** Each domain (`primaryChat`, `codeApply`, `fastUtil`, `imageCaption`) has its own ordered preferences reflecting the domain's purpose (e.g. `codeApply` favors code-optimized models).
 - **Domains without an entry** fall through directly to layer 3 (ELO/cost heuristic).
+
+### Curation rules
+
+- **One pick per service and domain**: the current model at the domain's service level that every user of the service can call. Older generations are not kept as fallbacks: a pick missing from the user's list falls through to layer 3, which already takes the best of what the user has.
+- **Service levels**: `primaryChat` is the flagship; `codeApply` a workhorse coder with function calling; `fastUtil` the fast, cheap tier; `imageCaption` quick vision.
+- **Order across vendors** follows quality at that level: arena score first, then price and speed.
+- **Bedrock** is the exception to one pick: access is per account and region. The newest model comes first, followed by the newest that an account without the enablement can invoke. The picker cannot see access, so the second applies only where the first is not listed; an account without the enablement gets a 403 on the first.
+- **OpenRouter** serves every upstream, so it gets a single pick per domain, the best across vendors.
+- **NVIDIA NIM** is a free trial catalog: its picks come last, so a configured paid service always wins.
 
 ### Matching logic
 
@@ -92,8 +101,8 @@ The `llmsDefineModels<TElem>()` factory preserves the array's const type, so the
 type _EditorialPick =
   | { vendor: 'anthropic',  modelId: LlmsAnthropicModelId }
   | { vendor: 'openai',     modelId: LlmsOpenAIModelId }
-  | { vendor: 'bedrock',    modelId: string }    // dynamic discovery
-  | { vendor: 'openrouter', modelId: string }    // dynamic discovery
+  | { vendor: 'bedrock',    modelId: `${'us.' | 'global.'}anthropic.${LlmsAnthropicModelId}${'' | '-v1:0'}` }
+  | { vendor: 'openrouter', modelId: `anthropic/${LlmsAnthropicModelId}` | `google/${string}` | `openai/${LlmsOpenAIModelId}` }
   // ...
   ;
 ```
@@ -110,11 +119,11 @@ const _assertEditorialVendorsAreValid: [_EditorialPick['vendor']] extends [Model
 - **Wrong modelId under a vendor** (e.g. `{ vendor: 'anthropic', modelId: 'gpt-5.5' }`) - fails discriminated union narrowing.
 - **Stale modelId after a vendor removes a model** - fails because `LlmsXxxModelId` updates automatically when the vendor's known-models array changes.
 
-Dynamic vendors (`openrouter`, `bedrock`) use `string` for `modelId` since their model lists are discovered at runtime.
+Dynamic vendors (`openrouter`, `bedrock`) list their models at runtime: their picks are templates over the native unions, so a native id that is removed also fails the picks that route to it. The picker matches them as a prefix or dot/dash equivalent of the listed id.
 
 ### Vendor coverage
 
-Static vendors with rich literal unions: Anthropic, OpenAI, Gemini (`googleai`), xAI, Z.AI, Moonshot, DeepSeek, NVIDIA NIM (`nvidianim`). These provide the strongest compile-time guarantees. NVIDIA NIM entries sit at the tail of every domain list - it is a free trial endpoint, so configured paid vendors always win.
+Static vendors with rich literal unions: Anthropic, OpenAI, Gemini (`googleai`), xAI, Z.AI, Moonshot, DeepSeek, NVIDIA NIM (`nvidianim`). These provide the strongest compile-time guarantees.
 
 All other registered vendors (Alibaba, ArceeAI, Azure, ChutesAI, FastAPI, FireworksAI, Groq, LLMAPI, Novita, TogetherAI) also export `LlmsXxxModelId` types via the same `llmsDefineManualMappings` pattern, but their known-model arrays may be empty today - the union degenerates to the base element type rather than `never`, keeping the mechanism ready for future editorial entries.
 
