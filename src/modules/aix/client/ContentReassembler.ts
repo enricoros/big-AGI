@@ -1139,6 +1139,12 @@ export class ContentReassembler {
     if (dialectTokenStopReason) {
       // one row per wire reason, shared with the edge: gcStopReasonRow in aix.wiretypes
       const stopRow = AixWire_Particles.gcStopReasonRow(dialectTokenStopReason);
+      // TODO: port to the new typed errors system, otherwise replace with the following code: the row's message becomes a fallback,
+      //       skipped when the stop arrived with its own text (today a Gemini filter stop, and an Anthropic refusal with details,
+      //       store two error fragments: the vendor's text and this generic one)
+      //   - ReassemblyState, false at init:  dialectStopExplained: boolean;
+      //   - onCGEnd, where dialectStopReason is set:  this.S.dialectStopExplained = !!tokenStopError || terminationReason === 'issue-dialect';
+      //   - here:  return { tsr: stopRow.stored, ...(stopRow.message && !this.S.dialectStopExplained && { errorMessage: stopRow.message }) };
       if (stopRow)
         return { tsr: stopRow.stored, ...(stopRow.message && { errorMessage: stopRow.message }) };
       console.warn(`[ContentReassembler] Unmapped dialectStopReason: ${dialectTokenStopReason}. Falling back to terminationReason.`);
