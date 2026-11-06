@@ -318,7 +318,7 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
       console.warn('[Anthropic] Structured output_config.format may conflict with web_fetch citations');
   }
 
-  // [Anthropic, fast-mode-2026-02-01] Fast inference mode (preview/waitlist)
+  // [Anthropic, fast-mode-2026-02-01] Fast inference mode
   if (model.vndAntInfSpeed === 'fast')
     payload.speed = 'fast';
 

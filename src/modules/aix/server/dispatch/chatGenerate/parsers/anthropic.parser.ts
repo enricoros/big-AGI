@@ -509,7 +509,7 @@ export function createAnthropicMessageParser(thinkingOrigins?: () => AnthropicTh
         // 401 - authentication_error (api key issue)
         // 403 - permission_error (api key lacks permissions)
         // 404 - not_found_error
-        // 413 - request_too_large (> 32MB for standard streaming)
+        // 413 - request_too_large (> 128MB)
         // 429* - rate_limit_error (account hit limits)
         // 500* - api_error (anthropic systems internal unexpected error)
         // 529* - overloaded_error: The API is temporarily overloaded.

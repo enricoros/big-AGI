@@ -114,6 +114,8 @@ const _hardcodedAnthropicThinkingVariants: ModelVariantMap & { [id: string]: { i
     parameterSpecs: [
       { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - 4.8 rejects budget_tokens */ },
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
+      // TODO 2026-11-30: fast mode deprecated 2026-10-30, HARD REMOVAL on this date - speed:'fast' will then return
+      // an error (unlike Opus 4.6's silent no-op removal). Drop 'fast_2x' here once removed; migrate users to Opus 5.5.
       { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // 2x tier on 4.8 (vs 4.7/4.6's 6x)
       ...ANT_TOOLS_DYNAMIC,
     ],
@@ -327,7 +329,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     parameterSpecs: [
       { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - the only mode; 'disabled' and budget_tokens return 400 */ },
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }, // default 'medium' (Opus 5: 'high'), probe-verified
-      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // fast mode: research preview, API only, waitlist-gated; $8/$40 2x tier
+      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // fast mode: available, no waitlist or beta header; $8/$40 2x tier
       ...ANT_TOOLS_DYNAMIC,
     ],
     // Opus 5.5 (launch-verified 2026-09-22, probed live): Fable 5.1's API surface at Opus pricing - adaptive-only, forced
@@ -485,6 +487,8 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     interfaces: [...IF_47, LLM_IF_ANT_ToolsSearch],
     parameterSpecs: [
       { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
+      // TODO 2026-11-30: fast mode deprecated 2026-10-30, HARD REMOVAL on this date - speed:'fast' will then return
+      // an error (unlike Opus 4.6's silent no-op removal). Drop 'fast_2x' here once removed; migrate users to Opus 5.5.
       { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // fast mode: research preview, API only; 2x tier ($10/$50 vs std $5/$25), unlike 4.7/4.6's 6x
       ...ANT_TOOLS_DYNAMIC,
     ],
