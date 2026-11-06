@@ -280,9 +280,15 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
   // [Anthropic, 2026-09-01] Preserved thinking: on Fable 5.1+ a replayed thinking block is valid only against the unchanged
   // system/tools/history prefix, and new accounts 400 after any edit (routine here: edits, deletes, persona/tool changes).
   // 'drop_block' drops the stale blocks instead (accepted on every model, probed); the parser relays the drops as 'vnt' void-notice particles.
-  // Not on 'between_tools' (400 'Extra inputs'): there, an edited history replaying Sonnet 5.5 thinking blocks can still 400 on new accounts.
+  // Not on 'between_tools' (400 'Extra inputs'): there, and on Haiku 5.x 'disabled', earlier turns' thinking is stripped instead (below).
   if (hostedFeatures.enableThinkingBindingControls && (payload.thinking?.type === 'adaptive' || payload.thinking?.type === 'enabled'))
     payload.thinking.block_binding = { prefix_mismatch_behavior: 'drop_block' };
+
+  // [Anthropic, 2026-11-05, hypothesis: the 400 is documented, not reproduced - our key predates the cutoff] Haiku 5.x 'disabled' (or unset, with forced tools) and Sonnet 5.x 'between_tools' take no block_binding, yet replayed blocks
+  // still face the prefix check: a 400 on accounts created on or after 2026-08-31 after any prefix change (routine here: the system prompt's
+  // hour tick, edits, tool changes). Strip earlier turns' thinking, the documented remedy; a tool loop in progress keeps its own, as required.
+  if (payload.thinking?.type === 'between_tools' || (/claude-haiku-5/.test(model.id) && (payload.thinking?.type === 'disabled' || (!payload.thinking && areToolCallsRequired))))
+    _stripThinkingBeforeCurrentTurn(chatMessages);
 
   // [Anthropic] Effort parameter
   const reasoningEffort = model.reasoningEffort; // ?? model.vndAntEffort;
@@ -550,6 +556,21 @@ function _pairInteriorToolUseBlocks(chatMessages: TRequest['messages']): void {
       [AnthropicWire_Blocks.TextBlock(AIX_MISSING_TOOL_RESULT_TEXT, 'pairing.orphan-tool-use')],
       undefined, // not is_error: the tool did not fail, its result is simply absent from history
     )));
+  }
+}
+
+/** Removes thinking blocks from the assistant messages before the turn in progress (from the last user message that is not only tool results). */
+function _stripThinkingBeforeCurrentTurn(chatMessages: TRequest['messages']): void {
+  const turnStart = chatMessages.findLastIndex(m => m.role === 'user' && m.content.some(block => block.type !== 'tool_result'));
+  for (let i = turnStart - 1; i >= 0; i--) {
+    const message = chatMessages[i];
+    if (message.role !== 'assistant') continue;
+    message.content = message.content.filter(block => block.type !== 'thinking' && block.type !== 'redacted_thinking');
+    // [Anthropic, 2026-11-06, hypothesis: an empty assistant turn is accepted but undocumented; on Bedrock probed only through OpenRouter's route]
+    // a reply that was only thinking (or thinking + the '\n' separator hotfix) stays as an empty turn: whitespace-only text is a 400,
+    // and without the turn the two user messages merge and the model also answers the earlier one
+    if (!message.content.some(block => block.type !== 'text' || block.text.trim()))
+      message.content = [];
   }
 }
 

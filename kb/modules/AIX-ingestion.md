@@ -130,6 +130,7 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **Q4** (low) Anthropic: one `ma` emits its thinking block, then all its redacted blocks (R3); matches wire order for every stored shape
 - [ ] **Q8** (low) OpenAI: `attachCodeInterpreterCallOutputs` overwrites `outputs` per stored tool result, only the last replays (synthetic)
 - [ ] **Q10** (low) Gemini: an assistant turn holding only `ma` fragments emits no model content, leaving two user contents adjacent (synthetic)
+- [ ] **Q11** (medium) Anthropic: with thinking off on Haiku 5.x and Sonnet 5.x, earlier turns' thinking is not replayed (it cannot be bound there, and a prefix change would 400 on newer accounts); an only-thinking reply is sent as an empty assistant turn - `_stripThinkingBeforeCurrentTurn`
 
 ## IR gaps
 
