@@ -516,6 +516,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
   // through to the generic fallback ([Chat,Vision,Fn], no params) and lost the thinking-level control. Modeled on gemini-3.1-flash-image.
   // displayName + token limits verified live 2026-07-10 via /v1beta/models; GA date per Google's API changelog.
   // Verified live 2026-10-06: all 14 aspect ratios; 1K only ('512'/'2K'/'4K' 400), so no llmVndGeminiImageSize
+  // No Search grounding: any googleSearch tool 400s 'Search as tool is not enabled for this model', so no llmVndGeminiGoogleSearch
   {
     id: 'models/gemini-3.1-flash-lite-image',
     labelOverride: 'Nano Banana 2 Lite',
@@ -524,7 +525,6 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     interfaces: IF_30,
     parameterSpecs: [
       { paramId: 'llmVndGemEffort', enumValues: ['minimal', 'high'] },
-      { paramId: 'llmVndGeminiGoogleSearch' },
       { paramId: 'llmVndGeminiAspectRatio' },
     ],
     benchmark: undefined, // Non-benchmarkable because generates images
