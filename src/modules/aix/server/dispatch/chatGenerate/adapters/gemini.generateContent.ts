@@ -91,6 +91,8 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
       topP: undefined, // (default, optional)
       topK: undefined, // (default, optional)
     },
+    // [Gemini, 2026-10-26, hypothesis: the field is accepted on every model, its effect on the logs is not observable] generateContent logs requests to AI Studio by default on paid projects created from this date - the request field overrides the project setting
+    store: false,
   };
 
   // Top-P instead of temperature

@@ -72,6 +72,7 @@ export const synthesizeGemini: SynthesizeBackendFn<SpeexWire_Access_Gemini> = as
       responseModalities: ['AUDIO'],
       speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice.ttsVoiceId || SPEEX_DEFAULTS.GEMINI_VOICE } } },
     },
+    store: false, // opt out of request logging, as the chat adapter does
   };
 
   // fetch

@@ -738,7 +738,7 @@ export namespace GeminiWire_API_Generate_Content {
     systemInstruction: GeminiWire_Messages.SystemInstruction_schema.optional(),
     generationConfig: GenerationConfig_schema.optional(),
     cachedContent: z.string().optional(),
-    /** (Not useful to us) Configures the logging behavior for a given request. */
+    /** Logs the request to AI Studio Logs (true) or not (false); unset follows the project setting, on by default for paid projects created on or after 2026-10-26. */
     store: z.boolean().optional(),
   });
 

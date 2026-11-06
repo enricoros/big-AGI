@@ -134,6 +134,7 @@ export const llmGeminiRouter = createTRPCRouter({
             },
           }),
         },
+        store: false, // opt out of request logging, as the chat adapter does
       };
 
       // -> heartbeats, while waiting for the generation response (4K takes 60-90s)
