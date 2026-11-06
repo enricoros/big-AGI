@@ -67,11 +67,13 @@ Retention: 1 day free, 55 days paid.
 | Status            | Meaning                                       | Handling                                              |
 |-------------------|-----------------------------------------------|-------------------------------------------------------|
 | `in_progress`     | Live run **or** zombie (see C)                | Surface diagnostics; offer Resume/Recover/Stop        |
+| `queued`          | In the SDK's status enum; never observed      | As `in_progress` (defensive)                          |
 | `completed`       | Done with content in `steps[]`                | Emit fragments, `tokenStopReason='ok'`                |
 | `failed`          | Server-side failure                           | Terminating issue                                     |
 | `cancelled`       | We or another client cancelled                | Close as `cg-issue`                                   |
 | `budget_exceeded` | Hit spend/compute cap (new steps-schema status) | Note + `tokenStopReason='out-of-tokens'`            |
 | `incomplete`      | Stopped early (token limit) — partial outputs | Note + `tokenStopReason='out-of-tokens'`              |
+| `requires_continuation` | Foreground hop hit its per-request output cap with budget left; needs `max_output_tokens` > 65,536, which we never send | As `incomplete`; no `continuation_token` hop |
 | `requires_action` | Not expected for Deep Research                | Fail loudly so we notice                              |
 
 ## Two retrieval paths

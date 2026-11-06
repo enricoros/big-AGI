@@ -476,6 +476,7 @@ export function createGeminiInteractionsParserNS(requestedModelName: string | nu
         pt.setDialectEnded('done-dialect');
         break;
       case 'incomplete':
+      case 'requires_continuation':
         pt.appendText('\n_Response incomplete (run stopped early)._\n');
         pt.setTokenStopReason('out-of-tokens');
         pt.setDialectEnded('done-dialect');
@@ -488,6 +489,7 @@ export function createGeminiInteractionsParserNS(requestedModelName: string | nu
       case 'requires_action':
         pt.setDialectTerminatingIssue('Deep Research returned requires_action (not supported in this client)', null, 'srv-warn');
         break;
+      case 'queued':
       case 'in_progress': {
         // Two scenarios both surface as `in_progress`:
         //  1) Run is genuinely live server-side (just slow) - polling later will yield content.
@@ -500,7 +502,7 @@ export function createGeminiInteractionsParserNS(requestedModelName: string | nu
         const elapsedMin = _minutesSince(interaction.created);
         const updatedMin = _minutesSince(interaction.updated);
         const outCount = (interaction.steps ?? []).length;
-        const lines: string[] = ['\n_Deep Research run is **`in_progress`** server-side._\n'];
+        const lines: string[] = [`\n_Deep Research run is **\`${interaction.status}\`** server-side._\n`];
         if (elapsedMin != null) lines.push(`- Started: **${_humanDuration(elapsedMin)} ago**`);
         if (updatedMin != null && updatedMin !== elapsedMin) lines.push(`- Last server update: **${_humanDuration(updatedMin)} ago**`);
         lines.push(`- Steps so far: **${outCount === 0 ? 'none' : outCount}**`);
@@ -846,6 +848,7 @@ function _handleInteractionCompleted(
       break;
 
     case 'incomplete':
+    case 'requires_continuation':
       // Run stopped early (token limit, etc.). Terminate gracefully with a visible note; we keep any content already emitted.
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} incomplete`, { opId: operationOpId, state: 'done' });
@@ -863,12 +866,13 @@ function _handleInteractionCompleted(
       pt.setDialectEnded('done-dialect');
       break;
 
+    case 'queued':
     case 'in_progress':
       // Anomalous: interaction.completed is the TERMINAL SSE event, so status=in_progress here means the
       // run did not actually finish AND no further frames will arrive. Terminate cleanly instead of leaving
       // the stream hanging until the socket times out (user-visible spinner hang). `cg-issue` keeps the
       // upstream handle alive for retry, matching the NS parser's in_progress policy.
-      console.warn('[GeminiInteractions] interaction.completed with status=in_progress; terminating as retryable');
+      console.warn(`[GeminiInteractions] interaction.completed with status=${interaction.status}; terminating as retryable`);
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} interrupted`, { opId: operationOpId, state: 'error' });
       pt.setTokenStopReason('cg-issue');
