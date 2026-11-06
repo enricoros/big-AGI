@@ -32,7 +32,7 @@ export namespace XAIWire_Responses_Tools {
   });
 
   // Web Search tool - searches the web for information
-  // - [2026-01-21] compared to OpenAI's Responses default, we have allowed/excluded domains, we miss search_context_size, user_location
+  // - compared to OpenAI's Responses default, we have allowed/excluded domains, we miss search_context_size; user_location is honored but not sent
   const WebSearchTool_schema = z.object({
     type: z.literal('web_search'),
     // either-or:
@@ -42,7 +42,7 @@ export namespace XAIWire_Responses_Tools {
     // [XAI-UNSUPPORTED] // external_web_access: z.boolean().optional(),
     // [XAI-IGNORED] // filters: ... for OAI compatibility, but replicates the allowed/excluded domains above
     // [XAI-UNSUPPORTED] // search_context_size: z.enum(['low', 'medium', 'high']).optional(),
-    // [XAI-UNSUPPORTED] // user_location: z.looseObject({}).nullish(),
+    // [XAI-NOT-SENT] // user_location: z.looseObject({}).nullish(), // honored: { type: 'approximate', country, city, timezone } localizes queries and results
   });
 
   // X Search tool - searches X/Twitter for social media content

@@ -1546,7 +1546,7 @@ export namespace OpenAIWire_Responses_Tools {
   const WebSearchTool_schema = z.object({
     type: z.enum(['web_search', 'web_search_preview', 'web_search_preview_2025_03_11']),
     search_context_size: z.enum(['low', 'medium', 'high']).optional(),
-    // [OpenAI 2026-04-23, GPT-5.5] API echoes user_location as `null` (not undefined) when unset - so .nullish()
+    // [OpenAI] when unset, the API echoes the location it applies: { type: 'approximate', country: 'US' }, the other fields null
     user_location: z.object({
       type: z.literal('approximate'),
       // API echoes these as `null` when unset, not omitted - so .nullish()
