@@ -83,7 +83,6 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 
 ### Transmit
 
-- [ ] **T3** (high) NS `pause_turn`: content and metrics of every pre-pause segment lost (44 blocks, 10 searches on one turn) - `_consumeDispatchUnified`. S totals are correct
 - [ ] **T1** (high) `endMessagePart()` emits nothing: unit boundaries never reach the client (168 Anthropic text blocks stored as 47 fragments) - `TX`
 - [ ] **T2** (low) S synthesizes missing function-call ids as `aix_*` (Gemini 2.5), accepted on replay; NS does not synthesize, a missing NS id fails the parse - `serverSideId`
 - [ ] **T4** (low) NS re-serializes tool-call args with `JSON.stringify` on Anthropic, Bedrock, Gemini; no replay effect. Chat Completions NS keeps vendor bytes

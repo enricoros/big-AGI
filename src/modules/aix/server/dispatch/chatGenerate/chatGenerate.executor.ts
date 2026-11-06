@@ -282,7 +282,10 @@ async function* _consumeDispatchUnified(
 
   } catch (error: any) {
     // NS pass-through dispatch signals - thrown by parsers to request operation retry or continuation
-    if (error instanceof DispatchContinuationSignal) throw error;
+    if (error instanceof DispatchContinuationSignal) {
+      yield* chatGenerateTx.flushParticles(); // the paused segment's content and metrics: the parser queued them all before it threw
+      throw error;
+    }
     if (error instanceof OperationRetrySignal) throw error;
 
     if (dispatchBody === undefined)
