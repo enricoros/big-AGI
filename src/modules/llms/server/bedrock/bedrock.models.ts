@@ -61,6 +61,7 @@ const SKIP_MANTLE_TOOLS_IDS = ['writer.palmyra-vision-7b']; // 400s: '"auto" too
 // Entries with `api: 'responses'` win over the foundation-model listing: AWS also lists GPT-5.6 and GPT-6 as foundation models
 // (2026-09), which described them as 131K Chat Completions models without reasoning. Their us./global. profiles go through
 // Converse: Mantle serves no geo/global ids ("The model 'us.openai.gpt-6-sol' does not exist" on both Mantle routes).
+// Those profiles are sized from this table too: on these ids converse.maxTokensMaximum is the output cap (128000), not the context.
 const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: number; vision?: true; reasoning?: true; api?: 'responses' }> = {
   'deepseek.v3.1': { label: 'DeepSeek V3.1', ctx: 131072, out: 8192 },
   'moonshotai.kimi-k2-thinking': { label: 'Kimi K2 Thinking', ctx: 262144, out: 16384, reasoning: true },
@@ -235,6 +236,7 @@ export function bedrockModelsToDescriptions(
     hasMantle: boolean;
     isLegacy: boolean;
     isProfile: boolean;
+    metadataOnly: boolean; // a base that is not served on demand: not a model of its own, it only describes its inference profiles
     streaming: boolean;
     converseMaxTokens: number | null;
     // capabilities detected from FM metadata
@@ -262,6 +264,9 @@ export function bedrockModelsToDescriptions(
       continue;
     }
 
+    // the listing is not filtered to on-demand: most profile bases are INFERENCE_PROFILE-only, and their profiles take label, limits and capabilities from here
+    const metadataOnly = !(fm.inferenceTypesSupported?.includes('ON_DEMAND') ?? true);
+
     modelMap.set(baseId, {
       id: baseId,
       label: fm.modelName,
@@ -269,6 +274,7 @@ export function bedrockModelsToDescriptions(
       hasMantle,
       isLegacy: fm.modelLifecycle?.status === 'LEGACY',
       isProfile: false,
+      metadataOnly,
       streaming: fm.responseStreamingSupported ?? true,
       converseMaxTokens: fm.converse?.maxTokensMaximum ?? null,
       reasoning: !!fm.converse?.reasoningSupported?.embedded,
@@ -278,7 +284,7 @@ export function bedrockModelsToDescriptions(
     });
 
     // mark as used in mantle - except curated Responses models, described by the Mantle-only pass below
-    if (hasMantle && !_isKnownMantleResponses(baseId))
+    if (!metadataOnly && hasMantle && !_isKnownMantleResponses(baseId))
       remainingMantleModelIds.delete(baseId);
   }
 
@@ -306,8 +312,10 @@ export function bedrockModelsToDescriptions(
       hasMantle: false, // (was: hadMantle,) 2026-11-05: Mantle serves no geo/global ids (404 "does not exist"): profiles go through Converse, even when the base id is on Mantle
       isLegacy: ip.status === 'LEGACY',
       isProfile: true,
+      metadataOnly: false,
       streaming: foundationMeta?.streaming ?? true,
-      converseMaxTokens: foundationMeta?.converseMaxTokens ?? null,
+      // a base without on-demand serving reports its output cap there (openai.gpt-* 128000, writer.palmyra-x5 8192), which must not become the context
+      converseMaxTokens: (!foundationMeta?.metadataOnly || foundationMeta.provider === 'Amazon') ? foundationMeta?.converseMaxTokens ?? null : null,
       reasoning: foundationMeta?.reasoning ?? false,
       inputImage: foundationMeta?.inputImage ?? false,
       outputAudio: foundationMeta?.outputAudio ?? false,
@@ -332,6 +340,7 @@ export function bedrockModelsToDescriptions(
   const bedrockAPIMantle = { paramId: 'llmVndBedrockAPI', initialValue: 'mantle' } as const satisfies DModelParameterSpecAny;
   const bedrockAPIMantleResponses = { paramId: 'llmVndBedrockAPI', initialValue: 'mantle-responses' } as const satisfies DModelParameterSpecAny;
   for (const [modelId, modelMeta] of modelMap) {
+    if (modelMeta.metadataOnly) continue;
     if (_seemsAnthropicBedrockModel(modelId)) {
 
       // Anthropic models
@@ -371,9 +380,10 @@ export function bedrockModelsToDescriptions(
       // Non-Anthropic models - may call them via mantle (if hasMantle) or converse (if not legacy)
       const isMantle = modelMeta.hasMantle;
       const isConverseCapable = !modelMeta.isLegacy;
+      const knownBase = modelMeta.isProfile ? _findKnownMantleModel(_stripRegionPrefix(modelId)) : undefined; // a profile of a curated id
       const interfaces = [LLM_IF_OAI_Chat];
-      if (modelMeta.reasoning) interfaces.push(LLM_IF_OAI_Reasoning);
-      if (modelMeta.inputImage) interfaces.push(LLM_IF_OAI_Vision);
+      if (modelMeta.reasoning || knownBase?.reasoning) interfaces.push(LLM_IF_OAI_Reasoning);
+      if (modelMeta.inputImage || knownBase?.vision) interfaces.push(LLM_IF_OAI_Vision);
       if (isMantle ? !SKIP_MANTLE_TOOLS_IDS.includes(_stripRegionPrefix(modelId)) : isConverseCapable) interfaces.push(LLM_IF_OAI_Fn); // Converse: toolConfig; Mantle: OpenAI tools (both live-probed 2026-08-17)
       if (modelMeta.outputAudio) interfaces.push(LLM_IF_Outputs_Audio);
       if (modelMeta.outputImage) interfaces.push(LLM_IF_Outputs_Image);
@@ -390,9 +400,10 @@ export function bedrockModelsToDescriptions(
         // input+output against it (voxtral-mini 32768, gemma-3 131072, glm-4.7 202752, palmyra-vision 4096 all
         // 400 when maxTokens == that value); on Amazon first-party it IS the output cap (nova-pro reports 10000
         // yet accepts a 62,223-token prompt; AWS docs: 300K context / 10K max output).
-        ...(modelMeta.provider === 'Amazon'
-          ? { contextWindow: null, ...(modelMeta.converseMaxTokens ? { maxCompletionTokens: modelMeta.converseMaxTokens } : {}) }
-          : { contextWindow: modelMeta.converseMaxTokens ?? null }),
+        ...(knownBase ? { contextWindow: knownBase.ctx, maxCompletionTokens: knownBase.out }
+          : modelMeta.provider === 'Amazon'
+            ? { contextWindow: null, ...(modelMeta.converseMaxTokens ? { maxCompletionTokens: modelMeta.converseMaxTokens } : {}) }
+            : { contextWindow: modelMeta.converseMaxTokens ?? null }),
         interfaces,
         parameterSpecs: [isMantle ? bedrockAPIMantle : bedrockAPIConverse],
         hidden: !(isMantle || isConverseCapable), // show if mantle or converse-capable

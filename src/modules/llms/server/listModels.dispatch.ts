@@ -184,7 +184,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
 
           // construct URLs by region
           const region = bedrockResolveRegion(access);
-          const fmUrl = bedrockURLControlPlane(region, '/foundation-models?byInferenceType=ON_DEMAND');
+          const fmUrl = bedrockURLControlPlane(region, '/foundation-models'); // all inference types: inference profiles are described by their base model, mostly not on-demand
           const ipUrl = bedrockURLControlPlane(region, '/inference-profiles?typeEquals=SYSTEM_DEFINED&maxResults=1000');
           const mantleUrl = bedrockURLMantle(region, '/v1/models');
 
