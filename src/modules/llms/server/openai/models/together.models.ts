@@ -38,8 +38,7 @@ const _togetherAIDenyList: string[] = [
 // Sweep 2026-10-21 (1-token probe, 78 priced chat rows; send a curl-like User-Agent, Cloudflare 403s Python's with
 // error 1010): all 54 entries below dead, 20 alive. The other 4, Qwen3.6-Plus/3.7-Plus/3.7-Max/3.8-Flash, are proxied
 // to Alibaba and 403 'third_party_data_sharing_blocked' until the org opts in at api.together.ai/settings/privacy - kept.
-// Alive but off https://docs.together.ai/docs/serverless-models: DeepSeek-V4-Flash-0731, Llama-3.3-70B-Instruct-Turbo,
-// arize-ai/qwen-2-1.5b-instruct.
+// Alive but off https://docs.together.ai/docs/serverless-models: DeepSeek-V4-Flash-0731, arize-ai/qwen-2-1.5b-instruct.
 // Membership rotates fast in both directions ('created' gets re-stamped) - probe, never trust this list's age.
 // Accepted cost: a user with a dedicated endpoint for one of these ids no longer sees it.
 const _togetherAIRetiredIds = new Set<string>([
@@ -72,6 +71,7 @@ const _togetherAIRetiredIds = new Set<string>([
   'meta-llama/Llama-3.1-405B-Instruct',
   'meta-llama/Llama-3.2-1B-Instruct',
   'meta-llama/Llama-3.2-3B-Instruct',
+  'meta-llama/Llama-3.3-70B-Instruct-Turbo',
   'meta-llama/Llama-4-Scout-17B-16E-Instruct',
   'meta-llama/Meta-Llama-3-70B-Instruct-Turbo',
   'meta-llama/Meta-Llama-3-8B-Instruct',
@@ -178,6 +178,8 @@ const _togetherEditorialPubDates: Record<string, string> = {
   'nvidia/NVIDIA-Nemotron-3.5-Super-VL': '20261015', // NVIDIA launch + OpenRouter slug (HF repos pre-staged 10-12)
   'reflection/Beam-1.0-501B-A23B': '20261016', // weights public + OpenRouter slug (announced 10-05, signup-only early access)
   'deepseek-ai/DeepSeek-V4.1-Flash-1017': '20261017', // HF weights + OpenRouter slug; post-training update of V4.1-Flash
+  'MiniMaxAI/MiniMax-M3.1-Flash': '20261019', // = minimax.models.ts 'MiniMax-M3.1-Flash'
+  'moonshotai/Kimi-K3.1-Pro': '20261023', // = moonshot.models.ts 'kimi-k3.1-pro'
 };
 
 /** 'YYYYMMDD' -> Unix epoch seconds (UTC midnight), 0 when absent - for list placement only */

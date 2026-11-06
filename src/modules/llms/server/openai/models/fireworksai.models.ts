@@ -50,6 +50,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_VISION_REASON,
     // thinking compulsory ('none' 400s); n=6/arm: low ~0.18K chars, high ~0.25K, medium = xhigh = max = Default ~1.7K
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high'] }],
+    benchmark: { cbaElo: 1477 }, // lmarena: glm-5.3-flash
     chatPrice: { input: 0.15, output: 0.50, cache: { read: 0.03 } }, // joined the docs pricing table by 2026-08-31 (was unpriced at launch)
   },
   {
@@ -98,6 +99,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Thinking,
     benchmark: { cbaElo: 1348 }, // lmarena: nvidia-nemotron-3.5-lightning-30b-a3b-nvfp4
     chatPrice: { input: 0.05, output: 0.20, cache: { read: 0.01 } },
+    hidden: true, // serverless shutdown 2026-11-07 (docs changelog)
   },
   {
     idPrefix: 'accounts/fireworks/models/deepseek-v4p1-flash-1017',
@@ -108,6 +110,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_VISION_REASON, // image input (OCR) and tool calls live-verified 2026-10-21
     // 2026-10-21, n=2/arm: 'none' hard-off (0 reasoning tokens); low/high/max accepted, gaps within noise on its short traces - family ladder kept
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
+    benchmark: { cbaElo: 1476 }, // lmarena: deepseek-v4.1-flash-20260910-max (0910 checkpoint; no 1017 row)
     chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.006 } }, // same card as deepseek-v4p1-flash
   },
   {
@@ -131,6 +134,17 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_VISION_REASON,
     parameterSpecs: _PS_Thinking,
     chatPrice: { input: 3.00, output: 15.00, cache: { read: 0.30 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/kimi-k3p1-pro',
+    label: 'Kimi K3.1 Pro (Vision)',
+    pubDate: '20261023', // = moonshot.models.ts 'kimi-k3.1-pro' (upstream release; the Fireworks listing is 20261102)
+    description: 'Moonshot AI flagship post-trained from Kimi K3 with large-scale joint RL: 2.8T MoE (104B active) with native image input and a 1M-token context, for coding and agentic work.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    // 'none' hard-off (0 reasoning tokens); n=2/arm: low ~0.17K tokens, high ~0.44K, max = Default ~1.6K; medium not separable from high
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
+    chatPrice: { input: 2.00, output: 10.00, cache: { read: 0.20 } },
   },
   {
     idPrefix: 'accounts/fireworks/models/kimi-k3',
@@ -167,6 +181,17 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     chatPrice: { input: 2.00, output: 6.00, cache: { read: 0.25 } },
   },
   {
+    idPrefix: 'accounts/fireworks/models/muse-spark-open',
+    label: 'Muse Spark Open (Vision)',
+    pubDate: '20261015', // = metaai.models.ts 'muse-spark-open'
+    description: 'Meta open-weights reasoning model for coding and agentic workflows: an 816B sparse MoE (42B active) with tool calling, native image understanding and a 1M-token context.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    // thinking compulsory ('none' 400s "disabling thinking ... is not supported"); n=3/arm: low ~0.6K tokens, medium ~0.8K, high = xhigh = max = Default ~1.3K
+    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }],
+    chatPrice: { input: 1.25, output: 4.25, cache: { read: 0.15 } }, // US-only capacity, the 50% US premium waived
+  },
+  {
     idPrefix: 'accounts/fireworks/models/inkling',
     label: 'Inkling (Vision)',
     pubDate: '20260714',
@@ -175,6 +200,18 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     interfaces: IF_CHAT_FN_VISION_REASON,
     benchmark: { cbaElo: 1442 }, // lmarena: inkling
     chatPrice: { input: 1.00, output: 4.05, cache: { read: 0.17 } }, // model page only - still absent from the serverless pricing table
+    hidden: true, // serverless shutdown 2026-11-07 (docs changelog; replacement: Muse Spark Open)
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/minimax-m3p1-flash',
+    label: 'MiniMax M3.1 Flash (Vision)',
+    pubDate: '20261019', // = minimax.models.ts 'MiniMax-M3.1-Flash'
+    description: 'MiniMax natively multimodal MoE (~428B params, ~23B active) with a 1M-token context, built for agentic reasoning, tool use, coding and long-context work.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    // 'none' hard-off (0 reasoning tokens; MiniMax's own API rejects it); n=3/arm: low ~135 tokens, medium ~170, high = xhigh ~290, max = Default ~0.5-0.9K
+    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'max'] }],
+    chatPrice: { input: 0.15, output: 0.60, cache: { read: 0.015 } }, // model page only - absent from the serverless pricing table
   },
   {
     idPrefix: 'accounts/fireworks/models/minimax-m3',
@@ -197,6 +234,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Thinking,
     benchmark: { cbaElo: 1427 }, // lmarena: nvidia-nemotron-3-ultra-550b-a55b-nvfp4
     chatPrice: { input: 0.60, output: 2.40, cache: { read: 0.12 } },
+    hidden: true, // serverless shutdown 2026-11-07 (docs changelog)
   },
   {
     idPrefix: 'accounts/fireworks/models/gpt-oss-120b',
@@ -209,6 +247,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }],
     benchmark: { cbaElo: 1352 }, // lmarena: gpt-oss-120b
     chatPrice: { input: 0.15, output: 0.60, cache: { read: 0.015 } },
+    hidden: true, // serverless shutdown 2026-11-07 (docs changelog)
   },
 ]);
 
@@ -281,8 +320,8 @@ export function fireworksAIModelsToModelDescriptions(wireModels: unknown): Model
     .parse(wireModels)
 
     .filter((model) => {
-      // filter-out non-llms
-      if (model.supports_chat === false)
+      // filter-out non-llms - curated ids pass: kimi-k3p1-pro and muse-spark-open are listed supports_chat=false, yet serve chat completions
+      if (model.supports_chat === false && !_fireworksKnownModels.some(known => known.idPrefix === model.id))
         return false;
 
       // embedding/reranker models are listed with supports_chat=true (qwen3-embedding-8b, qwen3-reranker-8b): 'kind' is the reliable signal

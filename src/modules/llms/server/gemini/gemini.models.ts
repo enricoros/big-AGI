@@ -1480,7 +1480,9 @@ export function llmOrtGemLookup(orModelName: string): OrtVendorLookupResult | un
 
   const parameterSpecs = knownModel.parameterSpecs
     ?.filter(spec => _ORT_GEM_PARAM_ALLOWLIST.has(spec.paramId))
-    .map(spec => ({ ...spec }));
+    .map(spec => (spec.paramId === 'llmVndGeminiAspectRatio' && !spec.enumValues && knownModel.id === 'models/gemini-3.1-flash-lite-image')
+      ? { ...spec, enumValues: GEM_IMAGE_AR_NO_EXTREMES } // OpenRouter 400s 1:4, 4:1, 1:8, 8:1 on Nano Banana 2 Lite (native accepts them)
+      : { ...spec });
 
   return { pubDate: knownModel.pubDate, interfaces, parameterSpecs, initialTemperature: GEMINI_DEFAULT_TEMPERATURE };
 }

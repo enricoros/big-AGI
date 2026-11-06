@@ -57,10 +57,10 @@ const SKIP_MANTLE_TOOLS_IDS = ['writer.palmyra-vision-7b']; // 400s: '"auto" too
 // `api: 'responses'`: model only implements the OpenAI Responses API (on the '/openai/v1/responses' path) and rejects
 // Chat Completions with a 400 - see https://docs.aws.amazon.com/bedrock/latest/userguide/models-api-compatibility.html
 // GPT-5.x ctx is 1M per the AWS model cards (272K is only the short/long pricing-tier boundary); out stays 128000 (cards say
-// "N/A"); GPT-6 1,050,000 / 128,000 per the Astra card; GPT-6.1 Sol 1M per its card (out: card 131,072, OpenAI 128,000). deepseek.v3.1 out 8192 and kimi-k2-thinking out 16384 per their cards' "Max output tokens".
+// "N/A"); GPT-6 1,050,000 / 128,000 per the Astra card; GPT-6.1 Sol 1M per its card (out: card 131,072, OpenAI 128,000); GPT-6.1 Terra 1,050,000 / 128,000 per its card. deepseek.v3.1 out 8192 and kimi-k2-thinking out 16384 per their cards' "Max output tokens".
 // Entries with `api: 'responses'` win over the foundation-model listing: AWS also lists GPT-5.6 and GPT-6 as foundation models
-// (2026-09), which described them as 131K Chat Completions models without reasoning. Their us./global. profiles keep the fused
-// path: per the AWS card Mantle serves no geo/global ids, so those likely need bedrock-runtime (not wired, unverified here).
+// (2026-09), which described them as 131K Chat Completions models without reasoning. Their us./global. profiles go through
+// Converse: Mantle serves no geo/global ids ("The model 'us.openai.gpt-6-sol' does not exist" on both Mantle routes).
 const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: number; vision?: true; reasoning?: true; api?: 'responses' }> = {
   'deepseek.v3.1': { label: 'DeepSeek V3.1', ctx: 131072, out: 8192 },
   'moonshotai.kimi-k2-thinking': { label: 'Kimi K2 Thinking', ctx: 262144, out: 16384, reasoning: true },
@@ -73,6 +73,7 @@ const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: numbe
   'openai.gpt-6-luna': { label: 'GPT-6 Luna', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-6-sol': { label: 'GPT-6 Sol', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-6.1-sol': { label: 'GPT-6.1 Sol', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-6.1-terra': { label: 'GPT-6.1 Terra', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-oss-20b': { label: 'GPT-OSS 20B', ctx: 131072, out: 128000 },
   'openai.gpt-oss-120b': { label: 'GPT-OSS 120B', ctx: 131072, out: 128000 },
   'qwen.qwen3-32b': { label: 'Qwen3 32B', ctx: 131072, out: 16384 },
@@ -302,7 +303,7 @@ export function bedrockModelsToDescriptions(
       id: ip.inferenceProfileId,
       label: ip.inferenceProfileName + (foundationMeta ? '' : ' [?]'),
       provider: _extractProvider(ip.inferenceProfileId),
-      hasMantle,
+      hasMantle: false, // (was: hadMantle,) 2026-11-05: Mantle serves no geo/global ids (404 "does not exist"): profiles go through Converse, even when the base id is on Mantle
       isLegacy: ip.status === 'LEGACY',
       isProfile: true,
       streaming: foundationMeta?.streaming ?? true,

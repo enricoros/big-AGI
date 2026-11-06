@@ -51,7 +51,10 @@ const _basetenCurated: Record<string, _BasetenCurated> = {
   'deepseek-ai/DeepSeek-V4.1-Flash-Fast': { pubDate: '20260910', parameterSpecs: _PS_MiscEffortFull }, // same weights as V4.1-Flash at full precision, dedicated capacity
   'deepseek-ai/DeepSeek-V4-Flash-0731': { pubDate: '20260731', parameterSpecs: _PS_MiscEffortFull },
   'deepseek-ai/DeepSeek-V4-Pro-0813': { pubDate: '20260813', parameterSpecs: _PS_MiscEffortFull },
+  'meta-models/muse-spark-open': { pubDate: '20261015', parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] }] }, // always reasons: 'none'/'minimal' run at low
+  'moonshotai/Kimi-K3.1-Pro': { pubDate: '20261023', parameterSpecs: _PS_MiscEffortFull }, // 'none' hard-off; minimal = low, medium = high, xhigh = max = default
   'moonshotai/Kimi-K3': { pubDate: '20260716', parameterSpecs: _PS_MiscEffortFull },
+  'nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B': { pubDate: '20261015', parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] }] }, // off by default; any value but 'none' turns it on, one depth
   'nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B': { pubDate: '20260604' }, // reasoning-capable; no effort control on this host
   'openai/gpt-oss-120b': { pubDate: '20250805', parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }] },
   'zai-org/GLM-5.2': { pubDate: '20260616', parameterSpecs: _PS_GlmEffort52 },
@@ -67,6 +70,9 @@ export function basetenModelsToModelDescriptions(wireModels: unknown): ModelDesc
 
     // only text-output chat models (lenient: keep rows that don't declare output modalities)
     .filter((model: WireBasetenModel) => !model.output_modalities || model.output_modalities.includes('text'))
+
+    // decision models (elephant, mammoth, joey) are listed with text output, but chat completions 404 on them
+    .filter((model: WireBasetenModel) => !model.id.startsWith('decision-models/'))
 
     .map((model: WireBasetenModel): ModelDescriptionSchema => {
 

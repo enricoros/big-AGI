@@ -428,6 +428,13 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       }
       break;
 
+    // [Mistral, 2026-11-05] OR lists Large 4 efforts as ['high','none'], but upstream 400s on 'none' ("supported values:
+    // [high, low, medium]"), which the generic fallback below would offer as Off: the native ladder (mistral.models.ts)
+    case modelIdUnaliased.startsWith('mistralai/mistral-large-4-0'):
+      if (interfaces.includes(LLM_IF_OAI_Reasoning))
+        parameterSpecs.push({ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] });
+      break;
+
     default:
       // 0-day: generic reasoning models with no upstream-specific vendor mapping. OpenRouter's unified reasoning
       // API (2025-11-11) translates whatever we send via the OAI-compatible branch in openai.chatCompletions.ts
