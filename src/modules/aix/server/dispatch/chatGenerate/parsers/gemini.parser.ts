@@ -45,6 +45,8 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
   let skipComputingTotalsOnce = isStreaming;
   const groundingRefNumbers = new Map<string, number>(); // citation number per URI, first appearance
   let nCodeExec = 0;
+  let nSearchQueries = 0, nFetchUrls = 0; // [Gemini 3+] queries and URLs of the hosted search and URL context calls, when tool circulation puts them on the wire
+  let nFetchUrlsListed = 0; // without those calls (2.x): URL context metadata entries
 
   // this can throw, it's caught by the caller
   return function(pt: IParticleTransmitter, rawEventData: string): void {
@@ -295,6 +297,18 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           // <- ToolCallPart (server-side hosted tool invocation, e.g. Google Search, URL Context)
           case 'toolCall' in mPart: {
             const tc = mPart.toolCall;
+            // the calls say what ran: every query (a repeated query is a new search) and every URL.
+            // [Gemini, 2026-11-05, hypothesis] counted in queries because the pricing page bills each executed query on Gemini 3+;
+            // that is not verifiable, and Google's own limit message counts calls, of which one can carry several queries.
+            // The candidate metadata is not a count: grounding lists only the queries whose results were used and is absent when
+            // the turn ends on a function call, URL context drops entries (failed retrievals, later steps)
+            if (tc.toolType === 'GOOGLE_SEARCH_WEB') {
+              nSearchQueries += _geminiStrArray(_geminiAsObj(tc.args)?.queries)?.length ?? 0;
+              if (nSearchQueries) pt.updateMetrics({ nWebSearch: nSearchQueries });
+            } else if (tc.toolType === 'URL_CONTEXT') {
+              nFetchUrls += _geminiStrArray(_geminiAsObj(tc.args)?.urls)?.length ?? 0;
+              if (nFetchUrls) pt.updateMetrics({ nWebFetch: nFetchUrls }); // counted, not per-call billed (#1283)
+            }
             if (!tc.id) {
               if (DEV_DEBUG_MISSING_IDS) console.log('[DEV] Gemini toolCall missing id for:', tc.toolType);
               break;
@@ -345,8 +359,8 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
         }
       }
 
-      // -> Candidates[0] -> Grounding Metadata: executed queries bill per query
-      if (candidate0.groundingMetadata?.webSearchQueries?.length)
+      // -> Candidates[0] -> Grounding Metadata: the queries used, counted when the search calls are not on the wire (no tool circulation: 2.x, image models)
+      if (!nSearchQueries && candidate0.groundingMetadata?.webSearchQueries?.length)
         pt.updateMetrics({ nWebSearch: candidate0.groundingMetadata.webSearchQueries.length });
       if (candidate0.groundingMetadata?.groundingChunks?.length) {
         /**
@@ -362,6 +376,8 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
 
       // -> Candidates[0] -> URL Context Metadata
       if (candidate0.urlContextMetadata?.urlMetadata?.length) {
+        if (!nFetchUrls) // fetches without the URL context calls on the wire (2.x): this list, which then comes once per fetch step
+          pt.updateMetrics({ nWebFetch: nFetchUrlsListed += candidate0.urlContextMetadata.urlMetadata.length });
         for (const urlMeta of candidate0.urlContextMetadata.urlMetadata) {
           // Only add URLs that were successfully retrieved
           if (urlMeta.urlRetrievalStatus === 'URL_RETRIEVAL_STATUS_SUCCESS')
