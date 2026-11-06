@@ -563,20 +563,21 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
             _hostedToolWishlistHint('image_generation');
             // -> IGC: process completed image generation using 'ii' particle for inline images
             const { id: igId, result: igResult, revised_prompt: igRevisedPrompt } = doneItem;
+            if (!igResult) {
+              _forwardFailedImageGenerationCallItem(pt, doneItem);
+              break;
+            }
             const igDoneText = !igRevisedPrompt?.length ? 'Image generated'
               : `Generated: "${igRevisedPrompt.length > 100 ? igRevisedPrompt.slice(0, 100) + '...' : igRevisedPrompt}"`;
             pt.sendOperationState('gen-image', igDoneText, { opId: igId, state: 'done' });
             // Create inline image with base64 data
-            if (igResult)
-              pt.appendImageInline(
-                _imageGenerationMimeType(doneItem), // infer from output_format echoed in the item
-                igResult,
-                igRevisedPrompt || 'Generated image',
-                R.imageGenToolCfg?.model || R.responseModel || AIX_OAI_DEFAULT_IMAGE_GEN_MODEL, // generator: the cached tool config, else the responding model ([Meta AI] muse-image-1.0 echoes no tools), else the OpenAI default
-                igRevisedPrompt || '', // prompt used
-              );
-            else
-              console.warn('[DEV] AIX: OpenAI Responses: image_generation_call done without result:', doneItem);
+            pt.appendImageInline(
+              _imageGenerationMimeType(doneItem), // infer from output_format echoed in the item
+              igResult,
+              igRevisedPrompt || 'Generated image',
+              R.imageGenToolCfg?.model || R.responseModel || AIX_OAI_DEFAULT_IMAGE_GEN_MODEL, // generator: the cached tool config, else the responding model ([Meta AI] muse-image-1.0 echoes no tools), else the OpenAI default
+              igRevisedPrompt || '', // prompt used
+            );
             break;
 
           case 'code_interpreter_call':
@@ -1145,7 +1146,7 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
               igRevisedPrompt || '', // prompt used
             );
           else
-            console.warn('[DEV] AIX: OpenAI Responses: image_generation_call done without result:', oItem);
+            _forwardFailedImageGenerationCallItem(pt, oItem);
           pt.endMessagePart();
           break;
 
@@ -1379,7 +1380,7 @@ function _prettyImageGenConfigSuffix(cfg: TImageGenToolCfg | undefined): string 
  * The API echoes the output_format in the done item (e.g. 'png', 'webp', 'jpeg').
  * [Meta AI] muse-image-1.0 echoes no output_format (and defaults to webp): sniff the base64 magic instead.
  */
-function _imageGenerationMimeType(item: { output_format?: string, result?: string }): string {
+function _imageGenerationMimeType(item: { output_format?: string | null, result?: string | null }): string {
   switch (item?.output_format) {
     case 'webp':
       return 'image/webp';
@@ -1387,6 +1388,7 @@ function _imageGenerationMimeType(item: { output_format?: string, result?: strin
       return 'image/jpeg';
     case 'png':
       return 'image/png';
+    case null:
     case undefined:
       // no output_format: sniffed below
       break;
@@ -1395,6 +1397,23 @@ function _imageGenerationMimeType(item: { output_format?: string, result?: strin
   if (b64Head.startsWith('UklGR')) return 'image/webp'; // 'RIFF....WEBP'
   if (b64Head.startsWith('/9j/')) return 'image/jpeg'; // 0xFF 0xD8 0xFF
   return 'image/png'; // 'iVBOR' (0x89 'PNG'), and the OpenAI default
+}
+
+/**
+ * Closes the image operation in the error state, for a done image_generation_call without an image:
+ * status 'failed' (OpenAI: error { code, message }, e.g. a moderation block), or no result.
+ * Also leaves an error part where the image would be: the response goes on (the model usually explains in text),
+ * and the next request carries the part to the model as text.
+ */
+function _forwardFailedImageGenerationCallItem(pt: IParticleTransmitter, item: Extract<TOutputItem, { type: 'image_generation_call' }>): void {
+  if (item.status !== 'failed')
+    console.warn('[DEV] AIX: OpenAI Responses: image_generation_call done without result:', item);
+  const failedText = item.error?.code === 'moderation_blocked' ? 'Image blocked by moderation' : 'Image generation failed';
+  pt.sendOperationState('gen-image', failedText, {
+    opId: item.id, state: 'error', ...item.error?.message ? { oTexts: [item.error.message] } : undefined,
+  });
+  // TODO: send this as a dialect issue, of subkind image-gen-error, subCause: string, aiRender: true, uiColor: 'neutral', ... - with the AIX errors refactor (typed errors, travelling in particles)
+  pt.sendCGControl({ cg: 'issue', issueId: 'dialect-issue', issueText: item.error?.message ? `${failedText}: ${item.error.message}` : `${failedText}.` }); // an issue particle alone does not end the response
 }
 
 /**

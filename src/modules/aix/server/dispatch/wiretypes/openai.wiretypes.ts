@@ -1298,16 +1298,25 @@ export namespace OpenAIWire_Responses_Items {
   const OutputImageGenerationCallItem_schema = _OutputItemBase_schema.extend({
     type: z.literal('image_generation_call'),
     id: z.string(), // unique ID of the image generation call (output item ID)
-    result: z.string().optional(), // base64 image data when completed
-    revised_prompt: z.string().optional(), // the revised prompt used for generation
+    result: z.string().nullish(), // base64 image data when completed
+    revised_prompt: z.string().nullish(), // the revised prompt used for generation
     // Docs: "in_progress" | "completed" | "generating" | "failed".
     status: _outputItemStatus_schema('image_generation_call', [
       'in_progress', 'completed', 'generating', 'failed',
       'incomplete', // defensive: not in docs for image_generation_call, but harmless to accept
     ]),
+    // [OpenAI, 2026-10-13] set on status 'failed', which carries no result; the model then continues with text
+    error: z.object({
+      code: z.string().nullish(), // e.g. 'moderation_blocked'
+      message: z.string().nullish(),
+      // also: type ('image_generation_user_error'), param, moderation_details { categories, moderation_stage } - not read
+    }).nullish().catch((ctx) => {
+      console.log('[DEV] AIX: OpenAI Responses: unknown image_generation_call error shape, ignoring:', ctx.value);
+      return undefined;
+    }),
     // Echoed configuration from the tool request - the API returns these on the done item with
     // RESOLVED values (e.g. size:"auto" becomes "1536x1024"). Confirmed live on 2026-04-21 log.
-    output_format: z.enum(['png' /* default */, 'jpeg', 'webp']).optional(),
+    output_format: z.enum(['png' /* default */, 'jpeg', 'webp']).or(z.string()).nullish(), // the SDK also types 'gif' | 'svg'
     // NOTE: we also see the following echoed in the image_generation_call item, but don't make use of them for now
     // background: z.enum(['transparent', 'opaque', 'auto' /* default */]).optional(),
     // quality: z.enum(['auto', 'high', 'medium', 'low']).optional(),
