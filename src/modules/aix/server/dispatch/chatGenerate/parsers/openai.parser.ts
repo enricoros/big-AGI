@@ -36,7 +36,7 @@ import { OperationRetrySignal } from '../chatGenerate.operation-retry';
  *    - the temporal order of the chunks implies the beginning/end of a tool call.
  * - There's no explicit end in this data protocol, but it's handled in the caller with a sse:[DONE] event.
  */
-export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunction {
+export function createOpenAIChatCompletionsChunkParser(ortFetchCountable = false): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
   let hasBegun = false;
   let hasWarned = false;
@@ -153,7 +153,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
     // -> Stats (the usage chunk is the streaming terminal signal; timing survives even without token counts)
     if (json.usage) {
-      pt.updateMetrics(_fromOpenAIMetrics(json.usage, parserCreationTimestamp, timeToFirstEvent));
+      pt.updateMetrics(_fromOpenAIMetrics(json.usage, parserCreationTimestamp, timeToFirstEvent, ortFetchCountable));
       // [OpenAI] Expected correct case: the last object has usage, but an empty choices array
       if (!json.choices.length)
         return;
@@ -448,7 +448,7 @@ export function createOpenAIChatCompletionsChunkParser(): ChatGenerateParseFunct
 
 /// OpenAI non-streaming ChatCompletions
 
-export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction {
+export function createOpenAIChatCompletionsParserNS(ortFetchCountable = false): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
   let progressiveCitationNumber = 1;
 
@@ -486,7 +486,7 @@ export function createOpenAIChatCompletionsParserNS(): ChatGenerateParseFunction
       pt.setModelName(json.model);
 
     // -> Metrics: timing always, tokens only when the usage block carries them (#1149)
-    pt.updateMetrics(_fromOpenAIMetrics(json.usage, parserCreationTimestamp, undefined));
+    pt.updateMetrics(_fromOpenAIMetrics(json.usage, parserCreationTimestamp, undefined, ortFetchCountable));
 
     // Assumption/validate: expect 1 completion, or stop
     if (json.choices.length !== 1)
@@ -696,7 +696,7 @@ function _fromOpenAIFinishReason(finish_reason: string | null | undefined) {
   return null;
 }
 
-function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usage'], parserCreationTimestamp: number, timeToFirstEvent: number | undefined): AixWire_Particles.CGSelectMetrics {
+function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usage'], parserCreationTimestamp: number, timeToFirstEvent: number | undefined, ortFetchCountable: boolean): AixWire_Particles.CGSelectMetrics {
 
   // Time Metrics - measured locally (parser-creation -> now), independent of the upstream `usage` block.
   // Emitted UNCONDITIONALLY so the run duration (`dtAll`) survives even when a provider omits usage or its
@@ -779,10 +779,15 @@ function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usa
   }
 
   // [OpenRouter, 2026-09-08] server tools: searches run by OpenRouter (or by the provider on the 'native' engine),
-  // also reported for the legacy 'web' plugin. Fetches have no counter of their own (tool_calls_executed only).
+  // also reported for the legacy 'web' plugin. [OpenRouter, 2026-11-06, hypothesis: derived, the counter is undocumented] Fetches have no counter of their own: tool_calls_executed counts every server tool
+  // call OpenRouter runs, so fetches (failed ones included) are what remains after the searches only when the request carried no
+  // other server tool - the dispatch says so. Fetches a provider runs natively (Anthropic, Claude 5.x) are on no counter (#1283)
   const ortWebSearches = usage.server_tool_use_details?.web_search_requests;
   if (ortWebSearches)
     metricsUpdate.nWebSearch = ortWebSearches;
+  const ortWebFetches = !ortFetchCountable ? 0 : (usage.server_tool_use_details?.tool_calls_executed ?? 0) - (ortWebSearches ?? 0);
+  if (ortWebFetches > 0)
+    metricsUpdate.nWebFetch = ortWebFetches;
 
   return metricsUpdate;
 }

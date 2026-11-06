@@ -618,7 +618,8 @@ export namespace OpenAIWire_API_Chat_Completions {
       }),
     ]).nullish(),
 
-    // [OpenRouter, 2026-09-08] server tools ('openrouter:web_search' / 'web_fetch') counters; web_search_requests is also reported for the legacy 'web' plugin
+    // [OpenRouter, 2026-09-08] server tools ('openrouter:web_search' / 'web_fetch') counters; web_search_requests is also reported for the legacy 'web' plugin.
+    // tool_calls_*: the calls OpenRouter runs itself, of any server tool (search, fetch, datetime, image generation, ...); absent when the provider runs them natively
     server_tool_use_details: z.object({
       web_search_requests: z.number().nullish(),
       tool_calls_requested: z.number().nullish(),

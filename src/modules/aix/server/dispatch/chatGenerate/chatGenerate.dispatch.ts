@@ -339,6 +339,11 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
       if (dialect === 'openrouter' && access.orRequireParameters)
         chatCompletionsBody.provider = { ...chatCompletionsBody.provider, require_parameters: true };
 
+      // [OpenRouter] its counter of executed server tool calls covers every tool: fetches can be told apart only when
+      // the fetch tool is requested and web search is the only other server tool
+      const ortFetchCountable = dialect === 'openrouter' && !!chatCompletionsBody.tools?.some(tool => tool.type === 'openrouter:web_fetch')
+        && chatCompletionsBody.tools.every(tool => !tool.type.startsWith('openrouter:') || tool.type === 'openrouter:web_search' || tool.type === 'openrouter:web_fetch');
+
       return {
         request: {
           ...openAIAccess(access, model.id, OPENAI_API_PATHS.chatCompletions),
@@ -346,7 +351,7 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
           body: chatCompletionsBody,
         },
         demuxerFormat: streaming ? 'fast-sse' : null,
-        chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser() : createOpenAIChatCompletionsParserNS(),
+        chatGenerateParse: streaming ? createOpenAIChatCompletionsChunkParser(ortFetchCountable) : createOpenAIChatCompletionsParserNS(ortFetchCountable),
       };
 
   }

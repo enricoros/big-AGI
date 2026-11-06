@@ -41,6 +41,8 @@ Every parser fills the same particle (`AixWire_Particles.CGSelectMetrics`):
 
 Streaming specifics: OpenAI usage sits only on the terminal event, the tier already on `response.created`. Anthropic's `message_delta` carries the authoritative input side (server tool result tokens land there, not in `message_start`). Gemini usage is cumulative on every chunk; the cache count only on the last. Chat Completions mirrors the Responses fields under `prompt_tokens_details` / `completion_tokens_details`.
 
+OpenRouter (Chat Completions) reports hosted calls in `usage.server_tool_use_details` only, never in the stream. `web_search_requests` are the searches, whoever runs them, calls refused by `max_uses` included. `tool_calls_executed` counts the calls OpenRouter runs itself, of any server tool (search, fetch, datetime, image generation), and none the provider runs natively. Fetches have no counter: they are `tool_calls_executed` minus the searches only when the request carried the fetch tool and no server tool other than search, which the dispatch tells the parser. Fetches the provider runs natively (Anthropic with Claude 5.x) are reported nowhere, the generation record included (`num_fetches` stays null). Its `cost` includes the engine fees.
+
 Continuation turns (Anthropic `pause_turn`) each start a fresh transmitter and the last turn's `set-metrics` wins, so a chained generation reports the final turn only. Folding turns server-side is a direction item, not shipped.
 
 ## Cost computation
