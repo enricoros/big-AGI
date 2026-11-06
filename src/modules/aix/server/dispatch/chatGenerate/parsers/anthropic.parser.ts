@@ -1301,8 +1301,8 @@ function _createAnthropicPauseTurnContinuation(
       return {
         ...body,
         messages,
-        // Pass container ID as string to reuse the existing container
-        ...(containerId ? { container: containerId } : {}),
+        // Pass container ID to reuse the existing container; an object form keeps its Skills, which a bare ID drops from the model's context
+        ...(containerId ? { container: (body.container && typeof body.container === 'object') ? { ...body.container, id: containerId } : containerId } : {}),
       };
     },
   };
