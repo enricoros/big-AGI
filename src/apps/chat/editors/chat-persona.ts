@@ -116,9 +116,8 @@ export async function runPersonaOnConversationHead(
   // check if aborted
   const hasBeenAborted = abortController.signal.aborted;
 
-  // clear to send, again
-  // FIXME: race condition? (for sure!)
-  cHandler.clearAbortController('chat-persona');
+  // clear to send, again - unless a newer run (e.g. a Retry while streaming) took over the controller
+  cHandler.clearAbortController(abortController, 'chat-persona');
 
   if (autoTitleChat) {
     // fire/forget, this will only set the title if it's not already set
