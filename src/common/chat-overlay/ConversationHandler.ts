@@ -11,7 +11,7 @@ import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 import type { DBlobAssetId } from '~/common/stores/blob/dblobs-portability';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import type { DLLMId } from '~/common/stores/llms/llms.types';
-import { ChatActions, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
+import { ChatActions, getConversation, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { collectFragmentAssetIds, gcChatImageAssets } from '~/common/stores/chat/chat.gc';
@@ -123,8 +123,10 @@ export class ConversationHandler {
     _chatStoreActions.setAbortController(this.conversationId, abortController, debugScope);
   }
 
-  clearAbortController(debugScope: string): void {
-    _chatStoreActions.setAbortController(this.conversationId, null, debugScope);
+  /** Clears the controller only if it is still the caller's: a newer run (e.g. a Retry while streaming) may own it now. */
+  clearAbortController(ownController: AbortController, debugScope: string): void {
+    if (getConversation(this.conversationId)?._abortController === ownController)
+      _chatStoreActions.setAbortController(this.conversationId, null, debugScope);
   }
 
   isIncognito(): boolean | undefined {
