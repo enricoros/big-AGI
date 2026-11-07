@@ -203,6 +203,9 @@ function AttachmentSources(props: {
     const isMessage = props.mode === 'menu-message';
     return <>
 
+      {/* [mobile] Responsive Camera OCR button, before the [+] menu */}
+      {props.hasCamera && !isMessage && <ButtonAttachCameraMemo isMobile color={props.color} onOpenCamera={props.onOpenCamera} />}
+
       <Dropdown>
         {props.menuButton ? props.menuButton : !isMessage ? (
           <RichMenuButton icon={<AddRoundedIcon />} />
@@ -266,9 +269,6 @@ function AttachmentSources(props: {
 
         </RichMenu>
       </Dropdown>
-
-      {/* [mobile] Responsive Camera OCR button */}
-      {props.hasCamera && !isMessage && <ButtonAttachCameraMemo isMobile color={props.color} onOpenCamera={props.onOpenCamera} />}
 
     </>;
   }
