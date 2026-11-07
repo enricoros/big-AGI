@@ -12,6 +12,7 @@ import { FromV1ImportBanner } from '~/common/from-v1/FromV1ImportBanner';
 import { OptimaBar } from '~/common/layout/optima/bar/OptimaBar';
 import { optimaHasMOTD, OptimaMOTD } from '~/common/layout/optima/OptimaMOTD';
 import { ChromelessFloatingButtons } from './ChromelessFloatingButtons';
+import { OperatorFab } from './operator/OperatorFab';
 import { useOptimaChromeless } from './useOptima';
 
 
@@ -79,6 +80,9 @@ export const PageCore = (props: {
 
     {/* Page (NextJS) must make the assumption they're in a flex-col layout */}
     {props.children}
+
+    {/* [Mobile] Operator FAB - one draggable Big-AGI button for frequent actions + voice commands */}
+    <OperatorFab />
 
     {/* [Mobile] Nav bar at the bottom */}
     {/*{!!props.isMobile && (*/}

@@ -15,6 +15,7 @@ import type { OptimaBarControlMethods } from '~/common/layout/optima/bar/OptimaB
 import { ConfirmationModal } from '~/common/components/modals/ConfirmationModal';
 import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager';
 import { OptimaDrawerIn, OptimaPanelIn, OptimaToolbarIn } from '~/common/layout/optima/portals/OptimaPortalsIn';
+import { operatorSubscribe } from '~/common/layout/optima/operator/operator.actions';
 import { Release } from '~/common/app.release';
 import { ShortcutKey, useGlobalShortcuts } from '~/common/components/shortcuts/useGlobalShortcuts';
 import { addSnackbar, removeSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
@@ -397,6 +398,23 @@ export function AppChat() {
 
 
   // Effects
+
+  // [effect] Operator FAB actions (home / new chat / incognito)
+  React.useEffect(() => operatorSubscribe((action) => {
+    switch (action) {
+      case 'home':
+        // Home = landing screen; for now, a pane with no conversation
+        chatPanesActions().openConversationInFocusedPane(null! /* landing */);
+        return true;
+      case 'chat-new':
+        handleConversationNewInFocusedPane(true, false);
+        return true;
+      case 'chat-incognito':
+        handleConversationNewInFocusedPane(true, true);
+        return true;
+    }
+    return false;
+  }), [handleConversationNewInFocusedPane]);
 
   // [effect] Handle the conversation intent
   React.useEffect(() => {
