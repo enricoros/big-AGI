@@ -56,8 +56,23 @@ The tables are private to `chat.message.outcome.ts`; `messageOutcomePolicy()`, `
 | OpenAI Chat | `length` | truncated |
 | OpenAI Responses | `incomplete`, reason `max_output_tokens` | truncated |
 | Gemini | `MAX_TOKENS` | truncated (ends with `issue-dialect`, the others with `done-dialect`) |
+| Gemini | `TOO_MANY_TOOL_CALLS` | error today; see Open: tool-budget stops |
 | Gemini Interactions | `incomplete`, `budget_exceeded` | truncated, with an inline body note |
 | all | `refusal`, `content_filter`, `SAFETY`, `RECITATION`, ... | error |
+
+## Open: tool-budget stops (PROPOSED)
+
+Gemini ends a hosted-tools run that exhausts the per-request step budget (Google Search and URL context share it) with `TOO_MANY_TOOL_CALLS` and a `finishMessage` that gives the counts and tells the user to split the task (#1286). The parser maps it to `cg-issue`: the message is `failed`, the text is an error fragment replayed to the model as `[ERROR]`, chat offers no Continue, Beam paints the ray red. Nothing retries it, which is right: a retry repeats the same cut at the same cost.
+
+Proposed treatment, to apply when the issue particle carries a descriptor (class, retryable, user text, AI text):
+
+- class `truncated`, with its own stop reason: `out-of-tokens` would show the wrong words, so the wording at the three "Out of tokens" sites (outcome label, Beam card notice, Continue block) becomes stop-reason aware
+- retryable: no; the recovery is Continue, since a new request gets a fresh budget
+- user text: the vendor `finishMessage`, as a display-only notice, not content
+- AI text: none
+- check the other dialects for the same stop: OpenAI Responses maps only `max_output_tokens` and `content_filter`, other `incomplete_details.reason` values fall to a generic incomplete text
+
+Deferred because the truncated class has one wire reason and one hardcoded wording; the descriptor refactor is the moment to add the second.
 
 ## Clean end without a finish reason
 
