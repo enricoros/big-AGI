@@ -21,7 +21,8 @@ const DEV_DEBUG_MISSING_IDS = Release.IsNodeDevBuild; // not in staging to reduc
 /**
  * Gemini Completions -  Messages Architecture
  *
- * Will send a single candidate (the API does not support more than 1), which will contain the content parts.
+ * Sends a single candidate (candidateCount is 1), which contains the content parts - except on TOO_MANY_TOOL_CALLS with
+ * hosted tools, where the aborted step's toolResponse parts arrive as extra candidates (see the candidates block, #1286).
  * There is just a single Part per Candidate, unless the chunk contains parallel function calls, in which case they're in parts.
  *
  * Beginning and End are implicit and follow the natural switching of parts in a progressive order; Gemini may for instance
@@ -147,17 +148,23 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
     }
 
     // candidates may be an optional field (started happening on 2024-09-27)
-    if (generationChunk.candidates) {
+    if (generationChunk.candidates?.length) {
 
-      // expect: single completion
-      if (generationChunk.candidates.length !== 1)
-        throw new Error(`expected 1 completion, got ${generationChunk.candidates?.length}`);
-      const candidate0 = generationChunk.candidates[0];
+      // We request one completion (candidateCount is 1): candidates[0].
+      const [candidate0, ...extraCandidates] = generationChunk.candidates;
       if (candidate0.index !== undefined && candidate0.index !== 0)
         throw new Error(`expected completion index 0, got ${candidate0.index}`);
 
-      // -> Candidates[0] -> Content
-      for (const mPart of (candidate0.content?.parts || [])) {
+
+      // [Gemini, 2026-11] On TOO_MANY_TOOL_CALLS with hosted tools, the aborted step's toolResponse parts arrive as extra index-less candidates,
+      // one per pending toolCall in candidates[0]: flushed server-side state, not alternative completions (#1286).
+      // Their parts are folded in wire order; anything else on an extra candidate is a shape we have not seen (strict in dev, warns in prod).
+      for (const extra of extraCandidates)
+        if (extra.finishReason || extra.groundingMetadata || extra.urlContextMetadata || extra.citationMetadata || extra.content?.parts?.some(part => !('toolCall' in part) && !('toolResponse' in part)))
+          aixResilientUnknownValue('Gemini', 'extraCandidate', extra);
+
+      // -> Candidates -> Content: the completion's parts, then the extra candidates' parts
+      for (const mPart of generationChunk.candidates.flatMap(candidate => candidate.content?.parts || [])) {
 
         // [Gemini 3, 2025-11-18] Extract thoughtSignature once (can appear on any part type)
         // https://ai.google.dev/gemini-api/docs/gemini-3?thinking=high#thought_signatures
@@ -430,7 +437,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
             return pt.setDialectTerminatingIssue(`unexpected Gemini finish reason: ${candidate0?.finishReason})`, null, 'srv-warn');
         }
       }
-    } /* end of .candidates (single candidate is ensured) */
+    } /* end of .candidates */
 
   };
 }
