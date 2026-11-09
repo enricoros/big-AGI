@@ -301,7 +301,7 @@ function _toXAIResponsesInput(
           const mPt = part.pt;
           switch (mPt) {
             case 'text':
-              getModelMessage().content.push({
+              (getModelMessage().content ??= []).push({
                 type: 'output_text',
                 text: part.text,
               });

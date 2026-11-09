@@ -1207,7 +1207,8 @@ export namespace OpenAIWire_Responses_Items {
     type: z.literal('message'),
     id: z.string(), // unique ID of the output item
     role: z.literal('assistant'), // [?XAI] also 'tool'?
-    content: z.array(_ContentItem_Parts_schema),
+    content: z.array(_ContentItem_Parts_schema)
+      .optional(), // [Sakana Namazu] absent when the item opens ('response.output_item.added')
     phase: z.enum(['commentary', 'final_answer']).or(z.string()).optional(), // [OpenAI, 2026-03-03] message phase indicator for multi-phase responses
   });
 
@@ -1220,7 +1221,8 @@ export namespace OpenAIWire_Responses_Items {
      * 2026-01-22: re-enabled with nullish, as XAI lists it as required
      */
     id: z.string().optional(),
-    summary: z.array(ReasoningItem_SummaryTextPart_schema), // summary of the reasoning
+    summary: z.array(ReasoningItem_SummaryTextPart_schema) // summary of the reasoning
+      .optional(), // [Sakana Namazu] absent when the item opens ('response.output_item.added')
     encrypted_content: z.string().nullish(), // populated when a response is generated with reasoning.encrypted_content in the include
   });
 

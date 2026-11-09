@@ -1330,7 +1330,7 @@ function _forwardResponseErrorNS(parsedData: any, pt: IParticleTransmitter, cont
  * IMPORTANT: These are HIGH-QUALITY citations (2-3 per response) that were actually
  * used in generating the response. Different from bulk web search sources (20+ results).
  */
-function _forwardTextAnnotation(pt: IParticleTransmitter, annotation: Exclude<Extract<Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'message' }>['content'][number], { type: 'output_text' }>['annotations'], undefined>[number], annotationIndex: number): void {
+function _forwardTextAnnotation(pt: IParticleTransmitter, annotation: Exclude<Extract<NonNullable<Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'message' }>['content']>[number], { type: 'output_text' }>['annotations'], undefined>[number], annotationIndex: number): void {
   switch (annotation?.type) {
     case 'url_citation':
       pt.appendUrlCitation(
