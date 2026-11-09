@@ -357,16 +357,38 @@ export namespace AnthropicWire_Blocks {
       ]),
       z.string(), // forward-compatibility parsing
     ]),
-    input: z.union([
-      z.object({ query: z.string(), limit: z.number().optional() }), // web_search, tool_search_tool_bm25 (limit: the result cap, 1-10000, default 5)
-      z.object({ url: z.string(), use_cache: z.boolean().optional() }), // web_fetch (use_cache: the model's per-call cache bypass, seen 2026-09-24 on the _20260318 tool)
-      z.object({ code: z.string() }), // code_execution
-      z.looseObject({ command: z.string() }), // bash_code_execution (loose: text_editor inputs match here first and keep their keys)
-      z.object({ command: z.string(), path: z.string() }), // text_editor_code_execution (+ file_text, old_str, new_str, view_range, etc.)
-      z.object({ pattern: z.string(), limit: z.number().optional() }), // tool_search_tool_regex (limit: as bm25)
-    ]).or(z.any()), // see the comment on ToolUseBlock_schema.input
+    /**
+     * Kept as received, like ToolUseBlock_schema.input: an object schema drops the keys it does not list, and a non-streaming
+     * response then loses them (the editor's path and file_text, the search tools' limit, web_fetch's use_cache).
+     * Readers go through ServerToolUseInput_schemas, below.
+     */
+    input: z.any(),
     caller: _ToolUseCaller_schema.optional(),
   });
+
+  /**
+   * The inputs of the known server tools, for the code that reads them: the block's `input` stays as received (above).
+   * Each lists the fields we show; a field that is missing or of another type reads as undefined, never as a parse failure.
+   * Also on the wire, not read: `limit` (the search tools' result cap, 1-10000, default 5), `use_cache` (web_fetch, the model's per-call cache bypass).
+   */
+  const _inputText_schema = z.string().optional().catch(undefined);
+  export const ServerToolUseInput_schemas = {
+    web_search: z.object({ query: _inputText_schema }),
+    web_fetch: z.object({ url: _inputText_schema }),
+    code_execution: z.object({ code: _inputText_schema }),
+    bash_code_execution: z.object({ command: _inputText_schema }),
+    text_editor_code_execution: z.object({
+      command: _inputText_schema, // 'create' | 'view' | 'str_replace' | 'insert' | 'undo_edit'
+      path: _inputText_schema,
+      file_text: _inputText_schema, // create
+      old_str: _inputText_schema, // str_replace
+      new_str: _inputText_schema, // str_replace
+      insert_text: _inputText_schema, // insert
+      view_range: z.unknown().optional(), // view
+    }),
+    tool_search_tool_regex: z.object({ pattern: _inputText_schema }),
+    tool_search_tool_bm25: z.object({ query: _inputText_schema }),
+  } as const;
 
   export const WebSearchToolResultBlock_schema = _CommonBlock_schema.extend({
     type: z.literal('web_search_tool_result'),

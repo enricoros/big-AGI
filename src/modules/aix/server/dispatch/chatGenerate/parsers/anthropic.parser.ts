@@ -1,3 +1,5 @@
+import type * as z from 'zod/v4';
+
 import { safeErrorString } from '~/server/wire';
 
 import type { AixAPIChatGenerate_Request, AixWire_Particles } from '../../../api/aix.wiretypes';
@@ -6,7 +8,7 @@ import type { IParticleTransmitter } from './IParticleTransmitter';
 import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 
-import { AnthropicWire_API_Message_Create, AnthropicWire_Messages } from '../../wiretypes/anthropic.wiretypes';
+import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks, AnthropicWire_Messages } from '../../wiretypes/anthropic.wiretypes';
 import { DispatchContinuationSignal } from '../chatGenerate.continuation';
 import { OperationRetrySignal } from '../chatGenerate.operation-retry';
 
@@ -932,12 +934,22 @@ function _formatAnthropicStopError(stopDetails: { type: string; category?: strin
 
 type _ContentBlock = AnthropicWire_API_Message_Create.Response['content'][number];
 
+/**
+ * A server tool's input, read through its schema: typed fields, each undefined when missing or of another type.
+ * Undefined as a whole when the input is not an object, as on streaming, where it accumulates as a JSON string.
+ */
+function _serverToolInput<TInput>(schema: z.ZodType<TInput>, input: unknown): TInput | undefined {
+  const parsed = schema.safeParse(input);
+  return parsed.success ? parsed.data : undefined;
+}
+
+const _serverToolInputs = AnthropicWire_Blocks.ServerToolUseInput_schemas;
+
 function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'server_tool_use' }>): void {
   // Server-side tool execution (e.g., web_search, web_fetch, Skills API tools)
   // NOTE: We don't create tool invocations for server tools - just show operation state
 
-  // Extract input fields when available (non-streaming has the full object; streaming starts empty and accumulates via input_json_delta)
-  const inputObj = typeof block.input === 'object' ? block.input as Record<string, any> : undefined;
+  // Input fields are read when available (non-streaming has the full object; streaming starts empty and accumulates via input_json_delta)
   const srvOp: Parameters<typeof pt.sendOperationState>[2] = {
     opId: block.id,
     ...((block.caller?.type && block.caller.type !== 'direct') && { parentOpId: block.caller.tool_id }),
@@ -945,54 +957,52 @@ function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_Cont
 
   switch (block.name) { // .server_tool_use.name
     case 'web_search':
-      // start input: { query: string } - dynamically extracted
-      const searchQuery = typeof inputObj?.query === 'string' ? inputObj.query : undefined;
+      const searchQuery = _serverToolInput(_serverToolInputs.web_search, block.input)?.query;
       pt.sendOperationState('search-web', 'Searching the web...', { ...srvOp, ...(searchQuery ? { iTexts: [`Search query: "${searchQuery}"`] } : undefined) });
       break;
     case 'web_fetch':
-      // start input: { url: string } - dynamically extracted
-      const fetchUrl = typeof inputObj?.url === 'string' ? inputObj.url : undefined;
+      const fetchUrl = _serverToolInput(_serverToolInputs.web_fetch, block.input)?.url;
       pt.sendOperationState('search-web', `Fetching ${fetchUrl || 'web content'}...`, { ...srvOp, ...(fetchUrl ? { iTexts: [`URL: ${fetchUrl}`] } : undefined) });
       break;
     case 'code_execution':
-      // input: { code: string } - Python code for sandbox execution
-      const pyCode = typeof inputObj?.code === 'string' ? inputObj.code : undefined;
+      // Python code for sandbox execution
+      const pyCode = _serverToolInput(_serverToolInputs.code_execution, block.input)?.code;
       pt.sendOperationState('code-exec', !pyCode ? 'Writing code...' : 'Running code...', { ...srvOp, ...(pyCode ? { iTexts: [_ellipsizeContext(pyCode)] } : undefined) });
       break;
     case 'bash_code_execution':
-      // input: { command: string } - bash command for sandbox execution
-      const bashCmd = typeof inputObj?.command === 'string' ? inputObj.command : undefined;
+      // bash command for sandbox execution
+      const bashCmd = _serverToolInput(_serverToolInputs.bash_code_execution, block.input)?.command;
       pt.sendOperationState('code-exec', !bashCmd ? 'Writing bash...' : 'Running bash...', { ...srvOp, ...(bashCmd ? { iTexts: [_ellipsizeContext(bashCmd)] } : undefined) });
       break;
     case 'text_editor_code_execution':
-      // input: { command: 'view'|'create'|'str_replace'|'insert'|'undo_edit', path: string, file_text?: string, old_str?: string, new_str?: string, ... }
-      const teCommand = typeof inputObj?.command === 'string' ? inputObj.command : undefined;
-      const tePath = typeof inputObj?.path === 'string' ? inputObj.path : undefined;
+      const teInput = _serverToolInput(_serverToolInputs.text_editor_code_execution, block.input);
+      const teCommand = teInput?.command;
+      const tePath = teInput?.path;
       const iTexts: string[] = [];
       if (tePath)
         iTexts.push(tePath);
       switch (teCommand) {
         default:
-          console.log('[DEV] Anthropic: server_tool_use(content_block_start): unrecognized text editor command', { teCommand, inputObj });
+          console.log('[DEV] Anthropic: server_tool_use(content_block_start): unrecognized text editor command', { teCommand, input: block.input });
         // fallthrough
         case undefined: // EXPECTED in Streaming: we don't know the command yet, the input object is empty - in NS, we have the details upfront (cases below)
           pt.sendOperationState('code-exec', `Editor: ${teCommand || 'working'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'create':
-          if (typeof inputObj?.file_text === 'string') iTexts.push(_ellipsizeContext(inputObj.file_text));
+          if (teInput?.file_text !== undefined) iTexts.push(_ellipsizeContext(teInput.file_text));
           pt.sendOperationState('code-exec', `Creating ${tePath || 'file'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'view':
-          if (inputObj?.view_range) iTexts.push(`lines: ${JSON.stringify(inputObj.view_range)}`);
+          if (teInput?.view_range) iTexts.push(`lines: ${JSON.stringify(teInput.view_range)}`);
           pt.sendOperationState('code-exec', `Viewing ${tePath || 'file'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'str_replace':
-          if (typeof inputObj?.old_str === 'string') iTexts.push(`- ${_ellipsizeContext(inputObj.old_str, 256)}`);
-          if (typeof inputObj?.new_str === 'string') iTexts.push(`+ ${_ellipsizeContext(inputObj.new_str, 256)}`);
+          if (teInput?.old_str !== undefined) iTexts.push(`- ${_ellipsizeContext(teInput.old_str, 256)}`);
+          if (teInput?.new_str !== undefined) iTexts.push(`+ ${_ellipsizeContext(teInput.new_str, 256)}`);
           pt.sendOperationState('code-exec', `Editing ${tePath || 'file'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'insert':
-          if (typeof inputObj?.insert_text === 'string') iTexts.push(_ellipsizeContext(inputObj.insert_text, 256));
+          if (teInput?.insert_text !== undefined) iTexts.push(_ellipsizeContext(teInput.insert_text, 256));
           pt.sendOperationState('code-exec', `Inserting in ${tePath || 'file'}...`, { ...srvOp, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'undo_edit':
@@ -1002,11 +1012,11 @@ function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_Cont
       break;
     // [Anthropic, 2025-11-24] Tool Search Tool
     case 'tool_search_tool_regex':
-      const pattern = typeof inputObj?.pattern === 'string' ? inputObj.pattern : undefined;
+      const pattern = _serverToolInput(_serverToolInputs.tool_search_tool_regex, block.input)?.pattern;
       pt.sendOperationState('code-exec', 'Searching tools...', { ...srvOp, ...(pattern ? { iTexts: [`pattern: ${pattern}`] } : undefined) });
       break;
     case 'tool_search_tool_bm25':
-      const query = typeof inputObj?.query === 'string' ? inputObj.query : undefined;
+      const query = _serverToolInput(_serverToolInputs.tool_search_tool_bm25, block.input)?.query;
       pt.sendOperationState('code-exec', 'Searching tools...', { ...srvOp, ...(query ? { iTexts: [`query: "${query}"`] } : undefined) });
       break;
     default:
@@ -1026,7 +1036,7 @@ function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_Cont
 
 /** Streaming only: called at content_block_stop to re-send the operation state with the fully accumulated input JSON */
 function _handleCBE_ServerToolUse_S(pt: IParticleTransmitter, opId: string, name: string, inputStr: string | object): void {
-  let input: Record<string, any> | undefined;
+  let input: unknown;
   try {
     input = typeof inputStr === 'string' ? JSON.parse(inputStr) : inputStr;
   } catch { /* ignore parse errors */
@@ -1039,39 +1049,40 @@ function _handleCBE_ServerToolUse_S(pt: IParticleTransmitter, opId: string, name
 
   switch (name) {
     case 'code_execution': {
-      const code = typeof input.code === 'string' ? input.code : undefined;
+      const code = _serverToolInput(_serverToolInputs.code_execution, input)?.code;
       pt.sendOperationState('code-exec', 'Executing code...', { opId, ...code && { iTexts: [_ellipsizeContext('input code:\n' + code)] } });
       break;
     }
     case 'bash_code_execution': {
-      const cmd = typeof input.command === 'string' ? input.command : undefined;
+      const cmd = _serverToolInput(_serverToolInputs.bash_code_execution, input)?.command;
       pt.sendOperationState('code-exec', 'Executing bash...', { opId, ...cmd && { iTexts: [_ellipsizeContext('bash command:\n' + cmd)] } });
       break;
     }
     case 'text_editor_code_execution': {
-      const path = typeof input.path === 'string' ? input.path : 'file';
+      const teInput = _serverToolInput(_serverToolInputs.text_editor_code_execution, input);
+      const path = teInput?.path ?? 'file';
       const iTexts: string[] = [];
       if (path !== 'file') iTexts.push(`path: ${path}`);
-      switch (input.command) {
+      switch (teInput?.command) {
         default: // not expected: the input shall be valid here
-          console.log('[DEV] Anthropic: server_tool_use(content_block_stop): unrecognized text editor command', { command: input.command, input });
-          pt.sendOperationState('code-exec', `Editor: ${input.command || 'working'}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
+          console.log('[DEV] Anthropic: server_tool_use(content_block_stop): unrecognized text editor command', { command: teInput?.command, input });
+          pt.sendOperationState('code-exec', `Editor: ${teInput?.command || 'working'}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'create':
-          if (typeof input.file_text === 'string') iTexts.push(_ellipsizeContext('file contents:\n' + input.file_text));
+          if (teInput?.file_text !== undefined) iTexts.push(_ellipsizeContext('file contents:\n' + teInput.file_text));
           pt.sendOperationState('code-exec', `Creating ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'view':
-          if (input.view_range) iTexts.push(`lines: ${JSON.stringify(input.view_range)}`);
+          if (teInput?.view_range) iTexts.push(`lines: ${JSON.stringify(teInput.view_range)}`);
           pt.sendOperationState('code-exec', `Viewing ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'str_replace':
-          if (typeof input.old_str === 'string') iTexts.push(`- ${_ellipsizeContext(input.old_str, 256)}`);
-          if (typeof input.new_str === 'string') iTexts.push(`+ ${_ellipsizeContext(input.new_str, 256)}`);
+          if (teInput?.old_str !== undefined) iTexts.push(`- ${_ellipsizeContext(teInput.old_str, 256)}`);
+          if (teInput?.new_str !== undefined) iTexts.push(`+ ${_ellipsizeContext(teInput.new_str, 256)}`);
           pt.sendOperationState('code-exec', `Editing ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'insert':
-          if (typeof input.insert_text === 'string') iTexts.push(_ellipsizeContext(input.insert_text, 256));
+          if (teInput?.insert_text !== undefined) iTexts.push(_ellipsizeContext(teInput.insert_text, 256));
           pt.sendOperationState('code-exec', `Inserting in ${path}...`, { opId, ...iTexts.length ? { iTexts } : undefined });
           break;
         case 'undo_edit':
