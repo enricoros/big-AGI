@@ -75,7 +75,11 @@ export function aixAnthropicHostedFeatures(model: AixAPI_Model, chatGenerate: Ai
     enableSkills: !!model.vndAntSkills,
     enableStrictOutputs: !!model.strictJsonOutput || !!model.strictToolInvocations,
     enableToolAdvanced20251120: !!model.vndAntToolSearch || programmaticToolCalling,
-    enableThinkingBindingControls: target === 'anthropic', // every thinking request; Bedrock 400s the body field (probed 2026-09-01)
+    // Claude API: every thinking request. Bedrock takes the flag per model deployment (probed: 'invalid beta flag' on Opus 4.5; accepted on
+    // Opus/Sonnet 4.6 and Haiku 4.5, where the response then carries input_transformations) and 400s block_binding without it, so there it
+    // is sent only to the models that run the prefix check on Bedrock.
+    // [Bedrock, 2026-11-09, hypothesis: Fable/Mythos 5.2 take the flag and 400 an edited history without it - both documented, neither probed: our account 403s on these models]
+    enableThinkingBindingControls: target === 'anthropic' || /claude-(fable|mythos)-5-2/.test(model.id),
     modelIdForPerModelFeatures: model.id,
   };
 }
@@ -467,9 +471,7 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
     // Fast inference mode is not offered on partner clouds: 400 'speed: Extra inputs are not permitted'
     delete payload.speed;
 
-    // Preserved-thinking controls: 400 'thinking.adaptive.block_binding: Extra inputs are not permitted' (never set for this target)
-    if (payload.thinking?.type === 'adaptive' || payload.thinking?.type === 'enabled')
-      delete payload.thinking.block_binding;
+    // Preserved-thinking controls (thinking.block_binding) are gated per model in aixAnthropicHostedFeatures, with their beta flag
   }
 
   // Preemptive error detection with server-side payload validation before sending it upstream
