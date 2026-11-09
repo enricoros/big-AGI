@@ -933,8 +933,8 @@ export namespace OpenAIWire_API_Images_Generations {
     'gpt-image-2.5-flare', // 2026-09-08 - fast, the T2I default; +'xhigh'/'max' quality, arbitrary WxH sizes (mult of 16, 1:3..3:1, <=3840)
     'gpt-image-2.5-sunburst', // 2026-09-08 - same price/tokens as flare, ~2x latency, tuned for edit precision
     'gpt-image-2',
-    'gpt-image-1.5', // leaves OpenAI on 2026-12-01 (Azure: 2027)
-    'gpt-image-1-mini', // leaves OpenAI on 2026-12-01 (Azure: 2027)
+    'gpt-image-1.5', // leaves OpenAI on 2026-12-01 (Azure: 2026-12-16)
+    'gpt-image-1-mini', // leaves OpenAI on 2026-12-01 (Azure: 2027-04-07)
   ]);
 
   export type Request = z.infer<typeof Request_schema>;

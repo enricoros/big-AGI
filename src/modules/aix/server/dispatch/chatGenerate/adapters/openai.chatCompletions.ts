@@ -1004,8 +1004,6 @@ function _toOpenAIToolChoice(openAIDialect: OpenAIDialects, itp: AixTools_ToolsP
 }
 
 
-
-
 // Approximate conversions
 
 export function aixAudioPart_to_OpenAIAudioFormat(part: AixParts_InlineAudioPart) {

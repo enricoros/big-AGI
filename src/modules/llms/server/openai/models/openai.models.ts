@@ -1259,7 +1259,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   },
 
 
-  // GPT-3.5 Turbo: removed, shut down October 23, 2026 (dead on OpenRouter too)
+  // GPT-3.5 Turbo: removed, shut down October 23, 2026 (OpenRouter still serves the -0613 and -16k snapshots via Azure; listed hidden, see orOldModelIDs)
 
 ]);
 
@@ -1400,7 +1400,7 @@ const openAIModelsShutdownDenyList: string[] = [
   'gpt-5.2-chat-latest',
   'gpt-5.3-chat-latest',
   'gpt-3.5-turbo-1106', // shut down September 28, 2026 - not on OpenRouter
-  // shut down October 23, 2026 - defs removed (dead on OpenRouter too)
+  // shut down October 23, 2026 - defs removed (dead on OpenRouter too, but for two gpt-3.5-turbo snapshots)
   'o1', // catches o1-2024-12-17 and o1-pro too
   'o3-mini', // alias + snapshot
   'o4-mini', // alias + snapshot

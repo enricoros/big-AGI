@@ -98,7 +98,7 @@ export type GeminiImageSize = DModelParameterValue<'llmVndGeminiImageSize'>;
 
 // OpenAI/DALL·E-protocol model and output types - GPT Image family only: DALL·E 2/3 left the OpenAI API on 2026-05-12 (Azure and OpenRouter too)
 
-// Shutdowns: gpt-image-1.5, gpt-image-1-mini and chatgpt-image-latest 2026-12-01 on OpenAI, 2027 on Azure
+// Shutdowns: gpt-image-1.5, gpt-image-1-mini and chatgpt-image-latest 2026-12-01 on OpenAI; on Azure gpt-image-1.5 2026-12-16, gpt-image-1-mini 2027-04-07
 export type GPTImageModelId = 'gpt-image-2.6-flare' | 'gpt-image-2.6-sunburst' | 'gpt-image-2.5-flare' | 'gpt-image-2.5-sunburst' | 'gpt-image-2' | 'gpt-image-1.5' | 'gpt-image-1-mini';
 export type DalleModelId = GPTImageModelId;
 export type DalleModelSelection = DalleModelId | null; // null = auto-select latest
