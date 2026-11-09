@@ -78,7 +78,7 @@ export function createBedrockConverseStreamParser(): ChatGenerateParseFunction {
           const tokenStopReason = _fromConverseStopReason(stopReason);
           if (tokenStopReason !== null)
             pt.setTokenStopReason(tokenStopReason);
-          return pt.setDialectEnded('done-dialect');
+          break; // not the end: 'metadata' follows with the usage, and the executor reads nothing past a dialect end
         }
 
         case 'metadata': {
@@ -92,7 +92,7 @@ export function createBedrockConverseStreamParser(): ChatGenerateParseFunction {
             ...(metrics?.latencyMs ? { dtInner: metrics.latencyMs } : {}),
             dtAll: Date.now() - parserCreationTimestamp,
           });
-          break;
+          return pt.setDialectEnded('done-dialect'); // the last event of a Converse stream
         }
 
         // case 'error': {
