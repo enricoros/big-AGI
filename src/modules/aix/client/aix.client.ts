@@ -713,8 +713,9 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   dMessage.pendingIncomplete = false;
 
   // [#1114] resolve Gemini/Vertex AI grounding redirect links before the final update, so every caller (chat, Beam, reattach)
-  // gets them with completion; truncated too, as its partial content is shown
-  if ((outcome === 'completed' || outcome === 'truncated') && getVndGeminiVertexLinks() === 'resolve') {
+  // gets them with completion, whatever the outcome: failed and truncated replies show their partial content too. After a user
+  // stop the aborted signal skips the server: only links already resolved in the session are rewritten, the rest stay for the chip
+  if (getVndGeminiVertexLinks() === 'resolve') {
     const { rewritten } = await vertexLinksResolveFragments(dMessage.fragments, clientOptions.abortSignal);
     if (rewritten.length) dMessage.fragments = dMessage.fragments.map(fragment => rewritten.find(({ fId }) => fId === fragment.fId) ?? fragment);
   }
