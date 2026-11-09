@@ -44,6 +44,10 @@ const _isClosedReasoningFragment = (f: Parameters<typeof isVoidFragment>[0]): bo
 /** The status chip of a server retry, see onAixRetryReset */
 const _isRetryStatus = (f: Parameters<typeof isVoidPlaceholderFragment>[0]) => isVoidPlaceholderFragment(f) && f.part.aixControl?.ctl === 'ec-retry';
 const _RETRY_COUNTDOWN = 'Retrying in ';
+/** Output of the attempt a retry status announced, once connected: heartbeats, connect failures and the end are not */
+const _isAttemptOutput = (op: AixWire_Particles.ChatGenerateOp): boolean => !('cg' in op) ? !('p' in op && op.p === '❤')
+  : op.cg === 'issue' ? op.issueId !== 'dispatch-prepare' && op.issueId !== 'dispatch-fetch'
+    : op.cg !== 'end' && op.cg !== 'aix-retry-reset' && op.cg !== '_debugDispatchRequest' && op.cg !== '_debugProfiler';
 
 // Future: Reassembly Policies
 // type ReassemblyPolicyVoidPlaceholder =
@@ -108,6 +112,7 @@ export class ContentReassembler {
   // settable per-iteration callback
   private onStreamingUpdate?: (accumulator: AixChatGenerateContent_LL, hasContent: boolean) => MaybePromise<void>;
   private updateContentStarted = false; // true (forever) after the first update with content, even if we have resets/continuations in the future
+  private retrySettlesOnOutput = false; // the retry status counts down to a non-final attempt: removed at that attempt's first output
 
 
   constructor(
@@ -372,6 +377,14 @@ export class ContentReassembler {
           console.log('[ContentReassembler] client particle transform failed, using original particle', { error: error?.message || error });
         }
       }
+
+    // the retried attempt produces output: the retry went through, and a failure from here on is not a give-up - the last
+    // attempt keeps its countdown, as its failure can be the same condition, which finalizeReassembly reports as a give-up
+    if (this.retrySettlesOnOutput && _isAttemptOutput(op)) {
+      this.retrySettlesOnOutput = false;
+      const idx = this.S.fragments.findLastIndex(_isRetryStatus);
+      if (idx >= 0) this._spliceFragment(idx);
+    }
 
     switch (true) {
 
@@ -1266,6 +1279,7 @@ export class ContentReassembler {
       ...(causeConn ? { rCauseConn: causeConn } : undefined),
       ...(calm && { rCalm: true }),
     }));
+    this.retrySettlesOnOutput = delayMs > 0 && attempt < maxAttempts;
   }
 
   private onMetrics({ metrics }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-metrics' }>): void {
