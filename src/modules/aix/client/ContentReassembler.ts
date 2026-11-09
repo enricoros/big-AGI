@@ -48,6 +48,7 @@ const _RETRY_COUNTDOWN = 'Retrying in ';
 const _isAttemptOutput = (op: AixWire_Particles.ChatGenerateOp): boolean => !('cg' in op) ? !('p' in op && op.p === '❤')
   : op.cg === 'issue' ? op.issueId !== 'dispatch-prepare' && op.issueId !== 'dispatch-fetch'
     : op.cg !== 'end' && op.cg !== 'aix-retry-reset' && op.cg !== '_debugDispatchRequest' && op.cg !== '_debugProfiler';
+const _STREAM_ENDED_EARLY = 'The stream ended before a final response status was received. The answer may be incomplete.';
 
 // Future: Reassembly Policies
 // type ReassemblyPolicyVoidPlaceholder =
@@ -1130,6 +1131,11 @@ export class ContentReassembler {
     // Vendor-composed stop error, surfaced as a complementary error fragment alongside the generic classification message
     if (tokenStopError)
       this._appendErrorFragment(tokenStopError);
+    // STOPGAP #1288 - REVERT with the typed errors (AIX-TODO-errors.md, "Stream mechanics"): this guesses "an error the vendor reported,
+    // on a stream that then closed without its final event" from three fields of the end. Two facts, neither implies the other;
+    // done properly the error is an issue of its own and the end only says how the read ended
+    if (tokenStopError && tokenStopReason === 'cg-issue' && terminationReason === 'done-dispatch-closed')
+      this._appendErrorFragment(_STREAM_ENDED_EARLY);
   }
 
   /**
@@ -1183,7 +1189,7 @@ export class ContentReassembler {
       case 'done-dispatch-closed': // (!) VERY COMMON
         // BROKEN - Stream EOF before the dialect sent a termination signal - provider closed the connection early
         console.warn(`⚠️ [ContentReassembler] done-dispatch-closed without dialectStopReason - possible truncation`);
-        return { tsr: 'issue', errorMessage: 'The stream ended before a final response status was received. The answer may be incomplete.' };
+        return { tsr: 'issue', errorMessage: _STREAM_ENDED_EARLY };
 
       case 'done-dispatch-aborted':
         // BROKEN - Infrastructure abort (not user-initiated) - dispatch connection severed

@@ -428,9 +428,8 @@ const ENDINGS: Ending[] = [
   {
     // #1288. Both captures are the container stream above, cut by hand after its error event: at the event boundary, and
     // 160 bytes into the next event
-    ending: 'failed by the vendor inside the stream, when the stream ends right after the error',
+    ending: 'failed by the vendor inside the stream, when the stream ends right after the error #1288',
     stop: FAILED, says: /: Container with id 'cntr_\w+' not found\./,
-    notYet: '#1288: the error waits for the failed response that normally follows it; when the stream ends first it is dropped and the answer reads as complete',
     files: ['openai/gpt-6-luna_error-after-text-then-eof_synthetic.sse', 'openai/gpt-6-luna_error-after-text-then-cut-midframe_synthetic.sse'],
   },
   {

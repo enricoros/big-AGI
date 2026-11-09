@@ -52,7 +52,7 @@ On the blocked image (2026-11-06), the TODO left at the site:
 ### Sites waiting for typed errors
 
 - OpenAI: a failed or blocked image generation leaves a non-terminating dialect issue with composed text - `_forwardFailedImageGenerationCallItem` (subkind `image-gen-error`, aiRender true, uiColor neutral)
-- OpenAI (#1288): an `error` after answer text is dropped when the stream ends before its terminal event (only the end-of-stream sentence shows). Not fixed on `main`: it waits for the shape under "Stream mechanics" (subkind `upstream-error`, non-terminal); the replay test carries the case as `notYet`
+- OpenAI (#1288): an `error` after answer text is kept when the stream ends before its terminal event, by a stopgap marked `STOPGAP #1288 - REVERT` at its three sites (Responses parser, transmitter, reassembler): the error is parked in the stop reason and the client guesses it back. To redo as a non-terminal issue (subkind `upstream-error`), see "Stream mechanics"
 - Gemini (#1287): an error sent inside the stream ends the message with its status, code and text; `details` is not carried, the log level is always a warning, a bare-string error is surfaced as its message
 - Stop errors stored twice (filter stops, refusals): the replacement code is commented under a `TODO` in `ContentReassembler` (`dialectStopExplained`)
 - Gemini `TOO_MANY_TOOL_CALLS`: belongs to the truncated class with its own wording and Continue - see [AIX-outcome.md](../AIX-outcome.md), "Open: tool-budget stops"
@@ -63,7 +63,17 @@ On the blocked image (2026-11-06), the TODO left at the site:
 - Gemini: in-stream `503 UNAVAILABLE` is real (seen as `error` events after HTTP 200) and is shown, not retried; retry only while nothing has streamed
 - A last attempt that goes through and then fails for another reason still reads "Gave up after N attempts": the reassembler cannot tell it from the same error returning
 - Anthropic: a zero fast mode rate limit is matched by message text in the fetch retrier, not by a typed cause
-- OpenAI Responses retries a transient `response.failed` even after answer text has streamed: the shown text is cleared and the run restarts. Chat Completions stops retrying once output has streamed. #1211 and #1287 ask that long partial work is not restarted; #1211 was reopened for a "Retry transient errors within [N] minutes" option, which is on neither TODO list
+
+### Retry after partial output (#1211, #1287)
+
+Left for the rework by Enrico's ruling; nothing changes before it.
+
+- Today, OpenAI Responses: a transient failure (rate limit, server error, overloaded) reported by `response.failed` is retried even after answer text has streamed. The retry clears the text already shown and the run starts again. An `error` before any text retries the same way
+- Today, Chat Completions: no retry once any output has streamed; the error is shown and the partial answer kept. The two dialects disagree
+- Asked in #1287: "Fixing diagnosis should not automatically restart a long, partially completed request"
+- Asked in [#1211](https://github.com/enricoros/big-AGI/issues/1211#issuecomment-6536775910): torn on an automatic restart "if it took half an hour to receive an error"; restart only on clear cases, like the flex tier being unavailable or a dropped connection with a completely empty response. Enrico [agreed](https://github.com/enricoros/big-AGI/issues/1211#issuecomment-6536859013) and [reopened](https://github.com/enricoros/big-AGI/issues/1211#issuecomment-6565761327) #1211 for a configurable "Retry transient errors within [N] minutes"
+- Shape for later: retry is a named policy read from the typed issue (transient or not, HTTP-equivalent status, the vendor's retry-after), not a decision inside a parser. Inputs the policy needs: whether anything streamed, how long the attempt ran, how much it produced
+- Open: one rule for every dialect (nothing streamed yet), the time-bounded option from #1211, or both
 
 ### Replay
 
@@ -86,7 +96,7 @@ From the #1288 work. The first two lines are measured, the direction is Enrico's
 - Open: an old client stores any issue as an error fragment, so it reads a salvaged answer with a non-terminal issue as failed. Sending them needs a client that knows them
 - Open: where the end is stored. Today an early close is an error fragment (the end-of-stream sentence), replayed to the model
 - Not for this: a parser end-of-stream hook. The transmitter already carries the stop reason and metrics to the end particle on every exit; a hook serves only parser-private buffers (Chat Completions audio) or a retry at the close, neither observed
-- Interim, unmerged: two #1288 versions that hold the error on the server until the end (one as a provisional stop reason, one as a held issue reported if no stop reason arrives). Both are replaced by the above; nothing structural ships before it
+- Shipped meanwhile: the #1288 stopgap above. It holds the error on the server until the end, so the error is still lost when our own function or the browser link is cut. Revert it when the shape above lands
 
 ### Dropped after the verdict
 

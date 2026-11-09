@@ -129,6 +129,7 @@ class ResponseParserStateMachine {
   #hasFunctionCalls: boolean = false; // tracks if we've seen function_call output items
   public hasEmittedText: boolean = false; // any assistant message text streamed - gates the 'error'/'response.failed' salvage (#1149)
   #responseSealed: boolean = false; // true once response.completed/failed/incomplete has been processed - trailing 'error' events are advisory only
+  public deferredErrorText: string | undefined; // the last 'error' whose verdict was left to the terminal event
 
   // hosted tool configuration echo (captured at response.created)
   #imageGenToolCfg: TImageGenToolCfg | undefined;
@@ -446,7 +447,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
           break;
         }
 
-        const failedText = !failedError ? 'Response failed with no error details.'
+        const failedText = !failedError ? (R.deferredErrorText ?? 'Response failed with no error details.') // the 'error' event that preceded it is the only explanation
           : `${safeErrorString(failedError.code) || 'Error'}: ${safeErrorString(failedError.message) || 'unknown.'}`;
 
         // Genuine failure: retry if transient (the deferred mid-stream 'error' lands here when the message didn't complete), else surface the error
@@ -841,6 +842,16 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
         // the verdict to the imminent 'response.failed' (see _isSalvageableFailedOutput), which repeats this error
         if (OPENAI_RESPONSES_SALVAGE_FAILED && R.hasEmittedText) {
           console.warn(`[DEV] AIX: OpenAI Responses: mid-stream 'error' after text streamed - deferring the verdict to the terminal event: ${errorText}`);
+          // STOPGAP #1288 - REVERT with the typed errors (AIX-TODO-errors.md, "Stream mechanics"). The error is parked in the stop
+          // reason until a terminal event sets its own, which replaces the reason and this text; when the stream ends first, the
+          // message carries the vendor's text beside the end-of-stream line. This writes an error into the vendor's status, the
+          // client then guesses it back (ContentReassembler.onCGEnd), and the error is lost if our own function is cut.
+          // Properly: send it on arrival as a non-terminal dialect issue (subkind 'upstream-error', subCause: errorCode,
+          // aiRender: false, uiColor: 'danger'); the end only says how the read ended; the outcome is derived from both.
+          // [OpenAI, 2026-11-09, hypothesis: 'response.failed' follows every 'error' (observed, the order is undocumented), so a stream ending on 'error' is a cut connection or another host]
+          pt.setTokenStopReason('cg-issue', errorText);
+          R.deferredErrorText = errorText;
+          pt.updateMetrics(_fromResponseMetrics(undefined, R.parserCreationTimestamp, R.timeToFirstEvent)); // timing, should no terminal event bring the rest
           break;
         }
 

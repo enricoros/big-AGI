@@ -243,7 +243,9 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     if (this.tokenStopReason && this.tokenStopReason !== reason)
       console.warn(`[Aix.${this.prettyDialect}] setTokenStopReason('${reason}'): already has token stop reason '${this.tokenStopReason}' (overriding)`);
     this.tokenStopReason = reason;
-    if (errorText) this.tokenStopError = errorText;
+    // STOPGAP #1288 - REVERT to `if (errorText) this.tokenStopError = errorText;` with the typed errors: a later stop reason replaces
+    // the text here only so that a held OpenAI Responses error is dropped when its terminal event arrives
+    this.tokenStopError = errorText || undefined;
   }
 
 
