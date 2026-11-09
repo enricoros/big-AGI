@@ -30,5 +30,4 @@ codebase consistency, etc.
 Think about what happens when the next developer touches this code.
 Rank findings by severity (bug > correctness > cleanup > cosmetic). Be specific about what to change and where.
 
-Remember: design values for this codebase: orthogonal features, features that generalize well, modularized and reusable code,
-type-discriminated data, optimized code, zero maintenance burden. Minimize future pain, etc.
+Judge design by the Design and Irreversible choices sections of CLAUDE.md, loaded in every session; do not restate them here.
