@@ -160,7 +160,9 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
       // one per pending toolCall in candidates[0]: flushed server-side state, not alternative completions (#1286).
       // Their parts are folded in wire order; anything else on an extra candidate is a shape we have not seen (strict in dev, warns in prod).
       for (const extra of extraCandidates)
-        if (extra.finishReason || extra.groundingMetadata || extra.urlContextMetadata || extra.citationMetadata || extra.content?.parts?.some(part => !('toolCall' in part) && !('toolResponse' in part)))
+        if (extra.finishReason || extra.groundingMetadata || extra.urlContextMetadata || extra.citationMetadata ||
+          extra.content?.parts?.some(part => !('toolCall' in part) && !('toolResponse' in part) && !('codeExecutionResult' in part))
+        ) // code execution: the pending executableCode's result
           aixResilientUnknownValue('Gemini', 'extraCandidate', extra);
 
       // -> Candidates -> Content: the completion's parts, then the extra candidates' parts
