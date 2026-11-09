@@ -278,7 +278,7 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
   }
 
   // [Anthropic, 2026-09-01] Preserved thinking: on Fable 5.1+ a replayed thinking block is valid only against the unchanged
-  // system/tools/history prefix, and new accounts 400 after any edit (routine here: edits, deletes, persona/tool changes).
+  // system/tools/history prefix, and after any edit (routine here: edits, deletes, persona/tool changes) new accounts 400, and every account on Fable/Mythos 5.2.
   // 'drop_block' drops the stale blocks instead (accepted on every model, probed); the parser relays the drops as 'vnt' void-notice particles.
   // Not on 'between_tools' (400 'Extra inputs'): there, and on Haiku 5.x 'disabled', earlier turns' thinking is stripped instead (below).
   if (hostedFeatures.enableThinkingBindingControls && (payload.thinking?.type === 'adaptive' || payload.thinking?.type === 'enabled'))

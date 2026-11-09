@@ -168,7 +168,7 @@ export function anthropicBetaFeatures(options?: AnthropicHostedFeatures): string
     bf.add('files-api-2025-04-14');
   }
 
-  // [Anthropic, fast-mode-2026-02-01] Fast inference mode - header required on Opus 5 / 4.8, optional on Opus 5.5
+  // [Anthropic, fast-mode-2026-02-01] Fast inference mode - header required on Opus 5 / 4.8, optional on Fable 5.2 and Opus 5.5
   if (options?.enableFastMode)
     bf.add('fast-mode-2026-02-01');
 

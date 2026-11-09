@@ -63,6 +63,7 @@ const IF_47_R = [...IF_4_R, LLM_IF_HOTFIX_NoTemperature];
 //                              below), but off is sent as `thinking: {type: 'between_tools'}` - 'disabled' returns 400.
 //                              Haiku 5.5 (2026-10-07): as Opus 5 (single entry, VISIBLE Thinking switch, 'disabled' at effort 'high'
 //                              or below, 'between_tools' returns 400); default effort 'medium'.
+//                              Fable/Mythos 5.2 (2026-11-09): as Fable 5.1; the prefix check on replayed thinking runs for every account.
 // - llmVndAntWebFetch/Search   seem an API feature available on all models
 
 const ANT_TOOLS: Exclude<ModelDescriptionSchema['parameterSpecs'], undefined> = [
@@ -259,6 +260,49 @@ type _AnthropicModelDef = ModelDescriptionSchema & {
 
 export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
 
+  // Claude 5.2 models (Fable/Mythos) - NOTE: no thinking variants, adaptive thinking is always on (as Fable 5.1)
+  {
+    id: 'claude-fable-5-2', // Active - 2026-11-09
+    label: 'Claude Fable 5.2',
+    pubDate: '20261109',
+    description: 'For demanding reasoning and long-horizon agentic work',
+    contextWindow: 1_000_000, // 1M default and max, flat pricing
+    maxCompletionTokens: 128000,
+    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch], // reasoning on the base model: thinking is always on
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - the only mode; 'disabled', 'between_tools' and budget_tokens return 400 */ },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] }, // default 'high', where most of the gain lands (Anthropic); from 'high' up it thinks before almost every reply
+      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // fast mode: available, no waitlist or beta header; $16/$80 2x tier
+      ...ANT_TOOLS_DYNAMIC,
+    ],
+    // Fable 5.2 (launch-verified 2026-11-09, probed live): Fable 5.1's API surface at a lower price - adaptive-only, forced tool_choice
+    // 'any'/'tool' 400 (AIX downgrades to 'auto' + system hint), temperature only at 1 / top_p / top_k / prefill 400, refusals, 30-day
+    // retention, same tokenizer, 512-token min cacheable prompt, cache reads 0.025x, knowledge cutoff Jun 2026. New: fast mode.
+    // Preserved thinking: the prefix check runs for every account, whatever its age (AIX sends 'drop_block'); its blocks are dropped by
+    // Opus 5.5 and Fable 5.1, while it reads theirs. Docs: only Fable/Mythos 5.2 read them, within the producing account.
+    chatPrice: { input: 8, output: 40, cache: { read: 0.20, write: 10, duration: 300 }, tools: ANT_PRICE_TOOLS },
+    benchmark: { cbaElo: 1504 + 4 }, // (no arena data yet) assuming: claude-fable-5-1 + 4
+  },
+  {
+    id: 'claude-mythos-5-2', // Limited availability (verified organizations) - 2026-11-09
+    label: 'Claude Mythos 5.2',
+    pubDate: '20261109',
+    description: 'Claude Fable 5.2 capabilities - limited availability, for organizations verified through Anthropic programs',
+    contextWindow: 1_000_000,
+    maxCompletionTokens: 128000,
+    interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch],
+    parameterSpecs: [
+      { paramId: 'llmVndAntThinkingBudget', hidden: true, initialValue: -1 /* FORCE adaptive - always on */ },
+      { paramId: 'llmVndAntEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'] },
+      { paramId: 'llmVndAntInfSpeed', enumValues: ['fast_2x'] }, // fast mode per the docs, $16/$80 2x tier
+      ...ANT_TOOLS_DYNAMIC,
+    ],
+    // Mythos 5.2: same specs/pricing/constraints as Fable 5.2 per the docs, prefix check included; verified organizations only
+    // (404 elsewhere, not on OpenRouter, not in the Bedrock listings).
+    chatPrice: { input: 8, output: 40, cache: { read: 0.20, write: 10, duration: 300 }, tools: ANT_PRICE_TOOLS },
+    benchmark: { cbaElo: 1504 + 5 }, // (no arena data yet) assuming: claude-fable-5-2 + 1
+  },
+
   // Claude Haiku 5.5 - single entry with a user-facing Thinking switch, as Opus 5: thinking is ON by default; off is
   // `thinking: {type: 'disabled'}`, legal at effort 'high' or below only (xhigh/max -> 400; the AIX adapter clamps).
   {
@@ -345,7 +389,7 @@ export const hardcodedAnthropicModels = llmsDefineModels<_AnthropicModelDef>()([
     id: 'claude-fable-5-1', // Active - 2026-09-01
     label: 'Claude Fable 5.1',
     pubDate: '20260901',
-    description: 'Most capable widely released model for demanding reasoning and long-horizon agentic work',
+    description: 'Previous Fable model, for demanding reasoning and long-horizon agentic work',
     contextWindow: 1_000_000, // 1M default and max, flat pricing
     maxCompletionTokens: 128000,
     interfaces: [...IF_47_R, LLM_IF_ANT_ToolsSearch], // reasoning on the base model: thinking is always on
@@ -771,8 +815,8 @@ export namespace AnthropicWire_API_Models_List {
 export function llmsAntValidateModelDefs_DEV(availableModels: AnthropicWire_API_Models_List.ModelObject[]): void {
   if (DEV_DEBUG_ANTHROPIC_MODELS) {
     llmDevCheckModels_DEV('Anthropic', availableModels.map(m => m.id), hardcodedAnthropicModels.map(m => m.id), {
-      // deliberate keeps: invite-only Mythos 5.1/5 + retired ids still served by Bedrock/OpenRouter (file header rule)
-      ignoreStale: ['claude-mythos-5-1', 'claude-mythos-5', 'claude-opus-4-1-20250805', 'claude-sonnet-4-20250514', 'claude-3-haiku-20240307'],
+      // deliberate keeps: invite-only Mythos 5.2/5.1/5 + retired ids still served by Bedrock/OpenRouter (file header rule)
+      ignoreStale: ['claude-mythos-5-2', 'claude-mythos-5-1', 'claude-mythos-5', 'claude-opus-4-1-20250805', 'claude-sonnet-4-20250514', 'claude-3-haiku-20240307'],
     });
     _llmsAntCheckApiCapabilities_DEV(availableModels);
     _llmsAntCheckInfSpeedTiers_DEV();

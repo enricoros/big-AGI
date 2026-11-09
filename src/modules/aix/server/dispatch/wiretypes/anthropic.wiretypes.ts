@@ -13,6 +13,15 @@ const hotFixAntShipNoEmptyTextBlocks = true; // Replace empty text blocks with a
  *
  * ## Updates
  *
+ * ### 2026-11-09 - API Sync: Claude Fable 5.2 / Mythos 5.2 (launch-verified live)
+ * - Models: claude-fable-5-2 - Fable 5.1's surface at $8/$40: thinking 'disabled' / 'enabled' / 'between_tools' 400, forced tool_choice 400,
+ *   temperature != 1 / top_p / top_k / prefill 400. Same tokenizer (count_tokens equal to Fable 5.1 and Opus 5.5). No wire changes.
+ * - Request.speed: 'fast' accepted on Fable 5.2 with or without the beta header (`usage.speed: 'fast'`); Fable 5.1 400s it.
+ * - Preserved thinking (probed): the prefix check now 400s on every account when `block_binding` is unset ('The block is bound to a different
+ *   conversation'); with 'drop_block' the request succeeds and lists the drops. Fable 5.2 blocks sent to Opus 5.5 or Fable 5.1 are dropped
+ *   with 'model_binding_mismatch'; Opus 5.5 and Fable 5.1 blocks replay on Fable 5.2.
+ * - Models API: `capabilities.thinking.types.between_tools` (2026-10-15), `lifecycle`, `deprecated_at`, `retires_at` - present, not parsed.
+ *
  * ### 2026-10-07 - API Sync: Claude Haiku 5.5 (launch-verified live)
  * - Models: claude-haiku-5-5 - Opus 5's thinking shape: adaptive on by default, 'disabled' at effort <= 'high' only (xhigh/max 400);
  *   'enabled' (budget_tokens) and 'between_tools' 400; 'block_binding' 400 alongside 'disabled'. Forced tool_choice works (200, no
@@ -1140,10 +1149,10 @@ export namespace AnthropicWire_API_Message_Create {
     top_p: z.number().optional(),
 
     /**
-     * [Anthropic, fast-mode-2026-02-01] Accelerated inference mode (up to 2.5x OTPS at 2x price). Available on Claude Opus 5.5;
+     * [Anthropic, fast-mode-2026-02-01] Accelerated inference mode (up to 2.5x OTPS at 2x price). Available on Claude Fable 5.2 and Opus 5.5;
      * research preview (beta header, waitlist) on Opus 5 and Opus 4.8 (2026-07-24: Opus 4.7 returns 400; Opus 4.6 silently runs standard,
-     * see `usage.speed`). Not available on Fable 5 / Sonnet 5, Batch API, Priority Tier, or partner clouds, except Opus 5.5 on
-     * Google Cloud (Anthropic managed) and Microsoft Foundry.
+     * see `usage.speed`). Not available on Fable 5.1 / 5, Sonnet, Batch API, Priority Tier, or partner clouds, except Fable 5.2 and
+     * Opus 5.5 on Google Cloud and Microsoft Foundry.
      * Note: switching speeds invalidates the prompt cache - requests at different speeds do not share cached prefixes.
      */
     speed: z.enum(['fast']).optional(),
