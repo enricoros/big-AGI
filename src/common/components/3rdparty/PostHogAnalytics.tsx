@@ -33,6 +33,9 @@ const SUPPRESSED_EXCEPTION_SUBSTRINGS = [
   'Script error.',
   // browser extensions reaching into React internals across origins
   '__reactFiber',
+  // globals read by scripts that crypto wallets and Firefox-based iOS browsers (Firefox, Brave) inject; the app never uses them
+  'window.ethereum',
+  '__firefox__',
 ];
 
 /**
