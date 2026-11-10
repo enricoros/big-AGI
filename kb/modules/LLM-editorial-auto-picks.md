@@ -26,7 +26,7 @@ See [Editorial table](#editorial-table) below.
 When no editorial entry matches, the system falls back to one of two strategies (configured per domain in `ModelDomainsRegistry`):
 
 - `topVendorTopLlm` - picks the highest-ELO model from the highest-ELO vendor. Used by `primaryChat`, `codeApply`, `imageCaption`.
-- `topVendorLowestCost` - picks the cheapest (non-free) model from the top vendor, preferring models with ELO ratings. Used by `fastUtil`.
+- `topVendorLowestCost` - picks the cheapest rated model from the top vendor, else its cheapest priced one (free counts as unpriced). Used by `fastUtil` and `scratchChat`. When the top vendor has nothing rated or priced, its list order is no basis: hosts whose ids carry no data were measured listing an image or a speech model first. There it takes the user's pinned chat model if that is one of the vendor's candidates (for `fastUtil`, models with function calling), else the first listed.
 
 Both strategies group visible LLMs by vendor, rank vendors by their top ELO, then select within the winning vendor.
 

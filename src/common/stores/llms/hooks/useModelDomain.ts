@@ -58,8 +58,8 @@ function _resolveModelDomain_SLOW(
     // else: broken pin - degrade to Auto via the heuristic below
   }
 
-  // auto-resolve model (editorial, ELO, etc.)
-  const autoLLMId = llmsAuto_ModelIdForDomain_SLOW(modelDomainId, llms);
+  // auto-resolve model (editorial, ELO, etc.), with the chat pin for a vendor whose list gives the cost strategy no basis
+  const autoLLMId = llmsAuto_ModelIdForDomain_SLOW(modelDomainId, llms, modelAssignments?.primaryChat?.modelId ?? undefined);
   if (autoLLMId)
     return { config: createDModelConfiguration(modelDomainId, autoLLMId, undefined), isAuto: true };
 

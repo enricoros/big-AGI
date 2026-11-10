@@ -250,11 +250,12 @@ function _allowedDomainLlmsOrUniverse<TLlm extends Pick<DLLM, 'interfaces'>>(
  * Layers, in order:
  * 1. narrow `universe` to the domain's `requiredInterfaces` - relaxed to the full universe when nothing matches
  * 2. editorial picks, for the domain then its `editorialFallbackDomain` (see model.domains.editorial.ts)
- * 3. the domain's `autoStrategy` over the ELO-ranked, non-hidden models
+ * 3. the domain's `autoStrategy` over the ELO-ranked, non-hidden models; `chatPinLlmId`, the user's chat pin, is the
+ *    cost strategy's pick on a winning vendor that has nothing rated or priced, when it is one of that vendor's candidates
  *
- * Pure in (domainId, universe) and uncached: the hooks and getters reach it through llmsResolvedModelDomain's cache.
+ * Pure in its arguments and uncached: the hooks and getters reach it through llmsResolvedModelDomain's cache.
  */
-export function llmsAuto_ModelIdForDomain_SLOW<Tllm extends DLLM>(domainId: DModelDomainId, universe: ReadonlyArray<Tllm>): DLLMId | undefined {
+export function llmsAuto_ModelIdForDomain_SLOW<Tllm extends DLLM>(domainId: DModelDomainId, universe: ReadonlyArray<Tllm>, chatPinLlmId?: DLLMId): DLLMId | undefined {
 
   // Narrow universe based on required interfaces (if required), but relax the filter if none matches
   const domainSpec = ModelDomainsRegistry[domainId];
@@ -274,7 +275,7 @@ export function llmsAuto_ModelIdForDomain_SLOW<Tllm extends DLLM>(domainId: DMod
       return _strategyTopQuality(_groupLlmsByVendorRankedByElo(universe));
 
     case 'topVendorLowestCost':
-      return _strategyTopVendorLowestCost(_groupLlmsByVendorRankedByElo(universe));
+      return _strategyTopVendorLowestCost(_groupLlmsByVendorRankedByElo(universe), chatPinLlmId);
 
     default:
       console.log('[DEV] unknown strategy for LLM domain', domainId);
@@ -290,7 +291,7 @@ function _strategyTopQuality(vendors: PreferredRankedVendors): DLLMId | undefine
   return vendors.length ? vendors[0].llmsByElo[0]?.id : undefined;
 }
 
-function _strategyTopVendorLowestCost(vendors: PreferredRankedVendors, requireEloRating: boolean = true): DLLMId | undefined {
+function _strategyTopVendorLowestCost(vendors: PreferredRankedVendors, chatPinLlmId: DLLMId | undefined): DLLMId | undefined {
 
   // based on the assumption that the lowest (but non-zero) cost will happen for:
   // - newest models
@@ -312,14 +313,18 @@ function _strategyTopVendorLowestCost(vendors: PreferredRankedVendors, requireEl
     });
 
     // get the first that has cbaElo, assuming those are more 'social proofed' models
-    if (requireEloRating) {
-      const firstWithElo = sorted.find(llm => llm.cbaElo);
-      if (firstWithElo)
-        return firstWithElo.id;
-    }
+    const firstWithElo = sorted.find(llm => llm.cbaElo);
+    if (firstWithElo)
+      return firstWithElo.id;
 
-    if (sorted.length && sorted[0].id)
+    // else the cheapest priced
+    if (sorted[0]?.costRank)
       return sorted[0].id;
+
+    // nothing rated or priced: the listing order is no basis (hosts whose ids carry no data were measured listing an
+    // image or a speech model first), so the user's chat pin wins if it is one of this vendor's candidates
+    if (sorted.length && sorted[0].id)
+      return sorted.find(llm => llm.id === chatPinLlmId)?.id ?? sorted[0].id;
   }
   return undefined;
 }
