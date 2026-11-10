@@ -351,7 +351,8 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
         + (payloadString ? `: \n${payloadString}` : '')
         // Custom hints for common issues from select providers
         + (s === 403 && moduleName === 'Gemini' && payloadString?.includes('Requests from referer') ? ' \n\nGemini: Check API key restrictions in Google Cloud Console' : '')
-        + ((s === 404 || (s === 403 && !url.includes('bedrock') /* just a tad more silence */) || s === 502) ? ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}` : ''),
+        // the URL is the likely cause, unless the vendor itself answered and named another one
+        + ((s === 404 || (s === 403 && !url.includes('bedrock') /* just a tad more silence */) || s === 502) && !_upstreamGaveReason(notOkayPayload) ? ` \n\nPlease make sure the Server can access -> ${debugCleanUrl}` : ''),
       // cause: payload, // NOT an Error - do not use even to preserve original error payload as cause
     });
   }
@@ -454,6 +455,17 @@ async function _jsonResponseParserOrThrow(response: Response) {
 
   }
   // unreachable
+}
+
+/**
+ * Whether an error body is the vendor's own error that names a cause (model, region, content blocks): its errors come in an
+ * `error` member. One that says only "not found" names none - OpenRouter answers a wrong base path that way.
+ */
+function _upstreamGaveReason(payload: any): boolean {
+  const error = payload?.error;
+  if (!error) return false;
+  const text = typeof error === 'string' ? error : typeof error.message === 'string' ? error.message : '';
+  return !/^not found\.?$/i.test(text.trim());
 }
 
 function _period(s: string) {
