@@ -1620,6 +1620,11 @@ export namespace OpenAIWire_Responses_Tools {
     ]).nullish(), // optional - if omitted, auto mode is used
   });
 
+  // [xAI] X Search tool, as the response echoes it; the request side, with its options, is in xai.wiretypes
+  const XSearchTool_schema = z.object({
+    type: z.literal('x_search'),
+  });
+
   // const FileSearchTool_schema = z.object({
   //   type: z.literal('file_search'),
   //   // OpenAI vector store feature - not implemented
@@ -1641,6 +1646,7 @@ export namespace OpenAIWire_Responses_Tools {
     WebSearchTool_schema,
     ImageGenerationTool_schema,
     CodeInterpreterTool_schema,
+    XSearchTool_schema, // [xAI]
     // FileSearchTool_schema, // OpenAI vector store - not implemented
     // MCPTool_schema,
     // ComputerUseTool_schema,
@@ -1769,7 +1775,7 @@ export namespace OpenAIWire_API_Responses {
 
     // echo of requested tools but with all properties values - can be used by the parser to enrich hosted-tool messages
     // NOTE: .catch() gracefully degrades to undefined since this is a non-critical enrichment path
-    tools: z.array(OpenAIWire_Responses_Tools.Tool_schema).optional().catch((ctx) => {
+    tools: z.array(OpenAIWire_Responses_Tools.Tool_schema).nullish().catch((ctx) => { // [Responses-compatible relays, 2026-10] null
       console.warn('[DEV] AIX: OpenAI Responses: unable to parse echoed tools, ignoring:', { tools: ctx.value });
       return undefined;
     }),
