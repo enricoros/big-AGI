@@ -120,7 +120,7 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 
 ### Replay (`aix.client.chatGenerateRequest.ts`, adapters)
 
-- [ ] **Q1** (high) Assistant error fragments replay as `[ERROR] ...` model text, parse issues with up to 2,048 chars of raw response JSON; the model reads them as its own output
+- [ ] **Q1** (high) Assistant error fragments replay as `[ERROR] ...` model text when the turn has other content, parse issues with up to 2,048 chars of raw response JSON; the model reads them as its own output. A turn of errors alone is not sent
 - [ ] **Q2** (high) Void fragments other than reasoning are skipped, so citations are not replayed (R8); replay without citations drops later Anthropic thinking when isolated from P4
 - [ ] **Q5** (high) Anthropic: model image parts are moved first and sent as user content (`hotFixImagePartsFirst`, `hotFixMapModelImagesToUser`): a generated chart lands in the user's message and that turn's thinking is dropped
 - [ ] **Q6** (high) OpenAI: assistant images sent as a user `input_image`: an image-generation turn dissolves into the user message, a code chart splits the assistant turn

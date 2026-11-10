@@ -78,7 +78,10 @@ Left for the rework by the author's ruling.
 
 ### Replay
 
-- Assistant error fragments are replayed as `[ERROR] ...` model text, so the model reads them as its own output (Q1 in [AIX-ingestion.md](../AIX-ingestion.md))
+- Assistant error fragments are replayed as `[ERROR] ...` model text when the turn has other content (Q1 in [AIX-ingestion.md](../AIX-ingestion.md)). A turn of errors alone is not sent: an interim turn-shape rule in the request builder, for a per-error replay policy to replace
+- Measured (a question, a stored 402 rejection turn, a new question; 9 models, 3 runs each): with the error replayed the first question went unanswered on 8 models (24 of 24) and was answered on Opus 5.5; left out, it was answered every time. "What happened?" was explained only when replayed. A neutral marker did no better than the error text
+- Still sent as an errors-only model turn: reasoning followed by an error (most adapters drop the reasoning), and an error after a tool result in a tool loop (the adapter splits the message). Frequency not measured
+- A change to the replay rule changes the prefix of every stored conversation it touches: once, Anthropic drops the thinking replayed after it (`prefix_binding_mismatch`, measured on Opus 5.5) and the prompt cache misses
 
 ### Stream mechanics (ideas)
 

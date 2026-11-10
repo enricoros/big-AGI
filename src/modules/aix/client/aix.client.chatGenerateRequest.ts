@@ -409,6 +409,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
     } else if (dMessageRole === 'assistant') {
 
       const modelMessage: AixMessages_ModelMessage = { role: 'model', parts: [] };
+      let modelErrorParts = 0;
 
       for (const aFragment of m.fragments) {
 
@@ -453,8 +454,10 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
             break;
 
           case 'error':
-            // Note: the llm will receive the extra '[ERROR]' text; this could be optimized to handle errors better
+            // after content, the error tells the model what went wrong (a cut reply, a failed image); a turn of errors alone is not sent (below)
+            // TODO: AIX typed errors - a per-error replay policy replaces this '[ERROR]' text and the errors-alone rule
             modelMessage.parts.push({ pt: 'text', text: `[ERROR] ${aPart.error}` });
+            modelErrorParts++;
             break;
 
           case 'reference':
@@ -569,7 +572,10 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
         }
       }
 
-      if (modelMessage.parts.length > 0) {
+      // a turn of errors alone (e.g. a rejected request) is not sent: the model never answered, and with the error in its place it treats the user's prompt as handled;
+      // the user turns around it become adjacent, as with a skipped or an empty assistant message
+      // DISABLED: not enough testing, will need to monitor this
+      if (modelMessage.parts.length > 0 /* modelErrorParts: DISABLED */) {
 
         // (on Assistant messages) handle the ant-cache-prompt user/auto flags, on the very last message
         if (mHasAntCacheFlag)
