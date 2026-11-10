@@ -79,9 +79,10 @@ const _citationsEndSx: SxProps = {
 } as const;
 
 const _separatorSx: SxProps = {
+  width: '100%', // center the symbol
   my: 2,
   textAlign: 'center',
-  color: 'text.primary',
+  color: 'accent.solidActiveBg',
   fontSize: { xs: '1.25rem', md: '1.5rem', lg: '1.75rem' },
   fontWeight: 'lg',
 } as const;
