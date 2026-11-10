@@ -61,7 +61,6 @@ export async function runReActUpdatingState(cHandler: ConversationHandler, quest
 
     return false;
   } finally {
-    // FIXME: Massive race condition here
-    cHandler.clearAbortController('react-tangent');
+    cHandler.clearAbortController(abortController);
   }
 }

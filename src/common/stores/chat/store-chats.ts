@@ -38,6 +38,7 @@ export interface ChatActions {
   // within a conversation
   isIncognito: (cId: DConversationId) => boolean | undefined;
   setAbortController: (cId: DConversationId, _abortController: AbortController | null, debugScope: string) => void;
+  clearAbortController: (cId: DConversationId, _ownController: AbortController) => void;
   abortConversationTemp: (cId: DConversationId) => void;
   historyReplace: (cId: DConversationId, messages: DMessage[]) => void;
   historyTruncateToIncluded: (cId: DConversationId, mId: DMessageId, offset: number) => void;
@@ -192,6 +193,15 @@ export const useChatStore = create<ConversationsStore>()(/*devtools(*/
           }
           return {
             _abortController: _nextController,
+          };
+        }),
+
+      /** For a run that ended: frees the slot only while that run still owns it. After a Retry or a second send the slot belongs to the newer run, whose Stop must stay. */
+      clearAbortController: (conversationId: DConversationId, _ownController: AbortController) =>
+        _get()._editConversation(conversationId, ({ _abortController: _currentController }) => {
+          if (_currentController !== _ownController) return false;
+          return {
+            _abortController: null,
           };
         }),
 

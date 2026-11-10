@@ -123,8 +123,8 @@ export class ConversationHandler {
     _chatStoreActions.setAbortController(this.conversationId, abortController, debugScope);
   }
 
-  clearAbortController(debugScope: string): void {
-    _chatStoreActions.setAbortController(this.conversationId, null, debugScope);
+  clearAbortController(ownController: AbortController): void {
+    _chatStoreActions.clearAbortController(this.conversationId, ownController);
   }
 
   isIncognito(): boolean | undefined {
