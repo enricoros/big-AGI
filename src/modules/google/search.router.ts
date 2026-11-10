@@ -10,6 +10,9 @@ import type { VertexLinkResolution } from './vertexai.types';
 import { VERTEX_GROUNDING_REDIRECT_PREFIX } from './vertexai.types';
 
 
+// configuration (Google Custom Search)
+const DEFAULT_GOOGLE_CSE_HOST = 'https://www.googleapis.com';
+
 // configuration (Vertex AI grounding links)
 const GROUNDING_MAX_URLS_PER_CALL = 64;
 const GROUNDING_DEFAULT_DEADLINE_MS = 4000;
@@ -27,6 +30,7 @@ export const googleSearchRouter = createTRPCRouter({
       items: z.number(),
       key: z.string().optional(), // could be server-set
       cx: z.string().optional(), // could be server-set
+      host: z.url({ protocol: /^https$/ }).optional(), // could be server-set
       restrictToDomain: z.string().nullable(),
     }))
     .query(async ({ input }): Promise<{ pages: Search.API.BriefResult[] }> => {
@@ -34,7 +38,7 @@ export const googleSearchRouter = createTRPCRouter({
       const customSearchParams: Search.Wire.RequestParams = {
         q: input.query.trim(),
         cx: (input.cx || env.GOOGLE_CSE_ID || '').trim(),
-        key: (input.key || env.GOOGLE_CLOUD_API_KEY || '').trim(),
+        key: (input.key || (!input.host ? env.GOOGLE_CLOUD_API_KEY : '') || '').trim(), // the server key only goes to the server-set host
         num: input.items,
       };
 
@@ -47,7 +51,8 @@ export const googleSearchRouter = createTRPCRouter({
       if (!customSearchParams.key || !customSearchParams.cx)
         throw new Error('Missing API Key or Custom Search Engine ID');
 
-      const url = `https://www.googleapis.com/customsearch/v1?${objectToQueryString(customSearchParams)}`;
+      const host = (input.host || env.GOOGLE_CSE_HOST || DEFAULT_GOOGLE_CSE_HOST).replace(/\/+$/, '');
+      const url = `${host}/customsearch/v1?${objectToQueryString(customSearchParams)}`;
       const data: Search.Wire.SearchResponse & { error?: { message?: string } } = await fetchJsonOrTRPCThrow({
         url,
         name: 'Google Custom Search',
