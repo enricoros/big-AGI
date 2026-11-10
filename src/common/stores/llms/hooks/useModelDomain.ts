@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import { shallowEquals } from '~/common/util/hooks/useShallowObject';
 
@@ -164,13 +165,15 @@ export function useModelDomain(modelDomainId: DModelDomainId): {
 
 /**
  * Label of the model Auto would pick for the domain, independent of the pin: the "Auto: <name>" entry of model
- * pickers while pinned. Runs the heuristic on every `llms` change, so mount it only where that entry is shown.
+ * pickers while pinned. Runs the heuristic on every `llms` or assignments change, so mount it only where that entry is shown.
  */
 export function useModelDomainAutoModelLabel(modelDomainId: DModelDomainId): string | undefined {
-  const llms = useModelsStore(state => state.llms);
+  const { llms, modelAssignments } = useModelsStore(useShallow(state => ({ llms: state.llms, modelAssignments: state.modelAssignments })));
   return React.useMemo(() => {
-    const autoModelId = llmsAuto_ModelIdForDomain_SLOW(modelDomainId, llms);
+    // resolved as if unpinned, so a fallback-domain hit shows too, as selecting Auto would give
+    const { [modelDomainId]: _pin, ...unpinnedAssignments } = modelAssignments;
+    const autoModelId = _resolveModelDomain_SLOW(modelDomainId, unpinnedAssignments, llms).config?.modelId;
     const autoLLM = autoModelId ? llms.find(llm => llm.id === autoModelId) : undefined;
     return autoLLM ? getLLMLabel(autoLLM) : undefined;
-  }, [modelDomainId, llms]);
+  }, [modelDomainId, llms, modelAssignments]);
 }
