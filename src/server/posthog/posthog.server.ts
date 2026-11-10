@@ -90,6 +90,9 @@ export async function posthogServerSendException(error: Error | unknown, distinc
   const client = _posthogServerSingleton();
   if (!client) return;
 
+  // origin and path only: tRPC GET requests carry their input in the query string, access objects with API keys included
+  context = { ...context, url: context.url?.split('?')[0] };
+
   try {
 
     const build = Release.buildInfo('backend');
