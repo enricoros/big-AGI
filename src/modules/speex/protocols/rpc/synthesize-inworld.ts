@@ -10,6 +10,7 @@
  */
 
 import * as z from 'zod/v4';
+import { TRPCError } from '@trpc/server';
 
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
@@ -271,7 +272,7 @@ export async function listVoicesInworld(access: SpeexWire_Access_Inworld): Promi
 function _inworldAccess(access: SpeexWire_Access_Inworld, apiPath: string): { headers: HeadersInit; url: string } {
   const apiKey = (access.apiKey || '').trim();
   if (!apiKey)
-    throw new Error('Missing Inworld API key');
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing Inworld API key' });
 
   let host = (access.apiHost || 'api.inworld.ai').trim();
   if (!host.startsWith('http'))

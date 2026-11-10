@@ -1,4 +1,5 @@
 import * as z from 'zod/v4';
+import { TRPCError } from '@trpc/server';
 
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
@@ -144,7 +145,7 @@ function _parseTTSResponseHeaders(headers: Headers): Pick<Extract<SpeexSpeechPar
 function _elevenlabsAccess(access: SpeexWire_Access_ElevenLabs, apiPath: string): { headers: HeadersInit; url: string } {
   const apiKey = (access.apiKey /*|| env.ELEVENLABS_API_KEY */ || '').trim();
   if (!apiKey)
-    throw new Error('Missing ElevenLabs API key');
+    throw new TRPCError({ code: 'BAD_REQUEST', message: 'Missing ElevenLabs API key' });
 
   let host = (access.apiHost /*|| env.ELEVENLABS_API_HOST*/ || 'api.elevenlabs.io').trim();
   if (!host.startsWith('http'))
