@@ -15,6 +15,14 @@ export function llmsFixupHost(host: string, apiPath: string): string {
 }
 
 /**
+ * For the setup fields, as the user enters a host: drop a trailing /v1 (or /v1/). The API paths start with /v1, so a base
+ * URL pasted with its version would repeat it. A stored host is used as it is.
+ */
+export function llmsHostStripV1Suffix(host: string): string {
+  return host.replace(/\/v1\/?$/, '');
+}
+
+/**
  * Safely check if a host URL's hostname matches the expected hostname.
  * Prevents DNS spoofing where hosts like "api.openai.com.evil.com" pass naive `.includes()` checks.
  */

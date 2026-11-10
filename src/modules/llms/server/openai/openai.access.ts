@@ -47,7 +47,7 @@ const DEFAULT_ZAI_HOST = 'https://api.z.ai/api/paas';
 // These are the standard paths used across all OpenAI-compatible dialects.
 // Some dialects (perplexity, cloudflare, azure) have custom path handling.
 // Dialects with user-configurable hosts (lmstudio, localai, openai, ollama) support
-// custom base paths - when the host URL contains a path, /v1 is stripped.
+// custom base paths; a /v1 pasted at the end of a host is removed by the setup fields (llmsHostStripV1Suffix), not here.
 
 export const OPENAI_API_PATHS = {
   chatCompletions: '/v1/chat/completions',
