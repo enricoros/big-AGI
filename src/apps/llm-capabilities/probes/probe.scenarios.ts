@@ -30,7 +30,8 @@ const getWeatherTool = aixFunctionCallTool({
  *  - Anthropic Fable/Mythos 5: 'any' is coerced server-side to 'auto' + system steering hint + effort=low;
  *    the probe should expect success but the model was not wire-forced.
  *  - Perplexity: will throw 'This service does not support function calls' if tools are present.
- *  - Mistral: will throw for any non-auto policy.
+ *  - OpenRouter, Mistral, Meta AI, Moonshot with thinking on (except K3): 'any' is sent as 'auto' + the same system
+ *    steering hint; not wire-forced either.
  *  - OpenAI/xAI/Gemini/Bedrock: 'any' maps to native forced-call equivalents and works.
  *  - DeepSeek V4 (flash and pro): 'any' -> 'required' 400s while thinking is on (the vendor default), so the adapter
  *    forces thinking off for restrictive policies - see openai.chatCompletions.ts.
@@ -55,10 +56,10 @@ export const PROBE_SCENARIOS: ProbeScenario[] = [
     systemMessage: 'You are a concise assistant. You must call one of the available tools to answer. Do not respond with plain text.',
     userMessage: 'What is the current weather in Tokyo? You must use the available tool.',
     tools: [getWeatherTool],
-    // NOTE: 'any' is DEPRECATED in AIX (Claude Fable/Mythos 5 reject it with 400; the Anthropic
-    // adapter coerces to 'auto' + system steering hint). Kept for probe purposes - matches what
-    // main's own forced-call callers (autoChatFollowUps, agiAttachmentPrompts) send today.
-    // All other adapters translate it natively (OpenAI -> 'required', Gemini -> 'ANY', etc.).
+    // NOTE: 'any' is DEPRECATED in AIX (Claude Fable/Mythos 5 reject it with 400). Kept for probe purposes - matches
+    // what main's own forced-call callers (autoChatFollowUps, agiAttachmentPrompts) send today. Where the vendor rejects
+    // or mishandles it, the adapter sends 'auto' + a system steering hint (see the per-vendor notes above); the
+    // others translate it natively (OpenAI -> 'required', Gemini -> 'ANY', etc.).
     toolsPolicy: { type: 'any' },
     expectedFunctionName: 'get_current_weather',
   },

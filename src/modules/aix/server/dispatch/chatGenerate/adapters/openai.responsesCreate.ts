@@ -6,7 +6,7 @@ import { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixM
 import { OpenAIWire_API_Responses, OpenAIWire_Responses_Items, OpenAIWire_Responses_Tools } from '../../wiretypes/openai.wiretypes';
 
 import { AIX_OPENAI_MAX_ID_LENGTH, aixDocPart_to_OpenAITextContent, aixMetaRef_to_OpenAIText, aixOpenAICallId, aixTexts_to_OpenAIInstructionText } from './openai.chatCompletions';
-import { AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxMediaUrlPart_To_String } from './adapters.common';
+import { AIX_FORCED_TOOLS_HINT_TEXT, AIX_MISSING_TOOL_RESULT_TEXT, aixSpillShallFlush, aixSpillSystemToUser, approxDocPart_To_String, approxMediaUrlPart_To_String } from './adapters.common';
 
 
 // configuration
@@ -244,6 +244,10 @@ export function aixToOpenAIResponses(
   const hasCustomTools = chatGenerate.tools?.some(t => t.type === 'function_call');
   const hasRestrictivePolicy = chatGenerate.toolsPolicy?.type === 'any' /* || chatGenerate.toolsPolicy?.type === 'function_call' - DISABLED 2026-07-17, see ToolsPolicy_schema */;
   const skipHostedToolsDueToCustomTools = hasCustomTools && hasRestrictivePolicy;
+
+  // forced tool use sent as 'auto' (see _toOpenAIResponsesToolChoice): the steering hint keeps the forced-call callers calling
+  if (quirks.toolChoiceOnlyAuto && hasRestrictivePolicy && hasCustomTools)
+    payload.instructions = payload.instructions ? payload.instructions + '\n\n' + AIX_FORCED_TOOLS_HINT_TEXT : AIX_FORCED_TOOLS_HINT_TEXT;
 
   // Tool: Web Search: for search and deep research models
   const requestWebSearchTool = !!model.vndOaiWebSearchContext || !!model.userGeolocation;
@@ -802,7 +806,7 @@ function _toOpenAIResponsesToolChoice(itp: AixTools_ToolsPolicy, onlyAuto: boole
       return 'auto';
     case 'any':
       // [Meta AI] only 'auto' is accepted ('none', 'required' and named choices 400 - verified 2026-09-02): degrade rather
-      // than reject the request; the tool descriptions still steer the model
+      // than reject the request; the instructions carry the steering hint (aixToOpenAIResponses)
       return onlyAuto ? 'auto' : 'required';
     // DISABLED 2026-07-17 - forced named tool, see ToolsPolicy_schema
     // case 'function_call':

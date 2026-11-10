@@ -14,7 +14,7 @@ Vendor `metaai` ("Meta AI"; the product is the Meta Model API at dev.meta.ai) se
 ## Request contract
 
 - Unknown top-level parameters 400 (`unknown parameter X`); unknown nested keys are ignored. `seed`, `stop`, `n`, `logit_bias`, `response_format`, top-level `verbosity`, `conversation` all 400. The adapter's zod strip keeps the body clean.
-- `tool_choice`: only `auto` (`none`, `required`, named 400). Tools policy `any` degrades to `auto` for this dialect.
+- `tool_choice`: only `auto` (`none`, `required`, named 400). Tools policy `any` degrades to `auto` for this dialect, with a steering hint appended to `instructions`.
 - Under `auto`, every Muse model writes one commentary line before a function call; `reasoning.summary` moves it into a reasoning item on Wonder 1.0, Spark 1.2 and 1.1, not on Spark 1.3. Callers that expect a single call skip leading text.
 - Spark 1.1 can leak its call markup as text instead of a `function_call` item.
 - Through OpenRouter, the Meta-served ids reject `tool_choice: 'required'` as well; the Chat Completions adapter sends `auto` for every OpenRouter model.

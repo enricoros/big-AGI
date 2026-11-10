@@ -20,6 +20,13 @@ const DEFAULT_SPILL_PART_TYPES: AixMessages_SystemMessage['parts'][number]['pt']
  */
 export const AIX_MISSING_TOOL_RESULT_TEXT = '[result omitted]';
 
+/**
+ * Steering hint for a forced tool call (tools policy 'any') that an adapter sends as 'auto', where the vendor rejects or
+ * mishandles the forced choice. Appended to the system instructions, it keeps the forced-call callers
+ * (aix.client.fromSimpleFunction) calling instead of answering in text.
+ */
+export const AIX_FORCED_TOOLS_HINT_TEXT = 'IMPORTANT: You MUST respond by calling one of the provided tools. Do not respond with text.';
+
 
 /** FNV-1a 32-bit hex digest - tiny, deterministic, edge-safe; for short stable wire ids derived from longer ones. */
 export function aixFnv1aHex(text: string): string {

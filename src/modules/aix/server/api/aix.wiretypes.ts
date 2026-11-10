@@ -468,10 +468,10 @@ export namespace AixWire_Tooling {
    * - function_call: MUST use a specific Function Tool [DISABLED 2026-07-17 - see below]
    * - none: same as not giving the model any tool [REMOVED - just give no tools]
    *
-   * @deprecated forced tool use is a thing of the past - 2026-06-09: Claude Fable/Mythos 5 (and 5.1) reject it
-   * with a 400 ('tool_choice ... not supported for this model'); the Anthropic and OpenRouter adapters
-   * coerce to 'auto' + a system steering hint. New code should use 'auto' (or no policy)
-   * and instruct the model to call the tool in the prompt instead.
+   * @deprecated forced tool use is a thing of the past: Claude Fable/Mythos 5.x reject it with a 400 ('tool_choice ...
+   * not supported for this model'), and so do Meta AI and thinking-mode Kimi. Adapters send 'auto' + a system steering hint
+   * where the vendor rejects or mishandles it: Anthropic (per model), OpenRouter, Mistral, Moonshot (thinking on, except K3)
+   * and Meta AI. New code should use 'auto' (or no policy) and instruct the model to call the tool in the prompt instead.
    *
    * 2026-07-17: 'function_call' (forced NAMED tool) commented out AIX-wide: Moonshot also 400s it on
    * all thinking-mode requests ("tool_choice 'specified' is incompatible with thinking enabled" - K3
