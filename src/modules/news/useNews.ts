@@ -62,8 +62,9 @@ export function newsInterceptDocsLinks(): () => void {
   const handleClick = (event: MouseEvent) => {
     if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     if (useNewsModalsStore.getState().docsTarget) return;
+    // closest('a') also matches <a> inside SVG (diagrams), whose href is not a string
     const anchor = event.target instanceof Element ? event.target.closest('a') : null;
-    const target = anchor ? newsDocsLinkTarget(anchor.href) : null;
+    const target = anchor instanceof HTMLAnchorElement ? newsDocsLinkTarget(anchor.href) : null;
     if (!target) return;
     event.preventDefault();
     useNewsModalsStore.setState({ docsTarget: target });
