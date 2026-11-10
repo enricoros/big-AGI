@@ -4,7 +4,7 @@ import { fetchWithAbortableConnectionRetry, RetryAttempt } from '~/server/trpc/t
 
 import { llmAppIdentityHeaders } from '~/modules/llms/shared/llm.appIdentity';
 
-import { isBrowserNetworkError, isBrowserOffline, isNodeStreamTerminated } from '~/common/util/fetchFailures';
+import { isBrowserNetworkError, isBrowserOffline, isEdgeConnectionLost, isNodeStreamTerminated } from '~/common/util/fetchFailures';
 import { objectDeepCloneWithStringLimit } from '~/common/util/objectUtils';
 
 import { AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../../api/aix.security';
@@ -34,10 +34,10 @@ function promiseWithResolvers<T>(): { promise: Promise<T>, resolve: (value: T | 
 /**
  * Text for a failure while reading the service response, shared by the streaming and non-streaming consumers.
  * A dropped connection says so and keeps the runtime's own text: [CSF] a browser drop (e.g. Firefox 'Error in input stream', #1211),
- * [server] a Node fetch drop ('terminated').
+ * [server] a Node fetch drop ('terminated') or a Vercel Edge one ('Network connection lost.').
  */
 function _describeReadFailure(error: any, prettyDialect: string): string {
-  if (isBrowserNetworkError(error) || isNodeStreamTerminated(error))
+  if (isBrowserNetworkError(error) || isNodeStreamTerminated(error) || isEdgeConnectionLost(error))
     return `the connection to ${prettyDialect} dropped mid-response (${error.message}).` + (isBrowserOffline() ? ' You appear to be offline.' : '');
   return safeErrorString(error) || 'Unknown stream reading error';
 }

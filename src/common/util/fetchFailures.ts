@@ -43,6 +43,12 @@ export function isNodeStreamTerminated(error: unknown): error is TypeError {
   return error instanceof TypeError && error.message === 'terminated';
 }
 
+// Vercel Edge runtime fetch - 'Network connection lost.', from Vercel's logs of /api/edge: the connection to the AI service
+// dropped (mid-body when thrown by a stream read). Matched by message only: the logs show the name 'Error', not the class.
+export function isEdgeConnectionLost(error: unknown): boolean {
+  return (error as Error | undefined)?.message === 'Network connection lost.';
+}
+
 
 // tRPC client (httpBatchStreamLink) - errors reach the caller bare while the stream is read, or wrapped in a TRPCClientError
 // (same message, the original on `.cause`) before the result envelope arrives.
