@@ -11,7 +11,7 @@ How a broken connection surfaces on each path, what classifies it, and what Verc
 | tRPC client | `BlockPartError` | `aix-net-disconnected` + `**connection terminated**` -> the Connection Terminated card with the Direct Connection toggle; `**network error**` -> plain text |
 | Server dispatch, and CSF in the browser | `fetchResponseOrTRPCThrow`, `fetchWithAbortableConnectionRetry` (`src/server/trpc/`) | connect and HTTP failures -> `TRPCFetcherError` categories; connection errors retried 3 times |
 | Server dispatch, and CSF in the browser | `chatGenerate.executor.ts` | `[Service Issue]`, `[Streaming Issue]`, `[Reading Issue]`, `[Parsing Issue]` in-band error particles (no hint) |
-| Both | `ContentReassembler` termination | a stream that ends without a terminal event -> "Response may be incomplete - the stream ended before completion." |
+| Both | `ContentReassembler` termination | a stream that ends without a terminal event -> "The stream ended before a final response status was received. The answer may be incomplete." |
 
 The failure texts live in one place, `src/common/util/fetchFailures.ts`, as checks by who throws them: `isBrowserNetworkError`, `isNodeStreamTerminated`, `isTRPCNetworkError` (bare or wrapped in a `TRPCClientError`), `isTRPCStreamClosedEarly`, plus `isBrowserOffline`. Each site sits on one leg, uses the checks of that leg, and words the message itself.
 
@@ -39,7 +39,7 @@ Older WebKit surfaced NSURLError texts (`The network connection was lost.` and s
 | Server's provider socket drops (undici `terminated`) | `[Streaming Issue] D: the connection to D dropped mid-response (terminated).` | - |
 | Front-door 413 | Request too large card | provider 413 -> `[Service Issue] ... 413` |
 | HTML instead of JSON | captive-portal message | - |
-| Provider ends without `[DONE]` or a finish reason | "Response may be incomplete - the stream ended before completion." | same |
+| Provider ends without `[DONE]` or a finish reason | "The stream ended before a final response status was received. The answer may be incomplete." | same |
 | Stop | aborted, no error fragment | same |
 | Transport fails after a clean or truncated end | kept as is, see AIX-outcome.md (Issue after the stop reason) | same |
 

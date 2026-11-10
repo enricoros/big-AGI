@@ -1183,7 +1183,7 @@ export class ContentReassembler {
       case 'done-dispatch-closed': // (!) VERY COMMON
         // BROKEN - Stream EOF before the dialect sent a termination signal - provider closed the connection early
         console.warn(`⚠️ [ContentReassembler] done-dispatch-closed without dialectStopReason - possible truncation`);
-        return { tsr: 'issue', errorMessage: 'Response may be incomplete - the stream ended before completion.' };
+        return { tsr: 'issue', errorMessage: 'The stream ended before a final response status was received. The answer may be incomplete.' };
 
       case 'done-dispatch-aborted':
         // BROKEN - Infrastructure abort (not user-initiated) - dispatch connection severed
