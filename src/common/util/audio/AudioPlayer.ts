@@ -49,8 +49,10 @@ export namespace AudioPlayer {
    * If a signal is provided and aborted, playback stops and the promise resolves.
    *
    * Mainly called by AudioAutoPlayer.
+   *
+   * @param onStarted called as the sound starts (after decoding), with the decoded duration in ms - for progress UIs.
    */
-  export async function playFullBuffer(audioBuffer: ArrayBuffer, signal?: AbortSignal): Promise<void> {
+  export async function playFullBuffer(audioBuffer: ArrayBuffer, signal?: AbortSignal, onStarted?: (durationMs: number) => void): Promise<void> {
     // sanity check
     if (!audioBuffer || audioBuffer.byteLength === 0 || signal?.aborted) return;
 
@@ -88,6 +90,7 @@ export namespace AudioPlayer {
           resolve();
         };
         bufferSource.start();
+        onStarted?.(decodedBuffer.duration * 1000);
       });
 
     } catch (error) {
