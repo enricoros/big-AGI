@@ -4,6 +4,7 @@ import { Alert, Box, FormHelperText, Switch } from '@mui/joy';
 import WifiOffRoundedIcon from '@mui/icons-material/WifiOffRounded';
 
 import type { ContentScaling } from '~/common/app.theme';
+import { Is } from '~/common/util/pwaUtils';
 import { useLLM } from '~/common/stores/llms/llms.hooks';
 import { useModelServiceClientSideFetch } from '~/common/stores/llms/hooks/useModelServiceClientSideFetch';
 
@@ -52,7 +53,7 @@ export function BlockPartError_NetDisconnected(props: {
 
           {/* Explanation */}
           <Box color='text.tertiary' fontSize='sm' my={2}>
-            <strong>Experimental:</strong> enable direct connection to {vendorName} to bypass server timeouts - then try again.
+            <strong>Experimental:</strong> long responses can outlast the server connection - turn on Direct Connection to {vendorName} below, then try again.
           </Box>
 
           {/* Toggle */}
@@ -91,9 +92,12 @@ export function BlockPartError_NetDisconnected(props: {
               Suggestions:
             </Box>
             <Box component='ul' sx={{ color: 'text.secondary' }}>
-              <li>Check your internet connection and try again</li>
+              {/* on Vercel the usual cause is the server's response time limit (see the /api/edge route file), not the user's network */}
+              <li>{Is.Deployment.VercelFromFrontend
+                ? 'Try a faster model, or a service that offers Direct Connection'
+                : 'Check your internet connection and try again'}</li>
               <li>The AI service may be experiencing issues - wait a moment and retry</li>
-              <li>If the issue persists, please let us know promptly on Discord or GitHib</li>
+              <li>If the issue persists, please let us know promptly on Discord or GitHub</li>
             </Box>
           </div>
         )}
