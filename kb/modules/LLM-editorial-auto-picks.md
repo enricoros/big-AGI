@@ -43,7 +43,7 @@ Each domain maps to an ordered array of `{ vendor, modelId }` picks:
 export const EditorialDefaults = {
   primaryChat: [
     { vendor: 'anthropic',  modelId: 'claude-opus-5-5' },
-    { vendor: 'googleai',   modelId: 'models/gemini-4-argon' },
+    { vendor: 'googleai',   modelId: 'models/gemini-3.8-flash' },
     { vendor: 'openai',     modelId: 'gpt-6.1-sol' },
     // ...
   ],

@@ -77,6 +77,7 @@ export const EditorialDefaults = {
     { vendor: 'bedrock',    modelId: 'global.anthropic.claude-opus-4-6' },
     { vendor: 'openrouter', modelId: 'anthropic/claude-opus-5-5' },
     { vendor: 'googleai',   modelId: 'models/gemini-4-argon' }, // 1520, the top score among the models we list - $2/$10 through 2026-11-30, then $4/$20
+    { vendor: 'googleai',   modelId: 'models/gemini-3.8-flash' }, // 1496, the top Gemini with a free tier - here if the free Gemini key doesn't allow 4-Argon (however it will prob still list it, so free users may have a default-fail here)
     { vendor: 'openai',     modelId: 'gpt-6.1-sol' }, // 1481, $2/$10 - level with 5.6 Sol (1485) and above Astra (1476, $10/$50)
     { vendor: 'moonshot',   modelId: 'kimi-k3.1-pro' }, // $2/$10 - succeeds K3 (1488, $3/$15), no arena row of its own yet
     { vendor: 'zai',        modelId: 'glm-5.3' }, // 1481, $1.4/$4.4
