@@ -14,7 +14,7 @@ const handlerEdgeRoutes = (req: Request) => fetchRequestHandler({
       : undefined,
 });
 
-// NOTE: we don't set maxDuration explicitly here - however we set it in the Vercel project settings, raising to the limit of 300s
-// export const maxDuration = 60;
+// NOTE: Vercel's Edge runtime has fixed limits, which neither maxDuration nor the project's duration setting changes:
+//       the response must start within 25s, then can stream for up to 300s
 export const runtime = 'edge';
 export { handlerEdgeRoutes as GET, handlerEdgeRoutes as POST };

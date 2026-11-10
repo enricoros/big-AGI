@@ -12,7 +12,7 @@ import { AixWire_API, AixWire_API_ChatContentGenerate } from './aix.wiretypes';
 // --- AIX tRPC Router ---
 
 /**
- * Vercel hard-kills the edge function at 300s (limit set in the Vercel project settings) without running
+ * Vercel hard-kills the edge function at 300s (the Edge runtime's fixed streaming limit) without running
  * any tRPC catch/finally, so a timed-out request leaves only a generic 'Task timed out' line with no model.
  * This arms a timer that logs the culprit ~15s before that kill - the only reliable way to see which
  * models/contexts run long enough to time out.
@@ -20,7 +20,7 @@ import { AixWire_API, AixWire_API_ChatContentGenerate } from './aix.wiretypes';
  * It MUST live inside the streaming generator body (which runs during stream consumption); a tRPC middleware
  * can't do this because its `await next()` resolves before streaming begins (verified on @trpc/server 11.18).
  * Cleared in `finally` on any completion - success, error, or client abort - so it only ever fires for a
- * request that genuinely crossed 270s.
+ * request that genuinely crossed 285s.
  */
 function _armSlowRequestWatchdog(label: string, hardKillTime = 300): () => void {
   const timer = setTimeout(() => console.log(`[AIX] SLOW request (almost ${hardKillTime}s): ${label}`), (hardKillTime - 15) * 1000);
