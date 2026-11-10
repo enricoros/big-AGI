@@ -4,6 +4,8 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, styled } from '@mui/joy';
 
 import { lineHeightChatTextMd } from '~/common/app.theme';
+import { isChunkLoadError } from '~/common/util/errorUtils';
+import { posthogCaptureException } from '~/common/components/3rdparty/PostHogAnalytics';
 
 import { RenderMarkdownLite } from './RenderMarkdownLite';
 
@@ -59,7 +61,14 @@ const RenderMarkdownBox = styled(Box, { name: 'RenderMarkdownBox' })({
 });
 
 
-const DynamicMarkdownRenderer = React.lazy(() => import('./CustomMarkdownRenderer'));
+const DynamicMarkdownRenderer = React.lazy(() => import('./CustomMarkdownRenderer').catch((error: unknown) => {
+  // the chunk did not arrive (network, timeout): lite markdown until the page reloads, in place of the boundary's forced reload;
+  // a module that threw stays an error
+  if (!isChunkLoadError(error)) throw error;
+  console.warn('[RenderMarkdown] renderer did not load, rendering lite markdown:', error);
+  posthogCaptureException(error, { agi_domain: 'client-chunk-fallback', agi_runtime: 'browser', component: 'RenderMarkdown' });
+  return { default: (props: RenderMarkdownRendererProps) => <RenderMarkdownLite content={props.content} /> };
+}));
 
 export function RenderMarkdown(props: RenderMarkdownRendererProps & { lite?: boolean | 'debug', noGutter?: boolean, sx?: SxProps }) {
   const { lite, noGutter, sx, ...rendererProps } = props;

@@ -24,8 +24,9 @@ export function isBenignDomMutationError(error: unknown): boolean {
 }
 
 /**
- * Detect lazy bundle loading failures. These usually happen when a deployment
- * changes chunk filenames while a browser tab is still running the old app.
+ * Detect lazy bundle loading failures: the chunk request failed or timed out (network),
+ * or a deployment removed the chunk files a browser tab still running the old app asks for.
+ * A module that loaded and then threw while evaluating is not one of these.
  */
 export function isChunkLoadError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
