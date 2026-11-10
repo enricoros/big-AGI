@@ -56,7 +56,7 @@ On the blocked image (2026-11-06), the TODO left at the site:
 
 - OpenAI: a failed or blocked image generation leaves a non-terminating dialect issue with composed text - `_forwardFailedImageGenerationCallItem` (subkind `image-gen-error`, aiRender true, uiColor neutral)
 - OpenAI (#1288): an `error` after answer text is kept when the stream ends before its terminal event, by a stopgap marked `STOPGAP #1288 - REVERT` at its three sites (Responses parser, transmitter, reassembler): the error is parked in the stop reason and the client guesses it back. To redo as a non-terminal issue (subkind `upstream-error`), see "Stream mechanics"
-- Gemini (#1287): an error sent inside the stream ends the message with its status, code and text; `details` is not carried, the log level is always a warning, a bare-string error is surfaced as its message
+- Gemini (#1287): an error sent inside the stream ends the message with its status, code and text; `details` is not carried (retry delay, quota, reason), the code reads like an HTTP status though the transport was 200, the log level is always a warning, a bare-string error is surfaced as its message
 - Stop errors stored twice (filter stops, refusals): the replacement code is commented under a `TODO` in `ContentReassembler` (`dialectStopExplained`)
 - Gemini `TOO_MANY_TOOL_CALLS`: belongs to the truncated class with its own wording and Continue - see [AIX-outcome.md](../AIX-outcome.md), "Open: tool-budget stops"
 - OpenAI `context_length_exceeded` in the middle of a hosted tool loop: the text should say the hosted tools filled the context; the terminal event carries the finished tool items and no message
@@ -64,6 +64,8 @@ On the blocked image (2026-11-06), the TODO left at the site:
 ### Retry
 
 - Gemini: in-stream `503 UNAVAILABLE` is real (seen as `error` events after HTTP 200) and is shown, not retried; retry only while nothing has streamed
+- [Gemini, 2026-11-10, hypothesis: deadline errors on two models] an error before the first event is the HTTP status (504), on the fetch path; inside the stream it always follows content, so "nothing has streamed" does not occur there
+- Gemini: "Deadline expired before operation could complete" comes under two statuses: `504 DEADLINE_EXCEEDED` when the request's own deadline expires (the `X-Server-Timeout` header, which we do not send), `503 UNAVAILABLE` from Google's side (#1287). Classify by status, not by message
 - A last attempt that goes through and then fails for another reason still reads "Gave up after N attempts": the reassembler cannot tell it from the same error returning
 - Anthropic: a zero fast mode rate limit is matched by message text in the fetch retrier, not by a typed cause
 

@@ -442,13 +442,16 @@ const ENDINGS: Ending[] = [
   },
   {
     // #1287. Gemini repeats the error as bare JSON after the frame; OpenRouter sends a finish reason and the billed usage
-    // after the error chunk, and no [DONE]. Neither is read. The Gemini captures were made with the request header
-    // X-Server-Timeout, the only way found to get this error on purpose.
+    // after the error chunk, and no [DONE]. Neither is read. The Gemini 504s were made with the request header
+    // X-Server-Timeout, the only way found to get this error on purpose: 10 seconds or more (less is refused), expiring
+    // after content has streamed (before any, the answer is an HTTP 504). The 503 is the frame logged in the ticket, which
+    // Gemini does not send on request, at the end of a cut recording.
     ending: 'an error sent inside a 200 stream, as the first event or after content: the message fails, with the vendor\'s words',
-    stop: FAILED, says: /DEADLINE_EXCEEDED \(504\): Deadline expired before operation could complete\.|Model call failed: invalid request \(400\)/,
+    stop: FAILED, says: /DEADLINE_EXCEEDED \(504\): Deadline expired before operation could complete\.|UNAVAILABLE \(503\): This model is currently experiencing high demand\.|Model call failed: invalid request \(400\)/,
     files: [
-      'gemini/gemini-2.5-flash-lite_inband-504-after-text.sse',
+      'gemini/gemini-3.5-flash-lite_inband-504-after-text.sse',
       'gemini/gemini-3.5-flash-lite_inband-504-during-code-run.sse',
+      'gemini/gemini-3.5-flash-lite_inband-503-after-text_synthetic.sse',
       'openrouter/qwen-2.5-7b_inband-error-400-before-content_no-done.sse',
       'openrouter/qwen-2.5-7b_inband-error-400-after-content_no-done.sse',
     ],
@@ -956,7 +959,7 @@ describe('Gemini generateContent', () => {
 
   // #1287: the error frame is followed by a bare JSON copy of itself, outside the event framing
   for (const [file, before] of [
-    ['gemini/gemini-2.5-flash-lite_inband-504-after-text.sse', 'the text'],
+    ['gemini/gemini-3.5-flash-lite_inband-504-after-text.sse', 'the text'],
     ['gemini/gemini-3.5-flash-lite_inband-504-during-code-run.sse', 'the code cell, left with no result'],
   ] as const)
     test(`an error sent mid-stream keeps what came before (${before}) and outputs nothing of what follows`, { skip: missing(file) }, async () => {

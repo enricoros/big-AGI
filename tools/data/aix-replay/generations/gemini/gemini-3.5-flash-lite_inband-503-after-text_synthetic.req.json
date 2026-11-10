@@ -1,0 +1,22 @@
+{
+  "note": "Synthetic: bytes [0, 787) of gemini-3.5-flash-lite_inband-504-after-text.sse, its first two events, then the error frame a user's log shows in #1287 (503 UNAVAILABLE, 49 minutes into a stream), as logged. Gemini does not send it on request. The body and headers are the request of that capture.",
+  "headers": {
+    "X-Server-Timeout": "10"
+  },
+  "body": {
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Write a long novella in many chapters about a lighthouse keeper on a remote island. Make it as long and detailed as you can."
+          }
+        ]
+      }
+    ],
+    "generationConfig": {
+      "maxOutputTokens": 30000
+    },
+    "store": false
+  }
+}

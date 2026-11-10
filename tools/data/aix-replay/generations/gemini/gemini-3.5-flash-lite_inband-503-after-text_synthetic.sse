@@ -1,0 +1,6 @@
+data: {"candidates": [{"content": {"parts": [{"text": "### Dram"}],"role": "model"},"index": 0}],"usageMetadata": {"promptTokenCount": 27,"candidatesTokenCount": 2,"totalTokenCount": 29,"promptTokensDetails": [{"modality": "TEXT","tokenCount": 27}],"serviceTier": "standard"},"modelVersion": "gemini-3.5-flash-lite","responseId": "19LyavCIA8KKqtsPq7Ww0QQ"}
+
+data: {"candidates": [{"content": {"parts": [{"text": "atis Personae\n\n*   **Enoch Gale:** The lighthouse keeper. A man of fifty"}],"role": "model"},"index": 0}],"usageMetadata": {"promptTokenCount": 27,"candidatesTokenCount": 21,"totalTokenCount": 48,"promptTokensDetails": [{"modality": "TEXT","tokenCount": 27}],"serviceTier": "standard"},"modelVersion": "gemini-3.5-flash-lite","responseId": "19LyavCIA8KKqtsPq7Ww0QQ"}
+
+data: {"error": {"code": 503,"message": "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.","status": "UNAVAILABLE"}}
+

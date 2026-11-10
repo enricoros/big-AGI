@@ -1,6 +1,6 @@
 {
   "headers": {
-    "X-Server-Timeout": "4"
+    "X-Server-Timeout": "10"
   },
   "body": {
     "contents": [
@@ -14,7 +14,7 @@
       }
     ],
     "generationConfig": {
-      "maxOutputTokens": 8000
+      "maxOutputTokens": 30000
     },
     "store": false
   }
