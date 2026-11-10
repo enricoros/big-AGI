@@ -112,6 +112,10 @@ function RenderCodeLite(props: { code: string | null, sx?: SxProps }) {
 // Lazy loader of the heavy prism functions
 const _DynamicPrism = React.lazy(async () => {
   try {
+    // On load Prism re-highlights every code[class*="language-"] in the page, overwriting the renderers inside our <code>
+    // elements (a diagram stays at 'Loading Diagram...'); we only call Prism.highlight, so opt out before it evaluates
+    (window as { Prism?: { manual?: boolean } }).Prism ??= { manual: true };
+
     // Dynamically import the code highlight functions
     const { highlightCode, inferCodeLanguage } = await import('~/modules/blocks/code/code-highlight/codePrism');
 
