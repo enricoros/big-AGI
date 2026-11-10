@@ -159,11 +159,13 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
   const body = 'body' in config ? config.body : undefined;
 
   // Cleaner url without query
-  let debugCleanUrl, debugHost;
+  let debugCleanUrl, debugHost, hiddenHostname: string | undefined;
   try {
-    const { origin, pathname, host } = new URL(url);
-    debugCleanUrl = decodeURIComponent(origin + pathname);
-    debugHost = host;
+    const { protocol, pathname, host, hostname } = new URL(url);
+    // an API key pasted into a host field: a single label holding a long run with digits (names are words, or dotted)
+    hiddenHostname = !hostname.includes('.') && /(?=[a-z0-9]*\d)[a-z0-9]{20,}/.test(hostname) ? hostname : undefined;
+    debugHost = hiddenHostname ? '(hidden: looks like an API key)' : host;
+    debugCleanUrl = decodeURIComponent(`${protocol}//${debugHost}${pathname}`);
   } catch {
     // ...ignore
   }
@@ -233,7 +235,8 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     const _cause = !error || !(error instanceof Error) || !('cause' in error) ? null : error.cause ?? null;
     const causeName = !_cause || !(_cause instanceof Error) ? null : _cause.name ?? null;
     const causeCode = !_cause || !(_cause instanceof Error || typeof _cause === 'object') ? null : (_cause as any).code ?? null;
-    const causeMessage = safeErrorString(_cause);
+    // [Node] a DNS failure names the host: 'getaddrinfo ENOTFOUND <host>'
+    const causeMessage = hiddenHostname ? safeErrorString(_cause)?.replaceAll(hiddenHostname, debugHost!) : safeErrorString(_cause);
     // const causeMessage = !_cause ? null : causeName === 'AggregateError' ? safeErrorString(_cause) : _cause?.toString() || safeErrorString(_cause) || null;
     const connErrorName = causeCode || causeName || errorName;
 
@@ -257,8 +260,8 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     // NOTE: This may log too much - for instance a 404 not found, etc.. - so we're putting it under the flag
     //       Consider we're also throwing the same, so there will likely be further logging.
     if (SERVER_DEBUG_WIRE || SERVER_LOG_FETCHERS_ERRORS) {
-      if (prettyShowUrl && !SERVER_DEBUG_WIRE)
-        // expected user-misconfig (unreachable/wrong URL): compact line - the thrown error carries the full message to the client
+      if ((prettyShowUrl || hiddenHostname) && !SERVER_DEBUG_WIRE)
+        // expected user-misconfig (unreachable/wrong URL, a key as host): compact line, no raw error objects - the thrown error carries the full message to the client
         console.log(`[${method}] [${moduleName} network issue]: ${connErrorName} -> ${debugCleanUrl || url}`);
       else
         console.log(`[${method}] [${moduleName} network issue]: "${errorString}"`, { error, _cause, debugCleanUrl, urlShown: prettyShowUrl });
