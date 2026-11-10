@@ -1195,7 +1195,7 @@ export namespace OpenAIWire_Responses_Items {
    * A closed enum fails the whole OutputItem union, which kills the stream and loses an otherwise-good
    * response, so an unobserved value degrades to undefined ('no status known') with a log, never a throw.
    * Rule: list only values actually seen for THAT item type - the fallback covers the rest.
-   * NOTE: a union match attempts EVERY branch, so one odd item logs once per candidate branch, not once.
+   * NOTE: the item union is discriminated by type: a plain union runs every branch, and their fallbacks log for valid items.
    */
   const _outputItemStatus_schema = <const T extends readonly [string, ...string[]]>(itemType: string, statuses: T) =>
     z.enum(statuses).optional().catch((ctx) => {
@@ -1395,7 +1395,7 @@ export namespace OpenAIWire_Responses_Items {
    * - Function Call Item (no parts, details are inside)
    *
    */
-  export const OutputItem_schema = z.union([
+  export const OutputItem_schema = z.discriminatedUnion('type', [
     // Text output
     OutputContentItem_schema, // assistant/tool message/refusal
     OutputReasoningItem_schema,
