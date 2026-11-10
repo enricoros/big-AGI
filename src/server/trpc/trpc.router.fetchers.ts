@@ -309,6 +309,8 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     const s: number = response.status;
     let payloadString = safeErrorString(notOkayPayload);
     if (payloadString) {
+      // [Gemini] some 403 bodies quote the caller's API key: keep it out of logs and messages
+      payloadString = payloadString.replace(/AIza[\w-]{35}/g, 'AIza...');
       // truncate (480 chars: fits typical provider rate-limit/auth/quota messages with org IDs, token counts, and help URLs)
       if (payloadString.length > 480)
         payloadString = payloadString.slice(0, 480) + '...';
