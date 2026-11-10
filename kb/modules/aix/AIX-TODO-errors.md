@@ -103,7 +103,6 @@ From the #1288 work. The first two lines are measured, the direction is Enrico's
 - OpenRouter Chat Completions: ends at the in-band `{error}` chunk; the finish chunk and the billed usage chunk that follow are dropped (5 in 7 days of production logs, one carrying usage)
 - OpenAI Responses: an `error` before any text ends the message there; `response.failed` follows (10 of 10 live) with `tool_usage` and the item list, never `usage`
 - OpenAI Responses: the search count sits behind the usage gate in `_fromResponseMetrics`, so a failed or wrapped-failed response (`usage` null, `tool_usage` present) reports none. Moving it shows a search-only cost on a message with no tokens
-- Gemini 2.x: an intermediate `STOP` ends the turn and the answer after it is dropped; pinned by an `open:` case in `chatGenerate.replay.test.ts`
 - Bedrock: exception frames inside a stream name the failure in `:exception-type`, which the event-stream transform drops. Converse skips the event and ends on the generic end-of-stream text, Invoke fails on the payload shape as a parsing issue; neither retries. Read from the code, not reproduced live
 
 ### Text and labels
