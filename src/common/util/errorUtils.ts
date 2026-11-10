@@ -14,6 +14,10 @@ export function isBenignDomMutationError(error: unknown): boolean {
   const message = error.message || '';
   if (error.name !== 'NotFoundError') return false;
 
+  // WebKit throws these with its generic NotFoundError text, which names no call; the DOM call is the innermost stack frame
+  if (message === 'The object can not be found here.')
+    return /^(?:removeChild|insertBefore)@\[native code\]/.test(error.stack || '');
+
   return message.includes('removeChild')
     || message.includes('insertBefore')
     || message.includes('The node before which the new node is to be inserted is not a child of this node');
