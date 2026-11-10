@@ -937,7 +937,8 @@ export namespace GeminiWire_API_Generate_Content {
 
   const UsageMetadata_schema = z.object({
     // effective prompt size, including tokens in the cached content
-    promptTokenCount: z.number(),
+    promptTokenCount: z.number()
+      .optional(), // [Gemini, 2026-10-30] a prompt blocked before generation comes with `usageMetadata: {}`
 
     // (usually there: missing on first packets, or 'RECITATION' answers) total tokens across all the generated candidates
     candidatesTokenCount: z.number().optional(),

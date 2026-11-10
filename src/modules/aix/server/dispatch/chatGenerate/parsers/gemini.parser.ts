@@ -110,8 +110,8 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
       sentRequestedModelName = true;
     }
 
-    // -> Stats - before candidates to endings won't interfere/block
-    if (generationChunk.usageMetadata) {
+    // -> Stats - before candidates to endings won't interfere/block; an empty usage block (blocked prompt) carries none
+    if (generationChunk.usageMetadata?.promptTokenCount !== undefined) {
       const metricsUpdate: AixWire_Particles.CGSelectMetrics = {
         // tool-use prompt tokens (code execution) bill as input, outside promptTokenCount
         TIn: generationChunk.usageMetadata.promptTokenCount + (generationChunk.usageMetadata.toolUsePromptTokenCount ?? 0),
