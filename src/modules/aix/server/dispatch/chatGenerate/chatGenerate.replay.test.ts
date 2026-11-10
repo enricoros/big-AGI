@@ -975,6 +975,28 @@ describe('Gemini generateContent', () => {
       assert.equal(theEnd(particles).terminationReason, 'issue-dialect');
     });
 
+  // #1287. No in-stream error with `details` was captured: the frames are built to the format Google documents for its
+  // errors (https://google.aip.dev/193), where `details` is a list of typed entries.
+  test('an error sent mid-stream shows its details, as JSON after the message', async () => {
+    const error = { code: 429, message: 'Resource has been exhausted.', status: 'RESOURCE_EXHAUSTED' };
+    const details = [
+      { '@type': 'type.googleapis.com/google.rpc.ErrorInfo', reason: 'RATE_LIMIT_EXCEEDED', domain: 'googleapis.com', metadata: { service: 'generativelanguage.googleapis.com' } },
+      { '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '41s' },
+    ];
+    const said = async (sent: object) => {
+      const stream = sse([{ data: { candidates: [{ content: { parts: [{ text: 'Partial answer.' }], role: 'model' }, index: 0 }] } }, { data: { error: sent } }]);
+      const texts = issueTexts((await replay([stream], true, () => createGeminiGenerateContentResponseParser('models/gemini-test', true))).particles);
+      assert.equal(texts.length, 1);
+      return texts[0];
+    };
+
+    assert.ok((await said(error)).endsWith('RESOURCE_EXHAUSTED (429): Resource has been exhausted.'), 'text was added to an error that has no details');
+    const withDetails = await said({ ...error, details });
+    const detailsAt = withDetails.indexOf('[{');
+    assert.ok(withDetails.includes('RESOURCE_EXHAUSTED (429): Resource has been exhausted.') && detailsAt > 0, `the details are not in the text: ${withDetails}`);
+    assert.deepEqual(JSON.parse(withDetails.slice(detailsAt)), details);
+  });
+
   const NAMED_FILE = 'gemini/gemini-3.8-flash_code-execution-file-with-displayName.sse';
 
   test('a code execution file is delivered under the name it was sent with', { skip: missing(NAMED_FILE) }, async () => {

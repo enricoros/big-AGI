@@ -58,11 +58,13 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
     // Throws on malformed event data
     const eventData = JSON.parse(rawEventData);
 
-    // In-band error after HTTP 200, a google.rpc.Status: {"error":{"code":503,"message":"...","status":"UNAVAILABLE"}}
+    // In-band error after HTTP 200, Google's error object (https://google.aip.dev/193): {"error":{"code":503,"message":"...","status":"UNAVAILABLE","details":[...]}}
+    // `details` is a list of typed entries (reason, retry delay, quota): shown as JSON after the message until typed errors carry them. None was seen in-stream yet
     // [Gemini, 2026-11-09, hypothesis] a bare-string error was never observed: it is surfaced as the message rather than dropped
     if (eventData?.error) {
-      const { code, message, status } = typeof eventData.error === 'object' ? eventData.error : { code: undefined, message: `${eventData.error}`, status: undefined };
-      return pt.setDialectTerminatingIssue(`${status || 'Error'}${code ? ` (${code})` : ''}: ${message || 'Upstream error.'}`, IssueSymbols.Generic, 'srv-warn');
+      const { code, message, status, details } = typeof eventData.error === 'object' ? eventData.error : { code: undefined, message: `${eventData.error}`, status: undefined };
+      const detailsText = Array.isArray(details) && details.length ? ` Details: ${JSON.stringify(details)}` : '';
+      return pt.setDialectTerminatingIssue(`${status || 'Error'}${code ? ` (${code})` : ''}: ${message || 'Upstream error.'}${detailsText}`, IssueSymbols.Generic, 'srv-warn');
     }
 
     // [Gemini, 2025-10-22] Early detection of proxy errors - being sent as an assistant message

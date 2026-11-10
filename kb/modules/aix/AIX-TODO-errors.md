@@ -56,7 +56,7 @@ On the blocked image (2026-11-06), the TODO left at the site:
 
 - OpenAI: a failed or blocked image generation leaves a non-terminating dialect issue with composed text - `_forwardFailedImageGenerationCallItem` (subkind `image-gen-error`, aiRender true, uiColor neutral)
 - OpenAI (#1288): an `error` after answer text is kept when the stream ends before its terminal event, by a stopgap marked `STOPGAP #1288 - REVERT` at its three sites (Responses parser, transmitter, reassembler): the error is parked in the stop reason and the client guesses it back. To redo with the typed errors
-- Gemini (#1287): an error sent inside the stream ends the message with its status, code and text; `details` is not carried (retry delay, quota, reason), the code reads like an HTTP status though the transport was 200, the log level is always a warning, a bare-string error is surfaced as its message
+- Gemini (#1287): an error sent inside the stream ends the message with its status, code and text; `details` is appended to the text as JSON and not carried as fields (reason, retry delay, quota), the code reads like an HTTP status though the transport was 200, the log level is always a warning, a bare-string error is surfaced as its message
 - Stop errors stored twice (filter stops, refusals): the replacement code is commented under a `TODO` in `ContentReassembler` (`dialectStopExplained`)
 - Gemini `TOO_MANY_TOOL_CALLS`: belongs to the truncated class with its own wording and Continue - see [AIX-outcome.md](../AIX-outcome.md), "Open: tool-budget stops"
 - OpenAI `context_length_exceeded` in the middle of a hosted tool loop: the text should say the hosted tools filled the context; the terminal event carries the finished tool items and no message
@@ -98,6 +98,7 @@ The wire a new design has to fit. Not a design: the direction is the author's, u
 - OpenAI: rate-limit `error` events carry `error.headers`, with `retry-after-ms`
 - OpenRouter (2 captures, 5 production log lines): after the in-band error chunk come a chunk with a `finish_reason` (`tool_calls`, or `error`) and one with the billed usage
 - Gemini (2 captures): after the in-stream error frame only an unframed copy of it follows, then the stream ends
+- Gemini: the error object is Google's standard one ([AIP-193](https://google.aip.dev/193#http11json-representation)): `code`, `message`, `status`, and `details`, a list of typed entries. No in-stream error carried `details` (2 captures, 3 bodies logged in #1287). HTTP errors do, live: a bad key (`ErrorInfo` with reason `API_KEY_INVALID`, `LocalizedMessage`), an unknown field or a bad enum value (`BadRequest`); not a 404, a 504, or four other 400s. The fetch path shows the message only
 - Anthropic: no in-stream error captured
 - Bedrock: exception frames inside a stream name the failure in the `:exception-type` header. From the AWS event-stream format, not reproduced live
 - [xAI, 2026-11-09, hypothesis: one capture] a reply that reaches the context window ends `response.completed`, cut mid-sentence, total tokens 6 under the window: nothing on the wire says it was cut
