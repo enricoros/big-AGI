@@ -24,6 +24,7 @@ Architecture and system documentation is available in the `/kb/` knowledge base,
 
 #### AIX - AI Communication Framework
 - **[AIX.md](modules/AIX.md)** - AIX streaming architecture documentation
+- **[aix/AIX-TODO-*.md](modules/aix/)** - planned AIX work, one input file per topic; [AIX-TODO-openai-context-compaction.md](modules/aix/AIX-TODO-openai-context-compaction.md): hosted-tool loops that outgrow the context window (#1211)
 - **[AIX-ingestion.md](modules/AIX-ingestion.md)** - lossless parse/reassembly rule, checklist of open conflicts
 - **[AIX-callers-analysis.md](modules/AIX-callers-analysis.md)** - Analysis of AIX entry points, call chains, common and different rendering, error handling, etc.
 - **[AIX-outcome.md](modules/AIX-outcome.md)** - how a generation ended: the four outcomes (completed, truncated, failed, aborted), one derivation from the stored message, the wire stop-reason table, colors, Beam status, what is not done

@@ -1717,7 +1717,7 @@ export namespace OpenAIWire_API_Responses {
     // API options
     stream: z.boolean().nullish(),
     background: z.boolean().nullish(),
-    truncation: z.enum(['auto', 'disabled']).nullish(), // defaults to 'disabled', 'auto' drops input items in the middle of the conversation.
+    truncation: z.enum(['auto', 'disabled']).nullish(), // defaults to 'disabled' (over-window input fails); 'auto' drops items from the beginning, silently, and also cuts requests that fit (see LLM-openai-responses.md)
     include: z.array(z.enum([
       'web_search_call.action.sources', // get web search citations
       'code_interpreter_call.outputs', // get code execution logs and images
