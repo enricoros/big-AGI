@@ -55,6 +55,7 @@ Only respond with the short title and nothing else.
 ${historyLines.join('\n')}
 \`\`\``,
       'chat-ai-title', conversationId,
+      { llmResponseHint: 'short' },
     );
 
     // parse title

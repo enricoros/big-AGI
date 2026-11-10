@@ -38,6 +38,7 @@ export async function imaginePromptFromTextOrThrow(messageText: string, contextR
     simpleImagineSystemPrompt,
     'Write a minimum of 20-30 words prompt and up to the size of the input, based on the INPUT below.\n\nINPUT:\n' + messageText,
     'draw-expand-prompt', contextRef,
+    { llmResponseHint: 'short' },
   )).trim();
 }
 

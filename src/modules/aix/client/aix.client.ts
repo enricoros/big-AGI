@@ -227,6 +227,7 @@ export function aixDecorateModelFromGlobals(model: AixAPI_Model, decorations: {
 interface AixClientOptions {
   abortSignal: AbortSignal | 'NON_ABORTABLE'; // 'NON_ABORTABLE' is a special case for non-abortable operations
   throttleParallelThreads?: number; // 0: disable, 1: default throttle (12Hz), 2+ reduce frequency with the square root
+  llmResponseHint?: 'short'; // the caller expects a short reply (a title, a prompt): the text facade lowers a larger output budget
 
   // [Reattach] Internal hook - set by `aixReattachContent_DMessage_orThrow`. When present, seeds the LL
   // with this generator; the upstreamHandle on it triggers the LL reattach branch (Gemini Deep Research GET-poll).
@@ -411,6 +412,13 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
 // --- L2-Simple - Text-only facade (resolves LLM, calls LL, returns string) ---
 
 /**
+ * Output budget of a call whose caller says the reply is short (`llmResponseHint`). The model's response-token
+ * setting is sized for chat (128K on most current models), and OpenRouter rejects a request whose budget the account
+ * balance cannot cover. The budget includes reasoning: some models think for over 6K tokens on a title.
+ */
+const _SHORT_RESPONSE_MAX_TOKENS = 8192;
+
+/**
  * L2-S - Accumulator for the simple text-only API
  */
 interface _AixChatGenerateText_Simple {
@@ -455,6 +463,8 @@ export async function aixChatGenerateText_Simple(
   // Aix Model
   const llmParameters = getAllModelParameterValues(llm.initialParameters, clientOptions?.llmUserParametersReplacement ?? llm.userParameters);
   const aixModel = aixCreateModelFromLLMOptions(llm.interfaces, llmParameters, clientOptions?.llmParamsWrite, llmId);
+  if (clientOptions?.llmResponseHint === 'short' && (aixModel.maxTokens ?? 0) > _SHORT_RESPONSE_MAX_TOKENS)
+    aixModel.maxTokens = _SHORT_RESPONSE_MAX_TOKENS; // lowers a set budget, never raises one; unset stays the vendor's default
 
   // Aix ChatGenerate Request
   const aixChatGenerate = aixCGR_FromSimpleText(
