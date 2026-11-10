@@ -160,6 +160,10 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
     // activate audio (/only) output
     payload.generationConfig!.responseModalities = noTextOutput ? ['AUDIO'] : ['TEXT', 'AUDIO'];
 
+    // [Gemini, 2026-11-09] TTS is single-turn: any request with more than one content is rejected (400 "Multiturn chat is not enabled"), so only the last turn is spoken
+    if (noTextOutput)
+      payload.contents = payload.contents.slice(-1);
+
     // default voice config - list here: https://ai.google.dev/gemini-api/docs/speech-generation#voices
     payload.generationConfig!.speechConfig = {
       voiceConfig: {
