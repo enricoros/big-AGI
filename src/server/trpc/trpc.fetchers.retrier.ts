@@ -114,6 +114,9 @@ const _429_RETRY_DENYLIST: { test: string | RegExp; label: string }[] = [
   // [Sakana.ai / OpenAI-compat] Prepaid credit balance exhausted - user must add credits.
   // Upstream 429 body: {"error":{"message":"Prepaid credit balance is exhausted","type":"usage_limit_reached",...}}
   { test: 'credit balance is exhausted', label: 'credit-exhausted (Sakana.ai)' },
+  // [OpenRouter] Daily request cap on ':free' models - resets at day end, not within the minute.
+  // Upstream 429 body: {"error":{"message":"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day","code":429,...}}
+  { test: 'free-models-per-day', label: 'free-models-per-day (OpenRouter)' },
 ];
 
 
