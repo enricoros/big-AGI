@@ -1,0 +1,26 @@
+{
+  "betas": [
+    "thinking-binding-controls-2026-08-01"
+  ],
+  "body": {
+    "model": "claude-haiku-5-5",
+    "max_tokens": 120,
+    "stream": true,
+    "thinking": {
+      "type": "adaptive",
+      "display": "summarized",
+      "block_binding": {
+        "prefix_mismatch_behavior": "drop_block"
+      }
+    },
+    "output_config": {
+      "effort": "low"
+    },
+    "messages": [
+      {
+        "role": "user",
+        "content": "Write a 600-word essay about the history of lighthouses. Start writing the essay immediately."
+      }
+    ]
+  }
+}

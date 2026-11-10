@@ -1,0 +1,19 @@
+{
+ "model": "openai/gpt-5.4-nano",
+ "tools": [
+  {
+   "type": "openrouter:datetime"
+  }
+ ],
+ "stream": true,
+ "stream_options": {
+  "include_usage": true
+ },
+ "messages": [
+  {
+   "role": "user",
+   "content": "Use the datetime tool to get the current date and time, then reply with it in one sentence. End with a line: REPORT datetime=<n>."
+  }
+ ],
+ "max_tokens": 3000
+}

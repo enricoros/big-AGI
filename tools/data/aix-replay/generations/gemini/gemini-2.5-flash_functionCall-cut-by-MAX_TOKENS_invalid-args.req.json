@@ -1,0 +1,69 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "In a single step, call: print(default_api.get_weather(city=default_api.get_location()), default_api.set_config(level=len(\"abc\")*4, mode=\"turbo\" if True else \"safe\")). Emit exactly that nested expression as one tool call."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "functionDeclarations": [
+    {
+     "name": "get_location",
+     "description": "Returns the user city."
+    },
+    {
+     "name": "get_weather",
+     "description": "Returns the weather for a city.",
+     "parameters": {
+      "type": "OBJECT",
+      "properties": {
+       "city": {
+        "type": "STRING"
+       }
+      },
+      "required": [
+       "city"
+      ]
+     }
+    },
+    {
+     "name": "set_config",
+     "description": "Sets the configuration.",
+     "parameters": {
+      "type": "OBJECT",
+      "properties": {
+       "level": {
+        "type": "INTEGER"
+       },
+       "mode": {
+        "type": "STRING",
+        "enum": [
+         "fast",
+         "safe"
+        ]
+       }
+      },
+      "required": [
+       "level",
+       "mode"
+      ]
+     }
+    }
+   ]
+  }
+ ],
+ "toolConfig": {
+  "functionCallingConfig": {
+   "mode": "AUTO"
+  }
+ },
+ "generationConfig": {
+  "maxOutputTokens": 1000
+ },
+ "store": false
+}

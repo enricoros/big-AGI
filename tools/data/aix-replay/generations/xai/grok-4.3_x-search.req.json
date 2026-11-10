@@ -1,0 +1,29 @@
+{
+  "model": "grok-4.3",
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Look up the X account @nodejs: who they are (profile), and their 3 most recent posts. Then search X for what people are saying about the newest Node.js LTS release. Summarize in 5 bullets, linking each post you cite."
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "x_search"
+    }
+  ],
+  "reasoning": {
+    "effort": "low",
+    "summary": "detailed"
+  },
+  "include": [
+    "reasoning.encrypted_content"
+  ],
+  "store": false,
+  "stream": true
+}

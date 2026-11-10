@@ -1,0 +1,2 @@
+# captured response bodies are replayed byte for byte: no line-ending conversion
+generations/** -text

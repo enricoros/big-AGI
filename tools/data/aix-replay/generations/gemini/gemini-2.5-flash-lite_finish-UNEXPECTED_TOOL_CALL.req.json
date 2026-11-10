@@ -1,0 +1,61 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "What is the weather in Rome?"
+    }
+   ]
+  },
+  {
+   "role": "model",
+   "parts": [
+    {
+     "functionCall": {
+      "id": "call_rome_1",
+      "name": "get_weather",
+      "args": {
+       "city": "Rome"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "role": "user",
+   "parts": [
+    {
+     "functionResponse": {
+      "id": "call_rome_1",
+      "name": "get_weather",
+      "response": {
+       "temperature_c": 21,
+       "conditions": "sunny"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "role": "model",
+   "parts": [
+    {
+     "text": "It is 21 C and sunny in Rome."
+    }
+   ]
+  },
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Now use the get_weather tool again for Paris and for Tokyo. Call the tool, do not guess."
+    }
+   ]
+  }
+ ],
+ "generationConfig": {
+  "maxOutputTokens": 1000
+ },
+ "store": false
+}

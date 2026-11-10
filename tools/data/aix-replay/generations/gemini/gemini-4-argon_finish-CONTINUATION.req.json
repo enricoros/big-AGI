@@ -1,0 +1,18 @@
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "This is a long-output API test. Your output budget for this response is 40000 tokens and the full list fits in it, so do not refuse or suggest a script. Print every integer from 1 to 8000 in increasing order, one per line, digits only. Do not skip, abbreviate, summarize or stop early. No other text."
+        }
+      ]
+    }
+  ],
+  "generationConfig": {
+    "maxOutputTokens": 40000,
+    "thinkingConfig": {
+      "thinkingLevel": "low"
+    }
+  }
+}

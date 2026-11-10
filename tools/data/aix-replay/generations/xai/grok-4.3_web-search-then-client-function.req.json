@@ -1,0 +1,47 @@
+{
+  "model": "grok-4.3",
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Search the web for the release date of the latest Node.js LTS, then save it with the save_note tool. Do not answer in text; just call the tool."
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "name": "save_note",
+      "description": "Save a short note for the user.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "description": "The note"
+          }
+        },
+        "required": [
+          "text"
+        ]
+      }
+    },
+    {
+      "type": "web_search"
+    }
+  ],
+  "tool_choice": "auto",
+  "reasoning": {
+    "effort": "low",
+    "summary": "detailed"
+  },
+  "include": [
+    "reasoning.encrypted_content"
+  ],
+  "store": false,
+  "stream": true
+}

@@ -1,0 +1,84 @@
+event: message_start
+data: {"type":"message_start","message":{"model":"claude-haiku-5-5","id":"msg_011CgtDnSU8HZxLS3AnHL4pF","type":"message","role":"assistant","content":[],"container":null,"stop_reason":null,"stop_sequence":null,"stop_details":null,"usage":{"input_tokens":2,"cache_creation_input_tokens":227,"cache_read_input_tokens":7969,"cache_creation":{"ephemeral_5m_input_tokens":227,"ephemeral_1h_input_tokens":0},"output_tokens":24,"service_tier":"standard","inference_geo":"global","speed":"standard"},"input_transformations":[],"diagnostics":null}        }
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"web_fetch_tool_result","tool_use_id":"srvtoolu_01FQroWp78ngJtEzXDekCjWJ","content":{"type":"web_fetch_result","url":"https://example.com/?n=11","retrieved_at":"2026-11-06T02:34:22+00:00","content":{"type":"document","source":{"type":"text","media_type":"text/plain","data":"---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Example Domain\n---\n\nThis domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes."},"title":"Example Domain","citations":{"enabled":true}}},"caller":{"type":"direct"}}               }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0    }
+
+event: content_block_start
+data: {"type":"content_block_start","index":1,"content_block":{"type":"server_tool_use","id":"srvtoolu_01MngqhWfiZQgP5W7jgK5n5W","name":"web_fetch","input":{}}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\"url\":"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":" \"https"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"://exam"}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"ple.com"}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"/?n=12\"}"}        }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":1            }
+
+event: content_block_start
+data: {"type":"content_block_start","index":2,"content_block":{"type":"web_fetch_tool_result","tool_use_id":"srvtoolu_01MngqhWfiZQgP5W7jgK5n5W","content":{"type":"web_fetch_result","url":"https://example.com/?n=12","retrieved_at":"2026-11-06T02:34:23+00:00","content":{"type":"document","source":{"type":"text","media_type":"text/plain","data":"---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Example Domain\n---\n\nThis domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes."},"title":"Example Domain","citations":{"enabled":true}}},"caller":{"type":"direct"}}           }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":2 }
+
+event: content_block_start
+data: {"type":"content_block_start","index":3,"content_block":{"type":"server_tool_use","id":"srvtoolu_01XTNEeD4iMT7gKzagxxZsLQ","name":"web_fetch","input":{}}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"input_json_delta","partial_json":""}    }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"input_json_delta","partial_json":"{\"url\":"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"input_json_delta","partial_json":" \"https"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"input_json_delta","partial_json":"://exam"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"input_json_delta","partial_json":"ple.com"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"input_json_delta","partial_json":"/?n=13\"}"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":3          }
+
+event: content_block_start
+data: {"type":"content_block_start","index":4,"content_block":{"type":"web_fetch_tool_result","tool_use_id":"srvtoolu_01XTNEeD4iMT7gKzagxxZsLQ","content":{"type":"web_fetch_result","url":"https://example.com/?n=13","retrieved_at":"2026-11-06T04:45:29+00:00","content":{"type":"document","source":{"type":"text","media_type":"text/plain","data":"---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Example Domain\n---\n\nThis domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes."},"title":"Example Domain","citations":{"enabled":true}}},"caller":{"type":"direct"}}  }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":4            }
+
+event: content_block_start
+data: {"type":"content_block_start","index":5,"content_block":{"type":"text","text":""}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"DONE"}            }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":5        }
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null,"stop_details":null,"container":{"id":"container_017X74vvgS6PEXgFyA2nR5v1","expires_at":"2026-11-10T00:27:51.172669Z","skills":[{"type":"anthropic","skill_id":"xlsx","version":"20261106"}]}},"usage":{"input_tokens":6,"cache_creation_input_tokens":681,"cache_read_input_tokens":24588,"output_tokens":121,"output_tokens_details":{"thinking_tokens":0},"server_tool_use":{"web_search_requests":0,"web_fetch_requests":3}}  }
+
+event: message_stop
+data: {"type":"message_stop"     }
+

@@ -1,0 +1,17 @@
+{
+ "model": "claude-haiku-5-5",
+ "max_tokens": 1500,
+ "stream": true,
+ "tools": [
+  {
+   "type": "code_execution_20260120",
+   "name": "code_execution"
+  }
+ ],
+ "messages": [
+  {
+   "role": "user",
+   "content": "Run three separate bash commands, as three separate tool calls (do not chain them): first `echo one`, then `python3 -c \"print(17*23)\"`, then `sleep 2; date`. Then reply \"done\"."
+  }
+ ]
+}

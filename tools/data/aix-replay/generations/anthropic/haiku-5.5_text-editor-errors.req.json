@@ -1,0 +1,37 @@
+{
+  "betas": [
+    "code-execution-2025-08-25",
+    "files-api-2025-04-14",
+    "thinking-binding-controls-2026-08-01"
+  ],
+  "body": {
+    "model": "claude-haiku-5-5",
+    "max_tokens": 2500,
+    "stream": true,
+    "thinking": {
+      "type": "adaptive",
+      "display": "summarized",
+      "block_binding": {
+        "prefix_mismatch_behavior": "drop_block"
+      }
+    },
+    "output_config": {
+      "effort": "low"
+    },
+    "tools": [
+      {
+        "type": "code_execution_20260120",
+        "name": "code_execution"
+      }
+    ],
+    "cache_control": {
+      "type": "ephemeral"
+    },
+    "messages": [
+      {
+        "role": "user",
+        "content": "Use ONLY the file text editor tool (never bash), exactly one tool call per step, and continue even when a step fails: 1) create /tmp/c.txt containing \"one two\"; 2) str_replace \"two\" with \"three\" in /tmp/c.txt; 3) str_replace \"nope\" with \"x\" in /tmp/c.txt; 4) view /tmp/missing2.txt (it does not exist; do not create it); 5) create /tmp/c.txt again containing \"overwritten\". Then reply \"done\" and list the failed steps."
+      }
+    ]
+  }
+}

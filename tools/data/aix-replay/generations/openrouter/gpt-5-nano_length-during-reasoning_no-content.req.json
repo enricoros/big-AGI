@@ -1,0 +1,18 @@
+{
+ "model": "openai/gpt-5-nano",
+ "reasoning": {
+  "enabled": true,
+  "effort": "high"
+ },
+ "stream": true,
+ "stream_options": {
+  "include_usage": true
+ },
+ "messages": [
+  {
+   "role": "user",
+   "content": "How many prime numbers are there between 1000 and 1200? Think carefully and verify each candidate."
+  }
+ ],
+ "max_tokens": 64
+}

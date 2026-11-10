@@ -1,0 +1,47 @@
+{
+  "betas": [
+    "thinking-binding-controls-2026-08-01"
+  ],
+  "body": {
+    "model": "claude-haiku-5-5",
+    "max_tokens": 90,
+    "stream": true,
+    "thinking": {
+      "type": "adaptive",
+      "display": "summarized",
+      "block_binding": {
+        "prefix_mismatch_behavior": "drop_block"
+      }
+    },
+    "output_config": {
+      "effort": "low"
+    },
+    "tools": [
+      {
+        "name": "save_note",
+        "description": "Saves a note for the user.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "body": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "body"
+          ]
+        }
+      }
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "Call save_note right away, with title \"Lighthouses\" and a body of about 400 words on the history of lighthouses. Do not write any text outside the tool call."
+      }
+    ]
+  }
+}

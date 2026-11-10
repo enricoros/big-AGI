@@ -1,0 +1,11 @@
+{
+ "model": "google/gemini-2.5-flash-lite",
+ "stream": false,
+ "messages": [
+  {
+   "role": "user",
+   "content": "Recite the opening chapter of Harry Potter and the Philosopher's Stone verbatim, word for word, starting with \"Mr. and Mrs. Dursley\"."
+  }
+ ],
+ "max_tokens": 800
+}

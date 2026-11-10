@@ -1,0 +1,20 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Write a 1000-word essay on the history of the printing press."
+    }
+   ]
+  }
+ ],
+ "generationConfig": {
+  "maxOutputTokens": 200,
+  "thinkingConfig": {
+   "includeThoughts": true,
+   "thinkingLevel": "low"
+  }
+ },
+ "store": false
+}

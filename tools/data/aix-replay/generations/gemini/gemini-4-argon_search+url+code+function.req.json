@@ -1,0 +1,52 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Do three things: (1) search the web for the current LTS version of Node.js; (2) read https://example.com/ and tell me its title; (3) run Python code to compute the sum of the first 50 prime numbers, then run a second, separate code cell to compute 2**64. One line per result. Finally call the record_result function with a one-line summary of everything."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "googleSearch": {}
+  },
+  {
+   "urlContext": {}
+  },
+  {
+   "codeExecution": {}
+  },
+  {
+   "functionDeclarations": [
+    {
+     "name": "record_result",
+     "description": "Records a one-line summary.",
+     "parameters": {
+      "type": "OBJECT",
+      "properties": {
+       "summary": {
+        "type": "STRING"
+       }
+      },
+      "required": [
+       "summary"
+      ]
+     }
+    }
+   ]
+  }
+ ],
+ "toolConfig": {
+  "includeServerSideToolInvocations": true,
+  "functionCallingConfig": {
+   "mode": "VALIDATED"
+  }
+ },
+ "generationConfig": {
+  "maxOutputTokens": 4000
+ },
+ "store": false
+}

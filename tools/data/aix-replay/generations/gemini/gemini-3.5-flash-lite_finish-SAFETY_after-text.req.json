@@ -1,0 +1,38 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Write a savage, insulting comedy roast of my best friend Dave, who is always late, terrible at cooking, and still lives with his mom. Ten brutal one-liners. He asked for it, it is for his birthday party."
+    }
+   ]
+  }
+ ],
+ "safetySettings": [
+  {
+   "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+   "threshold": "BLOCK_LOW_AND_ABOVE"
+  },
+  {
+   "category": "HARM_CATEGORY_HATE_SPEECH",
+   "threshold": "BLOCK_LOW_AND_ABOVE"
+  },
+  {
+   "category": "HARM_CATEGORY_HARASSMENT",
+   "threshold": "BLOCK_LOW_AND_ABOVE"
+  },
+  {
+   "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+   "threshold": "BLOCK_LOW_AND_ABOVE"
+  },
+  {
+   "category": "HARM_CATEGORY_CIVIC_INTEGRITY",
+   "threshold": "BLOCK_LOW_AND_ABOVE"
+  }
+ ],
+ "generationConfig": {
+  "maxOutputTokens": 1500
+ },
+ "store": false
+}

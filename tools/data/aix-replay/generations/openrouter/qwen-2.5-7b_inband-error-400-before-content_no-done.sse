@@ -1,0 +1,8 @@
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1794266891-FwdKHDvSopKcFAElUdo6","object":"chat.completion.chunk","created":1794266891,"model":"qwen/qwen-2.5-7b-instruct","provider":"Phala","choices":[],"error":{"code":400,"message":"Model call failed: invalid request (400)","metadata":{"error_type":"invalid_request"}}}
+
+data: {"id":"gen-1794266891-FwdKHDvSopKcFAElUdo6","object":"chat.completion.chunk","created":1794266891,"model":"qwen/qwen-2.5-7b-instruct","provider":"Phala","choices":[{"index":0,"delta":{"content":"","role":"assistant"},"finish_reason":"tool_calls","native_finish_reason":"tool_calls"}]}
+
+data: {"id":"gen-1794266891-FwdKHDvSopKcFAElUdo6","object":"chat.completion.chunk","created":1794266891,"model":"qwen/qwen-2.5-7b-instruct","provider":"Phala","service_tier":null,"choices":[{"index":0,"delta":{"content":"","role":"assistant"},"finish_reason":"tool_calls","native_finish_reason":"tool_calls"}],"usage":{"prompt_tokens":312,"completion_tokens":122,"total_tokens":434,"cost":0.0000556,"prompt_tokens_details":{"cached_tokens":211,"cache_write_tokens":0,"audio_tokens":0,"video_tokens":0},"completion_tokens_details":{"reasoning_tokens":0,"image_tokens":0,"audio_tokens":0},"cost_details":{"upstream_inference_cost":0.0000556,"upstream_inference_prompt_cost":0.0000312,"upstream_inference_completions_cost":0.0000244},"server_tool_use_details":{"tool_calls_requested":3,"tool_calls_executed":3}}}
+

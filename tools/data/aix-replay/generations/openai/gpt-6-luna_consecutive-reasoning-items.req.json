@@ -1,0 +1,32 @@
+{
+  "model": "gpt-6-luna",
+  "stream": true,
+  "store": false,
+  "reasoning": {
+    "effort": "max",
+    "summary": "detailed"
+  },
+  "include": [
+    "reasoning.encrypted_content",
+    "code_interpreter_call.outputs"
+  ],
+  "tools": [
+    {
+      "type": "code_interpreter",
+      "container": "cntr_6af259558d7c819886d20fc4b76db883049d65ee38eed96d"
+    }
+  ],
+  "max_output_tokens": 40000,
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Do these steps in order. 1) Write me one short sentence saying you are starting. 2) Use the python tool to run exactly: `print(\"cell one\")`. 3) Write me one short sentence about the result. 4) Now, WITHOUT any tool, think very carefully and at length: list by hand every 5-digit number whose digits are strictly increasing and whose digit sum is 25, and count them, double-checking each one twice. 5) Write the list and your count to me. 6) Only then use the python tool to verify the count. 7) Reply with the verified count."
+        }
+      ]
+    }
+  ]
+}

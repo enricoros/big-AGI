@@ -1,0 +1,21 @@
+{
+  "headers": {
+    "X-Server-Timeout": "4"
+  },
+  "body": {
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Write a long novella in many chapters about a lighthouse keeper on a remote island. Make it as long and detailed as you can."
+          }
+        ]
+      }
+    ],
+    "generationConfig": {
+      "maxOutputTokens": 8000
+    },
+    "store": false
+  }
+}

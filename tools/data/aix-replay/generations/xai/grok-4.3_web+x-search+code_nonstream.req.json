@@ -1,0 +1,36 @@
+{
+  "model": "grok-4.3",
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Three steps, using your tools: (1) search X for posts by @nodejs from the last two weeks and pick the one about a release; (2) search the web and open the official nodejs.org blog post for that release to get its exact release date; (3) with the code interpreter, compute how many days passed between that release date and 2026-11-09. Answer in 4 short sentences, citing the post and the page."
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "code_interpreter"
+    },
+    {
+      "type": "web_search"
+    },
+    {
+      "type": "x_search"
+    }
+  ],
+  "reasoning": {
+    "effort": "low",
+    "summary": "detailed"
+  },
+  "include": [
+    "reasoning.encrypted_content",
+    "code_interpreter_call.outputs"
+  ],
+  "store": false,
+  "stream": false
+}

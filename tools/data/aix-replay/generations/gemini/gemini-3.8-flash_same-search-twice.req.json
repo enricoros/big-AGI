@@ -1,0 +1,24 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Use Google Search for exactly this query: \"Node.js current LTS version\". Give the answer in one line. Then, as a second and separate search call, search again for exactly the same query \"Node.js current LTS version\" to double check, and say whether the answer changed."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "googleSearch": {}
+  }
+ ],
+ "toolConfig": {
+  "includeServerSideToolInvocations": true
+ },
+ "generationConfig": {
+  "maxOutputTokens": 4000
+ },
+ "store": false
+}

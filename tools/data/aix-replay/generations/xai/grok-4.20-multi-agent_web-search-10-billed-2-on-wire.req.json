@@ -1,0 +1,29 @@
+{
+  "model": "grok-4.20-multi-agent-0309",
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "What is the current latest LTS release of Node.js and its release date? Search the web, and answer in 2 sentences with sources."
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "web_search"
+    }
+  ],
+  "reasoning": {
+    "effort": "low",
+    "summary": "detailed"
+  },
+  "include": [
+    "reasoning.encrypted_content"
+  ],
+  "store": false,
+  "stream": true
+}

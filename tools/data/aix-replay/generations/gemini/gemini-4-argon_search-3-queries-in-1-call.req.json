@@ -1,0 +1,24 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Use Google Search. I need three unrelated facts, search for each one separately: (a) the weather forecast for Lisbon tomorrow, (b) the current EUR to USD exchange rate, (c) the current LTS version of Node.js. Answer with one short line per fact."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "googleSearch": {}
+  }
+ ],
+ "toolConfig": {
+  "includeServerSideToolInvocations": true
+ },
+ "generationConfig": {
+  "maxOutputTokens": 4000
+ },
+ "store": false
+}

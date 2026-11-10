@@ -1,0 +1,51 @@
+{
+ "model": "gpt-6-astra",
+ "stream": true,
+ "store": false,
+ "reasoning": {
+  "effort": "low",
+  "summary": "auto",
+  "mode": "pro"
+ },
+ "tools": [
+  {
+   "type": "web_search",
+   "search_context_size": "low",
+   "user_location": {
+    "type": "approximate"
+   },
+   "external_web_access": true
+  },
+  {
+   "type": "code_interpreter",
+   "container": {
+    "type": "auto"
+   }
+  },
+  {
+   "type": "image_generation",
+   "model": "gpt-image-2.6-flare",
+   "quality": "medium",
+   "complexity": "low",
+   "output_format": "webp",
+   "moderation": "low"
+  }
+ ],
+ "input": [
+  {
+   "role": "user",
+   "content": [
+    {
+     "type": "input_text",
+     "text": "Do these four things: (1) search the web for \"Node.js current LTS version\"; (2) open the page https://example.com/ and tell me its title; (3) use the python tool to compute 2**64; (4) generate one small simple image of a red circle on a white background. Then reply with one short line per step."
+    }
+   ]
+  }
+ ],
+ "max_output_tokens": 6000,
+ "include": [
+  "web_search_call.action.sources",
+  "code_interpreter_call.outputs",
+  "reasoning.encrypted_content"
+ ]
+}

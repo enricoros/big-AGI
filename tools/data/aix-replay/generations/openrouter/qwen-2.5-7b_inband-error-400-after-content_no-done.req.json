@@ -1,0 +1,23 @@
+{
+ "model": "qwen/qwen-2.5-7b-instruct",
+ "tools": [
+  {
+   "type": "openrouter:web_fetch",
+   "parameters": {
+    "engine": "auto",
+    "max_content_tokens": 60000
+   }
+  }
+ ],
+ "stream": true,
+ "messages": [
+  {
+   "role": "user",
+   "content": "First write a 250-word introduction to 19th-century English novels. Then, in the same turn, call the web fetch tool three times: https://www.gutenberg.org/cache/epub/1342/pg1342.txt , https://www.gutenberg.org/cache/epub/84/pg84.txt and https://www.gutenberg.org/cache/epub/2701/pg2701.txt . Then quote the first sentence of each book."
+  }
+ ],
+ "max_tokens": 700,
+ "stream_options": {
+  "include_usage": true
+ }
+}

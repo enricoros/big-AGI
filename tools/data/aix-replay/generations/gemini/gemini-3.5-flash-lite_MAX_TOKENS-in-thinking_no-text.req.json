@@ -1,0 +1,20 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Prove or disprove: for every integer n > 1, the number n^4 + 4^n is composite. Consider all cases carefully, then give the final answer."
+    }
+   ]
+  }
+ ],
+ "generationConfig": {
+  "maxOutputTokens": 40,
+  "thinkingConfig": {
+   "includeThoughts": true,
+   "thinkingLevel": "high"
+  }
+ },
+ "store": false
+}

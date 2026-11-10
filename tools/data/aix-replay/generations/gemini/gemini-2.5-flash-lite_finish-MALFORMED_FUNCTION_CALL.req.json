@@ -1,0 +1,46 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Use write_file to create gen.py: a Python script that prints a JSON string containing nested double quotes, single quotes, triple-quoted strings, backslashes, a regex like r\"d+\\\\\", and an f-string with {braces}. Make the file at least 60 lines. Call the tool directly."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "functionDeclarations": [
+    {
+     "name": "write_file",
+     "description": "Writes a text file.",
+     "parameters": {
+      "type": "OBJECT",
+      "properties": {
+       "path": {
+        "type": "STRING"
+       },
+       "content": {
+        "type": "STRING"
+       }
+      },
+      "required": [
+       "path",
+       "content"
+      ]
+     }
+    }
+   ]
+  }
+ ],
+ "toolConfig": {
+  "functionCallingConfig": {
+   "mode": "ANY"
+  }
+ },
+ "generationConfig": {
+  "maxOutputTokens": 100
+ },
+ "store": false
+}

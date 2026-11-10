@@ -1,0 +1,25 @@
+{
+  "model": "grok-4.3",
+  "max_output_tokens": 40,
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Write a 300-word story about a lighthouse keeper."
+        }
+      ]
+    }
+  ],
+  "reasoning": {
+    "effort": "none",
+    "summary": "detailed"
+  },
+  "include": [
+    "reasoning.encrypted_content"
+  ],
+  "store": false,
+  "stream": true
+}

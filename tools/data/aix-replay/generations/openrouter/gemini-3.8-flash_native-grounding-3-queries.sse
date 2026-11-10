@@ -1,0 +1,62 @@
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":"**Analyzing Prompt Nuances**\n\nI'm currently dissecting the core requirements, specifically focusing on the temporal aspect of the \"Lisbon weather\" fact and how it interacts with the \"current time\" context. This involves clarifying the precise date for the forecast.\n\n","reasoning_details":[{"type":"reasoning.text","text":"**Analyzing Prompt Nuances**\n\nI'm currently dissecting the core requirements, specifically focusing on the temporal aspect of the \"Lisbon weather\" fact and how it interacts with the \"current time\" context. This involves clarifying the precise date for the forecast.\n\n","format":"google-gemini-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":"**Investigating Weather Data**\n\nI'm currently focused on the weather forecast for Lisbon tomorrow, specifically Saturday, November 7th, 2026. The data indicates it will be cloudy with temperatures ranging from 16°C to 21°C.\n\n","reasoning_details":[{"type":"reasoning.text","text":"**Investigating Weather Data**\n\nI'm currently focused on the weather forecast for Lisbon tomorrow, specifically Saturday, November 7th, 2026. The data indicates it will be cloudy with temperatures ranging from 16°C to 21°C.\n\n","format":"google-gemini-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":"**Verifying Information Accuracy**\n\nI'm reviewing the details for Lisbon's weather, confirming the exchange rate for EUR to USD, and identifying the current Node.js LTS version. These updates seem to align with recent data.\nREPORT search_calls=1 search_queries=3 fetches=0\n\n","reasoning_details":[{"type":"reasoning.text","text":"**Verifying Information Accuracy**\n\nI'm reviewing the details for Lisbon's weather, confirming the exchange rate for EUR to USD, and identifying the current Node.js LTS version. These updates seem to align with recent data.\nREPORT search_calls=1 search_queries=3 fetches=0\n\n","format":"google-gemini-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":"(a) Lisbon tomorrow is forecast to be mostly cloudy with daytime highs around 21°C (69°F) and a","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":" chance of light rain overnight.\n(b) The current exchange rate is approximately 1 EUR to 1.","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":"12 USD.\n(c) The current LTS","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":" version of Node.js is Node.js 26 (v26.13.0 \"Lithium\")","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":".\nREPORT search_calls=1 search_queries=3 fetches=0","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":null,"reasoning_details":[{"type":"reasoning.encrypted","data":"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","format":"google-gemini-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://www.google.com/search?q=weather+in+Lisbon,+PT","title":"Weather information for Lisbon, PT","start_index":0,"end_index":128}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEmTVBMmp_h0xsMW7R8rZi7aLIPT4sCJo1AtQ8ADqD6DghluuhM8mtvLPBcLXJjlSDMFUYGgxI_s4ZECLuMGYexBXQ5ky6B5xAsdZuxP_wdmp5jvmKy7_L4q6Xd-XV7ju8WhBPKEAr0znSDI6MbWB0maQeLqluw_KA3haf6Iq77KOZNhuzx2w==","title":"xe.com","start_index":130,"end_index":194}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEz-uOPTyxOnLVhaw01YjHT4cCxCnvgNrrOX4Pehe5oI8tA8tLKvMRzt-zCKii86ZDzNBp4M1Hjr9n71I7zwNmm9dwlZc3xoyiqdmphqUho7Ra9V60IZ7Mc8rn3gyUbAoFvqeX8h6I=","title":"google.com","start_index":130,"end_index":194}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGMRaoTot-CfQjwf_LqM-Up9fhLnJyODU9upqp80qUNYinWJBDFG8X5lHE6mt2KAYGlr9WKOz_614sVO3AwMUDSodHkIdd5NcBw4Yxh0OuqmF4A5BpMoID9mfBAM6kPzdgGib66pA==","title":"nodejs.org","start_index":196,"end_index":269}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":null},"finish_reason":"stop","native_finish_reason":"STOP"}]}
+
+data: {"id":"gen-1793944147-pwLMdtqK6NHp5eHidcUR","object":"chat.completion.chunk","created":1793944147,"model":"google/gemini-3.8-flash","provider":"Google","service_tier":"default","choices":[{"index":0,"delta":{"content":"","role":"assistant"},"finish_reason":"stop","native_finish_reason":"STOP"}],"usage":{"prompt_tokens":98,"completion_tokens":800,"total_tokens":898,"cost":0.0450735,"is_byok":false,"prompt_tokens_details":{"cached_tokens":0,"cache_write_tokens":0,"audio_tokens":0,"video_tokens":0},"cost_details":{"upstream_inference_cost":0.0450735,"upstream_inference_prompt_cost":0.0000735,"upstream_inference_completions_cost":0.003},"completion_tokens_details":{"reasoning_tokens":672,"image_tokens":0,"audio_tokens":0},"server_tool_use_details":{"web_search_requests":3}}}
+
+data: [DONE]
+

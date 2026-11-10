@@ -1,0 +1,23 @@
+{
+  "betas": [
+    "code-execution-2025-08-25",
+    "files-api-2025-04-14"
+  ],
+  "body": {
+    "model": "claude-haiku-5-5",
+    "max_tokens": 1500,
+    "stream": true,
+    "tools": [
+      {
+        "type": "code_execution_20260120",
+        "name": "code_execution"
+      }
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "Use ONLY the file text editor tool (never bash, never python). Do these steps in order: 1) create /tmp/a.txt with content \"one\\ntwo\"; 2) view /tmp/a.txt with view_range [1, 1]; 3) str_replace \"two\" with \"three\" in /tmp/a.txt; 4) insert the line \"zero\" at line 0 of /tmp/a.txt. Then reply only: done"
+      }
+    ]
+  }
+}

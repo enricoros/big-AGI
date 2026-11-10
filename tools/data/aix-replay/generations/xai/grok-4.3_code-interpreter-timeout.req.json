@@ -1,0 +1,30 @@
+{
+  "model": "grok-4.3",
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "I am testing sandbox time limits. Run exactly this Python code once with the code interpreter, unchanged, and do not retry it:\n\nimport time\nprint(\"start\", flush=True)\ntime.sleep(400)\nprint(\"end\")\n\nThen tell me in one sentence what the tool reported."
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "code_interpreter"
+    }
+  ],
+  "reasoning": {
+    "effort": "low",
+    "summary": "detailed"
+  },
+  "include": [
+    "reasoning.encrypted_content",
+    "code_interpreter_call.outputs"
+  ],
+  "store": false,
+  "stream": true
+}

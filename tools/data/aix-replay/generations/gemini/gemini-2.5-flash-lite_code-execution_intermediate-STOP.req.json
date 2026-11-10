@@ -1,0 +1,21 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Run Python code to compute the sum of the first 50 prime numbers and tell me the result in one sentence. Then, in a second, separate code cell, compute 2**64 and tell me that result too. Finally, write one closing line with both numbers."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "codeExecution": {}
+  }
+ ],
+ "generationConfig": {
+  "maxOutputTokens": 4000
+ },
+ "store": false
+}

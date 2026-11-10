@@ -1,0 +1,35 @@
+{
+  "note": "Synthetic: bytes [0, 14884) of gpt-6-luna_container-deleted_error-after-text-then-failed.sse, everything through its error event. The response.failed event that followed is cut. The body is the request of that capture.",
+  "body": {
+    "model": "gpt-6-luna",
+    "stream": true,
+    "store": false,
+    "reasoning": {
+      "effort": "low",
+      "summary": "detailed"
+    },
+    "include": [
+      "reasoning.encrypted_content",
+      "code_interpreter_call.outputs"
+    ],
+    "tools": [
+      {
+        "type": "code_interpreter",
+        "container": "cntr_6af2570377fc819896f1734153a943760f4416ce2fbceaf7"
+      }
+    ],
+    "max_output_tokens": 3000,
+    "input": [
+      {
+        "type": "message",
+        "role": "user",
+        "content": [
+          {
+            "type": "input_text",
+            "text": "Do these steps in order. 1) Before any tool call, write me one short sentence saying you are starting. 2) Use the python tool to run exactly: `import time; time.sleep(10); print(\"first\")`. 3) Write one short sentence about the result. 4) Use the python tool again to run exactly: `print(2+2)`. 5) Reply \"done\"."
+          }
+        ]
+      }
+    ]
+  }
+}

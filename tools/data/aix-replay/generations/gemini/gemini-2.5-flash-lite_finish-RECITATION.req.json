@@ -1,0 +1,16 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Reproduce verbatim, word for word, the complete first chapter of \"Harry Potter and the Philosopher's Stone\" by J.K. Rowling, starting with \"Mr. and Mrs. Dursley, of number four, Privet Drive\". Do not summarize, do not comment, output only the original text."
+    }
+   ]
+  }
+ ],
+ "generationConfig": {
+  "maxOutputTokens": 3000
+ },
+ "store": false
+}

@@ -1,0 +1,35 @@
+{
+  "note": "The container is an explicit one (POST /v1/containers). It was deleted (DELETE /v1/containers/{id}) when response.code_interpreter_call.interpreting arrived for the first cell.",
+  "body": {
+    "model": "gpt-6-luna",
+    "stream": true,
+    "store": false,
+    "reasoning": {
+      "effort": "low",
+      "summary": "detailed"
+    },
+    "include": [
+      "reasoning.encrypted_content",
+      "code_interpreter_call.outputs"
+    ],
+    "tools": [
+      {
+        "type": "code_interpreter",
+        "container": "cntr_6af2570377fc819896f1734153a943760f4416ce2fbceaf7"
+      }
+    ],
+    "max_output_tokens": 3000,
+    "input": [
+      {
+        "type": "message",
+        "role": "user",
+        "content": [
+          {
+            "type": "input_text",
+            "text": "Do these steps in order. 1) Before any tool call, write me one short sentence saying you are starting. 2) Use the python tool to run exactly: `import time; time.sleep(10); print(\"first\")`. 3) Write one short sentence about the result. 4) Use the python tool again to run exactly: `print(2+2)`. 5) Reply \"done\"."
+          }
+        ]
+      }
+    ]
+  }
+}

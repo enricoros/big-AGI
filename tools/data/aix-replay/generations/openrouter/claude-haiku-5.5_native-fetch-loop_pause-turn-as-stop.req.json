@@ -1,0 +1,27 @@
+{
+ "model": "anthropic/claude-haiku-5.5",
+ "provider": {
+  "only": [
+   "anthropic"
+  ]
+ },
+ "tools": [
+  {
+   "type": "openrouter:web_fetch",
+   "parameters": {
+    "engine": "auto"
+   }
+  }
+ ],
+ "stream": true,
+ "stream_options": {
+  "include_usage": true
+ },
+ "messages": [
+  {
+   "role": "user",
+   "content": "Use the web fetch tool on each of these 14 URLs, one tool call per URL, one at a time, in order: https://httpbin.org/anything?n=1 , https://httpbin.org/anything?n=2 , https://httpbin.org/anything?n=3 , https://httpbin.org/anything?n=4 , https://httpbin.org/anything?n=5 , https://httpbin.org/anything?n=6 , https://httpbin.org/anything?n=7 , https://httpbin.org/anything?n=8 , https://httpbin.org/anything?n=9 , https://httpbin.org/anything?n=10 , https://httpbin.org/anything?n=11 , https://httpbin.org/anything?n=12 , https://httpbin.org/anything?n=13 , https://httpbin.org/anything?n=14 . After each fetch, write one line with the value of the \"n\" argument you saw. End with a line: REPORT fetches=<n>."
+  }
+ ],
+ "max_tokens": 4000
+}

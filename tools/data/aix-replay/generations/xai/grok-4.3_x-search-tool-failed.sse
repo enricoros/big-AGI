@@ -1,0 +1,255 @@
+event: response.created
+data: {"sequence_number":0,"type":"response.created","response":{"created_at":1794267440,"completed_at":null,"id":"f8414278-b54d-9d80-95d0-a6391141bad4","max_output_tokens":null,"model":"grok-4.3","object":"response","output":[],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":"low","summary":"detailed"},"temperature":0.7,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"x_search"}],"top_p":0.95,"usage":null,"user":null,"incomplete_details":null,"status":"in_progress","store":false,"metadata":{"system_fingerprint":"fp_eb3c003fc66c14ed"},"background":false,"service_tier":"default","truncation":"disabled","top_logprobs":0,"presence_penalty":0.0,"frequency_penalty":0.0,"prompt_cache_key":null,"max_tool_calls":null,"safety_identifier":null,"error":null,"instructions":null}}
+
+event: response.in_progress
+data: {"sequence_number":1,"type":"response.in_progress","response":{"created_at":1794267440,"completed_at":null,"id":"f8414278-b54d-9d80-95d0-a6391141bad4","max_output_tokens":null,"model":"grok-4.3","object":"response","output":[],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":"low","summary":"detailed"},"temperature":0.7,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"x_search"}],"top_p":0.95,"usage":null,"user":null,"incomplete_details":null,"status":"in_progress","store":false,"metadata":{"system_fingerprint":"fp_eb3c003fc66c14ed"},"background":false,"service_tier":"default","truncation":"disabled","top_logprobs":0,"presence_penalty":0.0,"frequency_penalty":0.0,"prompt_cache_key":null,"max_tool_calls":null,"safety_identifier":null,"error":null,"instructions":null}}
+
+event: response.output_item.added
+data: {"sequence_number":2,"type":"response.output_item.added","item":{"id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","summary":[],"type":"reasoning","status":"in_progress"},"output_index":0}
+
+event: response.reasoning_summary_part.added
+data: {"sequence_number":3,"type":"response.reasoning_summary_part.added","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"part":{"text":"","type":"summary_text"},"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"sequence_number":4,"type":"response.reasoning_summary_text.delta","delta":"Fetching the X thread","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"sequence_number":5,"type":"response.reasoning_summary_text.delta","delta":" for the Node.js post","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"sequence_number":6,"type":"response.reasoning_summary_text.delta","delta":" and the user profile","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"sequence_number":7,"type":"response.reasoning_summary_text.delta","delta":" for @zz_no_such_user_8f3k2q9x.","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"sequence_number":8,"type":"response.reasoning_summary_text.delta","delta":"\n\nThe post ID is 1. ","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"sequence_number":9,"type":"response.reasoning_summary_text.delta","delta":"No direct tool exists","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"sequence_number":10,"type":"response.reasoning_summary_text.delta","delta":" for fetching the user","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"sequence_number":11,"type":"response.reasoning_summary_text.delta","delta":" profile.","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"sequence_number":12,"type":"response.reasoning_summary_text.delta","delta":"\n\nI'll call x_thread_fetch","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"sequence_number":13,"type":"response.reasoning_summary_text.delta","delta":" for the post and x_user_search","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"summary_index":0}
+
+event: response.reasoning_summary_text.delta
+data: {"sequence_number":14,"type":"response.reasoning_summary_text.delta","delta":" for the user.","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"summary_index":0}
+
+event: response.reasoning_summary_text.done
+data: {"sequence_number":15,"type":"response.reasoning_summary_text.done","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"summary_index":0,"text":"Fetching the X thread for the Node.js post and the user profile for @zz_no_such_user_8f3k2q9x.\n\nThe post ID is 1. No direct tool exists for fetching the user profile.\n\nI'll call x_thread_fetch for the post and x_user_search for the user."}
+
+event: response.reasoning_summary_part.done
+data: {"sequence_number":16,"type":"response.reasoning_summary_part.done","item_id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":0,"part":{"text":"Fetching the X thread for the Node.js post and the user profile for @zz_no_such_user_8f3k2q9x.\n\nThe post ID is 1. No direct tool exists for fetching the user profile.\n\nI'll call x_thread_fetch for the post and x_user_search for the user.","type":"summary_text"},"summary_index":0}
+
+event: response.output_item.done
+data: {"sequence_number":17,"type":"response.output_item.done","item":{"id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","summary":[{"text":"Fetching the X thread for the Node.js post and the user profile for @zz_no_such_user_8f3k2q9x.\n\nThe post ID is 1. No direct tool exists for fetching the user profile.\n\nI'll call x_thread_fetch for the post and x_user_search for the user.","type":"summary_text"}],"type":"reasoning","status":"completed","encrypted_content":"HCxnnBBurqmnfuknNwFqgHrsirzmztI2hhr2qcWfr8M1k+p/4kVeYSlG3OS1MKaJFtR78NMHKfGG7jRhv3FBtx9aSrBdUXOWTAs3IR+kxGHYSolonIDSWq7u8YZwiJ4CjwL2Fc4W3lURwRTbghC84wV5HoEmcoVFAE6xUC8IhHvYInWpjQPmfyOGACVCjqXKaEA0DCXgTTtxkKNLe1DoA5jsTxjtW54cxgL3JgGLVecYBdwuugTEFNPeuZdjZCnDDa9MH/L/bn3FE1MJ7rtR9WscUQ848bwwwKz+Zaxie1bOLg9zlpjn3KaUhaVQjyx2FR1FNiT9FB6opt7eQ0gneW2q9FEPr5O5IWEsdDe4NaiXfFtoaJI7J0B61thxwUhJQNjgYCdCLJqDX02jy5EM2rGmhYqk3oAI+JUDL6vWZPLZeaBstsF2ql1Urc9oqIDg4J0SceaWCiHivE9VQd0GDq1yT6n5pEQTla6o1I9r8C6KLoBhKpwxwET/bv7si9IOmKfqSElv/glUb8J3BO/T3udwsjB5VYIPkFLs2zGyzt1mWxwt9Th88uhYCeY6NdzLIUVtpza4m8pyzdcu7foPf06+Ul7KO6AzWF57pxvQcCWcnJKYmL45yyZQo7I6m9O4Tecu99erDtMl/lrYNGzbWogGh+PSZlEBs454lb+rtzCS7PguzC2DvmJt4f9BEJrSmfSUn+gJGfDAPzYA1Zj5Jkl9ieG21pXxFHaXJafUserbJo2L+vh5oW9zwi8x4tkKw7MdXNtFNKcnPpVgu36zz1dIPk7yd/7JZXPJrXOFkBhL2n+QcL80Au7sMrswrDynSOqiG/wAHj+Yb3nlNVyHfHUEXjYDhyA2qOA6J8gU57tltS5giEBcRKE2FfPME6Behg4fseDtrb9HDmbmvHsqRl9h4wIe5pDLIfm541knUIxv0UVoo9QJu6b1ghTxTK8qMWQ82oXoVSB4eDhHwlgVJw9s1TIEIUILxt5k8QUuasac7aL/O1Jzgw57lMDQ1J+M5Eu7WMCHLHYfRAozjM3OXRdWLObW04LJZK/Q0T1g93AVpuDW47o"},"output_index":0}
+
+event: response.output_item.added
+data: {"sequence_number":18,"type":"response.output_item.added","item":{"call_id":"xs_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0","input":"","name":"x_thread_fetch","type":"custom_tool_call","id":"ctc_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0","status":"in_progress"},"output_index":1}
+
+event: response.custom_tool_call_input.delta
+data: {"sequence_number":19,"type":"response.custom_tool_call_input.delta","item_id":"ctc_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0","output_index":1,"delta":"{\"post_id\":\"1\"}"}
+
+event: response.custom_tool_call_input.done
+data: {"sequence_number":20,"type":"response.custom_tool_call_input.done","item_id":"ctc_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0","output_index":1,"input":"{\"post_id\":\"1\"}"}
+
+event: response.output_item.added
+data: {"sequence_number":21,"type":"response.output_item.added","item":{"call_id":"xs_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1","input":"","name":"x_user_search","type":"custom_tool_call","id":"ctc_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1","status":"in_progress"},"output_index":2}
+
+event: response.custom_tool_call_input.delta
+data: {"sequence_number":22,"type":"response.custom_tool_call_input.delta","item_id":"ctc_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1","output_index":2,"delta":"{\"query\":\"zz_no_such_user_8f3k2q9x\"}"}
+
+event: response.custom_tool_call_input.done
+data: {"sequence_number":23,"type":"response.custom_tool_call_input.done","item_id":"ctc_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1","output_index":2,"input":"{\"query\":\"zz_no_such_user_8f3k2q9x\"}"}
+
+event: response.output_item.done
+data: {"sequence_number":24,"type":"response.output_item.done","item":{"call_id":"xs_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1","input":"{\"query\":\"zz_no_such_user_8f3k2q9x\"}","name":"x_user_search","type":"custom_tool_call","id":"ctc_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1","status":"completed"},"output_index":2}
+
+event: response.output_item.added
+data: {"sequence_number":25,"type":"response.output_item.added","item":{"id":"tco_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1","summary":[],"type":"reasoning","status":"completed","encrypted_content":"tco_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1_wYaYGzJ2a2hkhHSnvK4UR1KLMIh1Fd++fwKDRg"},"output_index":3}
+
+event: response.output_item.done
+data: {"sequence_number":26,"type":"response.output_item.done","item":{"id":"tco_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1","summary":[],"type":"reasoning","status":"completed","encrypted_content":"tco_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1_wYaYGzJ2a2hkhHSnvK4UR1KLMIh1Fd++fwKDRg"},"output_index":3}
+
+event: response.output_item.done
+data: {"sequence_number":27,"type":"response.output_item.done","item":{"call_id":"xs_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0","input":"{\"post_id\":\"1\"}","name":"x_thread_fetch","type":"custom_tool_call","id":"ctc_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0","status":"failed"},"output_index":1}
+
+event: response.output_item.added
+data: {"sequence_number":28,"type":"response.output_item.added","item":{"id":"tco_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0","summary":[],"type":"reasoning","status":"completed","encrypted_content":"tco_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0_lbCYEKcJTl4B6FehX6nS5mXoQFNinF2tdzjfvJB3lorNGB+9jvGlfb6bykEiqZ53nKAN7R9/Pn7H32jW7NAAYChDlbLYrCxJGFup+hoNy8opeRFK5xNLVVPRgFjMwxahxLvAsA"},"output_index":4}
+
+event: response.output_item.done
+data: {"sequence_number":29,"type":"response.output_item.done","item":{"id":"tco_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0","summary":[],"type":"reasoning","status":"completed","encrypted_content":"tco_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0_lbCYEKcJTl4B6FehX6nS5mXoQFNinF2tdzjfvJB3lorNGB+9jvGlfb6bykEiqZ53nKAN7R9/Pn7H32jW7NAAYChDlbLYrCxJGFup+hoNy8opeRFK5xNLVVPRgFjMwxahxLvAsA"},"output_index":4}
+
+event: response.output_item.added
+data: {"sequence_number":30,"type":"response.output_item.added","item":{"id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","summary":[],"type":"reasoning","status":"in_progress"},"output_index":5}
+
+event: response.output_item.done
+data: {"sequence_number":31,"type":"response.output_item.done","item":{"id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","summary":[],"type":"reasoning","status":"completed","encrypted_content":"b2hwjusysLc7Qa6M+fNJDXk4jHiU211Zygn9/fj5TSMVO8i1xJbsYHz2DCQFI0ZVT/eev3GF73ts1FGdNYucb6OTJAEdeTv+6hH3tv3abTBgZqeLKXdy2aS42/oucmabi2Pxa8k90MeUYH4KRw4yVCFliq8I7qt+8cdBBsutDOVCfm8S8O4CaxHCke4xGDK9hluyaDByu2DDRZu2I7ILLZ7dzKPEPv6kHdFJODuK9wa+CFkPxnXFGV1ugYtCIFl8S0oqNQU9NXbn+YXbVuuDTP7YypRNEBMizo0FnBsOnKlv/2yIbqrZft6e4Na7u9/kzHLEuj3sYPceEvUtB/wEGSiymJyO6RJEZq5DMyDrqk4FhDc7CJIIlwav+YzL7hFEywKnomRyjPp9r12quNvRptxIiKMrpDtChHgPLcibkprrHBlCdVDUYBxtAEDwxPQ2pr8Fg+etcpKujrQPWYVj3269j5iwzZePm9aakeVT4AuGv8IXZkJ1qlsclexI6noYez/qvFMRmWR/ZivSAk894OwWPI1nL7VCWdJLzGh5dzJXDBK8Tqe+"},"output_index":5}
+
+event: response.output_item.added
+data: {"sequence_number":32,"type":"response.output_item.added","item":{"content":[],"id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","role":"assistant","type":"message","status":"in_progress"},"output_index":6}
+
+event: response.content_part.added
+data: {"sequence_number":33,"type":"response.content_part.added","content_index":0,"item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"part":{"type":"output_text","text":"","logprobs":[],"annotations":[]}}
+
+event: response.output_text.delta
+data: {"sequence_number":34,"type":"response.output_text.delta","content_index":0,"delta":"The","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":35,"type":"response.output_text.delta","content_index":0,"delta":" x","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":36,"type":"response.output_text.delta","content_index":0,"delta":"_thread","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":37,"type":"response.output_text.delta","content_index":0,"delta":"_fetch","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":38,"type":"response.output_text.delta","content_index":0,"delta":" tool","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":39,"type":"response.output_text.delta","content_index":0,"delta":" returned","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":40,"type":"response.output_text.delta","content_index":0,"delta":" that","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":41,"type":"response.output_text.delta","content_index":0,"delta":" post","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":42,"type":"response.output_text.delta","content_index":0,"delta":" ","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":43,"type":"response.output_text.delta","content_index":0,"delta":"1","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":44,"type":"response.output_text.delta","content_index":0,"delta":" is","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":45,"type":"response.output_text.delta","content_index":0,"delta":" unavailable","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":46,"type":"response.output_text.delta","content_index":0,"delta":" since","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":47,"type":"response.output_text.delta","content_index":0,"delta":" X","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":48,"type":"response.output_text.delta","content_index":0,"delta":" returned","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":49,"type":"response.output_text.delta","content_index":0,"delta":" no","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":50,"type":"response.output_text.delta","content_index":0,"delta":" data","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":51,"type":"response.output_text.delta","content_index":0,"delta":" for","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":52,"type":"response.output_text.delta","content_index":0,"delta":" it","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":53,"type":"response.output_text.delta","content_index":0,"delta":".","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":54,"type":"response.output_text.delta","content_index":0,"delta":"  \n","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":55,"type":"response.output_text.delta","content_index":0,"delta":"The","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":56,"type":"response.output_text.delta","content_index":0,"delta":" x","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":57,"type":"response.output_text.delta","content_index":0,"delta":"_user","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":58,"type":"response.output_text.delta","content_index":0,"delta":"_search","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":59,"type":"response.output_text.delta","content_index":0,"delta":" tool","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":60,"type":"response.output_text.delta","content_index":0,"delta":" returned","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":61,"type":"response.output_text.delta","content_index":0,"delta":" no","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":62,"type":"response.output_text.delta","content_index":0,"delta":" users","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":63,"type":"response.output_text.delta","content_index":0,"delta":" matching","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":64,"type":"response.output_text.delta","content_index":0,"delta":" the","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":65,"type":"response.output_text.delta","content_index":0,"delta":" query","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":66,"type":"response.output_text.delta","content_index":0,"delta":" zz","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":67,"type":"response.output_text.delta","content_index":0,"delta":"_no","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":68,"type":"response.output_text.delta","content_index":0,"delta":"_s","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":69,"type":"response.output_text.delta","content_index":0,"delta":"uch","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":70,"type":"response.output_text.delta","content_index":0,"delta":"_user","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":71,"type":"response.output_text.delta","content_index":0,"delta":"_","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":72,"type":"response.output_text.delta","content_index":0,"delta":"8","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":73,"type":"response.output_text.delta","content_index":0,"delta":"f","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":74,"type":"response.output_text.delta","content_index":0,"delta":"3","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":75,"type":"response.output_text.delta","content_index":0,"delta":"k","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":76,"type":"response.output_text.delta","content_index":0,"delta":"2","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":77,"type":"response.output_text.delta","content_index":0,"delta":"q","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":78,"type":"response.output_text.delta","content_index":0,"delta":"9","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":79,"type":"response.output_text.delta","content_index":0,"delta":"x","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.delta
+data: {"sequence_number":80,"type":"response.output_text.delta","content_index":0,"delta":".","item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"logprobs":[]}
+
+event: response.output_text.done
+data: {"sequence_number":81,"type":"response.output_text.done","content_index":0,"item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"text":"The x_thread_fetch tool returned that post 1 is unavailable since X returned no data for it.  \nThe x_user_search tool returned no users matching the query zz_no_such_user_8f3k2q9x.","logprobs":[]}
+
+event: response.content_part.done
+data: {"sequence_number":82,"type":"response.content_part.done","content_index":0,"item_id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","output_index":6,"part":{"type":"output_text","text":"The x_thread_fetch tool returned that post 1 is unavailable since X returned no data for it.  \nThe x_user_search tool returned no users matching the query zz_no_such_user_8f3k2q9x.","logprobs":[],"annotations":[]}}
+
+event: response.output_item.done
+data: {"sequence_number":83,"type":"response.output_item.done","item":{"content":[{"type":"output_text","text":"The x_thread_fetch tool returned that post 1 is unavailable since X returned no data for it.  \nThe x_user_search tool returned no users matching the query zz_no_such_user_8f3k2q9x.","logprobs":[],"annotations":[]}],"id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","role":"assistant","type":"message","status":"completed"},"output_index":6}
+
+event: response.completed
+data: {"sequence_number":84,"type":"response.completed","response":{"created_at":1794267440,"completed_at":1794267456,"id":"f8414278-b54d-9d80-95d0-a6391141bad4","max_output_tokens":null,"model":"grok-4.3","object":"response","output":[{"id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","summary":[{"text":"Fetching the X thread for the Node.js post and the user profile for @zz_no_such_user_8f3k2q9x.\n\nThe post ID is 1. No direct tool exists for fetching the user profile.\n\nI'll call x_thread_fetch for the post and x_user_search for the user.","type":"summary_text"}],"type":"reasoning","status":"completed","encrypted_content":"HCxnnBBurqmnfuknNwFqgHrsirzmztI2hhr2qcWfr8M1k+p/4kVeYSlG3OS1MKaJFtR78NMHKfGG7jRhv3FBtx9aSrBdUXOWTAs3IR+kxGHYSolonIDSWq7u8YZwiJ4CjwL2Fc4W3lURwRTbghC84wV5HoEmcoVFAE6xUC8IhHvYInWpjQPmfyOGACVCjqXKaEA0DCXgTTtxkKNLe1DoA5jsTxjtW54cxgL3JgGLVecYBdwuugTEFNPeuZdjZCnDDa9MH/L/bn3FE1MJ7rtR9WscUQ848bwwwKz+Zaxie1bOLg9zlpjn3KaUhaVQjyx2FR1FNiT9FB6opt7eQ0gneW2q9FEPr5O5IWEsdDe4NaiXfFtoaJI7J0B61thxwUhJQNjgYCdCLJqDX02jy5EM2rGmhYqk3oAI+JUDL6vWZPLZeaBstsF2ql1Urc9oqIDg4J0SceaWCiHivE9VQd0GDq1yT6n5pEQTla6o1I9r8C6KLoBhKpwxwET/bv7si9IOmKfqSElv/glUb8J3BO/T3udwsjB5VYIPkFLs2zGyzt1mWxwt9Th88uhYCeY6NdzLIUVtpza4m8pyzdcu7foPf06+Ul7KO6AzWF57pxvQcCWcnJKYmL45yyZQo7I6m9O4Tecu99erDtMl/lrYNGzbWogGh+PSZlEBs454lb+rtzCS7PguzC2DvmJt4f9BEJrSmfSUn+gJGfDAPzYA1Zj5Jkl9ieG21pXxFHaXJafUserbJo2L+vh5oW9zwi8x4tkKw7MdXNtFNKcnPpVgu36zz1dIPk7yd/7JZXPJrXOFkBhL2n+QcL80Au7sMrswrDynSOqiG/wAHj+Yb3nlNVyHfHUEXjYDhyA2qOA6J8gU57tltS5giEBcRKE2FfPME6Behg4fseDtrb9HDmbmvHsqRl9h4wIe5pDLIfm541knUIxv0UVoo9QJu6b1ghTxTK8qMWQ82oXoVSB4eDhHwlgVJw9s1TIEIUILxt5k8QUuasac7aL/O1Jzgw57lMDQ1J+M5Eu7WMCHLHYfRAozjM3OXRdWLObW04LJZK/Q0T1g93AVpuDW47o"},{"call_id":"xs_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0","input":"{\"post_id\":\"1\"}","name":"x_thread_fetch","type":"custom_tool_call","id":"ctc_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0","status":"failed"},{"call_id":"xs_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1","input":"{\"query\":\"zz_no_such_user_8f3k2q9x\"}","name":"x_user_search","type":"custom_tool_call","id":"ctc_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1","status":"completed"},{"id":"tco_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1","summary":[],"type":"reasoning","status":"completed","encrypted_content":"tco_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-1_wYaYGzJ2a2hkhHSnvK4UR1KLMIh1Fd++fwKDRg"},{"id":"tco_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0","summary":[],"type":"reasoning","status":"completed","encrypted_content":"tco_f8414278-b54d-9d80-95d0-a6391141bad4_call-bfc36513-e3e3-4337-b276-aaae75d4d179-0_lbCYEKcJTl4B6FehX6nS5mXoQFNinF2tdzjfvJB3lorNGB+9jvGlfb6bykEiqZ53nKAN7R9/Pn7H32jW7NAAYChDlbLYrCxJGFup+hoNy8opeRFK5xNLVVPRgFjMwxahxLvAsA"},{"id":"rs_f8414278-b54d-9d80-95d0-a6391141bad4","summary":[],"type":"reasoning","status":"completed","encrypted_content":"b2hwjusysLc7Qa6M+fNJDXk4jHiU211Zygn9/fj5TSMVO8i1xJbsYHz2DCQFI0ZVT/eev3GF73ts1FGdNYucb6OTJAEdeTv+6hH3tv3abTBgZqeLKXdy2aS42/oucmabi2Pxa8k90MeUYH4KRw4yVCFliq8I7qt+8cdBBsutDOVCfm8S8O4CaxHCke4xGDK9hluyaDByu2DDRZu2I7ILLZ7dzKPEPv6kHdFJODuK9wa+CFkPxnXFGV1ugYtCIFl8S0oqNQU9NXbn+YXbVuuDTP7YypRNEBMizo0FnBsOnKlv/2yIbqrZft6e4Na7u9/kzHLEuj3sYPceEvUtB/wEGSiymJyO6RJEZq5DMyDrqk4FhDc7CJIIlwav+YzL7hFEywKnomRyjPp9r12quNvRptxIiKMrpDtChHgPLcibkprrHBlCdVDUYBxtAEDwxPQ2pr8Fg+etcpKujrQPWYVj3269j5iwzZePm9aakeVT4AuGv8IXZkJ1qlsclexI6noYez/qvFMRmWR/ZivSAk894OwWPI1nL7VCWdJLzGh5dzJXDBK8Tqe+"},{"content":[{"type":"output_text","text":"The x_thread_fetch tool returned that post 1 is unavailable since X returned no data for it.  \nThe x_user_search tool returned no users matching the query zz_no_such_user_8f3k2q9x.","logprobs":[],"annotations":[]}],"id":"msg_f8414278-b54d-9d80-95d0-a6391141bad4","role":"assistant","type":"message","status":"completed"}],"parallel_tool_calls":true,"previous_response_id":null,"reasoning":{"effort":"low","summary":"detailed"},"temperature":0.7,"text":{"format":{"type":"text"}},"tool_choice":"auto","tools":[{"type":"x_search"}],"top_p":0.95,"usage":{"input_tokens":3752,"input_tokens_details":{"cached_tokens":2944},"output_tokens":780,"output_tokens_details":{"reasoning_tokens":698},"total_tokens":4532,"num_sources_used":0,"num_server_side_tools_used":1,"cost_in_usd_ticks":35488000,"server_side_tool_usage_details":{"web_search_calls":0,"x_search_calls":1,"x_posts_fetched":0,"x_users_fetched":0,"code_interpreter_calls":0,"file_search_calls":0,"mcp_calls":0,"document_search_calls":0,"image_generation_calls":0},"context_details":{"input_tokens":2164,"output_tokens":241}},"user":null,"incomplete_details":null,"status":"completed","store":false,"metadata":{"system_fingerprint":"fp_eb3c003fc66c14ed"},"background":false,"service_tier":"default","truncation":"disabled","top_logprobs":0,"presence_penalty":0.0,"frequency_penalty":0.0,"prompt_cache_key":null,"max_tool_calls":null,"safety_identifier":null,"error":null,"instructions":null}}
+

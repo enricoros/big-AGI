@@ -1,0 +1,24 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Do this in three separate steps, one URL per step, reading each page with the URL context tool before moving to the next: step 1 read https://www.iana.org/help/example-domains and give its title; step 2 read https://www.rfc-editor.org/rfc/rfc2606.txt and give its title; step 3 read https://nodejs.org/en/about/previous-releases and name the current LTS line. One line per step."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "urlContext": {}
+  }
+ ],
+ "toolConfig": {
+  "includeServerSideToolInvocations": true
+ },
+ "generationConfig": {
+  "maxOutputTokens": 4000
+ },
+ "store": false
+}

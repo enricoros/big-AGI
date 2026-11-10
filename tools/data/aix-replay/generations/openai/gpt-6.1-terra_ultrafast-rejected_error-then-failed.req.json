@@ -1,0 +1,26 @@
+{
+  "model": "gpt-6.1-terra",
+  "stream": true,
+  "store": false,
+  "service_tier": "ultrafast",
+  "reasoning": {
+    "effort": "low",
+    "summary": "detailed"
+  },
+  "include": [
+    "reasoning.encrypted_content"
+  ],
+  "max_output_tokens": 500,
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Say hello in five words."
+        }
+      ]
+    }
+  ]
+}

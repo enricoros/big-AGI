@@ -1,0 +1,11 @@
+data: {"candidates": [{"content": {"parts": [{"executableCode": {"language": "PYTHON","code": "import time\ntime.sleep(20)\nprint(\"done\")","id": "call_237061692689298740"},"thoughtSignature": "EmAKXgFpFH0TmfR36Zn2d2rNZCjYxwX1wXhfcW3KbcH9JTLE0TxM5EeVtcr8DhlFLbewJHFBiI5pvxK/aRNC112ri50iie4L6xMnxkx3a8Wo1g7V3yAP24xlWW6tqENI/Jw="}],"role": "model"},"index": 0}],"usageMetadata": {"promptTokenCount": 38,"candidatesTokenCount": 28,"totalTokenCount": 66,"promptTokensDetails": [{"modality": "TEXT","tokenCount": 38}],"serviceTier": "standard"},"modelVersion": "gemini-3.5-flash-lite","responseId": "RVjyaqyhB_idz7IPqu3fuAY"}
+
+data: {"error": {"code": 504,"message": "Deadline expired before operation could complete.","status": "DEADLINE_EXCEEDED"}}
+
+{
+  "error": {
+    "code": 504,
+    "message": "Deadline expired before operation could complete.",
+    "status": "DEADLINE_EXCEEDED"
+  }
+}

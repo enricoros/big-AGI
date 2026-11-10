@@ -1,0 +1,21 @@
+{
+  "model": "gpt-6-luna",
+  "stream": false,
+  "store": false,
+  "reasoning": {
+    "effort": "none"
+  },
+  "max_output_tokens": 40,
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Write a 300-word story about a lighthouse keeper."
+        }
+      ]
+    }
+  ]
+}

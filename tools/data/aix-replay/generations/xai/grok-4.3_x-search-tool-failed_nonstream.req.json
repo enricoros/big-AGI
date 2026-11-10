@@ -1,0 +1,29 @@
+{
+  "model": "grok-4.3",
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Fetch the X thread of post https://x.com/nodejs/status/1 and the X user profile @zz_no_such_user_8f3k2q9x. Do not search for anything else. One sentence each about what the tools returned."
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "x_search"
+    }
+  ],
+  "reasoning": {
+    "effort": "low",
+    "summary": "detailed"
+  },
+  "include": [
+    "reasoning.encrypted_content"
+  ],
+  "store": false,
+  "stream": false
+}

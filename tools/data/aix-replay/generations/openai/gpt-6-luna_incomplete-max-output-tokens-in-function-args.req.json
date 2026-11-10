@@ -1,0 +1,46 @@
+{
+  "model": "gpt-6-luna",
+  "stream": true,
+  "store": false,
+  "reasoning": {
+    "effort": "none"
+  },
+  "max_output_tokens": 40,
+  "tools": [
+    {
+      "type": "function",
+      "name": "save_note",
+      "description": "Save a note for the user.",
+      "strict": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string",
+            "description": "The full note text."
+          }
+        },
+        "required": [
+          "title",
+          "body"
+        ]
+      }
+    }
+  ],
+  "tool_choice": "required",
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Save a note titled \"Lighthouse\" whose body is a 300-word story about a lighthouse keeper."
+        }
+      ]
+    }
+  ]
+}

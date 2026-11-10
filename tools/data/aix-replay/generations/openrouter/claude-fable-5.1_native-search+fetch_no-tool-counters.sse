@@ -1,0 +1,220 @@
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":"I'll run","reasoning_details":[{"type":"reasoning.text","text":"I'll run","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":" the","reasoning_details":[{"type":"reasoning.text","text":" the","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":" search","reasoning_details":[{"type":"reasoning.text","text":" search","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":" first, since","reasoning_details":[{"type":"reasoning.text","text":" first, since","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":" the user w","reasoning_details":[{"type":"reasoning.text","text":" the user w","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":"ants that","reasoning_details":[{"type":"reasoning.text","text":"ants that","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":" done","reasoning_details":[{"type":"reasoning.text","text":" done","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":" before the two fetches.","reasoning_details":[{"type":"reasoning.text","text":" before the two fetches.","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":" Once it","reasoning_details":[{"type":"reasoning.text","text":" Once it","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":"'s back","reasoning_details":[{"type":"reasoning.text","text":"'s back","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":", I'll send","reasoning_details":[{"type":"reasoning.text","text":", I'll send","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":" both fetches together","reasoning_details":[{"type":"reasoning.text","text":" both fetches together","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":",","reasoning_details":[{"type":"reasoning.text","text":",","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":" because","reasoning_details":[{"type":"reasoning.text","text":" because","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":" they don","reasoning_details":[{"type":"reasoning.text","text":" they don","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":"'t depend on each other.","reasoning_details":[{"type":"reasoning.text","text":"'t depend on each other.","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":"\n\n","reasoning_details":[{"type":"reasoning.text","text":"\n\n","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning_details":[{"type":"reasoning.text","signature":"CAQS7gYKEAgTGAI4AUIIdGhpbmtpbmcSDEz9CBaXFqwQ2hSobhoMHMiZOOrdCaTqpTmeIjBOilg/3QoDIPV3vPQTzDL+bvf5eoe1tYcs1I0+Fk7DB4C9M3Bnqz617PCkT8dYPJAqiwZERrh3DyuWBumL2t3HeeWhX1CBiNx/Xg2k9uF/UIYSi09STZqfCojMhojswhBEDuxrDuWMEu99uk7nkkQKwdH505Ho4wxMRgCxhukDXN6gq+uYu3GBELPqXvmIxhgEH5D0XVry2XHvgGiMD/qmHV49mPZiucgliXFY67MuCimdp+tg3gHBYPQl40ncZ0diKm6ujwC3/UU0QsWjQxn4M99vaqPIhk3mCTvOrP5rk2TZNAYTd4zsZDP//J5p2Tmhhacnw4sEhPl5BzGnlwMsuoiPsa/wpVx6N5ZqmtPafiJZY+xNNfW8gRynVZjGdNxH2APKOY4oUUtmxDZ0gbBEqvPf6ECtKEVG8ALtW/bUCyhlYW15Lx67QbbQqKAabdfF+GfLhnu1Khx82CdiHP9T7Qkwv0Sc7mTDRd0EQo0Fj7lmLAsBCwMlK3QPz/m/bzDHTiVzi59cctCYKfMO/vwN+14mp302Clwkt2t7EB9ZpZUrXuHlckBxLVdjy+EbUXKbtQCcIfDcWk6cn3+LWBQ0l3c+EdVv7htH1pkmvHZYEhHG7cvvvB0X/TUHJArUOuRHDB2T+fK1/J6QFqoCXWkBGvb3IOJ6i2+RGHzxeUsP2iVaM2Xy26J+8FeA9UB3JEN3fMuzva/5P7HmhhPgn+LrurOOKuF2VETKNz0/rkV3lBPQX/1ighHb0ASXaq2sjxJErkdKI7ofMe3cc9MtXCBj+oaaHqiS4BTIHGX+yBDoCIQaif6zqexwmMl1iRWkmEPwwYh+mS74Yjpwa7nS/NiG8qF6+DQiadA0+ztDm1LdhrgYQkUCV6DHSzGhK0uw87Z+bpjhhifFMXmtsFy/4YJOKTNnqqZmuufpY0vNfjt81OU0mqNoutlTIfi7mOpS4f/UM7U/E2XxVH6mW3a00vS13Sk8zbYmrnbHzcL67JLsoqAYgq9RIlWH6zK6Xb9YmxjuDLOBE2qr/0sSSSvoJKa8RMt27qfgqUJGdpzr5dzOojDO9cZuAL9gexBP7wxWY9Why4CmOvePb6MtzMETVRgB.eyJlbmRwb2ludF9zbHVnIjoiYW50aHJvcGljL2NsYXVkZS1mYWJsZS01LjEtMjAyNjA4MzF8YW50aHJvcGljIn0","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"I'll start with the search","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":", then","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" run both fetches.","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"Search done. Now the two","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" fetches:","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"**Search result summ","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"ary:** I","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"ANA maintains dom","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"ains like example.com and example.","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"org for documentation pur","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"poses;","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" ","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://www.iana.org/help/example-domains","title":"Example Domains","start_index":0,"end_index":0,"content":"These domains may be used as illustrative examples in documents without prior coordination with us. They are not available for registration or transfe..."}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"these dom","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"ains may be used as illustr","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"ative examples in documents without pr","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"ior coordination with us. They","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" are not available for registration or trans","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"fer.","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"\n\n**Fetch","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" 1 — https://http","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"bin.org/anything?","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"n=1**\n- origin","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":": `\"160.79.106","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":".26\"`\n- User-","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"Agent: `\"M","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"ozilla/5.0 ","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"AppleWebKit/","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"537.36 (KHT","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"ML, like Gecko;","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" compatible; Claude-","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"User/1.0; +cla","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"ude-user@anthropic","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":".com)\"`\n\n**","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"Fetch 2 — https","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"://httpbin.org/","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"anything?n=2**","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"\n- origin: `\"160.","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"79.106.26\"`","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"\n- User-Agent: `","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"\"Mozilla/5","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":".0 AppleWeb","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"Kit/537.36 (","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"KHTML, like G","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"ecko; compatible;","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" Claude-User/1.0","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"; +claude-user@an","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"thropic.com)\"`","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"\n\nBoth f","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"etches returned the same origin","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" and","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" User-Agent values;","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" only","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" the `args","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":".n` and","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" `url` fields differed (","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"1 vs.","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" 2).\n\nREPORT","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":" searches=1 fetches","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"=2","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":null},"finish_reason":"stop","native_finish_reason":"end_turn"}]}
+
+data: {"id":"gen-1793944386-0E5IJODQVOjLDDX1Y58t","object":"chat.completion.chunk","created":1793944386,"model":"anthropic/claude-fable-5.1","provider":"Anthropic","service_tier":"default","choices":[{"index":0,"delta":{"content":"","role":"assistant"},"finish_reason":"stop","native_finish_reason":"end_turn"}],"usage":{"prompt_tokens":26084,"completion_tokens":649,"total_tokens":26733,"cost":0.30329,"is_byok":false,"prompt_tokens_details":{"cached_tokens":0,"cache_write_tokens":0,"audio_tokens":0,"video_tokens":0},"cost_details":{"upstream_inference_cost":0.30329,"upstream_inference_prompt_cost":0.26084,"upstream_inference_completions_cost":0.03245},"completion_tokens_details":{"reasoning_tokens":62,"image_tokens":0,"audio_tokens":0},"server_tool_use_details":{"web_search_requests":1}}}
+
+data: [DONE]
+

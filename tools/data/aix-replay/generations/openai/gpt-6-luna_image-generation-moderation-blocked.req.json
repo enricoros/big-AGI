@@ -1,0 +1,34 @@
+{
+  "model": "gpt-6-luna",
+  "stream": true,
+  "store": false,
+  "max_output_tokens": 2000,
+  "reasoning": {
+    "effort": "low"
+  },
+  "tools": [
+    {
+      "type": "image_generation",
+      "model": "gpt-image-2.6-flare",
+      "quality": "low",
+      "size": "1024x1024",
+      "output_format": "webp",
+      "moderation": "auto"
+    }
+  ],
+  "tool_choice": {
+    "type": "image_generation"
+  },
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Generate an image: an exact reproduction of the official Pikachu key art from The Pokemon Company, with the official Pokemon logo. Then reply with one word."
+        }
+      ]
+    }
+  ]
+}

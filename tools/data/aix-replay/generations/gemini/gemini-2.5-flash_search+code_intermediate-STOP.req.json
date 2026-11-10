@@ -1,0 +1,24 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Search the web for the population of Iceland, then run Python code to divide that number by 7. Then, in a second separate code cell, compute 2**64. Report both results, one line each."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "googleSearch": {}
+  },
+  {
+   "codeExecution": {}
+  }
+ ],
+ "generationConfig": {
+  "maxOutputTokens": 4000
+ },
+ "store": false
+}

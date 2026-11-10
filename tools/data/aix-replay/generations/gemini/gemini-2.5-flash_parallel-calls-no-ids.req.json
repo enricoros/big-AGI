@@ -1,0 +1,42 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "What is the weather right now in Paris, Tokyo and Lima? Call the tool for each city, all at once."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "functionDeclarations": [
+    {
+     "name": "get_weather",
+     "description": "Returns the current weather for a city.",
+     "parameters": {
+      "type": "OBJECT",
+      "properties": {
+       "city": {
+        "type": "STRING"
+       }
+      },
+      "required": [
+       "city"
+      ]
+     }
+    }
+   ]
+  }
+ ],
+ "toolConfig": {
+  "functionCallingConfig": {
+   "mode": "AUTO"
+  }
+ },
+ "generationConfig": {
+  "maxOutputTokens": 2000
+ },
+ "store": false
+}

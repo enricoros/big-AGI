@@ -1,0 +1,28 @@
+{
+ "model": "openai/gpt-6-astra-pro",
+ "tools": [
+  {
+   "type": "openrouter:web_search",
+   "parameters": {
+    "engine": "auto"
+   }
+  },
+  {
+   "type": "openrouter:web_fetch",
+   "parameters": {
+    "engine": "auto"
+   }
+  }
+ ],
+ "stream": true,
+ "stream_options": {
+  "include_usage": true
+ },
+ "messages": [
+  {
+   "role": "user",
+   "content": "First use the web search tool once for \"IANA example domains\". Then use the web fetch tool on https://example.com/ . Then reply with one sentence. End with a line: REPORT searches=<n> fetches=<n>."
+  }
+ ],
+ "max_tokens": 3000
+}

@@ -1,0 +1,924 @@
+event: message_start
+data: {"type":"message_start","message":{"model":"claude-sonnet-5-5","id":"msg_011CgmAQjpfbQPzpNKwjTsaR","type":"message","role":"assistant","content":[],"container":null,"stop_reason":null,"stop_sequence":null,"stop_details":null,"usage":{"input_tokens":8211,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0},"output_tokens":16,"service_tier":"standard","inference_geo":"global","speed":"standard"},"input_transformations":[],"diagnostics":null}     }
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"server_tool_use","id":"srvtoolu_013apyUSJbapzoCq2Xu5ywQS","name":"code_execution","input":{}}    }
+
+event: ping
+data: {"type": "ping"}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":""}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"{\"code\": \"import"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":" json,re,asyncio"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"\\nr=await web_search({"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"\\\"query\\\":\\\"Node.js"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":" release schedule "}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"20 22 24 Active"}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":" LTS d"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"ates official\\\"})\\nfor x in"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":" r[:5]:"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"print(x['url'],x"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"['title'])"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"\\nf"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"=json"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":".loads(await web_f"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"etch({\\\"url\\\":\\\"https"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"://nodejs.org/"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"en/about"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"/previous-releases\\\"}"}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"))[0]\\nprint(f"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":".get('error_code'));"}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"c=f."}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"get('content','');"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"print(len(c))"}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"\\nfor m"}  }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":" in re.finditer(r"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"'v"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"(20"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"|22|24)',c):"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"print(c[max(0,"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"m.start()-100"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"):m.start()+300]."}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"replace(\\\""}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"\\\\n\\\",\\\" \\\"));break"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"\\nprint(c[:3"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"000])"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"input_json_delta","partial_json":"\"}"}      }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+event: content_block_start
+data: {"type":"content_block_start","index":1,"content_block":{"type":"server_tool_use","id":"srvtoolu_01HvqMBmHYfiVJFagbUU4hHy","name":"web_search","input":{"query":"Node.js release schedule 20 22 24 Active LTS dates official"},"caller":{"type":"code_execution_20260120","tool_id":"srvtoolu_013apyUSJbapzoCq2Xu5ywQS"}}              }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":1       }
+
+event: content_block_start
+data: {"type":"content_block_start","index":2,"content_block":{"type":"web_search_tool_result","tool_use_id":"srvtoolu_01HvqMBmHYfiVJFagbUU4hHy","content":[{"type":"web_search_result","title":"Node.js","url":"https://endoflife.date/nodejs","encrypted_content":"Eu4HCioIFRgCIiRlZDcyZmI5OC1iMWVjLTQ2ZDQtYWQ1Ni03ODJiOTE5YzQyY2MSDFRKfalY3LEXrkg2IxoMQvUDl2flNgKZqEjNIjCQl10KxAn/Wulp+xU9ZbY7GpdXr6g4s/xJHGlcr55PJ9BwbaQpnYrdlguUURfO7Hsq8QbsFDJ68KxBjDXRSc0DTCW3I/3mz7eo9LBG3X8ZvAVW/TYJ+rZ0g79fwddPaXD/S/Gnnh0ks8eX//WasW/2MJ110MavpAJ0eytp0gcVOLQFOduOLsJvf2lUVEro5VugStrFNuusf6/AhZMo5MOg5aNSoR3XcANHPqZtkEm7Q9YVhX1vu9iSlQ4uRK7Zw47b4SHydWCL+2EVAa+qU+RAdlhO5blesnv7H7CHe10//PfTYl5uQqQaUxJdqb+ikTXF4iPRiZ6xbCOqVA1GZgTBs2g7LDoeg8eer1yGFedJc646MNuLI6aXEWIKwngm282PUWIWZL8DpMyKJPj3eLoXQP2/sBwVL0wwNJjjPcHNa35eCBUxPVfWKPQ4rS6Y++pUb7QbOoqzZeqmsXDjqRK2uRwHhV8l5b2jgOHUs5iCzmlnA+bSNbsa/IAf1dCOJW5xD1vMscGCcQ4bn2AZpibAwhqQf0leJrp1WvCLpJ2/1oBgICSFpHFWxD33bfyrCWkL1ZlxY7AhheYq9QpUymB6Nu1yqecagpvdK1sPTupJ3aK+yaoJdK7wvOHwOcEkO6YL/VpJ75n4LQDpRc3DKBeMJcjY+M90Kw/20TiSLJcbWBUNXfXCJ1xmIfJS8JqDHDqEJyJl6vulCZxhRf3NvwOS4T2xEI5nIGFOTmgEd4UtUsRDGo3BJLSbtjoXdqSMrjHuf4Ws2qvSInyJejILTSk+TFuEQ652TdaDku9MXMkKpOkUoXMO/pq3wsHxvqJ+cjQD3SZGSd7umfqL/qfdkIfodrncCbFvRbuKwQ5iE+Ti563/fbzd7H44A4DHTeVubbJ6wJMFHE1V/lSvBONuw9OxyJSVeurGoQVICTMDE1HCX7uIBVkQAogMWTWToEU26d6C02RX0rPJs+ayAy2pvxkPy8F27/eS1kIMdEeA8ek2zRJJKZUbjDNJBYb+NlPlX+QWAFItNJ9lxxmDt2zjL5O5Zdrd17TXhtIvht2wkXw1LKRAh9w30B5C1Qj8xxqu831d1eUqB1ntB5TrbvBSxTCzChA35kwLrnUdm89Wfg0anSJuoWULhZatFcvnsHaQgXIEK19XQxUZjUeMiO7tnN2aJ1+tgLlcz2pIKyYy3FH5TOO5Uhnaqvj6bNALXvIWgAF+8yE7cu5/Rw5PrZLbmyFiWo6XMRgD","page_age":"8 days ago"},{"type":"web_search_result","title":"Node 26 Becomes LTS on 28 October: Upgrade Guide from 24 and 22 - DEV Community","url":"https://dev.to/akaranjkar08/node-26-becomes-lts-on-28-october-upgrade-guide-from-24-and-22-m6i","encrypted_content":"EsYKCioIFRgCIiRlZDcyZmI5OC1iMWVjLTQ2ZDQtYWQ1Ni03ODJiOTE5YzQyY2MSDOXYQ3QDRkQ70GpZAhoMUakueQ4vfwX684HbIjAeXTM76MXXsui904kjb3FD4cUulTEfFRuXA/q8KzJ1O2xNmmTrHeJFxgRewhOPEsMqyQl71dNFUpe0K/PI0pov6CdAuVUa5LfcoT1SvQuleZZWXc8ZmDABxzvy2HKJ00iP2QiiSqx+PmgjnMMcPzXz4BrafRKiHcHoe7Gnkyi/8bWgqikvlfwmEqOyRnAoH6Ox+elVJmDgTUjmcoyueVBJn4rkvtqPE4aTDmzhAjd3e2nxmRrlv7zm2AATjG1G75RJrnLlBOnKEIMAs6O7kp5yRzTJt1imkxyWk8oDyQ0/R2ewBuXjdAzTf8M+A0o4IqBK+gjEJyr5O8amx1q08+JbQqXDdXf0W/BDXdwYo6d2D5PuIFosbdGP53b78Wy3hWnyhAwO45PWyGrVFfrzeaiJeEntOgyhmv02r8uIZ4zFH5rd0xwU2mZeUBmalgJYKZ+KWH2kZLMFqJ5rTejaujAlHZjrVma4etME8zqdktHcmv5kx2XK3K9cKWxiTIkZgDRtZ1boHhZieYVK1lkvNqU5JQKYBnf3+0jrz07C+8J1XRANo39TDR+ldtGWfWs62HsB2gELWgJ2U8KYO37PpAJ/kb9JVcelgU5Cq3kPTL48oLV5kMHljZViHWBy+iVQzseNiqX5xORyCEPXZprtfpUVJ9hOeZ6SgqW01ZiP18bMq7HhqQhl9bcj6XNXLL1oqvldom7KX78OWNgj/Th9M994Oy5eSjtAB+AqWRZW4WsMzxA0Kdc7c+9aeeW2gkcEPCKlHOSZzJEkorTZM0RbWH1dTZgV5kTnjhb5v5iduENBt2zHyyXdPC8FqMeT6bS1rR2mFtLfOGpb2+9Gf+LTR0QGvr551ouAryEc15rBnIi17L7275SNOQE1OkExkHQunkNZajjnRbNUpr6t/kxXicaE0altdjUkCrysRMnC8bRVku09pImAGEwsicOkGaLyu51ciw21iDMYWs/ip3kUhZK5fUhjxHHzZh9KPkPmusqxxT2KDKJelr4AjHrvUaV9ipEpZOUTB2mgx7xVAEElRUG2Iv/+6dtu8nPMqU5COHiwQnUFlAMfsF3du65l0ZVQzUNUfKOH4VOlWOd+wCqymIqlscuRYqfS1VM0ORAHNdxDt0DP15n/dSjjZh8bBo46UAZoVDUw0PgkGUCXjf+lYGaRoZT+n+TzpeT/k0upJtnxz6nsCXJW7U9YH7Hh7aJ5bMLJxTvQGlt6YoiSaXrmbuyDdCuJLXtORSZaIAdRAtc2nQM+ulm2E3TJOJnE2jghj2roF3Kt++HNRiK4ak2sANEq/oU7zIyA5Kzu8DiSprHcjHzE/UoxzUHzCpGg339UBqU6lh8K/7yVuLhw5r88C0/zye5z1xK7uZeUQw4l1QekpwzcyjB6s6iOrsi+5af/EOPk3SIpmArN0X9Cyuvmd5/hxCPE6tNHcHkVK431cGgezQ0OxRI5ti/V5F5fXJI+karSNQuwYNkQQxsEO+6wjb4OmHKE4dDLPZboZ+2Jscg0vLt+bfC2gbWy51vJOD4HzABtmLiqIjJyftpxvqnRUcionysb68KpoY+4xGmSSADu4XHyTwIA0NpmuUKGLLXGfzAjSp2l822IPq5wGuWAcvULIM3nDgs3w2JBXG41hMIBTGXSt/IVMEWqXGPQCHL6Qx203YAx0qUOsLLTIcR/Cwcvrtv/lguE8UxVa0klGAM=","page_age":"17 days ago"},{"type":"web_search_result","title":"Node.js Release and EOL Timeline - LTS Schedule, Active LTS and Maintenance, and End-of-Life Dates","url":"https://hidekazu-konishi.com/entry/nodejs_release_and_eol_timeline.html","encrypted_content":"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","page_age":"24 days ago"},{"type":"web_search_result","title":"Node.js End of Life Dates: 20 Ended, 22 Ends April 30, 2027","url":"https://endoflife.ai/article-nodejs-eol","encrypted_content":"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","page_age":"3 days ago"},{"type":"web_search_result","title":"Node.js LTS Schedule: Current vs Active vs Maintenance","url":"https://www.osseva.io/blog/nodejs-lts-schedule","encrypted_content":"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","page_age":"30 days ago"},{"type":"web_search_result","title":"Which Node.js version to run: 20, 22, 24 or 26","url":"https://www.nihardaily.com/posts/node-20-22-24-or-26-which-version-to-run-after-oct-28","encrypted_content":"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","page_age":"1 days ago"},{"type":"web_search_result","title":"Node 22 vs Node 24 in 2026: LTS Support, Breaking Changes, and Upgrade Path — PkgPulse Guides","url":"https://www.pkgpulse.com/guides/nodejs-22-vs-nodejs-24-2026","encrypted_content":"EroLCioIFRgCIiRlZDcyZmI5OC1iMWVjLTQ2ZDQtYWQ1Ni03ODJiOTE5YzQyY2MSDGEwBdKE2DLmkUS4SRoMOiMBCPU8tg0YzdE9IjBx+0KrhQiTo7qXsmXIanOQy7pGUYMJqBUNQeHNPlVikon4PTuWlq774Bbv2f1RJ4gqvQpHYNxPA8vAlenkmddifh+aNaUwehyN2j4AJKmqk4GaEWbprFweqFvzl3Jp9lWJCYhWolMw9oyEggucskw59L+VuFdO85cVJ+Gsw3jzf7pSHSCEPSJ1UwsdIjz8dv7RZJOjUA2L1aZRwFLddix1yzv8pgUnKLGvkl8vwwdBufvyKY8nFvWPjRXdNf17gyF2WctxZb+6NYfB1O8BWedzSBZ0E72Tkvr+eYFcb7R0Cvxj0SN57B+pGXvip7RCTv2eOH+EXSD0FN1Z4n4pjYyCrdFmuoiwuXd9WwTucNeRE1ifCpl2jjqLiuE40xEW1xlZAOmVEoVuIzNxEpJA1JSN7mJfqbupw1dyL49JFEvPi8a+wS7ZtswtWIHa9FWPm2uXerg3apnggZ+9bBa4GSilVDghoBmInOTt1AMnbk9xXwOAc0MDbize996hty/X7U2zVacEN1YJuDLPAKChbYxBCC76bBeYORZmF11gsBJUSf6c7wMmoxwaYp8emKo0MaV5Ki0Hm0+WpfWrZjBPtI7ttNeJXkCTUfqaC1aAjSHr9ImgO3jVh1+m6lcJGdp7HgTxB1b0TxE7cKsGwFWU1foT0+lWEQekthku9+9C4zrOVGwrHoLob2iStRhFP3EITmOLmfdszWKy2WC7bTNAtkOTZ2WNoEyQif5JaQrrxeDKcEzjSU/L6nbQvXq64oBY3zkFllsqKxzaYWydZm8R9G119q/b6+eppKwkSBB8kGX8g9IV8K3Vcch9asUKVr2v0b37rFqe/nGEVoaB2yRw5eB4VEZvVoGSGTalRz9tGEyNr4mqwI2LqdI5gIHd/37GuOGbJgbCavB5tPMDAA6KxzUBC6W3bEWYbmCg6Zwf0/GdzYSf8JgIhNj0JG7H2W3hrN6ava9fbwulGgv+NnQRTu7tJtzXAGSBrD3lEDE+9VFLKT2J/BNFtrj1RTXyH/W+gMCAg5Xv5ykss67SLfksaaEe4MmXStv5PkqRwB2BUSnFe08NqIMQTNYxn3+ztGm2U2XR8kYlO2DhR3IQ6gNNYq+a6nLQvXEzHTCBUT2D0lPiZUyReP6mVkroHUyeFsxy5r1Qg+nhL34wysO7KpcfDN1s7Zu91K92m/QsJn18Onm1oLk1dZVzr5b2oJ3//JEP956VnPpW6//GkQmm4NIFmj7IDTBnPnxnyZhAWIIzlR6UZlNxNnT1obptwlBeG7kqEBLrqUJfI2LbX5YrFuw/ZpGPHPKPe0ViVSGkjVuBrxi2dSSesbcTLL0JFRNkO/4yGXQ+ZSN/fKrSUnL0WcZ9P1W3VpGWy03puTM619egaqphFEfRvIuh8WE0qiY2ISSmIDWAXUQVBhlIlJZnGTD9UgupsA8jsreuHocDS8UMpOqvwBi0fzioUt2cbAyVRfPZ8LwauzwUJICBq4IbAlj+EtLPjXr0h1nVe5tpGk2SiqLlsnE1cMIcFdBp0Zmb2iIBt2RXoYEIhoTMSZ+WgNS+Fkr3hfLlHcLRo2q/8r2n9wDFkYRdf0KIknIJU8cg1jVECxpwBbRWu8uwkENnMX3sRs7Nk941WVJWe5jDpby/lVmRNc0MW/vfGRPkzp/BXz9Po1H3/+DqIAC2/VHz7uqRJktxQKby6fLNyKUv+dQA8jmTi6gTvcd6o4xjjfMgWdRL7Rd+0UmQ+eXc3WKlVwvOnFXwQbfe2pY2afxTOxNd4pEcsd1GWGTO64LeOfVe3Xxe8MnniIfrLk+mOWcw1vUi1eDiVCPdhCUqA4H7qgfBsy0YBFCOF6WxgzXZeAQ8+U+gk6QYAw==","page_age":"5 days ago"},{"type":"web_search_result","title":"Learn End: Node.js Release Schedule (2026) — Complete Guide","url":"https://tutorials.dodatech.com/end-of-life/nodejs-versions/","encrypted_content":"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","page_age":"139 days ago"},{"type":"web_search_result","title":"Node.js End of Life (EOL) Dates and End of Support (EOS) Dates","url":"https://eosl.date/eol/product/nodejs/","encrypted_content":"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","page_age":"158 days ago"},{"type":"web_search_result","title":"Node.js 24 Enters Maintenance, Node.js 26 Becomes LTS: What Changes for Security Fixes","url":"https://safeguard.sh/resources/blog/nodejs-24-maintenance-nodejs-26-lts-october-2026","encrypted_content":"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","page_age":"8 days ago"}],"caller":{"type":"code_execution_20260120","tool_id":"srvtoolu_013apyUSJbapzoCq2Xu5ywQS"}}              }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":2     }
+
+event: content_block_start
+data: {"type":"content_block_start","index":3,"content_block":{"type":"code_execution_tool_result","tool_use_id":"srvtoolu_013apyUSJbapzoCq2Xu5ywQS","content":{"type":"encrypted_code_execution_result","encrypted_stdout":"Eo4BCioIFRgCIiRlZDcyZmI5OC1iMWVjLTQ2ZDQtYWQ1Ni03ODJiOTE5YzQyY2MSDAya1TLIObrsH/sk3BoMMVJA137ZGLVucf35IjBEz4qEzhh6Be3g8rEq4yKE8L1f645MaFgAFKipyCdVC51rfrprcpwJmFtOk/dShfsqEtUUSfQbFtRxbG8A4wRxJuTPZxgD","stderr":"Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/asyncio/runners.py\", line 190, in run\n    return runner.run(main)\n           ^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/asyncio/runners.py\", line 118, in run\n    return self._loop.run_until_complete(task)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/asyncio/base_events.py\", line 654, in run_until_complete\n    return future.result()\n           ^^^^^^^^^^^^^^^\n  File \"/tmp/srvtoolu_013apyUSJbapzoCq2Xu5ywQS/cell.py\", line 14, in <module>\n    for x in r[:5]:print(x['url'],x['title'])\n                         ~^^^^^^^\nTypeError: string indices must be integers, not 'str'\n","return_code":1,"content":[]}}        }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":3      }
+
+event: content_block_start
+data: {"type":"content_block_start","index":4,"content_block":{"type":"server_tool_use","id":"srvtoolu_01Ln7EmYPQPkhnKy3kS3X4bK","name":"code_execution","input":{}}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":""}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"{\"code\": \"print(type("}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"r),"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"str(r)[:500"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"])\\nf=json.loads"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"(await web_fetch({"}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"\\\"url\\\":\\\"https://nod"}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"ejs.org/en/about"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"/previous-releases\\\"}"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"))[0]\\nprint(f"}    }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":".get('error_code'));"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"c=f.get('content','"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"');print(len(c));"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"print(c[:3500"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"])"}   }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"input_json_delta","partial_json":"\"}"}              }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":4         }
+
+event: content_block_start
+data: {"type":"content_block_start","index":5,"content_block":{"type":"server_tool_use","id":"srvtoolu_01KuNo6TaVDkEyWBm6v2bB83","name":"web_fetch","input":{"url":"https://nodejs.org/en/about/previous-releases"},"caller":{"type":"code_execution_20260120","tool_id":"srvtoolu_01Ln7EmYPQPkhnKy3kS3X4bK"}}           }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":5            }
+
+event: content_block_start
+data: {"type":"content_block_start","index":6,"content_block":{"type":"web_fetch_tool_result","tool_use_id":"srvtoolu_01KuNo6TaVDkEyWBm6v2bB83","content":{"type":"web_fetch_tool_result_error","error_code":"url_not_in_prior_context"},"caller":{"type":"code_execution_20260120","tool_id":"srvtoolu_01Ln7EmYPQPkhnKy3kS3X4bK"}}            }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":6        }
+
+event: content_block_start
+data: {"type":"content_block_start","index":7,"content_block":{"type":"code_execution_tool_result","tool_use_id":"srvtoolu_01Ln7EmYPQPkhnKy3kS3X4bK","content":{"type":"code_execution_result","stdout":"<class 'str'> [{\"type\": \"web_search_result\", \"title\": \"Node.js\", \"url\": \"https://endoflife.date/nodejs\", \"content\": \"Latest: 25.9.0 (01 Apr 2026). Node.js. Release: 24 ( LTS ). Released: 1 year and 6 months ago (06 May 2025). Active Support: Ended 2 weeks and 2 days ago (20 Oct 2026). Security Support: Ends in 1 year and 5 months (30 Apr 2028).\\n\\n# Node.js\\n| Release | Released | Active Support | Security Support | Commercial Support | Latest |\\n| --- | --- | --- | --- | --- | --- |\\n| 24 (LTS) | 1 year and \nurl_not_in_prior_context\n0\n\n","stderr":"","return_code":0,"content":[],"abort_reason":null}}  }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":7         }
+
+event: content_block_start
+data: {"type":"content_block_start","index":8,"content_block":{"type":"thinking","thinking":"","signature":""}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":8,"delta":{"type":"thinking_delta","thinking":"I need"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":8,"delta":{"type":"thinking_delta","thinking":" to pull the URL out"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":8,"delta":{"type":"thinking_delta","thinking":" of the search results,"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":8,"delta":{"type":"thinking_delta","thinking":" so I'm going"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":8,"delta":{"type":"thinking_delta","thinking":" to parse the response object"}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":8,"delta":{"type":"thinking_delta","thinking":" r"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":8,"delta":{"type":"thinking_delta","thinking":"."}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":8,"delta":{"type":"thinking_delta","thinking":"\n\n"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":8,"delta":{"type":"signature_delta","signature":"CAQS6QQKEAgTGAI4AUIIdGhpbmtpbmcSDN8fau2j9CQPlvuDlhoMGOF/yLIHp/l1kxeoIjA0FKtVLz5zC72G//3yn77VcsR3T66phhcJHGstndXkn3enjJ7t8f7MlYm/Jnznn1cqhgT44n7Lbg9UM0q1nQ62yRljvo/ZYj6CPvZRyreJ9Czu++QlcLt/YdpeuBbAAyk4oBlTb/Ju7B94vnAgxTNnhaxTP8tkKRciXlm/VzkiHLfezWK9FpUoyQJYavsaw70Z4ciwV57NT7Ti8JD7OGgxFsiYYE54m59jxKDYCPGNEo2d9LsdOm5f3uwOzKD06AZ9oopS4hi6Fr8nqe59rP9zZl+2wI54mwwpgng0Se/o31Ei6r6gxOTDxN6PlCDcfV95UHHHUXSFok2tEdNCQBC4ILa2yrP3PimGlDNb529bwliLMU02qaZDmnc9/SeBwmhNI5cA+XB6DBcXJQ9rvNZdxVVqy+is8trqyRl0A/Q5Xkjxjk0ltLGX0GeE1dfz65BnlkggF0KARh5An13nMeIiDhqaOqLuhlh7vA6dCGpm6J780uDPLrxzlMvNJ3MNnGLnZLiunVQfMqaOhPBDrpCkcnRrmf3Hji2hzgEPmQLUOEwwEyC1t9+BpoQVf3ku/7NGoqXxG8Y9gPtCJ7Q90FEyeG8e+YDUdxqjUJSmtYFO+rz4mtN6RZdP7tdx66b6hvHxuT9pUwst32gJ8uhCR/B9w/7PSems3ELu98rnr4JvSJWGJtBMLLUwKMMQf5qDGQhW0vlonRycZ+yRICRHZvTlwSlT8Npkl7n0XjVX8iS+Jivnfho5i7+peBgB"}       }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":8      }
+
+event: content_block_start
+data: {"type":"content_block_start","index":9,"content_block":{"type":"server_tool_use","id":"srvtoolu_01EwJpbkSo4YxD7oJEuq26Q6","name":"code_execution","input":{}}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":9,"delta":{"type":"input_json_delta","partial_json":""}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":9,"delta":{"type":"input_json_delta","partial_json":"{\"code\": \"r"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":9,"delta":{"type":"input_json_delta","partial_json":"s"}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":9,"delta":{"type":"input_json_delta","partial_json":"=json.loads(r)"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":9,"delta":{"type":"input_json_delta","partial_json":"\\nfor x in rs:"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":9,"delta":{"type":"input_json_delta","partial_json":"print(x['url'])"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":9,"delta":{"type":"input_json_delta","partial_json":"\\n"}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":9,"delta":{"type":"input_json_delta","partial_json":"\"}"}      }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":9            }
+
+event: content_block_start
+data: {"type":"content_block_start","index":10,"content_block":{"type":"code_execution_tool_result","tool_use_id":"srvtoolu_01EwJpbkSo4YxD7oJEuq26Q6","content":{"type":"code_execution_result","stdout":"https://endoflife.date/nodejs\nhttps://dev.to/akaranjkar08/node-26-becomes-lts-on-28-october-upgrade-guide-from-24-and-22-m6i\nhttps://hidekazu-konishi.com/entry/nodejs_release_and_eol_timeline.html\nhttps://endoflife.ai/article-nodejs-eol\nhttps://www.osseva.io/blog/nodejs-lts-schedule\nhttps://www.nihardaily.com/posts/node-20-22-24-or-26-which-version-to-run-after-oct-28\nhttps://www.pkgpulse.com/guides/nodejs-22-vs-nodejs-24-2026\nhttps://tutorials.dodatech.com/end-of-life/nodejs-versions/\nhttps://eosl.date/eol/product/nodejs/\nhttps://safeguard.sh/resources/blog/nodejs-24-maintenance-nodejs-26-lts-october-2026\n","stderr":"","return_code":0,"content":[],"abort_reason":null}}   }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":10           }
+
+event: content_block_start
+data: {"type":"content_block_start","index":11,"content_block":{"type":"thinking","thinking":"","signature":""}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":11,"delta":{"type":"thinking_delta","thinking":"I need"}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":11,"delta":{"type":"thinking_delta","thinking":" to find the official page"}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":11,"delta":{"type":"thinking_delta","thinking":" first, since"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":11,"delta":{"type":"thinking_delta","thinking":" there's no URL y"}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":11,"delta":{"type":"thinking_delta","thinking":"et. I"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":11,"delta":{"type":"thinking_delta","thinking":"'ll search for it rather than"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":11,"delta":{"type":"thinking_delta","thinking":" gu"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":11,"delta":{"type":"thinking_delta","thinking":"ess at a"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":11,"delta":{"type":"thinking_delta","thinking":" link."}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":11,"delta":{"type":"thinking_delta","thinking":"\n\n"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":11,"delta":{"type":"signature_delta","signature":"CAQSgQYKEAgTGAI4AUIIdGhpbmtpbmcSDLxo79NQA85cofFznxoMz+ldNky6cI4d41wRIjDw7mNSItLgVtwEgO3G86g56gkf4Nsb672uaMFm7Bdz3LkHijSUUlE0nCq40axBFnMqngVcWis4kC+9XHOZE0X7X2UD1GUiq2OO17KbCTM6xTLuYNavq4JU1LDfzPFMxobYZykymBTqqxCYP7j8N7XDAKsqdtbamxegIIWZZ3UVunJE/7C0h4911a8ZbQXYOFVwHROSZHuzNbeACWU6YzN9WMaPI3dFuCIHLMkMVIcDK2mWP32qMDT9/PkF6PWmLE5NxNXfeq9teNBk/+/LvCRaCtKP+h1F/wUf3n+1ytN54GcD6d/50tBnWsd/S+X/bPUKFliB6aXNooJP1h0sANhGK14YHiMh20TqKhYSGz4EWBjM0mSNpzJS+0dOrjn114sdqjaMyKhdk0srkPHZCMLCRWB9BjKGUuq5N+pKwDJCbu1roLuCCmJLQnkMCRDyR6Dx86IKHrXmmyCD9lLinenK8U3eYOog8LwGaL9jHbNZbpVjuvGCijno+LI2nV+aBwz9yYzUaZNrXIGxd4USVgm3BfvYlSrHs3uthxv3i/AG/yG+xnKovol0gF3B6PKrBW7l7F38L8/MiC+J5T7p155K5Zact8Y4MkyZyV4FnGSWgGV5Ofe8RgpbYLC7H8sMH9M/uz3BQahu/0Igks76FMkitmKOuz1mX6TF2EABkQ2pH/t9FF8fnVY2iBm4tvaujWn56JPFn/bekq2uwvoAkx3le0IMw5xR/xZ4Vakw/SOoC/8Rpn3NPsWoz44FZtrmtcVc7xrCqR6NJnTLv8txAwAoO3JyLLNVL4A73Ntw8pOwLshJ7uKjZP+MNA318HovyQhD+8GFl0CIqHDy08NzM43dKgC0CxsmCntTJc+X9xybFNrhLv3fKlSTIqEvQ54m79djKdj5ishggcbBpyz0t2l1WKu01vDNHGN81CWe7h5JkTn+dpoCW5eUh8KjN8rv/FM5GAE="}             }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":11    }
+
+event: content_block_start
+data: {"type":"content_block_start","index":12,"content_block":{"type":"server_tool_use","id":"srvtoolu_01Nf3u9sdGsVfBDnkjZ9UB81","name":"code_execution","input":{}}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":""}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":"{\"code\": \"for"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":" q in [\\\"n"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":"odejs.org previous rele"}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":"ases\\\",\\\""} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":"Node.js Release"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":" Working"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":" Group schedule github n"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":"odejs/"}  }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":"Release\\\"]:\\n    "}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":"for"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":" x in json.loads(await"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":" web_search({\\\"query\\\":q"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":"})):print(x['url'"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":"])\\n"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":12,"delta":{"type":"input_json_delta","partial_json":"\"}"}               }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":12     }
+
+event: content_block_start
+data: {"type":"content_block_start","index":13,"content_block":{"type":"server_tool_use","id":"srvtoolu_01NEJcoNLbHn4GKEr6qB5owo","name":"web_search","input":{"query":"nodejs.org previous releases"},"caller":{"type":"code_execution_20260120","tool_id":"srvtoolu_01Nf3u9sdGsVfBDnkjZ9UB81"}}          }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":13   }
+
+event: content_block_start
+data: {"type":"content_block_start","index":14,"content_block":{"type":"web_search_tool_result","tool_use_id":"srvtoolu_01NEJcoNLbHn4GKEr6qB5owo","content":[{"type":"web_search_result","title":"Node.js — Node.js Releases","url":"https://nodejs.org/en/about/previous-releases","encrypted_content":"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","page_age":"14 days ago"},{"type":"web_search_result","title":"Node.js","url":"https://endoflife.date/nodejs","encrypted_content":"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","page_age":"8 days ago"},{"type":"web_search_result","title":"Node.js — Run JavaScript Everywhere","url":"https://nodejs.org/en/download/archive/current","encrypted_content":"Er4ECioIFRgCIiRlZDcyZmI5OC1iMWVjLTQ2ZDQtYWQ1Ni03ODJiOTE5YzQyY2MSDJwyZBnYwgjy4VLY1hoM7kG5CL+qSjI2HMdbIjBN8W+2XaOEfxDzrxmd7L0OX4qL881/Fn7ym6YO8Y9P8fNiKjWZnkJwphVSjOmYvGYqwQMTslJOsTgiy650fDeDc+S+tbK1rJy6qUzlJvC7xnohfOTIcAGwx8L4dNxWtPEArwn3ikpLzUGjXU0niraPY5duSsdeJY5f7+2LwA2s3go/m2FHHLasL+JG8BWj+kzLP+UGxqXsUugJgSlph9Sl7DpXQQRC7qmd6OaP27zyyhCCHgHLUl1x+YDPEXGu8r7+NwKiPhKmRjMV/XKc8/iuRHsUhggMIf8qi2jWW0IlW4oQe2zGqrBBNWlVbsfNnzlHLlusCXvC2rbKxaV5avtvatIu0/xP53Ffz+uauli1kRxQme91egAmXYrPTSbeyaSZLEomjqGhD6hjF3oo8wEjy6UMiVOZ7cwxHPadogGJwz6kSEM8uzP3H4FbnUbpstYYuUKaf48IGGdxdWDeZUtOAWxZUwa+2OyaQt4H1+iL4Q4aaaF7VB9pUUuUQLIDhXZ+5rLox0b58dOlLkE3g+hTAKXFIWGnTaF7I5y7RTExIu/xyoUB3rEChGg3bXSqFxUoSEGEsDYu8dKVX1AuuHA7xpDrWglNo95jBtBnOdcCcaVpbxJGpVdjdKp7/g3h8VAc0gEtW1czcUL7TdbIhHE1XKehwBgD","page_age":"9 days ago"},{"type":"web_search_result","title":"Node.js Release and EOL Timeline - LTS Schedule, Active LTS and Maintenance, and End-of-Life Dates","url":"https://hidekazu-konishi.com/entry/nodejs_release_and_eol_timeline.html","encrypted_content":"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","page_age":"24 days ago"},{"type":"web_search_result","title":"GitHub - nodejs/Release: Node.js Release Working Group · GitHub","url":"https://github.com/nodejs/release","encrypted_content":"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","page_age":"17 days ago"},{"type":"web_search_result","title":"Node.js releases, versions & end-of-life (EOL) dates","url":"https://www.versio.io/en/product-release-end-of-life-eol-openjs-foundation-nodejs.html","encrypted_content":"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","page_age":"9 days ago"},{"type":"web_search_result","title":"Releases","url":"https://nodejs.org/en/about/releases/","encrypted_content":"Eq8HCioIFRgCIiRlZDcyZmI5OC1iMWVjLTQ2ZDQtYWQ1Ni03ODJiOTE5YzQyY2MSDBpb+CPxdDN4cTJ2MBoMXqtdQ5TcZrhT2ducIjBHyHDpvLTHfaMFWG4CN7BR5RPOBzth4yg+qA4M+iqxEhNJbTQqkHvuNUsxSZjrnSsqsgbYVyP7AnIEsm5x8YRU3Y9jdUn8+mDlRsOdJO9U0K1M1j3MOf1r96Crbn/g/6uyrFXCsTQ09Gbw7QcXN5ZosnvysFpjsNkTKKvO1KLRwNGo+gkph7wxicfZsJYP6iVYVmhHU9tNGcU/iHeEfE/tiWv6vxHhZWpojhQ1UWXFqmTTzaNhqRWbVgaRyRhLPGGI7hv3j8cjyIM0gdo3ViW0aXr1pWmXxsr1BJswisMX9S7KDlILfM7XM2Xppm7mSOW6R+IVuw9ZXj+sxE+m1Lwr1SOqvtxXS4hWqLNi8yQuxIcs5M5Rcpyvh6YFceexTEVnj2HX7Y9lmlZDrZ8BykWwwmp2PshkKM0dL6vLlh8g1EK3x0Qnhx84P8py0haNtpcdDaH9SRvp1fC+LAlfYSZlPV3k7IGkI4iW65O6mtteJuVMt67V7O/ccnIxXRk/nB9RoaQL4j13a3nYZsAbB3FKtcNvDq+nEmh7IDLz7llj7ctxFjH2NhD1M+Ub8MrkcdZ5JynNWO/qPuL1YemzucUMPX4GMMdleuTZZmOTPH5cMPEuxQUGfFPjiNmOQR1uC/YYdz9ugDhYR+v+E0XVHXUzGQu75LdNVooIvtmOzv/DTdYNRXoTuJmCo2Js+KnRUN95n3uY2vOQ+ilr16rcMtlI9rIWbJciQlO7wIi8OG/Ypw39JXRaLTMrCnYI5sHkBoc4LNWVLpU3MO2bv+0+WJ4nnsjOm9cVPjcbxoowvfAe91lkIQoZPORe0pWJFt0Uj8PXEvEyd7wEvfmLdeuHySRlGwh1VLpu6YKG63hGCJwOoo43wsAAJi5sbncKrfMlX/9qLqc6tkLCb5Ptjv8wD2M33d0oyi4/2VKOHHLVUw1284FKqf2ip05Luxlmy1rwFXaHCEQxbu2jEJ0sRAaXsz0NIZerB1uGWewcXBc5GWVK8H5r+GmohrZJxYgpHNfGyHKetLaKyvRG0cAUPQGNfXarFKip2W0mEuOtU23mtYQzJvL1QZmrFXpkijY6B4CKa4sDjEzlo19YGQSKX3SdCYnJDj7GxUvXlPV2Lc0UkAJvGk0GK9+3a8zhIu4wwpSDedcfhuNdThgD","page_age":"1520 days ago"},{"type":"web_search_result","title":"Node.js","url":"https://en.wikipedia.org/wiki/Node.js","encrypted_content":"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","page_age":null},{"type":"web_search_result","title":"Node.js Latest Version - Support Lifecycle, LTS & EOL — VersionLog","url":"https://versionlog.com/nodejs/","encrypted_content":"EtUFCioIFRgCIiRlZDcyZmI5OC1iMWVjLTQ2ZDQtYWQ1Ni03ODJiOTE5YzQyY2MSDCvkCySGWd8QVoeb2hoMObAkXYCLxoCRsoDkIjBz8FktahftZjatlc9RTweoPO16XnHwl3KBXKOg/9cQ4QOM7DCS6ElEOQBXqs2LXPcq2ARcoUjLOTpoMpvUiDJvebU+Ej6on0ramrFXRLJDDoNuYSn8KmeyyknfHlgCWfslW24mO6edeLnaWQaazAsxh2hqSTCTiNfWZ4jDwLav72T8EwrOBgTslosyOM4Uy9g6V7c5Dt1TBZtJvwVNPZZMp3MLu0oNhFGybEszLdVza9oe62BSQsOHfoszByEQOZwlBrN06tGZ0AB56PsiWVq7aaN3K2nECm7B2pGBWM2SULzFSZaexTTU9o9Xdfez1GdSvbJSpKtWzV6XDQUTPQkPpU3EUnfD3KY104QJ9o8vALl78pPKrFIDDgbM8u2wif2vZy4TCyHPUnlWC/ZMxLuhTicsFJIpD/e5fmOPmHCYLVsiukom51k+DDqUTBvRgH0Y9Iq4YGz40GyzoZqxXxoPmAHqWNIVXhEzuDTZtZd8vfhFeTOoXZ/tleYNVZlEyS4mlbJgtMRqcdv2+WS3anhMSo8Qvu/Wepu+G8IJnGbdqo5RLXdZq76l4/3IBWoRIvmY+p1XDjQPecUDtvJ11jiwwKicYuIcphwVQvhrcOmDtltND+40bHAuOVMZUdA/5RjFc569r9Uscze++0wsedB8Bg7ioK7HFAAS6+Gk3IUnvPOqIS4i2bv5KO8hORNgetjigbW92/8ODVEexbQbbfAQGOJnH0W6s1qln23tWvDcOPSqgZJGitfJhIQYRfNgTNE8C5UjmQj1OrjtDLqk+hJJG6+kqsiDMOw+qnzPDsJUKDQwlOkLdFOkh0PYZ+zArmslDPN+9b+cYaVSU3YcFPawRSysXLZrnhqfyDIYAw==","page_age":"22 days ago"}],"caller":{"type":"code_execution_20260120","tool_id":"srvtoolu_01Nf3u9sdGsVfBDnkjZ9UB81"}}     }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":14        }
+
+event: content_block_start
+data: {"type":"content_block_start","index":15,"content_block":{"type":"server_tool_use","id":"srvtoolu_01EZZR5mHMESctvbMd5rfApA","name":"web_search","input":{"query":"Node.js Release Working Group schedule github nodejs/Release"},"caller":{"type":"code_execution_20260120","tool_id":"srvtoolu_01Nf3u9sdGsVfBDnkjZ9UB81"}}  }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":15    }
+
+event: content_block_start
+data: {"type":"content_block_start","index":16,"content_block":{"type":"web_search_tool_result","tool_use_id":"srvtoolu_01EZZR5mHMESctvbMd5rfApA","content":[{"type":"web_search_result","title":"Release/README.md at main · nodejs/Release · GitHub","url":"https://github.com/nodejs/Release/blob/main/README.md","encrypted_content":"EugFCioIFRgCIiRlZDcyZmI5OC1iMWVjLTQ2ZDQtYWQ1Ni03ODJiOTE5YzQyY2MSDLqHqW1AXLGKX9/MhhoMJPyWNfv3wfV28EJ3IjBUghN9xvUhOawyZMFNAuSIFtlbcAPt3qM6imVS53ME1dM+b4cWemoj3je3FaGLoYoq6wT3bDKgiG7f1BX8GEdSPIuiqAQsflIpsEyFFgCeDSulUvtitaoZ2yge4ODKM+/rgjQPOFgsOZhwkkMQVeUAXYwwcynQPNwyXMWIyhcf7tLmysezsCNhP7G1++ZBLKempLHk736oKUcu5S5c+60p+dnnUB33uQV/pI2wuo3vKYUyecOMKtbi7O0IMw/rQWvHY9akJHcNIPFWcQi4BdREPe8kd3qpnFyEQeBfjJ/9rHMHKuqQ7r32Atef3HzAQSWKQuBJ71q6ku3muAZu5GWtLluo1Ef21g2bEIVqDCDarQmm2oEe+FZSD5J2Db3zxsTOq9ErHpMHlEgRhDfouubkdp+i2kNj86FiaipY60ePa8NE+sYrXEVm8avwTppuqbVnwb3fz2iaO5+y+wVjbexWH/LE0WBr3NzrSOAw0bniBYPTmxHOlQIeAxv/0i6j823sT+AqkkI9EFL9OcSH7eY8x4A+e3JL8/DG2XUiDnGJglfGlCgaQy8orgIolwWwXHXVQTgvQtlye0Pr9jFsYfpGtQc3XTkGWn7qvDk7acnStsJKIC4rZpdaQdqG+9KWgd/fa7u5uFAzKUDQGxlHWWl1l3y5EYIuOt7fGCPWLONqfP9WIz1uolAoAOUJDmXyAfoI2D0IvtL3v4qgMhuR7e6FWixmYp/4vrlwvYE80dLbugMAw7ANPBExOnrHfouzJbgoeBNg4t1OK2KBVaUHO3fu7U9TUkhqU3C/55mg7uiz3ukInTeS0K/KiZsI4OvYYMxX1rr//gZcUhTNIIr1+h3V6o3zxnrG5KBrLJf7oLpZjKtXsKrVso+P3aZeFi6FGAM=","page_age":null},{"type":"web_search_result","title":"Release/README.md at eb91c94681ea968a69bf4a4fe85c656ed44263b3 · nodejs/Release · GitHub","url":"https://github.com/nodejs/Release/blob/eb91c94681ea968a69bf4a4fe85c656ed44263b3/README.md","encrypted_content":"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","page_age":null},{"type":"web_search_result","title":"GitHub - RafaelGSS/Release: Node.js Release Working Group · GitHub","url":"https://github.com/RafaelGSS/Release","encrypted_content":"EpsJCioIFRgCIiRlZDcyZmI5OC1iMWVjLTQ2ZDQtYWQ1Ni03ODJiOTE5YzQyY2MSDIt9QAZ9aEzidFtY1BoM42FdhkFRIz4k3FvFIjD4kwWZAsdz19P+cFuDk65/wjlmp3wdtwnWY+BJnxjxTBYBX7DCWJtdrjBdQCQusNQqngg3zOkeHnaACyKWbNqXD3Q24EQUD4HrCbSJBcT7GCbQDwQbbjpdNbh5K95/6GmxtuphVnMCcq7l5NOJdAWQfRDENHA0aHnvOC9eOuNBQV7FK7ZQpwvMghbV3rsNC+9Hm6eastH6SExZxPgM6hvJhnkr5ogMNdIW6K7pIlbYTgqJD++vyx3xUSmapxY4fVofYJgZH+15Wbk2dzigjBUvgpbL83cjswFrrNZRJBAZC+ROmrVCPyPXldCwK7+fLVmXNYTHm7P6QroK5E4w5WAJYB+FRXceP6hLYWloCx7KsVGUjsQbu4cn+eIEQ+pctQzqDxWEZMRvodzEUbpuN3y0h1X16VI/9H8GO+jLoO9OGB4gVBV4Pet6rR+5P2vEU/1z6yKkDoGc3oQc3RGRwD6j7HNrOjv2BpbZ2vFW6P1q3E0ARUSLZK8dNYkyLDvSmboYiFAeudJBd9hUBzDYoXilnYUWx8GaYbv/XhqO5PRm4lUcwZt4ebKPrOnxk26VtogtPRysTM8QXTtW0ITrcKXeYFe0JyrGEo/23qMog73OOSomqDSqxOZZqBpJ8/Xq2moIyV6HyY4QTqWtyJp/vzzGre9Cf77E8wupn+wXsX/YK1DN8pifsmXQJPri6te9SAEy9P8KKKPfDh//w8rdVHZkVtVntHNTrOtuE16Oe0rYEc3Vdn/jq/olpmcSpDPWDNY6zP99BpI3F+wK24uazGa2Ny7rWtYdWnoHdDYa9C1A5qQAyNgTZceiMZI8yPeakfmhVBLImjvdJS/FYKKbcIJD12xuU8fweOGbDMM8XjMZrVbUGuuTI4JEQxa9O5CGlOmGvrzNxY9CLwruLcjFomYfCwVqOSaB8q3GPw2trHCnct3yKCFmZIxbITQFLFCPae02wvT7vZkoAUpVpRvKaAokIO9+2AKepaV5jc4V+I1S4uy7SHmFCqkV+WrPl8HPdmBPOAUAoRlV2oc8O1NmEFXDRlsub9vMOkGql+2BpZhH86S6U8FWXaRq8QgAawIZ1geavG5O7tFVo/ibNiJn22FnQCfNQghNAsA4TsQUOHIYmgCbAwv5UfkqBIoPo/ep1xJdjt/0NWYXZ6YbExHkImh+1p+YMHAdONk5ZbyGOfJY4YcbEUKTr1gxxwrAf6Dd0ZRdOv9/f7qAEQYnjWEZIgAG7UBQgn8MGugbScjlwgvUucPwpLAm+JBFNuHO4yjgAKM7BCiW/Ly1UuS9wkMfa4+q2fzb8p3gpvN3UiBqIHCvBoFnZi0Cic0ij0LyOLrKPIJKEFeBm4rocHPzlh3VKZfIOD53x2n4sVJJvzzqgJ/szIjDuOzRzrFoacYpk90xIFwsu9RkLPwkWlIysOIyieQtX+z9kNocnEe/nbZMGoGV0BWbxSwJfPeIQCS+ybrjLxK1GAM=","page_age":null},{"type":"web_search_result","title":"Issues · nodejs/Release · GitHub","url":"https://github.com/nodejs/Release/issues","encrypted_content":"EsoFCioIFRgCIiRlZDcyZmI5OC1iMWVjLTQ2ZDQtYWQ1Ni03ODJiOTE5YzQyY2MSDLjH1jkkRqiWqRxSzBoMkcY3/yqItAJrWrkeIjBVh6edlU1bnSnHSfdEup6w7Jfc6ZMGmISMBh/ajfGrkTOOCzLQCr9puHSWAE5A9scqzQSb2h27ZCsdeI3eYgyCHEozwQ+sUxc38UTQ3fRZLepbRlCGQO+sm+JaM3fXOkcsr9uBnFDSyA6y89oXGjgNtWFhG2l5rP7iezzkvyG4lBZcHAVh6o8g3CHUhq60lX/jJH8JEHdiC+ITjoJyVl/0LIrsg7aOnbIfOamV05XkB7GHkTNE1/5ozNuUV7+dfzuxRYVTJ5Dm+wJCiM29CnNSwnslFzeV6OYWQRTL0ZYzjYklUMZZXoq/V1JLasOl0f5rZk04/bHeG3skVKdwi3OXq4lnScyIf283Bn1Ovi9UpMhaedUKwdSicFKRZ7bbShJIwR11kVAld9vIXWG/p5sxS98a2WRnQn76dxQMFTdUimK7LCJLxP9n7xQN/qv5J/b+sKJ267MuzsngC3wNmZrV2iHXK/PTL3IkcYpMk9BI781llbZPmM0vng9o/7wIZt4G0EbkZA+WLjsGU2HAHC4meKl6V0T6WsIvC+5/MRyY+WCsl/qNk+Zg1dTBv+BOn2FDORUCmC5LxUt6GkI6lNDpyzBhYpQ7JarB5bL/Xnl55rzzwyBJtVEGGY4gtM+o0VIWHzODCEbM8ev8CbUMZVnUJi4Yk02TgqNBFb6c41RO82Vm9/P4dyDK48W1l5Y/PRqVYRCabLMf8a1lu7Hg0OXBmevHs6qwJBqZ/XFcwPtppoSs3jfK7PE4LmYUDPpcyLYxu4+SOJcPV2HdCIW+BsFYma3gQcIVTi1deG7Rqqu33s6Iuhxass13IhDO0dvO34SsN3/6mYyPsYdsFXCQ8sSiGAM=","page_age":"386 days ago"},{"type":"web_search_result","title":"Node.js's New Release Schedule Reveals a Maintainer Crisis - DEV Community","url":"https://dev.to/techdrifting/nodejss-new-release-schedule-reveals-a-maintainer-crisis-15g0","encrypted_content":"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","page_age":"35 days ago"},{"type":"web_search_result","title":"Release/schedule.json at main · nodejs/Release · GitHub","url":"https://github.com/nodejs/Release/blob/main/schedule.json","encrypted_content":"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","page_age":null},{"type":"web_search_result","title":"nodejs.org/apps/site/pages/en/blog/announcements/evolving-the-nodejs-release-schedule.md at main · nodejs/nodejs.org · GitHub","url":"https://github.com/nodejs/nodejs.org/blob/main/apps/site/pages/en/blog/announcements/evolving-the-nodejs-release-schedule.md","encrypted_content":"EsMGCioIFRgCIiRlZDcyZmI5OC1iMWVjLTQ2ZDQtYWQ1Ni03ODJiOTE5YzQyY2MSDAJZL6MzYoLfT+FEWhoMoNt36q0JSI8W33cNIjBB7XrahymmAlKLnZUwvN5d99l3IaT3XEpIjrw20PYwWMwpPFd6arYtd0Ggab3XzeQqxgWeAtxZo59GAPVU8A07fhOsnRDyCogRHHYaZcPME1vesS0UuQ8+L37gW5NWED7P40Dp3NMEpiR5ovtI6KG1bcsjg8vyDsWzphOQyzgJLVks/7YPx27n+5LpOrFd5GHXlj8HnqewcR115cVpD0CE718UfC9TNzKWGrTZ51LAu6PP+PORKdVKOAyXUbezg/F5fO4QypaJfhzOLBcJxD3vD++3bGS90ybfRLmrAzj309SUeKk0jKGxZqLMTOv/kwf/JsX0BWS2leqjE0iMZz+NJiUiy+csi/pns0psWX1sLPXu0eOqPOJoDI+Cv5YqwHL+RcVVTPVBing9fUFs58eIckq4QG6Z3fv1Y5ovacSqmZtkMR3IToWsmMrEljASFKDXGo2ORPhGw12iR3nJu1460c8YHIRgLcWbEbRfiKC54zeIW8TsiLMC89mkI+a4pg/BvpaJLGtJ8H25RYhTlD22kM9LsYC6MJgASBoDVNRCUMwIOLWz7BrgDRPCaE0BEHo1DvF949rmeYfMV/5EhyL6wM8Xe1f31dyOcYpf+k05wCMlUmTlvT7jFkyVhp4bbQAKNI+np/b/oEhadhLyNdizrFqAXfrKEM4SKRs911ozZS8z7GvXvQXMCA4hmh2vsWGnVfQ4rg4FBdjjW2vXRICprznRcOH89vey3yBRRle0f/NZD0iehPuNSwBfnL4+3LtBh/+eagYtYkGYFoBgVRP+ax36qNr7dYc46cfRJaBMKKb3JbhzgsBAJKUd8XXup8F855z2FUdHPBTSejACavqtFG4jXATnQ06XsUjcn82K1bw4a6xAB3qjNGg1jqYoBIvRxb6npASTYkG9WKAQwiBcgfrP+AL8yRhfhnv5aLGBVx/WfH7kubiVULamwD/aPgLQk5prySYK221u2hXtbTH5GkK32nAwZwgb2B4i8ChkgXXMikh9HD6KiRgD","page_age":null},{"type":"web_search_result","title":"Node.js Release and EOL Timeline - LTS Schedule, Active LTS and Maintenance, and End-of-Life Dates","url":"https://hidekazu-konishi.com/entry/nodejs_release_and_eol_timeline.html","encrypted_content":"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","page_age":"24 days ago"},{"type":"web_search_result","title":"Node.js","url":"https://en.wikipedia.org/wiki/Node.js","encrypted_content":"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","page_age":null}],"caller":{"type":"code_execution_20260120","tool_id":"srvtoolu_01Nf3u9sdGsVfBDnkjZ9UB81"}}   }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":16       }
+
+event: content_block_start
+data: {"type":"content_block_start","index":17,"content_block":{"type":"code_execution_tool_result","tool_use_id":"srvtoolu_01Nf3u9sdGsVfBDnkjZ9UB81","content":{"type":"encrypted_code_execution_result","encrypted_stdout":"EpQJCioIFRgCIiRlZDcyZmI5OC1iMWVjLTQ2ZDQtYWQ1Ni03ODJiOTE5YzQyY2MSDPgFroRTZRFTjqHiKxoMGmxXoqWUIwQKETJBIjDbASs7kVj8tmRfJQ5sW7u4842vmztj4gAdy9OH1UKljabKuG8LEuvWbzANNoUdO90qlwjTFBPc/ycnH6ehDlHLZuqkKBODh5bG2cbhzumikhqUBuvqhAu2AF/JwaMAPznBxlV3qdud6mkABkrU00u6g5F2zyFDJMsuAJalE8xkcBg41bkpw/hAF92UNeAT6bk5ncf2CUaJUPevTc9mHEQwlLmptYCJF0bDH2rIiB+hTY+DC6BtO/0XK3syOGwmvJvzMV27khreRpMblYhW59vTOYbNJc0N+q5QWtkHg3l1qpYW1ZSJoyV/sqfr5xKNidPGfymCgmwXIts96t2xyQm/WC6O2h3JnYUoiEw7SoC/ioRNjeOYA4GbNNa0YMoDP4I7SZs3HoB711RBWSAd8TolN4tq0zEkM5ztKi8ghls4ybnXDm+bmaXoZM9Cn5xvrnrKhLKn5HzFGwW0CSqZAuTvZBc7rZBZSHNs1mkvEFdT2v4MeLjAvPEzBJHUA5ntsmpaphiz0MXMG57512aKmnqSwEcUKXaWg+w7uOIVCuYjEG+7/PyAJ0R3QOoX3GAIT35R0VN692fAcES/MQ1cGKkMT2Gh1QSGcZvFxL8pmyucsTx/qHE6LbkePL4qeWKbxCx/zOhQhzlA+KY9XdQCCmZpMmqh/KjfXQW2bQJUVWzN78QFGiB0LM6ycQMq83/MlEUb0Ahe2+m8adiqb+/POIitWrDS2Vt2B4wQPBVPVOKUgIV++SeLxPq+JDLFIlm5lFHSnvd70VeLAmNUUH9URWF1ejQ8IfpuOOLoOyi6wTas3PlM9tTVKQR/fBP5kAUZKpvzjErcPKSBd2Vom801Dayo3zp/a09jI/AU3OXYwdjmiwb7n6bygcTsKU+vbKx8ZHQUs+N7NKfkSrfptnGFZqkLAmsbiENfZ/V1DYKyoJ5euAm7bwy2HZJTfU6YN0LMRGrleSgY9b10CKSgR6is1oWOsqY/pllmdKX7lcBVrcPz1K3S3ZV0IxQl/G7+tgcOTZyTJn87J9N54FfPBFje6J2j2L+kfGDfJ4LF/dEn4NRNk65mYOuLTg/T3gO8JYtxa1l5uDqk4Y9cf0b/0+Lf3ojs3pBlXAHdHeUGyp0H1yxgtOnXbkxT8wfx3VB0xTvXbpCI10lkwfMoe8EwZUo+iKw0vo/yymxdaJc+TwZYZNU8CFrtQrusl8JvQZiuH8g3vphd6q9t0sSOixcx/NtGk8N2CardN6d1vueVUYtWXiQPtHzJG3qnyVy7mI0MqkrqY3jH++mfUSJLDYs6OoKqzVTrxgtaWi4jYv1akL5OelNV7RQAcdpQivoe6uInqTybM03N4m9FESZyIXC+czdD4D/jhPuSrySLi9ckBuS17qd7rh9fgAqdo5YUXFfNf1ajcyoTLRrBwgZmR2MJFCJun+ZIxeWrMMUNwDq79G5a8nXrAmAcev8LZwkzgvAYAw==","stderr":"","return_code":0,"content":[]}}       }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":17        }
+
+event: content_block_start
+data: {"type":"content_block_start","index":18,"content_block":{"type":"server_tool_use","id":"srvtoolu_01PMKEQwbt3D32yRrM4EDLor","name":"code_execution","input":{}}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":""}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"{\"code\": \"f"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"=json.loads(await web"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"_fetch({\\\"url\\\":"}  }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"\\\"https://nodejs."}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"org/en/about/previous"}   }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"-releases\\\"}))[0"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"]\\nprint(f.get('"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"error_code'));c=f"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":".get('content','');print("}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"len(c));"}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"print(c[:2500])"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"\\ns=json.loads("}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"await web_fetch({\\\""}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"url\\\":\\\"https://github.com"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"/nodejs/Release"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"/blob/main/sched"}  }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"ule.json\\\"}))[0"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"]\\ns"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"c=s.get('content','"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"');print(s.get('error"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"_code'));\\nfor v"}  }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":" in ['"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"v20','v22','v24"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"']:\\n    i=sc"}   }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":".find('"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"\\\"%"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"s\\\"'%v);print("}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"sc[i:i+300"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"])"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":18,"delta":{"type":"input_json_delta","partial_json":"\"}"}          }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":18              }
+
+event: content_block_start
+data: {"type":"content_block_start","index":19,"content_block":{"type":"server_tool_use","id":"srvtoolu_01PnkHTHiUYGX2m428agtnUe","name":"web_fetch","input":{"url":"https://nodejs.org/en/about/previous-releases"},"caller":{"type":"code_execution_20260120","tool_id":"srvtoolu_01PMKEQwbt3D32yRrM4EDLor"}}       }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":19       }
+
+event: content_block_start
+data: {"type":"content_block_start","index":20,"content_block":{"type":"web_fetch_tool_result","tool_use_id":"srvtoolu_01PnkHTHiUYGX2m428agtnUe","content":{"type":"web_fetch_result","url":"https://nodejs.org/en/about/previous-releases","retrieved_at":"2026-11-06T05:35:00+00:00","content":{"type":"document","source":{"type":"text","media_type":"text/plain","data":"---\ncanonical: https://nodejs.org/en/about/previous-releases\nmeta-description: Node.js® is a free, open-source, cross-platform JavaScript runtime environment that lets developers create servers, web apps, command line tools and scripts.\nmeta-next-size-adjust:\nmeta-og:description: Node.js® is a free, open-source, cross-platform JavaScript runtime environment that lets developers create servers, web apps, command line tools and scripts.\nmeta-og:image: https://nodejs.org/en/next-data/og/announcement/Node.js%20%E2%80%94%20Node.js%20Releases\nmeta-og:title: Node.js — Node.js Releases\nmeta-robots: index, follow\nmeta-twitter:card: summary\nmeta-twitter:creator: @nodejs\nmeta-twitter:description: Node.js® is a free, open-source, cross-platform JavaScript runtime environment that lets developers create servers, web apps, command line tools and scripts.\nmeta-twitter:image: https://nodejs.org/static/images/logo-hexagon-card.png\nmeta-twitter:image:alt: The Node.js Hexagon Logo\nmeta-twitter:title: Node.js — Node.js Releases\nmeta-viewport: width=device-width, initial-scale=1.0\ntitle: Node.js — Node.js Releases\n---\n\n[Skip to content](#main)\n\n[/en](https://nodejs.org/en)\n\n[Learn](https://nodejs.org/learn)[About](https://nodejs.org/en/about)[Download](https://nodejs.org/en/download)[Blog](https://nodejs.org/en/blog)[Docs](https://nodejs.org/docs/latest/api/)[Beta Docs](https://beta.docs.nodejs.org/)[Contribute](https://github.com/nodejs/node/blob/main/CONTRIBUTING.md)\n\nStart typing...\n\n⌘ K\n\n[https://github.com/nodejs/node](https://github.com/nodejs/node)\n\nChange page Node.js Releases\n\nChange page\n\nNode.js Releases\n\nAbout Node.js\n\n[About Node.js®](https://nodejs.org/en/about)[Node.js Releases](https://nodejs.org/en/about/previous-releases)[Security Reporting](https://nodejs.org/en/about/security-reporting)[Project Governance](https://nodejs.org/en/about/governance)[Partners & Supporters](https://nodejs.org/en/about/partners)[Branding of Node.js](https://nodejs.org/en/about/branding)[End-of-Life (EOL)](https://nodejs.org/en/about/eol)\n\nGet Involved\n\n[Get Involved](https://nodejs.org/en/about/get-involved)[Collaboration Summit](https://nodejs.org/en/about/get-involved/collab-summit)[Upcoming Events](https://nodejs.org/en/about/get-involved/events)[Contribute to Node.js](https://github.com/nodejs/node/blob/main/CONTRIBUTING.md)[Code of Conduct](https://github.com/nodejs/admin/blob/main/CODE_OF_CONDUCT.md)\n\nAbout Node.js\n\n- [About Node.js®](https://nodejs.org/en/about)\n- [Node.js Releases](https://nodejs.org/en/about/previous-releases)\n- [Security Reporting](https://nodejs.org/en/about/security-reporting)\n- [Project Governance](https://nodejs.org/en/about/governance)\n- [Partners & Supporters](https://nodejs.org/en/about/partners)\n- [Branding of Node.js](https://nodejs.org/en/about/branding)\n- [End-of-Life (EOL)](https://nodejs.org/en/about/eol)\n\nGet Involved\n\n- [Get Involved](https://nodejs.org/en/about/get-involved)\n- [Collaboration Summit](https://nodejs.org/en/about/get-involved/collab-summit)\n- [Upcoming Events](https://nodejs.org/en/about/get-involved/events)\n- [Contribute to Node.js](https://github.com/nodejs/node/blob/main/CONTRIBUTING.md)\n- [Code of Conduct](https://github.com/nodejs/admin/blob/main/CODE_OF_CONDUCT.md)\n\n# [Node.js Releases](#nodejs-releases)\n\nCommercial support for versions past the Maintenance LTS phase is available through our [OpenJS Ecosystem Sustainability Program partners](https://nodejs.org/en/about/eol)\n\nMajor Node.js versions enter *Current* release status for six months, which gives library authors time to add support for them. Historically (up to Node.js 26), odd-numbered releases (9, 11, etc.) become unsupported after six months, and even-numbered releases (10, 12, etc.) move to *Active LTS* status and are ready for general use. Starting with Node.js 27, the release cycle will be annual and every major version will move to *LTS* status after its six-month *Current* phase (and six additional months of *Alpha* phase). *LTS* release status is \"long-term support\", which typically guarantees that critical bugs will be fixed for a total of 30 months. Production applications should only use *Active LTS* or *Maintenance LTS* releases.\n\n## [Release Schedule](#release-schedule)\n\n![Releases](https://raw.githubusercontent.com/nodejs/Release/main/schedule.svg?sanitize=true)\n\nFull details regarding the Node.js release schedule are available [on GitHub](https://github.com/nodejs/release#release-schedule).\n\n## [Looking for the latest release of a version branch?](#looking-for-the-latest-release-of-a-version-branch)\n\n| Node.js                                                           | Codename | First released | Last updated | Status |         |\n|-------------------------------------------------------------------|----------|----------------|--------------|--------|---------|\n| [v27](https://nodejs.org/en/download/archive/v27.0.0-alpha.0.0.0) | -        | Oct 29, 2026   | Oct 29, 2026 | Alpha  | Details |\n| [v26](https://nodejs.org/en/download/archive/v26.13.0)            | Lithium  | May 05, 2026   | Oct 28, 2026 | LTS    | Details |\n| [v25](https://nodejs.org/en/download/archive/v25.9.0)             | -        | Oct 15, 2025   | Mar 31, 2026 | EOL    | Details |\n| [v24](https://nodejs.org/en/download/archive/v24.22.2)            | Krypton  | May 06, 2025   | Oct 27, 2026 | LTS    | Details |\n| [v23](https://nodejs.org/en/download/archive/v23.11.1)            | -        | Oct 16, 2024   | May 14, 2025 | EOL    | Details |\n| [v22](https://nodejs.org/en/download/archive/v22.23.4)            | Jod      | Apr 24, 2024   | Oct 20, 2026 | LTS    | Details |\n| [v21](https://nodejs.org/en/download/archive/v21.7.3)             | -        | Oct 17, 2023   | Apr 10, 2024 | EOL    | Details |\n| [v20](https://nodejs.org/en/download/archive/v20.20.2)            | Iron     | Apr 17, 2023   | Mar 24, 2026 | EOL    | Details |\n| [v19](https://nodejs.org/en/download/archive/v19.9.0)             | -        | Oct 17, 2022   | Apr 10, 2023 | EOL    | Details |\n| [v18](https://nodejs.org/en/download/archive/v18.20.8)            | Hydrogen | Apr 18, 2022   | Mar 27, 2025 | EOL    | Details |\n| [v17](https://nodejs.org/en/download/archive/v17.9.1)             | -        | Oct 19, 2021   | Jun 01, 2022 | EOL    | Details |\n| [v16](https://nodejs.org/en/download/archive/v16.20.2)            | Gallium  | Apr 20, 2021   | Aug 08, 2023 | EOL    | Details |\n| [v15](https://nodejs.org/en/download/archive/v15.14.0)            | -        | Oct 20, 2020   | Apr 06, 2021 | EOL    | Details |\n| [v14](https://nodejs.org/en/download/archive/v14.21.3)            | Fermium  | Apr 21, 2020   | Feb 16, 2023 | EOL    | Details |\n| [v13](https://nodejs.org/en/download/archive/v13.14.0)            | -        | Oct 22, 2019   | Apr 29, 2020 | EOL    | Details |\n| [v12](https://nodejs.org/en/download/archive/v12.22.12)           | Erbium   | Apr 23, 2019   | Apr 05, 2022 | EOL    | Details |\n| [v11](https://nodejs.org/en/download/archive/v11.15.0)            | -        | Oct 23, 2018   | Apr 30, 2019 | EOL    | Details |\n| [v10](https://nodejs.org/en/download/archive/v10.24.1)            | Dubnium  | Apr 24, 2018   | Apr 06, 2021 | EOL    | Details |\n| [v9](https://nodejs.org/en/download/archive/v9.11.2)              | -        | Oct 31, 2017   | Jun 12, 2018 | EOL    | Details |\n| [v8](https://nodejs.org/en/download/archive/v8.17.0)              | Carbon   | May 30, 2017   | Dec 17, 2019 | EOL    | Details |\n| [v7](https://nodejs.org/en/download/archive/v7.10.1)              | -        | Oct 25, 2016   | Jul 11, 2017 | EOL    | Details |\n| [v6](https://nodejs.org/en/download/archive/v6.17.1)              | Boron    | Apr 26, 2016   | Apr 03, 2019 | EOL    | Details |\n| [v5](https://nodejs.org/en/download/archive/v5.12.0)              | -        | Oct 29, 2015   | Jun 23, 2016 | EOL    | Details |\n| [v4](https://nodejs.org/en/download/archive/v4.9.1)               | Argon    | Sep 08, 2015   | Mar 29, 2018 | EOL    | Details |\n| [v0](https://nodejs.org/en/download/archive/v0.12.18)             | -        | Feb 06, 2015   | Feb 22, 2017 | EOL    | Details |\n\n## [Recommended and community installation methods](#recommended-and-community-installation-methods)\n\nThe Node.js website provides several non-interactive installation methods on the Downloads page, including command-line interfaces (CLIs), operating system (OS) package managers (e.g., `brew`), and Node.js version managers (e.g., `nvm`).\n\nTo highlight and promote community contributions, the Node.js project introduced a revised Downloads page categorizing installation methods as either “Recommended” or “Community.” This provides users with increased flexibility and choice, while keeping a short, curated list for those who want a straightforward starting point.\n\nAnyone can propose a new installation method for the Downloads page. While the Node.js project makes the final call on what gets listed, proposals are evaluated against the criteria below.\n\n“Recommended” methods are selected for their reliability and close alignment with official releases, and meet the following criteria (in addition to all “Community” criteria):\n\n- “Recommended” methods make new Node.js releases available simultaneously with the official release.\n- “Recommended” methods use the official Node.js binaries without alteration, only building from source when pre-built binaries are not available.\n- “Recommended” methods allow developers to install and use multiple versions of Node.js on a system concurrently.\n- “Recommended” methods have a close relationship with the Node.js project, including direct communication channels.\n\n“Community” methods are additional installation methods also available on the Downloads page, and meet the following criteria:\n\n- “Community” methods must support all currently supported, non-End-of-Life (EOL) Node.js versions.\n- “Community” methods must function on at least one officially supported Operating System (OS), and must not be limited to a subset of OS distributions or versions.\n- “Community” methods must be free to use and open source, must not be sold as a commercial product, and must not be a paid service.\n\nReading Time\n\n2 min\n\nContribute\n\n[Edit this page](https://github.com/nodejs/nodejs.org/blob/main/apps/site/pages/en/about/previous-releases.mdx)\n\nTable of Contents\n\n1. [Release Schedule](#release-schedule)\n2. [Looking for the latest release of a version branch?](#looking-for-the-latest-release-of-a-version-branch)\n3. [Recommended and community installation methods](#recommended-and-community-installation-methods)\n\n1. [Navigate to Home](https://nodejs.org/en)\n2. About Node.js\n3. [Node.js Releases](https://nodejs.org/en/about/previous-releases)\n\n[v26.13.0Latest LTS](https://nodejs.org/blog/release/v26.13.0)[v27.0.0-alpha.0.0.0Latest Alpha](https://nodejs.org/blog/release/v27.0.0-alpha.0.0.0)\n\n[https://github.com/nodejs/node](https://github.com/nodejs/node)[https://discord.gg/nodejs](https://discord.gg/nodejs)[https://bsky.app/profile/nodejs.org](https://bsky.app/profile/nodejs.org)[https://twitter.com/nodejs](https://twitter.com/nodejs)[https://slack-invite.openjsf.org/](https://slack-invite.openjsf.org/)[https://www.linkedin.com/company/node-js](https://www.linkedin.com/company/node-js)\n\nCopyright [OpenJS Foundation](https://openjsf.org/) and Node.js contributors. All rights reserved. The [OpenJS Foundation](https://openjsf.org/) has registered trademarks and uses trademarks. For a list of trademarks of the [OpenJS Foundation](https://openjsf.org/), please see our [Trademark Policy](https://trademark-policy.openjsf.org/) and [Trademark List](https://trademark-list.openjsf.org/). Trademarks and logos not indicated on the [list of OpenJS Foundation trademarks](https://trademark-list.openjsf.org/) are trademarks™ or registered® trademarks of their respective holders. Use of them does not imply any affiliation with or endorsement by them.\n\n[OpenJS Foundation](https://openjsf.org/)[AI Coding Assistants Policy](https://ai-coding-assistants-policy.openjsf.org/)[Bylaws](https://bylaws.openjsf.org/)[Code of Conduct](https://code-of-conduct.openjsf.org/)[Cookie Policy](https://www.linuxfoundation.org/cookies/)[Privacy Policy](https://privacy-policy.openjsf.org/)[Security Policy](https://github.com/nodejs/node/security/policy)[Terms of Use](https://terms-of-use.openjsf.org/)[Trademark List](https://trademark-list.openjsf.org/)[Trademark Policy](https://trademark-policy.openjsf.org/)\n\n[](https://social.lfx.dev/@nodejs)"},"title":"Node.js — Node.js Releases","citations":{"enabled":true}}},"caller":{"type":"code_execution_20260120","tool_id":"srvtoolu_01PMKEQwbt3D32yRrM4EDLor"}}       }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":20}
+
+event: content_block_start
+data: {"type":"content_block_start","index":21,"content_block":{"type":"server_tool_use","id":"srvtoolu_01NDA4SAD5Bn4rVkwRPEC4A5","name":"web_fetch","input":{"url":"https://github.com/nodejs/Release/blob/main/schedule.json"},"caller":{"type":"code_execution_20260120","tool_id":"srvtoolu_01PMKEQwbt3D32yRrM4EDLor"}}        }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":21       }
+
+event: content_block_start
+data: {"type":"content_block_start","index":22,"content_block":{"type":"web_fetch_tool_result","tool_use_id":"srvtoolu_01NDA4SAD5Bn4rVkwRPEC4A5","content":{"type":"web_fetch_result","url":"https://github.com/nodejs/Release/blob/main/schedule.json","retrieved_at":"2026-10-21T11:44:38+00:00","content":{"type":"document","source":{"type":"text","media_type":"text/plain","data":"---\nmeta-analytics-location: /<user-name>/<repo-name>/blob/show\nmeta-apple-itunes-app: app-id=1477376905, app-argument=https://github.com/nodejs/Release/blob/main/schedule.json\nmeta-browser-errors-url: https://api.github.com/_private/browser/errors\nmeta-browser-stats-url: https://api.github.com/_private/browser/stats\nmeta-color-scheme: light dark\nmeta-current-catalog-service-hash: f3abb0cc802f3d7b95fc8762b94bdcb13bf39634c40c357301c4aa1d67a256fb\nmeta-description: Node.js Release Working Group. Contribute to nodejs/Release development by creating an account on GitHub.\nmeta-disable-turbo: false\nmeta-expected-hostname: github.com\nmeta-fb:app_id: 1401488693436528\nmeta-fetch-nonce: v2:3f30f0d1-ad81-31a3-cf78-5db3961435c5\nmeta-github-keyboard-shortcuts: repository,source-code,file-tree,copilot\nmeta-go-import: github.com/nodejs/Release git https://github.com/nodejs/Release.git\nmeta-google-site-verification: Apib7-x98H0j5cPqHWwSMm6dNU4GmODRoqxLiDzdx9I\nmeta-hostname: github.com\nmeta-hovercard-subject-tag: repository:33440467\nmeta-html-safe-nonce: 062e446ee409648c85498ef6366237a658bb7b3c94b85690a1d505232c7a043a\nmeta-octolytics-dimension-repository_id: 33440467\nmeta-octolytics-dimension-repository_is_fork: false\nmeta-octolytics-dimension-repository_network_root_id: 33440467\nmeta-octolytics-dimension-repository_network_root_nwo: nodejs/Release\nmeta-octolytics-dimension-repository_nwo: nodejs/Release\nmeta-octolytics-dimension-repository_public: true\nmeta-octolytics-dimension-user_id: 9950313\nmeta-octolytics-dimension-user_login: nodejs\nmeta-octolytics-url: https://collector.github.com/github/collect\nmeta-og:description: Node.js Release Working Group. Contribute to nodejs/Release development by creating an account on GitHub.\nmeta-og:image: https://opengraph.githubassets.com/09846cad10bcd36bbc872518d0e83f8a8192cd149d1e33eaed94b3e56946942a/nodejs/Release\nmeta-og:image:alt: Node.js Release Working Group. Contribute to nodejs/Release development by creating an account on GitHub.\nmeta-og:image:height: 600\nmeta-og:image:width: 1200\nmeta-og:site_name: GitHub\nmeta-og:title: Release/schedule.json at main · nodejs/Release\nmeta-og:type: object\nmeta-og:url: https://github.com/nodejs/Release/blob/main/schedule.json\nmeta-react-import-map: react,react-dom,react-dom/client,react-dom/profiling,react-is,react-reconciler,react/compiler-runtime,react/jsx-dev-runtime,react/jsx-runtime,scheduler@777f63f87cd0\nmeta-react-profiling: 0\nmeta-release: 245c465b79780c9687cd9effb673e901f571bef2\nmeta-request-id: 404D:39EE7F:76372:A2F94:6AD8A5A5\nmeta-route-action: show\nmeta-route-controller: blob\nmeta-route-pattern: /:user_id/:repository/blob/*name(/*path)\nmeta-theme-color: #1e2327\nmeta-turbo-body-classes: logged-out env-production page-responsive\nmeta-turbo-cache-control: no-cache\nmeta-twitter:card: summary_large_image\nmeta-twitter:description: Node.js Release Working Group. Contribute to nodejs/Release development by creating an account on GitHub.\nmeta-twitter:image: https://opengraph.githubassets.com/09846cad10bcd36bbc872518d0e83f8a8192cd149d1e33eaed94b3e56946942a/nodejs/Release\nmeta-twitter:site: @github\nmeta-twitter:title: Release/schedule.json at main · nodejs/Release\nmeta-ui-target: full\nmeta-user-login:\nmeta-viewport: width=device-width\nmeta-visitor-hmac: 9f9513eb6f504ee20f60af6f54835dd12f8fe49ae837744870199a0ec260c6c3\nmeta-visitor-payload: eyJyZWZlcnJlciI6IiIsInJlcXVlc3RfaWQiOiI0MDREOjM5RUU3Rjo3NjM3MjpBMkY5NDo2QUQ4QTVBNSIsInZpc2l0b3JfaWQiOiI2MzMwODQ3OTQyODg3OTA4NzczIiwicmVnaW9uX2VkZ2UiOiJpYWQiLCJyZWdpb25fcmVuZGVyIjoiaWFkIn0=\ntitle: Release/schedule.json at main · nodejs/Release · GitHub\n---\n\n[Skip to content](#start-of-content)\n\n## Navigation Menu\n\n[/](https://github.com/)\n\n[Sign in](https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Fnodejs%2FRelease%2Fblob%2Fmain%2Fschedule.json)\n\nAppearance settings\n\n- Platform\n  \n  - AI CODE CREATION\n    \n    - [GitHub CopilotWrite better code with AI](https://github.com/features/copilot)\n    - [GitHub Copilot appDirect agents from issue to merge](https://github.com/features/ai/github-app)\n    - [MCP RegistryIntegrate external tools](https://github.com/mcp)\n  - DEVELOPER WORKFLOWS\n    \n    - [ActionsAutomate any workflow](https://github.com/features/actions)\n    - [CodespacesInstant dev environments](https://github.com/features/codespaces)\n    - [IssuesPlan and track work](https://github.com/features/issues)\n    - [Code ReviewManage code changes](https://github.com/features/code-review)\n    - [Code QualityEnforce quality at merge](https://github.com/features/code-quality)\n  - APPLICATION SECURITY\n    \n    - [GitHub Advanced SecurityFind and fix vulnerabilities](https://github.com/security/advanced-security)\n    - [Code securitySecure your code as you build](https://github.com/security/advanced-security/code-security)\n    - [Secret protectionStop leaks before they start](https://github.com/security/advanced-security/secret-protection)\n  - EXPLORE\n    \n    - [Why GitHub](https://github.com/why-github)\n    - [Documentation](https://docs.github.com)\n    - [Blog](https://github.blog)\n    - [Changelog](https://github.blog/changelog)\n    - [Marketplace](https://github.com/marketplace)\n  \n  [View all features](https://github.com/features)\n- Solutions\n  \n  - BY COMPANY SIZE\n    \n    - [Enterprises](https://github.com/enterprise)\n    - [Small and medium teams](https://github.com/team)\n    - [Startups](https://github.com/enterprise/startups)\n    - [Nonprofits](https://github.com/solutions/industry/nonprofits)\n  - BY USE CASE\n    \n    - [App Modernization](https://github.com/solutions/use-case/app-modernization)\n    - [DevSecOps](https://github.com/solutions/use-case/devsecops)\n    - [DevOps](https://github.com/solutions/use-case/devops)\n    - [CI/CD](https://github.com/solutions/use-case/ci-cd)\n    - [View all use cases](https://github.com/solutions/use-case)\n  - BY INDUSTRY\n    \n    - [Healthcare](https://github.com/solutions/industry/healthcare)\n    - [Financial services](https://github.com/solutions/industry/financial-services)\n    - [Manufacturing](https://github.com/solutions/industry/manufacturing)\n    - [Government](https://github.com/solutions/industry/government)\n    - [View all industries](https://github.com/solutions/industry)\n  \n  [View all solutions](https://github.com/solutions)\n- Resources\n  \n  - EXPLORE BY TOPIC\n    \n    - [AI](https://github.com/resources/articles?topic=ai)\n    - [Software Development](https://github.com/resources/articles?topic=software-development)\n    - [DevOps](https://github.com/resources/articles?topic=devops)\n    - [Security](https://github.com/resources/articles?topic=security)\n    - [View all topics](https://github.com/resources/articles)\n  - EXPLORE BY TYPE\n    \n    - [Customer stories](https://github.com/customer-stories)\n    - [Events & webinars](https://github.com/resources/events)\n    - [Ebooks & reports](https://github.com/resources/whitepapers)\n    - [Business insights](https://github.com/solutions/executive-insights)\n    - [GitHub Skills](https://skills.github.com)\n  - SUPPORT & SERVICES\n    \n    - [Documentation](https://docs.github.com)\n    - [Customer support](https://support.github.com)\n    - [Community forum](https://github.com/orgs/community/discussions)\n    - [Trust center](https://github.com/trust-center)\n    - [Partners](https://github.com/partners)\n  \n  [View all resources](https://github.com/resources)\n- Open Source\n  \n  - COMMUNITY\n    \n    - [GitHub SponsorsFund open source developers](https://github.com/open-source/sponsors)\n  - PROGRAMS\n    \n    - [Security Lab](https://securitylab.github.com)\n    - [Maintainer Community](https://maintainers.github.com)\n    - [GitHub Stars](https://stars.github.com)\n    - [Archive Program](https://archiveprogram.github.com)\n  - REPOSITORIES\n    \n    - [Topics](https://github.com/topics)\n    - [Trending](https://github.com/trending)\n    - [Collections](https://github.com/collections)\n- Enterprise\n  \n  - ENTERPRISE SOLUTIONS\n    \n    - [Enterprise platformAI-powered developer platform](https://github.com/enterprise)\n  - AVAILABLE ADD-ONS\n    \n    - [GitHub Advanced SecurityEnterprise-grade security features](https://github.com/security/advanced-security)\n    - [Copilot for BusinessEnterprise-grade AI features](https://github.com/features/copilot/copilot-business)\n    - [Premium SupportEnterprise-grade 24/7 support](https://github.com/enterprise/premium-support)\n- [Pricing](https://github.com/pricing)\n\nSearch`/`\n\n[Sign in](https://github.com/login?return_to=https%3A%2F%2Fgithub.com%2Fnodejs%2FRelease%2Fblob%2Fmain%2Fschedule.json)\n\n[Sign up](https://github.com/signup?ref_cta=Sign%20up&ref_loc=header%20logged%20out&ref_page=%2F%3Cuser-name%3E%2F%3Crepo-name%3E%2Fblob%2Fshow&source=header-repo&source_repo=nodejs%2FRelease)\n\nAppearance settings\n\n1. [nodejs](https://github.com/nodejs)\n2. [Release](https://github.com/nodejs/Release)\n\n## Repository navigation\n\n- [Code](https://github.com/nodejs/Release)\n- [Issues39 (39)](https://github.com/nodejs/Release/issues)\n- [Pull requests7 (7)](https://github.com/nodejs/Release/pulls)\n- [Discussions](https://github.com/nodejs/Release/discussions)\n- [Projects](https://github.com/nodejs/Release/projects)\n- [Wiki](https://github.com/nodejs/Release/wiki)\n- [Security and quality](https://github.com/nodejs/Release/security)\n- [Insights](https://github.com/nodejs/Release/pulse)\n\nMore items\n\n## Files Expand file tree\n\nmain\n\n## Breadcrumbs\n\n1. [Release](https://github.com/nodejs/Release/tree/main)\n\n/\n\n# schedule.json\n\nCopy path\n\nBlame\n\nMore file actions\n\nBlame\n\nMore file actions\n\n## Latest commit\n\n \n\n## History\n\n[History](https://github.com/nodejs/Release/commits/main/schedule.json)\n\n[/nodejs/Release/commits/main/schedule.json](https://github.com/nodejs/Release/commits/main/schedule.json)History\n\n160 lines (160 loc) · 3.18 KB\n\nmain\n\n## Breadcrumbs\n\n1. [Release](https://github.com/nodejs/Release/tree/main)\n\n/\n\n# schedule.json\n\nCopy path\n\nTop\n\n## File metadata and controls\n\n- Code\n- Blame\n\n160 lines (160 loc) · 3.18 KB\n\n[Raw](https://github.com/nodejs/Release/raw/refs/heads/main/schedule.json)\n\nCopy raw file\n\nDownload raw file\n\nOpen symbols panel\n\nEdit and raw actions\n\n1\n\n2\n\n3\n\n4\n\n5\n\n6\n\n7\n\n8\n\n9\n\n10\n\n11\n\n12\n\n13\n\n14\n\n15\n\n16\n\n17\n\n18\n\n19\n\n20\n\n21\n\n22\n\n23\n\n24\n\n25\n\n26\n\n27\n\n28\n\n29\n\n30\n\n31\n\n32\n\n33\n\n34\n\n35\n\n36\n\n37\n\n38\n\n39\n\n40\n\n41\n\n42\n\n43\n\n44\n\n45\n\n46\n\n47\n\n48\n\n49\n\n50\n\n51\n\n52\n\n53\n\n54\n\n55\n\n56\n\n57\n\n58\n\n59\n\n60\n\n61\n\n62\n\n63\n\n64\n\n65\n\n66\n\n67\n\n68\n\n69\n\n70\n\n71\n\n72\n\n73\n\n74\n\n75\n\n76\n\n77\n\n78\n\n79\n\n80\n\n81\n\n82\n\n83\n\n84\n\n85\n\n86\n\n87\n\n88\n\n89\n\n90\n\n91\n\n92\n\n93\n\n94\n\n95\n\n96\n\n97\n\n98\n\n99\n\n100\n\n101\n\n102\n\n103\n\n104\n\n105\n\n106\n\n107\n\n108\n\n109\n\n110\n\n111\n\n112\n\n113\n\n114\n\n115\n\n116\n\n117\n\n118\n\n119\n\n120\n\n121\n\n122\n\n123\n\n124\n\n125\n\n126\n\n127\n\n128\n\n129\n\n130\n\n131\n\n132\n\n133\n\n134\n\n135\n\n136\n\n137\n\n138\n\n139\n\n140\n\n141\n\n142\n\n143\n\n144\n\n145\n\n146\n\n147\n\n148\n\n149\n\n150\n\n151\n\n152\n\n153\n\n154\n\n155\n\n156\n\n157\n\n158\n\n159\n\n160\n\n{\n\n\"v0.8\": {\n\n\"start\": \"2012-06-25\",\n\n\"end\": \"2014-07-31\"\n\n},\n\n\"v0.10\": {\n\n\"start\": \"2013-03-11\",\n\n\"end\": \"2016-10-31\"\n\n},\n\n\"v0.12\": {\n\n\"start\": \"2015-02-06\",\n\n\"end\": \"2016-12-31\"\n\n},\n\n\"v4\": {\n\n\"start\": \"2015-09-08\",\n\n\"lts\": \"2015-10-12\",\n\n\"maintenance\": \"2017-04-01\",\n\n\"end\": \"2018-04-30\",\n\n\"codename\": \"Argon\"\n\n},\n\n\"v5\": {\n\n\"start\": \"2015-10-29\",\n\n\"maintenance\": \"2016-04-30\",\n\n\"end\": \"2016-06-30\"\n\n},\n\n\"v6\": {\n\n\"start\": \"2016-04-26\",\n\n\"lts\": \"2016-10-18\",\n\n\"maintenance\": \"2018-04-30\",\n\n\"end\": \"2019-04-30\",\n\n\"codename\": \"Boron\"\n\n},\n\n\"v7\": {\n\n\"start\": \"2016-10-25\",\n\n\"maintenance\": \"2017-04-30\",\n\n\"end\": \"2017-06-30\"\n\n},\n\n\"v8\": {\n\n\"start\": \"2017-05-30\",\n\n\"lts\": \"2017-10-31\",\n\n\"maintenance\": \"2019-01-01\",\n\n\"end\": \"2019-12-31\",\n\n\"codename\": \"Carbon\"\n\n},\n\n\"v9\": {\n\n\"start\": \"2017-10-01\",\n\n\"maintenance\": \"2018-04-01\",\n\n\"end\": \"2018-06-30\"\n\n},\n\n\"v10\": {\n\n\"start\": \"2018-04-24\",\n\n\"lts\": \"2018-10-30\",\n\n\"maintenance\": \"2020-05-19\",\n\n\"end\": \"2021-04-30\",\n\n\"codename\": \"Dubnium\"\n\n},\n\n\"v11\": {\n\n\"start\": \"2018-10-23\",\n\n\"maintenance\": \"2019-04-22\",\n\n\"end\": \"2019-06-01\"\n\n},\n\n\"v12\": {\n\n\"start\": \"2019-04-23\",\n\n\"lts\": \"2019-10-21\",\n\n\"maintenance\": \"2020-11-30\",\n\n\"end\": \"2022-04-30\",\n\n\"codename\": \"Erbium\"\n\n},\n\n\"v13\": {\n\n\"start\": \"2019-10-22\",\n\n\"maintenance\": \"2020-04-01\",\n\n\"end\": \"2020-06-01\"\n\n},\n\n\"v14\": {\n\n\"start\": \"2020-04-21\",\n\n\"lts\": \"2020-10-27\",\n\n\"maintenance\": \"2021-10-19\",\n\n\"end\": \"2023-04-30\",\n\n\"codename\": \"Fermium\"\n\n},\n\n\"v15\": {\n\n\"start\": \"2020-10-20\",\n\n\"maintenance\": \"2021-04-01\",\n\n\"end\": \"2021-06-01\"\n\n},\n\n\"v16\": {\n\n\"start\": \"2021-04-20\",\n\n\"lts\": \"2021-10-26\",\n\n\"maintenance\": \"2022-10-18\",\n\n\"end\": \"2023-09-11\",\n\n\"codename\": \"Gallium\"\n\n},\n\n\"v17\": {\n\n\"start\": \"2021-10-19\",\n\n\"maintenance\": \"2022-04-01\",\n\n\"end\": \"2022-06-01\"\n\n},\n\n\"v18\": {\n\n\"start\": \"2022-04-19\",\n\n\"lts\": \"2022-10-25\",\n\n\"maintenance\": \"2023-10-18\",\n\n\"end\": \"2025-04-30\",\n\n\"codename\": \"Hydrogen\"\n\n},\n\n\"v19\": {\n\n\"start\": \"2022-10-18\",\n\n\"maintenance\": \"2023-04-01\",\n\n\"end\": \"2023-06-01\"\n\n},\n\n\"v20\": {\n\n\"start\": \"2023-04-18\",\n\n\"lts\": \"2023-10-24\",\n\n\"maintenance\": \"2024-10-22\",\n\n\"end\": \"2026-04-30\",\n\n\"codename\": \"Iron\"\n\n},\n\n\"v21\": {\n\n\"start\": \"2023-10-17\",\n\n\"maintenance\": \"2024-04-01\",\n\n\"end\": \"2024-06-01\"\n\n},\n\n\"v22\": {\n\n\"start\": \"2024-04-24\",\n\n\"lts\": \"2024-10-29\",\n\n\"maintenance\": \"2025-10-21\",\n\n\"end\": \"2027-04-30\",\n\n\"codename\": \"Jod\"\n\n},\n\n\"v23\": {\n\n\"start\": \"2024-10-16\",\n\n\"maintenance\": \"2025-04-01\",\n\n\"end\": \"2025-06-01\"\n\n},\n\n\"v24\": {\n\n\"start\": \"2025-05-06\",\n\n\"lts\": \"2025-10-28\",\n\n\"maintenance\": \"2026-10-20\",\n\n\"end\": \"2028-04-30\",\n\n\"codename\": \"Krypton\"\n\n},\n\n\"v25\": {\n\n\"start\": \"2025-10-15\",\n\n\"maintenance\": \"2026-04-01\",\n\n\"end\": \"2026-06-01\"\n\n},\n\n\"v26\": {\n\n\"start\": \"2026-05-05\",\n\n\"lts\": \"2026-10-28\",\n\n\"maintenance\": \"2027-10-20\",\n\n\"end\": \"2029-04-30\",\n\n\"codename\": \"\"\n\n},\n\n\"v27\": {\n\n\"alpha\": \"2026-10-28\",\n\n\"start\": \"2027-04-22\",\n\n\"maintenance\": \"2027-10-20\",\n\n\"end\": \"2030-04-30\",\n\n\"codename\": \"\"\n\n}\n\n}\n\n## Footer\n\n[https://github.com](https://github.com) © 2026 GitHub, Inc.\n\n### Footer navigation\n\n- [Terms](https://docs.github.com/site-policy/github-terms/github-terms-of-service)\n- [Privacy](https://docs.github.com/site-policy/privacy-policies/github-privacy-statement)\n- [Security](https://github.com/security)\n- [Status](https://www.githubstatus.com/)\n- [Community](https://github.community/)\n- [Docs](https://docs.github.com/)\n- [Contact](https://support.github.com?tags=dotcom-footer)\n- Manage cookies\n- Do not share my personal information"},"title":"Release/schedule.json at main · nodejs/Release","citations":{"enabled":true}}},"caller":{"type":"code_execution_20260120","tool_id":"srvtoolu_01PMKEQwbt3D32yRrM4EDLor"}}         }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":22           }
+
+event: content_block_start
+data: {"type":"content_block_start","index":23,"content_block":{"type":"code_execution_tool_result","tool_use_id":"srvtoolu_01PMKEQwbt3D32yRrM4EDLor","content":{"type":"code_execution_result","stdout":"None\n12556\n---\ncanonical: https://nodejs.org/en/about/previous-releases\nmeta-description: Node.js® is a free, open-source, cross-platform JavaScript runtime environment that lets developers create servers, web apps, command line tools and scripts.\nmeta-next-size-adjust:\nmeta-og:description: Node.js® is a free, open-source, cross-platform JavaScript runtime environment that lets developers create servers, web apps, command line tools and scripts.\nmeta-og:image: https://nodejs.org/en/next-data/og/announcement/Node.js%20%E2%80%94%20Node.js%20Releases\nmeta-og:title: Node.js — Node.js Releases\nmeta-robots: index, follow\nmeta-twitter:card: summary\nmeta-twitter:creator: @nodejs\nmeta-twitter:description: Node.js® is a free, open-source, cross-platform JavaScript runtime environment that lets developers create servers, web apps, command line tools and scripts.\nmeta-twitter:image: https://nodejs.org/static/images/logo-hexagon-card.png\nmeta-twitter:image:alt: The Node.js Hexagon Logo\nmeta-twitter:title: Node.js — Node.js Releases\nmeta-viewport: width=device-width, initial-scale=1.0\ntitle: Node.js — Node.js Releases\n---\n\n[Skip to content](#main)\n\n[/en](https://nodejs.org/en)\n\n[Learn](https://nodejs.org/learn)[About](https://nodejs.org/en/about)[Download](https://nodejs.org/en/download)[Blog](https://nodejs.org/en/blog)[Docs](https://nodejs.org/docs/latest/api/)[Beta Docs](https://beta.docs.nodejs.org/)[Contribute](https://github.com/nodejs/node/blob/main/CONTRIBUTING.md)\n\nStart typing...\n\n⌘ K\n\n[https://github.com/nodejs/node](https://github.com/nodejs/node)\n\nChange page Node.js Releases\n\nChange page\n\nNode.js Releases\n\nAbout Node.js\n\n[About Node.js®](https://nodejs.org/en/about)[Node.js Releases](https://nodejs.org/en/about/previous-releases)[Security Reporting](https://nodejs.org/en/about/security-reporting)[Project Governance](https://nodejs.org/en/about/governance)[Partners & Supporters](https://nodejs.org/en/about/partners)[Branding of Node.js](https://nodejs.org/en/about/branding)[End-of-Life (EOL)](https://nodejs.org/en/about/eol)\n\nGet Involved\n\n[Get Involved](https://nodejs.org/en/about/get-involved)[Collaboration Summit](https://nodejs.org/en/about/get-involved/collab-summit)[Upcoming Events](https://nodejs.org/en/about/get-involved/events)[Contribute to Node.js](https://github.com/nodejs/node/blob/main/CONTRIBUTING.md)[Code of Conduct](https://github.com/nodejs/admin/blob/main/CODE_OF_CONDUCT.md)\n\nAbout Node.js\n\n- [About Node.js®](https://nodejs.org/en/about)\n- [Node.js \nNone\n\"v20\": {\n\n\"start\": \"2023-04-18\",\n\n\"lts\": \"2023-10-24\",\n\n\"maintenance\": \"2024-10-22\",\n\n\"end\": \"2026-04-30\",\n\n\"codename\": \"Iron\"\n\n},\n\n\"v21\": {\n\n\"start\": \"2023-10-17\",\n\n\"maintenance\": \"2024-04-01\",\n\n\"end\": \"2024-06-01\"\n\n},\n\n\"v22\": {\n\n\"start\": \"2024-04-24\",\n\n\"lts\": \"2024-10-29\",\n\n\"maintenance\": \"2025-10\n\"v22\": {\n\n\"start\": \"2024-04-24\",\n\n\"lts\": \"2024-10-29\",\n\n\"maintenance\": \"2025-10-21\",\n\n\"end\": \"2027-04-30\",\n\n\"codename\": \"Jod\"\n\n},\n\n\"v23\": {\n\n\"start\": \"2024-10-16\",\n\n\"maintenance\": \"2025-04-01\",\n\n\"end\": \"2025-06-01\"\n\n},\n\n\"v24\": {\n\n\"start\": \"2025-05-06\",\n\n\"lts\": \"2025-10-28\",\n\n\"maintenance\": \"2026-10-\n\"v24\": {\n\n\"start\": \"2025-05-06\",\n\n\"lts\": \"2025-10-28\",\n\n\"maintenance\": \"2026-10-20\",\n\n\"end\": \"2028-04-30\",\n\n\"codename\": \"Krypton\"\n\n},\n\n\"v25\": {\n\n\"start\": \"2025-10-15\",\n\n\"maintenance\": \"2026-04-01\",\n\n\"end\": \"2026-06-01\"\n\n},\n\n\"v26\": {\n\n\"start\": \"2026-05-05\",\n\n\"lts\": \"2026-10-28\",\n\n\"maintenance\": \"2027\n","stderr":"","return_code":0,"content":[],"abort_reason":null}}          }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":23          }
+
+event: content_block_start
+data: {"type":"content_block_start","index":24,"content_block":{"type":"text","text":""} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":24,"delta":{"type":"text_delta","text":"Now"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":24,"delta":{"type":"text_delta","text":" the previous-releases page it"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":24,"delta":{"type":"text_delta","text":"self."}     }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":24    }
+
+event: content_block_start
+data: {"type":"content_block_start","index":25,"content_block":{"type":"server_tool_use","id":"srvtoolu_01XQA4FZ2iTYqHaAFQpXkvLQ","name":"code_execution","input":{}}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":""}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"{\"code\": \"for"}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":" m in re.finditer("} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"r'"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"Node\\\\.js "}   }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"2"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"["}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"024"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"]|v2[024]\\\\"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":".',c):print(c["}  }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"m"}    }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":".start()"}  }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"-50"}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":":m.start()+250"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"].replace(\\\"\\\\n\\\",\\\""}   }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":" | \\\"));print('--"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"')\\ni=c.find('"}   }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"Release"}   }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"');print(c[3"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"500"}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":":7"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"000])"}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":25,"delta":{"type":"input_json_delta","partial_json":"\"}"}           }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":25    }
+
+event: content_block_start
+data: {"type":"content_block_start","index":26,"content_block":{"type":"code_execution_tool_result","tool_use_id":"srvtoolu_01XQA4FZ2iTYqHaAFQpXkvLQ","content":{"type":"code_execution_result","stdout":" | | | [v24](https://nodejs.org/en/download/archive/v24.22.2)            | Krypton  | May 06, 2025   | Oct 27, 2026 | LTS    | Details | | | [v23](https://nodejs.org/en/download/archive/v23.11.1)            | -        | Oct 16, 2024   | May 14, 2025 | EOL    | Details | | | [v22](https://nodejs.org/en/dow\n--\n | | | [v22](https://nodejs.org/en/download/archive/v22.23.4)            | Jod      | Apr 24, 2024   | Oct 20, 2026 | LTS    | Details | | | [v21](https://nodejs.org/en/download/archive/v21.7.3)             | -        | Oct 17, 2023   | Apr 10, 2024 | EOL    | Details | | | [v20](https://nodejs.org/en/dow\n--\n | | | [v20](https://nodejs.org/en/download/archive/v20.20.2)            | Iron     | Apr 17, 2023   | Mar 24, 2026 | EOL    | Details | | | [v19](https://nodejs.org/en/download/archive/v19.9.0)             | -        | Oct 17, 2022   | Apr 10, 2023 | EOL    | Details | | | [v18](https://nodejs.org/en/dow\n--\nnter *Current* release status for six months, which gives library authors time to add support for them. Historically (up to Node.js 26), odd-numbered releases (9, 11, etc.) become unsupported after six months, and even-numbered releases (10, 12, etc.) move to *Active LTS* status and are ready for general use. Starting with Node.js 27, the release cycle will be annual and every major version will move to *LTS* status after its six-month *Current* phase (and six additional months of *Alpha* phase). *LTS* release status is \"long-term support\", which typically guarantees that critical bugs will be fixed for a total of 30 months. Production applications should only use *Active LTS* or *Maintenance LTS* releases.\n\n## [Release Schedule](#release-schedule)\n\n![Releases](https://raw.githubusercontent.com/nodejs/Release/main/schedule.svg?sanitize=true)\n\nFull details regarding the Node.js release schedule are available [on GitHub](https://github.com/nodejs/release#release-schedule).\n\n## [Looking for the latest release of a version branch?](#looking-for-the-latest-release-of-a-version-branch)\n\n| Node.js                                                           | Codename | First released | Last updated | Status |         |\n|-------------------------------------------------------------------|----------|----------------|--------------|--------|---------|\n| [v27](https://nodejs.org/en/download/archive/v27.0.0-alpha.0.0.0) | -        | Oct 29, 2026   | Oct 29, 2026 | Alpha  | Details |\n| [v26](https://nodejs.org/en/download/archive/v26.13.0)            | Lithium  | May 05, 2026   | Oct 28, 2026 | LTS    | Details |\n| [v25](https://nodejs.org/en/download/archive/v25.9.0)             | -        | Oct 15, 2025   | Mar 31, 2026 | EOL    | Details |\n| [v24](https://nodejs.org/en/download/archive/v24.22.2)            | Krypton  | May 06, 2025   | Oct 27, 2026 | LTS    | Details |\n| [v23](https://nodejs.org/en/download/archive/v23.11.1)            | -        | Oct 16, 2024   | May 14, 2025 | EOL    | Details |\n| [v22](https://nodejs.org/en/download/archive/v22.23.4)            | Jod      | Apr 24, 2024   | Oct 20, 2026 | LTS    | Details |\n| [v21](https://nodejs.org/en/download/archive/v21.7.3)             | -        | Oct 17, 2023   | Apr 10, 2024 | EOL    | Details |\n| [v20](https://nodejs.org/en/download/archive/v20.20.2)            | Iron     | Apr 17, 2023   | Mar 24, 2026 | EOL    | Details |\n| [v19](https://nodejs.org/en/download/archive/v19.9.0)             | -        | Oct 17, 2022   | Apr 10, 2023 | EOL    | Details |\n| [v18](https://nodejs.org/en/download/archive/v18.20.8)            | Hydrogen | Apr 18, 2022   | Mar 27, 2025 | EOL    | Details |\n| [v17](https://nodejs.org/en/download/archive/v17.9.1)             | -        | Oct 19, 2021   | Jun 01, 2022 | EOL    | Details |\n| [v16](https://nodejs.org/en/download/archive/v16.20.2)            | Gallium  | Apr 20, 2021   | Aug 08, 2023 | EOL    | Details |\n| [v15](https://nodejs.org/en/download/archive/v15.14.0)            | -        | Oct 20, 2020   | Apr 06, 2021 | EOL    | Details |\n| [v14](https://nodejs.org/en/download/archive/v14.21.3)            | Fermium  | Apr 21, 2020   | Feb 16, 2023 | EOL    | Details |\n| [v13](https://nodejs.org/en/download/archive/v13.14.0)            | -        | Oct 22, 2019   | Apr 29, 2020 | EOL    | Details |\n| [v12](https://nodejs.org/en/download/archive/v12.22.12)           | Erbium   | Apr 23, 2019   | Apr 05, 2022 | EOL    | Details |\n| [v11](https://nodejs.org\n","stderr":"","return_code":0,"content":[],"abort_reason":null}}              }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":26       }
+
+event: content_block_start
+data: {"type":"content_block_start","index":27,"content_block":{"type":"thinking","thinking":"","signature":""}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":"I'm comparing Node"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":" v20's first"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":" release date:"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":" the page says Apr 17"}    }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":", "}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":"2023 while the sch"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":"edule l"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":"ists Apr 18, which"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":" is"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":" lik"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":"ely a timezone dif"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":"ference. I"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":"'ll take"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":" the release"}    }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":" date from the page and"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":" p"}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":"ull the LTS dates from"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":" schedule.json, since the"}  }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":" page doesn't have them,"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":" then work out both variants."}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"thinking_delta","thinking":"\n\n"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":27,"delta":{"type":"signature_delta","signature":"CAQS2gcKEAgTGAI4AUIIdGhpbmtpbmcSDLKwj815K6LICfAqSRoMnwemeCK+TY7UgguLIjCZtFs0nA527tGp/XMimB9REq62MH6UG61Z4mVyvdV62jrV/6EjQj3CDXMVF3xRSIgq9wZTjW3pYzH95CvbNH9Q/+xYyiihdCBv0RAc0zcNGuK+pAwxwqXEubA6NvLDhbc6QRYt0Z1tlwuhsGf3gmkWNg8okgDJZP9OaBf1Qg3XJHh/vLEd2UAhLadtzNyECXE7Cjyh5zPAjvg+OPHYSSkX0vmu7DXmS9MemM1Wci3MaFM3Rp66Qla3Z5h0/iTkioGscvZGsrK2c/z4yuBe8wHlzQbNZYo/jszM68Gr7tN1b3WNrnYhKTe2VjbkvKaUBGsdfwKEFx4SQqVpOz2alz/iEz+oO/SSxfcwtl9EjVOp+W42yXO1aCAbPFJ0LhtOk9IEnj0U1++iragGJ/CtHRUudn8XMPqy9p7jnTqNhhVtdC4eDZ/VlGG5V97y4Q4K/WeE8qosK4xMX6w0ntTuCnMyXKQhiFjMmrYiHa2buZ9hqCR/BAeTqrGJc7gjwlIzUI37w1IqCN/cbebd8oohIj6h0E6DRimhgCyBNe6zEFXFDmGdsaLh6SGXv9iIs0o1klKZJS1dJVO0ziTMxHxGyohPUpcnBCTYMG5XFKm0dBxxA5sfYM5LvpCpvzIF1xI7Oyi3grk+bvmMAX00eeVa7SktaARto/IRT5XYzgoJNS4Hnae2pp7MFs9V0XemcMLwXLmzg24D03dtHyBv5Y0zmWsdFbcBgnfcWs4YO7PBmpIvBpVlLlFDK6bDVRN4edmQYtG72Mi/otAZ4lObDOxl9ek+ugrFqrN0ckWOd3e4quz9oaUnTrRta6Dj0b45ZtQy+JqkAujQjLMXSXN5lpmvFFb2w9Z/kWtn2Psq/D4845A/nZn8S2yIdkMPPfbL0hLDoKQxgyVBSNjvsyV/a2YVoRQRpnr2Z9MbUqm96LVNOaguSOh37VjLwAcGEy8i3wos9qwQ4Ycu2qn0MfVzsYj7tsWlTlDsLMsEM6Iq+9OpJFXDJplMjSD/iL/E3L0ocnFAY8EO62PvYVwvNJQE/cCp6VrV7RAho2ZULw2EdlZbF0KqZiWZFc/z06+5vDwdIMcb/BXtC8bYkya5jIFdWXkz//nTJ79ouqvhEzgP534IA0L0Ytfj9tOMedL6MGvbDEiT5Vlh470qBvr0PvQTkjjV5trkVbG66aNqgHirU3perMDw7HeaC3vDHqd4RULPAgMC+eCpJpPO89OK0NNgWwW1Lonrgy6vUsKggAY+chgB"} }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":27 }
+
+event: content_block_start
+data: {"type":"content_block_start","index":28,"content_block":{"type":"server_tool_use","id":"srvtoolu_01TmJQDordyrvFovKxuwQAn5","name":"code_execution","input":{}}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":""} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"{\"code\": \"from datet"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"ime import date as"}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":" d\\npage"}    }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"={'"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"20':d"}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"(2023,4,17),"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"'22':d(2024,"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"4,24),'24':d"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"(2025,5,6)"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"}\\nsch"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"={'20':("}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"d(2023,4,18"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"),d(2023,10,"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"24)),'22':(d"}    }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"(2024,4,24),"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"d(2024,10,29"}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":")),'24':(d("}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"2025,5,6),d"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"(2025,10,28))"}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"}\\nfor k in page:"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"print(k,(s"}    }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"ch[k][1]-page"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"[k]).days,(s"}        }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"ch[k][1]-s"}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"ch[k][0]).days"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":")"}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":28,"delta":{"type":"input_json_delta","partial_json":"\"}"}            }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":28             }
+
+event: content_block_start
+data: {"type":"content_block_start","index":29,"content_block":{"type":"tool_use","id":"toolu_01L4XB38ht3roAsTLEzKNsBy","name":"get_user_timezone","input":{},"caller":{"type":"direct"}}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":29,"delta":{"type":"input_json_delta","partial_json":""}   }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":29             }
+
+event: content_block_start
+data: {"type":"content_block_start","index":30,"content_block":{"type":"tool_use","id":"toolu_016kWiYykuMbs1xz3HKQwNRM","name":"save_note","input":{},"caller":{"type":"direct"}}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":""}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"{\"title"}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"\": \"Nod"}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"e LTS g"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"aps\""}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":", \"body"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"\": \"Nod"}   }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"e.js 24"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":" had th"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"e short"}   }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"est gap"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":" betwee"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"n initi"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"al rele"}   }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"ase and"}             }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":" Active"}     }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":" LTS: 1"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"75 days"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":" (2025-"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"05-06 t"}   }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"o 2025-"}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"10-28),"}         }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":" vs 188"}   }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":" days f"}            }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"or v22 "}           }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"and 189"}              }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":" days ("}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"190 usi"} }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"ng the "}  }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"Apr 17 "}       }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"page da"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"te) for"}               }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":" v20..."}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":" see de"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"tails i"}          }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"n chat."}      }
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":30,"delta":{"type":"input_json_delta","partial_json":"\"}"}        }
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":30             }
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"tool_use","stop_sequence":null,"stop_details":null,"container":{"id":"container_01Wh1Xt9gWn6mTvhmXdfhkcq","expires_at":"2026-11-06T06:59:52.799263Z"}},"usage":{"input_tokens":72621,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":1531,"output_tokens_details":{"thinking_tokens":173},"server_tool_use":{"web_search_requests":3,"web_fetch_requests":3}}       }
+
+event: message_stop
+data: {"type":"message_stop" }
+

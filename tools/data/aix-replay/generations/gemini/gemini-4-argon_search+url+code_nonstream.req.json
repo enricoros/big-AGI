@@ -1,0 +1,30 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Do three things: (1) search the web for the current LTS version of Node.js; (2) read https://example.com/ and tell me its title; (3) run Python code to compute the sum of the first 50 prime numbers, then run a second, separate code cell to compute 2**64. One line per result."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "googleSearch": {}
+  },
+  {
+   "urlContext": {}
+  },
+  {
+   "codeExecution": {}
+  }
+ ],
+ "toolConfig": {
+  "includeServerSideToolInvocations": true
+ },
+ "generationConfig": {
+  "maxOutputTokens": 4000
+ },
+ "store": false
+}

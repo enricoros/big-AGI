@@ -1,0 +1,29 @@
+{
+  "headers": {
+    "X-Server-Timeout": "10"
+  },
+  "body": {
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Run exactly this Python code in the code execution tool, unchanged, and then tell me what it printed:\n\nimport time\ntime.sleep(20)\nprint(\"done\")"
+          }
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "codeExecution": {}
+      }
+    ],
+    "toolConfig": {
+      "includeServerSideToolInvocations": true
+    },
+    "generationConfig": {
+      "maxOutputTokens": 2000
+    },
+    "store": false
+  }
+}

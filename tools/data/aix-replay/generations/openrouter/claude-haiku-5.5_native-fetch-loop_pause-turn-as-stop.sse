@@ -1,0 +1,32 @@
+data: {"id":"gen-1794267436-2euOXK6ltTXNBT7M9edr","object":"chat.completion.chunk","created":1794267436,"model":"anthropic/claude-haiku-5.5","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning_details":[{"type":"reasoning.text","signature":"CAQSmAYKEAgTGAI4AUIIdGhpbmtpbmcSDC3DEUJ2RkG3jHsJwRoM7od6Jq+ebVifU3SiIjBw7iup1K33qh322espn5M1tMgQhVfFtyXr4LiSr5sG/NUQqYr/+dZk1e41LgLuCi4qtQVwqIRffQBr3ubF2njcqwZdz6yafDI81ngaxkLdRB5NL2w5lWaE7aLM980e0khrEWjTDm4FmWxPKWOYOhG5APR7k7KaI5Mw6gNZ3dyguHzY7IAcpj3CfoBPW35CRaVYXkggmWvS6TAXazPXCrZhuw3SJx1yKbj72nh73shorwzoC7HPk/EVOT26t8h+kw3ib0Jr3baa1GRLBF82Cl92WGyZNlmsTjGG+OJFrSdoz1pPWYpl7SJQZyPxnhbYGOaybgCZCHPJucyynLrboXmjbg48HJnROqOz3GGqRBoh2GBGIwYgRf+UfVpgtPqnfV14F5wHL/hHO2wCDzys6Af2f0UTNafy1VtPgMa2rqU25hVdUoysj2hc7JKzX5Zfr8d43IbbVIfEsL2Jr/QiazHrs9xYeaedHNz9ok401SJJMNwwpYpngeQKnD1mWhPK5a0zaLSVr0m/rI2z99m3YQ4rhjaqbB79+XLhrQFWAf5/SQBjx3aQNVi1uYkfzDOr0omtwbxixOoWE8TOmh0axVA6vLkZLpS2PUZUiMFXBWcapkeiMwWkjvk07ZfTyWyttG4geMcBjNSOXKz4VuQyYDJLcimMZ85q5Ve4bJ940vpA1nDdIMjT3T5Qf00XECc0zXbNHih7WH5y5VkUG6O7PtafIlU0KifER/SWfYbIRQpVHTlslePcf7ZULLEbvrDa6/QN+5YLEVf/jjmOeIEqdyepr5O9VTDtIUaDt1dO5EwEQ1qEerZRBiN57ri6qSlaE5Lg5DpVSZ/J3O5IFXEGb+BmT74Xl/wjNalm4UpgILL8vsGUGtORkwBp1JTGCamoQlXFko3Sp8ki0oAenkW0j2YM8kz6o02tHQow3uGb7dONi3I6Ob0syr8rDVxrml6bp7t+tcesaPqh0U3pOvsJHis9MGzzR2nU2/oYAQ==.eyJlbmRwb2ludF9zbHVnIjoiYW50aHJvcGljL2NsYXVkZS1oYWlrdS01LjUtMjAyNjEwMDd8YW50aHJvcGljIn0","format":"anthropic-claude-v1","index":0}]},"finish_reason":null,"native_finish_reason":null}]}
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1794267436-2euOXK6ltTXNBT7M9edr","object":"chat.completion.chunk","created":1794267436,"model":"anthropic/claude-haiku-5.5","provider":"Anthropic","choices":[{"index":0,"delta":{"content":"","role":"assistant","reasoning":null},"finish_reason":"stop","native_finish_reason":"pause_turn"}]}
+
+data: {"id":"gen-1794267436-2euOXK6ltTXNBT7M9edr","object":"chat.completion.chunk","created":1794267436,"model":"anthropic/claude-haiku-5.5","provider":"Anthropic","service_tier":"default","choices":[{"index":0,"delta":{"content":"","role":"assistant"},"finish_reason":"stop","native_finish_reason":"pause_turn"}],"usage":{"prompt_tokens":33758,"completion_tokens":738,"total_tokens":34496,"cost":0.0037448,"is_byok":false,"prompt_tokens_details":{"cached_tokens":0,"cache_write_tokens":0,"audio_tokens":0,"video_tokens":0},"cost_details":{"upstream_inference_cost":0.0037448,"upstream_inference_prompt_cost":0.0033758,"upstream_inference_completions_cost":0.000369},"completion_tokens_details":{"reasoning_tokens":44,"image_tokens":0,"audio_tokens":0},"server_tool_use_details":{"web_search_requests":0}}}
+
+data: [DONE]
+

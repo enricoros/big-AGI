@@ -1,0 +1,2 @@
+data: {"candidates": [{"finishReason": "UNEXPECTED_TOOL_CALL","index": 0}],"usageMetadata": {"promptTokenCount": 82,"totalTokenCount": 82,"promptTokensDetails": [{"modality": "TEXT","tokenCount": 82}],"serviceTier": "standard"}}
+

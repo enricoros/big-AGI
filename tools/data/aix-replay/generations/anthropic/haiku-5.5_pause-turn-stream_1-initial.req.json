@@ -1,0 +1,56 @@
+{
+  "betas": [
+    "code-execution-2025-08-25",
+    "files-api-2025-04-14",
+    "skills-2025-10-02",
+    "thinking-binding-controls-2026-08-01"
+  ],
+  "body": {
+    "model": "claude-haiku-5-5",
+    "max_tokens": 8000,
+    "stream": true,
+    "thinking": {
+      "type": "adaptive",
+      "display": "summarized",
+      "block_binding": {
+        "prefix_mismatch_behavior": "drop_block"
+      }
+    },
+    "tools": [
+      {
+        "type": "web_fetch_20250910",
+        "name": "web_fetch",
+        "citations": {
+          "enabled": true
+        }
+      },
+      {
+        "type": "code_execution_20260120",
+        "name": "code_execution"
+      }
+    ],
+    "cache_control": {
+      "type": "ephemeral"
+    },
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Before starting, think briefly about the plan. Then call the web_fetch tool 13 separate times, one call per URL, in this order, waiting for each result before the next call (do not use bash): https://example.com/?n=1 , https://example.com/?n=2 , https://example.com/?n=3 , https://example.com/?n=4 , https://example.com/?n=5 , https://example.com/?n=6 , https://example.com/?n=7 , https://example.com/?n=8 , https://example.com/?n=9 , https://example.com/?n=10 , https://example.com/?n=11 , https://example.com/?n=12 , https://example.com/?n=13. Never combine commands into one call. After the last one, reply DONE."
+          }
+        ]
+      }
+    ],
+    "container": {
+      "skills": [
+        {
+          "type": "anthropic",
+          "skill_id": "xlsx",
+          "version": "latest"
+        }
+      ]
+    }
+  }
+}

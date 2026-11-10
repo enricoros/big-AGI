@@ -1,0 +1,86 @@
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1793944162-VHtxr5H6Xq4nWzIQA0vO","object":"chat.completion.chunk","created":1793944162,"model":"openai/gpt-6-astra-pro","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://www.iana.org/help/example-domains","title":"Example Domains","start_index":0,"end_index":0,"content":"Example Domains\n\n# Example Domains\n\nA number of domains such as `example.com` and `example.org` are maintained for documentation purposes. These domains may be used as illustrative examples in documents without prior coordination with us. They are not available for registration or transfer.\n\nWe provide a web service on the example domain hosts to provide basic information on the purpose of the domain. These web services are provided as best effort, but are not designed to support production applications. We strongly recommend you do not design applications that require the example domains to have operating HTTP service."}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944162-VHtxr5H6Xq4nWzIQA0vO","object":"chat.completion.chunk","created":1793944162,"model":"openai/gpt-6-astra-pro","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://www.iana.org/domains/reserved","title":"IANA-managed Reserved Domains","start_index":0,"end_index":0,"content":"# IANA-managed Reserved Domains\n\nCertain domains are set aside, and nominally registered to “IANA”, for specific policy or technical purposes.\n\n## Example domains\n\nAs described in RFC 2606 and RFC 6761, a number of domains such as example.com and example.org are maintained for documentation purposes. These domains may be used as illustrative examples in documents without prior coordination with us. They are not available for registration or transfer.\n\n## Test IDN top-level domains\n\nThese domains were temporarily delegated by IANA for the IDN Evaluation being conducted by ICANN.\n\n| Domain | Domain (A-label) | Language | Script |\n| --- | --- | --- | --- |\n| إختبار | xn--kgbechtv | Arabic | Arabic |\n| آزمایشی | xn--hgbk6aj7f53bba | Persian | Arabic |\n| 测试 | xn--0zwm56d | Chinese | Han (Simplified variant) |"}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944162-VHtxr5H6Xq4nWzIQA0vO","object":"chat.completion.chunk","created":1793944162,"model":"openai/gpt-6-astra-pro","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://www.iana.org/assignments/special-use-domain-names","title":"Special-Use Domain Names","start_index":0,"end_index":0,"content":"# Special-Use Domain Names\n\n## Special-Use Domain Names\n\n### Registration Procedure(s)\n\n- Standards Action or IESG Approval\n\n### Reference\n\n- RFC 6761: Special-Use Domain Names\n\n### Note\n\nThe \"Special Use\" designation applies to both the listed domains and their subdomains.\n\n### Available Formats\n\n| Name | Reference |\n| --- | --- |\n| alt. | RFC 9476 |\n\n...\n\n| RFC 9665 |\n| example. | RFC 6761 |\n| example.com. | RFC 6761 |\n| example.net. | RFC 6761 |\n| example.org. | RFC 6761 |\n| invalid. | RFC 6761 |\n| local. | RFC 6762 |\n| localhost. | RFC 6761 |\n| onion. | RFC 7686 |\n| test. | RFC 6761 |"}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944162-VHtxr5H6Xq4nWzIQA0vO","object":"chat.completion.chunk","created":1793944162,"model":"openai/gpt-6-astra-pro","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://www.iana.org/news/2024/example-domain-http-methods","title":"Changes to HTTP service for example domains","start_index":0,"end_index":0,"content":"Changes to HTTP service for example domains\n\n# Changes to HTTP service for example domains\n\n2024-09-04\n\nThe websites served on the example domains (e.g. example.com, example.net, example.org, and example.edu) no longer support POST, PUT, DELETE, and PATCH requests. Attempts for those HTTP request methods now return a 405 (Method Not Allowed) status code.\n\nSoftware should not rely on the existence of this HTTP service. These websites are provided on a best-effort basis to inform users of the purpose of these domains. The service is not provided to be a testing endpoint for software, however we recognize that the domains may inadvertently be used such as through copying configurations from sample documentation. Users should not make any assumptions about the content, behavior, or availability of any services. Future changes to the example domains may be given without notice.\n\nAs described in RFC 2606 and RFC 6761, a number of domains such as example.com and example.org are maintained for documentation purposes. These domains may be used as illustrative examples in documents without prior coordination with us."}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944162-VHtxr5H6Xq4nWzIQA0vO","object":"chat.completion.chunk","created":1793944162,"model":"openai/gpt-6-astra-pro","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://en.wikipedia.org/wiki/Example.com","title":"Example.com","start_index":0,"end_index":0,"content":"The domain names example.com, example.net, example.org, and example.edu are second-level domain names in the Domain Name System of the Internet. They are reserved by the Internet Assigned Numbers Authority (IANA) at the direction of the Internet Engineering Task Force (IETF) as special-use domain names for documentation purposes. [2] The domain names are used widely in books, tutorials, sample network configurations, and generally as examples for the use of domain names. As a courtesy, [3] the Internet Corporation for Assigned Names and Numbers (ICANN) operates websites for these domains with content that reflects their purpose.\n\n## Purpose\n\nThe domains example.com, example.net, example.org and example.edu are intended for general use in any kind of documentation, such as technical and software documentation, manuals, and sample software configurations. Thus, documentation writers can be sure to select a domain name without creating naming conflicts if end-users try to use the sample configurations or examples verbatim. The domains may be used in documentation without prior consultation with IANA or ICANN."}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1793944162-VHtxr5H6Xq4nWzIQA0vO","object":"chat.completion.chunk","created":1793944162,"model":"openai/gpt-6-astra-pro","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"IANA reserves example.com for documentation examples, and its webpage confirms that permission is not required for this use.\nREPORT searches=1 fetches=1","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944162-VHtxr5H6Xq4nWzIQA0vO","object":"chat.completion.chunk","created":1793944162,"model":"openai/gpt-6-astra-pro","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant"},"finish_reason":"stop","native_finish_reason":"stop"}]}
+
+data: {"id":"gen-1793944162-VHtxr5H6Xq4nWzIQA0vO","object":"chat.completion.chunk","created":1793944162,"model":"openai/gpt-6-astra-pro","provider":"OpenAI","service_tier":null,"choices":[{"index":0,"delta":{"content":"","role":"assistant"},"finish_reason":"stop","native_finish_reason":"stop"}],"usage":{"prompt_tokens":12331,"completion_tokens":369,"total_tokens":12700,"cost":0.0871585,"prompt_tokens_details":{"cached_tokens":7451,"cache_write_tokens":1783,"audio_tokens":0,"video_tokens":0},"completion_tokens_details":{"reasoning_tokens":159,"image_tokens":0,"audio_tokens":0},"cost_details":{"upstream_inference_cost":0.07915849999999999,"upstream_inference_prompt_cost":0.0607085,"upstream_inference_completions_cost":0.01845},"server_tool_use_details":{"web_search_requests":1,"tool_calls_requested":2,"tool_calls_executed":2}}}
+
+data: [DONE]
+

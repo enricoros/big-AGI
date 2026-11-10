@@ -1,0 +1,22 @@
+{
+ "model": "google/gemini-3.8-flash",
+ "tools": [
+  {
+   "type": "openrouter:web_search",
+   "parameters": {
+    "engine": "native"
+   }
+  }
+ ],
+ "stream": true,
+ "stream_options": {
+  "include_usage": true
+ },
+ "messages": [
+  {
+   "role": "user",
+   "content": "I need three unrelated facts, look each one up on the web: (a) the weather forecast for Lisbon tomorrow, (b) the current EUR to USD exchange rate, (c) the current LTS version of Node.js. One short line per item. End with a line: REPORT search_calls=<n> search_queries=<n> fetches=<n>."
+  }
+ ],
+ "max_tokens": 3000
+}

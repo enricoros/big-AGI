@@ -1,0 +1,28 @@
+{
+ "model": "gpt-6-luna",
+ "stream": true,
+ "store": false,
+ "tools": [
+  {
+   "type": "code_interpreter",
+   "container": {
+    "type": "auto"
+   }
+  }
+ ],
+ "input": [
+  {
+   "role": "user",
+   "content": [
+    {
+     "type": "input_text",
+     "text": "Use the python tool three separate times (three separate tool calls, not one): first compute 17*23, then compute the 20th Fibonacci number, then run `import time; time.sleep(2); print(\"slept\")`. Then reply \"done\"."
+    }
+   ]
+  }
+ ],
+ "max_output_tokens": 2500,
+ "include": [
+  "code_interpreter_call.outputs"
+ ]
+}

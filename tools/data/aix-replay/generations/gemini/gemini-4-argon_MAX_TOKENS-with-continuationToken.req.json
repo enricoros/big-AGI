@@ -1,0 +1,19 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Print every integer from 1 to 3000 in increasing order, one per line, digits only. Do not skip, abbreviate or stop early. No other text."
+    }
+   ]
+  }
+ ],
+ "generationConfig": {
+  "maxOutputTokens": 1000,
+  "thinkingConfig": {
+   "thinkingLevel": "low"
+  }
+ },
+ "store": false
+}

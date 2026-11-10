@@ -1,0 +1,10 @@
+data: {"id":"gen-1794267010-x0NXkTVXpzn9Nuiwx4yn","object":"chat.completion.chunk","created":1794267010,"model":"google/gemini-2.5-flash-lite","provider":"Google AI Studio","choices":[{"index":0,"delta":{"content":"\"Mr. and Mrs.","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1794267010-x0NXkTVXpzn9Nuiwx4yn","object":"chat.completion.chunk","created":1794267010,"model":"google/gemini-2.5-flash-lite","provider":"Google AI Studio","choices":[{"index":0,"delta":{"content":" Dursley, of number four, Privet Drive, were proud to say that","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1794267010-x0NXkTVXpzn9Nuiwx4yn","object":"chat.completion.chunk","created":1794267010,"model":"google/gemini-2.5-flash-lite","provider":"Google AI Studio","choices":[{"index":0,"delta":{"content":"","role":"assistant"},"finish_reason":"error","native_finish_reason":"RECITATION"}]}
+
+data: {"id":"gen-1794267010-x0NXkTVXpzn9Nuiwx4yn","object":"chat.completion.chunk","created":1794267010,"model":"google/gemini-2.5-flash-lite","provider":"Google AI Studio","service_tier":"default","choices":[{"index":0,"delta":{"content":"","role":"assistant"},"finish_reason":"error","native_finish_reason":"RECITATION"}],"usage":{"prompt_tokens":0,"completion_tokens":0,"total_tokens":0,"cost":0,"is_byok":false,"prompt_tokens_details":{"cached_tokens":0,"cache_write_tokens":0,"audio_tokens":0,"video_tokens":0},"cost_details":{"upstream_inference_cost":0,"upstream_inference_prompt_cost":0,"upstream_inference_completions_cost":0},"completion_tokens_details":{"reasoning_tokens":0,"image_tokens":0,"audio_tokens":0}}}
+
+data: [DONE]
+

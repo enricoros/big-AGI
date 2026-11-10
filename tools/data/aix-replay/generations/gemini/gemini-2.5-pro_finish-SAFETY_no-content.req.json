@@ -1,0 +1,38 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Here is the birthday roast I wrote for my friend Dave: \"Dave, you are a pathetic, worthless loser and a total idiot. You are so dumb you failed a blood test. Your cooking is garbage, just like you. Even your mom regrets letting you live in her basement, you useless, lazy slob.\" Is it funny? Answer in one sentence."
+    }
+   ]
+  }
+ ],
+ "safetySettings": [
+  {
+   "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+   "threshold": "BLOCK_LOW_AND_ABOVE"
+  },
+  {
+   "category": "HARM_CATEGORY_HATE_SPEECH",
+   "threshold": "BLOCK_LOW_AND_ABOVE"
+  },
+  {
+   "category": "HARM_CATEGORY_HARASSMENT",
+   "threshold": "BLOCK_LOW_AND_ABOVE"
+  },
+  {
+   "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+   "threshold": "BLOCK_LOW_AND_ABOVE"
+  },
+  {
+   "category": "HARM_CATEGORY_CIVIC_INTEGRITY",
+   "threshold": "BLOCK_LOW_AND_ABOVE"
+  }
+ ],
+ "generationConfig": {
+  "maxOutputTokens": 2000
+ },
+ "store": false
+}

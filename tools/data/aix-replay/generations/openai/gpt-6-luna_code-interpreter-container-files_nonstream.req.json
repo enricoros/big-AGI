@@ -1,0 +1,34 @@
+{
+  "model": "gpt-6-luna",
+  "stream": false,
+  "store": false,
+  "reasoning": {
+    "effort": "low",
+    "summary": "detailed"
+  },
+  "include": [
+    "reasoning.encrypted_content",
+    "code_interpreter_call.outputs"
+  ],
+  "tools": [
+    {
+      "type": "code_interpreter",
+      "container": {
+        "type": "auto"
+      }
+    }
+  ],
+  "max_output_tokens": 3000,
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Use the python tool once to write two files: /mnt/data/hello.py (a script that prints \"hello\") and /mnt/data/table.csv (a header row \"x,y\" and three data rows). Then give me a download link to each file."
+        }
+      ]
+    }
+  ]
+}

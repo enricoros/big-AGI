@@ -1,0 +1,65 @@
+{
+  "betas": [
+    "thinking-binding-controls-2026-08-01"
+  ],
+  "body": {
+    "model": "claude-opus-5-5",
+    "max_tokens": 2000,
+    "stream": true,
+    "thinking": {
+      "type": "adaptive",
+      "display": "summarized"
+    },
+    "output_config": {
+      "effort": "high"
+    },
+    "system": [
+      {
+        "type": "text",
+        "text": "You are a concise math tutor. Current date and time: 2026-11-09 16:00."
+      }
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": "Is 391 prime? Work it out, then answer in one sentence."
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "I'm checking whether 391 is prime by factoring it: 17 times 23 gives 391, so it isn't prime.\n\n",
+            "signature": "CAQS9QQKEAgTGAI4AUIIdGhpbmtpbmcSDCFzm8W4MX1qnY1wBRoMjZkUeZMRS4L3I8lxIjAE1sz+TqIlvKCW7fhz1XYGHt2RU/IenTvygCFGuCdTYExDiANYPguOyUQaetQaId0qkgT1p4J/fyFLf7YSrKggFms8PzU/loEfVAsfaeaYmwSqSazufSCSx9uvApdK5i2xLZmA3A8G15q1+uU2+ggGyHYzHb9dth7i2HHghDWk86w8bwVQTjngPAXpEmr+JQP1I6Mwr0rUpE7kAjZRZkNwOBWfYhAkmM7eZa4ZnT+2VVA/Xqo1O1O8eVcsFxZ9VJNeFnoG3gMfmTSz4XfUMOyuA8bQSCjzc3l4hrpK4coZ/nfRTgwEDtnFxXrb8GKQDEgRVjZagzp677ADKKUuz6FwDygOogktxjrOoEwkG3gh6AhGgxqBR4f9zGInn7JEOcUXVRH1f9kJHdOt3T4TH7hDITnHDOj6SVPIQZC3Rx6BOJSHkO6d51jQHDQq3OwrYXWGTax9PS3Px4igbfKjsBkZppIRIFHU3FRnwIGWvvkssvLmZqc2h1nfEo5kZMoAt7S1jxGYjRW+IBmncJ+IFfy5ITRDBkKur7UxeP7pe/vUcPU3T9sk7qFggpaJNyIjRav9MvEZQFLjn5pZE0lp66Zgqc6dHUIpLPb87cpwpX1cqwCdtH3dyEbp5YMz/cEq7tXTIEIK2X6EZjTWT44skdFafAd98s6t2PrqJRxMKHWrIOBGyqYs/ZR52YdF3bjOenalcoi/1otjQXs5AXMQV1e7U2anU5z4DsTG9w/ovlJahaHABUW65BKd/hLtjlmh7a533edwRxgB"
+          },
+          {
+            "type": "text",
+            "text": "**Working it out:** √391 ≈ 19.8, so I only need to test primes up to 19.\n\n- 2: 391 is odd, so no.\n- 3: digit sum is 3+9+1 = 13, so no.\n- 5: it doesn't end in 0 or 5, so no.\n- 7: 7 × 55 = 385, leaving a remainder of 6, so no.\n- 11: 3 − 9 + 1 = −5, so no.\n- 13: 13 × 30 = 390, leaving a remainder of 1, so no.\n- 17: 17 × 23 = 391, so **yes**.\n\n**Answer:** No, 391 is not prime because it equals 17 × 23."
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": "Is 397 prime? Same format."
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "I'm checking whether 397 is prime by testing the primes up to about 19.9. It's odd, its digit sum rules out 3, and it isn't divisible by 5, 7, 11, 13, 17, or 19, since each division leaves a nonzero remainder, so it's prime.\n\n",
+            "signature": "CAQS5QYKEAgTGAI4AUIIdGhpbmtpbmcSDE6K67WyYOGXODwDdBoMlI5v3qBMH+sJ0VLCIjCy+iWdBkAH7auKYnhYnwjASgW83ovhwnAZJaxvzu9FDMEO+MD61TlAReJYPJ6nt58qggavIEqP1cWJFNE3dsXb+pdOcqQx5ut0IPOfsfLZoBPCj7qIIXh/DxgNpZM/ItWCz+Ysczv4zMsjRIibvxS7eToRDfM16cm2t13BcwzTXviF2pds3tyrh/ToMERZsbf8Zfp5gMh7K5yW73RX7+IxmRV7kJ9ne1C9vYOPFsLagYgZLyc31ivdBQSlF53TpdCryX3xfEC0V8fEF3/nJmqZQ2PKuXW5l3FeIL256OXxl4rzmEac0zuHMRoNlISd69SBWPBopNjZLV21193irxFqcSpvWQ485rCWNmIAe5Xrfo8djXV5QsB7y9Ssbukt1gmZ8Sj3x26CNaxHNNXhJEKERSbcykQATicWI7TB5d9JeKA5RC0q5ChoU/nkG54N6NvUDplCIQdNMYADcMruhZ9iPgwkEgqPxw5Ofln7acuKDHLGdLhEd20nUZo6CiBxLF5m+bHO1/piC4h7jDfJp1jahPsmxu4IrZVsO5GIdIsGO694vfjV3n8WwybC87LD0rfdPdhSj52VFT4PhJ6KtFM7A9lVgipqiD5BrvQ26Xwjye9wxkoZCaUnME5X7gmfDWAk6CXwbFoiugEiGRGIC1p0LMnkeQHGeroU08py8NfhHVwCC5bSRRBpISav35KjLbHqALoTt7ltRR7oKeahvdjTw6JG+vWrT18TteSsE8QLt9cMteNtcTQFwEBY9mgfbQgjKXhNPGXPurj1HDM1LLnyfj16PE7z+UO/NS9ZDv4Pb0kc0oLe1oGD90OziZKde2RIpzFjnxkGaha6h9PNg0NoSi6MKhNnyB3ysOLcJHov2PAZoKvc7GaeL9U+0VM56CHQBV/AJLfU73hcpW2Uec/TVMWia3VnhLB0TaJqnqiA5auaMcF7MoeWV50Jq6xRxVE+4W1fKRy+GF4DItBPW//1ZnT6mXRmcPbKK+T9vIfJW89WRnE9en3fDEZTRNLNr164ZddyH31qQq3kHsXDI/KURL6IIcrLvdRXu8HMJFM5cr9d8tMvJ9ViBDFC7QEuRZbPh65MnRgB"
+          },
+          {
+            "type": "text",
+            "text": "**Working it out:** √397 ≈ 19.9, so I only need to test primes up to 19.\n\n- 2: 397 is odd, so no.\n- 3: digit sum is 3+9+7 = 19, so no.\n- 5: it doesn't end in 0 or 5, so no.\n- 7: 7 × 56 = 392, leaving a remainder of 5, so no.\n- 11: 3 − 9 + 7 = 1, so no.\n- 13: 13 × 30 = 390, leaving a remainder of 7, so no.\n- 17: 17 × 23 = 391, leaving a remainder of 6, so no.\n- 19: 19 × 20 = 380, leaving a remainder of 17, so no.\n\n**Answer:** Yes, 397 is prime because no prime up to its square root divides it."
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": "Is 401 prime? Same format."
+      }
+    ]
+  }
+}

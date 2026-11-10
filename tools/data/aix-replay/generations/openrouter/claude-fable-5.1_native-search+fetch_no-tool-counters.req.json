@@ -1,0 +1,33 @@
+{
+ "model": "anthropic/claude-fable-5.1",
+ "provider": {
+  "only": [
+   "anthropic"
+  ]
+ },
+ "tools": [
+  {
+   "type": "openrouter:web_search",
+   "parameters": {
+    "engine": "auto"
+   }
+  },
+  {
+   "type": "openrouter:web_fetch",
+   "parameters": {
+    "engine": "auto"
+   }
+  }
+ ],
+ "stream": true,
+ "stream_options": {
+  "include_usage": true
+ },
+ "messages": [
+  {
+   "role": "user",
+   "content": "First use the web search tool once for \"IANA example domains\". Then use the web fetch tool on exactly these two URLs, as two separate tool calls: https://httpbin.org/anything?n=1 and https://httpbin.org/anything?n=2 . For each one, quote exactly the value of the \"origin\" field and of the \"User-Agent\" header shown in the page. End with a line: REPORT searches=<n> fetches=<n>."
+  }
+ ],
+ "max_tokens": 3000
+}

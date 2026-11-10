@@ -1,0 +1,837 @@
+event: response.created
+data: {"type":"response.created","response":{"id":"resp_037da3e7be4d037b016af24ccc693487d08517005c68c453eb","object":"response","created_at":1794264268,"status":"in_progress","access_programs":null,"background":false,"completed_at":null,"error":null,"frequency_penalty":0.0,"image":{"context_compression":"disabled"},"incomplete_details":null,"instructions":null,"max_output_tokens":null,"max_tool_calls":null,"model":"gpt-5-nano-2025-08-07","moderation":null,"output":[],"parallel_tool_calls":true,"presence_penalty":0.0,"previous_response_id":null,"prompt_cache_key":null,"prompt_cache_retention":"in_memory","reasoning":{"context":"current_turn","effort":"low","mode":"standard","summary":null},"safety_identifier":null,"service_tier":"auto","store":false,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tool_usage":{"image_gen":{"input_tokens":0,"input_tokens_details":{"image_tokens":0,"text_tokens":0},"output_tokens":0,"output_tokens_details":{"image_tokens":0,"text_tokens":0},"total_tokens":0},"web_search":{"num_requests":0}},"tools":[{"type":"web_search","return_token_budget":"default","search_content_types":["text"],"search_context_size":"medium","user_location":{"type":"approximate","city":null,"country":"US","region":null,"timezone":null}}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}},"sequence_number":0}
+
+event: response.in_progress
+data: {"type":"response.in_progress","response":{"id":"resp_037da3e7be4d037b016af24ccc693487d08517005c68c453eb","object":"response","created_at":1794264268,"status":"in_progress","access_programs":null,"background":false,"completed_at":null,"error":null,"frequency_penalty":0.0,"image":{"context_compression":"disabled"},"incomplete_details":null,"instructions":null,"max_output_tokens":null,"max_tool_calls":null,"model":"gpt-5-nano-2025-08-07","moderation":null,"output":[],"parallel_tool_calls":true,"presence_penalty":0.0,"previous_response_id":null,"prompt_cache_key":null,"prompt_cache_retention":"in_memory","reasoning":{"context":"current_turn","effort":"low","mode":"standard","summary":null},"safety_identifier":null,"service_tier":"auto","store":false,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tool_usage":{"image_gen":{"input_tokens":0,"input_tokens_details":{"image_tokens":0,"text_tokens":0},"output_tokens":0,"output_tokens_details":{"image_tokens":0,"text_tokens":0},"total_tokens":0},"web_search":{"num_requests":0}},"tools":[{"type":"web_search","return_token_budget":"default","search_content_types":["text"],"search_context_size":"medium","user_location":{"type":"approximate","city":null,"country":"US","region":null,"timezone":null}}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}},"sequence_number":1}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"rs_037da3e7be4d037b016af24cd1b43487d09ff06e44c811fd53","type":"reasoning","content":[],"encrypted_content":"gAAAAABq8kzRbZqPcoqjhgdpcicDtfGjM7GlR6NgsZtQf9LDswX6p6Ytfw_qoLBGX2FHbVcOkNzImw4fUa-rT5x-tF-bXUZRG4iuafAVXuUb4Ki_oXDAV3QVrIRZP_rb3ceS2d6wKe-bNuUkd-IGCDZkTWmJbF0kkGHL7UTABF4LHZ1WxwZzqYXiDCJfFJSAQAAtiL8KxRqyt_izOUu59RgdJQufBP7zzlMZ0In1NiKlLPLZldrzjZ6MIqDoaGw6zPl0ZMFAbGPAtKRT7Q31sLFAFbwqjY1wBEx2eKgCwXsEQztznegFmS8pZMOXFZ4_cqhuCo6ML6E_dNmShya_M1_0gV7ZEb3XeJwLm3LckVNs_95SIXtmMhYLW6CqIIQZomYKpfPLhiPaHHe0zMCoLIWdoYyA5Hdfvmho7U2XMp6QRJeCvPHBQYph0xtw4qSFe9_nCAOk_-HHA-E2VeWDDmszB6aCc7WDKx3-nh4X-pYkwEkY4K0HzBvZZ3GZ1CshtZ7Fkho7ZTWdXjvaTFWMt9Bl6ctiA-Cbavbrmrz6ZAVniwlTZ089cHL5KSp_8qDSq6v8x9t-9GZtroN_1VpAiCyZyZk_cVywkKRbtP4bIrpa3vtyvlmjfu08YEss5AiM1Us0KwJOX4NxqKTwAItMGBbHesn3oZDq-qH3GVO6MssZq3cNSw_uPExrSGZW33b5mRNQrXrTMtZW8vpIcYzvr62wj752eIGgR2DRXplXS_yShC7X7Pwyt5L3wo9z9-0908Jpyn2Yt8oGWevpuJ3F1oIPeyEMa0zpG2YKwqJtAcZBVoBdn15thj6KHDxgTUED3SAGRHT0qyB4ZuVxOb42xtyJgupi3nTLhAQXqSjm5wVj0d4Nso3lDVRTAFhyS0Yqm1D2nRG-1GFQOTds3mdpbDyy7-ENIqWvntLgLtUBXkUbyiQtfXfE8p2YMcD2VWZLCjGShL2ZcDH7YguFsA2dGFqrroURG3ySxbqYv2UT0I-I9hb51UeqiCiRvjxjcSRDHV2sTunNGYefLxvs5NZTCNnc1_6LuyvGVczG3RRv6gXyrP00ldR-77r7_zqv158SmgYs_Hm4Ix4QZleDuGcSzKocHXTguAX8zoxLIhHsr8p-jED-UwcrOW_Gd7dsdQYrUIhFB1AWAaGALXrjbL55JuAeTBQYjUEIgJdpjE7pVawb4m38GCbPP951bHr9RfQjv-EIxEtCWXGU7BJLQH2n0hKA-bN7CPIkcQDs3Sp9rEoiulu1WSmJeIhZnOj1gGhMgkHkweXFkGHt6pcw_7fA0lsw4Sa7xJzBBtWNAeJLkibr7fF5C8zAMUpqMJYzayduTFGQIVlSD5_uOUTdvlgRYJEkKtRpOv-2QbUQ5k5FacVvJE1Sh716IrboeQGs_bQmR9qGijb6XjXC","summary":[]},"output_index":0,"sequence_number":2}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"rs_037da3e7be4d037b016af24cd1b43487d09ff06e44c811fd53","type":"reasoning","content":[],"encrypted_content":"gAAAAABq8kzSig9XZsU-fY5bfL7XxAmRx7-vOXWv1JmRxdBRo-04bpRyIsw0sUstPW7x0nXdJtVdccwUb_kGSPGKZgolvz09BWZPV5UPPvA72fjG9ojRecW9snGeK5gd4aKUVzqDTmnbBxBtJo4DCEt-m46d4YTgJj4ptJUSgtTKXIs-w2AupbB_cNsQ37JLn92-0dtJBDUzkBCuSPHzGdm0IWhOjWHG7y0yOFi7zsU4XvL2XaqJj4anfkXoCE4emaOoL4BXsmtJsdJvep2FGtuv3Pn2vwczx2EcHJ5OqJOgD3H7bwV5w1TMRvtdr08v_a_FzbNERGl1-z5XiIqayg3NrDukuquGwog5OAwYg2SvpERCpGLYa499kyHyTYIluAgL6IP_4ikgHWwrtJD86tSeqDD6Zql4a4AV8RkW0QhkgpRrDW1EaGgOUqtJtqRcCMd7bju1Eyth4Qll5aiyEXgxYczvG3QNj3xKsOoDZBCH8WB4b2ZZOffkAAx2AzHGfEO3h5ECHtHWEDZ6O55EEmLked7KHTYAREqriTDou1Q2E25wtDl_-XlSL0dpDpuKnMlNNbRHOG84jK0ovaHmKdymFvzcbYuI1eYIxlssnZ14WHa4CfYngwnhcIOjVQk-P0iqchYwQzH-5FGhCBb_Z8hfo5TuMGLZx9sjkrXRzkfkT4Ar582CJIHDlKgFmyP7AIhr10sW0K9hIDYXalJk6ADIWrIhK_-bYhqt6Vf4GjlEzcOiwJyiBNoEj20iHSPAapxu0KOMYFlaqw6e3_kpQkRB0as3nWOjLI0jA9YQEP7bo4tsjopQGPkG8sjpL3bIQRWhnts1PgSsSy8OMY7ZHPVRF-GG5j8EkxT8oMBTgqwrSSdSBAnkfBCJI72rU-Vfi3AQcj2ljGbIwHxZ7o8ofoZWFyCC8McIVRwdqW-FIRrNING6km0tfGtA1eoygIrEft6lW6WOXC17rjawcylxpGpt4rk3G9c-95rQ14A07JLaXiorrDuyJNrakN9Mh5DvdkG85Ak3aCcFqKB55Gb1tcv1liygWzraOTihlLUPMIs1wt0uYrJIQVBOnp-FgKF0OtzL9E7mcIqdQlu3XvcNEls8B67r0mDoXDVU4hW8LzlKn0XcC_XUK0Wi68vAJ7jn7o5S3Q9BTsWze4106NHbG65dGX8jhK8xxh2ssQz1JbrxPdWDTEM--NwDukn79hoWyYs_dahYYg5yeYKs2SruATb0cIqpw-uS49Jv_BM1_iJpkXTsfsJzG8sHLW0GBGTbAIdddAUdNGfIBlj9EDSF45npSednfelX62kb-Jn_KFjYe18mys_pIKJ6J9wEwEuBaUfG_KEjAEPYREebh7Ix-_pIvnKAnjKlm8jjGj5uE4c2Nt-zNqiCpV1rp1E1U4E_bJuaXRZb4wiIOZVPJSdGOgBz3GdQiUuTqvvg6JCsEjPO_jHC4ri4FkqV7A4kr0dSTIu9kRf3LxWYGAYWiSX5T9m6PJekT0ymNZPHohcQ6jd7KHbE_b1UGi4s7mVWR-ffDMLcdp_TTTlUvvqdx9KQFZvuCdtjsjfub1DWUARyhf1N-9yB4wSQBWQjs5DW1WHi7HTz5XkSBS8K7PQh4Z8tC7464TJV2Q8UAkhOQ5mhrrRE6noT3kvt_BvPUkPP1lPK62xVGokS2Iy_GY_UBAKANjU1GKdppciZ2oLQUgcwewWqKcsIsCRGrzTj4v9Wfkk5aHQTh1smcDLFoFaXBG5fUr88JmZEn8aPAb29gZfjJ5llA2RLR_P1RhQnq30s0sQkKictc9hYVSIHGT5bZ5mRUPpHq8J8BXDPGLVBHNopzy4PMqaP-zg7Q3_2Cbx3OuGf0BnEQVEiH8Ohhy3EtQxXanh1Kj-J0q6sk4l3rvBV9aHXQJ8qhmCW3vlr7Dx0UMY_cIoU-NRja_7GUvs4SS77NVYEFwBUrnVjwrvlgzVjzwcEnFJhZ8BjTl74DI4g3d95jdR85g6RRDKrx9XxbB6fV_DRGyPhkLc_DaIMHBbm7sb27vcX4fx8Xxicb94aGLGKUaPeYJLyTyu00TfIFwh4jyHV1zlzVMHWHolyCylL59o1MsikfmMh94xUiZl810NynbWtpgr3oHDEYSbRFsC6pxPkknBM2u6oXKlMFuLz54PAsksPtLrdXrR_h5o29SyMspPPZ5VMKUQ16yQRNFxDeYpcuKsYjQCxJns9OYSXMJHK0VbeopuwiOk=","summary":[]},"output_index":0,"sequence_number":3}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"ws_037da3e7be4d037b016af24cd2eb0c87d0b2c4f395626b5447","type":"web_search_call","status":"in_progress"},"output_index":1,"sequence_number":4}
+
+event: response.web_search_call.in_progress
+data: {"type":"response.web_search_call.in_progress","item_id":"ws_037da3e7be4d037b016af24cd2eb0c87d0b2c4f395626b5447","output_index":1,"sequence_number":5}
+
+event: response.web_search_call.searching
+data: {"type":"response.web_search_call.searching","item_id":"ws_037da3e7be4d037b016af24cd2eb0c87d0b2c4f395626b5447","output_index":1,"sequence_number":6}
+
+event: response.web_search_call.completed
+data: {"type":"response.web_search_call.completed","item_id":"ws_037da3e7be4d037b016af24cd2eb0c87d0b2c4f395626b5447","output_index":1,"sequence_number":7}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"ws_037da3e7be4d037b016af24cd2eb0c87d0b2c4f395626b5447","type":"web_search_call","status":"completed","action":{"type":"search","queries":["recent news river conservation 2024 2025 2026","global river restoration news 2026 conservation"],"query":"recent news river conservation 2024 2025 2026"}},"output_index":1,"sequence_number":8}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"rs_037da3e7be4d037b016af24cd6c7f887d0ba776cb607b31c85","type":"reasoning","content":[],"encrypted_content":"gAAAAABq8kzWk4fAkL7FsRLocRqkifowVlQS9TpVDjP_kWoHGfLWpDDK4lGeNWFsp9mj_3hbTiPPeqSghnrmE6wSxdd23zF68KFa4b9BpbOdLxlwvWYxqA_sErufeBHiXkt9cSNzN9mQG7lPBb9_lkIYQ-xkpXWl_aInbo7zy-gS6D-5GMS72iwZ_AriUjhzP13hkBYSouOhntRcaTUlhN_k_scLZnUC9tIFLo3Vh-BBvOhOvmdyvd6vKUwyI_Oq_Y5miJcIUdpDfEheNF41eSp3rhuh7DIzpXhL9eF1oUxZar4DtCuqJOdmgHjme-bwByUvhFwLYRq5zUUEim4xUG6KP_14rfuj6MmhwJJbesKy_wzNGp-wShWV-eS0_Cvxeu7f5xCA3SXNVFSyNSnHt5uOCSccEE5zZypmtFD6Jn-qG0XRZsBtV8UzCQQ3uoXMp5A_b31PzAjtI12k8xY1uEE1uqGJgtThe-p6OPsvIGdamN8ONnDkbig-JWGJAwj1AI9qsUL-tasZzaZpdTcBxE3Es01G3FSjDaOreVgmGIGStEzb8cfrEowO8pITs4L10qpVDxQ84lJztxFIo2OBLPqfiUK79SNZXuZ0f0mw_4mSoCIue-dJ95p-MWaKFDqzUWCqTPM3tlJRGVd7zCwPCYb3Ud0qvFoZ5xuEId07deiQ8Kb_VFgjW_QiTXS2bipJnlyJKa8MJAbRE-eRPuwAoOmhj1Pir9TpnExnjgvud0G8kgLLcyvCisCfqSi_GV_2HGQRcYZxZsqzCSlCrioD-3NId65LJGgO0tq2jXnbi60gdhYdAyB5DIX275CoFIUyNx20R_y1ChqoXntGFEfnJs20gDLW0OjCkW4Xg8kgADFUCy5LQr9yNn9dfd6R5NgNnxOrE0oGuv6aFZAVgLrR0xHvZU5TStU9cwivM0xyS31Nv6Nv_hzWMfeyCI50fX1wRNxRDRv8ZYrEwKrGDqar-Qpc-5zpFhSC4nsivGHhR7sCmYRJYhFMgYSsTcYHgHbWEOlCE1qMFenQQSqTCEVvX7e9tqbQgDN3uedBn7jRUM-W9jnUgR_LjiNimU0Ol1F90nloq7OvHVwH0DiayX_Wu7TfnJwQsjtiR7s6bnXRhxh5UjGMTHdvHJodloaEXVD75nBdsEd8S3-aq1Z7qRl0tX00hPNrdSxK_Fc8VKZmgoQg6jn3p7mXPxswe4jlBINVV2b6dZFjVTFUS_Zab23l8DFvamTyWO4-x3jgDWgYmZM4j4inl61sXl166bn4qETzkwS3mehqYycqQ3JVQu-uREqhO_h9WG2Yp9DCwDNlsgXAWegIDmfpRigSbJvmQsdc-EMgqYZ7n2BkWTVM8laP4-MyZrUhiVw4LHi1JLfzCblQob-yeBqz_ROz4TVxcT7RyJOmncSlv7rb","summary":[]},"output_index":2,"sequence_number":9}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"rs_037da3e7be4d037b016af24cd6c7f887d0ba776cb607b31c85","type":"reasoning","content":[],"encrypted_content":"gAAAAABq8kzX9N6f_yCGmXhoCBwL9vrDoISG__cc73UbnNxR7evcLPsUQA14PmzVkjdjs_ojQKhe2jLrB6EgpGtGtWpcdG8VPUL6Iitb-TqBu_PWT6cjrrRdpM20800WYpfFPDUzUUoihYMhzA0-kw0DS8_6-71Cc5LewMf0zl9dXuylezSr5UxgBpERLcPAD-DmFbXbh0X_UVwa4bR2k5aiRgdcHjPXnHI91HqvUBdzNLAccWvCYCTBD__PdVxkL5kQ7ai1rAlQbVvjkSx5CX0J-krkQMXmxjye7V5UwcX8kiXfB3Z99QOL-vzgOFOgXcRf-DHQ-wrQgUeN7SXNihl-bK6qCgX4q3KaVInKSH32q5TyyuVm_QuucRSLVDGwempOwDI6pLqQwy7_z9R7bHKlT9pcChcMuaQdu7BwcPnKoCMdOsHvru25tPv91GV33lU8bq_iq0bx55PEROBT6iGpSJAE4Z8h01ymDWOVaxn3bih5s6Uc3GCNBjAa7DWbnAw0Nyhde5w8O_khZ7stByOQ6bSxlp2FV8IMSHXGdhdKvY7gHnBjQcU9140dL9CwF17PlSB50075_Pd5XsoQWxh0zInBiH1NNmUy_h917P_Q5O-b53koutHG1D_AModO_rE-ULoaXBdk8Yxp5nEquWyofYrXGB3zlAH_KvclUzblcznYNJIImQIrGj8zl5eP5dLUi3f5gHJ-hAzI-bmnEK6YVNKLG1WHjeEYoKTMp6KrZbRspq36gTovkFABbCC9RicZM7xTtTeuMl2W1zTgouMxvpFuJAvs7g6l4CAY_wVOXPnmZCIdJMSg5UZ6Nsi-u4812q2YRPclQ0yH0-K3QcZGgVU5vc8k-XqmSTu_Y3MMPQP7YW1mHAJBRKY38a03N2BmEYe0cWB6d-QZ4ZIkUT8kcdxL0Rx33aR7GjJx7-8Wlxi5Q11w63pysbIbyldFGbUsri-gzvCq96OdDkLOIxp6WS4BgEL4Qo3aIy9MXzioNKYhhgmfUwKxP5zZK_AzD6QjD0F0UEdn97dhAZ3xKROPPy14YlOQpRbQ6szvJMrukvHtbZJggXO5InmRbAkJLfrBV1HvDrKE_t0X1wfGtySYmfsSPeEsS4BlwK8Bu_PIvsIPwx2-8ku_uhgXAm_0aGkrM0pTx-8kYTtNnWtGL7DJnCqH20AQfysBX8Ssf3ATQ4aBQXA7Nh_dRbxFqnj0gcTENbVa17QdA_-ZSsNPWhr37Z3FxrTJSjZidsfq-CBJGnecPmiBk2zqhs7OC0Mu4JWWm8pe4NMLA7xL4Yx6CcTbTlUFHn5VWwZ3Ay7AN7y-rZhuhf714nelV9kZpzWXyXhbNOsrtWAOQqE7CUFWkxejSiZPyhKVo51ql8VYGn0ZKMnH5jMROWi3sgfjruVRArgdxjnHMWA2SdBvVRGcKuHAmfypF2Su8hO_iY583fAM6ZIiezhI8m83ChlA-GU81Gwy5HJCotAJzSmZezMN1rGOd_6uXEovnoczql5KTWLWIPkjv8RldnvMvHDAI4RfnwF42ViGD88LWnkx0-ldsk__2njtwJRbXVdQjPn02zdNmjGRzM5gw1524uHi_n9ZEBRh2wz2SklySY_By0rTRcGCArdA_dIKr3sTHG5a9QVggvuhsEFPF5g04CNXtX3soTipv4ypSOZ9osvTWtGz_XxEfgW-Eh3qU5kl3BX74VbDLFF-pDBriaUJE5iNX4deSdSZZiuHPpaJQRrMSki-db9c2cJTQ-1RQE88JAi6Tyl0LkeU-uteF0V6CH9vHC4U80pT19k9HgysjH4PxmYafS-WkxGsVkErtfiWqWw2oyrShToqps5-PLItlXWzv0SPcYLCiKWHRoLsMwR_5TDls1EA9-O4lw23G82oAcOyK95SX04wr4G_3Pr5hQm3YjXJJiTw89a-rGFhoyDyBQHqSEHl7wKaHRFypgDrHZNvPK1ZggX_3_U_SVqqzzwACtEnqK-j4U3f58dDyvGOIhU3WiQjJWHhK9T0fzL7KZTwYWOoCYFTTnnA6D8UDn9c5ttQgkJ4MBOKTPLjO_lDNpA2aDDo8wllPWWJkuUzBNiizeOZVmm-vGtgMMrrSfC0LrGaJ0AiR5Wv24ZyOif-Wiz69EW5bR7rKss1lmkEvrnIYsER2l88BONKjPDnypEMun4nqyRhL1kjABt_krCIMOn_A26T0FKp5iqXrXDwY7O11RqtOGt4TPugzDj1kuFx8RoqB56ssDzm29kgtj6eKEdxHC1LNlw1Slak3KVaBiB5QPuF1sCeRlpaqpwH5K2FACmZUiJmR1vLoJURYhUoWOgmEQBLAv8XVPAgpHJRZThKnUvvN8j-gJQ-0RVSe4QA91-DuOaP9_6RKMyxDGIxbTQokNxzqh7EmRL2pd32_Bo8jFgLCLIm1wdy6x9VgdeGu28wdJK_iELB2w9G_9NpGIbN5wmJfaQhT5LEcsGkfFVuIMb_PigbbgDMRRiLBwlE2RlNi-iAJaMjijt8-C2vpS6BsE5mMGGItU1aOl41QQzUrxMzueqmI8_fSLGPT2th5Ms2ejK5U-64fb7aSlx3Zqwy08Z-IwmKU4-gAZAv4JHsQLbO92W9z4q-4kH_r4gDEIq9jcGT1lJHom-il-LgHMLW9PEaYDbChLsE1TC4DRQwA9Q2dX8CfjEuzXlxDrjU9mXVAMmkJgTa4xrLL9a10T5YdgQTKiH8tUEXjbyu-q29nW9WLtNKMmDGw-M=","summary":[]},"output_index":2,"sequence_number":10}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","item":{"id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","type":"message","status":"in_progress","content":[],"role":"assistant"},"output_index":3,"sequence_number":11}
+
+event: response.content_part.added
+data: {"type":"response.content_part.added","content_index":0,"item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","output_index":3,"part":{"type":"output_text","annotations":[],"logprobs":[],"text":""},"sequence_number":12}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"River conservation in recent times has emerged as a mosaic of","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"DIV","output_index":3,"sequence_number":13}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" dam removals, habitat restoration projects,","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"LmFs","output_index":3,"sequence_number":14}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" cross-border water agreements, and streamlined permitting that together","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"zGX7jfy9","output_index":3,"sequence_number":15}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" aim to restore ecological connectivity and resilience to freshwater systems.","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"9Ba","output_index":3,"sequence_number":16}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" The latest wave of reporting from U.S. and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"R6ggg","output_index":3,"sequence_number":17}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" global outlets highlights both","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"p","output_index":3,"sequence_number":18}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" local triumphs and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"35rzMBNEDuHxy","output_index":3,"sequence_number":19}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" broader policy shifts, revealing how communities, governments, and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"WHvzDGvaJvuC1","output_index":3,"sequence_number":20}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" nonprofits are reimagining what it means to","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"c1by","output_index":3,"sequence_number":21}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" keep rivers healthy in a warming","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"2Jgv655vEuNj5UT","output_index":3,"sequence_number":22}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":", changing world. What follows is a synthesized","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"i","output_index":3,"sequence_number":23}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" account drawn from recent news and organizational updates, focusing on concrete actions, outcomes, and the policy contexts that shape them.\n\nA local dam removal as a","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"4FXmfN6kjx","output_index":3,"sequence_number":24}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" stepping-stone to free-flowing rivers\n\nOne vivid","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"7wdbNcRvtLzUO8M","output_index":3,"sequence_number":25}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" example of river restoration in the United States is the removal of the","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"EgDQ8ypQ","output_index":3,"sequence_number":26}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" Larkin","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"PClp0fDRY","output_index":3,"sequence_number":27}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" Dam on the Parker River in Newbury","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"SeAZ1lnOu71dl","output_index":3,"sequence_number":28}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":", Massachusetts. The project","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"rohG","output_index":3,"sequence_number":29}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" was framed not merely as a civil works exercise but","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"5VNY6HUdogjm","output_index":3,"sequence_number":30}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" as a testbed for reconnecting migratory","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"Mu6Fe7Da","output_index":3,"sequence_number":31}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" fish routes that have been severed by barriers","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"N","output_index":3,"sequence_number":32}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":". Mass. state accounts describe how the dam","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"3grwt","output_index":3,"sequence_number":33}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" removal enables a more natural flow regime, free passage","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"nFt3Svu","output_index":3,"sequence_number":34}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" for diadromous fish, and an","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"8HH7","output_index":3,"sequence_number":35}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" opportunity to observe how ecosystems reorganize in","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"cyJduFfFpHKN","output_index":3,"sequence_number":36}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" the wake of a restored river. The Parker River","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"4","output_index":3,"sequence_number":37}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":", long recognized for its biodiversity—hosting ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"A","output_index":3,"sequence_number":38}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"10 documented diadromous species including river h","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"cvePdVRjQOz9LQ","output_index":3,"sequence_number":39}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"erring and sea-run brook trout","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"SW","output_index":3,"sequence_number":40}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"—stands as a case study in translating engineering","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"1t6n8NFW69OaEX","output_index":3,"sequence_number":41}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" decisions into ecological and community benefits. The L","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"DaD7jH9Y","output_index":3,"sequence_number":42}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"arkin Dam removal, completed in 2025","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"upVIZRJIyU1t","output_index":3,"sequence_number":43}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" with ongoing monitoring in 2026, was presented","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"a","output_index":3,"sequence_number":44}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" by local officials as part of a broader shift in","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"oXZ2wZghQmD7Jje","output_index":3,"sequence_number":45}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" state policy that prioritized large-scale river restoration (","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"Dy","output_index":3,"sequence_number":46}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"and a broader 2025-2026","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"nZmViUDRn","output_index":3,"sequence_number":47}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" pipeline of dam removals) as a measure","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"vewq8nn7a","output_index":3,"sequence_number":48}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" to advance watershed health and climate resilience. This local","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"3","output_index":3,"sequence_number":49}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" victory underscores a recurring pattern in which communities and agencies","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"2QadhL","output_index":3,"sequence_number":50}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" collaborate to unlock ecological connectivity that has been blocked","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"9QV9u4C3gcbQ","output_index":3,"sequence_number":51}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" for decades. ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"p9","output_index":3,"sequence_number":52}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([mass.gov](https://www.mass.gov/news/larkin-dam-removed-restoring-a-free-flowing-parker-river-in-newbury?utm_source=openai))\n\nCross-jurisdictional efforts and habitat protections\n\nBeyond single-","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"fb8s3xkqZOCI7","output_index":3,"sequence_number":53}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":2094,"start_index":1969,"title":"Larkin Dam Removed, Restoring a Free-Flowing Parker River in Newbury | Mass.gov","url":"https://www.mass.gov/news/larkin-dam-removed-restoring-a-free-flowing-parker-river-in-newbury?utm_source=openai"},"annotation_index":0,"content_index":0,"item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","output_index":3,"sequence_number":54}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"river actions, river conservation increasingly operates through formal plans and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":55}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" permits that span multiple rivers and counties. In Washington State,","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"szAuylpuSw3","output_index":3,"sequence_number":56}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" NOAA Fisheries published a Habitat Conservation Plan associated with","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"BdcfOGeONyi","output_index":3,"sequence_number":57}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" Pierce County’s flood","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"0q6ukljgef","output_index":3,"sequence_number":58}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" risk reduction structures. The plan illustrates how conservation","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"pVx7ceHx2MXmEkG","output_index":3,"sequence_number":59}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" agencies navigate balancing infrastructure needs","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"3JIW3l9ZSKfkw2n","output_index":3,"sequence_number":60}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" (flood control,","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":61}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" maintenance, and operations) with protections for ESA-listed species across several rivers (Puy","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":62}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"allup, White, Greenwater, Carbon, and Nisqually). The formal instruments—incidental take permits and associated recovery plans—reflect a trend toward integrating ecological considerations into everyday watershed management.","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"Q","output_index":3,"sequence_number":63}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" This example demonstrates how federal wildlife agencies coordinate with county","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"v","output_index":3,"sequence_number":64}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"-level and tribal or municipal actors to sustain aquatic","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"7rh0oXwb","output_index":3,"sequence_number":65}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" life while accommodating ongoing risk-reduction projects. Such","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"X","output_index":3,"sequence_number":66}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" instruments are increasingly common and signal a shift toward","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"RZ","output_index":3,"sequence_number":67}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" embedding conservation assurances within routine civil works rather than","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"q0gAFbK","output_index":3,"sequence_number":68}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" treating ecological concerns as separate add-ons. ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"ruX2hoxOixKPH","output_index":3,"sequence_number":69}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([fisheries.noaa.gov](https://www.fisheries.noaa.gov/action/pierce-county-and-public-works-flood-risk-reduction-structures-maintenance-and-operations?utm_source=openai))\n","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"ypTVOd","output_index":3,"sequence_number":70}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":3406,"start_index":3237,"title":"Pierce County and Public Works Flood Risk Reduction Structures Maintenance and Operations Habitat Conservation Plan | NOAA Fisheries","url":"https://www.fisheries.noaa.gov/action/pierce-county-and-public-works-flood-risk-reduction-structures-maintenance-and-operations?utm_source=openai"},"annotation_index":1,"content_index":0,"item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","output_index":3,"sequence_number":71}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"\nPermitting reform and permitting-driven restoration\n\nSeveral U.S.","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"rM07jdhjomVJWY","output_index":3,"sequence_number":72}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" and California-based developments in ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"R3XnzZZejH","output_index":3,"sequence_number":73}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"2025–2026 point to a broader reform","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"jVLrXsoD0w0J4","output_index":3,"sequence_number":74}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" of how river restoration can be accelerated via permitting processes","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"HXCP5LSdwTH","output_index":3,"sequence_number":75}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":". California’s Water Boards and allied agencies highlighted Earth","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"wbtgbH0k8Lkuk5W","output_index":3,"sequence_number":76}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" Day-era reflections on permitting efficiencies for restoration projects,","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"YLXsAX7","output_index":3,"sequence_number":77}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" describing new tools and streamlined pathways that help accelerate the","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"wObrVXNHo","output_index":3,"sequence_number":78}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" pace at which habitat improvements can be planned, funded","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"U3SUP2","output_index":3,"sequence_number":79}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":", and implemented. The overarching idea is to reduce procedural bott","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"DtRF8PK6Zu3b","output_index":3,"sequence_number":80}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"lenecks without compromising environmental protections, so that","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"J","output_index":3,"sequence_number":81}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" the pace of restoration can keep up with urgent","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":82}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" needs in river systems facing climate stress, invasive species pressures, and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"NI","output_index":3,"sequence_number":83}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" degraded water quality. Reports emphasize that when permitting processes are","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"pry","output_index":3,"sequence_number":84}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" aligned with restoration goals, projects can deliver coho salmon protection, improved stream","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"e8I","output_index":3,"sequence_number":85}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" resilience, and stronger habitat networks more quickly than traditional","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"aF7Kc3iV","output_index":3,"sequence_number":86}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":", slower regulatory pathways would allow.","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"T6EIgDM","output_index":3,"sequence_number":87}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" These reforms are receiving","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"wNV8","output_index":3,"sequence_number":88}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" attention across the western","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"Fod","output_index":3,"sequence_number":89}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" U.S. and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"4glsGua","output_index":3,"sequence_number":90}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" are being tracked by","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"aPzex8KJxKg","output_index":3,"sequence_number":91}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" state and regional boards as part of a coordinated","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"uOZqs5LH9J1Il","output_index":3,"sequence_number":92}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":", policy-forward approach to river recovery. ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"4TG","output_index":3,"sequence_number":93}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([waterboards.ca.gov](https://www.waterboards.ca.gov/stories/2026/earth-day-restoration-permits.html?utm_source=openai))\n\nUrban rivers and policy","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"fpTrjcwtUPurbbF","output_index":3,"sequence_number":94}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":4725,"start_index":4605,"title":"Earth Day Update: Restoring Rivers Faster with Streamlined Permits - Ebb and Flow","url":"https://www.waterboards.ca.gov/stories/2026/earth-day-restoration-permits.html?utm_source=openai"},"annotation_index":2,"content_index":0,"item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","output_index":3,"sequence_number":95}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"-relevant signs of progress\n\nThe Colorado River and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"cNFGDxspIORjB","output_index":3,"sequence_number":96}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" its delta","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"zB0QYK","output_index":3,"sequence_number":97}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" have dominated national","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"DiaZgd74","output_index":3,"sequence_number":98}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" attention for years","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"6Rl0asCyPgYI","output_index":3,"sequence_number":99}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":", and ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"5NxuTcY6pc","output_index":3,"sequence_number":100}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"2026 brought","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"ydvV","output_index":3,"sequence_number":101}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" additional milestones in","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"IIsVYuc","output_index":3,"sequence_number":102}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" the policy arena","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"nvZIp6opiYeu399","output_index":3,"sequence_number":103}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":". The signing","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"El9","output_index":3,"sequence_number":104}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" of Minute ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"QgPBI","output_index":3,"sequence_number":105}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"334, the","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"524a5K0O","output_index":3,"sequence_number":106}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" latest addendum","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":107}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" to the 1944","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"dO8i","output_index":3,"sequence_number":108}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" U.S.-Mexico Water Treaty, was framed by","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"XFXDbMcV","output_index":3,"sequence_number":109}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" The Nature Conservancy and other partners as a","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"G","output_index":3,"sequence_number":110}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" watershed-scale recognition that cooperative, binational management","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"SVD5Mfb1b5r8","output_index":3,"sequence_number":111}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" can advance river restoration in critical portions of","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"PP70Qa0uaf","output_index":3,"sequence_number":112}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" the river system. The Minute 334","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"T8JkRmKaTEW511X","output_index":3,"sequence_number":113}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" framework has linked restoration sites with coordinated water-sharing","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"7A3TDcTDdv","output_index":3,"sequence_number":114}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" arrangements, a governance model designed to support both","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"SwfhzG","output_index":3,"sequence_number":115}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" agriculture and urban needs while preserving ecological values in a","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"SeD0nNRYBNj2","output_index":3,"sequence_number":116}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" highly stressed river corridor. The policy architecture reflected in","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"TBIBJudFrwG","output_index":3,"sequence_number":117}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" Minute 334—tangible commitments to shared flows","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":118}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":", coordinated releases, and joint investment in","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"R","output_index":3,"sequence_number":119}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" restoration—offers a blueprint for how interstate and cross","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"TcHl","output_index":3,"sequence_number":120}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"-border river recovery efforts can be sustained through formal","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"O2","output_index":3,"sequence_number":121}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" agreements, even as climate variability compounds","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"vCL8XVeYj6uFjp","output_index":3,"sequence_number":122}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" uncertainty. The Colorado River story thus appears as","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"VDiLD1fW3D","output_index":3,"sequence_number":123}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" a touchstone for how restoration economics (habitat","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"a7GjZllmKbZE","output_index":3,"sequence_number":124}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" investments, dam removal, and water management","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"1","output_index":3,"sequence_number":125}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":") can be integrated","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"NrYqIFc6HDP9N","output_index":3,"sequence_number":126}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" into durable, cross","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"cJWfs047jcNh","output_index":3,"sequence_number":127}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"-border policy instruments.","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"zM0B4","output_index":3,"sequence_number":128}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"26z9xEMMVG6Cq7q","output_index":3,"sequence_number":129}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([nature.org](https://www.nature.org/en-us/newsroom/co-river-collaboration/?utm_source=openai)","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"Ni","output_index":3,"sequence_number":130}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":")\n\nRivers as urban","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"odOlgCSdglVfBn","output_index":3,"sequence_number":131}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":6064,"start_index":5969,"title":"Continuing Collaboration for the Colorado River Delta | TNC","url":"https://www.nature.org/en-us/newsroom/co-river-collaboration/?utm_source=openai"},"annotation_index":3,"content_index":0,"item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","output_index":3,"sequence_number":132}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" and peri-urban restoration theaters\n\nUrban river restoration has","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"P59s4adeDsllQEF","output_index":3,"sequence_number":133}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" gained visibility, with notable developments in places like the","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":134}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" Bronx, New York. The Wildlife Conservation Society and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"srytqmGoh","output_index":3,"sequence_number":135}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" partners reported the return of a North American river ot","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"vxcJff","output_index":3,"sequence_number":136}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"ter to the Bronx River for the first time","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"T81vgRP","output_index":3,"sequence_number":137}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" in roughly a century, a landmark tiding that","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"bFy","output_index":3,"sequence_number":138}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" demonstrates how urban river restoration can yield tangible wildlife re","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"ZR5iVrEu","output_index":3,"sequence_number":139}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"occupations. The Bronx River example is not purely","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"0p4JNwNUsOrCE9","output_index":3,"sequence_number":140}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" symbolic: it signals that urban river ecosystems, when restored","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":141}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" and well managed, can support higher trophic levels","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"fc3Np9zCXhne","output_index":3,"sequence_number":142}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" and more complex ecological interactions than previously thought possible in","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"ygL","output_index":3,"sequence_number":143}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" dense urban landscapes. This narrative—restoration","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"5kRw4f9YHlIPQ","output_index":3,"sequence_number":144}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" as a pathway to biodiversity, even in cities—","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"TI","output_index":3,"sequence_number":145}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"helps broaden the public’s appreciation for river health and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"wXKz","output_index":3,"sequence_number":146}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" creates a platform for ongoing community engagement around water","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"N9JZjhcsJzhhvvw","output_index":3,"sequence_number":147}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" quality, green space, and habitat connectivity.","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":148}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"YWSHHv4lGmJxpgu","output_index":3,"sequence_number":149}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([programs.wcs.org](https://programs.wcs.org/press/News-Releases/articleType/ArticleView/articleId/26542/WCS-Bronx-Zoo-Announces-First-River-Otter-Spotted-in-the-Bronx-in-100-Years-Along-the-Bronx-River.aspx?utm_source=openai))\n\nCross-border and global dimensions of river","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":150}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":7222,"start_index":6995,"title":"WCS Bronx Zoo Announces: First River Otter Spotted in the Bronx in 100 Years Along the Bronx River > Newsroom","url":"https://programs.wcs.org/press/News-Releases/articleType/ArticleView/articleId/26542/WCS-Bronx-Zoo-Announces-First-River-Otter-Spotted-in-the-Bronx-in-100-Years-Along-the-Bronx-River.aspx?utm_source=openai"},"annotation_index":4,"content_index":0,"item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","output_index":3,"sequence_number":151}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" restoration\n\nOn the international front, river restoration is","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"4V","output_index":3,"sequence_number":152}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" increasingly positioned within global policy and funding cycles. A ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"7f02MtZydeww","output_index":3,"sequence_number":153}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"2026 restoration progress report from United Nations agencies and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"ywlLzWqlRlAOJWd","output_index":3,"sequence_number":154}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" partners highlights a rising global ambition: millions of","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"WXHagM","output_index":3,"sequence_number":155}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" hectares of wetlands and waterways are planned for restoration,","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":156}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" with river restoration often expressed in terms of connectivity, dam","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"TyHUxd6pDSk","output_index":3,"sequence_number":157}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" removal, and corridor scale rather than purely in","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"ZFz9jP233VtGnt","output_index":3,"sequence_number":158}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" kilometers of river. The report emphasizes that governments and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":159}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" NGOs are adopting more ambitious restoration targets and that financing streams","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":160}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"—from public budgets to private philanthropy—are increasingly","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"OG2","output_index":3,"sequence_number":161}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" aligned with biodiversity goals and climate resilience objectives. While","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"3uYH56l","output_index":3,"sequence_number":162}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" the exact scales and national commitments vary, the trend","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"Lrpd8u","output_index":3,"sequence_number":163}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" is clear: restoration is moving from a set of","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"v7","output_index":3,"sequence_number":164}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" isolated, local projects to a more integrated, landscape","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"mZMPmfq","output_index":3,"sequence_number":165}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"-scale agenda that foregrounds river connectivity as essential for freshwater","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"UGQ","output_index":3,"sequence_number":166}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" biodiversity. ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"4","output_index":3,"sequence_number":167}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([indonesia.un.org](https://indonesia.un.org/sites/default/files/2026-10/Restoration%20Progress%20Report%20Nature%E2%80%99s%20comeback%20-%20Scaling%20ecosystem%20restoration%20for%20people%20and%20planet_1.pdf?utm_source=openai))\n\nThe Colorado","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"9TpALYSNZtvu","output_index":3,"sequence_number":168}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":8464,"start_index":8234,"title":"CHAPTER 2 · GLOBAL PROGRESS IN ECOSYSTEM RESTORATION","url":"https://indonesia.un.org/sites/default/files/2026-10/Restoration%20Progress%20Report%20Nature%E2%80%99s%20comeback%20-%20Scaling%20ecosystem%20restoration%20for%20people%20and%20planet_1.pdf?utm_source=openai"},"annotation_index":5,"content_index":0,"item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","output_index":3,"sequence_number":169}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" River delta and the governance of shared water\n\nThe Colorado River","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"uzTxBT4yaQKft","output_index":3,"sequence_number":170}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" narrative after Minute 334 underscores a broader political economy around","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"fprGiQ","output_index":3,"sequence_number":171}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" rivers: restoration is paired with governance that acknowledges the","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"nDsRvFVy314m","output_index":3,"sequence_number":172}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" need to balance water rights, power production, and ecosystem","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"KB","output_index":3,"sequence_number":173}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" protection. The degree to which Minute 334 and related","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"Zr1GqfIbh","output_index":3,"sequence_number":174}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" agreements can be sustained through upcoming climate shocks remains an","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"mMIQVHTt4","output_index":3,"sequence_number":175}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" open question, but the 2026 reporting landscape suggests","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"1KPYrwz","output_index":3,"sequence_number":176}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" that the path forward includes investment in both structural solutions","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"2gdvro5dj","output_index":3,"sequence_number":177}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" (dam removals, habitat improvements) and governance innovations (binational","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"bkMt","output_index":3,"sequence_number":178}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" compacts, integrated planning). The Washington Post and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"dHHLfncR","output_index":3,"sequence_number":179}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" related outlets have chronicled how varying basins approach the","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":180}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" trade-offs between downriver ecological goals and the economic costs","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"KLObBw34RTE","output_index":3,"sequence_number":181}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" of cooling water releases or other interventions; the Colorado","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"s","output_index":3,"sequence_number":182}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" River case shows how governance structures can attempt to resolve these","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"NOH2Vdru","output_index":3,"sequence_number":183}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" trade-offs through joint decision-making and cost-sharing. These","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"JAWvyQ7e3BsSvEK","output_index":3,"sequence_number":184}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" policy debates matter because they determine whether restoration investments are","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"vFfl8GF2CFY6blk","output_index":3,"sequence_number":185}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" recurrent, scalable, and durable in the face of drought","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"W2OZY3OM","output_index":3,"sequence_number":186}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" and demand growth. ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"ISvWXwJAI9xC","output_index":3,"sequence_number":187}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([washingtonpost.com](https://www.washingtonpost.com/national/2026/08/06/colorado-river-humpback-chub-cool-water-mix/3815af74-920e-11f1-9fdc-0a725c989a7b_story.html?utm_source=openai)","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"JozrWlQxN","output_index":3,"sequence_number":188}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":")\n\nA growing","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"Id9K","output_index":3,"sequence_number":189}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":9809,"start_index":9625,"title":"Officials will not release cool water from a Colorado River reservoir to protect threatened fish - The Washington Post","url":"https://www.washingtonpost.com/national/2026/08/06/colorado-river-humpback-chub-cool-water-mix/3815af74-920e-11f1-9fdc-0a725c989a7b_story.html?utm_source=openai"},"annotation_index":6,"content_index":0,"item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","output_index":3,"sequence_number":190}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" portfolio of tools, a shifting pace\n\nTaken together","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"q4q2n8fWwyjK","output_index":3,"sequence_number":191}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":", the recent wave of river-conservation news paints a","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"7N2lMjbL0es","output_index":3,"sequence_number":192}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" picture of a field that is becoming more procedural","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"QdBJSErBGkdm","output_index":3,"sequence_number":193}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"ly sophisticated, more interconnected, and more constructor-driven.","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"8tOzUXB1XOiRp","output_index":3,"sequence_number":194}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" Dam removals like Larkin Dam, habitat protection plans","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"0UZEl1SBR","output_index":3,"sequence_number":195}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" in Washington, streamlined permits for restoration in California, cross","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"KS8bW0Ya","output_index":3,"sequence_number":196}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"-border treaties in the Colorado basin, and urban wildlife returns in","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"9ZL81A6Vot3","output_index":3,"sequence_number":197}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" the Bronx together constitute a portfolio of tools aimed","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"PykvL2M","output_index":3,"sequence_number":198}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" at restoring ecological processes, reestablishing habitat","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"bChEHN","output_index":3,"sequence_number":199}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" connectivity, and building social legitimacy for river recovery. The","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"GOxPZOceCFL","output_index":3,"sequence_number":200}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" diversity of sites—from Massachusetts tidal rivers to Colorado’s ar","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"8lBlknES0Y5d","output_index":3,"sequence_number":201}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"id delta to urban New York—demonstrates","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"CwuVDVKGK","output_index":3,"sequence_number":202}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" that river restoration is not a single recipe but a","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"RqgvHL2pvsMQ","output_index":3,"sequence_number":203}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" plural set of approaches tailored to local hydrology, governance","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"e6GDcZ7syHv8Evh","output_index":3,"sequence_number":204}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" structures, and cultural contexts.\n\nFor a true understanding of progress, it helps","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"UU7UMLOkXrxCU","output_index":3,"sequence_number":205}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" to anchor claims in concrete dates and verifiable milestones.","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"6m","output_index":3,"sequence_number":206}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" In the Massachusetts Parker River/Larkin Dam case, the dam","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"VUEjD","output_index":3,"sequence_number":207}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" removal was completed by 2025 and the site has","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"W","output_index":3,"sequence_number":208}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" been monitored through 2026, with officials highlighting the","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"Sr4","output_index":3,"sequence_number":209}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" dam’s role as a local restoration milestone and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":210}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" a potential model for future dam-removal efforts across the","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"QX5x","output_index":3,"sequence_number":211}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" region. In Pierce County, Washington, the I","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"N8Mc","output_index":3,"sequence_number":212}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"TP and accompanying habitat plan entered formal operation in ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"xN5","output_index":3,"sequence_number":213}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"2025, illustrating how agencies can pair flood-management","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"OH47En5","output_index":3,"sequence_number":214}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" needs with species protections in multiple river systems. In","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"kJZ","output_index":3,"sequence_number":215}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" California, Earth Day-era permitting updates and restoration-streamlining","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"MaJGI6","output_index":3,"sequence_number":216}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" initiatives were highlighted in 2026 reports as","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":217}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" part of ongoing state efforts to accelerate river recovery. The","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":218}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" binational Minute 334 signing occurred in 2026","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"8","output_index":3,"sequence_number":219}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":", marking a daily-life turning point for how the United","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"d0EotXagm","output_index":3,"sequence_number":220}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" States and Mexico cooperatively steward the Colorado River. And","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":221}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" in urban environments, the Bronx River otter sighting","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"ocTEHeSxbo","output_index":3,"sequence_number":222}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" was reported in 2026 as a sign of","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"S8RY762NahFpMU","output_index":3,"sequence_number":223}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" successful long-term restoration and community engagement. These absolute","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"CXkn27","output_index":3,"sequence_number":224}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" dates help reduce ambiguity when people reference “latest","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"RLaH8w","output_index":3,"sequence_number":225}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"” or “today’s news,” and they show how","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"QQ5SyL1m4u","output_index":3,"sequence_number":226}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" the field’s momentum is both sustained and time-bound.","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"RJ97dtyXf","output_index":3,"sequence_number":227}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"BH8gv5kogpqWN3z","output_index":3,"sequence_number":228}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([mass.gov](https://www.mass.gov/news/larkin-dam-removed-restoring-a-free-flowing-parker-river-in-newbury?utm_source=openai)","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"MviY","output_index":3,"sequence_number":229}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":")","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"jDWmDWGJ5FOxwXH","output_index":3,"sequence_number":230}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":12082,"start_index":11957,"title":"Larkin Dam Removed, Restoring a Free-Flowing Parker River in Newbury | Mass.gov","url":"https://www.mass.gov/news/larkin-dam-removed-restoring-a-free-flowing-parker-river-in-newbury?utm_source=openai"},"annotation_index":7,"content_index":0,"item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","output_index":3,"sequence_number":231}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"\n\nWhat these developments mean for the future of river","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"JOPtwzqmhP","output_index":3,"sequence_number":232}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" conservation\n\nSeveral threads emerge from the","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"Jd","output_index":3,"sequence_number":233}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" latest reporting:\n\n- Connectivity is","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"qtuDyvflG3r","output_index":3,"sequence_number":234}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" the core objective. Dam removals, fish passage","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"D","output_index":3,"sequence_number":235}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" improvements, and habitat restoration projects are increasingly framed","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"YH5WS0TAl","output_index":3,"sequence_number":236}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" as essential to restoring ecological processes that sustain freshwater biodiversity.\n-","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"pb8m7Ta4V","output_index":3,"sequence_number":237}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" The pace of restoration is accelerating, but it depends on","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"TFN0p","output_index":3,"sequence_number":238}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" permitting reform and cross-institution coordination. Stream","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"8qr","output_index":3,"sequence_number":239}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"lined permitting and integrated planning are repeatedly cited as catalysts for moving from","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"Csw3qc","output_index":3,"sequence_number":240}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" projects that are episodic to programs that are durable and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"GYFR","output_index":3,"sequence_number":241}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" scalable.\n- Governance matters as much as engineering.","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"RbfnLpiP6","output_index":3,"sequence_number":242}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" Transboundary agreements, habitat conservation plans, and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"oH8Alp","output_index":3,"sequence_number":243}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" unified funding strategies are shown to strengthen the durability of restoration outcomes","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"88955q","output_index":3,"sequence_number":244}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" in the face of competing water demands, climate change,","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"1xnzT3Nw","output_index":3,"sequence_number":245}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" and energy needs.\n- Urban and peri-urban rivers","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":246}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" deserve attention as restoration theaters. The Bronx River otter","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"bMllqSchgwrcN8M","output_index":3,"sequence_number":247}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" discovery demonstrates that the benefits of river restoration extend beyond ecology and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"2QjiO6UD","output_index":3,"sequence_number":248}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" into public engagement, health, and equitable access to green","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"9F","output_index":3,"sequence_number":249}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" infrastructure.\n- Global momentum is rising. The UN","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"CiCXHWE3OVM7","output_index":3,"sequence_number":250}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" restoration progress report and related international coverage indicate that river","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"vhkTH18RI7KGe","output_index":3,"sequence_number":251}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" restoration is increasingly seen as a critical climate-and-biod","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":252}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"iversity strategy, with potential for financing and knowledge-sharing on","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"MI4y8c09","output_index":3,"sequence_number":253}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" a scale that exceeds earlier decades.\n\nIf you want,","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"yqb3c0Ebh1XI","output_index":3,"sequence_number":254}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" I can tailor a deeper dive into any one of","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"TxnPw","output_index":3,"sequence_number":255}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" these threads—dam removals in a specific region,","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"ZsyjkqYVtJYRfoy","output_index":3,"sequence_number":256}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" a policy analysis of Minute 334, or case studies","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"mVJ6nwMN6Bz4GxK","output_index":3,"sequence_number":257}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" of urban river restoration—pulling in more sources and","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"JGUuzvjoG","output_index":3,"sequence_number":258}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" focusing on how these efforts interact with local economies, recreation","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"XMTcy7Nm","output_index":3,"sequence_number":259}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":", and community voices.\n\nIn closing, the recent news","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"bhna5X2rKIDo","output_index":3,"sequence_number":260}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" about river conservation portrays a field in transition","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"2aLaOoTU","output_index":3,"sequence_number":261}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":": from episodic, site-specific actions to a more","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":262}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" integrated, policy-sensitive practice that","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"KxlPr","output_index":3,"sequence_number":263}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" treats river connectivity as a cornerstone of ecological, social, and climatic resilience. The concrete, date-bound milestones—Larkin Dam’s removal and Parker River recovery; the Pierce County habitat plan and ITP;","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"uumfpuEq5","output_index":3,"sequence_number":264}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" Minute 334’s binational governance; and urban wildlife","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"kCPNsS49H","output_index":3,"sequence_number":265}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" recoveries in the Bronx—signal a durable turning point: rivers","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"B","output_index":3,"sequence_number":266}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" are being managed with an eye toward long-term ecological functioning,","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"PwWAyyeuX","output_index":3,"sequence_number":267}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" community co-benefits, and cross-border collaboration that can","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"d","output_index":3,"sequence_number":268}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" weather future uncertainties. The work remains challenging","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"TdK93","output_index":3,"sequence_number":269}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":", but the trajectory is clear","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"qZ2","output_index":3,"sequence_number":270}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":": more rivers connected, healthier habitats, and governance that","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"","output_index":3,"sequence_number":271}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" makes restoration part of everyday stewardship rather than a discretionary,","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"pmkt","output_index":3,"sequence_number":272}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":" one-off action. ","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"EYufEp1vPoS8rgD","output_index":3,"sequence_number":273}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":"([mass.gov](https://www.mass.gov/news/larkin-dam-removed-restoring-a-free-flowing-parker-river-in-newbury?utm_source=openai)","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"NwVp","output_index":3,"sequence_number":274}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","content_index":0,"delta":")","item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","logprobs":[],"obfuscation":"zwIrp10auDGQOG2","output_index":3,"sequence_number":275}
+
+event: response.output_text.annotation.added
+data: {"type":"response.output_text.annotation.added","annotation":{"type":"url_citation","end_index":14843,"start_index":14718,"title":"Larkin Dam Removed, Restoring a Free-Flowing Parker River in Newbury | Mass.gov","url":"https://www.mass.gov/news/larkin-dam-removed-restoring-a-free-flowing-parker-river-in-newbury?utm_source=openai"},"annotation_index":8,"content_index":0,"item_id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","output_index":3,"sequence_number":276}
+
+event: error
+data: {"type":"error","error":{"type":"tokens","code":"rate_limit_exceeded","headers":{"retry-after":"4","retry-after-ms":"3141","x-ratelimit-limit-requests":"5000","x-ratelimit-limit-tokens":"2000000","x-ratelimit-remaining-requests":"4999","x-ratelimit-remaining-tokens":"166509","x-ratelimit-reset-requests":"12ms","x-ratelimit-reset-tokens":"55.004s"},"message":"Rate limit reached for gpt-5-nano in organization org-MASKED on tokens per min (TPM): Limit 2000000, Used 1833491, Requested 271242. Please try again in 3.141s. Visit https://platform.openai.com/account/rate-limits to learn more.","param":null},"sequence_number":277}
+
+event: response.failed
+data: {"type":"response.failed","response":{"id":"resp_037da3e7be4d037b016af24ccc693487d08517005c68c453eb","object":"response","created_at":1794264268,"status":"failed","access_programs":null,"background":false,"completed_at":null,"error":{"type":"tokens","code":"rate_limit_exceeded","headers":{"retry-after":"4","retry-after-ms":"3141"},"message":"Rate limit reached for gpt-5-nano in organization org-MASKED on tokens per min (TPM): Limit 2000000, Used 1833491, Requested 271242. Please try again in 3.141s. Visit https://platform.openai.com/account/rate-limits to learn more.","param":null},"frequency_penalty":0.0,"image":{"context_compression":"disabled"},"incomplete_details":null,"instructions":null,"max_output_tokens":null,"max_tool_calls":null,"model":"gpt-5-nano-2025-08-07","moderation":null,"output":[{"id":"rs_037da3e7be4d037b016af24cd1b43487d09ff06e44c811fd53","type":"reasoning","content":[],"encrypted_content":"gAAAAABq8kzqRXoe8ihJxzpj3Y7OxxlgQYp_gSzdGCCHsTIS0y_3PKk_M1YzJCoIm9eYeSqj3Th45VgVfuaiZ-uu_vhvAmZHh_vEmfeC_7yScsPOM6lZIsddGUxaDF2QDwwrK1Ypasdix61xCk4kCjIurmTEI3S9K-RnsQwlKHQSvAH-L6V6lAZRXUFj6QuCcoDFfGd1g-B0qIPTIrcl83IIhuXGPOxCJ7cLOQU9EkSedb99ZeLhuuT9zJt_Ic6XwxxOJ1xX3HL9B4YQ1OpNjFQn9n1JIc5FY0Cz4zuvSkwNdON61OfuJH1wvw8ASPmDNUp156kOSmSWk8KhQ7vmAwVl_oHaV5LWrxXL3gxDwet0yeeojI_ZEPgpuFUhO3eUNOS4xgcHHCf1ZzMioxGqzWRZcUTdJ_rmpOUfJyP3WsmvQtypw0Vc_us84MnPv2KTgeAO4eVvEYO-yvKaOY0io-cJeFo-zkoLOFNnV8M3PN0yrQP1AFeiitGcL00Ie5oGy-5APhtLaAvknJYv3SuCsgw7_mkmUtsn6BAC2Nx5dbwuK-24Tm032rUj_G5I8CFIc3ecRrE_ESGC_gms_WZU6j2xRFRRCqO_Cyq7QJ3nYk-Md2XtRWjureXUK7iwtiX0PB_quv4HVJE0R91laHBgo4fWK5iMY9tu--oqABw65ZsIn6qEhOcnFQhc4vd7slZmAe9p9vdVFkkrU_9VrEovAGm8bjYE7VOW6rKIW1CV7fcjDA6LC1SXy_D-vRoDCJcRNavqioIJ_ifot7iRn2EttTER5Jb-Lk_tptmEFhG-aJukt0Vaure8I4ZsgJ-boiiaJpZqAemnWNCbfdqXUJpmfchcrvh1WSwm5UdR-4Lxw6VsnIWAyz5AjIzWYLlzvZWP3mAv2Ps10MdHdp3COD_w2guYZA_lFphAHqt_9XMB2QPdCJEOSXizyvxvfoD48tquQ7EPEBeZFxpAf-JQP1_xGtgqBbiN35ZV2eeJL5Uys9GKrNbRHHshZHBJe6CySthDaaMFpidCawLDS4YELwGjEWOyL-Wd4in9FWNPZuHU6n62gV6gdTimmGXrp5TcIAq1XolAnMmwDI_aRLh93Luc5J7OeWwMYzCQkY4nCNbtobmNpLEhVWlC8NNUzi9DNc0HM7gtSF-Cms663iPwP3Gh01YyeqoNqNSPFQJXFr6cm_BJZHPnk9BcAMQyNLj4HVX6tZSrzRNXsp_IDkFQMHA9bIrb8fHIvAGKYICajccFWwBJjChbg_S4QX48F_6Vc4DTnU_Rgoxfz3aJks14JjbqtXqr17rNCfTibJ-59hyBxCISt2T1vhqfE3HqsV_-y5mhw5T_pvUFbqDAyCXHFodR-GCtPB6Ff-p-6IUh5N9DiIRf4_HCIOVpDSDJVeOYAmg8M6J5QeukjQJJRbm23O9PMunwszxsAuEXjo8WJIt-5QwAkNwyAyUCwVSwzq1Oy3S7X4xotwZIPcTk4dQMXCNXFSS5LSvVtO-02Ry7STDaZ2XcbAPwTgyNEGNlo19q06ALzcXWYa32U2GiC5s_KodrzcScDkyyaLu__qP-zGv06DHenuZRyPBzlTxcucXrhpjv_6tA91t3AqJw2XJoepG6nienFZBmAhMGWvTRQV2yIGwsyBRNThNlQBf3r6-biK-eVBLtpqj-re1U5ODIOO4tXt4Xzw-bUdA7CCcP_B8T4TtGv0Lgrpky0mUWuEq3ctBDfWiNGFRyplKTYnc5JpKOgBUBmiHiIgtB9RKDXfvqRCVe2EmwOismNhqK1tnz3pSJSGVV-1_eRcILsEpJq0yXG2RKPKaVN4-d1d_zAl0YaM1szeF8Wdohol2i9WrT5b2SlbkwysiqqOT7rKA9k5hnNFJgeA7z8UW3YtPcI7vDGF6o-d34SSysAyOJQZbeYszIPnyB53VaN8-ixIkMkZnl3BxgVxEia6Kdo-QmnYnXX8FgR71acq1e7POEUaYloklkz9g4N-rWdKIpIi2V8B2IFbxfQ_brRLIJsMCgjS1WzONQVcJGX_ZBiNUPwe2pHSO8jLsSUyrMVihy8QMZEy5J0Z_aQyvgYq91aqxe2_KWdAfEvGqN8yRcOt36QCyzravkuQywtoU_3rqo1WN69zYRLIaPBX0pVLkKyNLlUgmwMwIYpJhARK9szvKtjsZJxVFjhRrd-I07u3WJDzRefnZHOtiqvpJD1O22ua9njnPIsONwPnEX-_ZSLRI=","summary":[]},{"id":"ws_037da3e7be4d037b016af24cd2eb0c87d0b2c4f395626b5447","type":"web_search_call","status":"completed","action":{"type":"search","queries":["recent news river conservation 2024 2025 2026","global river restoration news 2026 conservation"],"query":"recent news river conservation 2024 2025 2026"}},{"id":"rs_037da3e7be4d037b016af24cd6c7f887d0ba776cb607b31c85","type":"reasoning","content":[],"encrypted_content":"gAAAAABq8kzqMMHWTfzqqrf1nJiCJ3exgcjllWnQdlIGbQs-67xc2gkRR65jq7IMTgrFgohOGg86f1PdH8pRMYgFw9ITJj7gCsnjhwoE9-RQyPeovZnMDNtAQ31YOg1EGkWm7kw_hMRReniz0o0VfF7ysYFhNdiwaBBTl9vO76gBP_0CQ-aGxEn4G2M93U_y3Ia69XJ8-J1wHNGte4AIwcHKXN7VWnhXJiddTPw1FIdjNE-2dIzFamnHE5yMele6x3hU968D8y9fHR6QuVmHtnz4Lt0-FBRN5-46_p8FXZbDpRvMtYr2Hpmud9uLD9XVivF3ro6FTGSddsjFftRWyLdTY-sdVsHGMUtfQSg4nPW4Oue0JWQvioXQhxtMEiiVuT7sKalJHWQA6UpuA2FyvnkNsXeSFG_C8Rwt24UCm8xSBZOdI91wJTSKqc_Okaf3y4_wUvierCiEPAsMvfUlCBHn-GpjAM8sfzYc5MEZd_TCWiqVqra7BYSAbP_uqVCkQPRtC98DG2iQgIfIh7XZO9z4geyrXp49N-1jt7wTcmpJ0ID5h5QFJXXtqBcSbckf9p-DJefsGs43OLX7k4-yFUKlAYBwkWAP6rtP7GSLAchfhTny5JHcusdhSEs4ALhwnQXQ1xO00XqgO1LSDt7T6wTIGv27pPYdmT6L22d1TUlpVvODX8izJabAjyq9Ukre-B99tNIG6cFSEZSOhw9y6a1inTMkz7eaxCdJ-z1isyqRSAkenqI09FG7Bk6VLx2NywSSu8osD9HldoAjAapNjWIXCHKetiWZCH8CQfDrjooHEIayFC9THwDdojj9Grn6TiiQkNVMiWBI4wPFYB1FqkcxvvKpbdhcJmjLYuNWRkxIDdCBYxLJALADMR6YgD6p6kNwF9lkmOtUaAQCOp7bE_ubFdmbnzZKDR-JYgLxDyw2_46EjIfXGz1SJ95zvH7lqn3nF1zPwHxI7ALpU0xjeCx3pEkMzxzDD5zz39pObqwW5zjA8swVudaJZCFHc2AN0CluY0-Czi5tHnpYOcIZjmw3QH0vr1un5RKmZfvbnJQFSJGZ8rIqQ7xeMNtwToa8JP_C1CS8psmIiI7xXjrYdXY3p_cPqV-wQtWctG_FkcXiqleyMRgWGQvSxY607GTyZnXFHRqXSxJmLcbHyWgSYfO1ZbXuE0C6sScOdsm75GWfMUOf1vV8bXgNM8uURCOePRV1ca9rO2P69wZx7iUaN34RrTXnRuIZD4qQDVKuN9I9F3Cp2cJbQGLdq4NUldAh-TeuT4ElK_9hZ-r9q3V51iWmXlZvZOGlj-4SHOL8fpyeimpy0TVIovnsKql2VVNDXPR-a1BMXdFMG7HgsTg0HlVhJnigCnDIZP-tVUNZ8tXxkgOxqCqtXlOKrfo-2Aj9yl2CdngH4cpq6YqfmHCWcdwUhXuhH2b9B9hjunfdItlT699PH7AcxgR-4NzTgfQ2WmA4EeKVI-aWhXBpeKNI3MrBNQHl1U8qp_xS8JW242JP7I6IiemVpPJ-gohZzTnWdFeKDSBCUoh5Hrsx0y0gy3P0vZkqPpsG3AOxLF1Sy1Rvew3kbh9EtfhC7UNyGvPWUiv_KM_7I2LUWaYdp3In9PsMTXGGoTv812ywJAJhrorzgQR4U8VPjbZ-4612Vo0fbHzM6vS_DreZ38yUYqAQvOJRrz3SAjMjzLLNRqGzCad1sVRbB6aoDMQwc7iHJzjiFvyez69CM80FVREobX-TS_YE_ZCJyL-qXJcKYcWkCayxtW6t8hGkZz9GrHh5jbxCUnJTkrcgwWqIgQz8TvAKBxJOfSz9z0jQTpiGrEL9jiOb1zfPvM1kFNLFkHiq4hs_uzu2Sg6fPzCJuGAfJgKf-79J_RXJ2xMGUa9GW1ghJEOeFZYloiiNF_IPK59TOPVtd-dHULhHO9sGmRga_T5wwXN_J2jHgSQMhDPv45p4xwrA0UVz9yvGlzrMd1wUpmk05mMYJ0xuntnCHzjqkspbfpxoOroceXByXCD-lFPrj3dDc-7fokEegrgMeJ_bFHfs1MOObqc5fYQzqYNazXt8k4UZ_4kr4Xoba7xGNuDJ3drRxR2NF0y04au3KKFc1OiAHuNfQ20C-cMuYvWoAlv7BwaehwgVpbuz_2_K8verpTap3VXcKsBKFgvzJ-HiM91TaTZDztJHAMN5T3brFX3Rdne4N6Q6ZfUEzghA4OGaLnPP8_Rx9zX4XrQmyl1TsslmLOjCUqFDRKmhkRXowVA-w9O-MDBpHmWOPlaLIDJf-7hHtRwOjTRTNIUk6FHZtPmvGiDjgxvCITvj-ouCns7n5dF3B8WwPM6WnHdKVsXCkMGpvihrE8QvjUIYH4s3nLXGx6plJ-H87sjuqSRSOdEY6-W71tTuHxese3vUcmnb26ravVG6dSK_2cOqN-O-mcvlvhqroXxdZEdB7Y5JoKTEFdrnaF01dFb3pgpkzhlCXYDQT-TUShpNgxhWHcjYLWRp6CtvwPB9c9nl4Au5czKhPYCzqxtZ6zFFZPk4P28UNiV6zehviAUwpRR8bPsXclhNiDRf4_Q5nxTj_yK67PpKEwnYO3CpDDRi3FLw8hLtqJRjrIVPAiBLHID3-qbzW0hPdB9a26kKn9Tyh6orwJ130HHCVyuuz3UToUv1aeBhzxE2mLPI6uqv9mnCzVqf7TpRDdvPqbQOMWoWv4OGuhEiinmV-9Ma0TMcQ0V9TFTjR0pZkNKjotJB7QA=","summary":[]},{"id":"msg_037da3e7be4d037b016af24cd780fc87d08fa65cd8320c4c1f","type":"message","status":"completed","content":[{"type":"output_text","annotations":[{"type":"url_citation","end_index":2094,"start_index":1969,"title":"Larkin Dam Removed, Restoring a Free-Flowing Parker River in Newbury | Mass.gov","url":"https://www.mass.gov/news/larkin-dam-removed-restoring-a-free-flowing-parker-river-in-newbury?utm_source=openai"},{"type":"url_citation","end_index":3406,"start_index":3237,"title":"Pierce County and Public Works Flood Risk Reduction Structures Maintenance and Operations Habitat Conservation Plan | NOAA Fisheries","url":"https://www.fisheries.noaa.gov/action/pierce-county-and-public-works-flood-risk-reduction-structures-maintenance-and-operations?utm_source=openai"},{"type":"url_citation","end_index":4725,"start_index":4605,"title":"Earth Day Update: Restoring Rivers Faster with Streamlined Permits - Ebb and Flow","url":"https://www.waterboards.ca.gov/stories/2026/earth-day-restoration-permits.html?utm_source=openai"},{"type":"url_citation","end_index":6064,"start_index":5969,"title":"Continuing Collaboration for the Colorado River Delta | TNC","url":"https://www.nature.org/en-us/newsroom/co-river-collaboration/?utm_source=openai"},{"type":"url_citation","end_index":7222,"start_index":6995,"title":"WCS Bronx Zoo Announces: First River Otter Spotted in the Bronx in 100 Years Along the Bronx River > Newsroom","url":"https://programs.wcs.org/press/News-Releases/articleType/ArticleView/articleId/26542/WCS-Bronx-Zoo-Announces-First-River-Otter-Spotted-in-the-Bronx-in-100-Years-Along-the-Bronx-River.aspx?utm_source=openai"},{"type":"url_citation","end_index":8464,"start_index":8234,"title":"CHAPTER 2 · GLOBAL PROGRESS IN ECOSYSTEM RESTORATION","url":"https://indonesia.un.org/sites/default/files/2026-10/Restoration%20Progress%20Report%20Nature%E2%80%99s%20comeback%20-%20Scaling%20ecosystem%20restoration%20for%20people%20and%20planet_1.pdf?utm_source=openai"},{"type":"url_citation","end_index":9809,"start_index":9625,"title":"Officials will not release cool water from a Colorado River reservoir to protect threatened fish - The Washington Post","url":"https://www.washingtonpost.com/national/2026/08/06/colorado-river-humpback-chub-cool-water-mix/3815af74-920e-11f1-9fdc-0a725c989a7b_story.html?utm_source=openai"},{"type":"url_citation","end_index":12082,"start_index":11957,"title":"Larkin Dam Removed, Restoring a Free-Flowing Parker River in Newbury | Mass.gov","url":"https://www.mass.gov/news/larkin-dam-removed-restoring-a-free-flowing-parker-river-in-newbury?utm_source=openai"},{"type":"url_citation","end_index":14843,"start_index":14718,"title":"Larkin Dam Removed, Restoring a Free-Flowing Parker River in Newbury | Mass.gov","url":"https://www.mass.gov/news/larkin-dam-removed-restoring-a-free-flowing-parker-river-in-newbury?utm_source=openai"}],"logprobs":[],"text":"River conservation in recent times has emerged as a mosaic of dam removals, habitat restoration projects, cross-border water agreements, and streamlined permitting that together aim to restore ecological connectivity and resilience to freshwater systems. The latest wave of reporting from U.S. and global outlets highlights both local triumphs and broader policy shifts, revealing how communities, governments, and nonprofits are reimagining what it means to keep rivers healthy in a warming, changing world. What follows is a synthesized account drawn from recent news and organizational updates, focusing on concrete actions, outcomes, and the policy contexts that shape them.\n\nA local dam removal as a stepping-stone to free-flowing rivers\n\nOne vivid example of river restoration in the United States is the removal of the Larkin Dam on the Parker River in Newbury, Massachusetts. The project was framed not merely as a civil works exercise but as a testbed for reconnecting migratory fish routes that have been severed by barriers. Mass. state accounts describe how the dam removal enables a more natural flow regime, free passage for diadromous fish, and an opportunity to observe how ecosystems reorganize in the wake of a restored river. The Parker River, long recognized for its biodiversity—hosting 10 documented diadromous species including river herring and sea-run brook trout—stands as a case study in translating engineering decisions into ecological and community benefits. The Larkin Dam removal, completed in 2025 with ongoing monitoring in 2026, was presented by local officials as part of a broader shift in state policy that prioritized large-scale river restoration (and a broader 2025-2026 pipeline of dam removals) as a measure to advance watershed health and climate resilience. This local victory underscores a recurring pattern in which communities and agencies collaborate to unlock ecological connectivity that has been blocked for decades. ([mass.gov](https://www.mass.gov/news/larkin-dam-removed-restoring-a-free-flowing-parker-river-in-newbury?utm_source=openai))\n\nCross-jurisdictional efforts and habitat protections\n\nBeyond single-river actions, river conservation increasingly operates through formal plans and permits that span multiple rivers and counties. In Washington State, NOAA Fisheries published a Habitat Conservation Plan associated with Pierce County’s flood risk reduction structures. The plan illustrates how conservation agencies navigate balancing infrastructure needs (flood control, maintenance, and operations) with protections for ESA-listed species across several rivers (Puyallup, White, Greenwater, Carbon, and Nisqually). The formal instruments—incidental take permits and associated recovery plans—reflect a trend toward integrating ecological considerations into everyday watershed management. This example demonstrates how federal wildlife agencies coordinate with county-level and tribal or municipal actors to sustain aquatic life while accommodating ongoing risk-reduction projects. Such instruments are increasingly common and signal a shift toward embedding conservation assurances within routine civil works rather than treating ecological concerns as separate add-ons. ([fisheries.noaa.gov](https://www.fisheries.noaa.gov/action/pierce-county-and-public-works-flood-risk-reduction-structures-maintenance-and-operations?utm_source=openai))\n\nPermitting reform and permitting-driven restoration\n\nSeveral U.S. and California-based developments in 2025–2026 point to a broader reform of how river restoration can be accelerated via permitting processes. California’s Water Boards and allied agencies highlighted Earth Day-era reflections on permitting efficiencies for restoration projects, describing new tools and streamlined pathways that help accelerate the pace at which habitat improvements can be planned, funded, and implemented. The overarching idea is to reduce procedural bottlenecks without compromising environmental protections, so that the pace of restoration can keep up with urgent needs in river systems facing climate stress, invasive species pressures, and degraded water quality. Reports emphasize that when permitting processes are aligned with restoration goals, projects can deliver coho salmon protection, improved stream resilience, and stronger habitat networks more quickly than traditional, slower regulatory pathways would allow. These reforms are receiving attention across the western U.S. and are being tracked by state and regional boards as part of a coordinated, policy-forward approach to river recovery. ([waterboards.ca.gov](https://www.waterboards.ca.gov/stories/2026/earth-day-restoration-permits.html?utm_source=openai))\n\nUrban rivers and policy-relevant signs of progress\n\nThe Colorado River and its delta have dominated national attention for years, and 2026 brought additional milestones in the policy arena. The signing of Minute 334, the latest addendum to the 1944 U.S.-Mexico Water Treaty, was framed by The Nature Conservancy and other partners as a watershed-scale recognition that cooperative, binational management can advance river restoration in critical portions of the river system. The Minute 334 framework has linked restoration sites with coordinated water-sharing arrangements, a governance model designed to support both agriculture and urban needs while preserving ecological values in a highly stressed river corridor. The policy architecture reflected in Minute 334—tangible commitments to shared flows, coordinated releases, and joint investment in restoration—offers a blueprint for how interstate and cross-border river recovery efforts can be sustained through formal agreements, even as climate variability compounds uncertainty. The Colorado River story thus appears as a touchstone for how restoration economics (habitat investments, dam removal, and water management) can be integrated into durable, cross-border policy instruments. ([nature.org](https://www.nature.org/en-us/newsroom/co-river-collaboration/?utm_source=openai))\n\nRivers as urban and peri-urban restoration theaters\n\nUrban river restoration has gained visibility, with notable developments in places like the Bronx, New York. The Wildlife Conservation Society and partners reported the return of a North American river otter to the Bronx River for the first time in roughly a century, a landmark tiding that demonstrates how urban river restoration can yield tangible wildlife reoccupations. The Bronx River example is not purely symbolic: it signals that urban river ecosystems, when restored and well managed, can support higher trophic levels and more complex ecological interactions than previously thought possible in dense urban landscapes. This narrative—restoration as a pathway to biodiversity, even in cities—helps broaden the public’s appreciation for river health and creates a platform for ongoing community engagement around water quality, green space, and habitat connectivity. ([programs.wcs.org](https://programs.wcs.org/press/News-Releases/articleType/ArticleView/articleId/26542/WCS-Bronx-Zoo-Announces-First-River-Otter-Spotted-in-the-Bronx-in-100-Years-Along-the-Bronx-River.aspx?utm_source=openai))\n\nCross-border and global dimensions of river restoration\n\nOn the international front, river restoration is increasingly positioned within global policy and funding cycles. A 2026 restoration progress report from United Nations agencies and partners highlights a rising global ambition: millions of hectares of wetlands and waterways are planned for restoration, with river restoration often expressed in terms of connectivity, dam removal, and corridor scale rather than purely in kilometers of river. The report emphasizes that governments and NGOs are adopting more ambitious restoration targets and that financing streams—from public budgets to private philanthropy—are increasingly aligned with biodiversity goals and climate resilience objectives. While the exact scales and national commitments vary, the trend is clear: restoration is moving from a set of isolated, local projects to a more integrated, landscape-scale agenda that foregrounds river connectivity as essential for freshwater biodiversity. ([indonesia.un.org](https://indonesia.un.org/sites/default/files/2026-10/Restoration%20Progress%20Report%20Nature%E2%80%99s%20comeback%20-%20Scaling%20ecosystem%20restoration%20for%20people%20and%20planet_1.pdf?utm_source=openai))\n\nThe Colorado River delta and the governance of shared water\n\nThe Colorado River narrative after Minute 334 underscores a broader political economy around rivers: restoration is paired with governance that acknowledges the need to balance water rights, power production, and ecosystem protection. The degree to which Minute 334 and related agreements can be sustained through upcoming climate shocks remains an open question, but the 2026 reporting landscape suggests that the path forward includes investment in both structural solutions (dam removals, habitat improvements) and governance innovations (binational compacts, integrated planning). The Washington Post and related outlets have chronicled how varying basins approach the trade-offs between downriver ecological goals and the economic costs of cooling water releases or other interventions; the Colorado River case shows how governance structures can attempt to resolve these trade-offs through joint decision-making and cost-sharing. These policy debates matter because they determine whether restoration investments are recurrent, scalable, and durable in the face of drought and demand growth. ([washingtonpost.com](https://www.washingtonpost.com/national/2026/08/06/colorado-river-humpback-chub-cool-water-mix/3815af74-920e-11f1-9fdc-0a725c989a7b_story.html?utm_source=openai))\n\nA growing portfolio of tools, a shifting pace\n\nTaken together, the recent wave of river-conservation news paints a picture of a field that is becoming more procedurally sophisticated, more interconnected, and more constructor-driven. Dam removals like Larkin Dam, habitat protection plans in Washington, streamlined permits for restoration in California, cross-border treaties in the Colorado basin, and urban wildlife returns in the Bronx together constitute a portfolio of tools aimed at restoring ecological processes, reestablishing habitat connectivity, and building social legitimacy for river recovery. The diversity of sites—from Massachusetts tidal rivers to Colorado’s arid delta to urban New York—demonstrates that river restoration is not a single recipe but a plural set of approaches tailored to local hydrology, governance structures, and cultural contexts.\n\nFor a true understanding of progress, it helps to anchor claims in concrete dates and verifiable milestones. In the Massachusetts Parker River/Larkin Dam case, the dam removal was completed by 2025 and the site has been monitored through 2026, with officials highlighting the dam’s role as a local restoration milestone and a potential model for future dam-removal efforts across the region. In Pierce County, Washington, the ITP and accompanying habitat plan entered formal operation in 2025, illustrating how agencies can pair flood-management needs with species protections in multiple river systems. In California, Earth Day-era permitting updates and restoration-streamlining initiatives were highlighted in 2026 reports as part of ongoing state efforts to accelerate river recovery. The binational Minute 334 signing occurred in 2026, marking a daily-life turning point for how the United States and Mexico cooperatively steward the Colorado River. And in urban environments, the Bronx River otter sighting was reported in 2026 as a sign of successful long-term restoration and community engagement. These absolute dates help reduce ambiguity when people reference “latest” or “today’s news,” and they show how the field’s momentum is both sustained and time-bound. ([mass.gov](https://www.mass.gov/news/larkin-dam-removed-restoring-a-free-flowing-parker-river-in-newbury?utm_source=openai))\n\nWhat these developments mean for the future of river conservation\n\nSeveral threads emerge from the latest reporting:\n\n- Connectivity is the core objective. Dam removals, fish passage improvements, and habitat restoration projects are increasingly framed as essential to restoring ecological processes that sustain freshwater biodiversity.\n- The pace of restoration is accelerating, but it depends on permitting reform and cross-institution coordination. Streamlined permitting and integrated planning are repeatedly cited as catalysts for moving from projects that are episodic to programs that are durable and scalable.\n- Governance matters as much as engineering. Transboundary agreements, habitat conservation plans, and unified funding strategies are shown to strengthen the durability of restoration outcomes in the face of competing water demands, climate change, and energy needs.\n- Urban and peri-urban rivers deserve attention as restoration theaters. The Bronx River otter discovery demonstrates that the benefits of river restoration extend beyond ecology and into public engagement, health, and equitable access to green infrastructure.\n- Global momentum is rising. The UN restoration progress report and related international coverage indicate that river restoration is increasingly seen as a critical climate-and-biodiversity strategy, with potential for financing and knowledge-sharing on a scale that exceeds earlier decades.\n\nIf you want, I can tailor a deeper dive into any one of these threads—dam removals in a specific region, a policy analysis of Minute 334, or case studies of urban river restoration—pulling in more sources and focusing on how these efforts interact with local economies, recreation, and community voices.\n\nIn closing, the recent news about river conservation portrays a field in transition: from episodic, site-specific actions to a more integrated, policy-sensitive practice that treats river connectivity as a cornerstone of ecological, social, and climatic resilience. The concrete, date-bound milestones—Larkin Dam’s removal and Parker River recovery; the Pierce County habitat plan and ITP; Minute 334’s binational governance; and urban wildlife recoveries in the Bronx—signal a durable turning point: rivers are being managed with an eye toward long-term ecological functioning, community co-benefits, and cross-border collaboration that can weather future uncertainties. The work remains challenging, but the trajectory is clear: more rivers connected, healthier habitats, and governance that makes restoration part of everyday stewardship rather than a discretionary, one-off action. ([mass.gov](https://www.mass.gov/news/larkin-dam-removed-restoring-a-free-flowing-parker-river-in-newbury?utm_source=openai))"}],"role":"assistant"}],"parallel_tool_calls":true,"presence_penalty":0.0,"previous_response_id":null,"prompt_cache_key":null,"prompt_cache_retention":"in_memory","reasoning":{"context":"current_turn","effort":"low","mode":"standard","summary":null},"safety_identifier":null,"service_tier":"default","store":false,"temperature":1.0,"text":{"format":{"type":"text"},"verbosity":"medium"},"tool_choice":"auto","tool_usage":{"image_gen":{"input_tokens":0,"input_tokens_details":{"image_tokens":0,"text_tokens":0},"output_tokens":0,"output_tokens_details":{"image_tokens":0,"text_tokens":0},"total_tokens":0},"web_search":{"num_requests":1}},"tools":[{"type":"web_search","return_token_budget":"default","search_content_types":["text"],"search_context_size":"medium","user_location":{"type":"approximate","city":null,"country":"US","region":null,"timezone":null}}],"top_logprobs":0,"top_p":1.0,"truncation":"disabled","usage":null,"user":null,"metadata":{}},"sequence_number":278}
+

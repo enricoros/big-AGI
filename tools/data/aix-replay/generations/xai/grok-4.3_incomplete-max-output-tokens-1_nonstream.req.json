@@ -1,0 +1,25 @@
+{
+  "model": "grok-4.3",
+  "max_output_tokens": 1,
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "A bat and a ball cost $1.10 in total. The bat costs $1.00 more than the ball. Think carefully step by step, double-check, then give the price of the ball."
+        }
+      ]
+    }
+  ],
+  "reasoning": {
+    "effort": "high",
+    "summary": "detailed"
+  },
+  "include": [
+    "reasoning.encrypted_content"
+  ],
+  "store": false,
+  "stream": false
+}

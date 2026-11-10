@@ -1,0 +1,31 @@
+{
+ "model": "openai/gpt-5.4-nano",
+ "tools": [
+  {
+   "type": "openrouter:datetime"
+  },
+  {
+   "type": "openrouter:web_search",
+   "parameters": {
+    "engine": "auto"
+   }
+  },
+  {
+   "type": "openrouter:web_fetch",
+   "parameters": {
+    "engine": "auto"
+   }
+  },
+  {
+   "type": "openrouter:image_generation"
+  }
+ ],
+ "stream": false,
+ "messages": [
+  {
+   "role": "user",
+   "content": "Do these four things, each exactly once, as separate tool calls: (1) use the datetime tool to get the current time; (2) use the web search tool for \"IANA example domains\"; (3) use the web fetch tool on https://example.com/ ; (4) use the image generation tool to generate a simple red circle on a white background. Then reply with one short line per step. End with a line: REPORT datetime=<n> searches=<n> fetches=<n> images=<n>."
+  }
+ ],
+ "max_tokens": 3000
+}

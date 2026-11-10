@@ -1,0 +1,368 @@
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://exa.ai/library/weather/lisbon-portugal?latitude=38.7500&longitude=-9.1250&date=2026-11-07","title":"Lisbon, Portugal Weather | Slight rain showers, High 72°F","start_index":0,"end_index":0,"content":"# Weather for Lisbon, Portugal - Saturday, November 7, 2026\n\nSlight rain showers. High 72°F (22°C), low 61°F (16°C). 0.7mm precipitation expected.\n\n- Conditions: Slight rain showers\n- High: 72°F (22°C) / Low: 61°F (16°C)\n- Precipitation: 0.7mm\n- UV Index: 3.3\n- Sunrise: 7:10 AM / Sunset: 5:30 PM\n\n## Hourly Forecast\n| Time | Temp | Conditions | Wind | Precip | Rain % |\n|:-----|-----:|:-----------|-----:|-------:|-------:|\n| 12:00 AM | 63°F | Overcast | 1 mph | 0mm | – |\n| 1:00 AM | 63°F | Partly cloudy | 1 mph | 0mm | – |\n| 2:00 AM | 63°F | Partly cloudy | 2 mph | 0.1mm | – |\n| 3:00 AM | 62°F | Partly cloudy | 1 mph | 0.1mm | – |\n| 4:00 AM | 61°F | Overcast | 2 mph | 0mm | – |\n| 5:00 AM | 61°F | Overcast | 3 mph | 0mm | – |\n| 6:00 AM | 61°F | Overcast | 3 mph | 0mm | – |\n| 7:00 AM | 61°F | Overcast | 3 mph | 0mm | – |\n| 8:00 AM | 61°F | Overcast | 3 mph | 0mm | – |\n| 9:00 AM | 62°F | Slight rain showers | 3 mph | 0.2mm | – |\n| 10:00 AM | 63°F | Slight rain showers | 3 mph | 0.3mm | – |\n| 11:00 AM | 65°F | Overcast | 2 mph | 0mm | – |\n| 12:00 PM | 67°F | Overcast | 3 mph | 0mm | – |\n| 1:00 PM | 70°F | Overcast | 4 mph | 0mm | – |\n| 2:00 PM | 72°F | Overcast | 6 mph | 0mm | – |\n| 3:00 PM | 72°F | Overcast | 6 mph | 0mm | – |\n| 4:00 PM | 71°F | Overcast | 4 mph | 0mm | – |\n| 5:00 PM | 70°F | Partly cloudy | 2 mph | 0mm | – |\n| 6:00 PM | 68°F | Overcast | 2 mph | 0mm | – |\n| 7:00 PM | 67°F | Overcast | 3 mph | 0mm | – |\n| 8:00 PM | 66°F | Partly cloudy | 0 mph | 0mm | – |\n| 9:00 PM | 65°F | Overcast | 2 mph | 0mm | – |\n| 10:00 PM | 65°F | Overcast | 3 mph | 0mm | – |\n| 11:00 PM | 65°F | Overcast | 4 mph | 0mm | – |\n\n## 15-Day Forecast\n| Day | Conditions | High | Low | Rain % | Precip | Wind |\n|:----|:-----------|-----:|----:|-------:|-------:|-----:|\n| Sat 7 | Slight rain showers | 72°F | 61°F | – | 0.7mm | 6 mph ESE |\n| Sun 8 | Slight rain showers | 69°F | 64°F | – | 5.6mm | 17 mph SSE |\n\n...\n\n## Source\nWeather data by Open-Meteo.com (https://open-meteo.com/), licensed under CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Open-Meteo blends forecast models from ECMWF, Deutscher Wetterdienst (DWD), NOAA NCEP, the UK Met Office, the Japan Meteorological Agency and the Australian Bureau of Meteorology. Values are model output, not station observations. Units converted and values rounded by Exa."}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://www.yr.no/en/forecast/hourly-table/2-2267057/Portugal/Lisbon%20District/Lisbon%20Municipality/Lisbon?i=0","title":"Yr - Lisbon - Hourly weather forecast","start_index":0,"end_index":0,"content":"# Lisbon\n\nCapital, Lisbon Municipality, Lisbon District (Portugal), elevation 55 m\n\nCurrent conditions\n\nTemperature 14°\n\n14° \n\nFeels like 13°\n\nPrecipitation 0.2 mm\n\n2 m/s light breeze from east\n\n2 m/s\n\n## Weather forecast for the next 9 days\n\nNight Morning Day Afternoon Evening Temperature high/low Wind Precip.\n\n1. ### Friday 6 Nov.\n\nExpected: Yellow Rain Warning for Lisboa: Yellow severity\n\nExpected: Yellow Rain Warning for Lisboa: Yellow severity\n\nMaximum minimum temperature: 18°/ 12° Precipitation 18 mm Wind: 5 m/s\n2. ### Saturday 7 Nov.\n\nMaximum minimum temperature: 20°/ 17° Precipitation 0.7 mm Wind: 5 m/s\n3. ### Sunday 8 Nov.\n\nMaximum minimum temperature: 20°/ 17° Precipitation 7.9 mm Wind: 7 m/s\n4. ### Monday 9 Nov.\n\nMaximum minimum temperature: 20°/ 17° Precipitation 12 mm Wind: 7 m/s\n5. ### Tuesday 10 Nov.\n\nMaximum minimum temperature: 20°/ 18° Precipitation 21 mm Wind: 7 m/s\n6. ### Wednesday 11 Nov.\n\nMaximum minimum temperature: 20°/ 17° Precipitation 22 mm Wind: 6 m/s\n7. ### Thursday 12 Nov.\n\nMaximum minimum temperature: 19°/ 17° Precipitation 3.1 mm Wind: 5 m/s\n8. ### Friday 13 Nov.\n\nMaximum minimum temperature: 19°/ 15° Precipitation 0.7 mm Wind: 3 m/s\n9. ### Saturday 14 Nov.\n\nMaximum\n\n...\n\nUpdated 23:18.\n\n## Friday 6 November\n\n1. Weather warning \n\n### Expected: Yellow Rain Warning for Lisboa\n\nYellow severity\n\n#### Description\n\nPeriods of rain or showers, sometimes heavy and accompanied by thunderstorms.\n\n#### Area\n\nApplies to Lisboa\n\n[www.ipma.pt]\n\n#### Time period\n\n1. Friday, 06 November kl. 15:00 - increasing danger\n2. Saturday, 07 November kl. 00:00 - decreasing danger\n\nRead more about the severity levels\n\n#### Issued\n\n5. November 2026 12:58 (+00:00)\n\nInstituto Português do Mar e da Atmosfera\n\nMeteoAlarm\n\nTime delays between this website and the www.meteoalarm.org website are possible. For the most up-to-date awareness information as published by the participating National Meteorological and Hydrological Services, please refer to www.meteoalarm.org.\n\nDisplay for hour-by-hour forecast.\n\n| Time | Weather | Temp. | Precip. mm | Wind speed m/s | Wind desc. |\n| --- | --- | --- | --- | --- | --- |\n| 00 | | 14° | 0.2 | 2 m/s from east 2 | Light breeze from east |\n\n...\n\n| 09 | | 13° | 0 | 2 m/s from east 2 | Light breeze from east |\n| 10 | | 15° | 0 | 2 m/s from north east 2 | Light breeze from north east |\n\n...\n\n| 12 | | 18° | 0 | 3 m/s from south 3 | Light breeze from south |\n| 13 | | 18° | 0.7 | 4 m/s from south 4 | Gentle breeze from south |\n| 14 | | 17° | 0.8 | 4 m/s from south east 4 | Gentle breeze from south east |\n| 15 | | 17° | 1.2 | 4 m/s from south 4 | Gentle breeze from south |\n| 16 | | 16° | 0.9 | 5 m/s from south 5 | Gentle breeze from south |\n| 17 | | 16° | 1.8 | 5 m/s from south 5 | Gentle breeze from south |\n| 18 | | 16° | 3.4 | 5 m/s from south 5 | Gentle breeze from south |\n| 19 | | 16° | 0.4 | 6 m/s from south 6 | Moderate breeze from south |\n| 20 | | 16° | 0.3 | 5 m/s from south 5 | Gentle breeze from south |\n| 21 | | 16° | 0.1 | 4 m/s from south 4 | Gentle breeze from south |\n| 22 | | 17° | 0.2 | 4 m/s from south 4 | Gentle breeze from south |\n| 23 | | 17° | 0.3 | 4 m/s from south 4 | Gentle breeze from south |"}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://www.foreca.net/Portugal/Lisbon?details=20261106","title":"Hourly weather forecast for Lisbon - Foreca.net","start_index":0,"end_index":0,"content":"## Friday\n\nNovember 6\n\n10 h 23 min\n\n7:08 AM 07:08 5:31 PM 17:31 \n\nMorning temperature of 11 °C, afternoon 20°, evening 16° and night 16°. Morning temperature of 52 degrees, afternoon 69°, evening 61° and night 61°.\n\nMorning fog, afternoon cloudy, evening and night light rain.\n\n...\n\n1 PM 13\n\n68 +20 68 +20 52%\n\n 7 11 2 3\n\nPartly cloudy Gusts 11 mph 18 km/h 3 Bft 5 m/s\n\n...\n\n2 PM 14\n\n68 +20 68 +20 51%\n\n 7 11 2 3\n\nCloudy Gusts 13 mph 22 km/h 4 Bft 6 m/s\n\n...\n\n3 PM 15\n\n...\n\n4 PM 16\n\n68 +20 68 +20 59%\n\n 7 11 2 3\n\nCloudy Gusts 11 mph 18 km/h 3 Bft 5 m/s\n\n...\n\n5 PM 17\n\n66 +19 66 +19 69%\n\n 7 11 2 3\n\nCloudy Gusts 9 mph 14 km/h 3 Bft 4 m/s\n\n...\n\n6 PM 18\n\n63 +17 63 +17 80%\n\n 7 11 2 3\n\nCloudy Gusts 7 mph 11 km/h 2 Bft 3 m/s\n\nBarometer 1020 hPa 30.1 765.2\n\n7 PM 19\n\n63 +17 63 +17 84%\n\n 7 11 2 3\n\nCloudy and light rain Gusts 7 mph 11 km/h 2 Bft 3 m/s\n\nBarometer 1020 hPa 30.1 765.2\n\n8 PM 20\n\n63 +17 63 +17 88%\n\nCloudy and light rain Gusts 7 mph 11 km/h 2 Bft 3 m/s\n\nPrecip. chance 40%\n\nBarometer 1020 hPa 30.1 765.2\n\n9 PM 21\n\n63 +17 63 +17 91%\n\n0.01 in 0.2 mm\n\n 7 11 2 3\n\nCloudy and light rain Gusts 7 mph 11 km/h 2 Bft 3 m/s\n\nPrecip. chance 42%\n\nBarometer 1020 hPa 30.1 765.2\n\n10 PM 22\n\n61 +16 61 +16 92%\n\n0.01 in 0.2 mm\n\n 7 11 2 3\n\nCloudy and light rain Gusts 7 mph 11 km/h 2 Bft 3 m/s\n\nPrecip. chance 44%\n\nBarometer 1020 hPa 30.1 765.2\n\n11 PM 23\n\n61 +16 61 +16 93%\n\n0.01 in 0.2 mm\n\n 7 11 2 3\n\nCloudy and light rain Gusts 7 mph 11 km/h 2 Bft 3 m/s\n\nPrecip. chance 46%\n\nBarometer 1020 hPa 30.1 765.2\n\n...\n\nUpdated at 01/11 8:54 pm 20:54"}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://weather.metoffice.gov.uk/forecast/eycs85gmq","title":"Lisbon International (Portugal) weather - Met Office","start_index":0,"end_index":0,"content":"# Lisbon International (Portugal) weather\n\n## Next hour\n\n 14°C 14 degrees Celsius Partly cloudy\n\n- Feels like 14°\n- Rain <5%\n- Max gust 6mph from E Max gust 6mph from the east\n\n## Friday\n\n 18°C 18 degrees Celsius Cloudy\n\n- Feels like 16°\n- Rain 40% at 1pm\n- Max gust 17mph\n\n## Saturday\n\n 20°C 20 degrees Celsius Sunny intervals\n\n- Feels like 20°\n- Rain 30% at 12am\n- Max gust 17mph\n\n## Sunday\n\n 21°C 21 degrees Celsius Light rain\n\n- Feels like 17°\n- Rain 40% at 9am\n- Max gust 33mph\n\n## Monday\n\n 20°C 20 degrees Celsius Light showers\n\n- Feels like 16°\n- Light showers 80% at 6am\n- Max gust 34mph\n\n...\n\n- ### Sat 7 \n\n \n\n 20° Maximum daytime temperature: 20 degrees Celsius; 17° Minimum nighttime temperature: 17 degrees Celsius; \n- ### Sun 8"}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://weather.metoffice.gov.uk/forecast/eycs2h2ky","title":"Lisbon (Portugal) weather","start_index":0,"end_index":0,"content":"# Lisbon (Portugal) weather\n\n## Next hour\n\n 15°C 15 degrees Celsius Partly cloudy\n\n- Feels like 15°\n- Rain <5%\n- Max gust 5mph from ESE Max gust 5mph from the east southeast\n\n## Thursday\n\n 18°C 18 degrees Celsius Sunny\n\n- Feels like 15°\n- Rain <5%\n- Max gust 4mph\n\n## Friday\n\n 18°C 18 degrees Celsius Cloudy\n\n- Feels like 17°\n- Rain 40% at 1pm\n- Max gust 17mph\n\n## Saturday\n\n 21°C 21 degrees Celsius Sunny intervals\n\n- Feels like 20°\n- Rain 30% at 12am\n- Max gust 17mph\n\n## Sunday\n\n 21°C 21 degrees Celsius Light rain\n\n- Feels like 17°\n- Rain 40% at 9am\n- Max gust 33mph\n\n## Monday\n\n 20°C 20 degrees Celsius Light showers\n\n- Feels like 16°\n- Light showers 80% at 6am\n- Max gust 34mph\n\n## Tuesday\n\n 19°C 19 degrees Celsius Light showers\n\n- Feels like 17°\n- Light showers 80% at 6am\n- Max gust 29mph\n\n...\n\n## Thursday\n\n 19°C 19 degrees Celsius Light showers\n\n- Feels like 18°\n- Rain 40% at 6am\n\n## Friday\n\n 19°C 19 degrees Celsius Sunny intervals\n\n- Feels like 17°\n- Rain 40% at 6am\n\n## Saturday\n\n 18°C 18 degrees Celsius Sunny intervals\n\n- Feels like 17°\n- Rain 30% at 6am\n\n## Forecast days\n\n- ### Today \n\n \n\n 18° Maximum daytime temperature: 18 degrees Celsius; 13° Minimum nighttime temperature: 13 degrees Celsius; \n- ### Fri 6 \n\n \n\n 18° Maximum daytime temperature: 18 degrees Celsius; 16° Minimum nighttime temperature: 16 degrees Celsius; \n- ### Sat 7 \n\n \n\n 21° Maximum daytime temperature: 21 degrees Celsius; 17° Minimum nighttime temperature: 17 degrees Celsius; \n- ### Sun 8 \n\n \n\n 21° Maximum daytime temperature: 21 degrees Celsius; 18° Minimum nighttime temperature: 18 degrees Celsius; \n- ### Mon 9\n\n...\n\n### Thursday 12 November\n\nReasonable certainty\n\n## Temperature\n\nThis shows the estimated highest and lowest temperatures expected over the 24-hour period.\n\n Highest 18 to 19° \n\n Lowest 14 to 15° \n\n## Rainfall\n\nThis shows the estimated hours of heavy and light rain expected over the 24-hour period.\n\nAny remaining time indicates when we expect dry conditions with no rain.\n\n Heavy Rain 0 hours Light Rain 12 hours No Rain 12 hours \n\n## Wind\n\nThis shows the estimated Max Gusts and Average Speed expected over the 24-hour period.\n\n Average speed 5 to 9mph Gentle breeze"}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://exa.ai/library/markets/forex/EURUSD","title":"EURUSD | Latest quote: 1.119986 (-0.16%) | As of 2026-11-06T05:48:47Z","start_index":0,"end_index":0,"content":"# EURUSD\n\nThe latest quote for EURUSD is 1.119986 as of 2026-11-06T05:48:47Z, down 0.001814 (0.16%) from the previous close.\n\n## Trading Session\n\n- Trading Day: November 6, 2026\n- Close: 1.119986\n\n## Previous Close\n\n- Close: 1.121800"}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://www.investing.com/currencies/eur-usd","title":"EUR USD | Euro US Dollar","start_index":0,"end_index":0,"content":"# EUR/USD - Euro US Dollar\n\n...\n\n| Symbol | | Exchange | | Currency | |\n| --- | --- | --- | --- | --- | --- |\n| EUR/USD | · | Real-time Currencies | · | USD | Real-time |\n\n...\n\n1.1198 -0.0021(-0.19%)\n\nReal-time Data· 00:07:52\n\nDay's Range\n\n1.1191\n\n1.1235\n\n52 wk Range\n\n1.1105\n\n1.2079\n\n...\n\nEuro US Dollar Quotes\n\n| Exchange | Last | Bid | Ask | Volume | Chg. % | Currency | Time | |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| Real-time Currencies 00:05:05 | 1.1199 | 1.1198 | 1.12 | 0 | -0.18% | USD | 00:05:05 | 1.1199-0.18% |\n| Moscow 04/11 | 1.1222 | 1.0646 | 1.0649 | 71,082 | +0.33% | USD | 04/11 | 1.1222+0.33% |\n| B3 05/11 | 1,122.20 | 1,119.90 | 1,125.15 | 3,192 | -0.02% | USD | 05/11 | 1,122.20-0.02% |\n\n...\n\n| Hyperliquid 00:04:44 | 1.1204 | 1.1204 | 1.1204 | 1,099,238 | -0.13% | USD | 00:04:44 | 1.1204-0.13% |\n\n...\n\n## FAQ\n\n### What Is the Current EUR/USD Exchange Rate?\n\nThe current EUR/USD exchange rate is 1.1198, with a previous close of 1.1219.\n\n### What Is the Daily Range for EUR/USD?\n\nToday’s EUR/USD range is from 1.1191 to 1.1235.\n\n### What Was the Opening Price for EUR/USD Today?\n\nThe opening price for EUR/USD today was 1.1219.\n\n### What Is the Bid and Ask for EUR/USD?\n\nThe bid price is 1.1197 and the ask price is 1.1199 for EUR/USD."}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://www.bloomberg.com/quote/EURUSD:CUR","title":"EUR to USD Exchange Rate","start_index":0,"end_index":0,"content":"EUR to USD Exchange Rate\n\n0.00–0.03%\n\nAs of 5:37 PM EST Nov 05.\n\n### Overview"}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://www.fxempire.com/currencies/converter","title":"Currency Converter — Free Live Exchange Rates | FXEmpire","start_index":0,"end_index":0,"content":"# Currency Converter\n\n1 EUR = 1.119760 USD\n\nMid-market rate\n\nRate as of 05:24 UTC\n\n## Euro to US dollar conversion table\n\n1 EUR → USD 1.11976\n\n1 USD → EUR 0.89305\n\n...\n\n## Key Statistics\n\nDay’s Range\n\n1.11919 1.12332\n\n- Previous Close\n\n1.1228\n- Open\n\n1.1228\n\n...\n\nThe information contained on this website is not necessarily provided in real time, nor is it guaranteed to be accurate. Prices displayed may be provided by market makers and not by exchanges."}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://moneyswapp.com/exchange-rates/eurusd/","title":"Currency-exchange rate Euro/US Dollar: quotes and news","start_index":0,"end_index":0,"content":"# Today's EUR/USD \n\n### exchange rate in real time \n\n \n\n## EUR/USD\n\n### Euro / US Dollar\n\n1.1205\n\n -0.00674 (-0.60 %) \n\n Data updated on 6 November 2026 - 05:01 \n\n Previous closing (05/11/2026 ore 23:55): 1.1223 \n\nToday's Min-Max\n\n 1.1205 1.1240 \n\n 1.1205 Today's minimum\n\n 1.1240 Today's maximum\n\n 1.1222 Today's average\n\n...\n\n## Historical exchange rate data Euro / US Dollar \n\n Data updated on 6 November 2026 - 05:01 \n\n| Rate | Daily 6 November 2026 | Monthly November 2026 | Yearly 2026 | Historical All time |\n| --- | --- | --- | --- | --- |\n| Minimum | 1.1205 | 1.1152 | 1.1120 | 0.82250 |\n| Maximum | 1.1240 | 1.1276 | 1.2067 | 1.60370 |\n| Average rate | 1.1222 | 1.1210 | 1.15702 | 1.21310 |\n\n...\n\nMoneyswapp calculation based on the euro foreign exchange reference rates of the ECB.\n\n...\n\n## Conversion Euro / US Dollar\n\nToday 6 November 2026 05:01 GMT+2 , 1 Euro is worth 1.1205 US Dollar."}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://nodejs.org/en/blog/release/v26.13.0","title":"Node.js — Node.js 26.13.0 (LTS)","start_index":0,"end_index":0,"content":"Node.js — Node.js 26.13.0 (LTS)\n\n# Node.js 26.13.0 (LTS)\n\nRichard Lau\n\n## 2026-10-28, Version 26.13.0 'Lithium' (LTS), @richardlau\n\n### Notable Changes\n\nThis release marks the transition of Node.js 26.x into Long Term Support (LTS) with the codename 'Lithium'. It will continue to receive updates through to the end of April 2029.\n\nOther than updating metadata, such as the `process.release` object, to reflect that the release is LTS, no further changes from Node.js 26.12.1 are included.\n\n...\n\nPrevious Node.js 24.22.2 (LTS) Next Node.js 26.12.1 (Current)\n\nLast Updated\n: Oct 28, 2026"}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://nodejs.org/en","title":"Node.js","start_index":0,"end_index":0,"content":".js — Run JavaScript Everywhere\n\n# Run JavaScript Everywhere\n\nNode.js® is a free, open-source, cross-platform JavaScript runtime environment that lets developers create servers, web apps, command line tools and scripts."}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://nodejs.org/en/download/","title":"Node.js — Download Node.js®","start_index":0,"end_index":0,"content":".js — Download Node.js®\n\n# Download Node.js®\n\nGet Node.js® \n\nv26.13.0 LTS\n\nv26.13.0 LTS\n\nv27.0.0-alpha.0.0.0 Alpha\n\nv26.13.0 LTS\n\nv25.9.0 EOL\n\nv24.22.2 LTS\n\nv23.11.1 EOL\n\nv22.23.4 LTS\n\nv21.7.3 EOL\n\nv20.20.2 EOL\n\nv19.9.0 EOL\n\nv18.20.8 EOL\n\nv17.9.1 EOL"}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://nodejs.org/en/blog/release","title":"Node.js","start_index":0,"end_index":0,"content":"Node.js\n\nThe latest Node.js news, migration guides and events summaries\n\nReleases Node.js 27.0.0-alpha.0.0.0 (Alpha)\n\nRG\n\nRafael Gonzaga\n\nOct 29, 2026\n\nReleases Node.js 24.22.2 (LTS)\n\nADH\n\nAntoine du Hamel\n\nOct 28, 2026\n\nReleases Node.js 26.13.0 (LTS)\n\nRL\n\nRichard Lau\n\nOct 28, 2026\n\nReleases Node.js 26.12.1 (Current)\n\nADH\n\nAntoine du Hamel\n\nOct 21, 2026\n\nReleases Node.js 24.22.1 (LTS)\n\nADH\n\nAntoine du Hamel\n\nOct 21, 2026\n\nReleases Node.js 22.23.4 (LTS)\n\nAntoine du Hamel\n\nOct 21, 2026\n\nv26.13.0 Latest LTS v27.0.0-alpha.0.0.0 Latest Alpha"}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant","annotations":[{"type":"url_citation","url_citation":{"url":"https://endoflife.date/nodejs","title":"Node.js | endoflife.date","start_index":0,"end_index":0,"content":"# Node.js \n\n 📅 Last updated on 29 October 2026 🤖 \n\nNode.js is an open-source, cross-platform JavaScript run-time environment built on Chrome’s V8 JavaScript engine that executes JavaScript code outside a browser.\n\n| Release | Released | Active Support | Security Support | Commercial Support | Latest |\n| --- | --- | --- | --- | --- | --- |\n| 26 (LTS) | 6 months ago (05 May 2026) | Ends in 11 months (27 Oct 2027) | Ends in 2 years and 5 months (30 Apr 2029) | Unavailable | 26.13.0 (28 Oct 2026) |\n\n...\n\n| 24 (LTS) | 1 year and 6 months ago (06 May 2025) | Ended 2 weeks and 3 days ago (20 Oct 2026) | Ends in 1 year and 5 months (30 Apr 2028) | Unavailable | 24.22.2 (28 Oct 2026) |\n\n...\n\nMajor Node.js versions enter Current release status for six months, which gives library authors time to add support for them. After six months, releases after 26 move to Active LTS status and are ready for general use. LTS release status is “long-term support”, which typically guarantees that critical bugs will be fixed for a total of 30 months. Production applications should only use Active LTS or Maintenance LTS releases."}}]},"finish_reason":null,"native_finish_reason":null}]}
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+: OPENROUTER PROCESSING
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"(a","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":")","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" Lisbon","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" tomorrow","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" (","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"7","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" Nov","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"):","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" slight","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" rain","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" showers","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":",","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" high","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" ","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"22","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"°C","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":",","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" low","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" ","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"16","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"°C","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" ([","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"source","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"](","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"https","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"://","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"exa","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":".ai","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"/library","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"/weather","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"/l","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"is","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"bon","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"-port","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"ugal","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"?","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"latitude","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"=","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"38","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":".","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"750","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"0","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"&","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"longitude","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"=-","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"9","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":".","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"125","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"0","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"&","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"date","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"=","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"202","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"6","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"-","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"11","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"-","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"07","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":")).\n","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"(b","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":")","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" EUR","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"/USD","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":":","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" €","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"1","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" ≈","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" $","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"1","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":".","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"119","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"986","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":",","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" as","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" of","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" ","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"6","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" Nov","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" ","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"202","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"6","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":",","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" ","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"05","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":":","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"48","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" UTC","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" ([","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"source","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"](","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"https","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"://","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"exa","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":".ai","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"/library","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"/","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"markets","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"/","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"fore","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"x","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"/E","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"UR","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"USD","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":")).\n","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"(c","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":")","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" Current","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" Node","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":".js","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" L","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"TS","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":":","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" v","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"26","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":".","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"13","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":".","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"0","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" “","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"Lith","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"ium","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"”","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" ([","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"source","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"](","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"https","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"://","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"node","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"js","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":".org","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"/en","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"/download","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"/","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":")).\n","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"(d","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":")","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" https","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"://","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"example","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":".com","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"/","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" title","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":":","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" “","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"Example","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" Domain","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"”.\n","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"REPORT","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" search","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"_calls","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"=","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"3","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" search","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"_queries","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"=","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"3","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":" fetch","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"es","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"=","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"1","role":"assistant"},"finish_reason":null,"native_finish_reason":null}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","choices":[{"index":0,"delta":{"content":"","role":"assistant"},"finish_reason":"stop","native_finish_reason":"stop"}]}
+
+data: {"id":"gen-1793944152-EIq4f2hKB9kwdgrL6GoL","object":"chat.completion.chunk","created":1793944152,"model":"openai/gpt-6-astra","provider":"OpenAI","service_tier":null,"choices":[{"index":0,"delta":{"content":"","role":"assistant"},"finish_reason":"stop","native_finish_reason":"stop"}],"usage":{"prompt_tokens":8120,"completion_tokens":270,"total_tokens":8390,"cost":0.135745,"prompt_tokens_details":{"cached_tokens":0,"cache_write_tokens":7618,"audio_tokens":0,"video_tokens":0},"completion_tokens_details":{"reasoning_tokens":0,"image_tokens":0,"audio_tokens":0},"cost_details":{"upstream_inference_cost":0.113745,"upstream_inference_prompt_cost":0.100245,"upstream_inference_completions_cost":0.013500000000000002},"server_tool_use_details":{"web_search_requests":3,"tool_calls_requested":4,"tool_calls_executed":4}}}
+
+data: [DONE]
+

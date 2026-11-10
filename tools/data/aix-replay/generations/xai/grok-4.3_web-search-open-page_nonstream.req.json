@@ -1,0 +1,29 @@
+{
+  "model": "grok-4.3",
+  "input": [
+    {
+      "type": "message",
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Find the current latest LTS release of Node.js. Search the web, then open the page https://nodejs.org/en/about/previous-releases and also the Node.js GitHub releases page to confirm. Answer in 3 sentences with the version and its release date, citing sources."
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "web_search"
+    }
+  ],
+  "reasoning": {
+    "effort": "low",
+    "summary": "detailed"
+  },
+  "include": [
+    "reasoning.encrypted_content"
+  ],
+  "store": false,
+  "stream": false
+}

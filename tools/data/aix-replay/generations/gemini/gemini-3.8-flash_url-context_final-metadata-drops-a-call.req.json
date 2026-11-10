@@ -1,0 +1,27 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Read https://example.com/ , then run Python code to count the characters of its title. Then, in a second separate code cell, compute 17*23. Report the results."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "urlContext": {}
+  },
+  {
+   "codeExecution": {}
+  }
+ ],
+ "toolConfig": {
+  "includeServerSideToolInvocations": true
+ },
+ "generationConfig": {
+  "maxOutputTokens": 4000
+ },
+ "store": false
+}

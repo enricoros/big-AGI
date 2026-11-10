@@ -1,0 +1,38 @@
+{
+  "note": "The two auto containers of the response (name \"auto\", created 3-4 s after the request) were deleted 4.8 s into the run.",
+  "body": {
+    "model": "gpt-6-luna",
+    "stream": true,
+    "store": false,
+    "reasoning": {
+      "effort": "low",
+      "summary": "detailed",
+      "mode": "pro"
+    },
+    "include": [
+      "reasoning.encrypted_content",
+      "code_interpreter_call.outputs"
+    ],
+    "tools": [
+      {
+        "type": "code_interpreter",
+        "container": {
+          "type": "auto"
+        }
+      }
+    ],
+    "max_output_tokens": 4000,
+    "input": [
+      {
+        "type": "message",
+        "role": "user",
+        "content": [
+          {
+            "type": "input_text",
+            "text": "First, without tools, work out the smallest positive integer n such that n! ends in exactly 100 zeros. Then use the python tool to verify your answer. Then reply with n."
+          }
+        ]
+      }
+    ]
+  }
+}

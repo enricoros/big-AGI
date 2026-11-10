@@ -1,0 +1,68 @@
+{
+ "model": "claude-fable-5-1",
+ "max_tokens": 8000,
+ "stream": true,
+ "thinking": {
+  "type": "adaptive",
+  "display": "summarized",
+  "block_binding": {
+   "prefix_mismatch_behavior": "drop_block"
+  }
+ },
+ "output_config": {
+  "effort": "medium"
+ },
+ "tools": [
+  {
+   "type": "web_search_20260318",
+   "name": "web_search",
+   "max_uses": 6
+  },
+  {
+   "type": "web_fetch_20260318",
+   "name": "web_fetch",
+   "max_uses": 4,
+   "citations": {
+    "enabled": true
+   }
+  },
+  {
+   "type": "code_execution_20260120",
+   "name": "code_execution"
+  },
+  {
+   "name": "get_user_timezone",
+   "description": "Returns the IANA timezone of the user.",
+   "input_schema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+   }
+  },
+  {
+   "name": "save_note",
+   "description": "Saves a short note for the user.",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "title": {
+      "type": "string"
+     },
+     "body": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "title",
+     "body"
+    ]
+   }
+  }
+ ],
+ "messages": [
+  {
+   "role": "user",
+   "content": "Research task. Find the initial release date and the date each entered Active LTS for the Node.js 20, 22 and 24 release lines, using official sources (search, then read the Node.js previous-releases page to confirm). Then tell me which line had the shortest gap between initial release and LTS start, in days. Be precise and cite your sources. Compute the gaps with code, not by hand. When you are done, call get_user_timezone and save_note (title \"Node LTS gaps\", body = your one-line conclusion) together."
+  }
+ ]
+}

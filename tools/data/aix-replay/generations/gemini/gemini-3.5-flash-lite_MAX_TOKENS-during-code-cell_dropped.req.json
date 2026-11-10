@@ -1,0 +1,24 @@
+{
+ "contents": [
+  {
+   "role": "user",
+   "parts": [
+    {
+     "text": "Run one Python code cell that defines a function is_prime with a docstring and comments, a function first_primes(n), prints the first 50 primes, their sum, their product modulo 10**9+7, and a table of prime gaps. Then explain the result."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "codeExecution": {}
+  }
+ ],
+ "toolConfig": {
+  "includeServerSideToolInvocations": true
+ },
+ "generationConfig": {
+  "maxOutputTokens": 60
+ },
+ "store": false
+}

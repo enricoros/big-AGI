@@ -1,0 +1,388 @@
+{
+  "id": "resp_0df83e99a06b9dfc016aed6adc0ccc87d087f1e57b15197a3e",
+  "object": "response",
+  "created_at": 1793944284,
+  "status": "completed",
+  "access_programs": null,
+  "background": false,
+  "billing": {
+    "payer": "developer"
+  },
+  "completed_at": 1793944295,
+  "error": null,
+  "frequency_penalty": 0.0,
+  "image": {
+    "context_compression": "disabled"
+  },
+  "incomplete_details": null,
+  "instructions": null,
+  "max_output_tokens": 6000,
+  "max_tool_calls": null,
+  "model": "gpt-6-astra",
+  "moderation": null,
+  "output": [
+    {
+      "id": "ws_0df83e99a06b9dfc016aed6add79f487d085f6a2c2f28130a5",
+      "type": "web_search_call",
+      "status": "completed",
+      "action": {
+        "type": "search",
+        "queries": [
+          "Lisbon weather tomorrow"
+        ],
+        "query": "Lisbon weather tomorrow",
+        "sources": [
+          {
+            "type": "url",
+            "url": "https://www.accuweather.com/en/pt/lisbon/274087/weather-forecast/274087?city=lisbon&type=locality"
+          },
+          {
+            "type": "url",
+            "url": "https://weather.metoffice.gov.uk/forecast/eycs2h2ky?new-design=true"
+          },
+          {
+            "type": "url",
+            "url": "https://weather.metoffice.gov.uk/forecast/eycs2h2ky"
+          },
+          {
+            "type": "url",
+            "url": "https://www.timeanddate.com/weather/portugal/lisbon"
+          },
+          {
+            "type": "url",
+            "url": "https://weather.metoffice.gov.uk/forecast/eycs85gmq"
+          },
+          {
+            "type": "url",
+            "url": "https://www.worldweatheronline.com/Lisbon-weather/Lisboa/PT.aspx"
+          },
+          {
+            "type": "url",
+            "url": "https://weather.metoffice.gov.uk/forecast/eycs85gmq?new-design=true"
+          },
+          {
+            "type": "url",
+            "url": "https://zenitmap.com/en/weather/lisbon/"
+          },
+          {
+            "type": "url",
+            "url": "https://weather.metoffice.gov.uk/forecast/eycs24xdx?new-design=true"
+          },
+          {
+            "type": "url",
+            "url": "https://dailylisbon.news/weather"
+          },
+          {
+            "type": "url",
+            "url": "https://weather.com/en-TV/pt/lisbon/city/lisbon/tenday"
+          },
+          {
+            "type": "url",
+            "url": "https://bgweather.com/en/portugal/lisboa/lisbon/weather-tomorrow/"
+          },
+          {
+            "type": "url",
+            "url": "https://fenix.tecnico.ulisboa.pt/downloadFile/1689244997261232/73063-joao-bastos.pdf"
+          },
+          {
+            "type": "url",
+            "url": "https://legacy.gct.com/-/media/flipbooks-pdf/ships-2026/2026_tpg_rlc.pdf"
+          },
+          {
+            "type": "url",
+            "url": "https://d1enwirvb3djmg.cloudfront.net/Portuguese_European_2_9781797144825_Bklt_519d78958a.pdf"
+          },
+          {
+            "type": "url",
+            "url": "https://ai.tecnico.ulisboa.pt/files/sites/52/eda_ist-march17-web.pdf"
+          },
+          {
+            "type": "url",
+            "url": "https://www.iscte-iul.pt/assets/files/resources/6385"
+          },
+          {
+            "type": "url",
+            "url": "https://en.wikipedia.org/wiki/Lisbon"
+          },
+          {
+            "type": "url",
+            "url": "https://apnews.com/article/f5b087df737496cbe033833512fcccb5"
+          },
+          {
+            "type": "url",
+            "url": "https://apnews.com/article/03f26f4b351d6557fd6320683ec324de"
+          },
+          {
+            "type": "url",
+            "url": "https://apnews.com/article/9a50ace98360f65d12ab25326b4a721e"
+          },
+          {
+            "type": "url",
+            "url": "https://www.countrylife.co.uk/travel/the-oldest-capital-in-western-europe-wears-its-ancient-history-and-rich-heritage-lightly-the-country-life-guide-to-lisbon-portugal"
+          },
+          {
+            "type": "url",
+            "url": "https://www.whowhatwear.com/fashion/vacation/what-to-pack-for-lisbon"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ws_0df83e99a06b9dfc016aed6ae005f887d09c1d40f76c3a61c8",
+      "type": "web_search_call",
+      "status": "completed",
+      "action": {
+        "type": "search",
+        "queries": [
+          "Node.js current LTS version"
+        ],
+        "query": "Node.js current LTS version",
+        "sources": [
+          {
+            "type": "url",
+            "url": "https://nodejs.org/en/download/current"
+          },
+          {
+            "type": "url",
+            "url": "https://nodejs.org/en/about/previous-releases"
+          },
+          {
+            "type": "url",
+            "url": "https://github.com/nodejs/Release/blob/main/README.md?plain=1"
+          },
+          {
+            "type": "url",
+            "url": "https://github.com/nodejs/Release"
+          },
+          {
+            "type": "url",
+            "url": "https://github.com/nodejs/node/releases?after=v10.16.2"
+          },
+          {
+            "type": "url",
+            "url": "https://github.com/nodejs/node/releases?after=v12.1.0"
+          },
+          {
+            "type": "url",
+            "url": "https://github.com/nodejs/Release/blob/main/README.md"
+          },
+          {
+            "type": "url",
+            "url": "https://github.com/nodejs/node/releases"
+          },
+          {
+            "type": "url",
+            "url": "https://github.com/nodejs/release"
+          },
+          {
+            "type": "url",
+            "url": "https://github.com/nodejs/node/releases?ref=fossengineer.com"
+          },
+          {
+            "type": "url",
+            "url": "https://github.com/nodejs/node/releases?after=v8.10.0"
+          },
+          {
+            "type": "url",
+            "url": "https://github.com/nodejs/node/releases?after=v15.7.0"
+          },
+          {
+            "type": "url",
+            "url": "https://www.linode.com/linode/en/documents/ebook/2025/road-to-kubernetes.pdf"
+          },
+          {
+            "type": "url",
+            "url": "https://www.ciscolive.com/c/dam/r/ciscolive/emea/docs/2023/pdf/DEVNET-1314.pdf"
+          },
+          {
+            "type": "url",
+            "url": "https://daviddas2.github.io/exb/Part1.pdf"
+          },
+          {
+            "type": "url",
+            "url": "https://static.packt-cdn.com/downloads/9781800560635_ColorImages.pdf"
+          },
+          {
+            "type": "url",
+            "url": "https://en.wikipedia.org/wiki/Node.js"
+          },
+          {
+            "type": "url",
+            "url": "https://www3.cs.stonybrook.edu/~pfodor/courses/CSE316/L08-node.pdf"
+          },
+          {
+            "type": "url",
+            "url": "https://typescriptcourses.azurewebsites.net/DOC/SE001TS/Setup%20Guide.pdf"
+          },
+          {
+            "type": "url",
+            "url": "https://de.wikipedia.org/wiki/Node.js"
+          },
+          {
+            "type": "url",
+            "url": "https://es.wikipedia.org/wiki/Node.js"
+          },
+          {
+            "type": "url",
+            "url": "https://ru.wikipedia.org/wiki/Node.js"
+          },
+          {
+            "type": "url",
+            "url": "https://fr.wikipedia.org/wiki/Node.js"
+          },
+          {
+            "type": "url",
+            "url": "https://www.reddit.com/r/node/comments/1xibbk5/nodejs_26_is_now_long_term_support/"
+          },
+          {
+            "type": "url",
+            "url": "https://www.reddit.com/r/node/comments/1daa51m"
+          },
+          {
+            "type": "url",
+            "url": "https://pt.wikipedia.org/wiki/Node.js"
+          },
+          {
+            "type": "url",
+            "url": "https://www.reddit.com/r/webdevelopment/comments/1j4tr0c"
+          },
+          {
+            "type": "url",
+            "url": "https://www.techradar.com/pro/how-small-businesses-can-use-nodejs-to-save-time-and-money"
+          },
+          {
+            "type": "url",
+            "url": "https://www.reddit.com/r/node/comments/1dl6fm2/how_does_node_lts_work/"
+          },
+          {
+            "type": "url",
+            "url": "https://www.techradar.com/pro/security/popular-javascript-library-can-be-hacked-to-allow-attackers-into-user-accounts"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ws_0df83e99a06b9dfc016aed6ae32e6887d0ae5d32ca350311e6",
+      "type": "web_search_call",
+      "status": "completed",
+      "action": {
+        "type": "open_page",
+        "url": "https://example.com/"
+      }
+    },
+    {
+      "id": "ws_0df83e99a06b9dfc016aed6ae461c487d09d016ee974d33618",
+      "type": "web_search_call",
+      "status": "completed",
+      "action": {
+        "type": "find_in_page",
+        "pattern": "illustrative",
+        "url": "https://example.com/"
+      }
+    },
+    {
+      "id": "msg_0df83e99a06b9dfc016aed6ae5f52887d094934632982f445d",
+      "type": "message",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [
+            {
+              "type": "url_citation",
+              "end_index": 183,
+              "start_index": 146,
+              "title": "Example Domain",
+              "url": "https://example.com/"
+            },
+            {
+              "type": "url_citation",
+              "end_index": 278,
+              "start_index": 241,
+              "title": "Example Domain",
+              "url": "https://example.com/"
+            }
+          ],
+          "logprobs": [],
+          "text": "1. Searched for \u201cLisbon weather tomorrow\u201d.\n2. Separately searched for \u201cNode.js current LTS version\u201d.\n3. Opened the page; title: \u201cExample Domain\u201d. ([example.com](https://example.com/))\n4. Searched the page for \u201cillustrative\u201d; no match found. ([example.com](https://example.com/))"
+        }
+      ],
+      "phase": "final_answer",
+      "role": "assistant"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0.0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "prompt_cache_retention": "24h",
+  "reasoning": {
+    "context": "all_turns",
+    "effort": "low",
+    "mode": "standard",
+    "summary": "detailed"
+  },
+  "safety_identifier": null,
+  "service_tier": "default",
+  "store": false,
+  "temperature": 1.0,
+  "text": {
+    "format": {
+      "type": "text"
+    },
+    "verbosity": "medium"
+  },
+  "tool_choice": "auto",
+  "tool_usage": {
+    "image_gen": {
+      "input_tokens": 0,
+      "input_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 0
+      },
+      "output_tokens": 0,
+      "output_tokens_details": {
+        "image_tokens": 0,
+        "text_tokens": 0
+      },
+      "total_tokens": 0
+    },
+    "web_search": {
+      "num_requests": 2
+    }
+  },
+  "tools": [
+    {
+      "type": "web_search",
+      "return_token_budget": "default",
+      "search_content_types": [
+        "text"
+      ],
+      "search_context_size": "low",
+      "user_location": {
+        "type": "approximate",
+        "city": null,
+        "country": null,
+        "region": null,
+        "timezone": null
+      }
+    }
+  ],
+  "top_logprobs": 0,
+  "top_p": 0.98,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 13314,
+    "input_tokens_details": {
+      "cache_write_tokens": 0,
+      "cached_tokens": 4515
+    },
+    "output_tokens": 205,
+    "output_tokens_details": {
+      "reasoning_tokens": 117
+    },
+    "total_tokens": 13519
+  },
+  "user": null,
+  "metadata": {}
+}

@@ -1,0 +1,29 @@
+{
+ "model": "openai/gpt-5.4-nano",
+ "tools": [
+  {
+   "type": "openrouter:web_search",
+   "parameters": {
+    "engine": "exa",
+    "max_uses": 1
+   }
+  },
+  {
+   "type": "openrouter:web_fetch",
+   "parameters": {
+    "engine": "auto"
+   }
+  }
+ ],
+ "stream": true,
+ "stream_options": {
+  "include_usage": true
+ },
+ "messages": [
+  {
+   "role": "user",
+   "content": "Use the web search tool three separate times, as three tool calls: \"Lisbon weather tomorrow\", \"EUR USD exchange rate today\", \"Node.js current LTS version\". Then use the web fetch tool on https://example.com/ . Answer briefly. End with a line: REPORT searches_attempted=<n> searches_that_returned_results=<n> fetches=<n>."
+  }
+ ],
+ "max_tokens": 3000
+}

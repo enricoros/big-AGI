@@ -1,0 +1,23 @@
+{
+ "model": "qwen/qwen-2.5-7b-instruct",
+ "tools": [
+  {
+   "type": "openrouter:web_fetch",
+   "parameters": {
+    "engine": "auto",
+    "max_content_tokens": 60000
+   }
+  }
+ ],
+ "stream": true,
+ "stream_options": {
+  "include_usage": true
+ },
+ "messages": [
+  {
+   "role": "user",
+   "content": "Call the web fetch tool three times right away, as three tool calls in the same turn, with no text before them: https://www.gutenberg.org/cache/epub/1342/pg1342.txt , https://www.gutenberg.org/cache/epub/84/pg84.txt and https://www.gutenberg.org/cache/epub/2701/pg2701.txt . Then quote the first sentence of each book."
+  }
+ ],
+ "max_tokens": 300
+}

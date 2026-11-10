@@ -1,0 +1,399 @@
+{
+  "betas": [
+    "code-execution-2025-08-25",
+    "files-api-2025-04-14",
+    "skills-2025-10-02",
+    "thinking-binding-controls-2026-08-01"
+  ],
+  "body": {
+    "model": "claude-haiku-5-5",
+    "max_tokens": 8000,
+    "stream": true,
+    "thinking": {
+      "type": "adaptive",
+      "display": "summarized",
+      "block_binding": {
+        "prefix_mismatch_behavior": "drop_block"
+      }
+    },
+    "tools": [
+      {
+        "type": "web_fetch_20250910",
+        "name": "web_fetch",
+        "citations": {
+          "enabled": true
+        }
+      },
+      {
+        "type": "code_execution_20260120",
+        "name": "code_execution"
+      }
+    ],
+    "cache_control": {
+      "type": "ephemeral"
+    },
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Before starting, think briefly about the plan. Then call the web_fetch tool 13 separate times, one call per URL, in this order, waiting for each result before the next call (do not use bash): https://example.com/?n=1 , https://example.com/?n=2 , https://example.com/?n=3 , https://example.com/?n=4 , https://example.com/?n=5 , https://example.com/?n=6 , https://example.com/?n=7 , https://example.com/?n=8 , https://example.com/?n=9 , https://example.com/?n=10 , https://example.com/?n=11 , https://example.com/?n=12 , https://example.com/?n=13. Never combine commands into one call. After the last one, reply DONE."
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "I need to make thirteen web_fetch calls one after another, waiting for each result before starting the next. This isn't a spreadsheet job, so no skills apply. I'll begin with the first call.\n\n",
+            "signature": "CAQStQYKEAgTGAI4AUIIdGhpbmtpbmcSDEEBj7CpH2I6qtAcPxoM9GSodr/M8FqxDfZ7IjCa10LWj6atuyzg5mURFHVyoOqs6UO0qbLcXlYne9XN/80ExQKSRyuOB0CdUiAQG4cq0gWPnPfAZQ327Kg4Gv0eeR60cdIdS7E2rXjLqqaVRkPNMRf5Ibfgtjsxd6NzDo3exIQU35AbfMAfw+oc1Minz+CbejRpf1r4s6PeOBQ9VrYPGtWneBLSum6xnqjOhOpIiW9EMD3kRRDRDW1je17LypEFcT7HcXUHrUtpF6ySsyeAYSRd32JaeuQZC5HAMuKiQggvJkbslTYPPu3jU+H7Fm8R7tRQ9SfGKDA+lWzpmn1/5vck3mBIVxd5t66ixeT/JC4CLn2oUe+U2Oo2qqT4qFuQ+Ag6Yq4yaTeM8eSVG/vRDPPrZjKPcHuhPp2qcemhE4U21mom9j5oSSpCBVaO3fj3pPj/rln8qrWKpFwkIGJdkpRUIvRN2NvKTGsSglRkkOx5xugdq5AhcpsoT/b3NJQSgbi7jTiMDaxTwAHuAfAzOIcwj56saPYrpuo/aoPacfjYDQLHBa7JcKBC/QSi7fUePDHgiw8R/AbhX5KvuZJ4r8rw0f2sWP+Td7CyMGNKKHE3syuRfiihYguYogcOTUrBQpqRyf34fVqmXzIf74qBgHa6PFYlnTpWhZlcKYjFEuPSKNen83MYyZHuR8i9AH/4+b2hM/2g5YcLfePckbDbHAo1qD7CoNTpL/AoEdzacrBZtxJwFZTz9g46PDCjUycLk9WKm+tqAaWb1I53y78/e4MxJX0W47dBZ6Z0YyrBoI4F2S6BH3/LOxeDJbHyJ7Amxobgixj8Ns6OHk9bDO4yRdNK14zK1LJz3A0f2uTKN1xu2h7Q4BYoce8XemjvB+qDxKgFMEGXI/fr9X6CjRHdKQleYybRapdSoII9IiprbanMRfHDj5WIsVnx/O3xGRCiLCu7W5B5PxICZAAqLqUBMhLeMDguXmWPn68p9tLPZ1AhL7FX7i1CX9BPruNfJfWW2i6uwBVywEqmvfPdwAgVhYrkThiXgc4Hc8B+PJqZCRkLyxgB"
+          },
+          {
+            "type": "text",
+            "text": "Plan: fetch the 13 URLs one at a time, in order, waiting for each result before the next call. I'll reply DONE after the last one."
+          },
+          {
+            "type": "server_tool_use",
+            "id": "srvtoolu_01D7yA44fa51iuBE1ABeJXs6",
+            "name": "web_fetch",
+            "input": {
+              "url": "https://example.com/?n=1"
+            }
+          },
+          {
+            "type": "web_fetch_tool_result",
+            "tool_use_id": "srvtoolu_01D7yA44fa51iuBE1ABeJXs6",
+            "content": {
+              "type": "web_fetch_result",
+              "url": "https://example.com/?n=1",
+              "retrieved_at": "2026-11-09T23:27:44+00:00",
+              "content": {
+                "type": "document",
+                "source": {
+                  "type": "text",
+                  "media_type": "text/plain",
+                  "data": "---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Example Domain\n---\n\nThis domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes."
+                },
+                "title": "Example Domain",
+                "citations": {
+                  "enabled": true
+                }
+              }
+            },
+            "caller": {
+              "type": "direct"
+            }
+          },
+          {
+            "type": "server_tool_use",
+            "id": "srvtoolu_01WTGgHwubgQhnUzHPPnMVN2",
+            "name": "web_fetch",
+            "input": {
+              "url": "https://example.com/?n=2"
+            }
+          },
+          {
+            "type": "web_fetch_tool_result",
+            "tool_use_id": "srvtoolu_01WTGgHwubgQhnUzHPPnMVN2",
+            "content": {
+              "type": "web_fetch_result",
+              "url": "https://example.com/?n=2",
+              "retrieved_at": "2026-11-06T03:03:35+00:00",
+              "content": {
+                "type": "document",
+                "source": {
+                  "type": "text",
+                  "media_type": "text/plain",
+                  "data": "---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Example Domain\n---\n\nThis domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes."
+                },
+                "title": "Example Domain",
+                "citations": {
+                  "enabled": true
+                }
+              }
+            },
+            "caller": {
+              "type": "direct"
+            }
+          },
+          {
+            "type": "server_tool_use",
+            "id": "srvtoolu_01Bf7tS79gBKFcmoYU2QnfEn",
+            "name": "web_fetch",
+            "input": {
+              "url": "https://example.com/?n=3"
+            }
+          },
+          {
+            "type": "web_fetch_tool_result",
+            "tool_use_id": "srvtoolu_01Bf7tS79gBKFcmoYU2QnfEn",
+            "content": {
+              "type": "web_fetch_result",
+              "url": "https://example.com/?n=3",
+              "retrieved_at": "2026-11-06T03:06:41+00:00",
+              "content": {
+                "type": "document",
+                "source": {
+                  "type": "text",
+                  "media_type": "text/plain",
+                  "data": "---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Example Domain\n---\n\nThis domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes."
+                },
+                "title": "Example Domain",
+                "citations": {
+                  "enabled": true
+                }
+              }
+            },
+            "caller": {
+              "type": "direct"
+            }
+          },
+          {
+            "type": "server_tool_use",
+            "id": "srvtoolu_01ExL9hWoUP3fmsUH2wRvLAS",
+            "name": "web_fetch",
+            "input": {
+              "url": "https://example.com/?n=4"
+            }
+          },
+          {
+            "type": "web_fetch_tool_result",
+            "tool_use_id": "srvtoolu_01ExL9hWoUP3fmsUH2wRvLAS",
+            "content": {
+              "type": "web_fetch_result",
+              "url": "https://example.com/?n=4",
+              "retrieved_at": "2026-11-06T04:39:27+00:00",
+              "content": {
+                "type": "document",
+                "source": {
+                  "type": "text",
+                  "media_type": "text/plain",
+                  "data": "---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Example Domain\n---\n\nThis domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes."
+                },
+                "title": "Example Domain",
+                "citations": {
+                  "enabled": true
+                }
+              }
+            },
+            "caller": {
+              "type": "direct"
+            }
+          },
+          {
+            "type": "server_tool_use",
+            "id": "srvtoolu_01GnABaB4xNpzZDDnUBsNQTj",
+            "name": "web_fetch",
+            "input": {
+              "url": "https://example.com/?n=5"
+            }
+          },
+          {
+            "type": "web_fetch_tool_result",
+            "tool_use_id": "srvtoolu_01GnABaB4xNpzZDDnUBsNQTj",
+            "content": {
+              "type": "web_fetch_result",
+              "url": "https://example.com/?n=5",
+              "retrieved_at": "2026-11-06T04:39:53+00:00",
+              "content": {
+                "type": "document",
+                "source": {
+                  "type": "text",
+                  "media_type": "text/plain",
+                  "data": "---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Example Domain\n---\n\nThis domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes."
+                },
+                "title": "Example Domain",
+                "citations": {
+                  "enabled": true
+                }
+              }
+            },
+            "caller": {
+              "type": "direct"
+            }
+          },
+          {
+            "type": "server_tool_use",
+            "id": "srvtoolu_018iBHRHQtdxXQyifCMkkE5D",
+            "name": "web_fetch",
+            "input": {
+              "url": "https://example.com/?n=6"
+            }
+          },
+          {
+            "type": "web_fetch_tool_result",
+            "tool_use_id": "srvtoolu_018iBHRHQtdxXQyifCMkkE5D",
+            "content": {
+              "type": "web_fetch_result",
+              "url": "https://example.com/?n=6",
+              "retrieved_at": "2026-11-06T04:40:26+00:00",
+              "content": {
+                "type": "document",
+                "source": {
+                  "type": "text",
+                  "media_type": "text/plain",
+                  "data": "---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Example Domain\n---\n\nThis domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes."
+                },
+                "title": "Example Domain",
+                "citations": {
+                  "enabled": true
+                }
+              }
+            },
+            "caller": {
+              "type": "direct"
+            }
+          },
+          {
+            "type": "server_tool_use",
+            "id": "srvtoolu_01GRksBKR7y4fdCcfEqCGvtJ",
+            "name": "web_fetch",
+            "input": {
+              "url": "https://example.com/?n=7"
+            }
+          },
+          {
+            "type": "web_fetch_tool_result",
+            "tool_use_id": "srvtoolu_01GRksBKR7y4fdCcfEqCGvtJ",
+            "content": {
+              "type": "web_fetch_result",
+              "url": "https://example.com/?n=7",
+              "retrieved_at": "2026-11-06T04:41:07+00:00",
+              "content": {
+                "type": "document",
+                "source": {
+                  "type": "text",
+                  "media_type": "text/plain",
+                  "data": "---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Example Domain\n---\n\nThis domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes."
+                },
+                "title": "Example Domain",
+                "citations": {
+                  "enabled": true
+                }
+              }
+            },
+            "caller": {
+              "type": "direct"
+            }
+          },
+          {
+            "type": "server_tool_use",
+            "id": "srvtoolu_01RfELSPyVpfTp2kbhyKSpeh",
+            "name": "web_fetch",
+            "input": {
+              "url": "https://example.com/?n=8"
+            }
+          },
+          {
+            "type": "web_fetch_tool_result",
+            "tool_use_id": "srvtoolu_01RfELSPyVpfTp2kbhyKSpeh",
+            "content": {
+              "type": "web_fetch_result",
+              "url": "https://example.com/?n=8",
+              "retrieved_at": "2026-11-06T02:34:20+00:00",
+              "content": {
+                "type": "document",
+                "source": {
+                  "type": "text",
+                  "media_type": "text/plain",
+                  "data": "---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Example Domain\n---\n\nThis domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes."
+                },
+                "title": "Example Domain",
+                "citations": {
+                  "enabled": true
+                }
+              }
+            },
+            "caller": {
+              "type": "direct"
+            }
+          },
+          {
+            "type": "server_tool_use",
+            "id": "srvtoolu_01WMRitxVCm1ENYF4eNqnzyh",
+            "name": "web_fetch",
+            "input": {
+              "url": "https://example.com/?n=9"
+            }
+          },
+          {
+            "type": "web_fetch_tool_result",
+            "tool_use_id": "srvtoolu_01WMRitxVCm1ENYF4eNqnzyh",
+            "content": {
+              "type": "web_fetch_result",
+              "url": "https://example.com/?n=9",
+              "retrieved_at": "2026-11-06T02:34:20+00:00",
+              "content": {
+                "type": "document",
+                "source": {
+                  "type": "text",
+                  "media_type": "text/plain",
+                  "data": "---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Example Domain\n---\n\nThis domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes."
+                },
+                "title": "Example Domain",
+                "citations": {
+                  "enabled": true
+                }
+              }
+            },
+            "caller": {
+              "type": "direct"
+            }
+          },
+          {
+            "type": "server_tool_use",
+            "id": "srvtoolu_01VqT8SruyFN8MUNsMRWm1Ky",
+            "name": "web_fetch",
+            "input": {
+              "url": "https://example.com/?n=10"
+            }
+          },
+          {
+            "type": "web_fetch_tool_result",
+            "tool_use_id": "srvtoolu_01VqT8SruyFN8MUNsMRWm1Ky",
+            "content": {
+              "type": "web_fetch_result",
+              "url": "https://example.com/?n=10",
+              "retrieved_at": "2026-11-06T04:41:34+00:00",
+              "content": {
+                "type": "document",
+                "source": {
+                  "type": "text",
+                  "media_type": "text/plain",
+                  "data": "---\nmeta-viewport: width=device-width,initial-scale=1\ntitle: Example Domain\n---\n\nThis domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes."
+                },
+                "title": "Example Domain",
+                "citations": {
+                  "enabled": true
+                }
+              }
+            },
+            "caller": {
+              "type": "direct"
+            }
+          },
+          {
+            "type": "server_tool_use",
+            "id": "srvtoolu_01FQroWp78ngJtEzXDekCjWJ",
+            "name": "web_fetch",
+            "input": {
+              "url": "https://example.com/?n=11"
+            }
+          }
+        ]
+      }
+    ],
+    "container": {
+      "skills": [
+        {
+          "type": "anthropic",
+          "skill_id": "xlsx",
+          "version": "latest"
+        }
+      ],
+      "id": "container_017X74vvgS6PEXgFyA2nR5v1"
+    }
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "note": "Request not saved: gpt-5-nano with web search, from the same batch of large requests; the results of the first search overflow the context inside the tool loop.",
+  "body": null
+}
