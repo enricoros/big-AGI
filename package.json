@@ -107,23 +107,16 @@
   "engines": {
     "node": "^26.0.0 || ^24.0.0 || ^22.0.0"
   },
-  "browserslist": {
-    "production": [
-      "chrome >= 110",
-      "edge >= 110",
-      "firefox >= 115",
-      "safari >= 16.4",
-      "ios_saf >= 16.4",
-      "and_chr >= 110",
-      "samsung >= 21",
-      "not dead"
-    ],
-    "development": [
-      "last 2 chrome versions",
-      "last 2 firefox versions",
-      "last 2 safari versions"
-    ]
-  },
+  "browserslist": [
+    "chrome >= 110",
+    "edge >= 110",
+    "firefox >= 115",
+    "safari >= 16.4",
+    "ios_saf >= 16.4",
+    "and_chr >= 110",
+    "samsung >= 21",
+    "not dead"
+  ],
   "allowScripts": {
     "@posthog/cli": false,
     "@prisma/client": false,
