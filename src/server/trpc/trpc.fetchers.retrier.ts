@@ -248,11 +248,12 @@ export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Pr
 
       // not retryable
       if (!rp) {
-        if (AIX_DEBUG_SERVER_RETRY) {
-          const errorInfo = !(error instanceof TRPCFetcherError) ? '' : `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
-          console.log(`[fetchers.retrier] ❌ Not retryable ${errorInfo}}`); // removing the duplicate error message
-          // console.log(`[fetchers.retrier] ❌ Not retryable ${errorInfo}: ${error?.message || error}`);
-        }
+        // disabled: this verdict repeats, on every failure, what the fetcher and the caller already log
+        // if (AIX_DEBUG_SERVER_RETRY) {
+        //   const errorInfo = !(error instanceof TRPCFetcherError) ? '' : `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
+        //   console.log(`[fetchers.retrier] ❌ Not retryable ${errorInfo}}`); // removing the duplicate error message
+        //   // console.log(`[fetchers.retrier] ❌ Not retryable ${errorInfo}: ${error?.message || error}`);
+        // }
         throw error;
       }
 
