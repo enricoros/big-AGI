@@ -55,7 +55,7 @@ On the blocked image (2026-11-06), the TODO left at the site:
 ### Sites waiting for typed errors
 
 - OpenAI: a failed or blocked image generation leaves a non-terminating dialect issue with composed text - `_forwardFailedImageGenerationCallItem` (subkind `image-gen-error`, aiRender true, uiColor neutral)
-- OpenAI (#1288): an `error` after answer text is kept when the stream ends before its terminal event, by a stopgap marked `STOPGAP #1288 - REVERT` at its three sites (Responses parser, transmitter, reassembler): the error is parked in the stop reason and the client guesses it back. To redo as a non-terminal issue (subkind `upstream-error`), see "Stream mechanics"
+- OpenAI (#1288): an `error` after answer text is kept when the stream ends before its terminal event, by a stopgap marked `STOPGAP #1288 - REVERT` at its three sites (Responses parser, transmitter, reassembler): the error is parked in the stop reason and the client guesses it back. To redo with the typed errors
 - Gemini (#1287): an error sent inside the stream ends the message with its status, code and text; `details` is not carried (retry delay, quota, reason), the code reads like an HTTP status though the transport was 200, the log level is always a warning, a bare-string error is surfaced as its message
 - Stop errors stored twice (filter stops, refusals): the replacement code is commented under a `TODO` in `ContentReassembler` (`dialectStopExplained`)
 - Gemini `TOO_MANY_TOOL_CALLS`: belongs to the truncated class with its own wording and Continue - see [AIX-outcome.md](../AIX-outcome.md), "Open: tool-budget stops"
@@ -71,58 +71,39 @@ On the blocked image (2026-11-06), the TODO left at the site:
 
 ### Retry after partial output (#1211, #1287)
 
-Left for the rework by Enrico's ruling; nothing changes before it.
+Left for the rework by the author's ruling.
 
-- Today, OpenAI Responses: a transient failure (rate limit, server error, overloaded) reported by `response.failed` is retried even after answer text has streamed. The retry clears the text already shown and the run starts again. An `error` before any text retries the same way
-- Today, Chat Completions: no retry once any output has streamed; the error is shown and the partial answer kept. The two dialects disagree
-- Asked in #1287: "Fixing diagnosis should not automatically restart a long, partially completed request"
-- Asked in [#1211](https://github.com/enricoros/big-AGI/issues/1211#issuecomment-6536775910): torn on an automatic restart "if it took half an hour to receive an error"; restart only on clear cases, like the flex tier being unavailable or a dropped connection with a completely empty response. Enrico [agreed](https://github.com/enricoros/big-AGI/issues/1211#issuecomment-6536859013) and [reopened](https://github.com/enricoros/big-AGI/issues/1211#issuecomment-6565761327) #1211 for a configurable "Retry transient errors within [N] minutes"
-- Shape for later: retry is a named policy read from the typed issue (transient or not, HTTP-equivalent status, the vendor's retry-after), not a decision inside a parser. Inputs the policy needs: whether anything streamed, how long the attempt ran, how much it produced
-- Open: one rule for every dialect (nothing streamed yet), the time-bounded option from #1211, or both
+- Today the dialects disagree: OpenAI Responses retries a transient failure even after answer text has streamed, clearing it; Chat Completions stops retrying once any output has streamed
+- Asked in #1287: "Fixing diagnosis should not automatically restart a long, partially completed request". In [#1211](https://github.com/enricoros/big-AGI/issues/1211#issuecomment-6536775910): restart only on clear cases, like a busy flex tier or a dropped connection with an empty response; the author [agreed](https://github.com/enricoros/big-AGI/issues/1211#issuecomment-6536859013) and [reopened](https://github.com/enricoros/big-AGI/issues/1211#issuecomment-6565761327) it for a configurable "Retry transient errors within [N] minutes"
 
 ### Replay
 
 - Assistant error fragments are replayed as `[ERROR] ...` model text, so the model reads them as its own output (Q1 in [AIX-ingestion.md](../AIX-ingestion.md))
 
-### Stream mechanics: issue, end, outcome (PROPOSED)
+### Stream mechanics (ideas)
 
-From the #1288 work. The first two lines are measured, the direction is the author's (see "From the author"), the rest is a proposal to validate against the inventory of error sites.
+Light pointers for whoever builds this, so these get looked at. Not a design. The `STOPGAP #1288 - REVERT` comments in the code point here.
 
-- Measured: `setDialectTerminatingIssue` bundles three things: it reports the fact, fails the message, and stops the read. A dialect end stops the read too. The executor parses nothing after either, and logs a dropped event only when it shares the network chunk. Every loss under "Dropped after the verdict" comes from the stopped read
-- Measured: OpenAI's `error` after answer text is not final. The `.done` events never stream before it; only `response.failed` says whether the message completed (16 of 16 live rate-limit cases were complete answers, the #1149 salvage)
-- Direction: an issue is typed where it is born, because every step downstream knows less. The source always gives the origin (the vendor, a dispatch stage, the client) and the facts, and by default sets the two hints below. Zero to many issues per generation; the end travels apart; the error state is derived
-- Two commands replace `setDialectTerminatingIssue`: queue the issue (the `aix.issue` particle), and stop-and-close. Queuing never stops the read: data after an issue keeps coming and is parsed as usual
-- Two hints, two words. The outcome hint: does the issue fail the message (yes; yes unless the vendor's final status clears it; no, it is a note: a blocked image, an issue after a clean stop). The read disposition: continue, the default, or stop and close. "Terminating" carried both until now
-- Stop-and-close is the exception. In every vendor error captured the stream ended by itself after the issue: OpenAI sends `response.failed`, OpenRouter a finish chunk and the usage, Gemini and Anthropic close. Who stops: a parser on the vendor's true last event, or when it cannot go on; the executor on a read failure, an abort, or the grace timer below; the retrier when its policy says to retry now
-- One end particle: how the read ended (the vendor's last event, `[DONE]`, closed, read failure, abort, grace timeout) and the vendor's stop reason
-- Policies run at the end of one step (one low-level AIX call) over the fragments and the issue fragments. The first is the outcome, by one static function, never sent. In order: user stop -> aborted; an issue that fails the message -> failed; a stop reason -> its class, and the issues it clears remain as notes; no stop reason -> failed if the read did not end on the vendor's last event or an uncleared error exists, else completed with the "no finish reason" notice
-- Retry is the policy that cannot wait for the end of the step, and it runs where the retry loop is: in the dispatch (the server on tRPC, the browser on CSF). Today a parser decides it, by asking `hasRetriesForHttpStatus` and throwing. Proposed: the parser only queues the issue, the retrier reads it and decides, and a retry is its own stop-and-close. The static part is a table in shared code keyed by the issue (`upstreamRetryProfile` is its seed), so both sides read the same one; what the user sets ("within N minutes", #1211) travels in the request
-- Stop reasons carry the vendor's own final status only: `cg-issue` narrows to "the vendor says failed". "An issue happened" is no longer a stop reason, and `tokenStopError` goes: a stop's explanation is an issue
-- Grace timer: started by an issue that fails the message, cleared by the end, so a host that errors and never closes cannot hang (agreed in principle; in the executor read loop)
-- One failure, one issue: OpenAI's `error` event has the fuller fields (type, code, param, headers). The `response.failed` after it contributes the final status, the item list and the counts, and adds an issue only when no `error` came first
-- #1288 in this shape: the `error` after text is queued on arrival with the hint "fails unless the final status clears it" and the read continues, so it also survives our own function or the browser link being cut. Final status ok -> completed, the error stays as a note (P21); failed -> failed; no final status -> failed, the error and the end shown apart
-- Open: an old client stores any issue as an error fragment, so it reads a salvaged answer that carries a cleared issue as failed. Sending issues that do not fail the message needs a client that knows them
-- Open: where the end is stored. Today an early close is an error fragment (the end-of-stream sentence), replayed to the model
-- Not for this: a parser end-of-stream hook. The transmitter already carries the stop reason and metrics to the end particle on every exit; a hook serves only parser-private buffers (Chat Completions audio) or a retry at the close, neither observed
-- Shipped meanwhile: the #1288 stopgap above. It holds the error on the server until the end, so the error is still lost when our own function or the browser link is cut. Revert it when the shape above lands
+- `setDialectTerminatingIssue` packs three things in one call: it reports the issue, fails the message, and stops the read. They are likely separate: at least queuing the issue (the `aix.issue` particle) apart from stop-and-close
+- This likely changes the whole chain of functions that produce particles (what the parsers call, the transmitter, the read loop, the end), not that one call; some of today's calls become more than one
+- Disposition (keep parsing or stop) and outcome (does the message fail) are two things; an issue alone is no reason to close
+- What arrives after an error is worth reading: see the next section
 
-### Dropped after the verdict
+### What the vendors send around an error (measured)
 
-- OpenRouter Chat Completions: ends at the in-band `{error}` chunk; the finish chunk and the billed usage chunk that follow are dropped (5 in 7 days of production logs, one carrying usage)
-- OpenAI Responses: an `error` before any text ends the message there; `response.failed` follows (10 of 10 live) with `tool_usage` and the item list, never `usage`
-- OpenAI Responses: the search count sits behind the usage gate in `_fromResponseMetrics`, so a failed or wrapped-failed response (`usage` null, `tool_usage` present) reports none. Moving it shows a search-only cost on a message with no tokens
-- Bedrock: exception frames inside a stream name the failure in `:exception-type`, which the event-stream transform drops. Converse skips the event and ends on the generic end-of-stream text, Invoke fails on the payload shape as a parsing issue; neither retries. Read from the code, not reproduced live
+The wire a new design has to fit. Not a design: the direction is the author's, under "From the author".
 
-### Text and labels
+- OpenAI Responses: `response.failed` followed the `error` event in 18 of 18 live runs. It repeats the message and adds the item list and `tool_usage`, never `usage`; its code can be the placeholder `unknown` where the `error` had a type and a param
+- OpenAI Responses: an `error` after answer text is not a verdict. No `.done` event precedes it, and in 10 of 10 rate-limit cases the message inside `response.failed` was complete. Such an answer comes with no `usage`
+- OpenAI: rate-limit `error` events carry `error.headers`, with `retry-after-ms`
+- OpenRouter (2 captures, 5 production log lines): after the in-band error chunk come a chunk with a `finish_reason` (`tool_calls`, or `error`) and one with the billed usage
+- Gemini (2 captures): after the in-stream error frame only an unframed copy of it follows, then the stream ends
+- Anthropic: no in-stream error captured
+- Bedrock: exception frames inside a stream name the failure in the `:exception-type` header. From the AWS event-stream format, not reproduced live
+- [xAI, 2026-11-09, hypothesis: one capture] a reply that reaches the context window ends `response.completed`, cut mid-sentence, total tokens 6 under the window: nothing on the wire says it was cut
 
-- Responses: the label is the `type`, else the `code`, so the code is lost when a type exists (`tokens: Rate limit reached` loses `rate_limit_exceeded`); `response.failed` labels the same failure by its code, which can be OpenAI's placeholder `unknown`. #1288 asks to keep type, code, message and param
-- Responses (#1288): the ticket also asks for the response and event ids with the error, and that a final failure less specific than the earlier `error` (placeholder code `unknown` against type `invalid_request_error`, same message) does not replace it
-- Responses: a salvaged `failed` response drops its error text (P21 in [AIX-ingestion.md](../AIX-ingestion.md)); as a non-terminal error it can stay as a note
-- OpenAI: rate-limit `error` events carry `error.headers` (`retry-after-ms`); the in-band retry does not read them
-- Responses (#1288): of several `error` events before the end, the stopgap keeps the last only. Promised on the ticket: each one is kept, as its own issue
+### Asked on #1288, not done
 
-### Not signalled by the vendor
-
-- [xAI, 2026-11-09, hypothesis: one capture] a reply that reaches the context window ends `response.completed`, cut mid-sentence, total tokens 6 under the window. Stored as completed; detectable only by comparing total tokens with the window
-- OpenAI: a wrapped-failed response (rate limit after a complete answer) carries no `usage`, so it is stored completed with no tokens and no cost
-- Chat Completions: finish reasons we do not map read as "not provided"; Gemini Interactions `cancelled` shows an error with no text. Read from the code, not reproduced live
+- The error keeps its type, code, message and param, and the response and event ids
+- A final failure less specific than the earlier `error` does not replace it
+- Multiple errors are preserved (the stopgap keeps the last)
