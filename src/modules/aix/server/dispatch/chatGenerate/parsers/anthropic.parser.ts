@@ -1424,6 +1424,7 @@ function _fromAnthropicStopReason(stopReason: AnthropicWire_API_Message_Create.R
       return null;
 
     case null:
+    case undefined: // omitted by some gateways: no stop reason, as null
       console.warn(`_fromAnthropicStopReason(${debugCaller}): unexpected stop_reason: ${stopReason}`);
       return null;
 

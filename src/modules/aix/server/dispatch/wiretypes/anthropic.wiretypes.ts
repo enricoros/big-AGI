@@ -1213,9 +1213,11 @@ export namespace AnthropicWire_API_Message_Create {
      * The reason why Claude stopped generating.
      * In non-streaming mode this value is always non-null. In streaming mode, it is null in the message_start event and non-null otherwise.
      */
-    stop_reason: StopReason_schema.nullable(),
+    stop_reason: StopReason_schema
+      .nullish(), // [Anthropic-compatible gateways, 2026-10] omitted at message_start, not null
     // Which custom stop sequence was generated, if any.
-    stop_sequence: z.string().nullable(),
+    stop_sequence: z.string()
+      .nullish(), // [Anthropic-compatible gateways, 2026-10] omitted, not null
 
     /**
      * Structured stop details. Present when stop_reason === 'refusal' (carries category + explanation).
@@ -1299,7 +1301,8 @@ export namespace AnthropicWire_API_Message_Create {
     // MessageDelta
     delta: z.object({
       stop_reason: StopReason_schema.nullable(),
-      stop_sequence: z.string().nullable(),
+      stop_sequence: z.string()
+        .nullish(), // [Anthropic-compatible gateways, 2026-10] omitted, not null
       /**
        * Structured stop details - present alongside stop_reason === 'refusal' (category + explanation).
        */
