@@ -705,6 +705,8 @@ export namespace OpenAIWire_API_Chat_Completions {
 
     finish_reason: z.union([FinishReason_Enum, z.string()])
       .nullable(),
+    // [OpenRouter] the provider's own finish reason, behind the normalized one: read on finish_reason 'error'
+    native_finish_reason: z.string().nullish(),
 
     // (OMITTED BY CHOICE) We will not support logprobs for now, so it's disabled here and in the request
     // logprobs: z.any().nullable().optional() // Log probability information for the choice.
@@ -853,6 +855,8 @@ export namespace OpenAIWire_API_Chat_Completions {
     finish_reason: z.union([FinishReason_Enum, z.string()])
       .nullable()   // very common, e.g. Azure
       .optional(),  // [OpenRouter] added .optional() which only has the delta field in the whole chunk choice
+    // [OpenRouter] the provider's own finish reason, behind the normalized one: read on finish_reason 'error'
+    native_finish_reason: z.string().nullish(),
 
     // (OMITTED BY CHOICE) We will not support logprobs for now, so it's disabled here and in the request
     // logprobs: z.any().nullable().optional() // Log probability information for the choice.

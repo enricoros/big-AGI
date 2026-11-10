@@ -60,6 +60,7 @@ On the blocked image (2026-11-06), the TODO left at the site:
 - Stop errors stored twice (filter stops, refusals): the replacement code is commented under a `TODO` in `ContentReassembler` (`dialectStopExplained`)
 - Gemini `TOO_MANY_TOOL_CALLS`: belongs to the truncated class with its own wording and Continue - see [AIX-outcome.md](../AIX-outcome.md), "Open: tool-budget stops"
 - OpenAI `context_length_exceeded` in the middle of a hosted tool loop: the text should say the hosted tools filled the context; the terminal event carries the finished tool items and no message
+- OpenRouter Chat Completions: `finish_reason: 'error'` sets `cg-issue` (RECITATION -> `filter-recitation`) with composed text in `tokenStopError` - `_fromOpenRouterErrorFinish`
 
 ### Retry
 

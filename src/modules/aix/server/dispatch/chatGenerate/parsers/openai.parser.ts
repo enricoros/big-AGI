@@ -222,7 +222,7 @@ export function createOpenAIChatCompletionsChunkParser(ortFetchCountable = false
     // }
 
 
-    for (const { index, delta, finish_reason } of json.choices) {
+    for (const { index, delta, finish_reason, native_finish_reason } of json.choices) {
 
       // n=1 -> single Choice only
       if (index !== 0 && index !== undefined /* [OpenRouter->Gemini] */)
@@ -433,6 +433,8 @@ export function createOpenAIChatCompletionsChunkParser(ortFetchCountable = false
         // [Z.ai, 2026-02-26] 'network_error' is an upstream error, not a normal stop reason
         if (finish_reason === 'network_error')
           pt.setDialectTerminatingIssue('Upstream network error.', IssueSymbols.Generic, 'srv-warn');
+        else if (finish_reason === 'error')
+          pt.setTokenStopReason(..._fromOpenRouterErrorFinish(native_finish_reason));
         else {
           const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
           if (tokenStopReason !== null)
@@ -496,7 +498,7 @@ export function createOpenAIChatCompletionsParserNS(ortFetchCountable = false): 
     if (json.choices.length !== 1)
       throw new Error(`expected 1 completion, got ${json.choices.length}`);
 
-    for (const { index, message, finish_reason } of json.choices) {
+    for (const { index, message, finish_reason, native_finish_reason } of json.choices) {
 
       // n=1 -> single Choice only
       if (index !== 0)
@@ -628,6 +630,8 @@ export function createOpenAIChatCompletionsParserNS(ortFetchCountable = false): 
       // [Z.ai, 2026-02-26] 'network_error' is an upstream error, not a normal stop reason
       if (finish_reason === 'network_error')
         pt.setDialectTerminatingIssue('Upstream network error.', IssueSymbols.Generic, 'srv-log');
+      else if (finish_reason === 'error')
+        pt.setTokenStopReason(..._fromOpenRouterErrorFinish(native_finish_reason));
       else {
         const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
         if (tokenStopReason !== null)
@@ -698,6 +702,19 @@ function _fromOpenAIFinishReason(finish_reason: string | null | undefined) {
   // Developers: show more finish reasons (not under flag for now, so we can add to the supported set)
   console.warn('AIX: OpenAI-dispatch unexpected finish_reason:', finish_reason);
   return null;
+}
+
+/**
+ * [OpenRouter] finish_reason 'error', one of its normalized values: the provider failed the reply, or stopped it for a
+ * reason with no normalized name; native_finish_reason is the provider's own. A stop reason, not a dialect end: the usage
+ * chunk that follows still counts.
+ * TODO: typed errors - queue an issue (subkind 'upstream-error', subCause: native_finish_reason, aiRender: false, uiColor: 'danger'); the stop reason keeps only the vendor's final status
+ */
+function _fromOpenRouterErrorFinish(nativeFinishReason: string | null | undefined): [AixWire_Particles.GCTokenStopReason, string] {
+  // [OpenRouter -> Gemini] a recitation stop arrives as 'error'
+  if (nativeFinishReason === 'RECITATION')
+    return ['filter-recitation', 'Generation stopped due to RECITATION'];
+  return ['cg-issue', `The provider ended the reply with an error${nativeFinishReason ? ` (${nativeFinishReason})` : ''}.`];
 }
 
 function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usage'], parserCreationTimestamp: number, timeToFirstEvent: number | undefined, ortFetchCountable: boolean): AixWire_Particles.CGSelectMetrics {

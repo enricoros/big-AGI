@@ -460,7 +460,6 @@ const ENDINGS: Ending[] = [
     // finish_reason 'error' with native_finish_reason RECITATION and no error object
     ending: 'a provider filter that OpenRouter reports as finish_reason error ends as a filtered answer, naming the reason',
     stop: 'filter-recitation', says: /RECITATION/,
-    notYet: 'finish_reason error is not read: no stop reason, no explanation, the cut answer reads as complete',
     files: ['openrouter/gemini-2.5-flash-lite_finish-error-native-recitation.sse', 'openrouter/gemini-2.5-flash-lite_finish-error-native-recitation_nonstream.json'],
   },
   {
@@ -1053,6 +1052,26 @@ describe('OpenRouter Chat Completions', () => {
     ['openrouter/gpt-6-astra-pro_search+fetch.sse', { nWebSearch: 1, nWebFetch: 1 }, '1 search, 1 fetch, executed 2', true],
     ['openrouter/grok-4.7_search+fetch.sse', { nWebSearch: 2, nWebFetch: 2 }, '2 searches, 2 fetches on Grok, executed 4', true],
   ]);
+
+  // 'error' is one of OpenRouter's normalized finish reasons, and a streamed finish is repeated on the usage chunk.
+  // Synthetic: no provider failure was caught live
+  test('finish_reason error fails the reply, keeps what came before, and the usage chunk after it still counts', async () => {
+    const chunk = (delta: object, finish_reason: string | null, extra?: object) =>
+      ({ data: { id: 'gen-replay', object: 'chat.completion.chunk', created: 1, model: 'vendor/model', choices: [{ index: 0, delta, finish_reason, native_finish_reason: null }], ...extra } });
+    const stream = sse([
+      chunk({ role: 'assistant', content: 'The first half' }, null),
+      chunk({ role: 'assistant', content: '' }, 'error'),
+      chunk({ role: 'assistant', content: '' }, 'error', { usage: { prompt_tokens: 12, completion_tokens: 4, total_tokens: 16 } }),
+    ]) + 'data: [DONE]\n\n';
+    const { particles } = await replay([stream], true, () => createOpenAIChatCompletionsChunkParser());
+
+    const { tokenStopReason, tokenStopError } = theEnd(particles);
+    assert.equal(tokenStopReason && AixWire_Particles.gcStopReasonRow(tokenStopReason)?.class, 'error');
+    assert.ok(tokenStopError, 'the user is told why');
+    assert.equal(particles.filter(isText).map(op => op.t).join(''), 'The first half');
+    const { TIn, TOut } = finalMetrics(particles);
+    assert.deepEqual({ TIn, TOut }, { TIn: 12, TOut: 4 });
+  });
 
 });
 
