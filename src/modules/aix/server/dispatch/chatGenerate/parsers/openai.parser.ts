@@ -176,6 +176,10 @@ export function createOpenAIChatCompletionsChunkParser(ortFetchCountable = false
       pt.updateMetrics(metricsUpdate);
     }
 
+    // [OpenAI-compatible relays, 2026-11] an empty chunk, `{"object":"chat.completion.chunk","choices":[]}`: nothing to read
+    if (!json.choices.length)
+      return;
+
     // expect: 1 completion, or stop
     if (json.choices.length !== 1)
       throw new Error(`expected 1 completion, got ${json.choices.length}`);
@@ -772,6 +776,11 @@ function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usa
     if (typeof usage.cost === 'number') {
       // OpenRouter sends cost directly as a number
       metricsUpdate.$cReported = Math.round(usage.cost * 100 * 10000) / 10000;
+    } else if (typeof usage.cost === 'string') {
+      // [OpenAI-compatible relays, 2026-11] the same, as a decimal string
+      const cost = Number(usage.cost);
+      if (Number.isFinite(cost))
+        metricsUpdate.$cReported = Math.round(cost * 100 * 10000) / 10000;
     } else if (typeof usage.cost === 'object' && 'total_cost' in usage.cost && typeof usage.cost.total_cost === 'number') {
       // Perplexity sends cost as an object with total_cost
       metricsUpdate.$cReported = Math.round(usage.cost.total_cost * 100 * 10000) / 10000;

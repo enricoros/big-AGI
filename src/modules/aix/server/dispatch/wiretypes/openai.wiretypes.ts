@@ -573,7 +573,8 @@ export namespace OpenAIWire_API_Chat_Completions {
   const Usage_schema = z.object({
     prompt_tokens: z.number(),
     completion_tokens: z.number(),
-    total_tokens: z.number(),
+    total_tokens: z.number()
+      .optional(), // [OpenAI-compatible relays, 2026-10] omitted; never read
 
     // [OpenAI, 2024-10-01] breaks down the input tokens into components
     prompt_tokens_details: z.object({
@@ -610,6 +611,7 @@ export namespace OpenAIWire_API_Chat_Completions {
     // [OpenRouter, 2025-01-22] cost as direct number
     cost: z.union([
       z.number(), // OpenRouter sends cost as a number directly
+      z.string(), // [OpenAI-compatible relays, 2026-11] a decimal string, e.g. "0.004044348"
       z.looseObject({
         input_tokens_cost: z.number().optional(),
         output_tokens_cost: z.number().optional(),
@@ -869,7 +871,8 @@ export namespace OpenAIWire_API_Chat_Completions {
     ])
       // .or(z.string()) // [Perplexity, 2025-10-20] future resiliency post perplexity still breaking the openai compatibility
       .optional(), // [FastAPI, 2025-04-24] the FastAPI dialect sadly misses the 'chat.completion.chunk' type
-    id: z.string(),
+    id: z.string()
+      .optional(), // [OpenAI-compatible relays, 2026-10] omitted on the usage chunk, at times on every chunk; read only when set
 
     /**
      * A list of chat completion choices.
@@ -878,7 +881,8 @@ export namespace OpenAIWire_API_Chat_Completions {
      */
     choices: z.array(ChunkChoice_schema),
 
-    model: z.string(), // The model used for the chat completion.
+    model: z.string() // The model used for the chat completion.
+      .optional(), // [OpenAI-compatible relays, 2026-10] omitted on the usage chunk, at times on every chunk; read only when set
     usage: Usage_schema.optional(), // If requested
     created: z.number() // The Unix timestamp (in seconds) of when the chat completion was created.
       .optional(), // [FastAPI, 2025-04-24] the FastAPI dialect sadly misses the 'created' field
