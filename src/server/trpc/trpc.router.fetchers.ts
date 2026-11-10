@@ -132,6 +132,21 @@ function _retryAfterMsFromHeaders(headers: Headers): number | undefined {
 }
 
 /**
+ * The machine-readable code in the `error` member of an upstream error body, where each vendor puts it: the message
+ * alone cannot tell a temporary 429 from a permanent one. Undefined when the body names none.
+ */
+function _upstreamErrorCode(error: any): string | undefined {
+  const googleDetail = (type: string) => !Array.isArray(error?.details) ? undefined : error.details.find((d: any) => d?.['@type'] === `type.googleapis.com/google.rpc.${type}`);
+  return [
+    error?.details?.error_code,                               // [Anthropic]
+    error?.code,                                              // [OpenAI and compatibles] - OpenRouter and Gemini put the HTTP status here
+    error?.metadata?.limit_source,                            // [OpenRouter] the limit that tripped
+    googleDetail('QuotaFailure')?.violations?.[0]?.quotaId,   // [Gemini] the tripped quota: window and tier
+    googleDetail('ErrorInfo')?.reason,                        // [Gemini] other errors, e.g. API_KEY_INVALID
+  ].find((code): code is string => typeof code === 'string');
+}
+
+/**
  * @abort: aborted by client/signal
  * @connection: network/TCP errors before HTTP response
  * @http: upstream returned HTTP error (4xx, 5xx)
@@ -326,14 +341,10 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
       console.log(`[${method}->${parserName}] [${moduleName} issue] (http ${s}, ${response.statusText}):`, { url: debugCleanUrl || url, responseOk: response.ok, notOkayPayload: payloadString || notOkayPayload });
 
     // -> throw HTTP error: will be a 400 (BAD_REQUEST), with preserved status
-    // machine-readable upstream code: the message alone cannot tell a temporary 429 from a permanent one
-    // [Anthropic] error.details.error_code, [OpenAI and compatibles] error.code
-    const upstreamCode = notOkayPayload?.error?.details?.error_code ?? notOkayPayload?.error?.code;
-
     throw new TRPCFetcherError({
       category: 'http',
       httpStatus: s,
-      httpErrorCode: typeof upstreamCode === 'string' ? upstreamCode : undefined,
+      httpErrorCode: _upstreamErrorCode(notOkayPayload?.error),
       httpRetryAfterMs: _retryAfterMsFromHeaders(response.headers),
       message: (throwWithoutName ? '' : `[${moduleName} issue]: `)
         + `Upstream responded with HTTP ${s} ${response.statusText}`
