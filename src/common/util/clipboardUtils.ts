@@ -97,6 +97,12 @@ export function clipboardCopyDOMSelectionOrFallback(containerElement: HTMLElemen
   const cleanedHtml = div.innerHTML;
   const cleanedText = _getInnerTextFromFloatingElement(div, fallbackText);
 
+  // No rich copy without ClipboardItem (Firefox before 127): plain text only
+  if (typeof ClipboardItem === 'undefined' || !navigator.clipboard?.write) {
+    copyToClipboard(cleanedText, typeLabel);
+    return;
+  }
+
   // Write both HTML and plain text to clipboard
   const htmlBlob = new Blob([cleanedHtml], { type: 'text/html' });
   const textBlob = new Blob([cleanedText], { type: 'text/plain' });
