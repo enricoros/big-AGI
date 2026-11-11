@@ -135,7 +135,9 @@ export function useWindowControls(
     if (!isVisible || typeof window === 'undefined') return;
 
     const handleResize = () => {
-      const boundedPosition = getPositionWithinBounds(containerRef.current, positionRef.current);
+      const position = positionRef.current;
+      const boundedPosition = getPositionWithinBounds(containerRef.current, position);
+      if (boundedPosition.x === position.x && boundedPosition.y === position.y) return; // still in bounds: nothing to persist
       onPositionChange(boundedPosition);
       updateCSSPosition(boundedPosition);
     };
