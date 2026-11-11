@@ -63,7 +63,8 @@ export interface DProfileGemini {
   asrModel?: typeof ASRX_MODELS.gemini[number]; // unset = Auto
   mode?: 'smart' | 'verbatim'; // smart: vendor-formatted punctuation + paragraphs (attested formatting); verbatim: literal
   language?: string;       // BCP-47, comma-separated list allowed -> language_codes[] (undefined = auto-detect, 85+ languages; detection is not reported back)
-  keywords?: string[];     // user dictionary -> custom_vocabulary wire param (vendor cap 1000 terms; API-incompatible with diarization/timestamps, which v1 doesn't expose)
+  keywords?: string[];     // user dictionary -> custom_vocabulary wire param (vendor cap 1000 terms; not sent with diarize: the API 400s on the pair)
+  diarize?: boolean;       // speaker labels - forces verbatim mode (smart 400s with diarization)
 }
 
 export interface DProfileOpenAI {
@@ -75,6 +76,9 @@ export interface DProfileOpenAI {
   temperature?: number;    // 0..1 (whisper-1 only; the gpt transcribe models ignore it)
   diarize?: boolean;       // speaker labels - swaps the request onto the gpt-4o-transcribe-diarize model
 }
+
+/** Profile switches a surface can flip on any engine without knowing its vendor (gated by the vendor capabilities). */
+export type ASRxEngineFeature = 'diarize' | 'topics';
 
 
 // Credentials
@@ -112,6 +116,8 @@ export interface ASRxTranscribeBatchOptions {
   languageCode?: string;
   // topic detection: undefined honors the engine profile's policy; true/false overrides it (applied only where the vendor supports it - Deepgram)
   topicsHint?: boolean;
+  // speaker labels: undefined honors the engine profile's policy; true/false overrides it (dictation turns them off: 'Speaker 0:' must not reach the text)
+  diarizeHint?: boolean;
   // abort the transcription mid-flight
   signal?: AbortSignal;
   // NorthBridge-style operation metadata (for future use in an ops panel)
@@ -125,6 +131,7 @@ export type ASRxBatchResult =
       success: true;
       text: string;
       model: string;          // `${vendorType}/${asrModel}` - suitable for VoiceTranscript.model
+      profile: DASRxProfileAny; // the profile that ran: the engine's, with this call's overrides applied
       language?: string;      // detected or confirmed language (when provided by the vendor)
       confidence?: number;    // 0..1, when provided
       durationMs?: number;    // client-measured round-trip (or vendor-reported when available)

@@ -27,8 +27,9 @@ export const ASRxVendorGemini: IASRxVendor<'gemini'> = {
   },
 
   capabilities: {
+    diarization: true,        // verbatim mode only, without the dictionary (profile.diarize)
     languageDetection: false, // auto-detects 85+ languages but never reports which (verified 2026-08-28)
-    diarization: false,       // the API supports it (30-min cap, conflicts with vocabulary) - not exposed in v1
+    topicDetection: false,    // no analysis pass: the model rejects instructions and JSON mode
     interimResults: false,    // batch only ('-live' is a separate bidi model)
     wordTimestamps: false,    // word_info annotations exist upstream - no ASRx consumer, not exposed in v1
   },

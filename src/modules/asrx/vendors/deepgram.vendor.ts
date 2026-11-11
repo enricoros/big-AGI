@@ -12,8 +12,9 @@ export const ASRxVendorDeepgram: IASRxVendor<'deepgram'> = {
   autoFromLlmVendorIds: undefined,
 
   capabilities: {
-    languageDetection: true,
     diarization: true,
+    languageDetection: true,
+    topicDetection: true,
     interimResults: true,   // available via WebSocket realtime (future)
     wordTimestamps: true,
   },

@@ -17,8 +17,13 @@
  * Response: transcript is in `steps[].content[].text` of `model_output` steps; `output_text` is
  *           ALWAYS empty. Silence completes with zero content items. No detected-language, no
  *           confidence.
+ * Speakers: `mode: {type: 'verbatim', diarization_mode: 'speaker'}` - smart mode 400s with
+ *           diarization, and there is no speaker-count hint. Labels never enter the text:
+ *           `word_info` annotations on the content item carry `speaker: 'spk:N'` per turn with
+ *           start/end indices into it; rebuilt here as 'Speaker N:' turns, like Deepgram and OpenAI.
+ *           Smart mode dropped one speaker's turns on a two-speaker clip where verbatim was complete.
  * Config:   `mode` takes 'smart' | 'verbatim' as plain strings; `language_codes` (BCP-47) and
- *           `custom_vocabulary` (<=1000 terms; 400s with diarization/timestamps - v1 exposes neither).
+ *           `custom_vocabulary` (<=1000 terms; 400s with diarization or word timestamps).
  * Limits:   audio bills at 25 tok/s against the 98,304-token input cap -> ~65 minutes; over-cap
  *           fails with a generic `Invalid input received.` (61 min passes, 88 min fails).
  */
@@ -48,9 +53,18 @@ const GeminiWire_Interaction_Response_schema = z.object({
     content: z.array(z.object({
       type: z.string().optional(),
       text: z.string().optional(),
+      // diarization spans; .catch: wire drift degrades to an unlabeled transcript, never fails it
+      annotations: z.array(z.object({
+        type: z.string().optional(),
+        start_index: z.number().optional(), // unread: a turn starts where the previous span ended, so no text is dropped
+        end_index: z.number().optional(),
+        speaker: z.string().optional(),
+      })).optional().catch(undefined),
     })).optional(),
   })).optional(),
 });
+
+type GeminiWire_Content = NonNullable<NonNullable<z.infer<typeof GeminiWire_Interaction_Response_schema>['steps']>[number]['content']>[number];
 
 export const asrxTranscribeGemini: TranscribeBackendFn<ASRxAccess_Gemini> = async (params) => {
 
@@ -71,6 +85,7 @@ export const asrxTranscribeGemini: TranscribeBackendFn<ASRxAccess_Gemini> = asyn
   // Resolve model and profile
   const model = modelPickOrAuto(profile.asrModel, ASRX_MODELS.gemini) ?? ASRX_DEFAULTS.GEMINI_MODEL;
   const mode = profile.mode ?? 'smart';
+  const diarize = !!profile.diarize;
   const language = languageCode ?? profile.language;
   const languageCodes = language ? language.split(/[,\s]+/).filter(Boolean) : [];
   const vocabulary = profile.keywords?.map(k => k.trim()).filter(Boolean).slice(0, 1000) ?? [];
@@ -81,7 +96,7 @@ export const asrxTranscribeGemini: TranscribeBackendFn<ASRxAccess_Gemini> = asyn
     : mimeType.startsWith('video/') ? `audio/${mimeType.slice('video/'.length).split(';')[0].trim()}`
       : mimeType;
 
-  if (ASRX_DEBUG) console.log('[ASRx][Gemini] transcribe', { model, mode, languageCodes, bytes: audio.byteLength, mime });
+  if (ASRX_DEBUG) console.log('[ASRx][Gemini] transcribe', { model, mode, diarize, languageCodes, bytes: audio.byteLength, mime });
 
   const started = Date.now();
 
@@ -107,9 +122,9 @@ export const asrxTranscribeGemini: TranscribeBackendFn<ASRxAccess_Gemini> = asyn
           input: [audioInput],
           generation_config: {
             transcription_config: {
-              mode: mode,
+              mode: diarize ? { type: 'verbatim', diarization_mode: 'speaker' } : mode,
               ...(languageCodes.length ? { language_codes: languageCodes } : {}),
-              ...(vocabulary.length ? { custom_vocabulary: vocabulary } : {}),
+              ...(vocabulary.length && !diarize ? { custom_vocabulary: vocabulary } : {}),
             },
           },
         }),
@@ -145,7 +160,7 @@ export const asrxTranscribeGemini: TranscribeBackendFn<ASRxAccess_Gemini> = asyn
     const text = (json.steps ?? [])
       .filter(step => step.type === 'model_output')
       .flatMap(step => step.content ?? [])
-      .map(content => content.text?.trim())
+      .map(content => (diarize ? _speakerTurns(content) : undefined) ?? content.text?.trim())
       .filter((t): t is string => !!t)
       .join('\n\n');
 
@@ -166,3 +181,31 @@ export const asrxTranscribeGemini: TranscribeBackendFn<ASRxAccess_Gemini> = asyn
       void geminiFileDelete(gemini, uploaded.name).catch(() => { /* expiry is the fallback */ });
   }
 };
+
+
+/**
+ * 'Speaker N:' turns from the diarization spans; undefined when there are none, so the plain text stands.
+ * Lossless: a turn takes the text from the previous span's end to its own, and the last one the tail.
+ */
+function _speakerTurns(content: GeminiWire_Content): string | undefined {
+  const { text, annotations } = content;
+  if (!text || !annotations?.length) return undefined;
+  const turns: string[] = [];
+  let speaker: string | undefined;
+  let cursor = 0;
+  for (const span of annotations) {
+    if (span.type !== 'word_info' || !span.speaker || span.end_index === undefined || span.end_index <= cursor) continue;
+    const spanText = text.slice(cursor, span.end_index).trim();
+    cursor = span.end_index;
+    if (!spanText) continue;
+    if (span.speaker !== speaker) {
+      speaker = span.speaker;
+      turns.push(`Speaker ${speaker.replace(/^spk[:_]/, '')}: ${spanText}`);
+    } else
+      turns[turns.length - 1] += ' ' + spanText;
+  }
+  if (!turns.length) return undefined;
+  const tail = text.slice(cursor).trim();
+  if (tail) turns[turns.length - 1] += ' ' + tail;
+  return turns.join('\n\n');
+}

@@ -39,8 +39,9 @@ export interface IASRxVendor<TVt extends DASRxVendorType> {
 
   // capabilities (informational - for UI rendering and feature gating)
   readonly capabilities: {
-    languageDetection: boolean; // vendor reports the detected language
     diarization: boolean;       // speaker identification / labeling
+    languageDetection: boolean; // vendor reports the detected language
+    topicDetection: boolean;    // vendor labels the topics spoken about
     interimResults: boolean;    // realtime only: partial transcripts during streaming
     wordTimestamps: boolean;    // per-word start/end times
   };

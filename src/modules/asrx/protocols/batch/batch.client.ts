@@ -60,6 +60,10 @@ export async function asrxTranscribeBatch(
   if (options?.topicsHint !== undefined && effectiveEngine.vendorType === 'deepgram')
     effectiveEngine = { ...effectiveEngine, profile: { ...effectiveEngine.profile, topics: options.topicsHint } };
 
+  // 2c. Caller speaker-labels hint wins over the profile policy (every vendor has the switch)
+  if (options?.diarizeHint !== undefined)
+    effectiveEngine = { ...effectiveEngine, profile: { ...effectiveEngine.profile, diarize: options.diarizeHint } } as DASRxEngineAny;
+
   // 3. Build wire access from credentials (dereferences 'llms-service')
   const access = _buildBatchWireAccess(effectiveEngine);
   if (!access)
@@ -89,6 +93,7 @@ export async function asrxTranscribeBatch(
       success: true,
       text: output.text,
       model: output.model,
+      profile: effectiveEngine.profile,
       ...(output.language ? { language: output.language } : {}),
       ...(output.confidence !== undefined ? { confidence: output.confidence } : {}),
       ...(output.durationMs !== undefined ? { durationMs: output.durationMs } : {}),

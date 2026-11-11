@@ -7,7 +7,7 @@ import { findModelVendor } from '~/modules/llms/vendors/vendors.registry';
 import { agiUuidV4 } from '~/common/util/idUtils';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
-import type { DASRxEngineId, DASRxCredentialsAny, DASRxEngine, DASRxEngineAny, DASRxVendorType } from './asrx.types';
+import type { ASRxEngineFeature, DASRxEngineId, DASRxCredentialsAny, DASRxEngine, DASRxEngineAny, DASRxVendorType } from './asrx.types';
 import { asrxFindByVendorPriorityAsc, asrxFindVendor, asrxFindVendorForLLMVendor } from './asrx.vendors-registry';
 
 
@@ -279,6 +279,32 @@ export function asrxFindGlobalEngine({ engines, activeEngineId }: ASRxStore = us
     if (asrxAreCredentialsValid(e.credentials)) validEngines.push(e);
   }
   return asrxFindByVendorPriorityAsc(validEngines) ?? asrxFindByVendorPriorityAsc(anyEngines);
+}
+
+
+// --- Engine features: profile switches a surface can read and flip without knowing the vendor ---
+
+/** Whether the engine's vendor can do the feature at all - surfaces show the switch only then. */
+export function asrxEngineFeatureSupported(engine: DASRxEngineAny, feature: ASRxEngineFeature): boolean {
+  const capabilities = asrxFindVendor(engine.vendorType)?.capabilities;
+  return feature === 'diarize' ? !!capabilities?.diarization : !!capabilities?.topicDetection;
+}
+
+/** The engine's own setting: the value its Settings switch shows. */
+export function asrxEngineFeatureOn(engine: DASRxEngineAny, feature: ASRxEngineFeature): boolean {
+  switch (feature) {
+    case 'diarize':
+      return !!engine.profile.diarize;
+    case 'topics':
+      return 'topics' in engine.profile && !!engine.profile.topics;
+  }
+}
+
+export function asrxEngineFeatureSet(engineId: DASRxEngineId, feature: ASRxEngineFeature, on: boolean): void {
+  const engine = asrxFindEngineById(engineId, false);
+  if (!engine || !asrxEngineFeatureSupported(engine, feature)) return;
+  // off = absent, as the Settings switches store it
+  useASRxStore.getState().updateEngine(engineId, { profile: { ...engine.profile, [feature]: on || undefined } } as Partial<DASRxEngineAny>);
 }
 
 

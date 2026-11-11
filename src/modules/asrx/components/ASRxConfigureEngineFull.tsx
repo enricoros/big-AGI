@@ -455,7 +455,7 @@ function GeminiParameters({ engine, onUpdate, isMobile }: {
   }, [onUpdate, profile]);
 
   // any parameter off its default (no model picker: gemini-3.5-transcribe is the only batch model)
-  const hasUserParameters = profile.mode === 'verbatim' || !!profile.language;
+  const hasUserParameters = profile.mode === 'verbatim' || !!profile.language || !!profile.diarize;
 
   const handleResetParameters = React.useCallback(() => {
     onUpdate({ profile: { ...ASRxVendorGemini.getDefaultProfile(), ...(profile.keywords?.length && { keywords: profile.keywords }) } });
@@ -488,9 +488,19 @@ function GeminiParameters({ engine, onUpdate, isMobile }: {
       inputSx={{ maxWidth: 210 }}
     />
 
+    {(advanced.on || !!profile.diarize) && (
+      <FormSwitchControl
+        title='Label Speakers'
+        description='Verbatim; skips Dictionary'
+        checked={!!profile.diarize}
+        onChange={checked => handleProfileUpdate({ diarize: checked || undefined })}
+      />
+    )}
+
     <PersonalDictionaryRow
       show={advanced.on || keywordsCount > 0}
       terms={profile.keywords ?? []}
+      description={profile.diarize ? 'Unused with Label Speakers' : undefined}
       onSave={terms => handleProfileUpdate({ keywords: terms.length ? terms : undefined })}
     />
 

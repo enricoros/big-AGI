@@ -97,6 +97,8 @@ export const transcribeDeepgram: TranscribeBackendFn<ASRxAccess_Deepgram> = asyn
 
   if (profile.smartFormat !== undefined) queryParams.set('smart_format', String(profile.smartFormat));
   if (profile.diarize !== undefined) queryParams.set('diarize', String(profile.diarize));
+  // speaker labels exist only in the paragraphs transcript, which smart_format otherwise brings
+  if (profile.diarize) queryParams.set('paragraphs', 'true');
   if (profile.utterances !== undefined) queryParams.set('utterances', String(profile.utterances));
   if (profile.topics) queryParams.set('topics', 'true');
   if (profile.sentiment) queryParams.set('sentiment', 'true');
