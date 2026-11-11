@@ -261,7 +261,7 @@ export const createAppTheme = (uiComplexityMinimal: boolean) => extendTheme({
             '--Card-padding': '1rem',
           },
           ...(!uiComplexityMinimal && {
-            '& .agi-animate-enter': {
+            '&.agi-animate-enter': {
               animation: `${animationEnterBelow} 0.16s ease-out`,
             },
           }),
