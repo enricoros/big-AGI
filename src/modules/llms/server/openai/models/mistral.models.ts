@@ -174,6 +174,8 @@ function _mistralModelsSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema
       return aIndex - bIndex;
     return b.label.localeCompare(a.label);
   }
+  if (aIndex === -1 && bIndex === -1)
+    return 0; // both outside the known families: keep the upstream order (-1 both ways was not a valid comparator)
   return aIndex !== -1 ? 1 : -1;
 }
 

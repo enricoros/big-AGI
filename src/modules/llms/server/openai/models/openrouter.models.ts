@@ -95,6 +95,10 @@ export function openRouterModelFamilySortFn(a: { id: string, created?: number },
     return b.id.localeCompare(a.id);
   }
 
+  // If neither has a prefix, keep the upstream order (returning 1 both ways made the order engine-defined)
+  if (aPrefixIndex === -1 && bPrefixIndex === -1)
+    return 0;
+
   // If one has a prefix and the other doesn't, prioritize the one with prefix
   return aPrefixIndex !== -1 ? -1 : 1;
 }
