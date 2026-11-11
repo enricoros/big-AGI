@@ -223,7 +223,7 @@ function _createDLLMFromModelDescription(d: ModelDescriptionSchema, service: DMo
  *
  * @param sourceLlm - The source LLM to clone
  * @param cloneLabel - Display label for the clone
- * @param cloneVariant - Variant suffix for the clone ID (will be appended as `-{variant}`)
+ * @param cloneVariant - Variant suffix for the clone ID (will be appended as `::{variant}`)
  * @returns The new DLLM object ready to be added to the store
  */
 export function createDLLMUserClone(sourceLlm: DLLM, cloneLabel: string, cloneVariant: string): DLLM {

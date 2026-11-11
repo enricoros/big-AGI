@@ -104,7 +104,7 @@ export function LLMOptionsClone(preps: {
                   : 'success.plainColor',
           }}
         >
-          {!variantTrimmed ? `Full ID: ${llmId}-...`
+          {!variantTrimmed ? `Full ID: ${getDLLMCloneId(llmId, '...')}`
             : !isVariantUnique ? `ID already exists: ${candidateCloneId}`
               : `Full ID: ${candidateCloneId}`}
         </Typography>
