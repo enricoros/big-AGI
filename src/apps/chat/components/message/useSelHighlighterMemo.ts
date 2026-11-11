@@ -190,9 +190,10 @@ export function useSelHighlighterMemo(
 
             // Toggle, if the tooled text is already present (except for cut which always removes)
             const newFragmentText =
-              tool === 'cut' ? fragmentText.replace(sourceText, reconstructed) // Cut always removes text
-                : fragmentText.includes(reconstructed) ? fragmentText.replace(reconstructed, sourceText) // toggles selection
-                  : fragmentText.replace(sourceText, reconstructed);
+              // function replacers: the message text may contain '$$', '$&' (replacement patterns)
+              tool === 'cut' ? fragmentText.replace(sourceText, () => reconstructed) // Cut always removes text
+                : fragmentText.includes(reconstructed) ? fragmentText.replace(reconstructed, () => sourceText) // toggles selection
+                  : fragmentText.replace(sourceText, () => reconstructed);
 
             // Replace the whole fragment within the message
             onMessageFragmentReplace(messageId, fragment.fId, createTextContentFragment(newFragmentText));

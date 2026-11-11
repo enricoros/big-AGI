@@ -210,7 +210,7 @@ const RCSyntaxHighlight = React.memo(function RCSyntaxHighlight(props: {
     // 1. pre-process with enclosing tags to locate later
     let codeToProcess = deferredCode;
     try {
-      codeToProcess = codeToProcess.replaceAll(codeHighlight, `${CONTEXT_HIGHLIGHT_START}${codeHighlight}${CONTEXT_HIGHLIGHT_END}`);
+      codeToProcess = codeToProcess.replaceAll(codeHighlight, () => `${CONTEXT_HIGHLIGHT_START}${codeHighlight}${CONTEXT_HIGHLIGHT_END}`); // function replacer: the selection may contain '$$', '$&' (replacement patterns)
     } catch (e) {
       // console.warn('[DEV] Error during string replaceAll for highlighting:', e);
     }

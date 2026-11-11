@@ -127,7 +127,7 @@ export function AutoBlocksRenderer(props: {
   const handleReplaceCode = React.useCallback((search: string, replace: string): boolean => {
     if (setText) {
       const text = curTextRef.current;
-      const newText = text.replace(search, replace);
+      const newText = text.replace(search, () => replace); // function replacer: the code may contain '$$', '$&' (replacement patterns)
       if (newText !== text) {
         setText(newText);
         return true;
