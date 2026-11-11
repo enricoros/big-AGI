@@ -2,6 +2,8 @@
  * Data-driven shortcut catalog for documentation display in ShortcutsModal.
  * Extends ShortcutDefinition for fingerprint matching against registered shortcuts.
  */
+import { Is } from '~/common/util/pwaUtils';
+
 import type { ShortcutDefinition } from './useGlobalShortcuts';
 
 export type ShortcutCatalogItem = ShortcutDefinition & Required<Pick<ShortcutDefinition, 'description'>>;
@@ -50,7 +52,7 @@ export const shortcutsCatalog: ShortcutCatalogCategory[] = [
       { key: '+', ctrl: true, shift: true, description: 'Increase Text Size' },
       { key: '-', ctrl: true, shift: true, description: 'Decrease Text Size' },
       { key: 'a', ctrl: true, shift: true, description: 'AI Request Inspector' },
-      { key: '/', ctrl: true, shift: true, description: 'Shortcuts' },
+      { key: Is.OS.MacOS ? '/' : '?', ctrl: true, shift: true, description: 'Shortcuts' }, // same platform key as the registration
     ],
   },
   {
