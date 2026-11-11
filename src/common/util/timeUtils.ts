@@ -64,15 +64,16 @@ const UNANCHORED_TIME = true;
  * Call once, then use returned function for each item - avoids redundant Date computations.
  */
 export function createTimeBucketClassifierEn() {
-  const now = new Date(), y = now.getFullYear(), m = now.getMonth();
-  const todayMs = new Date(y, m, now.getDate()).getTime();
-  const DAY_MS = 86400000;
-  const yesterdayMs = todayMs - DAY_MS;
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+  const todayMs = new Date(y, m, d).getTime();
+  // local midnights N days back: calendar days, not N * 24h (DST days are 23h or 25h long)
+  const daysAgoMs = (days: number) => new Date(y, m, d - days).getTime();
+  const yesterdayMs = daysAgoMs(1);
 
   if (UNANCHORED_TIME) {
-    const pastWeekMs = todayMs - 7 * DAY_MS;
-    const pastMonthMs = todayMs - 30 * DAY_MS;
-    const past3MonthsMs = todayMs - 90 * DAY_MS;
+    const pastWeekMs = daysAgoMs(7);
+    const pastMonthMs = daysAgoMs(30);
+    const past3MonthsMs = daysAgoMs(90);
 
     return (itemTimestamp: number): string => {
       const t = new Date(itemTimestamp).setHours(0, 0, 0, 0);
@@ -86,8 +87,9 @@ export function createTimeBucketClassifierEn() {
   }
 
   // Week starts Monday (ISO 8601) - locale-aware: new Intl.Locale(navigator.language).getWeekInfo?.().firstDay
-  const weekStartMs = todayMs - ((now.getDay() + 6) % 7) * DAY_MS;
-  const lastWeekStartMs = weekStartMs - 7 * DAY_MS;
+  const daysSinceMonday = (now.getDay() + 6) % 7;
+  const weekStartMs = daysAgoMs(daysSinceMonday);
+  const lastWeekStartMs = daysAgoMs(daysSinceMonday + 7);
   const monthStartMs = new Date(y, m, 1).getTime();
   const lastMonthStartMs = new Date(y, m - 1, 1).getTime();
   const yearStartMs = new Date(y, 0, 1).getTime();
