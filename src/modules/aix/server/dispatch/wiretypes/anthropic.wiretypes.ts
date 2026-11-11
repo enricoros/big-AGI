@@ -582,7 +582,14 @@ export namespace AnthropicWire_Blocks {
     // - ".input: Input should be a valid dictionary" - Anthropic
     // - ".input: Field required" - Anthropic
     // -> we replace 'null' and '', with {}
-    return { type: 'tool_use', id, name, input: !input ? {} : JSON.parse(input) /* 2024-11-03: Anthropic requires an object in 'input' */ };
+    let inputObj: any = {}; // 2024-11-03: Anthropic requires an object in 'input'
+    if (input)
+      try {
+        inputObj = JSON.parse(input);
+      } catch {
+        // malformed arguments (e.g. a call stopped mid-arguments): an unparsable history item would otherwise fail every later request
+      }
+    return { type: 'tool_use', id, name, input: inputObj };
   }
 
   export function ToolResultBlock(tool_use_id: string, content: z.infer<typeof ToolResultBlock_I_schema>['content'], is_error?: boolean): z.infer<typeof ToolResultBlock_I_schema> {
