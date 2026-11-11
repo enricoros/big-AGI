@@ -33,7 +33,7 @@ const fetchPageInputSchema = z.object({
     wssEndpoint: z.string().trim().optional(),
   }),
   requests: z.array(z.object({
-    url: z.url(),
+    url: z.url({ protocol: /^https?$/ }), // web pages only: file:, chrome:, data: and javascript: would run on the browser host
     transforms: z.array(pageTransformSchema).max(pageTransformSchema.options.length),
     allowFileDownloads: z.boolean().optional(),
     screenshot: z.object({
