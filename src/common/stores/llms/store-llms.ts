@@ -624,7 +624,7 @@ export function getDomainModelIdOrThrow(tryDomains: DModelDomainId[], requireFun
       // Try next or fall back to the error
     }
   }
-  throw new Error(`No model available for '${useCaseLabel}'. Pease select a '${tryDomains[0]}' model that supports${requireFunctionCallTools ? ' function calls' : ' text input'}${requireImageInput ? ' and image input' : ''} in App Preferences > Chat AI.`);
+  throw new Error(`No model available for '${useCaseLabel}'. Please select a '${tryDomains[0]}' model that supports${requireFunctionCallTools ? ' function calls' : ' text input'}${requireImageInput ? ' and image input' : ''} in App Preferences > Chat AI.`);
 }
 
 

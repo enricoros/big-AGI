@@ -24,7 +24,7 @@ export function copyToClipboard(text: string, typeLabel: string) {
       });
     })
     .catch((err) => {
-      alert(`Failed to message to clipboard${err?.name ? ' (' + err.name + ')' : ''}.\n\n${err?.message || 'Unknown error, likely a permission issue.'}`);
+      alert(`Failed to copy to clipboard${err?.name ? ' (' + err.name + ')' : ''}.\n\n${err?.message || 'Unknown error, likely a permission issue.'}`);
     });
 }
 

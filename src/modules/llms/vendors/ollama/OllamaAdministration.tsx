@@ -139,7 +139,7 @@ export function OllamaAdministration(props: { access: OllamaAccessSchema, onClos
         {/* Status*/}
         {!!pullData && (pullData.error
           ? <Typography color='danger'>{pullData.error}</Typography>
-          : <Typography color='success'>{pullData.status || 'Ok, but unkown status'}</Typography>)}
+          : <Typography color='success'>{pullData.status || 'Ok, but unknown status'}</Typography>)}
         {!!pullError && <InlineError error={pullError} />}
         {!!deleteError && <InlineError error={deleteError} />}
 
