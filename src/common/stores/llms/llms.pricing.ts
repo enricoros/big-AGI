@@ -67,7 +67,7 @@ function _isPricingFree(pricing: DTieredPricing | undefined): boolean {
 /// Human readable cost
 
 export function getLlmCostForTokens(tierTokens: number, tokens: number, pricing: DTieredPricing | undefined): number | undefined {
-  if (!pricing) return undefined;
+  if (pricing === undefined || pricing === null) return undefined; // 0 is a price (free), not a missing one
   if (pricing === 'free') return 0;
 
   // Cost = tokens * price / 1e6
