@@ -25,6 +25,7 @@ export class AudioAutoPlayer {
   private isPlayingFullBuffer: boolean = false;
   private hasEnqueuedChunks: boolean = false;
   private hasEndedPlayback: boolean = false;
+  private readonly fullBufferAbortController = new AbortController(); // lets stop() interrupt AudioPlayer.playFullBuffer
 
   // deferred for waitForPlaybackEnd() in non-streaming mode
   private readonly playbackEndPromise: Promise<void>;
@@ -82,7 +83,7 @@ export class AudioAutoPlayer {
       // combine all chunks and play
       const combined = combine_ArrayBuffers_To_Uint8Array(this.chunksAccumulator).buffer;
       this.chunksAccumulator = []; // Clear after combining
-      AudioPlayer.playFullBuffer(combined).finally(() => {
+      AudioPlayer.playFullBuffer(combined, this.fullBufferAbortController.signal).finally(() => {
         if (!this.isStopped)
           this.playbackEndResolve?.();
       });
@@ -107,7 +108,7 @@ export class AudioAutoPlayer {
       console.warn('[DEV] AudioAutoPlayer: playFullBuffer called twice');
 
     this.isPlayingFullBuffer = true;
-    AudioPlayer.playFullBuffer(buffer).finally(() => {
+    AudioPlayer.playFullBuffer(buffer, this.fullBufferAbortController.signal).finally(() => {
       if (!this.isStopped)
         this.playbackEndResolve?.();
     });
@@ -128,6 +129,7 @@ export class AudioAutoPlayer {
   stop(): void {
     this.isStopped = true;
     this.livePlayer?.stop();
+    this.fullBufferAbortController.abort(); // the full-buffer paths (no live player, or a single non-chunked buffer)
     this.chunksAccumulator = [];
     this.playbackEndResolve?.(); // Resolve to unblock any waiters
   }
