@@ -13,7 +13,8 @@ import { RenderCodeHtmlIFrame } from '../code/code-renderers/RenderCodeHtmlIFram
 
 // this is used by the blocks parser (for full text detection) and by the Code component (for inline rendering)
 export function heuristicIsBlockPureHTML(text: string): boolean {
-  return ['<!DOCTYPE html', '<!doctype html', '<head'].some((start) => text.startsWith(start));
+  // '<head' as a whole tag name: a bare prefix test also matched <header>, <heading>, ...
+  return text.startsWith('<!DOCTYPE html') || text.startsWith('<!doctype html') || /^<head[\s>]/.test(text);
 }
 
 
