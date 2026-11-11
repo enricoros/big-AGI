@@ -1139,7 +1139,7 @@ function _cleanPossibleHtmlText(inputStr: string): string {
       tag.replace(/ class="[^"]*"/g, '').replace(/ style="[^"]*"/g, ''),
     )
     // remove svg elements
-    .replace(/<svg[^>]*>.*?<\/svg>/g, '');
+    .replace(/<svg[^>]*>[\s\S]*?<\/svg>/g, ''); // [\s\S]: svg elements span lines
 }
 
 
