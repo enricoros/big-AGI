@@ -36,6 +36,10 @@ export function heuristicIsSVGCode(trimmedCode: string): boolean {
   return false;
 }
 
+/**
+ * Display only: when the root already has a style attribute this adds a second one, which HTML tolerates but XML does not,
+ * so PNG exports render the unfitted SVG.
+ */
 export function useFittedSvgString(svgCode: string | null, fitContainer: boolean): string | null {
   return React.useMemo(() => {
     if (!svgCode) return null;
@@ -63,11 +67,11 @@ export const RenderCodeSVG = React.forwardRef(function RenderCodeSVG(props: {
   // Expose control methods
   React.useImperativeHandle(ref, () => ({
     renderAsPNGBlob: async (transparentBackground: boolean) => {
-      if (!patchedSvgCode) return null;
-      const blob = await renderSVGToPNGBlob(patchedSvgCode, transparentBackground, 2);
+      if (!safeSvgCode) return null;
+      const blob = await renderSVGToPNGBlob(safeSvgCode, transparentBackground, 2);
       return !blob ? null : { blob, prefix: 'svg' };
     },
-  }), [patchedSvgCode]);
+  }), [safeSvgCode]);
 
 
   return (

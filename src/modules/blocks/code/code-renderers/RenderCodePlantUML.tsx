@@ -217,7 +217,8 @@ export const RenderCodePlantUML = React.forwardRef(function RenderCodePlantUML(p
     queryFn: () => fetchPlantUmlSvg(props.plantUMLCode),
     staleTime: 24 * 60 * 60 * 1000, // 1 day
   });
-  const patchedSvgCode = useFittedSvgString(conversion?.svg ?? null, props.fitContainer);
+  const svgCode = conversion?.svg ?? null;
+  const patchedSvgCode = useFittedSvgString(svgCode, props.fitContainer);
 
   // AI Fixup function - pass full error context (errorCause) for better AI analysis
   const tryFixError = conversion?.errorCause || conversion?.errorText || serverError?.message || null;
@@ -247,11 +248,11 @@ export const RenderCodePlantUML = React.forwardRef(function RenderCodePlantUML(p
   // Expose control methods
   React.useImperativeHandle(ref, () => ({
     renderAsPNGBlob: async (transparentBackground: boolean) => {
-      if (!patchedSvgCode) return null;
-      const blob = await renderSVGToPNGBlob(patchedSvgCode, transparentBackground, 2);
+      if (!svgCode) return null;
+      const blob = await renderSVGToPNGBlob(svgCode, transparentBackground, 2);
       return !blob ? null : { blob, prefix: 'uml' };
     },
-  }), [patchedSvgCode]);
+  }), [svgCode]);
 
 
   // Loading state

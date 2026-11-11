@@ -171,7 +171,8 @@ export const RenderCodeMermaid = React.forwardRef(function RenderCodeMermaid(pro
     },
     staleTime: 1000 * 60 * 60 * 24, // 1 day
   });
-  const patchedSvgCode = useFittedSvgString(data?.success === true ? data.svg : null, props.fitScreen);
+  const svgCode = data?.success === true ? data.svg : null;
+  const patchedSvgCode = useFittedSvgString(svgCode, props.fitScreen);
 
   // AI Fixup function
   const renderError = mermaidLoadError || (data?.success === false ? data.error : null) || null;
@@ -199,15 +200,15 @@ export const RenderCodeMermaid = React.forwardRef(function RenderCodeMermaid(pro
   // Expose control methods
   React.useImperativeHandle(ref, () => ({
     renderAsPNGBlob: async (transparentBackground: boolean) => {
-      if (!patchedSvgCode) return null;
-      const blob = await renderSVGToPNGBlob(patchedSvgCode, transparentBackground, 2)
+      if (!svgCode) return null;
+      const blob = await renderSVGToPNGBlob(svgCode, transparentBackground, 2)
         .catch((error) => {
           console.warn('Error converting Mermaid SVG to PNG:', error);
           return null;
         });
       return !blob ? null : { blob, prefix: 'diagram' };
     },
-  }), [patchedSvgCode]);
+  }), [svgCode]);
 
 
   return (
