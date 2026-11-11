@@ -44,7 +44,16 @@ export class AudioLivePlayer {
     this.mediaSource.addEventListener('error', this.onMediaSourceError);
     this.mediaSource.addEventListener('sourceended', this.onMediaSourceEnded);
     this.mediaSource.addEventListener('sourceclose', this.onMediaSourceClosed);
+
+    // Release on natural end too: stop() is the only place that closes the AudioContext and revokes the
+    // MediaSource URL, and callers only call it to interrupt - otherwise each utterance leaks one of each
+    this.audioElement.addEventListener('ended', this.onAudioElementEnded, { once: true });
   }
+
+  private onAudioElementEnded = () => {
+    if (!this.isStopped)
+      this.stop();
+  };
 
   private onMediaSourceOpen = () => {
     if (this.isStopped) return; // Prevent race with stop()
