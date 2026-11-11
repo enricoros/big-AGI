@@ -73,11 +73,14 @@ export const useSnackbarsStore = create<SnackbarStore>()(
       }),
 
     animateCloseSnackbar: () => {
+      const closingKey = _get().activeMessage?.key;
       _set({
         activeSnackbarOpen: false,
       });
       setTimeout(() => {
-        _get().closeSnackbar();
+        // a second trigger within the animation must not close the snackbar promoted by the first
+        if (_get().activeMessage?.key === closingKey)
+          _get().closeSnackbar();
       }, SNACKBAR_ANIMATION_DURATION); // Delay needs to match match your CSS animation duration
     },
 
