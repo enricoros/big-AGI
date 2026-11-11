@@ -87,13 +87,13 @@ export const PromptVariableRegistry: Record<string, PVariableDefinition> = {
   '{{PreferTables}}': {
     scope: 'system',
     description: 'Instruct to prefer tabulated data',
-    replace: () => 'Data presentation: prefer tables (auto-columns)',
+    replace: () => 'Data presentation: prefer tables for comparisons and structured information when they are easier to read than prose or lists. In Markdown tables, use unpadded cells and --- separators.',
   },
 
   '{{RenderMermaid}}': {
     scope: 'system',
     description: 'Enable Mermaid diagram rendering',
-    replace: () => 'Mermaid rendering: Enabled for diagrams and pie charts and no other charts',
+    replace: () => 'Mermaid rendering: Enabled for diagrams and pie charts, but no other chart types. Use `mermaid` fenced code blocks.',
   },
 
   '{{RenderPlantUML}}': {
@@ -118,15 +118,7 @@ export const PromptVariableRegistry: Record<string, PVariableDefinition> = {
   '{{RenderChartJS}}': {
     scope: 'system',
     description: 'Enable ChartJS chart rendering',
-    replace: () => `
-When presenting data that would be better visualized as a chart, output a ChartJS configuration JSON in this format:
-\`\`\`chartjs
-{
-  // Valid and complete ChartJS configuration JSON (DO NOT USE FUNCTIONS)
-}
-\`\`\`
-Choose the most suitable chart type based on the data and context. Include only the JSON configuration, without any explanatory text. Ensure the JSON is valid and complete and can be parsed by ChartJS.
-`.trim(),
+    replace: () => 'Chart.js rendering: Enabled when a chart helps explain the data. For Chart.js output, choose a suitable chart type and put one complete configuration in each `chartjs` fenced code block. Inside each block, use strict JSON only (DO NOT USE FUNCTIONS; no comments or trailing commas). Put any explanation outside the block.',
   },
 
   // Model Capabilities
