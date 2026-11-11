@@ -9,7 +9,7 @@ import { geminiInteractionsUsageToTokenMetrics } from './gemini.interactions.par
 
 
 /**
- * [2026-06-26, Interactions BUG] Gemini Interactions (Deep Research) token-usage backfill transform.
+ * [2026-06-26, Interactions BUG] Gemini Interactions (Deep Research) token-usage backfill companion.
  * See Github #1143
  *
  * WHY: the LIVE `interaction.completed` SSE event is a deliberately reduced payload that OMITS the

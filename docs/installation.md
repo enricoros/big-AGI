@@ -56,7 +56,7 @@ the same steps 1 and 2 as for [local development](#local-development).
 ### Advanced Customization
 
 Want to pre-enable models, customize the interface, or deploy with username/password or alter code to your needs?
-Check out the [Customizations Guide](README.md) for detailed instructions.
+Check out the [Customizations Guide](customizations.md) for detailed instructions.
 
 ## ☁️ Cloud Deployment Options
 
