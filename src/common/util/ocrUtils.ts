@@ -60,8 +60,6 @@ export async function ocrImageWithProgress(
     },
   });
 
-  console.log('OCR', {page});
-
   return page.text;
 }
 
