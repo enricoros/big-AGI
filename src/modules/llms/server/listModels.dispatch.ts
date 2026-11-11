@@ -336,8 +336,8 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
             return {
               id: model.name,
               label,
-              created: Date.parse(model.modified_at) ?? undefined,
-              updated: Date.parse(model.modified_at) ?? undefined,
+              created: Math.round(Date.parse(model.modified_at) / 1000) || undefined, // seconds, as every other vendor
+              updated: Math.round(Date.parse(model.modified_at) / 1000) || undefined,
               description: description, // description: (model.license ? `License: ${model.license}. Info: ` : '') + model.modelfile || 'Model unknown',
               contextWindow,
               ...(contextWindow ? { maxCompletionTokens: Math.round(contextWindow / 2) } : {}),
