@@ -319,7 +319,7 @@ export function createOpenAIChatCompletionsChunkParser(ortFetchCountable = false
       for (const deltaToolCall of (delta.tool_calls || [])) {
 
         // validation
-        if (deltaToolCall.type !== undefined && deltaToolCall.type !== 'function'
+        if (deltaToolCall.type != null && deltaToolCall.type !== 'function'
           && deltaToolCall.type !== 'builtin_function' // [Moonshot, 2025-11-09] Support Moonshot-over-OpenAI builtin tools
         )
           throw new Error(`unexpected tool_call type: ${deltaToolCall.type}`);

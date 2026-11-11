@@ -775,9 +775,9 @@ export namespace OpenAIWire_API_Chat_Completions {
     type: z.enum([
       'function',
       'builtin_function', // [Moonshot, 2025-11-09] (S-parse) Support Moonshot-over-OpenAI builtin tools (builtin_function)
-    ]).optional(),
+    ]).nullish(), // [NVIDIA, 2026-11-11] null on the argument chunks (z-ai/glm-5.3-flash)
 
-    id: z.string().optional(), // id of the tool call - set likely only in the first chunk
+    id: z.string().nullish(), // id of the tool call - set likely only in the first chunk; null afterwards on Alibaba (qwen3.7-*, qwen3.8-max), Fireworks (minimax-m3), NVIDIA
 
     function: z.object({
       /**
