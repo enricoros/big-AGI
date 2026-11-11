@@ -42,13 +42,13 @@ export async function pdfToText(pdfBuffer: ArrayBuffer, onProgress: (progress: n
   for (let i = 1; i <= pdf.numPages; i++) {
 
     const page = await pdf.getPage(i);
-    onProgress(i / pdf.numPages);
+    onProgress(((i - 1) * 3 + 1) / (pdf.numPages * 3));
 
     const content = await page.getTextContent();
     const strings = content.items
       .filter(isTextItem) // Use the type guard to filter out items with the 'str' property
       .map((item) => (item as { str: string }).str); // Use type assertion to ensure that the item has the 'str' property
-    onProgress((i * 3 + 1) / (pdf.numPages * 3));
+    onProgress(((i - 1) * 3 + 2) / (pdf.numPages * 3));
 
     // textPages.push(strings.join(' ')); // Add the joined strings to the array
     // New way: join the strings to form a page text. treat empty lines as newlines, otherwise join with a space (or not if the line is just 1 space)
@@ -72,7 +72,7 @@ export async function pdfToText(pdfBuffer: ArrayBuffer, onProgress: (progress: n
       // otherwise just concatenate
       return acc + str;
     }, ''));
-    onProgress((i * 3 + 2) / (pdf.numPages * 3));
+    onProgress(((i - 1) * 3 + 3) / (pdf.numPages * 3));
   }
 
   onProgress(1);
@@ -119,14 +119,14 @@ export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: 
   for (let i = 1; i <= pdf.numPages; i++) {
 
     const page = await pdf.getPage(i);
-    onProgress(i / pdf.numPages);
+    onProgress(((i - 1) * 3 + 1) / (pdf.numPages * 3));
 
     const viewport = page.getViewport({ scale });
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d')!;
     canvas.height = viewport.height;
     canvas.width = viewport.width;
-    onProgress((i * 3 + 1) / (pdf.numPages * 3));
+    onProgress(((i - 1) * 3 + 2) / (pdf.numPages * 3));
 
     await page.render({
       canvasContext: context,
@@ -147,7 +147,7 @@ export async function pdfToImageDataURLs(pdfBuffer: ArrayBuffer, imageMimeType: 
     } catch (error) {
       console.warn(`pdfToImageDataURLs: failed to convert image to ${imageMimeType}.`, { error });
     }
-    onProgress((i * 3 + 2) / (pdf.numPages * 3));
+    onProgress(((i - 1) * 3 + 3) / (pdf.numPages * 3));
   }
 
   onProgress(1);
