@@ -23,7 +23,7 @@ export function RenderDangerousHtml(props: { html: string, sx?: SxProps }) {
   const [showHTML, setShowHTML] = React.useState(false);
 
   // remove the font* properties from sx
-  const sx: any = props.sx || {};
+  const sx: any = { ...props.sx }; // a copy: the caller's sx is memoized and shared with other blocks
   for (const key in sx)
     if (key.startsWith('font'))
       delete sx[key];
