@@ -193,10 +193,11 @@ export const llmOpenAIRouter = createTRPCRouter({
 
       // Determine if this is an edit request (any member of the GPT Image family supports edits)
       const isGptImageFamily = _isGptImageConfig(config);
-      const isEdit = !!editConfig?.inputImages?.length && isGptImageFamily;
+      const hasInputImages = !!editConfig?.inputImages?.length;
+      const isEdit = hasInputImages && isGptImageFamily;
 
       // validate input
-      if (isEdit && !isGptImageFamily)
+      if (hasInputImages && !isGptImageFamily)
         throw new TRPCError({ code: 'BAD_REQUEST', message: `Image editing is only supported for GPT Image models` });
 
 
