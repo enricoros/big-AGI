@@ -180,7 +180,8 @@ async function wikipedia(q: string): Promise<string> {
     `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&origin=*`,
   );
   const data = await response.json();
-  return data.query.search[0].snippet;
+  // no hits is an observation for the model, not a reason to fail the whole run
+  return data?.query?.search?.[0]?.snippet ?? 'No results found on Wikipedia.';
 }
 
 async function search(query: string): Promise<string> {
