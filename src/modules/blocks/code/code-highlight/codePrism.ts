@@ -49,11 +49,13 @@ export function inferCodeLanguage(blockTitle: string, code: string): string | nu
       return 'json'; // {{RenderChartJS}}
 
     // single word: assume it's the syntax highlight language
-    if (!blockTitle.includes('.'))
-      return hFileExtensionsMap.hasOwnProperty(blockTitle) ? hFileExtensionsMap[blockTitle] : blockTitle;
+    if (!blockTitle.includes('.')) {
+      const language = blockTitle.trim().toLowerCase(); // 'JSON', 'Python': language ids are lowercase
+      return hFileExtensionsMap.hasOwnProperty(language) ? hFileExtensionsMap[language] : language;
+    }
 
     // file extension: map back to a language
-    const extension = blockTitle.split('.').pop();
+    const extension = blockTitle.split('.').pop()?.toLowerCase();
     if (extension && hFileExtensionsMap.hasOwnProperty(extension))
       return hFileExtensionsMap[extension];
 
