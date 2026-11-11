@@ -54,11 +54,11 @@ export function useBrowserTranslationWarning() {
       variant='outlined' color='warning'
       startDecorator={<WarningRoundedIcon />}
       endDecorator={
-        <IconButton color='warning'>
-          <CloseRoundedIcon onClick={() => {
-            setHideWarning(true);
-            touch();
-          }} />
+        <IconButton color='warning' variant='soft' onClick={() => {
+          setHideWarning(true);
+          touch();
+        }}>
+          <CloseRoundedIcon />
         </IconButton>
       }
     >
