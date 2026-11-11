@@ -116,7 +116,6 @@ export const useLayoutOverlaysStore = create<OverlayState & OverlayActions>((set
 
       const overlay = state.overlays.find(o => o.id === id);
       if (!overlay) return state; // This shouldn't happen due to the check above, but TypeScript doesn't know that
-      console.log('reordering');
       return {
         overlays: [
           ...state.overlays.filter(o => o !== overlay),

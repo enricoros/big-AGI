@@ -168,7 +168,6 @@ export function LiteVideoEmbed(props: LiteVideoEmbedProps) {
         cursor: showFacade ? 'pointer' : undefined,
         position: 'relative',
         overflow: 'hidden',
-        background: 'red',
         ...(rounded && { borderRadius: 'md' }),
         // sizing: fill the parent when responsive (16:9 only if the parent height is auto),
         // otherwise explicit width/height in style (16:9 stands in for a missing height)
