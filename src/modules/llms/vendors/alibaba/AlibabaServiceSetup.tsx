@@ -61,7 +61,7 @@ export function AlibabaServiceSetup(props: { serviceId: DModelsServiceId }) {
     <FormInputKey
       autoCompleteId='alibaba-key' label='Alibaba Cloud API Key'
       rightLabel={needsUserKey
-        ? alibabaOaiKey && <Link level='body-sm' href={ALIBABA_REG_LINK} target='_blank'>get API key</Link>
+        ? (!alibabaOaiKey ? <Link level='body-sm' href={ALIBABA_REG_LINK} target='_blank'>get API key</Link> : undefined)
         : <AlreadySet overridden={!!alibabaOaiKey} />
       }
       value={alibabaOaiKey}
