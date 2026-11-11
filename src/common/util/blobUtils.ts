@@ -29,11 +29,12 @@ export function convert_Base64_To_UInt8Array(base64: string, debugCaller: string
       binaryString = atob(paddedBase64);
     }
 
-    // Convert binary string to Uint8Array - MODERNIZED from:
-    // const bytes = new Uint8Array(binaryString.length);
-    // for (let i = 0; i < binaryString.length; i++)
-    //   bytes[i] = binaryString.charCodeAt(i);
-    return Uint8Array.from(binaryString, char => char.charCodeAt(0));
+    // Convert binary string to Uint8Array - keep the loop: Uint8Array.from(binaryString, mapFn) runs the
+    // string iterator plus a callback per byte, measured ~35x slower (8 MB: 690 ms vs 18 ms)
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++)
+      bytes[i] = binaryString.charCodeAt(i);
+    return bytes;
 
   } catch (error) {
     Release.IsNodeDevBuild && console.warn(`[DEV] convert_Base64_To_UInt8Array: Conversion failed in (${debugCaller}):`, error);
