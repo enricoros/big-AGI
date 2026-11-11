@@ -9,6 +9,7 @@ import { useAgiFixupCode } from '~/modules/aifn/agicodefixup/useAgiFixupCode';
 
 import { isBrowser } from '~/common/util/pwaUtils';
 import { renderSVGToPNGBlob } from '~/common/util/imageUtils';
+import { sanitizeSvgMarkup } from '~/common/util/svgSanitizeUtils';
 import { themeCodeFontFamilyCss, themeFontFamilyCss } from '~/common/app.theme';
 
 import type { IRenderHandle } from './IRenderHandle';
@@ -94,7 +95,7 @@ function _initializeMermaid(mermaidAPI: MermaidAPI): MermaidAPI {
 
     // style configuration
     htmlLabels: false,
-    securityLevel: 'loose',
+    securityLevel: 'strict',
     theme: 'forest',
 
     // per-chart configuration
@@ -191,7 +192,8 @@ export const RenderCodeMermaid = React.forwardRef(function RenderCodeMermaid(pro
       try {
         const elementId = `mermaid-${Math.random().toString(36).substring(2, 9)}`;
         const { svg } = await mermaidAPI!.render(elementId, props.mermaidCode, mermaidContainerRef.current!);
-        return svg ? { success: true, svg: svg.replaceAll('&amp;quot;', '&quot;').replaceAll('&amp;amp;', '&amp;') } : { success: false, error: 'No SVG returned.' };
+        const safeSvg = !svg ? '' : sanitizeSvgMarkup(svg.replaceAll('&amp;quot;', '&quot;').replaceAll('&amp;amp;', '&amp;'), { allowExternalLinks: true });
+        return safeSvg ? { success: true, svg: safeSvg } : { success: false, error: 'No SVG returned.' };
       } catch (error: any) {
         return { success: false, error: error?.message ?? error?.toString() ?? 'unknown error' };
       }
@@ -270,15 +272,19 @@ export const RenderCodeMermaid = React.forwardRef(function RenderCodeMermaid(pro
           )}
         </Box>
       )}
+      {renderError ? (
+        <Typography level='body-sm' sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+          {renderError}
+        </Typography>
+      ) : !patchedSvgCode && (
+        <Typography level='body-sm'>
+          {data?.success === true ? 'Invalid SVG...' : 'Loading Diagram...'}
+        </Typography>
+      )}
       <Box
         component='div'
         ref={mermaidContainerRef}
-        dangerouslySetInnerHTML={{
-          __html:
-            renderError ? renderError
-              : data?.success === true ? patchedSvgCode || 'Invalid SVG...'
-                : 'Loading Diagram...',
-        }}
+        dangerouslySetInnerHTML={{ __html: (!renderError && patchedSvgCode) || '' }}
       />
     </Box>
   );
