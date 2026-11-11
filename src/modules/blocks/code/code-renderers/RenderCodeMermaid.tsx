@@ -24,9 +24,13 @@ import { useFittedSvgString } from './RenderCodeSVG';
  * and would slow down development for everyone.
  *
  * If you update this file, also make sure the interfaces/type definitions and initialization
- * options are updated accordingly.
+ * options are updated accordingly. Update the version and the integrity together.
+ *
+ * Mermaid 12 is not adopted: it declares Safari 17.4+ (above our floor), restyles every diagram (ELK layout, 'neo' look)
+ * and adds ~600 KB gzipped to this script.
  */
-const MERMAID_CDN_FILE: string = 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js';
+const MERMAID_CDN_FILE: string = 'https://cdn.jsdelivr.net/npm/mermaid@11.17.2/dist/mermaid.min.js';
+const MERMAID_CDN_INTEGRITY: string = 'sha384-EOXBFmc3gx5mb+vn0vPvvGqACToJD24hhacX5Yx+8NUUQrHIle/Qi5Bg9o3zKwW2';
 
 interface MermaidAPI {
   initialize: (config: any) => void;
@@ -62,6 +66,8 @@ function _loadMermaidFromCDN() {
     loadingStarted = true;
     const script = document.createElement('script');
     script.src = MERMAID_CDN_FILE;
+    script.integrity = MERMAID_CDN_INTEGRITY;
+    script.crossOrigin = 'anonymous';
     script.defer = true;
     script.onload = () => {
       useMermaidStore.setState({
@@ -95,8 +101,12 @@ function _initializeMermaid(mermaidAPI: MermaidAPI): MermaidAPI {
 
     // style configuration
     htmlLabels: false,
-    securityLevel: 'strict',
+    securityLevel: 'strict', // diagrams come from models and shared chats: sanitizes labels, drops javascript: links
+    // Mermaid's defaults plus htmlLabels: a diagram turning HTML labels back on gets foreignObject labels, which the sanitizer drops
+    secure: ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'suppressErrorRendering', 'maxEdges', 'htmlLabels'],
     theme: 'forest',
+    // 11.x leaves the label of [ ] ( ) (( )) {{ }} mindmap nodes at x=0 when htmlLabels is false; fixed in Mermaid 12.2
+    themeCSS: '.mindmap-node .label[transform^="translate(0,"] text { text-anchor: middle; }',
 
     // per-chart configuration
     mindmap: { useMaxWidth: false },
@@ -122,45 +132,6 @@ function useMermaidLoader() {
   }, [mermaidAPI]);
 
   return { mermaidAPI, isSuccess: !!mermaidAPI, hasStartedLoading: loadingStarted, error: loadingError };
-}
-
-function _cleanMermaidSVG(svgCode: string): string {
-
-  // parse the SVG string
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(svgCode, 'image/svg+xml');
-
-  // find foreignObject
-  // noinspection CssInvalidHtmlTagReference
-  const foreignObjects = doc.querySelectorAll('foreignObject');
-
-  // Replace each foreignObject with a text element
-  foreignObjects.forEach(fo => {
-    // get the text content
-    const div = fo?.querySelector('div');
-    const text = div?.textContent?.trim() || '';
-
-    // create new text element
-    const textElement = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
-
-    // copy relevant attributes from parent g element
-    const parentG = fo?.parentElement;
-    const transform = parentG?.getAttribute('transform');
-    if (transform)
-      textElement.setAttribute('transform', transform);
-
-    // set text properties
-    textElement.setAttribute('text-anchor', 'middle');
-    textElement.setAttribute('dominant-baseline', 'middle');
-    textElement.textContent = text;
-
-    // replace foreignObject's parent g with new text element
-    if (parentG?.parentElement)
-      parentG.parentElement.replaceChild(textElement, parentG);
-  });
-
-  // serialize back to string
-  return new XMLSerializer().serializeToString(doc);
 }
 
 
@@ -229,8 +200,7 @@ export const RenderCodeMermaid = React.forwardRef(function RenderCodeMermaid(pro
   React.useImperativeHandle(ref, () => ({
     renderAsPNGBlob: async (transparentBackground: boolean) => {
       if (!patchedSvgCode) return null;
-      const hotfixedMermaidCode = _cleanMermaidSVG(patchedSvgCode);
-      const blob = await renderSVGToPNGBlob(hotfixedMermaidCode, transparentBackground, 2)
+      const blob = await renderSVGToPNGBlob(patchedSvgCode, transparentBackground, 2)
         .catch((error) => {
           console.warn('Error converting Mermaid SVG to PNG:', error);
           return null;
