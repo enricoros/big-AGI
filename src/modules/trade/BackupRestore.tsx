@@ -279,6 +279,7 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
   };
 
   // process each database in sequence
+  const failures: string[] = [];
   for (const dbName in allDbData) {
     try {
       const dbStoresData = allDbData[dbName] as Record<string, { key: any; value: any }[]>;
@@ -363,6 +364,12 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
                 const errorMsg = target.error ? target.error.message : 'Unknown error';
                 logger.error(`Transaction error during restore of "${dbName}": ${errorMsg}`);
                 // Don't reject - we'll resolve at completion
+              };
+
+              // a failed request, a quota error or an exception aborts the transaction: 'complete' then never fires
+              transaction.onabort = () => {
+                db.close();
+                reject(new Error(`Transaction aborted during restore of "${dbName}": ${transaction.error?.message || 'unknown reason'}`));
               };
 
               transaction.oncomplete = () => {
@@ -482,9 +489,14 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
       // logger.log(`Completed restore process for: ${dbName}`);
     } catch (error) {
       logger.error(`Error restoring database "${dbName}": ${_getErrorText(error)}`);
+      failures.push(_getErrorText(error));
       // Continue with other databases even if one fails
     }
   }
+
+  // a failed database kept its old content (an aborted transaction rolls back): the caller must not report success
+  if (failures.length)
+    throw new Error(failures.join('; '));
 }
 
 // --- Validation and Utility Functions ---
