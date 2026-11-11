@@ -72,7 +72,11 @@ export function abortWithReason(controller: AbortController | undefined | null, 
  * navigate away, or an operation is intentionally torn down.
  */
 export function isAbortErrorLike(error: unknown): boolean {
-  if (!error) return false;
+  return _isAbortErrorLike(error, 0);
+}
+
+function _isAbortErrorLike(error: unknown, depth: number): boolean {
+  if (!error || depth > 8) return false; // bounded: cause chains can be cyclic
 
   if (typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError')
     return true;
@@ -81,7 +85,7 @@ export function isAbortErrorLike(error: unknown): boolean {
     if (error.name === 'AbortError')
       return true;
     if (error.cause)
-      return isAbortErrorLike(error.cause);
+      return _isAbortErrorLike(error.cause, depth + 1);
   }
 
   if (typeof error === 'object') {
@@ -89,9 +93,9 @@ export function isAbortErrorLike(error: unknown): boolean {
     if (maybeError.name === 'AbortError')
       return true;
     if (maybeError.error)
-      return isAbortErrorLike(maybeError.error);
+      return _isAbortErrorLike(maybeError.error, depth + 1);
     if (maybeError.cause)
-      return isAbortErrorLike(maybeError.cause);
+      return _isAbortErrorLike(maybeError.cause, depth + 1);
   }
 
   return false;
