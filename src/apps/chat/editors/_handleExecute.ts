@@ -32,7 +32,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
   //       1. all the callers need to pass a new array
   //       2. all the exit points need to call setMessages
   const _inplaceEditableHistory = [...initialHistory];
-  ConversationHandler.inlineUpdatePurposeInHistory(conversationId, _inplaceEditableHistory, chatLLMId || undefined);
+  ConversationHandler.inlineUpdatePurposeInHistory(conversationId, _inplaceEditableHistory);
 
   // Support for Prompt Caching - it's here rather than upstream to apply to user-initiated workflows
   ConversationHandler.inlineUpdateAutoPromptCaching(_inplaceEditableHistory);

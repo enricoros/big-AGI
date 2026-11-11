@@ -127,7 +127,7 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
 
 
 function _mixChatGeneratePrompt(prompt: string, raysReady: number, prevStepOutput: string): string {
-  return bareBonesPromptMixer(prompt, undefined, {
+  return bareBonesPromptMixer(prompt, {
     '{{N}}': raysReady.toString(),
     '{{PrevStepOutput}}': prevStepOutput,
   });

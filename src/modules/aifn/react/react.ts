@@ -110,7 +110,7 @@ export class Agent {
   }
 
   initialize(question: string, assistantLLMId: DLLMId, enableBrowse: boolean, log: (...data: any[]) => void = console.log): State {
-    const systemPrompt = bareBonesPromptMixer(reActPrompt(enableBrowse), assistantLLMId);
+    const systemPrompt = bareBonesPromptMixer(reActPrompt(enableBrowse));
     log('## Prepare Buffer');
     log('→ instruction [' + 1 + ']: "' + systemPrompt.slice(0, 86).replaceAll('\n', ' ') + ' ..."');
     return {

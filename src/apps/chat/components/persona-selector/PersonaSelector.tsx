@@ -22,7 +22,6 @@ import { lineHeightTextareaMd } from '~/common/app.theme';
 import { navigateToPersonas } from '~/common/app.routes';
 import { useChatStore } from '~/common/stores/chat/store-chats';
 import { useChipBoolean } from '~/common/components/useChipBoolean';
-import { useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
 import { useUIPreferencesStore } from '~/common/stores/store-ui';
 
 import { usePurposeStore } from './store-purposes';
@@ -145,8 +144,6 @@ export function PersonaSelector(props: {
     hiddenPurposeIDs: state.hiddenPurposeIDs,
     toggleHiddenPurposeId: state.toggleHiddenPurposeId,
   })));
-  const { domainModelId: chatLLMId } = useModelDomain('primaryChat');
-  const chatLLM = { id: chatLLMId ?? undefined }; // adapter for porting
 
 
   // derived state
@@ -400,14 +397,14 @@ export function PersonaSelector(props: {
                     <Button
                       variant='plain' color='neutral' size='sm'
                       endDecorator={<EditNoteIcon />}
-                      onClick={() => handleSwitchToCustom(bareBonesPromptMixer(selectedPurpose?.systemMessage || 'No system message available', chatLLM?.id))}
+                      onClick={() => handleSwitchToCustom(bareBonesPromptMixer(selectedPurpose?.systemMessage || 'No system message available'))}
                       sx={{ ml: 'auto', my: '-0.25rem' /* absorb the button padding */ }}
                     >
                       Custom
                     </Button>
                   </Box>
                   <Typography level='body-sm' sx={{ whiteSpace: 'break-spaces' }}>
-                    {bareBonesPromptMixer(selectedPurpose?.systemMessage || 'No system message available', chatLLM?.id)}
+                    {bareBonesPromptMixer(selectedPurpose?.systemMessage || 'No system message available')}
                   </Typography>
                   {!!selectedPurpose?.systemMessageNotes && (
                     <Alert sx={{ m: -1, mt: 1, p: 1 }}>

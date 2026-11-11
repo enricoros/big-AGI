@@ -52,7 +52,7 @@ export async function executeUserInputChecklistInstruction(
       clearState();
 
       // output prompt mixer
-      const outputPrompt = bareBonesPromptMixer(_i.outputPrompt, undefined, {
+      const outputPrompt = bareBonesPromptMixer(_i.outputPrompt, {
         '{{YesAnswers}}': selectedOptions.filter(o => o.selected).map(o => `- ${o.label.trim()}`).join('\n') || 'None',
         '{{NoAnswers}}': selectedOptions.filter(o => !o.selected).map(o => `- ${o.label.trim()}`).join('\n') || 'None',
       });

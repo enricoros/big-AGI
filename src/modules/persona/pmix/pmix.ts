@@ -1,6 +1,5 @@
 import { autoFollowUpUIMixin } from '~/modules/aifn/auto-chat-follow-ups/autoChatFollowUps';
 
-import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { BrowserLang, Is } from '~/common/util/pwaUtils';
 
 import { getChatAutoAI } from '../../../apps/chat/store-app-chat';
@@ -15,6 +14,13 @@ const REMOVE_ALL_LINE_IF_MISSING_LLM = true; // remove all lines if LLM is missi
 export function replacePromptVariables(template: string, context: PPromptMixerContext): string {
   let mixed = template;
 
+  // Remove deprecated variables: templates at rest may still carry them. First, so what the caller fills in is left as it is
+  // - {{LLM.Cutoff}} - deprecated on 2026-01-29; not used, maybe back to gpt-4, but then we could just update those prompts (whole line removal)
+  mixed = mixed.replaceAll(/.*\{\{LLM\.Cutoff}}.*\n/g, '');
+  // - {{LLM.LowRL:text}} - the token with its text; a line that held only the token goes too
+  mixed = mixed.replaceAll(/^[ \t]*\{\{LLM\.LowRL:[\s\S]*?}}[ \t]*\r?\n?/gm, '');
+  mixed = mixed.replaceAll(/\{\{LLM\.LowRL:[\s\S]*?}}/g, '');
+
   // auto-append Auto-Suggest features if enabled
   if (context.fixupAutoSuggestHTMLUI)
     mixed += (mixed.endsWith('\n') ? '' : '\n') + autoFollowUpUIMixin;
@@ -25,13 +31,6 @@ export function replacePromptVariables(template: string, context: PPromptMixerCo
   for (const [variable, definition] of Object.entries(PromptVariableRegistry)) {
 
     // validate presence of dependencies
-    if (definition.dependencies?.assistantLlmId && !context.assistantLlmId) {
-      if (REMOVE_ALL_LINE_IF_MISSING_LLM)
-        mixed = mixed.replaceAll(new RegExp(`.*${variable}.*\n?`, 'g'), '');
-      else
-        console.log(`[DEV] replacePromptVariables: skipping ${variable} due to missing LLM ID`);
-      continue;
-    }
     if (definition.dependencies?.lowHourPrecision && context.lowHourPrecision === undefined) {
       if (REMOVE_ALL_LINE_IF_MISSING_LLM)
         mixed = mixed.replaceAll(new RegExp(`.*${variable}.*\n?`, 'g'), '');
@@ -40,24 +39,8 @@ export function replacePromptVariables(template: string, context: PPromptMixerCo
       continue;
     }
 
-    // get the replacement text or the regex replacement pattern
+    // get the replacement text
     const replacementOrNull = definition.replace(context);
-
-    // handle whole-line removal
-    if (definition.wholeLine && replacementOrNull === null) {
-      mixed = mixed.replaceAll(new RegExp(`.*${variable}.*\n?`, 'g'), '');
-      continue;
-    }
-
-    // handle pattern-based replacement
-    if (definition.pattern) {
-      mixed = replacementOrNull === null
-        ? mixed.replaceAll(definition.pattern, '')
-        : mixed.replaceAll(definition.pattern, replacementOrNull);
-      continue;
-    }
-
-    // Simple replacement
     if (replacementOrNull !== null)
       mixed = mixed.replaceAll(variable, replacementOrNull);
   }
@@ -66,10 +49,6 @@ export function replacePromptVariables(template: string, context: PPromptMixerCo
   if (context.customFields)
     for (const [placeholder, replacement] of Object.entries(context.customFields))
       mixed = mixed.replaceAll(placeholder, replacement);
-
-  // Remove deprecated variables (whole line removal)
-  // - {{LLM.Cutoff}} - deprecated on 2026-01-29; not used, maybe back to gpt-4, but then we could just update those prompts
-  mixed = mixed.replaceAll(/.*\{\{LLM\.Cutoff}}.*\n/g, '');
 
   // At most leave 2 newlines in a row
   mixed = mixed.replace(/\n{3,}/g, '\n\n');
@@ -82,10 +61,9 @@ export function replacePromptVariables(template: string, context: PPromptMixerCo
  * This will be made a module and fully reactive in the future.
  * NOTE: think twice before changing the variables, as they can be in data at rest (can they?)
  */
-export function bareBonesPromptMixer(_template: string, assistantLlmId: DLLMId | undefined, customFields: Record<string, string> | undefined = undefined) {
+export function bareBonesPromptMixer(_template: string, customFields: Record<string, string> | undefined = undefined) {
   const { autoSuggestHTMLUI, /*autoSuggestDiagrams,*/ autoVndAntBreakpoints } = getChatAutoAI();
   return replacePromptVariables(_template, {
-    assistantLlmId,
     deviceIsDesktop: Is.Desktop,
     deviceBrowserLang: BrowserLang.orUS,
     lowHourPrecision: autoVndAntBreakpoints,

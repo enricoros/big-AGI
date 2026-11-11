@@ -10,7 +10,6 @@ import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 
 import type { DBlobAssetId } from '~/common/stores/blob/dblobs-portability';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
-import type { DLLMId } from '~/common/stores/llms/llms.types';
 import { ChatActions, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
 import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
@@ -52,7 +51,7 @@ export class ConversationHandler {
 
   // Conversation Management
 
-  static inlineUpdatePurposeInHistory(conversationId: DConversationId, history: DMessage[], assistantLlmId: DLLMId | undefined): void {
+  static inlineUpdatePurposeInHistory(conversationId: DConversationId, history: DMessage[]): void {
     const purposeId = getConversationSystemPurposeId(conversationId);
     // TODO: HACK: find the persona identiy separately from the "first system message"
     const systemMessageIndex = history.findIndex(m => m.role === 'system');
@@ -65,7 +64,7 @@ export class ConversationHandler {
     // Update the system message with the current persona's message, if formerly unset
     if (!systemMessage.updated && purposeId && SystemPurposes[purposeId]?.systemMessage) {
       systemMessage.purposeId = purposeId;
-      const systemMessageText = bareBonesPromptMixer(SystemPurposes[purposeId].systemMessage, assistantLlmId);
+      const systemMessageText = bareBonesPromptMixer(SystemPurposes[purposeId].systemMessage);
       systemMessage.fragments = [createTextContentFragment(systemMessageText)];
 
       // HACK: this is a special case for the 'Custom' persona, to set the message in stone (so it doesn't get updated when switching to another persona)

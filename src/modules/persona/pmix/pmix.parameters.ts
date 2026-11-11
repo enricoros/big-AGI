@@ -11,31 +11,22 @@
  * - The system is extensible for future object-variable replacement
  */
 
-import type { DLLMId } from '~/common/stores/llms/llms.types';
-
-
 /// Types
 
 interface PVariableDefinition {
 
-  scope: 'global' | 'system' | 'model';     // 'persona' | 'user';
+  scope: 'global' | 'system';     // 'persona' | 'user';
   description: string;
 
   dependencies?: {
-    assistantLlmId?: boolean;     // requires the LLM ID
     lowHourPrecision?: boolean;   // affects behavior with time
   };
-
-  // replacement behavior
-  wholeLine?: boolean;            // whether to remove the whole line if variable is undefined
-  pattern?: RegExp;               // for variables that need regex replacement (e.g., {{LLM.LowRL:...}})
 
   // function to generate the replacement text
   replace: (context: PPromptMixerContext) => string | null;
 }
 
 export interface PPromptMixerContext {
-  assistantLlmId?: DLLMId;
   deviceIsDesktop?: boolean;
   deviceBrowserLang?: string;
   lowHourPrecision?: boolean;
@@ -119,26 +110,6 @@ export const PromptVariableRegistry: Record<string, PVariableDefinition> = {
     scope: 'system',
     description: 'Enable ChartJS chart rendering',
     replace: () => 'Chart.js rendering: Enabled when a chart helps explain the data. For Chart.js output, choose a suitable chart type and put one complete configuration in each `chartjs` fenced code block. Inside each block, use strict JSON only (DO NOT USE FUNCTIONS; no comments or trailing commas). Put any explanation outside the block.',
-  },
-
-  // Model Capabilities
-
-  '{{LLM.LowRL:...}}': {
-    scope: 'model',
-    description: 'Conditional content for non-reasoning models',
-    dependencies: { assistantLlmId: true },
-    pattern: /{{LLM\.LowRL:(.*?)}}/gs,
-    replace: ({ assistantLlmId }) => {
-      const removeLineForDLLMIDs = [
-        '-claude-3-5', '-claude-3-opus',    // [Anthropic]
-        '-deepseek-chat',                   // [DeepSeek]
-        '-gemini-1.5',                      // [Google]
-        '-mistral-large',                   // [Mistral]
-        '-o1', '-gpt-4o', '-gpt-4-turbo',   // [OpenAI]
-      ];
-      const shallRemoveLine = !assistantLlmId ? false : removeLineForDLLMIDs.some(model => assistantLlmId.includes(model));
-      return shallRemoveLine ? null : '$1';
-    },
   },
 
 } as const;
