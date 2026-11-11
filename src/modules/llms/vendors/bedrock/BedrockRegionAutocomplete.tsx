@@ -37,7 +37,7 @@ const BEDROCK_REGIONS: BedrockRegion[] = [
   { id: 'ap-southeast-2', label: 'Sydney' },
 ];
 
-const DEFAULT_REGION = 'us-west-2';
+const DEFAULT_REGION = 'us-east-1'; // same default as bedrock.vendor.ts and the server (bedrock.access.ts)
 
 
 export function BedrockRegionAutocomplete(props: {
