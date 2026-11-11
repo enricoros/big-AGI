@@ -79,9 +79,9 @@ const geminiExpFree: ModelDescriptionSchema['chatPrice'] = {
 };
 
 
-// Pricing based on https://ai.google.dev/gemini-api/docs/pricing (November 5, 2026)
+// Pricing based on https://ai.google.dev/gemini-api/docs/pricing (November 10, 2026)
 
-// NOTE(2026-12-01): Gemini 4 Argon introductory pricing expires November 30, 2026 - flip gemini4ArgonPricing to the list prices in its comments
+// NOTE(2026-12-01): Gemini 4 Carbon and Argon introductory pricing expires November 30, 2026 - flip gemini4ArgonPricing to the list prices in its comments
 // NOTE(2027-01-01): 3.8/3.6 Flash, 3.8 Flash(-Lite) TTS and Robotics-ER 2 introductory pricing expires December 31, 2026 -
 // flip those consts to the list prices in their comments
 
@@ -256,11 +256,12 @@ const IF_30 = [...IF_25]; // Note: Gemini 3 Developer Guide recommends temperatu
 // that only the Nano Banana 2 family accepts (verified 2026-10-06, natively and through OpenRouter)
 export const GEM_IMAGE_AR_NO_EXTREMES: string[] = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9', '21:9'];
 
-// Gemini Thinking Control (as of 2026-10-21):
+// Gemini Thinking Control (as of 2026-11-10):
 // - Gemini 3+ models use `thinkingLevel` (llmVndGemEffort) - NOT thinkingBudget.
-//   Levels are per-model (docs thinking page table): 4 Argon + 3.8/3.7 Flash=['low','medium','high'] (default 'medium'; 'minimal' 400s),
+//   Levels are per-model (docs thinking page table): 4 Carbon/Argon + 3.8/3.7 Flash=['low','medium','high'] (default 'medium'; 'minimal' 400s),
 //   3.6/3.5 Flash + 3.5 Flash-Lite=['minimal','low','medium','high'] (Flash default 'medium'), 3.1 Pro/3 Pro=['low','medium','high'] (default 'high').
 //   Pro does not support disabling thinking. Flash's 'minimal' does not guarantee thinking is off.
+//   4 Carbon/Argon also pass 'xhigh' and 'max' through enum validation: undocumented, and they think like the default level, below 'high' - do NOT expose.
 // - Gemini 2.5 models use `thinkingBudget` (llmVndGeminiThinkingBudget) - NOT thinkingLevel.
 //   Budget=0 disables thinking (Flash/Flash-Lite only; Pro cannot disable). Undefined = auto.
 // Note: thinkingBudget is ACCEPTED on-wire by Gemini 3 models (3.6/3.7 verified 2026-08-13, 3.8 on 2026-09-02; 3.6 still 400'd it on
@@ -286,6 +287,24 @@ type _GeminiModelDef = {
 const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
 
   /// Generation 4
+
+  // Gemini 4 Carbon (Stable) - Released November 10, 2026; the most capable Gemini 4 - Argon is the faster sibling, spending fewer tokens per turn
+  // API surface and price card identical to Argon's (below): same thinking levels, tools, output and caching limits
+  {
+    id: 'models/gemini-4-carbon',
+    labelOverride: 'Gemini 4 Carbon',
+    pubDate: '20261110',
+    chatPrice: gemini4ArgonPricing, // same card as Argon, introductory through 2026-11-30
+    interfaces: IF_30,
+    parameterSpecs: [
+      { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high'] }, // no 'minimal' (live 400); default 'medium' per docs
+      { paramId: 'llmVndGeminiMediaResolution' },
+      { paramId: 'llmVndGeminiCodeExecution' },
+      { paramId: 'llmVndGeminiGoogleSearch' },
+      { paramId: 'llmVndGeminiUrlContext' },
+    ],
+    benchmark: { cbaElo: 1526 }, // gemini-4-carbon-high (LMArena 2026-11-09, preliminary, CI +/-10)
+  },
 
   // Gemini 4 Argon (Stable) - Announced September 30, 2026 (Fairwind-gated); API GA October 13, 2026
   // Verified live 2026-10-21: thinkingLevel ['low','medium','high'] ('minimal' 400s; default 'medium' per docs); thinkingBudget
@@ -1192,6 +1211,7 @@ export function geminiFilterModels(geminiModel: GeminiWire_API_Models_List.Model
 
 const _sortOderIdPrefix: string[] = [
   // Gemini 4 family above everything (both id dialects)
+  'models/gemini-4-carbon',
   'models/gemini-4-argon',
   'models/gemini-4-',
   'models/gemini-4.',
