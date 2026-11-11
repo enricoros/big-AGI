@@ -336,7 +336,7 @@ export function createOpenAIChatCompletionsChunkParser(ortFetchCountable = false
             },
           };
           pt.startFunctionCallInvocation(created.id, created.function.name, 'incr_str', created.function.arguments);
-          break;
+          continue; // not 'break': a chunk can carry several calls (Mistral, Cerebras and NVIDIA send parallel calls whole, in one chunk)
         }
 
         // Updating arguments
