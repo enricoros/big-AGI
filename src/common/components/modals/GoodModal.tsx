@@ -120,6 +120,11 @@ export function GoodModal(props: {
     dragFromDialogRef.current = true;
   }, []);
 
+  // a press released inside the dialog is a plain click, not a drag onto the backdrop
+  const handleMouseUpWithinDialog = React.useCallback(() => {
+    dragFromDialogRef.current = false;
+  }, []);
+
   const handleOnClose = React.useCallback((event: React.BaseSyntheticEvent, reason: 'backdropClick' | 'escapeKeyDown' | 'closeClick') => {
     // ignore clicks on the backdrop that started from within the dialog
     const ignoreDragOnBackdrop = reason === 'backdropClick' && (dragFromDialogRef.current || !!props.disableBackdropClose);
@@ -145,6 +150,7 @@ export function GoodModal(props: {
           invertedColors={props.themedColor ? true : undefined}
           className={props.animateEnter ? 'agi-animate-enter' : ''}
           onMouseDown={handleMouseDownWithinDialog /* to fix the Backdrop drag-closes issue */}
+          onMouseUp={handleMouseUpWithinDialog}
           sx={dialogSx}
         >
 
