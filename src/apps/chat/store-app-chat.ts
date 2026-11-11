@@ -336,7 +336,7 @@ export const useChatShowToolbarNavigation = (): boolean =>
   useAppChatStore(state => state.showToolbarNavigation);
 
 export function useChatStorageWarning(): [boolean, () => void] {
-  return useAppChatStore(useShallow(state => [state.storageWarningDismissed, state.dismissStorageWarning]));
+  return useAppChatStore(useShallow(state => [state.storageWarningDismissed || Is.Automated, state.dismissStorageWarning]));
 }
 
 /** Off by default. Auto: first user message and final message. All: every user/assistant message. */

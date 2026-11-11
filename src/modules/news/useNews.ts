@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { SiteDocSlug } from '~/common/gen/com.site.docs.slug';
 import { BaseProduct, Release } from '~/common/app.release';
-import { runWhenIdle } from '~/common/util/pwaUtils';
+import { Is, runWhenIdle } from '~/common/util/pwaUtils';
 
 import type { NewsAnnouncement } from './news.feed';
 import { NewsConfig } from './news.config';
@@ -121,7 +121,7 @@ export function useNews(immediate: boolean) {
   // external state
   const { off, tier, channel } = useNewsAudience();
   const bootGateOpen = useNewsBootGate();
-  const { items, isError, hasMore, loadMore, isLoadingMore } = useNewsFeed(!off && (immediate || bootGateOpen), tier, channel);
+  const { items, isError, hasMore, loadMore, isLoadingMore } = useNewsFeed(!off && (immediate || (bootGateOpen && !Is.Automated)), tier, channel);
   const { changelogMark, announcementsSince, announcementIds } = useNewsSeenStore(useShallow(state => ({
     changelogMark: state.changelog,
     announcementsSince: state.announcementsSince,

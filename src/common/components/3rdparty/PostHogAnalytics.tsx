@@ -3,7 +3,7 @@ import type { PostHog, Properties } from 'posthog-js';
 
 import { isAbortErrorLike } from '~/common/util/abortUtils';
 import { isBenignDomMutationError } from '~/common/util/errorUtils';
-import { isBrowser } from '~/common/util/pwaUtils';
+import { Is, isBrowser } from '~/common/util/pwaUtils';
 import { Release } from '~/common/app.release';
 
 
@@ -152,7 +152,7 @@ export function OptionalPostHogAnalytics() {
   // [effect] PostHog > Initialize (if on) - the effect avoids hydration issues
   React.useEffect(() => {
 
-    if (!hasPostHogAnalytics || !isBrowser || _posthog !== undefined) return;
+    if (!hasPostHogAnalytics || !isBrowser || Is.Automated || _posthog !== undefined) return;
     _posthog = null;
 
     // do not proceed with user opt-out

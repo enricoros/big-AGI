@@ -122,7 +122,7 @@ export function OptimaLayout(props: { suspendAutoModelsSetup?: boolean, children
     {Is.Desktop && <GlobalDragOverlay />}
 
     {/* Overlay Modals */}
-    <Modals suspendAutoModelsSetup={props.suspendAutoModelsSetup} />
+    <Modals suspendAutoModelsSetup={props.suspendAutoModelsSetup || Is.Automated} />
 
     {/* Shared Clipboard History */}
     {supportsClip && <ScratchClip />}

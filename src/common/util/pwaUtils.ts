@@ -38,6 +38,8 @@ export const Is = {
     // the 413 "edge network" limit) on self-hosted deployments sitting behind nginx/other reverse proxies.
     VercelFromFrontend: (process.env.NEXT_PUBLIC_DEPLOYMENT_TYPE ?? '').startsWith('vercel'),
   },
+  // first-run UI, banners, analytics and news fetches step aside (see _isAutomated)
+  Automated: _isAutomated(),
 } as const;
 
 
@@ -51,6 +53,25 @@ export const BrowserLang = {
   },
 } as const;
 
+
+/**
+ * Dev builds only (production folds this to false): the page is driven by automation - WebDriver/CDP sets
+ * navigator.webdriver (Playwright, Puppeteer, Selenium, headless Chrome) - or the URL says so: ?automation=1
+ * forces it on (e.g. an extension-driven browser), ?automation=0 off (a test of the first-run UI), for the tab.
+ */
+function _isAutomated(): boolean {
+  if (process.env.NODE_ENV !== 'development' || !isBrowser) return false;
+  try {
+    const param = new URLSearchParams(window.location.search).get('automation');
+    if (param === '1' || param === '0') sessionStorage.setItem('app-automation', param);
+    const forced = sessionStorage.getItem('app-automation');
+    if (forced) return forced === '1';
+  } catch {
+    // storage unavailable: the browser signal decides
+  }
+  // noinspection PointlessBooleanExpressionJS
+  return navigator.webdriver === true;
+}
 
 /**
  * Returns 'true' if the application is being executed as a 'PWA' (e.g., installed, stand-alone)
