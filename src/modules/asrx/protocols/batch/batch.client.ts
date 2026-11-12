@@ -20,7 +20,7 @@ import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 import type { ASRxBatchResult, ASRxProfileSelector, ASRxTranscribeBatchOptions, DASRxEngineAny, DASRxProfileAny } from '../../asrx.types';
 import type { ASRxAccess } from './batch.access';
 import { ASRX_DEBUG } from '../../asrx.config';
-import { asrxAreCredentialsValid, asrxFindEngineById, asrxFindGlobalEngine, asrxFindValidEngineByType } from '../../store-module-asrx';
+import { asrxAreCredentialsValid, asrxEngineFeatureSupported, asrxFindEngineById, asrxFindGlobalEngine, asrxFindValidEngineByType } from '../../store-module-asrx';
 
 
 // --- CSF: cached dynamic import for client-side fetch, unbundled ---
@@ -60,8 +60,8 @@ export async function asrxTranscribeBatch(
   if (options?.topicsHint !== undefined && effectiveEngine.vendorType === 'deepgram')
     effectiveEngine = { ...effectiveEngine, profile: { ...effectiveEngine.profile, topics: options.topicsHint } };
 
-  // 2c. Caller speaker-labels hint wins over the profile policy (every vendor has the switch)
-  if (options?.diarizeHint !== undefined)
+  // 2c. Caller speaker-labels hint wins over the profile policy - only where the capability exists (AssemblyAI has no switch)
+  if (options?.diarizeHint !== undefined && asrxEngineFeatureSupported(effectiveEngine, 'diarize'))
     effectiveEngine = { ...effectiveEngine, profile: { ...effectiveEngine.profile, diarize: options.diarizeHint } } as DASRxEngineAny;
 
   // 3. Build wire access from credentials (dereferences 'llms-service')
@@ -162,6 +162,13 @@ function _buildBatchWireAccess(engine: DASRxEngineAny): ASRxAccess | null {
 
     case 'api-key':
       switch (engine.vendorType) {
+        case 'assemblyai':
+          return {
+            dialect: 'assemblyai',
+            apiKey: c.apiKey,
+            ...(c.apiHost ? { apiHost: c.apiHost } : {}),
+          };
+
         case 'deepgram':
           return {
             dialect: 'deepgram',
@@ -189,7 +196,7 @@ function _buildBatchWireAccess(engine: DASRxEngineAny): ASRxAccess | null {
       }
 
     case 'llms-service': {
-      // Deepgram never links (credentials forced api-key by _TypeMap)
+      // AssemblyAI and Deepgram never link (credentials forced api-key by _TypeMap)
       const service = findModelsServiceOrNull(c.serviceId);
       if (!service) return null;
       switch (engine.vendorType) {

@@ -8,7 +8,7 @@ import type { ASRX_MODELS } from './asrx.config';
 
 // ASRx Vendor Types (supported ASR / transcription providers)
 
-export type DASRxVendorType = 'deepgram' | 'gemini' | 'openai';
+export type DASRxVendorType = 'assemblyai' | 'deepgram' | 'gemini' | 'openai';
 
 
 // ASRx Engines - instances of ASRx Vendor Types - persisted in store-module-asrx
@@ -33,6 +33,7 @@ export type DASRxEngineId = string; // agiUuidV4('asrx.engine.instance')
 
 // helper for mapping credentials and profile types to the engine type
 interface _TypeMap extends Record<DASRxVendorType, { profile: unknown; credentials: unknown }> {
+  'assemblyai': { profile: DProfileAssemblyAI; credentials: DCredentialsApiKey };
   'deepgram': { profile: DProfileDeepgram; credentials: DCredentialsApiKey };
   'gemini': { profile: DProfileGemini; credentials: DCredentialsLLMSService | DCredentialsApiKey };
   'openai': { profile: DProfileOpenAI; credentials: DCredentialsLLMSService | DCredentialsApiKey };
@@ -45,6 +46,17 @@ interface _TypeMap extends Record<DASRxVendorType, { profile: unknown; credentia
 export type DASRxProfileAny = { [TVt in DASRxVendorType]: DASRxProfile<TVt> }[DASRxVendorType];
 
 export type DASRxProfile<TVt extends DASRxVendorType> = _TypeMap[TVt]['profile'];
+
+export interface DProfileAssemblyAI {
+  dialect: 'assemblyai';
+  // no asrModel: the Dictation API has no model parameter (Universal-3.6 Pro, vendor-rolled)
+  mode?: 'smart' | 'verbatim'; // smart: the rewrite (filler removed, self-corrections resolved), falling back to the transcript when it fails; verbatim: the transcript (the rewrite still runs and bills)
+  rewriteMode?: 'fast' | 'smart'; // rewrite_mode: smart follows detailed instructions, at higher latency (undefined = fast)
+  language?: string;       // ISO-639-1 (plus 'yue'), comma-separated list allowed -> language_codes[] (undefined = no steering; 32 codes, others are dropped: the API 400s on them)
+  prompt?: string;         // stt_prompt: a description of the situation ('a doctor dictating a visit note'), not an instruction; 6000 chars
+  instruction?: string;    // llm_instruction: replaces the default cleanup task (smart mode only)
+  keywords?: string[];     // user dictionary -> keyterms_prompt wire param (vendor cap 100 terms, 8000 chars total)
+}
 
 export interface DProfileDeepgram {
   dialect: 'deepgram';

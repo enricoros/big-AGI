@@ -5,6 +5,10 @@ export const ASRX_DEBUG = false;
 // default profile parameters for each vendor
 export const ASRX_DEFAULTS = {
 
+  // AssemblyAI - Dictation API (2026-09): one request, verbatim transcript + LLM rewrite; 80 ms to 20 min, 256 MB
+  // region pins: dictation.us.assemblyai.com, dictation.eu.assemblyai.com (same paths, host only)
+  ASSEMBLYAI_HOST: 'https://dictation.assemblyai.com',
+
   // Deepgram - nova-3 is current flagship, multi language auto-detects 10+ common languages
   DEEPGRAM_MODEL: 'nova-3',
   DEEPGRAM_LANGUAGE: 'multi',

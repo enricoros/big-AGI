@@ -26,7 +26,7 @@ export interface IASRxVendor<TVt extends DASRxVendorType> {
   readonly vendorType: TVt;
   readonly name: string;
   readonly protocols: ReadonlySet<ASRxProtocol>;
-  readonly priority: number;  // display priority (lower = higher): deepgram=10, openai=20
+  readonly priority: number;  // display priority (lower = higher): deepgram=10, gemini=15, openai=20, assemblyai=25
 
   // auto-detection info: if a configured LLM service matches one of these vendor ids,
   // an auto-linked ASRx engine is created using that service's credentials

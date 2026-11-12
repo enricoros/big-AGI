@@ -294,7 +294,7 @@ export function asrxEngineFeatureSupported(engine: DASRxEngineAny, feature: ASRx
 export function asrxEngineFeatureOn(engine: DASRxEngineAny, feature: ASRxEngineFeature): boolean {
   switch (feature) {
     case 'diarize':
-      return !!engine.profile.diarize;
+      return 'diarize' in engine.profile && !!engine.profile.diarize;
     case 'topics':
       return 'topics' in engine.profile && !!engine.profile.topics;
   }

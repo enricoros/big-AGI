@@ -12,7 +12,13 @@
  */
 
 
-export type ASRxAccess = ASRxAccess_Deepgram | ASRxAccess_Gemini | ASRxAccess_OpenAI;
+export type ASRxAccess = ASRxAccess_AssemblyAI | ASRxAccess_Deepgram | ASRxAccess_Gemini | ASRxAccess_OpenAI;
+
+export interface ASRxAccess_AssemblyAI {
+  dialect: 'assemblyai';
+  apiKey: string;
+  apiHost?: string;   // defaults to dictation.assemblyai.com; dictation.us. / dictation.eu. pin a data zone
+}
 
 export interface ASRxAccess_Deepgram {
   dialect: 'deepgram';

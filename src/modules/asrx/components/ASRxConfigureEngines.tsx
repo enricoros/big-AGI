@@ -12,6 +12,7 @@ import * as React from 'react';
 
 import { Box, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 // import AutoModeIcon from '@mui/icons-material/AutoMode';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import GraphicEqRoundedIcon from '@mui/icons-material/GraphicEqRounded';
 import KeyIcon from '@mui/icons-material/Key';
 import LinkIcon from '@mui/icons-material/Link';
@@ -45,6 +46,11 @@ const VENDOR_INFO: { [key in DASRxVendorType]: { label: string; description: str
     label: 'OpenAI',
     description: 'GPT Transcribe / Whisper',
     icon: OpenAIIcon,
+  },
+  assemblyai: {
+    label: 'AssemblyAI',
+    description: 'Dictation, cleaned-up text',
+    icon: AutoFixHighIcon,
   },
 } as const;
 

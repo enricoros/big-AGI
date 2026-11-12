@@ -31,6 +31,7 @@ import type { ASRxAccess_OpenAI } from './batch.access';
 import type { ASRxCoreTranscribeResult, TranscribeBackendFn } from './transcribe.core';
 
 import { ASRX_DEBUG, ASRX_DEFAULTS, ASRX_MODELS } from '../../asrx.config';
+import { asrxAudioFileName } from './batch.audio';
 
 
 // Upstream OpenAI response - validated, not trusted; only the fields we read, unknown keys ignored
@@ -113,7 +114,7 @@ export const transcribeOpenAI: TranscribeBackendFn<ASRxAccess_OpenAI> = async (p
 
   // Build multipart body
   const formData = new FormData();
-  formData.append('file', new Blob([audio as BlobPart], { type: mimeType }), _fileNameForMime(mimeType));
+  formData.append('file', new Blob([audio as BlobPart], { type: mimeType }), asrxAudioFileName(mimeType));
   formData.append('model', model);
   if (isGptTranscribe)
     languages.forEach(code => formData.append('languages[]', code)); // never the singular form too: the pair 400s
@@ -220,17 +221,4 @@ function _promptWithKeywords(prompt: string | undefined, keywords: string[]): st
   if (!keywords.length) return prompt;
   const vocabulary = keywords.join(', ');
   return prompt ? `${prompt} - ${vocabulary}` : vocabulary;
-}
-
-
-// Helper - derive a filename with a useful extension from the MIME type (OpenAI infers format from filename)
-
-function _fileNameForMime(mimeType: string): string {
-  if (mimeType.includes('webm')) return 'audio.webm';
-  if (mimeType.includes('ogg')) return 'audio.ogg';
-  if (mimeType.includes('mp4') || mimeType.includes('m4a')) return 'audio.m4a';
-  if (mimeType.includes('mpeg') || mimeType.includes('mp3')) return 'audio.mp3';
-  if (mimeType.includes('wav')) return 'audio.wav';
-  if (mimeType.includes('flac')) return 'audio.flac';
-  return 'audio';
 }

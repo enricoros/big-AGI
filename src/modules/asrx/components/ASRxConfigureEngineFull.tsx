@@ -16,8 +16,9 @@ import { GoodModal } from '~/common/components/modals/GoodModal';
 import { modelPickOrAuto } from '~/common/util/modelPickUtils';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
-import type { DASRxEngine, DASRxEngineAny, DASRxVendorType, DCredentialsApiKey, DProfileDeepgram, DProfileGemini, DProfileOpenAI } from '../asrx.types';
+import type { DASRxEngine, DASRxEngineAny, DASRxVendorType, DCredentialsApiKey, DProfileAssemblyAI, DProfileDeepgram, DProfileGemini, DProfileOpenAI } from '../asrx.types';
 import { ASRX_DEFAULTS, ASRX_MODELS } from '../asrx.config';
+import { ASRxVendorAssemblyAI } from '../vendors/assemblyai.vendor';
 import { ASRxVendorDeepgram } from '../vendors/deepgram.vendor';
 import { ASRxVendorGemini } from '../vendors/gemini.vendor';
 import { ASRxVendorOpenAI } from '../vendors/openai.vendor';
@@ -75,6 +76,8 @@ export function ASRxConfigureEngineFull(props: {
             <GeminiParameters engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
           ) : engine.vendorType === 'openai' ? (
             <OpenAIParameters engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
+          ) : engine.vendorType === 'assemblyai' ? (
+            <AssemblyAIParameters engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
           ) : (
             <Typography level='body-sm' color='warning'>Unknown engine type {(engine as any)?.vendorType}</Typography>
           )}
@@ -175,9 +178,12 @@ function ManualCredentials({ engine, credentials, onUpdate, advancedOn }: {
 
   // const keyDescription = vendorType === 'deepgram' ? 'Deepgram' : 'OpenAI';
   const hostDefault =
-    vendorType === 'deepgram' ? 'https://api.deepgram.com'
-      : vendorType === 'gemini' ? 'https://generativelanguage.googleapis.com'
-        : 'https://api.openai.com';
+    vendorType === 'assemblyai' ? ASRX_DEFAULTS.ASSEMBLYAI_HOST
+      : vendorType === 'deepgram' ? ASRX_DEFAULTS.DEEPGRAM_HOST
+        : vendorType === 'gemini' ? 'https://generativelanguage.googleapis.com'
+          : ASRX_DEFAULTS.OPENAI_HOST;
+  // AssemblyAI pins a data zone by host (dictation.us. / dictation.eu.), the others take a proxy
+  const hostDescription = vendorType === 'assemblyai' ? 'Optional - .us. or .eu. zone' : 'Optional';
 
   return <>
 
@@ -196,7 +202,7 @@ function ManualCredentials({ engine, credentials, onUpdate, advancedOn }: {
       <FormTextField
         autoCompleteId={`asrx-${vendorType}-host`}
         title='API Host'
-        description='Optional'
+        description={hostDescription}
         value={credentials.apiHost ?? ''}
         onChange={text => handleCredentialsUpdate({ apiHost: text || undefined })}
         placeholder={hostDefault}
@@ -383,7 +389,7 @@ function DeepgramParameters({ engine, onUpdate }: {
 }
 
 
-/** Minimal one-term-per-line editor for the user dictionary (Deepgram keyterms; OpenAI/Gemini keywords). */
+/** Minimal one-term-per-line editor for the user dictionary (Deepgram keyterms; OpenAI/Gemini/AssemblyAI keywords). */
 function DictionaryModal(props: {
   terms: string[];
   onSave: (terms: string[]) => void;
@@ -613,6 +619,123 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
       show={advanced.on || keywordsCount > 0}
       terms={profile.keywords ?? []}
       description={keywordsApply ? undefined : 'Unused by this model'}
+      onSave={terms => handleProfileUpdate({ keywords: terms.length ? terms : undefined })}
+    />
+
+    <PanelFooter advanced={advanced} showReset={hasUserParameters} onReset={handleResetParameters} />
+
+  </>;
+}
+
+
+// --- AssemblyAI parameters ---
+
+// no model picker: the Dictation API has no model parameter; the one rate (AssemblyAI launch post, 2026-09)
+// covers transcript and rewrite, so both modes bill the same
+const _ASSEMBLYAI_RATE = '$0.62 per hour';
+
+function AssemblyAIParameters({ engine, onUpdate, isMobile }: {
+  engine: DASRxEngine<'assemblyai'>;
+  onUpdate: (updates: Partial<DASRxEngineAny>) => void;
+  isMobile: boolean;
+}) {
+
+  const { profile } = engine;
+  const isVerbatim = profile.mode === 'verbatim';
+
+  // advanced starts closed; features off their default stay visible individually below
+  const advanced = useToggleableBoolean();
+
+  const handleProfileUpdate = React.useCallback((patch: Partial<DProfileAssemblyAI>) => {
+    onUpdate({ profile: { ...profile, ...patch } });
+  }, [onUpdate, profile]);
+
+  // any parameter off its default (prompt, instruction and dictionary are data - reset preserves them)
+  const hasUserParameters = isVerbatim || !!profile.language || profile.rewriteMode === 'smart';
+
+  const handleResetParameters = React.useCallback(() => {
+    onUpdate({
+      profile: {
+        ...ASRxVendorAssemblyAI.getDefaultProfile(),
+        ...(profile.prompt && { prompt: profile.prompt }),
+        ...(profile.instruction && { instruction: profile.instruction }),
+        ...(profile.keywords?.length && { keywords: profile.keywords }),
+      },
+    });
+  }, [onUpdate, profile.instruction, profile.keywords, profile.prompt]);
+
+  const keywordsCount = profile.keywords?.length ?? 0;
+
+  return <>
+
+    {/* Mode - which of the two returned texts to use: the rewrite or the verbatim transcript */}
+    <FormChipControl<Exclude<DProfileAssemblyAI['mode'], undefined>>
+      title='Mode'
+      alignEnd
+      options={[
+        { value: 'smart', label: 'Smart', description: 'Dictation', tooltip: `Filler and false starts removed, self-corrections resolved, punctuated - ${_ASSEMBLYAI_RATE}` },
+        { value: 'verbatim', label: 'Verbatim', description: 'Literal', tooltip: `Word-for-word transcript (the rewrite still runs) - ${_ASSEMBLYAI_RATE}` },
+      ]}
+      value={profile.mode ?? 'smart'}
+      onChange={value => handleProfileUpdate({ mode: value })}
+    />
+
+    {/* Rewrite engine - smart mode only */}
+    {!isVerbatim && (advanced.on || profile.rewriteMode === 'smart') && (
+      <FormChipControl<Exclude<DProfileAssemblyAI['rewriteMode'], undefined>>
+        title='Rewrite'
+        alignEnd
+        options={[
+          { value: 'fast', label: 'Fast', description: 'Lowest latency', tooltip: 'Default cleanup and short instructions' },
+          { value: 'smart', label: 'Smart', description: 'Follows instructions', tooltip: 'Detailed formatting, e.g. spoken punctuation - slower' },
+        ]}
+        value={profile.rewriteMode ?? 'fast'}
+        onChange={value => handleProfileUpdate({ rewriteMode: value === 'fast' ? undefined : value })}
+      />
+    )}
+
+    {/* Language(s) */}
+    <FormTextField
+      autoCompleteId='asrx-assemblyai-language'
+      title='Language'
+      description={
+        <Link level='inherit' color='neutral' href='https://www.assemblyai.com/docs/dictation/language-selection' target='_blank' rel='noopener' sx={{ textDecoration: 'underline' }}>
+          {isMobile ? 'en, es, ..' : `'en' or 'en,es' - blank = auto`}
+        </Link>
+      }
+      placeholder='(auto-detect)'
+      value={profile.language ?? ''}
+      onChange={text => handleProfileUpdate({ language: text || undefined })}
+      inputSx={{ maxWidth: 210 }}
+    />
+
+    {/* Context - a situation, not an instruction */}
+    <FormTextField
+      autoCompleteId='asrx-assemblyai-prompt'
+      title='Context'
+      description={isMobile ? undefined : 'What the audio is'}
+      placeholder='Optional - e.g. a dev dictating a bug report'
+      value={profile.prompt ?? ''}
+      onChange={text => handleProfileUpdate({ prompt: text || undefined })}
+      inputSx={{ maxWidth: 210 }}
+    />
+
+    {/* Rewrite instruction - replaces the default cleanup; smart mode only */}
+    {!isVerbatim && (advanced.on || !!profile.instruction) && (
+      <FormTextField
+        autoCompleteId='asrx-assemblyai-instruction'
+        title='Instruction'
+        description={isMobile ? undefined : 'Replaces the default cleanup'}
+        placeholder='Optional - e.g. keep filler, fix punctuation only'
+        value={profile.instruction ?? ''}
+        onChange={text => handleProfileUpdate({ instruction: text || undefined })}
+        inputSx={{ maxWidth: 210 }}
+      />
+    )}
+
+    <PersonalDictionaryRow
+      show={advanced.on || keywordsCount > 0}
+      terms={profile.keywords ?? []}
       onSave={terms => handleProfileUpdate({ keywords: terms.length ? terms : undefined })}
     />
 
