@@ -10,7 +10,7 @@ import { describe, it } from 'node:test';
 import type { Immutable } from '../../../types/immutable.types';
 
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText } from '../chat.message';
-import { createDMessageDataInlineText, createDocAttachmentFragment, createTextContentFragment } from '../chat.fragments';
+import { createDMessageDataInlineText, createDMessageDataRefDBlob, createDocAttachmentFragment, createTextContentFragment, createZyncAssetReferenceAttachmentFragment, DMessageAttachmentFragment } from '../chat.fragments';
 
 import { historyApply_systemInstruction } from './history.apply.system-instruction';
 
@@ -25,7 +25,20 @@ const reply = (text: string, created: number, endedAt?: number): DMessage =>
 const instruction = (text: string) => [createTextContentFragment(text)];
 const textOf = (message: Immutable<DMessage> | null | undefined) => message ? messageFragmentsReduceText(message.fragments) : null;
 
-const doc = createDocAttachmentFragment('notes.txt', '', 'text/plain', createDMessageDataInlineText('facts'), 'ref-notes', 1);
+/** Makes any write into the value, at any depth, throw: what goes into the function is not to be changed by it. */
+function frozen<T>(value: T): T {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    Object.values(value).forEach(frozen);
+  }
+  return value;
+}
+
+const doc = frozen(createDocAttachmentFragment('notes.txt', '', 'text/plain', createDMessageDataInlineText('facts'), 'ref-notes', 1));
+const image = frozen(createZyncAssetReferenceAttachmentFragment('chart.png', '', 'asset-1', 'a chart', 'image', { pt: 'image_ref', dataRef: createDMessageDataRefDBlob('dblob-1', 'image/png', 1234), width: 640, height: 480 }));
+
+// what a persona does with its documents and images: they go into the system message as they are
+const attached = { mapAttachment: (fragment: Immutable<DMessageAttachmentFragment>) => fragment };
 
 
 describe('the system instruction of a chat', () => {
@@ -45,19 +58,21 @@ describe('the system instruction of a chat', () => {
     // six hours of sends, never an hour apart: the hour moved six times, the text did not
     let last = NOON;
     for (; last < NOON + 6 * HOUR; last += 50 * MINUTE) {
-      history = send([...history, reply('ok', last + MINUTE), user('more', last + 50 * MINUTE)]).nextHistory;
-      assert.equal(textOf(history[0]), textOf(first));
+      const sent = [...history, reply('ok', last + MINUTE), user('more', last + 50 * MINUTE)];
+      history = send(sent).nextHistory;
+      assert.equal(history, sent); // nothing rebuilt: the stored message, in the history that was sent
+      assert.equal(history[0], first);
     }
 
     // a reply that takes 50 minutes, answered 15 minutes after it ended: the prefix was in use 15 minutes ago
     history = send([...history, reply('long', last + MINUTE, last + 51 * MINUTE), user('and?', last + 66 * MINUTE)]).nextHistory;
-    assert.equal(textOf(history[0]), textOf(first));
+    assert.equal(history[0], first);
 
     // the reply to it is regenerated the next afternoon, and a message follows two minutes later: that reply answers
     // a request that carried the old date, so the date stays until a user message follows a pause
     const nextDay = new Date(2001, 2, 5, 15, 46).getTime();
     history = send([...history, reply('again', nextDay), user('thanks', nextDay + 2 * MINUTE)]).nextHistory;
-    assert.equal(textOf(history[0]), textOf(first));
+    assert.equal(history[0], first);
 
     // 61 minutes later, a user message: an idle hour passed, so the date is that message's. It is the same message
     // and the same text fragment, edited: ids stay
@@ -72,7 +87,64 @@ describe('the system instruction of a chat', () => {
 
     // and it holds from there
     history = send([...resumed.nextHistory, reply('welcome back', resumedAt + MINUTE), user('so', resumedAt + 30 * MINUTE)]).nextHistory;
-    assert.equal(textOf(history[0]), textOf(resumed.systemMessage));
+    assert.equal(history[0], resumed.systemMessage);
+  });
+
+  // A persona's documents and images go in as they are, the persona's own objects, and nothing is written into them.
+  // Attached again on the next send, they make the same message: the stored one stays.
+  it('keeps the stored message when the same documents and images are attached again', () => {
+    const withAttachments = frozen([createTextContentFragment('Be brief.'), doc, image]);
+    const first = historyApply_systemInstruction(frozen([user('hi', NOON)]), withAttachments, attached);
+    assert.equal(first.systemMessage?.fragments.length, 3);
+    assert.equal(first.systemMessage?.fragments[1], doc);
+    assert.equal(first.systemMessage?.fragments[2], image);
+
+    const again = historyApply_systemInstruction(frozen(first.nextHistory), withAttachments, attached);
+    assert.equal(again.modified, false);
+    assert.equal(again.nextHistory, first.nextHistory);
+    assert.equal(again.systemMessage, first.systemMessage);
+
+    // the same once the chat was read back from storage: the creators make no key that storage would drop
+    const reloaded: DMessage[] = frozen(JSON.parse(JSON.stringify(first.nextHistory)));
+    const afterReload = historyApply_systemInstruction(reloaded, withAttachments, attached);
+    assert.equal(afterReload.modified, false);
+    assert.equal(afterReload.systemMessage, reloaded[0]);
+  });
+
+  // what the model reads changed, or who the message is from: it is rebuilt, and what did not change stays as stored
+  it('rebuilds the message when its content changed, and only what changed', () => {
+    const text = createTextContentFragment('Be brief.');
+    // the chat as read back from storage: its fragments are objects of their own, equal to the persona's
+    const stored: DMessage[] = frozen(JSON.parse(JSON.stringify(historyApply_systemInstruction([user('hi', NOON)], [text, doc, image], attached).nextHistory)));
+    const rebuilt = (...args: Parameters<typeof historyApply_systemInstruction> extends [unknown, ...infer Rest] ? Rest : never) => {
+      const result = historyApply_systemInstruction(stored, ...args);
+      assert.equal(result.systemMessage?.id, stored[0].id);
+      return result;
+    };
+    const editedDoc = createDocAttachmentFragment('notes.txt', '', 'text/plain', createDMessageDataInlineText('other facts'), 'ref-notes', 2);
+    const otherImage = createZyncAssetReferenceAttachmentFragment('chart.png', '', 'asset-2', 'a chart', 'image');
+
+    assert.equal(rebuilt([createTextContentFragment('Be brief.'), doc, image], attached).modified, false);
+
+    // another text: the same text fragment, edited, and the attachments are the stored objects
+    const reworded = rebuilt([createTextContentFragment('Be thorough.'), doc, image], attached);
+    assert.equal(reworded.modified, true);
+    assert.match(textOf(reworded.systemMessage)!, /^Be thorough\./);
+    assert.equal(reworded.systemMessage?.fragments[0].fId, stored[0].fragments[0].fId);
+    assert.equal(reworded.systemMessage?.fragments[1], stored[0].fragments[1]);
+    assert.equal(reworded.systemMessage?.fragments[2], stored[0].fragments[2]);
+
+    assert.equal(rebuilt([text, editedDoc, image], attached).modified, true); // a document's content
+    assert.equal(rebuilt([text, doc, otherImage], attached).modified, true);  // another image
+    assert.equal(rebuilt([text, image, doc], attached).modified, true);       // the same attachments in another order: another prefix
+    assert.equal(rebuilt([text, doc], attached).modified, true);              // one attachment less
+
+    // a document put in front of two texts: every fragment still has an id of its own
+    const twoTexts = historyApply_systemInstruction([user('hi', NOON)], [createTextContentFragment('A'), createTextContentFragment('B')]);
+    const shifted = historyApply_systemInstruction(twoTexts.nextHistory, [doc, ...twoTexts.systemMessage!.fragments], attached);
+    assert.equal(new Set(shifted.systemMessage?.fragments.map(fragment => fragment.fId)).size, 3);
+
+    assert.equal(rebuilt([text, doc, image], { ...attached, stamp: systemMessage => { systemMessage.tokenCount = 7; } }).modified, true); // what the caller stamps, such as who the message is from: any message field counts
   });
 
   // `updated` on a system message means its text is the user's: no instruction applies to it any more
@@ -85,8 +157,8 @@ describe('the system instruction of a chat', () => {
     assert.equal(kept.systemMessage, edited);
 
     // text typed by the user before the chat started: frozen at its first render, as an edit would be
-    const frozen = historyApply_systemInstruction([user('hi', NOON)], instruction('Typed by the user.'), { freeze: true });
-    const later = historyApply_systemInstruction(frozen.nextHistory, instruction('Another persona.'));
+    const frozenByCaller = historyApply_systemInstruction([user('hi', NOON)], instruction('Typed by the user.'), { freeze: true });
+    const later = historyApply_systemInstruction(frozenByCaller.nextHistory, instruction('Another persona.'));
     assert.equal(later.modified, false);
     assert.equal(textOf(later.nextHistory[0]), 'Typed by the user.');
   });

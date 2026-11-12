@@ -8,6 +8,8 @@
  *   as an edit does
  * - attachments are the caller's call: what `mapAttachment` returns goes in as it is, no copy is made
  * - an empty instruction removes the system message; a caller that wants to keep it does not call
+ * - a fragment that says what the stored one says is the stored one; when the whole message does, the input history
+ *   and the stored message come back, with `modified: false`
  *
  * Nothing that comes in is changed. What goes out shares its objects with what came in (the stored message, the
  * caller's attachments), so a later step copies what it changes.
@@ -16,6 +18,7 @@
 import { promptMixer } from '~/modules/promptMixer/promptMixer';
 
 import type { Immutable } from '~/common/types/immutable.types';
+import { isDeepEqual } from '~/common/util/hooks/useDeep';
 
 import { createDMessageEmpty, DMessage } from '../chat.message';
 import { createTextContentFragment, DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isTextContentFragment } from '../chat.fragments';
@@ -58,7 +61,7 @@ export function historyApply_systemInstruction(
       : isAttachmentFragment(fragment) ? options?.mapAttachment?.(fragment) ?? null
         : null;
     if (built)
-      fragments.push(built);
+      fragments.push(stored && isDeepEqual(built, stored) ? stored : built); // unchanged: the stored object itself
   }
 
   if (!fragments.length)
@@ -70,6 +73,10 @@ export function historyApply_systemInstruction(
   options?.stamp?.(systemMessage);
   if (options?.freeze)
     systemMessage.updated = Date.now();
+
+  // nothing to store when the stored message already says the same: with the date holding still, that is most sends
+  if (former && isDeepEqual<unknown>(former, systemMessage))
+    return { nextHistory: inputHistory, systemMessage: former, modified: false };
 
   return { nextHistory: [systemMessage, ...chatMessages], systemMessage, modified: true };
 }
