@@ -3,7 +3,7 @@
  */
 
 import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
-import { bareBonesPromptMixer } from '~/modules/promptMixer/promptMixer';
+import { promptMixer } from '~/modules/promptMixer/promptMixer';
 import { callApiSearchGoogle } from '~/modules/google/search.client';
 import { callBrowseFetchPageOrThrow } from '~/modules/browse/browse.client';
 
@@ -110,7 +110,7 @@ export class Agent {
   }
 
   initialize(question: string, assistantLLMId: DLLMId, enableBrowse: boolean, log: (...data: any[]) => void = console.log): State {
-    const systemPrompt = bareBonesPromptMixer(reActPrompt(enableBrowse));
+    const systemPrompt = promptMixer.oneShot(reActPrompt(enableBrowse));
     log('## Prepare Buffer');
     log('→ instruction [' + 1 + ']: "' + systemPrompt.slice(0, 86).replaceAll('\n', ' ') + ' ..."');
     return {

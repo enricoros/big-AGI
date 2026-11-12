@@ -1,15 +1,22 @@
+/**
+ * Prompt Mixer: expands the {{Variables}} of instruction templates.
+ *
+ * `promptMixer` mixes; the variables, and the lists an editor offers, are in promptMixer.variables.ts.
+ * No import here pulls in UI code, so the module loads in a node test.
+ */
+
 import { BrowserLang, Is } from '~/common/util/pwaUtils';
 
 import { getChatAutoAI } from '../../apps/chat/store-app-chat';
 
-import { PPromptMixerContext, PromptVariableRegistry } from './promptMixer.variables';
+import { PromptMixerContext, PromptMixerVariables } from './promptMixer.variables';
 
 
 // configuration
 const REMOVE_ALL_LINE_IF_MISSING_LLM = true; // remove all lines if LLM is missing
 
 
-export function replacePromptVariables(template: string, context: PPromptMixerContext): string {
+function _render(template: string, context: PromptMixerContext): string {
   let mixed = template;
 
   // Remove deprecated variables: templates at rest may still carry them. First, so what the caller fills in is left as it is
@@ -20,14 +27,14 @@ export function replacePromptVariables(template: string, context: PPromptMixerCo
   mixed = mixed.replaceAll(/\{\{LLM\.LowRL:[\s\S]*?}}/g, '');
 
   // process each variable in the registry
-  for (const [variable, definition] of Object.entries(PromptVariableRegistry)) {
+  for (const [variable, definition] of Object.entries(PromptMixerVariables)) {
 
     // validate presence of dependencies
     if (definition.dependencies?.lowHourPrecision && context.lowHourPrecision === undefined) {
       if (REMOVE_ALL_LINE_IF_MISSING_LLM)
         mixed = mixed.replaceAll(new RegExp(`.*${variable}.*\n?`, 'g'), '');
       else
-        console.log(`[DEV] replacePromptVariables: skipping ${variable} due to missing lowHourPrecision`);
+        console.log(`[DEV] promptMixer: skipping ${variable} due to missing lowHourPrecision`);
       continue;
     }
 
@@ -49,16 +56,28 @@ export function replacePromptVariables(template: string, context: PPromptMixerCo
 }
 
 
-/**
- * This will be made a module and fully reactive in the future.
- * NOTE: think twice before changing the variables, as they can be in data at rest (can they?)
- */
-export function bareBonesPromptMixer(_template: string, customFields: Record<string, string> | undefined = undefined) {
-  const { autoVndAntBreakpoints } = getChatAutoAI();
-  return replacePromptVariables(_template, {
+// FUTURE: move from global state to contextual state
+function _mix(template: string, customFields?: Record<string, string>): string {
+  return _render(template, {
     deviceIsDesktop: Is.Desktop,
     deviceBrowserLang: BrowserLang.orUS,
-    lowHourPrecision: autoVndAntBreakpoints,
+    lowHourPrecision: getChatAutoAI().autoVndAntBreakpoints,
     customFields,
   });
 }
+
+
+export const promptMixer = {
+
+  chat: {
+    /** A chat's system instruction. */
+    mixInstruction: (template: string): string => _mix(template),
+  },
+
+  /**
+   * A prompt sent once: a ReAct run, a Beam merge, a preview.
+   * @param fields the caller's own placeholders, e.g. { '{{N}}': '3' }
+   */
+  oneShot: (template: string, fields?: Record<string, string>): string => _mix(template, fields),
+
+} as const;

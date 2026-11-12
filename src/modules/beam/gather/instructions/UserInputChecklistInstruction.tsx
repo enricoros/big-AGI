@@ -1,4 +1,4 @@
-import { bareBonesPromptMixer } from '~/modules/promptMixer/promptMixer';
+import { promptMixer } from '~/modules/promptMixer/promptMixer';
 
 import { abortWithReason } from '~/common/util/abortUtils';
 
@@ -52,7 +52,7 @@ export async function executeUserInputChecklistInstruction(
       clearState();
 
       // output prompt mixer
-      const outputPrompt = bareBonesPromptMixer(_i.outputPrompt, {
+      const outputPrompt = promptMixer.oneShot(_i.outputPrompt, {
         '{{YesAnswers}}': selectedOptions.filter(o => o.selected).map(o => `- ${o.label.trim()}`).join('\n') || 'None',
         '{{NoAnswers}}': selectedOptions.filter(o => !o.selected).map(o => `- ${o.label.trim()}`).join('\n') || 'None',
       });

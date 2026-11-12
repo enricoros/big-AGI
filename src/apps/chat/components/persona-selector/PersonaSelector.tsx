@@ -13,7 +13,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import { SystemPurposeData, SystemPurposeExample, SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { YouTubeURLInput } from '~/modules/youtube/YouTubeURLInput';
-import { bareBonesPromptMixer } from '~/modules/promptMixer/promptMixer';
+import { promptMixer } from '~/modules/promptMixer/promptMixer';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';
@@ -397,14 +397,14 @@ export function PersonaSelector(props: {
                     <Button
                       variant='plain' color='neutral' size='sm'
                       endDecorator={<EditNoteIcon />}
-                      onClick={() => handleSwitchToCustom(bareBonesPromptMixer(selectedPurpose?.systemMessage || 'No system message available'))}
+                      onClick={() => handleSwitchToCustom(promptMixer.oneShot(selectedPurpose?.systemMessage || 'No system message available'))}
                       sx={{ ml: 'auto', my: '-0.25rem' /* absorb the button padding */ }}
                     >
                       Custom
                     </Button>
                   </Box>
                   <Typography level='body-sm' sx={{ whiteSpace: 'break-spaces' }}>
-                    {bareBonesPromptMixer(selectedPurpose?.systemMessage || 'No system message available')}
+                    {promptMixer.oneShot(selectedPurpose?.systemMessage || 'No system message available')}
                   </Typography>
                   {!!selectedPurpose?.systemMessageNotes && (
                     <Alert sx={{ m: -1, mt: 1, p: 1 }}>

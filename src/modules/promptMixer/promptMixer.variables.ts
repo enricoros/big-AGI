@@ -1,19 +1,14 @@
 /**
- * Prompt Mixer Parameter Registry
+ * Prompt Mixer: the {{Variables}} a template can use.
  *
- * This module provides a type-safe parameter management system for prompt variables.
- * It handles variable definitions, dependencies, and runtime replacements while
- * maintaining strict type safety throughout the application.
+ * `promptMixer` (promptMixer.ts) expands them; an editor imports the lists it offers from here.
  *
- * Key concepts:
- * - Variables are categorized by their scope/type
- * - Each variable has a clear definition of its dependencies and replacement logic
- * - The system is extensible for future object-variable replacement
+ * NOTE: think twice before changing a variable: templates at rest carry them (stored personas, custom instructions).
  */
 
 /// Types
 
-interface PVariableDefinition {
+interface PromptMixerVariableDefinition {
 
   scope: 'global' | 'system';     // 'persona' | 'user';
   description: string;
@@ -23,22 +18,22 @@ interface PVariableDefinition {
   };
 
   // function to generate the replacement text
-  replace: (context: PPromptMixerContext) => string | null;
+  replace: (context: PromptMixerContext) => string | null;
 }
 
-export interface PPromptMixerContext {
+export interface PromptMixerContext {
   deviceIsDesktop?: boolean;
   deviceBrowserLang?: string;
   lowHourPrecision?: boolean;
-  customFields?: Record<string, string>;
+  customFields?: Record<string, string>;    // caller's own placeholders, e.g. { '{{N}}': '3' }
 }
 
-export type PPromptVariable = keyof typeof PromptVariableRegistry;
+export type PromptMixerVariableId = keyof typeof PromptMixerVariables;
 
 
 // Registry
 
-export const PromptVariableRegistry: Record<string, PVariableDefinition> = {
+export const PromptMixerVariables: Record<string, PromptMixerVariableDefinition> = {
 
   // Date and Time
 
@@ -111,4 +106,23 @@ export const PromptVariableRegistry: Record<string, PVariableDefinition> = {
     replace: () => 'Chart.js rendering: Enabled when a chart helps explain the data. For Chart.js output, choose a suitable chart type and put one complete configuration in each `chartjs` fenced code block. Inside each block, use strict JSON only (DO NOT USE FUNCTIONS; no comments or trailing commas). Put any explanation outside the block.',
   },
 
+} as const;
+
+
+// Mixins: the variables an editor offers as chips
+
+export const PromptMixerMixins: Record<'output' | 'variables', { id: PromptMixerVariableId, description: string }[]> = {
+  output: [
+    // Core Rendering
+    { id: '{{RenderMermaid}}', description: 'Mermaid Diagrams' },
+    { id: '{{RenderPlantUML}}', description: 'UML Diagrams' },
+    { id: '{{RenderHTML}}', description: 'Interactive HTML' },
+    { id: '{{RenderSVG}}', description: 'Vector Graphics' },
+    // Data Presentation
+    { id: '{{RenderChartJS}}', description: 'Interactive Charts' },
+    { id: '{{PreferTables}}', description: 'Prefer Tables' },
+  ],
+  variables: [
+    { id: '{{LocaleNow}}', description: 'Date and Time' },
+  ],
 } as const;

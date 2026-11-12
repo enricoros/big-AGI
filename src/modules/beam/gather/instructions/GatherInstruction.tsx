@@ -3,7 +3,7 @@ import * as React from 'react';
 import { Typography } from '@mui/joy';
 
 import { AixChatGenerateContent_DMessageGuts, aixChatGenerateContent_DMessage_FromConversation } from '~/modules/aix/client/aix.client';
-import { bareBonesPromptMixer } from '~/modules/promptMixer/promptMixer';
+import { promptMixer } from '~/modules/promptMixer/promptMixer';
 
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
@@ -127,7 +127,7 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
 
 
 function _mixChatGeneratePrompt(prompt: string, raysReady: number, prevStepOutput: string): string {
-  return bareBonesPromptMixer(prompt, {
+  return promptMixer.oneShot(prompt, {
     '{{N}}': raysReady.toString(),
     '{{PrevStepOutput}}': prevStepOutput,
   });
