@@ -41,13 +41,13 @@ function _render(template: string, context: PromptMixerContext): string {
     // get the replacement text
     const replacementOrNull = definition.replace(context);
     if (replacementOrNull !== null)
-      mixed = mixed.replaceAll(variable, replacementOrNull);
+      mixed = mixed.replaceAll(variable, () => replacementOrNull);
   }
 
-  // Handle custom fields
+  // Handle custom fields - replaced by a function, as a string would have its '$' sequences read as patterns
   if (context.customFields)
     for (const [placeholder, replacement] of Object.entries(context.customFields))
-      mixed = mixed.replaceAll(placeholder, replacement);
+      mixed = mixed.replaceAll(placeholder, () => replacement);
 
   // At most leave 2 newlines in a row
   mixed = mixed.replace(/\n{3,}/g, '\n\n');
