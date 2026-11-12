@@ -13,7 +13,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import { SystemPurposeData, SystemPurposeExample, SystemPurposeId, SystemPurposes } from '../../../../data';
 
 import { YouTubeURLInput } from '~/modules/youtube/YouTubeURLInput';
-import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
+import { bareBonesPromptMixer } from '~/modules/promptMixer/promptMixer';
 
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ExpanderControlledBox } from '~/common/components/ExpanderControlledBox';

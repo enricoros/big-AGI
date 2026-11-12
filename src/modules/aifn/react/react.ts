@@ -3,7 +3,7 @@
  */
 
 import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
-import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
+import { bareBonesPromptMixer } from '~/modules/promptMixer/promptMixer';
 import { callApiSearchGoogle } from '~/modules/google/search.client';
 import { callBrowseFetchPageOrThrow } from '~/modules/browse/browse.client';
 

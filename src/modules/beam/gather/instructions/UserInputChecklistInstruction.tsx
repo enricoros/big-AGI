@@ -1,4 +1,4 @@
-import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
+import { bareBonesPromptMixer } from '~/modules/promptMixer/promptMixer';
 
 import { abortWithReason } from '~/common/util/abortUtils';
 

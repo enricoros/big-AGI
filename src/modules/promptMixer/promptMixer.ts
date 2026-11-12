@@ -1,8 +1,8 @@
 import { BrowserLang, Is } from '~/common/util/pwaUtils';
 
-import { getChatAutoAI } from '../../../apps/chat/store-app-chat';
+import { getChatAutoAI } from '../../apps/chat/store-app-chat';
 
-import { PPromptMixerContext, PromptVariableRegistry } from './pmix.parameters';
+import { PPromptMixerContext, PromptVariableRegistry } from './promptMixer.variables';
 
 
 // configuration

@@ -1,6 +1,6 @@
 import type { StoreApi } from 'zustand';
 
-import { bareBonesPromptMixer } from '~/modules/persona/pmix/pmix';
+import { bareBonesPromptMixer } from '~/modules/promptMixer/promptMixer';
 
 import { SystemPurposes } from '../../data';
 
