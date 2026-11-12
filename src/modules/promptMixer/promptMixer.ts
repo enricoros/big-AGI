@@ -5,15 +5,12 @@
  * No import here pulls in UI code, so the module loads in a node test.
  */
 
-import { BrowserLang, Is } from '~/common/util/pwaUtils';
-
-import { getChatAutoAI } from '../../apps/chat/store-app-chat';
+import type { DMessage } from '~/common/stores/chat/chat.message';
+import type { Immutable } from '~/common/types/immutable.types';
+import { Is } from '~/common/util/pwaUtils';
 
 import { PromptMixerContext, PromptMixerVariables } from './promptMixer.variables';
-
-
-// configuration
-const REMOVE_ALL_LINE_IF_MISSING_LLM = true; // remove all lines if LLM is missing
+import { PROMPT_MIXER_CHAT_CLOCK, promptMixerClock_chatUserMessageAnchor } from './promptMixer.clock';
 
 
 function _render(template: string, context: PromptMixerContext): string {
@@ -28,17 +25,6 @@ function _render(template: string, context: PromptMixerContext): string {
 
   // process each variable in the registry
   for (const [variable, definition] of Object.entries(PromptMixerVariables)) {
-
-    // validate presence of dependencies
-    if (definition.dependencies?.lowHourPrecision && context.lowHourPrecision === undefined) {
-      if (REMOVE_ALL_LINE_IF_MISSING_LLM)
-        mixed = mixed.replaceAll(new RegExp(`.*${variable}.*\n?`, 'g'), '');
-      else
-        console.log(`[DEV] promptMixer: skipping ${variable} due to missing lowHourPrecision`);
-      continue;
-    }
-
-    // get the replacement text
     const replacementOrNull = definition.replace(context);
     if (replacementOrNull !== null)
       mixed = mixed.replaceAll(variable, () => replacementOrNull);
@@ -56,28 +42,28 @@ function _render(template: string, context: PromptMixerContext): string {
 }
 
 
-// FUTURE: move from global state to contextual state
-function _mix(template: string, customFields?: Record<string, string>): string {
-  return _render(template, {
-    deviceIsDesktop: Is.Desktop,
-    deviceBrowserLang: BrowserLang.orUS,
-    lowHourPrecision: getChatAutoAI().autoVndAntBreakpoints,
-    customFields,
-  });
-}
-
-
 export const promptMixer = {
 
   chat: {
-    /** A chat's system instruction. */
-    mixInstruction: (template: string): string => _mix(template),
+    /**
+     * A chat's system instruction. Date variables render the chat clock, so the text is the same on every send
+     * until the date rolls (promptMixer.clock.ts).
+     * @param messages the chat the instruction is for
+     */
+    mixInstruction: (template: string, messages: Immutable<DMessage[]>): string => _render(template, {
+      clock: promptMixerClock_chatUserMessageAnchor(messages, PROMPT_MIXER_CHAT_CLOCK) ?? Date.now(), // a chat with no message yet: now
+      deviceIsDesktop: Is.Desktop,
+    }),
   },
 
   /**
-   * A prompt sent once: a ReAct run, a Beam merge, a preview.
+   * A prompt sent once: a ReAct run, a Beam merge, a preview. Date variables render now.
    * @param fields the caller's own placeholders, e.g. { '{{N}}': '3' }
    */
-  oneShot: (template: string, fields?: Record<string, string>): string => _mix(template, fields),
+  oneShot: (template: string, fields?: Record<string, string>): string => _render(template, {
+    clock: Date.now(),
+    deviceIsDesktop: Is.Desktop,
+    customFields: fields,
+  }),
 
 } as const;

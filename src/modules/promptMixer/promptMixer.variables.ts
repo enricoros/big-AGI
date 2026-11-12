@@ -13,18 +13,17 @@ interface PromptMixerVariableDefinition {
   scope: 'global' | 'system';     // 'persona' | 'user';
   description: string;
 
-  dependencies?: {
-    lowHourPrecision?: boolean;   // affects behavior with time
-  };
-
   // function to generate the replacement text
   replace: (context: PromptMixerContext) => string | null;
 }
 
 export interface PromptMixerContext {
+  /**
+   * The instant the date variables render, in epoch ms. The variables never read the wall clock: a chat's instruction
+   * gets the chat clock, a prompt sent once gets now (promptMixer.clock.ts says why).
+   */
+  clock: number;
   deviceIsDesktop?: boolean;
-  deviceBrowserLang?: string;
-  lowHourPrecision?: boolean;
   customFields?: Record<string, string>;    // caller's own placeholders, e.g. { '{{N}}': '3' }
 }
 
@@ -40,30 +39,28 @@ export const PromptMixerVariables: Record<string, PromptMixerVariableDefinition>
   '{{Today}}': {
     scope: 'global',
     description: 'Current date in YYYY-MM-DD format',
-    replace: () => {
-      const today = new Date();
+    replace: ({ clock }) => {
+      const today = new Date(clock);
       return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     },
   },
 
-  // {{LocaleNow}} - enough information to get on the same page with the user
+  // {{LocaleNow}} - enough information to get on the same page with the user, e.g. 'Tue, Nov 10, 2026, 02 PM PST'.
+  // The language is fixed, so the text does not change with the browser's; the time zone is the device's.
   '{{LocaleNow}}': {
     scope: 'global',
-    description: 'Locale-aware date and time',
-    dependencies: { lowHourPrecision: true },
-    replace: ({ lowHourPrecision, deviceBrowserLang }) => {
-      const formatter = new Intl.DateTimeFormat(deviceBrowserLang, {
-        weekday: 'short', // Full name of the day of the week
-        year: 'numeric', // Numeric year
-        month: 'short', // Full name of the month
-        day: 'numeric', // Numeric day of the month
-        hour: '2-digit', // 2-digit hour
-        // NOTE: disable the minutes if we are using auto-breakpoints, as this will invalidate all every minute...
-        minute: lowHourPrecision ? undefined : '2-digit', // 2-digit minute
-        timeZoneName: 'short', // Short timezone name (e.g., GMT, CST)
-        hour12: true, // Use 12-hour time format; set to false for 24-hour format if preferred
+    description: 'Date, hour and time zone',
+    replace: ({ clock }) => {
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        timeZoneName: 'short', // e.g., GMT, CST
+        hour12: true,
       });
-      return formatter.format(new Date());
+      return formatter.format(new Date(clock));
     },
   },
 

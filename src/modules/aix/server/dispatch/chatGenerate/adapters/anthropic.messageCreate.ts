@@ -290,7 +290,7 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
 
   // [Anthropic, 2026-11-05, hypothesis: the 400 is documented, not reproduced - our key predates the cutoff] Haiku 5.x 'disabled' (or unset, with forced tools) and Sonnet 5.x 'between_tools' take no block_binding, yet replayed blocks
   // still face the prefix check: a 400 on accounts created on or after 2026-08-31 after any prefix change (routine here: the system prompt's
-  // hour tick, edits, tool changes). Strip earlier turns' thinking, the documented remedy; a tool loop in progress keeps its own, as required.
+  // date rolling after a pause, edits, tool changes). Strip earlier turns' thinking, the documented remedy; a tool loop in progress keeps its own, as required.
   if (payload.thinking?.type === 'between_tools' || (/claude-haiku-5/.test(model.id) && (payload.thinking?.type === 'disabled' || (!payload.thinking && areToolCallsRequired))))
     _stripThinkingBeforeCurrentTurn(chatMessages);
 

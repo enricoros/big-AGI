@@ -64,7 +64,7 @@ export class ConversationHandler {
     // Update the system message with the current persona's message, if formerly unset
     if (!systemMessage.updated && purposeId && SystemPurposes[purposeId]?.systemMessage) {
       systemMessage.purposeId = purposeId;
-      const systemMessageText = promptMixer.chat.mixInstruction(SystemPurposes[purposeId].systemMessage);
+      const systemMessageText = promptMixer.chat.mixInstruction(SystemPurposes[purposeId].systemMessage, history);
       systemMessage.fragments = [createTextContentFragment(systemMessageText)];
 
       // HACK: this is a special case for the 'Custom' persona, to set the message in stone (so it doesn't get updated when switching to another persona)

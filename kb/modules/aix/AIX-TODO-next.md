@@ -14,7 +14,7 @@ Inputs for planned AIX work other than error handling ([AIX-TODO-errors.md](AIX-
 - Forced call with hosted tools on: xAI and Gemini keep web search and code execution, so the model can satisfy the forced call with a hosted tool and skip ours; Anthropic, OpenAI and OpenRouter drop them. Needs a probe
 - Bedrock: Mantle uses the OpenAI dialect, so Kimi and DeepSeek get a forced call with thinking on, which the native dialects work around; a Claude 5.x model on Converse sends a forced call with no fallback. Needs a probe
 - Gemini: continuation support (`requires_continuation` on Interactions, the `CONTINUATION` finish reason on generateContent); both are only read today
-- Anthropic: the system prompt changes with the hour tick and resets preserved thinking; root fix parked
+- Anthropic: the date in the system prompt rolls after an idle hour (`PROMPT_MIXER_CHAT_CLOCK`) and that send drops the previous reply's reasoning. With reasoning kept from every reply, the API then drops the same older blocks on each later turn: not sending them again stops the notice with the cache intact (one Opus 5.5 chain, to confirm on more models)
 
 ## Responses
 

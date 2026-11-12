@@ -838,7 +838,7 @@ function _sendInputTransforms(pt: IParticleTransmitter, transforms: NonNullable<
   const droppedAll = new Set([...pathsByReason.values()].flat()); // every reason's drops: none of them is kept
   for (const [reason, paths] of pathsByReason) {
     // NOTE: Anthropic's 'prefix_binding_mismatch' fires identically for an edited/deleted message, a changed
-    // tool selection, or a changed system prompt (e.g. our own {{LocaleNow}} ticking to a new hour) - it does
+    // tool selection, or a changed system prompt (e.g. our own date rolling after a pause, PROMPT_MIXER_CHAT_CLOCK) - it does
     // NOT tell us which. Empirically verified live (2026-09-21): a pure tool toggle and a pure system-prompt
     // change both return this exact reason with zero message edits. Don't claim "History edited" here, it's
     // provably wrong in those cases - stay cause-neutral instead.
