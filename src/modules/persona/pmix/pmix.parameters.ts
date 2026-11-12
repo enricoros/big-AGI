@@ -30,7 +30,6 @@ export interface PPromptMixerContext {
   deviceIsDesktop?: boolean;
   deviceBrowserLang?: string;
   lowHourPrecision?: boolean;
-  fixupAutoSuggestHTMLUI?: boolean;
   customFields?: Record<string, string>;
 }
 

@@ -82,10 +82,6 @@ Analyze the following short exchange and call the function {{functionName}} with
 
 // Auto-HTML-UI
 
-const suggestUIFunctionName = 'generate_web_ui';
-
-export const autoFollowUpUIMixin = `Do not generate code, unless via the \`${suggestUIFunctionName}\` function call, IF DEFINED`;
-
 // noinspection HtmlRequiredTitleElement
 const uiTool = {
   sys: `You are a helpful AI assistant skilled in creating user interfaces. Analyze the conversation and user persona below to determine if an HTML user interface would complement or enhance the user's understanding.
@@ -111,7 +107,7 @@ Please follow closely the following requirements:
 - **Functional Requirements:** The UI must solve the user's problem, demonstrate a complete feature or concept, be visually impressive, and renderable in isolation.`,
   usr: 'Analyze the conversation and call {{functionName}} to evaluate UI relevance and generate HTML code if sufficiently useful.',
   fun: {
-    name: suggestUIFunctionName,
+    name: 'generate_web_ui',
     description: 'Renders a web UI when provided with a single concise HTML5 string (can include CSS and JS), if applicable and relevant.',
     inputSchema: z.object({ // zod-4
       possible_ui_requirements: z.string().describe('Brief (10 words) to medium length (40 words) requirements for the UI. Include main features, looks, and layout.'),

@@ -1,5 +1,3 @@
-import { autoFollowUpUIMixin } from '~/modules/aifn/auto-chat-follow-ups/autoChatFollowUps';
-
 import { BrowserLang, Is } from '~/common/util/pwaUtils';
 
 import { getChatAutoAI } from '../../../apps/chat/store-app-chat';
@@ -20,12 +18,6 @@ export function replacePromptVariables(template: string, context: PPromptMixerCo
   // - {{LLM.LowRL:text}} - the token with its text; a line that held only the token goes too
   mixed = mixed.replaceAll(/^[ \t]*\{\{LLM\.LowRL:[\s\S]*?}}[ \t]*\r?\n?/gm, '');
   mixed = mixed.replaceAll(/\{\{LLM\.LowRL:[\s\S]*?}}/g, '');
-
-  // auto-append Auto-Suggest features if enabled
-  if (context.fixupAutoSuggestHTMLUI)
-    mixed += (mixed.endsWith('\n') ? '' : '\n') + autoFollowUpUIMixin;
-  // if (context.autoSuggestDiagrams)
-  //   mixed += (mixed.endsWith('\n') ? '' : '\n') + '{{FixupAutoSuggestDiagrams}}';
 
   // process each variable in the registry
   for (const [variable, definition] of Object.entries(PromptVariableRegistry)) {
@@ -62,12 +54,11 @@ export function replacePromptVariables(template: string, context: PPromptMixerCo
  * NOTE: think twice before changing the variables, as they can be in data at rest (can they?)
  */
 export function bareBonesPromptMixer(_template: string, customFields: Record<string, string> | undefined = undefined) {
-  const { autoSuggestHTMLUI, /*autoSuggestDiagrams,*/ autoVndAntBreakpoints } = getChatAutoAI();
+  const { autoVndAntBreakpoints } = getChatAutoAI();
   return replacePromptVariables(_template, {
     deviceIsDesktop: Is.Desktop,
     deviceBrowserLang: BrowserLang.orUS,
     lowHourPrecision: autoVndAntBreakpoints,
-    fixupAutoSuggestHTMLUI: autoSuggestHTMLUI,
     customFields,
   });
 }
