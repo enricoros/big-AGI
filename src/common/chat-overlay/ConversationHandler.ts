@@ -1,9 +1,5 @@
 import type { StoreApi } from 'zustand';
 
-import { promptMixer } from '~/modules/promptMixer/promptMixer';
-
-import { SystemPurposes } from '../../data';
-
 import { BeamStore, createBeamVanillaStore } from '~/modules/beam/store-beam_vanilla';
 import { autoConversationTitle } from '~/modules/aifn/autotitle/autoTitle';
 import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
@@ -11,8 +7,8 @@ import { useModuleBeamStore } from '~/modules/beam/store-module-beam';
 import type { DBlobAssetId } from '~/common/stores/blob/dblobs-portability';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ChatActions, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
-import { createDMessageEmpty, createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
-import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
+import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { collectFragmentAssetIds, gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
 
@@ -50,33 +46,6 @@ export class ConversationHandler {
 
 
   // Conversation Management
-
-  static inlineUpdatePurposeInHistory(conversationId: DConversationId, history: DMessage[]): void {
-    const purposeId = getConversationSystemPurposeId(conversationId);
-    // TODO: HACK: find the persona identiy separately from the "first system message"
-    const systemMessageIndex = history.findIndex(m => m.role === 'system');
-
-    let systemMessage: DMessage = systemMessageIndex >= 0
-      ? history.splice(systemMessageIndex, 1)[0]
-      : createDMessageEmpty('system'); // [chat] new system:'' (non updated)
-
-    // TODO: move this to a proper persona identity management
-    // Update the system message with the current persona's message, if formerly unset
-    if (!systemMessage.updated && purposeId && SystemPurposes[purposeId]?.systemMessage) {
-      systemMessage.purposeId = purposeId;
-      const systemMessageText = promptMixer.chat.mixInstruction(SystemPurposes[purposeId].systemMessage, history);
-      systemMessage.fragments = [createTextContentFragment(systemMessageText)];
-
-      // HACK: this is a special case for the 'Custom' persona, to set the message in stone (so it doesn't get updated when switching to another persona)
-      if (purposeId === 'Custom')
-        systemMessage.updated = Date.now();
-
-      // HACK: refresh the object to trigger a re-render of this message
-      systemMessage = { ...systemMessage };
-    }
-
-    history.unshift(systemMessage);
-  }
 
   static inlineUpdateAutoPromptCaching(history: DMessage[]): void {
     let setAuto = getChatAutoAI().autoVndAntBreakpoints;
