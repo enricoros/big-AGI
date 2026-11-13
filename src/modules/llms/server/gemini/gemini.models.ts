@@ -1,7 +1,7 @@
 import type { GeminiWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
 import type { DModelParameterId } from '~/common/stores/llms/llms.parameters';
-import { LLM_IF_GEM_CodeExecution, LLM_IF_GEM_Interactions, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_Inputs_Video, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
+import { LLM_IF_GEM_CodeExecution, LLM_IF_GEM_Interactions, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_StripSys0, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_Inputs_Video, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../llm.server.types';
@@ -251,6 +251,7 @@ const geminiRoboticsER2Pricing: ModelDescriptionSchema['chatPrice'] = {
 
 const IF_25 = [LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_GEM_CodeExecution, LLM_IF_OAI_PromptCaching, LLM_IF_Inputs_Video];
 const IF_30 = [...IF_25]; // Note: Gemini 3 Developer Guide recommends temperature=1.0, which is now set as the default via initialTemperature
+const IF_40 = [...IF_30, LLM_IF_HOTFIX_NoTemperature]; // Gemini 4 ignores sampling controls
 
 // Image models: the ratios every Gemini image model takes - Nano Banana Pro and Nano Banana (2.5) 400 on the 1:4/4:1/1:8/8:1
 // that only the Nano Banana 2 family accepts (verified 2026-10-06, natively and through OpenRouter)
@@ -295,7 +296,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     labelOverride: 'Gemini 4 Carbon',
     pubDate: '20261110',
     chatPrice: gemini4ArgonPricing, // same card as Argon, introductory through 2026-11-30
-    interfaces: IF_30,
+    interfaces: IF_40,
     parameterSpecs: [
       { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high'] }, // no 'minimal' (live 400); default 'medium' per docs
       { paramId: 'llmVndGeminiMediaResolution' },
@@ -316,7 +317,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     labelOverride: 'Gemini 4 Argon',
     pubDate: '20260930', // Fairwind access; API GA 2026-10-13
     chatPrice: gemini4ArgonPricing,
-    interfaces: IF_30,
+    interfaces: IF_40,
     parameterSpecs: [
       { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high'] }, // no 'minimal' (live 400); default 'medium' per docs
       { paramId: 'llmVndGeminiMediaResolution' },
@@ -1475,7 +1476,7 @@ export function geminiModelsAddVariants(models: ModelDescriptionSchema[]): Model
 const _ORT_GEM_IF_ALLOWLIST: ReadonlySet<string> = new Set([
   LLM_IF_OAI_Chat, LLM_IF_OAI_Vision, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning,
   LLM_IF_Outputs_Image, // let image generation happen through OR (works also with the params below) - NOTE: for the few models that don't have image config params and so it's not added to those
-  LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, // client-side fixes: let per-model quirks (e.g. Omni's Sys0ToUsr0) survive the lookup - no longer needed by Gemma, which is fully multimodal since Gemma 4
+  LLM_IF_HOTFIX_StripImages, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_HOTFIX_NoTemperature, // client-side fixes: let per-model quirks (e.g. Omni's Sys0ToUsr0) survive the lookup - no longer needed by Gemma, which is fully multimodal since Gemma 4
 ] as const);
 
 const _ORT_GEM_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
