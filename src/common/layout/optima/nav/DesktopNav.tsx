@@ -4,7 +4,6 @@ import Router from 'next/router';
 import type { SxProps } from '@mui/joy/styles/types';
 import { Divider, Dropdown, ListDivider, ListItem, ListItemButton, ListItemDecorator, Menu, MenuButton, MenuItem, Tooltip, Typography } from '@mui/joy';
 import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded';
-import HistoryIcon from '@mui/icons-material/History';
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import MenuIcon from '@mui/icons-material/Menu';
 import PushPinOutlinedIcon from '@mui/icons-material/PushPinOutlined';
@@ -27,7 +26,6 @@ import { BringTheLove } from './BringTheLove';
 import { DesktopNavGroupBox, DesktopNavIcon, navItemClasses } from './DesktopNavIcon';
 import { InvertedBar, InvertedBarCornerItem } from '../InvertedBar';
 import { optimaActions, optimaOpenModels, optimaOpenPreferences, optimaToggleDrawer, useOptimaDrawerOpen, useOptimaDrawerPeeking, useOptimaModals } from '../useOptima';
-import { scratchClipSupported, useScratchClipVisibility } from '../scratchclip/store-scratchclip';
 
 
 export const bigAgiProUrl = 'https://big-agi.com' + clientUtmSource('upgrade-apps');
@@ -56,7 +54,6 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
   const { showPromisedOverlay } = useOverlayComponents();
   const { showModels, showPreferences } = useOptimaModals();
   const { peekDrawerEnter, peekDrawerLeave } = optimaActions();
-  const { isVisible: isScratchClipVisible, toggleVisibility: toggleScratchClipVisibility } = useScratchClipVisibility();
 
   // derived state
   const noLLMs = !useHasLLMs();
@@ -176,10 +173,6 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
             <ListItemDecorator><TerminalOutlinedIcon /></ListItemDecorator>
             AI Inspector
           </MenuItem>
-          <MenuItem disabled={!scratchClipSupported()} onClick={toggleScratchClipVisibility}>
-            <ListItemDecorator><HistoryIcon /></ListItemDecorator>
-            {isScratchClipVisible ? 'Hide ' : ''}Clipboard {scratchClipSupported() ? 'History' : '(not supported)'}
-          </MenuItem>
           <ListDivider />
 
           {/* SUPPORT Section */}
@@ -200,7 +193,7 @@ export function DesktopNav(props: { component: React.ElementType, currentApp?: N
       </Dropdown>);
 
     return components;
-  }, [toggleScratchClipVisibility, isScratchClipVisible, handleShowTechnologies, props.currentApp, isDrawerOpen]);
+  }, [handleShowTechnologies, props.currentApp, isDrawerOpen]);
 
 
   // External link items

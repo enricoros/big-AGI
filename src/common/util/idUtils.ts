@@ -13,7 +13,6 @@ type UidScope =
   | 'chat-ephemerals-item'
   | 'chat-folders-item'
   | 'chat-pane'
-  | 'clip-history'
   | 'dblob-asset'
   | 'draw-prompt'
   | 'event-id'
