@@ -439,9 +439,10 @@ function _prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachme
 
       let fileTitle = _lowCollisionRefString(mayBeImage ? 'Image' : 'File', 4);
       let fileCaption = '';
+      const srcFileSize = source.fileWithHandle.size || input.dataSize;
       const fileMeta: DMessageDocPart['meta'] = {
-        srcFileName: source.fileWithHandle.name || undefined,
-        srcFileSize: source.fileWithHandle.size || input.dataSize,
+        ...(source.fileWithHandle.name ? { srcFileName: source.fileWithHandle.name } : {}),
+        ...(srcFileSize ? { srcFileSize } : {}),
       };
 
       const sourceOrigin = source.origin;
@@ -504,7 +505,7 @@ function _prepareDocData(source: AttachmentDraftSource, input: Readonly<Attachme
         // TODO: expand this to allow future redownload - or other location but for the same purpose
         docMeta: {
           srcFileName: source.fileName,
-          srcFileSize: source.fileSize || input.dataSize,
+          ...((source.fileSize || input.dataSize) ? { srcFileSize: source.fileSize || input.dataSize } : {}),
         },
       };
 

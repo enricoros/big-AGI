@@ -226,12 +226,12 @@ export function duplicateDMessage(message: Immutable<DMessage>, skipVoid: boolea
     // IMPORTANT: a duplicate message is never 'being generated' (anymore) - we may as well finalize it
     // ...(message.pendingIncomplete ? { pendingIncomplete: true } : {}),
 
-    purposeId: message.purposeId,
+    ...(message.purposeId !== undefined ? { purposeId: message.purposeId } : {}),
 
-    metadata: message.metadata ? duplicateDMessageMetadata(message.metadata) : undefined,
-    generator: message.generator ? duplicateDMessageGenerator(message.generator) : undefined,
+    ...(message.metadata ? { metadata: duplicateDMessageMetadata(message.metadata) } : {}),
+    ...(message.generator ? { generator: duplicateDMessageGenerator(message.generator) } : {}),
     // sessionMetadata: message.sessionMetadata ? duplicateDMessageSession(message.sessionMetadata) : undefined,
-    userFlags: message.userFlags ? [...message.userFlags] : undefined,
+    ...(message.userFlags ? { userFlags: [...message.userFlags] } : {}),
 
     tokenCount: message.tokenCount,
 
