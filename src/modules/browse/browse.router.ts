@@ -5,6 +5,8 @@ import puppeteer, { Browser, BrowserContext, ScreenshotOptions } from 'puppeteer
 import { createDocument } from '@mixmark-io/domino';
 
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
+import { egressAssertClientUrlOrThrow } from '~/server/egress.server';
+import { egressResolveNodeDns } from '~/server/egress.node.server';
 import { env } from '~/server/env.server';
 
 import { workerPuppeteerDownloadFileOrThrow } from './browse.files';
@@ -82,6 +84,11 @@ export const browseRouter = createTRPCRouter({
       const endpoint = (access.wssEndpoint || env.PUPPETEER_WSS_ENDPOINT || '').trim();
       if (!endpoint || (!endpoint.startsWith('wss://') && !endpoint.startsWith('ws://')))
         throw new TRPCError({ code: 'PRECONDITION_FAILED', message: 'Invalid WSS browser endpoint' });
+
+      // a client-supplied endpoint is dialed by this server: apply the outbound policy (the env endpoint is operator-trusted)
+      if (access.wssEndpoint)
+        await egressAssertClientUrlOrThrow(endpoint, { kind: 'websocket', label: 'Browse endpoint', resolver: egressResolveNodeDns });
+
       const workerHost = new URL(endpoint).host;
 
       yield { type: 'ack-start' as const };

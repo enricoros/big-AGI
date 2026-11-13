@@ -116,6 +116,9 @@ export const env = createEnv({
     // Browsing Service
     PUPPETEER_WSS_ENDPOINT: z.url().optional(),
 
+    // Outbound policy: hosts exempt from the private-network block on client-supplied hosts (comma-separated host or host:port, or '*')
+    SERVER_ALLOWED_PRIVATE_HOSTS: z.string().optional(),
+
     // Google Custom Search
     GOOGLE_CLOUD_API_KEY: z.string().optional(),
     GOOGLE_CSE_ID: z.string().optional(),

@@ -67,6 +67,7 @@ export const synthesizeElevenLabs: SynthesizeBackendFn<SpeexWire_Access_ElevenLa
       body,
       signal,
       name: 'ElevenLabs',
+      ...(!!access.apiHost && { redirect: 'error' as const }),
     });
   } catch (error: any) {
     yield { t: 'error', e: `ElevenLabs fetch failed: ${error.message || 'Unknown error'}` };
@@ -93,6 +94,7 @@ export async function listVoicesElevenLabs(access: SpeexWire_Access_ElevenLabs):
       url,
       headers,
       name: 'ElevenLabs',
+      ...(!!access.apiHost && { redirect: 'error' as const }),
     }),
   );
 
