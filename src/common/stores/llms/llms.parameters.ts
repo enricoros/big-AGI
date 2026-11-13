@@ -159,9 +159,9 @@ export const DModelParameterRegistry = {
   llmVndGemEffort: _enumDef({
     label: 'Thinking Level',
     type: 'enum',
-    description: 'Controls internal reasoning depth. When unset, the model decides dynamically.',
-    values: ['minimal', 'low', 'medium', 'high'],
-    // undefined means dynamic (model decides)
+    description: 'Controls internal reasoning depth. When unset, uses the model default.',
+    values: ['minimal', 'low', 'medium', 'high', 'xhigh'],
+    // undefined means the model's default level
   }),
 
   llmVndOaiEffort: _enumDef({

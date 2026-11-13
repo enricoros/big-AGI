@@ -34,7 +34,8 @@ const _antEffortOptions = [
 ] as const;
 
 const _gemEffortOptions = [
-  { value: 'high', label: 'High', description: 'Maximum reasoning depth' } as const,
+  { value: 'xhigh', label: 'X-High', description: 'Deepest reasoning' } as const,
+  { value: 'high', label: 'High', description: 'Deep reasoning' } as const,
   { value: 'medium', label: 'Medium', description: 'Balanced reasoning' } as const,
   { value: 'low', label: 'Low', description: 'Quick responses' } as const,
   { value: 'minimal', label: 'Minimal', description: 'Fastest, least reasoning' } as const,
@@ -499,7 +500,7 @@ export function LLMParametersEditor(props: {
     {showParam('llmVndGemEffort') && gemEffortOptions && (
       <FormSelectControl
         title='Thinking Level'
-        tooltip='Controls internal reasoning depth. When unset, the model decides dynamically.'
+        tooltip='Controls internal reasoning depth. When unset, uses the model default.'
         value={llmVndGemEffort ?? _UNSPECIFIED}
         onChange={(value) => {
           if (value === _UNSPECIFIED || !value) onRemoveParameter('llmVndGemEffort');

@@ -103,7 +103,7 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
   // Thinking models: thinking budget and show thoughts
   const thinkingLevel = model.reasoningEffort; // ?? model.vndGeminiThinkingLevel;
-  if (thinkingLevel === 'none' || thinkingLevel === 'xhigh' || thinkingLevel === 'max') // domain validation
+  if (thinkingLevel === 'none' || thinkingLevel === 'max') // domain validation
     throw new Error(`Gemini API does not support '${thinkingLevel}' thinking level`);
 
   if (thinkingLevel || model.vndGeminiThinkingBudget !== undefined /*|| model.vndGeminiShowThoughts === true*/) {

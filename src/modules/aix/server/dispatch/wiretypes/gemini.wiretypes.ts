@@ -680,11 +680,8 @@ export namespace GeminiWire_API_Generate_Content {
     topP: z.number().optional(),
     topK: z.number().int().optional(),
 
-    // [Gemini, 2025-01-23] CoT support - undocumented yet
     thinkingConfig: z.object({
-      /**
-       * [2025-04-17] Used to work with v1alpha API, now it seems to not work in any model/api version combo.
-       */
+      /** Return thought summaries alongside the answer. */
       includeThoughts: z.boolean().optional(),
       /**
        * [Gemini, 2025-04-17] Introduced in Flash-2.5-Preview to set the thinking budget.
@@ -693,15 +690,10 @@ export namespace GeminiWire_API_Generate_Content {
        */
       thinkingBudget: z.int().optional(),
       /**
-       * [Gemini 3, 2025-11-18] Replaces thinkingBudget for Gemini 3 models.
-       * - 'high': Maximum reasoning depth
-       * - 'medium': Balanced reasoning (from Gemini 3 Flash)
-       * - 'low': Minimizes latency and cost
-       * - 'minimal': Quickest responses with minimal reasoning (from Gemini 3 Flash)
-       * - undefined: Dynamic (model decides)
-       * CRITICAL: Cannot use both thinkingLevel and thinkingBudget (400 error)
+       * Gemini 3+ uses levels instead of budgets; supported levels and defaults are model-specific.
+       * Hydrogen adds 'xhigh' and defaults to 'high'. Cannot combine with thinkingBudget (400).
        */
-      thinkingLevel: z.enum(['high', 'medium', 'low', 'minimal']).optional(),
+      thinkingLevel: z.enum(['xhigh', 'high', 'medium', 'low', 'minimal']).optional(),
     }).optional(),
 
     // Image generation configuration

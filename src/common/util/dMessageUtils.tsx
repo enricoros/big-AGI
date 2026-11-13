@@ -647,6 +647,8 @@ function _prettyGeminiModelName(cutModel: string): string {
     .replace('max', 'Max')
     .replace('lite', 'Lite')
     .replace('argon', 'Argon') // Gemini 4 tier name
+    .replace('carbon', 'Carbon')
+    .replace('hydrogen', 'Hydrogen')
     .replace(/(\d)b\b/g, '$1B') // size token: '31b' -> '31B' (e.g. Gemma 4 31B)
     // feature variants
     .replace('robotics er', 'Robotics')

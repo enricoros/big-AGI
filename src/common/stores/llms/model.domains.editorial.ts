@@ -76,8 +76,7 @@ export const EditorialDefaults = {
     { vendor: 'bedrock',    modelId: 'us.anthropic.claude-opus-4-6' },
     { vendor: 'bedrock',    modelId: 'global.anthropic.claude-opus-4-6' },
     { vendor: 'openrouter', modelId: 'anthropic/claude-opus-5-5' },
-    { vendor: 'googleai',   modelId: 'models/gemini-4-argon' }, // 1520, the top score among the models we list - $2/$10 through 2026-11-30, then $4/$20
-    { vendor: 'googleai',   modelId: 'models/gemini-3.8-flash' }, // 1496, the top Gemini with a free tier - here if the free Gemini key doesn't allow 4-Argon (however it will prob still list it, so free users may have a default-fail here)
+    { vendor: 'googleai',   modelId: 'models/gemini-4-hydrogen' }, // $1.50/$7.50, available on free and paid keys; high thinking by default
     { vendor: 'openai',     modelId: 'gpt-6.1-sol' }, // 1481, $2/$10 - level with 5.6 Sol (1485) and above Astra (1476, $10/$50)
     { vendor: 'moonshot',   modelId: 'kimi-k3.1-pro' }, // $2/$10 - succeeds K3 (1488, $3/$15), no arena row of its own yet
     { vendor: 'zai',        modelId: 'glm-5.3' }, // 1481, $1.4/$4.4
@@ -88,8 +87,8 @@ export const EditorialDefaults = {
 
   // workhorse coder with function calling: strong, quick, mid-priced
   codeApply: [
-    { vendor: 'googleai',   modelId: 'models/gemini-3.8-flash' }, // 1496 - Google's "workhorse for coding and agents"
-    { vendor: 'openrouter', modelId: 'google/gemini-3.8-flash' },
+    { vendor: 'googleai',   modelId: 'models/gemini-4-hydrogen' }, // everyday coding and agentic execution; four thinking levels
+    { vendor: 'openrouter', modelId: 'google/gemini-4-hydrogen' },
     { vendor: 'openai',     modelId: 'gpt-6.1-sol' }, // 1481, $2/$10 - "exceptionally strong on agentic coding"
     { vendor: 'anthropic',  modelId: 'claude-sonnet-5-5' }, // 1477, $2/$10 - cheaper than Sonnet 4.6 ($3/$15), which it succeeds; thinks by default
     { vendor: 'bedrock',    modelId: 'us.anthropic.claude-sonnet-5-5' },

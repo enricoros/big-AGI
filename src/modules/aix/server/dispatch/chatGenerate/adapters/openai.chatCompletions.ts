@@ -417,7 +417,7 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
       } else {
         const gemEffort = model.reasoningEffort; // ?? model.vndGeminiThinkingLevel;
         if (gemEffort) {
-          if (gemEffort === 'none' || gemEffort === 'xhigh' || gemEffort === 'max') // domain validation
+          if (gemEffort === 'none' || gemEffort === 'max') // domain validation
             throw new Error(`OpenRouter->Gemini API does not support '${gemEffort}' reasoning effort`);
           payload.reasoning = { enabled: true, effort: gemEffort };
         }

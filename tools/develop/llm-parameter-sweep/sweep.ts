@@ -142,16 +142,13 @@ const SWEEP_DEFINITIONS = [
   }),
 
 
-  // Gemini: thinking level (Gemini 3.x)
-  // - Pro supports: high, low
-  // - Flash supports: high, medium, low, minimal
-  // - null = dynamic (model decides)
+  // Gemini 3+: model-specific thinking levels. Hydrogen adds xhigh.
   defineSweep({
     name: 'gemini-thinking-level',
     description: 'Gemini thinkingConfig.thinkingLevel values',
     applicability: { type: 'dialects', dialects: ['gemini'] },
-    applyToModel: (value) => value ? { reasoningEffort: value } : {}, // null = dynamic mode, don't set level
-    values: ['minimal', 'low', 'medium', 'high'] satisfies (AixAPI_Model['reasoningEffort'] | null)[],
+    applyToModel: (value) => value ? { reasoningEffort: value } : {}, // null = vendor default
+    values: ['minimal', 'low', 'medium', 'high', 'xhigh'] satisfies (AixAPI_Model['reasoningEffort'] | null)[],
     mode: 'enumerate',
   }),
 
