@@ -283,7 +283,9 @@ type _GeminiModelDef = {
   symLink?: string,
   deprecated?: string, // Gemini may provide deprecation dates
   // _delete removed - models are now physically removed from the list instead of marked for deletion
-} & Pick<ModelDescriptionSchema, 'pubDate' | 'interfaces' | 'parameterSpecs' | 'chatPrice' | 'hidden' | 'benchmark'> & { pubDate: string /* make it required */ };
+} & Pick<ModelDescriptionSchema, 'pubDate' | 'interfaces' | 'parameterSpecs' | 'chatPrice' | 'hidden' | 'benchmark'>
+  & Partial<Pick<ModelDescriptionSchema, 'contextWindow'>> // set where input and output share one window - the list API reports them as separate limits
+  & { pubDate: string /* make it required */ };
 
 const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
 
@@ -296,6 +298,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     labelOverride: 'Gemini 4 Carbon',
     pubDate: '20261110',
     chatPrice: gemini4ArgonPricing, // same card as Argon, introductory through 2026-11-30
+    contextWindow: 1_048_576, // Gemini 4 shares one window across input, thinking and output
     interfaces: IF_40,
     parameterSpecs: [
       { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high'] }, // no 'minimal' (live 400); default 'medium' per docs
@@ -317,6 +320,7 @@ const _knownGeminiModels = llmsDefineModels<_GeminiModelDef>()([
     labelOverride: 'Gemini 4 Argon',
     pubDate: '20260930', // Fairwind access; API GA 2026-10-13
     chatPrice: gemini4ArgonPricing,
+    contextWindow: 1_048_576,
     interfaces: IF_40,
     parameterSpecs: [
       { paramId: 'llmVndGemEffort', enumValues: ['low', 'medium', 'high'] }, // no 'minimal' (live 400); default 'medium' per docs
@@ -1389,7 +1393,7 @@ export function geminiModelToModelDescription(geminiModel: GeminiWire_API_Models
 
   // context window
   const { inputTokenLimit, outputTokenLimit } = geminiModel;
-  const contextWindow = inputTokenLimit + outputTokenLimit;
+  const contextWindow = knownModel?.contextWindow ?? inputTokenLimit + outputTokenLimit;
 
   // description
   const { version, topK, topP, temperature } = geminiModel;
