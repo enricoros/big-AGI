@@ -5,7 +5,7 @@ import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow, fetchTextOrTRPCThrow } 
 
 import { convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
 
-import { FileMetadataResponse_schema, ListModelsResponse_schema } from '../llm.server.types';
+import { FileMetadataResponse_schema, ListModelsResponse_schema, VendorResourceId_schema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
 import { ANTHROPIC_API_PATHS, anthropicAccess, AnthropicAccessSchema, anthropicAccessSchema, AnthropicHostedFeatures } from './anthropic.access';
@@ -52,20 +52,20 @@ export const llmAnthropicRouter = createTRPCRouter({
   getSkill: edgeProcedure
     .input(z.object({
       access: anthropicAccessSchema,
-      skillId: z.string(),
+      skillId: VendorResourceId_schema,
     }))
     .query(async ({ input: { access, skillId } }) => {
-      return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.skills}/${skillId}`, { enableSkills: true });
+      return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.skills}/${encodeURIComponent(skillId)}`, { enableSkills: true });
     }),
 
   /* [Anthropic] Files API - delete file permanently from Anthropic servers */
   fileApiDelete: edgeProcedure
     .input(z.object({
       access: anthropicAccessSchema,
-      fileId: z.string(),
+      fileId: VendorResourceId_schema,
     }))
     .mutation(async ({ input: { access, fileId } }) => {
-      const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.files}/${fileId}`, { enableSkills: true, enableCodeExecution: true });
+      const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.files}/${encodeURIComponent(fileId)}`, { enableSkills: true, enableCodeExecution: true });
       await fetchTextOrTRPCThrow({ url, headers, method: 'DELETE', name: 'Anthropic' });
       return { success: true };
     }),
@@ -74,10 +74,10 @@ export const llmAnthropicRouter = createTRPCRouter({
   fileApiDownload: edgeProcedure
     .input(z.object({
       access: anthropicAccessSchema,
-      fileId: z.string(),
+      fileId: VendorResourceId_schema,
     }))
     .query(async ({ input: { access, fileId } }) => {
-      const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.files}/${fileId}/content`, { enableSkills: true, enableCodeExecution: true });
+      const { headers, url } = anthropicAccess(access, `${ANTHROPIC_API_PATHS.files}/${encodeURIComponent(fileId)}/content`, { enableSkills: true, enableCodeExecution: true });
       const response = await fetchResponseOrTRPCThrow({ url, headers, name: 'Anthropic' });
 
       // Guard against excessively large files (10 MB limit)
@@ -100,11 +100,11 @@ export const llmAnthropicRouter = createTRPCRouter({
   fileApiGetMetadata: edgeProcedure
     .input(z.object({
       access: anthropicAccessSchema,
-      fileId: z.string(),
+      fileId: VendorResourceId_schema,
     }))
     .output(FileMetadataResponse_schema)
     .query(async ({ input: { access, fileId } }) => {
-      return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.files}/${fileId}`, { enableSkills: true, enableCodeExecution: true });
+      return await anthropicGETOrThrow(access, `${ANTHROPIC_API_PATHS.files}/${encodeURIComponent(fileId)}`, { enableSkills: true, enableCodeExecution: true });
     }),
 
 });

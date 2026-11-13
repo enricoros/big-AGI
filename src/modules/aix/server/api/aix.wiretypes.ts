@@ -9,6 +9,7 @@ import { bedrockAccessSchema } from '~/modules/llms/server/bedrock/bedrock.acces
 import { geminiAccessSchema } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccessSchema } from '~/modules/llms/server/ollama/ollama.access';
 import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.access';
+import { VendorResourceId_schema } from '~/modules/llms/server/llm.server.types';
 
 import { OrtMaxToolCalls_schema, OrtWebFetchTool_schema, OrtWebSearchTool, OrtWebSearchTool_schema } from './aix.wiretypes.openrouter';
 
@@ -627,7 +628,7 @@ export namespace AixWire_API {
   export const UpstreamHandle_schema = z.discriminatedUnion('uht', [
     z.object({
       uht: z.literal('vnd.oai.responses'),
-      runId: z.string(), // upstream: OpenAI Responses `response.id`
+      runId: VendorResourceId_schema, // upstream: OpenAI Responses `response.id`
       startingAfter: z.number().optional(), // the sequence number of event after which to start streaming
     }),
     z.object({
