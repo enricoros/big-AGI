@@ -57,6 +57,7 @@ PUPPETEER_WSS_ENDPOINT=
 # Search
 GOOGLE_CLOUD_API_KEY=
 GOOGLE_CSE_ID=
+GOOGLE_CSE_HOST=
 
 # Text-To-Speech: ElevenLabs
 ELEVENLABS_API_KEY=
@@ -143,6 +144,7 @@ Enable the app to Talk, Draw, and Google things up.
 | **Google Custom Search**   | [Google Programmable Search Engine](https://programmablesearchengine.google.com/about/)  produces links to pages        |
 | `GOOGLE_CLOUD_API_KEY`     | Google Cloud API Key, used with the '/react' command - [Link to GCP](https://console.cloud.google.com/apis/credentials) |
 | `GOOGLE_CSE_ID`            | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)               |
+| `GOOGLE_CSE_HOST`          | Custom host for the Custom Search JSON API (https), defaults to `https://www.googleapis.com`                            |
 | **Browse**                 |                                                                                                                         |
 | `PUPPETEER_WSS_ENDPOINT`   | Puppeteer WebSocket endpoint - used for browsing (pade downloadeing), etc.                                              |
 | **Backend**                |                                                                                                                         |
