@@ -158,6 +158,15 @@ const _richPopperOptions = {
 };
 
 /**
+ * The scrim rides the Menu's children, which only mount while the menu is open - no open-state wiring needed.
+ * Joy's ListProvider clones data-first-child/data-last-child onto every List child: this wrapper absorbs them
+ * (MUI Portal's exactProp rejects them), and going last keeps data-first-child on the first real item.
+ */
+function _RichMenuScrim(props: { zIndex: number }) {
+  return <Portal><Box zIndex={props.zIndex} sx={popupBackdropSx} /></Portal>;
+}
+
+/**
  * Menu surface for a RichMenu - must be a child of `Dropdown`.
  * Rich (default): docks on top of the pill trigger with the polished chrome.
  * Compact: the default Joy menu look (mobile).
@@ -175,16 +184,13 @@ export function RichMenu(props: {
 
   const zIndex = props.zIndex ?? themeZIndexOverMobileDrawer; // above dialogs that may host the trigger
 
-  // scrim rides the Menu's children, which only mount while the menu is open - no open-state wiring needed
-  const backdrop = !props.darkenBackdrop ? null : (
-    <Portal><Box zIndex={zIndex - 1} sx={popupBackdropSx} /></Portal>
-  );
+  const backdrop = !props.darkenBackdrop ? null : <_RichMenuScrim zIndex={zIndex - 1} />;
 
   if (props.compact)
     return (
       <Menu variant={props.darkenBackdrop ? 'plain' : undefined /* under the scrim: no hairline, same as CloseablePopup */} placement={props.placement} sx={{ ...richMenuCompactSx, ...(props.stagger && _richMenuStaggerSx), zIndex, ...props.sx }}>
-        {backdrop}
         {props.children}
+        {backdrop}
       </Menu>
     );
 
@@ -195,8 +201,8 @@ export function RichMenu(props: {
       popperOptions={_richPopperOptions}
       sx={{ ...richMenuSx(props.color), ...(props.stagger && _richMenuStaggerSx), zIndex, ...props.sx }}
     >
-      {backdrop}
       {props.children}
+      {backdrop}
     </Menu>
   );
 }
