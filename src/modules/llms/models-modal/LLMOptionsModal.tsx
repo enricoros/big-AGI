@@ -88,6 +88,32 @@ function prettyPricingComponent(pricingChatGenerate: DPricingChatGenerate): Reac
 }
 
 
+/**
+ * Upstream model id of a user model (clone or custom), sent as the model in requests.
+ * Only non-empty values are stored, so a cleared field never leaves the model without an id.
+ */
+function UserModelRefInput(props: { llmId: DLLMId, llmRef: string, onChange: (llmId: DLLMId, llmRef: string) => void }) {
+  const { llmId, llmRef, onChange } = props;
+  const [draft, setDraft] = React.useState(llmRef);
+
+  // follow external changes (e.g. switching model)
+  React.useEffect(() => setDraft(llmRef), [llmRef]);
+
+  const handleChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value.trim();
+    setDraft(value);
+    if (value) onChange(llmId, value);
+  }, [llmId, onChange]);
+
+  return (
+    <FormControl orientation='horizontal' sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+      <FormLabelStart title='Model ID' description='upstream' tooltip='The model id sent to the service. Only editable on duplicated and custom models.' sx={{ minWidth: 96 }} />
+      <Input variant='outlined' size='sm' placeholder='upstream-model-id' value={draft} onChange={handleChange} error={!draft} sx={{ flex: 1, minWidth: 160 }} />
+    </FormControl>
+  );
+}
+
+
 export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsContext, onClose: () => void }) {
 
   // external state
@@ -145,6 +171,11 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
     const value = event.target.value;
     // auto-clear userLabel when it matches the vendor default (or is empty)
     updateLLM(llm.id, { userLabel: (!value || value === llm.label) ? undefined : value });
+  };
+
+  const handleLlmRefSet = (llmId: DLLMId, llmRef: string) => {
+    if (!llm.isUserClone) return; // safety: only clones can change the upstream model id
+    updateLLM(llmId, { initialParameters: { ...llm.initialParameters, llmRef } });
   };
 
   const handleLlmVisibilityToggle = () => updateLLM(llm.id, { userHidden: isLLMVisible(llm) });
@@ -379,11 +410,13 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
       {/* Clone Source Info */}
       {llm.isUserClone && (
         <Typography level='body-sm' sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          ➕ Cloned from:{' '}
-          {cloneSourceLlm
-            ? <Link component='button' onClick={handleGoToCloneSource}>{getLLMLabel(cloneSourceLlm)}</Link>
-            : <Typography component='span' sx={{ color: 'text.tertiary' }}>{llm.cloneSourceId} (not found)</Typography>
-          }
+          {!llm.cloneSourceId ? '➕ Custom model, added manually' : <>
+            ➕ Cloned from:{' '}
+            {cloneSourceLlm
+              ? <Link component='button' onClick={handleGoToCloneSource}>{getLLMLabel(cloneSourceLlm)}</Link>
+              : <Typography component='span' sx={{ color: 'text.tertiary' }}>{llm.cloneSourceId} (not found)</Typography>
+            }
+          </>}
         </Typography>
       )}
 
@@ -453,6 +486,9 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
             />
           </Tooltip>
         </FormControl>}
+
+        {/* Upstream Model ID (only for clones) */}
+        {!!llm.isUserClone && <UserModelRefInput llmId={llm.id} llmRef={llm.initialParameters?.llmRef ?? ''} onChange={handleLlmRefSet} />}
 
         {/* Clone Interface Toggles (only for clones) */}
         {!!llm.isUserClone && <Box sx={{ display: 'flex' }}>

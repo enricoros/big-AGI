@@ -5,7 +5,7 @@ import type { AixAPI_Access } from '~/modules/aix/server/api/aix.wiretypes';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import { createDebugWireLogger } from '~/server/wire';
-import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 
 import type { ModelDescriptionSchema } from './llm.server.types';
 import { llmDevValidateParameterSpecs_DEV, llmsAutoImplyInterfaces, llmsWireCompatCacheTag } from './models.mappings';
@@ -113,6 +113,22 @@ async function _fetchModelsListCuratedFirst(vendorName: string, fetchList: () =>
   } catch (error) {
     console.warn(`[${vendorName}] Models list API failed, using curated models only:`, (error as Error)?.message || error);
     return { object: 'list', data: [] };
+  }
+}
+
+/**
+ * Custom OpenAI-compatible hosts: some gateways serve chat but no /v1/models. A 404/405 there yields an empty
+ * list, so the service configures and the user adds models by id; any other failure (auth, network) still throws.
+ */
+async function _fetchModelsListOptional(fetchList: () => Promise<OpenAIWire_API_Models_List.Response>): Promise<OpenAIWire_API_Models_List.Response> {
+  try {
+    return await fetchList();
+  } catch (error) {
+    if (error instanceof TRPCFetcherError && error.category === 'http' && (error.httpStatus === 404 || error.httpStatus === 405)) {
+      console.warn(`[OpenAI-compatible] Models list API not available (HTTP ${error.httpStatus}), continuing with no models`);
+      return { object: 'list', data: [] };
+    }
+    throw error;
   }
 }
 
@@ -433,6 +449,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           // [MiniMax] curated-first: the list only adds 0-day ids to the curated table (see minimaxModelsToModelDescriptions)
           if (dialect === 'openai' && minimaxHeuristic(oaiUrl))
             return _fetchModelsListCuratedFirst('MiniMax', fetchList);
+
+          // [OpenAI-compatible] custom hosts may not publish the models list
+          if (dialect === 'openai' && !llmsIsNativeOpenAIHost(access.oaiHost))
+            return _fetchModelsListOptional(fetchList);
 
           return fetchList();
         },

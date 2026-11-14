@@ -7,7 +7,7 @@ import { persist } from 'zustand/middleware';
 
 import type { DOpenRouterServiceSettings } from '~/modules/llms/vendors/openrouter/openrouter.vendor';
 import type { IModelVendor } from '~/modules/llms/vendors/IModelVendor';
-import { createDLLMUserClone, getDLLMCloneId } from '~/modules/llms/llm.client';
+import { createDLLMUserClone, createDLLMUserCustom, getDLLMCloneId } from '~/modules/llms/llm.client';
 import { findModelVendor, type ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import { hasKeys } from '~/common/util/objectUtils';
@@ -54,6 +54,7 @@ interface LlmsRootActions {
   resetServiceVisibility: (serviceId: DModelsServiceId) => void;
   setServiceModelsHidden: (serviceId: DModelsServiceId, hidden: boolean) => void;
   userCloneLLM: (sourceId: DLLMId, cloneLabel: string, cloneVariant: string) => DLLMId | null;
+  userCreateLLM: (serviceId: DModelsServiceId, label: string, llmRef: string) => DLLMId | null;
 
   createModelsService: (vendor: IModelVendor) => DModelsService;
   importServicesAppend: (services: DModelsService<any>[]) => { added: number; skipped: number };
@@ -335,6 +336,23 @@ export const useModelsStore = create<LlmsStore>()(persist(
       set({ llms: newLlms });
 
       return cloneId;
+    },
+
+    userCreateLLM: (serviceId: DModelsServiceId, label: string, llmRef: string): DLLMId | null => {
+      const { llms, sources } = get();
+      const service = sources.find(s => s.id === serviceId);
+      if (!service || !llmRef) return null;
+
+      const newLlm = createDLLMUserCustom(service, label, llmRef);
+      if (llms.some(llm => llm.id === newLlm.id)) return null;
+
+      // keep the service's models contiguous (the UI groups by service); a service may have no models yet
+      const serviceStartIndex = llms.findIndex(llm => llm.sId === serviceId);
+      const newLlms = [...llms];
+      newLlms.splice(serviceStartIndex >= 0 ? serviceStartIndex : newLlms.length, 0, newLlm);
+      set({ llms: newLlms });
+
+      return newLlm.id;
     },
 
     createModelsService: (vendor: IModelVendor): DModelsService => {
