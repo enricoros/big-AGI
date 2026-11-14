@@ -1,11 +1,30 @@
+import { hasServerConf } from '~/common/app.serverconf';
 import { apiAsync } from '~/common/util/trpc.client';
 
 import { Search } from './search.types';
 import { useGoogleSearchStore } from './store-module-google';
 
 
-export const isValidGoogleCloudApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 39;
-export const isValidGoogleCseId = (cseId?: string) => !!cseId && cseId.trim()?.length >= 17;
+const isValidGoogleCloudApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 39;
+const isValidGoogleCseId = (cseId?: string) => !!cseId && cseId.trim()?.length >= 17;
+
+/**
+ * Validity of the Google search configuration, per credential: client-held keys, else server-held keys.
+ * Shared by the settings UI (per-field errors) and the search provider (`isConfigured`).
+ */
+export function googleSearchConfigValidity(): { keyValid: boolean; cseIdValid: boolean } {
+  const { googleCloudApiKey, googleCSEId } = useGoogleSearchStore.getState();
+  const backendHasGoogle = hasServerConf('hasGoogleCustomSearch');
+  return {
+    keyValid: googleCloudApiKey ? isValidGoogleCloudApiKey(googleCloudApiKey) : backendHasGoogle,
+    cseIdValid: googleCSEId ? isValidGoogleCseId(googleCSEId) : backendHasGoogle,
+  };
+}
+
+export function googleSearchIsConfigured(): boolean {
+  const { keyValid, cseIdValid } = googleSearchConfigValidity();
+  return keyValid && cseIdValid;
+}
 
 
 /**

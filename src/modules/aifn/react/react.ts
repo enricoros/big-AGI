@@ -4,7 +4,7 @@
 
 import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 import { promptMixer } from '~/modules/promptMixer/promptMixer';
-import { callApiSearchGoogle } from '~/modules/google/search.client';
+import { getActiveSearchProvider } from '~/modules/search/search.provider';
 import { callBrowseFetchPageOrThrow } from '~/modules/browse/browse.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
@@ -185,11 +185,11 @@ async function wikipedia(q: string): Promise<string> {
 
 async function search(query: string): Promise<string> {
   try {
-    const data = await callApiSearchGoogle(query, 10);
+    const data = await getActiveSearchProvider().search({ query, items: 10 });
     return JSON.stringify(data);
   } catch (error: any) {
     console.error('Error fetching search results:', error);
-    return 'An error occurred while searching the internet. Missing Google API Key? Google error: ' + (error?.message || error?.toString() || 'Unknown error');
+    return 'An error occurred while searching the internet. Check the search provider configuration in Tools > Custom Search. (' + (error?.message || error?.toString() || 'Unknown error') + ')';
   }
 }
 
