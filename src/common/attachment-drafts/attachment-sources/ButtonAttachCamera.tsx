@@ -1,10 +1,9 @@
 import * as React from 'react';
 
 import { Box, Button, ColorPaletteProp, IconButton, Tooltip } from '@mui/joy';
-import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
-import CameraAltOutlinedIcon from '@mui/icons-material/CameraAltOutlined';
 
 import { buttonAttachSx } from '~/common/components/ButtonAttachFiles';
+import { PhCamera } from '~/common/components/icons/phosphor/PhCamera';
 
 
 export const ButtonAttachCameraMemo = React.memo(ButtonAttachCamera);
@@ -19,7 +18,7 @@ function ButtonAttachCamera(props: {
 }) {
   return props.isMobile ? (
     <IconButton color={props.color} disabled={props.disabled} onClick={props.onOpenCamera}>
-      <AddAPhotoIcon />
+      <PhCamera />
     </IconButton>
   ) : (
     <Tooltip arrow disableInteractive placement='top-start' title={props.noToolTip ? null : (
@@ -33,7 +32,7 @@ function ButtonAttachCamera(props: {
         color={props.color || 'neutral'}
         disabled={props.disabled}
         fullWidth={props.fullWidth}
-        startDecorator={<CameraAltOutlinedIcon />}
+        startDecorator={<PhCamera />}
         onClick={props.onOpenCamera}
         sx={buttonAttachSx.desktop}
       >

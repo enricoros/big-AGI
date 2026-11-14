@@ -6,7 +6,6 @@ import { Box, Button, Checkbox, ColorPaletteProp, Dropdown, IconButton, ListDivi
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import AddToDriveRoundedIcon from '@mui/icons-material/AddToDriveRounded';
 import AttachFileRoundedIcon from '@mui/icons-material/AttachFileRounded';
-import CameraAltOutlinedIcon from '@mui/icons-material/CameraAltOutlined';
 import ContentPasteGoIcon from '@mui/icons-material/ContentPasteGo';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import LanguageRoundedIcon from '@mui/icons-material/LanguageRounded';
@@ -17,6 +16,7 @@ import { useBrowseStore } from '~/modules/browse/store-module-browsing';
 import { ButtonAttachFilesMemo, openFileForAttaching } from '~/common/components/ButtonAttachFiles';
 import { RichMenu, RichMenuButton, RichMenuItem, richMenuItemSx } from '~/common/components/RichMenu';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
+import { PhCamera } from '~/common/components/icons/phosphor/PhCamera';
 import { supportsClipboardRead } from '~/common/util/clipboardUtils';
 import { takeScreenCapture } from '~/common/util/screenCaptureUtils';
 
@@ -260,7 +260,7 @@ function AttachmentSources(props: {
             <RichMenuItem
               name='Camera'
               color={props.color}
-              Icon={CameraAltOutlinedIcon}
+              Icon={PhCamera}
               description='Capture photos with optional OCR'
               onClick={props.onOpenCamera}
               endAction={!isMessage && props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} tooltip='Live Camera chat' onClick={props.onStartLiveCameraFeed} />}
@@ -371,7 +371,7 @@ function AttachmentSources(props: {
         {props.hasCamera && (
           <RichMenuItem
             name='Camera'
-            Icon={CameraAltOutlinedIcon}
+            Icon={PhCamera}
             description='Capture photos with optional OCR'
             onClick={props.onOpenCamera}
             endAction={props.onStartLiveCameraFeed && <LiveFeedButton isActive={!!props.hasActiveCameraFeed} tooltip='Live Camera chat' onClick={props.onStartLiveCameraFeed} />}
