@@ -74,7 +74,7 @@ Local-first, all Zustand in memory. Global stores `persist` to localStorage (dis
 ### Development Patterns
 
 #### Design
-- Choose for the long term: modern, principled, scalable patterns over the file's current habits; one responsibility and a small surface per module, so concurrent agents edit different files. Design the shape the codebase will need, build the part asked for
+- Choose for the long term: modern, decoupled, scalable patterns over the file's current habits; one responsibility and a small surface per module, so concurrent agents edit different files. Design the shape the codebase will need, build the part asked for
 - Improve or share the existing function rather than add a copy; what a second module could use goes in `src/common/`
 - TS interfaces: discriminated unions so misuse fails at compile time, the fewest types that achieve it. Model on the best current pattern in the codebase, not the nearest one
 - Comments carry the why and the contract: a short file header, notes on non-obvious shapes and decisions, none that restate the code
