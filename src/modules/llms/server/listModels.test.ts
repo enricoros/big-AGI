@@ -349,9 +349,9 @@ describe('listModels enumeration', () => {
     ok(models.some(m => /minimax/i.test(m.id)), 'minimax: MiniMax-* present');
   });
 
-  test('openai-compat/openrouter: live listing (endpoint is PUBLIC; any bearer accepted)', { skip: skipIfMissing('OPENROUTER_API_KEY') }, async () => {
-    // OpenRouter's /api/v1/models accepts any bearer token, so this COULD run keyless -
-    // but it's key-gated so a keyless `npm test` stays offline and deterministic (catalog
+  test('openai-compat/openrouter: live listing (the list is PUBLIC; the key is checked beside it)', { skip: skipIfMissing('OPENROUTER_API_KEY') }, async () => {
+    // OpenRouter's /api/v1/models accepts any bearer token; the listing also asks /api/v1/key,
+    // so it needs a real key. Key-gated so a keyless `npm test` stays offline and deterministic (catalog
     // drift turns it red with zero code changes). Exercises a real fetch + OpenAI-compatible
     // parse + vendor mapping + variant injection pipeline.
     const key = E.OPENROUTER_API_KEY?.trim() || 'x';
@@ -360,6 +360,16 @@ describe('listModels enumeration', () => {
       50, 'openrouter/live',
     );
     ok(models.some(m => m.id.includes('/')), 'openrouter: ids use vendor/model format');
+  });
+
+  test('openai-compat/openrouter: a key OpenRouter does not know fails the listing', { skip: skipIfMissing('OPENROUTER_API_KEY') }, async () => {
+    // the public list loads for this key too: /api/v1/key's 401 is what fails the listing, at setup instead of at the first chat.
+    // Needs no key of ours; gated like the live listing, to stay offline without one.
+    const unknownKey = 'sk-or-v1-' + '0'.repeat(64);
+    const rejection: any = await listModelsRunDispatch(
+      { dialect: 'openrouter', ...openAIShape({ oaiKey: unknownKey }) } as AixAPI_Access, AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    ).then(() => null, error => error);
+    ok(rejection?.httpStatus === 401, 'openrouter: an unknown key throws the upstream 401');
   });
 
   test('openai-compat/perplexity: hardcoded list (no API, no credentials)', async () => {

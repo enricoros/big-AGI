@@ -5,7 +5,7 @@ import type { AixAPI_Access } from '~/modules/aix/server/api/aix.wiretypes';
 import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
 import { createDebugWireLogger } from '~/server/wire';
-import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
+import { fetchJsonOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 
 import type { ModelDescriptionSchema } from './llm.server.types';
 import { llmDevValidateParameterSpecs_DEV, llmsAutoImplyInterfaces, llmsWireCompatCacheTag } from './models.mappings';
@@ -31,7 +31,7 @@ import { wireOllamaListModelsSchema, wireOllamaModelInfoSchema } from './ollama/
 
 // protocol: OpenAI-compatible
 import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
-import { OPENAI_API_PATHS, openAIAccess } from './openai/openai.access';
+import { OPENAI_API_PATHS, openAIAccess, OPENROUTER_API_PATHS } from './openai/openai.access';
 import { alibabaModelFilter, alibabaModelSort, alibabaModelToModelDescription } from './openai/models/alibaba.models';
 import { arceeAIHeuristic, arceeAIModelsToModelDescriptions } from './openai/models/arceeai.models';
 import { azureDeploymentFilter, azureDeploymentToModelDescription, azureParseFromDeploymentsAPI } from './openai/models/azure.models';
@@ -433,6 +433,19 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
           // [MiniMax] curated-first: the list only adds 0-day ids to the curated table (see minimaxModelsToModelDescriptions)
           if (dialect === 'openai' && minimaxHeuristic(oaiUrl))
             return _fetchModelsListCuratedFirst('MiniMax', fetchList);
+
+          // [OpenRouter] the list is public and loads with any key, so a wrong key would first fail in chat: ask the key
+          // endpoint alongside, and fail the listing on its 401 alone - no other answer, error or delay of it counts
+          if (dialect === 'openrouter') {
+            const { headers, url } = openAIAccess(access, null, OPENROUTER_API_PATHS.key);
+            const [wireModels, keyRejection] = await Promise.all([
+              fetchList(),
+              fetchJsonOrTRPCThrow({ url, headers, name: `OpenAI/${_capitalize(dialect)}`, signal: AbortSignal.timeout(5000) })
+                .then(() => null, error => error instanceof TRPCFetcherError && error.httpStatus === 401 ? error : null),
+            ]);
+            if (keyRejection) throw keyRejection;
+            return wireModels;
+          }
 
           return fetchList();
         },
