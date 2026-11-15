@@ -668,7 +668,8 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
         break;
 
       case 'response.output_text.done':
-        R.contentPartVisit(eventType, event.output_index, event.content_index);
+        if (event.content_index !== undefined) // not sent by some relays: no index to check
+          R.contentPartVisit(eventType, event.output_index, event.content_index);
         // .text: ignore finalized content, we already transmitted all partials
         // [xAI] release any non-marker text held back by the citations-leak filter
         const heldTail = xaiCitationsFilter?.flush();

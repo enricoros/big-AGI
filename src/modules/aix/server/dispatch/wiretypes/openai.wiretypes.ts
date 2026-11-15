@@ -1217,7 +1217,8 @@ export namespace OpenAIWire_Responses_Items {
     role: z.literal('assistant'), // [?XAI] also 'tool'?
     content: z.array(_ContentItem_Parts_schema)
       .optional(), // [Sakana Namazu] absent when the item opens ('response.output_item.added')
-    phase: z.enum(['commentary', 'final_answer']).or(z.string()).optional(), // [OpenAI, 2026-03-03] message phase indicator for multi-phase responses
+    phase: z.enum(['commentary', 'final_answer']).or(z.string()) // [OpenAI, 2026-03-03] message phase indicator for multi-phase responses
+      .nullish(), // [Responses-compatible relays] null
   });
 
   export type OutputReasoningItem = z.infer<typeof OutputReasoningItem_schema>;
@@ -1811,7 +1812,8 @@ export namespace OpenAIWire_API_Responses {
 
     // Echo State management & API options (with defaults)
     background: z.boolean().optional(), // (false)
-    store: z.boolean().optional(), // (true)
+    store: z.boolean() // (true)
+      .nullish(), // [Responses-compatible relays] null
 
     // NOTE: the following fields seem an exact echo of what's in the request - let's ignore these for now
     // instructions: z.string().nullable(), // null
@@ -1896,6 +1898,9 @@ export namespace OpenAIWire_API_Responses {
 
   const _PartIndexedEvent_schema = _OutputIndexedEvent_schema.extend({
     content_index: z.number(), // identifies the content part in the output item
+
+    // [Responses-compatible relays] absent on the content part events, where it is not read
+    item_id: z.string().optional(),
   });
 
   const ContentPartAddedEvent_schema = _PartIndexedEvent_schema.extend({
@@ -1916,6 +1921,9 @@ export namespace OpenAIWire_API_Responses {
   const OutputTextDoneEvent_schema = _PartIndexedEvent_schema.extend({
     type: z.literal('response.output_text.done'),
     text: z.string(),
+
+    // [Responses-compatible relays] absent here, sent on the deltas
+    content_index: z.number().optional(),
   });
 
   const OutputTextAnnotationAddedEvent_schema = _PartIndexedEvent_schema.extend({

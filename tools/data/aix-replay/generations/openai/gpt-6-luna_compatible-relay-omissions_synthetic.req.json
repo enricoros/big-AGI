@@ -1,0 +1,10 @@
+{
+  "note": "Synthetic: the first-party reply to the body below, edited by hand to what two Responses-compatible relays sent in production (2026-11): no item_id on the content part events, no content_index on response.output_text.done, store null on the response, phase null on the message item.",
+  "body": {
+    "model": "gpt-6-luna",
+    "stream": true,
+    "store": false,
+    "input": "Reply with the single word: ok",
+    "max_output_tokens": 400
+  }
+}
