@@ -348,7 +348,17 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
     // throws on malformed event data
     const chunkData = JSON.parse(eventData);
 
-    const event = OpenAIWire_API_Responses.StreamingEvent_schema.parse(chunkData);
+    const parsed = OpenAIWire_API_Responses.StreamingEvent_schema.safeParse(chunkData);
+    if (!parsed.success) {
+      // An event type the union does not list is an unknown value (skipped in production), not a malformed event:
+      // [ChatGPT-backed relays, 2026-11] 'response.metadata' carries moderation flags between the events of the API
+      const [issue] = parsed.error.issues;
+      if (issue.code !== 'invalid_union' || issue.path[0] !== 'type') throw parsed.error;
+      R.validateSequenceNumber(typeof chunkData?.sequence_number === 'number' ? chunkData.sequence_number : undefined);
+      aixResilientUnknownValue('OpenAI-Responses', 'eventType', chunkData?.type);
+      return;
+    }
+    const event = parsed.data;
     const eventType = event?.type;
 
     // Validations

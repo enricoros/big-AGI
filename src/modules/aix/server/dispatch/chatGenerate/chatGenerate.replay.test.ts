@@ -927,6 +927,32 @@ describe('OpenAI Responses', () => {
       assert.deepEqual(particles.filter(isPart('hres')).map(file => 'filename' in file ? file.filename : undefined), cited);
     });
 
+  // ChatGPT-backed relays send `response.metadata` (moderation flags) among the events of the API. An event type the parser
+  // does not list is an unknown vendor shape (see the top of this file): fatal in development, skipped in production.
+  // Synthetic: the event as logged in production, its flags left out, placed before the last text delta of a capture
+  const WITH_TEXT = 'openai/gpt-6-luna_code-interpreter-3-runs.sse';
+
+  test('an event type that is not listed is skipped in production: the answer around it arrives, the reply completes', { skip: missing(WITH_TEXT) }, async () => {
+    const events = sseData(capture(WITH_TEXT));
+    events.splice(events.findLastIndex(event => event.type === 'response.output_text.delta'), 0,
+      { type: 'response.metadata', response_id: events[0].response.id, metadata: { openai_chatgpt_moderation_metadata: { prompt: {}, generation: {}, tool_call: {}, tool_response: {} } } });
+    const stream = sse(events.map((data, sequence_number) => ({ event: data.type, data: { ...data, sequence_number } })));
+    const replayIn = async (NODE_ENV: 'production' | 'development') => {
+      Object.assign(process.env, { NODE_ENV });
+      try {
+        return (await replay([stream], true, () => createOpenAIResponsesEventParser('openai'))).particles;
+      } finally {
+        Object.assign(process.env, { NODE_ENV: 'development' });
+      }
+    };
+
+    const particles = await replayIn('production');
+    assert.equal(particles.filter(isText).map(op => op.t).join(''), VENDORS.openai.answerText(events, true));
+    assert.deepEqual(issueTexts(particles), []);
+    assert.equal(theEnd(particles).tokenStopReason, 'ok');
+    assert.ok(issueTexts(await replayIn('development')).some(text => CHAIN_FAILURE.test(text)), 'development did not fail on the unlisted event');
+  });
+
 });
 
 

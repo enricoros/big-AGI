@@ -43,6 +43,7 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **P13** (low) `refusal` parts dropped; a refusal-only message stores nothing (synthetic)
 - [ ] **P14** (low) `reasoning_text` dropped; never emitted by GPT-6 (0/87 items)
 - [ ] **P55** (low) A failed `image_generation_call` (moderation block) is stored as a composed error text and replayed as `[ERROR]` (Q1); its id, status and error object are lost (P16) - `_forwardFailedImageGenerationCallItem`
+- [ ] **P56** (low) S: event types not in the union are skipped in production, fatal to the stream in development builds and strict mode; seen: `response.metadata` (moderation flags) from ChatGPT-backed relays
 
 ### Parse: Gemini (`P/gemini.parser.ts`, `P/gemini.interactions.parser.ts`)
 
