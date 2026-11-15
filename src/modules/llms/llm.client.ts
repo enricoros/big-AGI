@@ -267,6 +267,42 @@ export function createDLLMUserClone(sourceLlm: DLLM, cloneLabel: string, cloneVa
 }
 
 /**
+ * Creates a user-defined DLLM for a service, for models the service does not list (e.g. no /v1/models).
+ * It is a user clone without a source, so model refreshes preserve it and its Model ID stays editable.
+ * Capabilities are unknown: chat + function calling, no context/output limits, default temperature.
+ */
+export function createDLLMUserCustom(service: Pick<DModelsService, 'id' | 'vId'>, label: string, llmRef: string): DLLM {
+  return {
+    id: getDLLMCustomId(service.id, llmRef),
+    label,
+    created: 0,
+    updated: 0,
+    description: '',
+    hidden: false,
+
+    contextTokens: null,
+    maxOutputTokens: null,
+    interfaces: [..._fallbackInterfaces],
+    parameterSpecs: [],
+    initialParameters: {
+      llmRef,
+      llmResponseTokens: null,
+      llmTemperature: LLMImplicitParametersRuntimeFallback.llmTemperature,
+    },
+
+    sId: service.id,
+    vId: service.vId,
+
+    isUserClone: true,
+  };
+}
+
+/** The ID of a user-defined model; the variant suffix keeps it apart from a listed model with the same id. */
+export function getDLLMCustomId(serviceId: DModelsServiceId, llmRef: string): DLLMId {
+  return getDLLMCloneId(`${serviceId}-${llmRef}` as DLLMId, 'custom');
+}
+
+/**
  * Generates the clone ID that would be created for a given source and variant.
  * Useful for checking uniqueness before creating a clone.
  */

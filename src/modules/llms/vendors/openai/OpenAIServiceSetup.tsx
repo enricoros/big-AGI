@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { Alert, Box, Button, Divider, IconButton, Typography } from '@mui/joy';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
@@ -14,9 +15,11 @@ import { NvidiaIcon } from '~/common/components/icons/vendors/NvidiaIcon';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
+import { LLMOptionsAddCustom } from '../../models-modal/LLMOptionsAddCustom';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
@@ -102,6 +105,9 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   const { isFetching, refetch, isError, error } =
     useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service);
 
+  // custom hosts may not list their models: let the user add them by ID
+  const [showAddModel, setShowAddModel] = React.useState(false);
+
   return <>
 
     <ApproximateCosts serviceId={service?.id} />
@@ -164,9 +170,24 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
 
     {/* Note, there will be an item here, becasue the former adds an item when visible=false, and as such it must be the last item, to guarantee the gap is always there */}
 
-    <SetupFormRefetchButton refetch={refetch} disabled={isFetching} error={isError} loading={isFetching} advanced={advanced} />
+    <SetupFormRefetchButton
+      refetch={refetch} disabled={isFetching} error={isError} loading={isFetching} advanced={advanced}
+      leftButton={!!oaiHost && (
+        <Button variant='plain' color='neutral' startDecorator={<AddRoundedIcon />} onClick={() => setShowAddModel(true)}>
+          Add Model
+        </Button>
+      )}
+    />
 
     {isError && <InlineError error={error} />}
+
+    {showAddModel && (
+      <LLMOptionsAddCustom
+        serviceId={props.serviceId}
+        onClose={() => setShowAddModel(false)}
+        onAdded={optimaActions().openModelOptions}
+      />
+    )}
 
   </>;
 }

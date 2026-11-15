@@ -57,6 +57,8 @@
 //                                        no server env fallback)
 // -----------------------------------------------------------------------------
 
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { describe, test } from 'node:test';
 
 import type { AixAPI_Access } from '../../aix/server/api/aix.wiretypes';
@@ -347,6 +349,38 @@ describe('listModels enumeration', () => {
       1, 'openai/minimax',
     );
     ok(models.some(m => /minimax/i.test(m.id)), 'minimax: MiniMax-* present');
+  });
+
+  test('openai-compat/openai via custom host: 404/405 models list -> no models, other errors still throw', async () => {
+    // Local stand-in for a gateway that serves chat but not /v1/models; fully offline.
+    let status = 404;
+    let requestedPath = '';
+    const server = createServer((req, res) => {
+      requestedPath = req.url || '';
+      res.writeHead(status, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: { message: `status ${status}` } }));
+    });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    const oaiHost = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    const access = { dialect: 'openai', ...openAIShape({ oaiKey: 'dummy', oaiHost }) } as AixAPI_Access;
+    try {
+      for (status of [404, 405]) {
+        const models = await listModelsRunDispatch(access, AbortSignal.timeout(REQUEST_TIMEOUT_MS));
+        ok(Array.isArray(models) && models.length === 0, `custom host ${status}: expected an empty list, got ${models.length}`);
+        ok(requestedPath === '/v1/models', `custom host ${status}: requested ${requestedPath}`);
+      }
+      for (status of [401, 500]) {
+        let threw = false;
+        try {
+          await listModelsRunDispatch(access, AbortSignal.timeout(REQUEST_TIMEOUT_MS));
+        } catch {
+          threw = true;
+        }
+        ok(threw, `custom host ${status}: expected the listing to fail`);
+      }
+    } finally {
+      await new Promise<void>(resolve => server.close(() => resolve()));
+    }
   });
 
   test('openai-compat/openrouter: live listing (endpoint is PUBLIC; any bearer accepted)', { skip: skipIfMissing('OPENROUTER_API_KEY') }, async () => {
