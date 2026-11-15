@@ -345,7 +345,7 @@ function _pairInteriorFunctionCalls(contents: GeminiWire_Messages.Content[]): vo
     if (!orphanCalls.length) continue;
 
     // head-insert, in functionCall order: responses lead the user turn, ahead of any user content
-    console.warn(`[Gemini] Pairing ${orphanCalls.length} orphan functionCall part(s) with a placeholder functionResponse (contents.${i})`);
+    console.log(`[Gemini] Pairing ${orphanCalls.length} orphan functionCall part(s) with a placeholder functionResponse (contents.${i})`);
     responsesContent.parts.unshift(...orphanCalls.map(fc => GeminiWire_ContentParts.FunctionResponsePart({
       id: fc.id,
       name: fc.name,

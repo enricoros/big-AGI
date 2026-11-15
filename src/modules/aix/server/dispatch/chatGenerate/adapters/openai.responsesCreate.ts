@@ -745,7 +745,7 @@ function _pairInteriorFunctionCalls(requestInput: TRequestInput[]): void {
   for (let i = requestInput.length - 1; i >= 0; i--) {
     const item = requestInput[i];
     if ('type' in item && item.type === 'function_call_output' && !calledIds.has(item.call_id)) {
-      console.warn(`[OpenAI Responses] Dropping an orphan function_call_output (input.${i})`);
+      console.log(`[OpenAI Responses] Dropping an orphan function_call_output (input.${i})`);
       requestInput.splice(i, 1);
     }
   }
@@ -762,7 +762,7 @@ function _pairInteriorFunctionCalls(requestInput: TRequestInput[]): void {
     if (answeredIds.has(item.call_id)) continue;
 
     // insert right after the call, the canonical position for its output
-    console.warn(`[OpenAI Responses] Pairing an orphan function_call with a placeholder output (input.${i})`);
+    console.log(`[OpenAI Responses] Pairing an orphan function_call with a placeholder output (input.${i})`);
     requestInput.splice(i + 1, 0, { type: 'function_call_output', call_id: item.call_id, output: AIX_MISSING_TOOL_RESULT_TEXT });
   }
 }

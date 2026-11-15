@@ -552,7 +552,7 @@ function _pairInteriorToolUseBlocks(chatMessages: TRequest['messages']): void {
     if (!orphanIds.length) continue;
 
     // head-insert, in tool_use order: tool_result blocks lead the user turn, ahead of any user content
-    console.warn(`[Anthropic] Pairing ${orphanIds.length} orphan tool_use block(s) with a placeholder tool_result (messages.${i})`);
+    console.log(`[Anthropic] Pairing ${orphanIds.length} orphan tool_use block(s) with a placeholder tool_result (messages.${i})`);
     resultsMessage.content.unshift(...orphanIds.map(id => AnthropicWire_Blocks.ToolResultBlock(
       id,
       [AnthropicWire_Blocks.TextBlock(AIX_MISSING_TOOL_RESULT_TEXT, 'pairing.orphan-tool-use')],

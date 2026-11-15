@@ -557,7 +557,7 @@ function _fixPairInteriorToolCalls(chatMessages: TRequestMessages): void {
     if (!orphanIds.length) continue;
 
     // append to the existing run, in tool_calls order, so all results stay contiguous after the call
-    console.warn(`[OpenAI] Pairing ${orphanIds.length} orphan tool call(s) with a placeholder tool message (messages.${i})`);
+    console.log(`[OpenAI] Pairing ${orphanIds.length} orphan tool call(s) with a placeholder tool message (messages.${i})`);
     chatMessages.splice(insertAt, 0, ...orphanIds.map(id => OpenAIWire_Messages.ToolMessage(id, AIX_MISSING_TOOL_RESULT_TEXT)));
   }
 }

@@ -17,6 +17,8 @@ const DEFAULT_SPILL_PART_TYPES: AixMessages_SystemMessage['parts'][number]['pt']
  * and Gemini, and it repeats on every later turn - the conversation is bricked until the offending
  * message is deleted. Each adapter runs an interior-orphan pass over its own wire shape and pairs
  * the missing results with this text; the trailing (in-flight) tool call is never paired.
+ * A pairing is logged at info level: the request is repaired, and one stored orphan logs on every
+ * later request of its conversation.
  */
 export const AIX_MISSING_TOOL_RESULT_TEXT = '[result omitted]';
 
