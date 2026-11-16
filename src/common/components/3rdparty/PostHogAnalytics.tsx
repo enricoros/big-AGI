@@ -51,6 +51,10 @@ const SUPPRESSED_EXCEPTION_SUBSTRINGS = [
 function shouldSuppressPostHogCapture(captureResult: any): boolean {
   if (!captureResult || captureResult.event !== '$exception') return false;
 
+  // error reporting off: no exception leaves the browser. The explicit reports (posthogCaptureException) and the
+  // automatic captures both become '$exception' events, so this one check covers every client error report
+  if (!Release.Features.ERROR_REPORTING) return true;
+
   const properties = captureResult.properties || {};
   const parts: string[] = [];
 
