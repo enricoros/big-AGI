@@ -55,6 +55,7 @@ XAI_API_KEY=
 PUPPETEER_WSS_ENDPOINT=
 
 # Search
+CONTEXT_DEV_API_KEY=
 GOOGLE_CLOUD_API_KEY=
 GOOGLE_CSE_ID=
 
@@ -131,7 +132,7 @@ requiring the user to enter an API key
 
 ### Features
 
-Enable the app to Talk, Draw, and Google things up.
+Enable speech, drawing, web search, and browsing.
 
 | Variable                   | Description                                                                                                             |
 |:---------------------------|:------------------------------------------------------------------------------------------------------------------------|
@@ -140,6 +141,9 @@ Enable the app to Talk, Draw, and Google things up.
 | `ELEVENLABS_API_HOST`      | Custom host for ElevenLabs                                                                                              |
 | `ELEVENLABS_VOICE_ID`      | Default voice ID for ElevenLabs                                                                                         |
 |                            | *Note: OpenAI TTS and LocalAI TTS reuse credentials from your configured LLM services (no separate env vars needed)*   |
+| **Context.dev Search** | Select Context.dev in `Tools > Custom Search` to use it with `/react`. |
+| `CONTEXT_DEV_API_KEY` | Optional server-side Context.dev API key. A key entered in settings takes precedence. |
+| | Server keys stay on the server, but requests use the deployment's existing access controls. Anyone able to access its search endpoint can consume the configured account's credits; protect public deployments. |
 | **Google Custom Search**   | [Google Programmable Search Engine](https://programmablesearchengine.google.com/about/)  produces links to pages        |
 | `GOOGLE_CLOUD_API_KEY`     | Google Cloud API Key, used with the '/react' command - [Link to GCP](https://console.cloud.google.com/apis/credentials) |
 | `GOOGLE_CSE_ID`            | Google Custom/Programmable Search Engine ID - [Link to PSE](https://programmablesearchengine.google.com/)               |

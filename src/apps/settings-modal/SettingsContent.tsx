@@ -10,7 +10,7 @@ import { optimaActions } from '~/common/layout/optima/useOptima';
 
 import { ASRxConfigureEngines } from '~/modules/asrx/components/ASRxConfigureEngines';
 import { BrowseSettings } from '~/modules/browse/BrowseSettings';
-import { GoogleSearchSettings } from '~/modules/google/GoogleSearchSettings';
+import { WebSearchSettings } from '~/modules/websearch/WebSearchSettings';
 import { T2IConfigureEngines } from '~/modules/t2i/components/T2IConfigureEngines';
 
 import type { SettingsNavId } from './settings.nav';
@@ -207,7 +207,7 @@ function renderSection(nodeId: SettingsNavId, isMobile: boolean, onSelect: (id: 
     case 'tools-browse':
       return <Box sx={_styles.block}><BrowseSettings /></Box>;
     case 'tools-search':
-      return <Box sx={_styles.block}><GoogleSearchSettings /></Box>;
+      return <Box sx={_styles.block}><WebSearchSettings /></Box>;
 
     case 'labs':
       return <Box sx={_styles.block}><UxLabsSettings /></Box>;

@@ -349,7 +349,7 @@ Configure 100s of AI models from 20+ providers:
 | **More**      | _integrations_                                                                                                 |
 |:--------------|:---------------------------------------------------------------------------------------------------------------| 
 | Web Browse    | [Browserless](https://www.browserless.io/) · [Puppeteer](https://pptr.dev/)-based                              |
-| Web Search    | [Google CSE](https://programmablesearchengine.google.com/)                                                     |
+| Web Search    | [Google CSE](https://programmablesearchengine.google.com/) · [Context.dev](https://context.dev) for `/react` |
 
 ---
 

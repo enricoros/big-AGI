@@ -70,6 +70,7 @@ export const backendRouter = createTRPCRouter({
         hasDB: (!!env.MDB_URI) || (!!env.POSTGRES_PRISMA_URL && !!env.POSTGRES_URL_NON_POOLING),
         hasBrowsing: !!env.PUPPETEER_WSS_ENDPOINT,
         hasGoogleCustomSearch: !!env.GOOGLE_CSE_ID && !!env.GOOGLE_CLOUD_API_KEY,
+        hasContextSearch: !!env.CONTEXT_DEV_API_KEY?.trim(),
         hasVoiceElevenLabs: !!env.ELEVENLABS_API_KEY,
         // hashes - TODO(2026-11): remove hashLlmReconfig + generateLlmEnvConfigHash: unread since LLM-Defs (per-vendor defsV), kept for pre-LLM-Defs clients
         hashLlmReconfig: generateLlmEnvConfigHash(env),

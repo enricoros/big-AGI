@@ -116,6 +116,9 @@ export const env = createEnv({
     // Browsing Service
     PUPPETEER_WSS_ENDPOINT: z.url().optional(),
 
+    // Context.dev Search
+    CONTEXT_DEV_API_KEY: z.string().optional(),
+
     // Google Custom Search
     GOOGLE_CLOUD_API_KEY: z.string().optional(),
     GOOGLE_CSE_ID: z.string().optional(),

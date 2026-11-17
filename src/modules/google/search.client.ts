@@ -11,7 +11,7 @@ export const isValidGoogleCseId = (cseId?: string) => !!cseId && cseId.trim()?.l
 /**
  * This function either returns the Search JSON response, or throws a descriptive error string
  */
-export async function callApiSearchGoogle(query: string, items: number, restrictToDomain?: string): Promise<{ pages: Search.API.BriefResult[] }> {
+export async function callApiSearchGoogle(query: string, items: number, restrictToDomain?: string, signal?: AbortSignal): Promise<{ pages: Search.API.BriefResult[] }> {
 
   // get the keys (empty if they're on server)
   const { googleCloudApiKey, googleCSEId, restrictToDomain: defaultRestrictToDomain } = useGoogleSearchStore.getState();
@@ -23,7 +23,7 @@ export async function callApiSearchGoogle(query: string, items: number, restrict
       key: googleCloudApiKey,
       cx: googleCSEId,
       restrictToDomain: restrictToDomain || defaultRestrictToDomain || null,
-    });
+    }, { signal });
   } catch (error: any) {
     const errorMessage = error?.message || error?.toString() || 'Unknown error';
     console.error(`callApiSearchGoogle: ${errorMessage}`);

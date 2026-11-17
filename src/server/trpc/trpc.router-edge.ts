@@ -3,6 +3,7 @@ import { createTRPCRouter } from './trpc.server';
 // Edge routers
 import { aixRouter } from '~/modules/aix/server/api/aix.router';
 import { backendRouter } from '~/modules/backend/backend.router';
+import { contextSearchRouter } from '~/modules/websearch/search.router';
 import { googleSearchRouter } from '~/modules/google/search.router';
 import { llmAnthropicRouter } from '~/modules/llms/server/anthropic/anthropic.router';
 import { llmBedrockRouter } from '~/modules/llms/server/bedrock/bedrock.router';
@@ -18,6 +19,7 @@ import { youtubeRouter } from '~/modules/youtube/youtube.router';
 export const appRouterEdge = createTRPCRouter({
   aix: aixRouter,
   backend: backendRouter,
+  contextSearch: contextSearchRouter,
   googleSearch: googleSearchRouter,
   llmAnthropic: llmAnthropicRouter,
   llmBedrock: llmBedrockRouter,
