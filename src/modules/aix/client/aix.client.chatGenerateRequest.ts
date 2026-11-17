@@ -574,8 +574,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
       // a turn of errors alone (e.g. a rejected request) is not sent: the model never answered, and with the error in its place it treats the user's prompt as handled;
       // the user turns around it become adjacent, as with a skipped or an empty assistant message
-      // DISABLED: not enough testing, will need to monitor this
-      if (modelMessage.parts.length > 0 /* modelErrorParts: DISABLED */) {
+      if (modelMessage.parts.length > modelErrorParts) {
 
         // (on Assistant messages) handle the ant-cache-prompt user/auto flags, on the very last message
         if (mHasAntCacheFlag)
