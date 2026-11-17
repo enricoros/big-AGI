@@ -21,8 +21,20 @@ export function useLlmUpdateModels<TServiceSettings extends object>(
   isError: boolean,
   error: TRPCClientErrorBase<any> | null
 } {
+  // A setting being typed is not listed by itself (Enter and the Models button list it): the format rules behind
+  // `enabled` are weak, and a half-typed key or host fails the listing. A whole value - a paste, a fill, a toggle - is.
+  // [derived from the previous render] whether the last change of the setup was typed
+  const setup = service?.setup;
+  const [seen, setSeen] = React.useState({ setup, isTyped: false });
+  let isTyped = seen.isTyped;
+  if (seen.setup !== setup) {
+    const change = _setupChange(seen.setup, setup);
+    if (change !== 'none') isTyped = change === 'typed';
+    setSeen({ setup, isTyped });
+  }
+
   const { isFetching, refetch, isError, error } = useQuery<{ models: ModelDescriptionSchema[] }, TRPCClientErrorBase<any> | null>({
-    enabled: enabled && !!service,
+    enabled: enabled && !!service && !isTyped,
     queryKey: llmsListServiceModelsQueryKey(service?.id),
     queryFn: async () => {
       if (!service) throw new Error('No service provided to fetch models for'); // only to allow null
@@ -36,4 +48,26 @@ export function useLlmUpdateModels<TServiceSettings extends object>(
   const refetchOrJoin = React.useCallback(() => void refetch({ cancelRefetch: false }), [refetch]);
 
   return { isFetching, refetch: refetchOrJoin, isError, error };
+}
+
+/**
+ * How a setup changed: 'typed' when one text setting differs by one character (inserted, deleted or replaced),
+ * 'whole' for any other difference, 'none' when the settings are equal.
+ */
+function _setupChange(prev: object | undefined, next: object | undefined): 'none' | 'typed' | 'whole' {
+  const from: Record<string, unknown> = { ...prev }, to: Record<string, unknown> = { ...next };
+  const changed = Object.keys({ ...from, ...to }).filter(name => from[name] !== to[name]);
+  if (changed.length !== 1) return changed.length ? 'whole' : 'none';
+
+  // a setting typed for the first time has no value yet
+  const a = from[changed[0]] ?? '', b = to[changed[0]] ?? '';
+  if (a === b) return 'none';
+  if (typeof a !== 'string' || typeof b !== 'string') return 'whole';
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  if (long.length - short.length > 1) return 'whole';
+
+  // past the common start, the rest is equal after skipping one character: of the longer text, or of both
+  let at = 0;
+  while (at < short.length && short[at] === long[at]) at++;
+  return long.slice(at + 1) === short.slice(long.length > short.length ? at : at + 1) ? 'typed' : 'whole';
 }
