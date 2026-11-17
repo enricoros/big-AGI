@@ -106,5 +106,10 @@ export function LLMVendorSetup(props: { service: DModelsService }) {
   if (!SetupComponent)
     return 'Configuration issue: Setup component not found for vendor ' + vendor.id;
 
-  return <SetupComponent key={props.service.id} serviceId={props.service.id} />;
+  // a form, for the browser's own Enter: in any field of the setup it presses the submit button, which is 'Models' (SetupFormRefetchButton)
+  return (
+    <form style={{ display: 'contents' /* the setup's rows stay children of the parent's grid */ }} onSubmit={event => event.preventDefault()}>
+      <SetupComponent key={props.service.id} serviceId={props.service.id} />
+    </form>
+  );
 }

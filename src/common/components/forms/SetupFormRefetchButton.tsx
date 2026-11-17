@@ -29,6 +29,7 @@ export function SetupFormRefetchButton(props: {
       )}
 
       <Button
+        type='submit' // inside a form (LLMVendorSetup), Enter in a field presses it
         color={props.error ? 'warning' : 'primary'}
         disabled={props.disabled}
         loading={props.loading}
