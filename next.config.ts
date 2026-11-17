@@ -210,6 +210,7 @@ if (process.env.POSTHOG_API_KEY && process.env.POSTHOG_ENV_ID) {
     logLevel: 'error', // lowered, too noisy
     sourcemaps: {
       enabled: process.env.NODE_ENV === 'production',
+      failOnError: process.env.VERCEL_ENV === 'preview', // a failed upload stops preview builds only: they surface it, no other build depends on PostHog
       releaseName: 'big-agi',
       releaseVersion: process.env.NEXT_PUBLIC_BUILD_HASH,
       deleteAfterUpload: false, // false: leave them in the tree, which would also help debugging of open-source installs
