@@ -69,6 +69,9 @@ let nextConfig: NextConfig = {
     // @mui/joy: anything material gets redirected to Joy
     config.resolve.alias['@mui/material'] = '@mui/joy';
 
+    // posthog-node: skip the optional peer of its email API (unused here), or the server bundles warn "Can't resolve '@react-email/render'"
+    config.plugins.push(new webpack.IgnorePlugin({ resourceRegExp: /^@react-email\/render$/, contextRegExp: /posthog-node/ }));
+
     // @dqbd/tiktoken: enable asynchronous WebAssembly
     config.experiments = {
       asyncWebAssembly: true,
