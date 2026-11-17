@@ -205,13 +205,13 @@ if (process.env.POSTHOG_API_KEY && process.env.POSTHOG_ENV_ID) {
   log('- building with PostHog issue reporting...');
   nextConfig = withPostHogConfig(nextConfig, {
     personalApiKey: process.env.POSTHOG_API_KEY,
-    envId: process.env.POSTHOG_ENV_ID,
+    projectId: process.env.POSTHOG_ENV_ID,
     host: 'https://us.i.posthog.com', // backtrace upload host
     logLevel: 'error', // lowered, too noisy
     sourcemaps: {
       enabled: process.env.NODE_ENV === 'production',
-      project: 'big-agi',
-      version: process.env.NEXT_PUBLIC_BUILD_HASH,
+      releaseName: 'big-agi',
+      releaseVersion: process.env.NEXT_PUBLIC_BUILD_HASH,
       deleteAfterUpload: false, // false: leave them in the tree, which would also help debugging of open-source installs
     },
   });
