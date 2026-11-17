@@ -136,7 +136,7 @@ async function _runLLmRefreshSession(serviceIds: DModelsServiceId[], options: Ll
         // through the query client, not a direct call: the per-service listings (useLlmUpdateModels in the modal, the
         // vendor setups and the Updates rows) run on this same key, so an in-flight fetch is joined instead of
         // duplicated (one vendor call, one changelog entry), and their isFetching/error state reflects the session.
-        // staleTime 0 forces the listing (the hook caches forever).
+        // staleTime 0 forces the listing.
         // a stop releases the wait at once; the listing itself drops its result when it lands
         await resultOrAbort(queryClient.query({
           queryKey: llmsListServiceModelsQueryKey(serviceId),

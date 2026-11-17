@@ -40,7 +40,8 @@ export function useLlmUpdateModels<TServiceSettings extends object>(
       if (!service) throw new Error('No service provided to fetch models for'); // only to allow null
       return await llmsUpdateModelsForServiceOrThrow(service.id, { at: Date.now(), via: 'service' });
     },
-    staleTime: Infinity,
+    // no staleTime: an earlier listing of this id says nothing once `enabled` asks for one - its models are gone
+    // (removed, or the service was removed and added again, which reuses the id)
   });
 
   // join an in-flight listing (a session's, or a double click) instead of cancelling it: the listing does not
