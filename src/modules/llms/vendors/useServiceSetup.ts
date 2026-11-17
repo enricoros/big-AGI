@@ -3,10 +3,12 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import type { DLLM } from '~/common/stores/llms/llms.types';
+import { reactQueryClientSingleton } from '~/common/app.queryclient';
 import { useShallowStabilizer } from '~/common/util/hooks/useShallowObject';
 import { useModelsStore } from '~/common/stores/llms/store-llms';
 
 import type { IModelVendor } from './IModelVendor';
+import { llmsListServiceModelsQueryKey } from '../llm.client';
 import { vendorHasServerConf } from './vendor.helpers';
 
 
@@ -64,6 +66,11 @@ export function useServiceSetup<TServiceSettings extends object, TAccess extends
 
   const updateSettings = React.useCallback((partialSetup: Partial<TServiceSettings>) => {
     updateServiceSettings<TServiceSettings>(serviceId, partialSetup);
+    // a listing that failed on the previous settings is forgotten: with these, the setup lists again if it is ready
+    reactQueryClientSingleton().removeQueries({
+      queryKey: llmsListServiceModelsQueryKey(serviceId),
+      predicate: query => query.state.status === 'error' && query.state.fetchStatus === 'idle', // never one in flight: it would still land and write
+    });
   }, [serviceId, updateServiceSettings]);
 
   return {
