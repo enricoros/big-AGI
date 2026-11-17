@@ -6,7 +6,7 @@ How a broken connection surfaces on each path, what classifies it, and what Verc
 
 | Path | Site | Turns a failure into |
 |---|---|---|
-| tRPC client | `streamingTransportFetch` (`src/common/util/trpc.client.ts`) | tags 413 and `text/html` responses (`aixTransportCode`) before tRPC parses them |
+| tRPC client | `streamingTransportFetch` (`src/common/util/trpc.client.ts`) | 413 and `text/html` responses -> `TRPCClientFetchError`, before tRPC parses them |
 | tRPC client | `aixClassifyStreamingError` (`src/modules/aix/client/aix.client.errors.ts`) | thrown transport errors -> error fragment text + `aix-<type>` hint |
 | tRPC client | `BlockPartError` | `aix-net-disconnected` + `**connection terminated**` -> the Connection Terminated card with the Direct Connection toggle; `**network error**` -> plain text |
 | Server dispatch, and CSF in the browser | `fetchResponseOrTRPCThrow`, `fetchWithAbortableConnectionRetry` (`src/server/trpc/`) | connect and HTTP failures -> `TRPCFetcherError` categories; connection errors retried 3 times |

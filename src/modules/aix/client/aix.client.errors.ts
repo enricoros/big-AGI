@@ -1,12 +1,12 @@
 import { TRPCClientError } from '@trpc/client';
 
-import { isBrowserOffline, isTRPCNetworkError, isTRPCStreamClosedEarly } from '~/common/util/fetchFailures';
+import { getTRPCClientFetchErrorCode, isBrowserOffline, isTRPCNetworkError, isTRPCStreamClosedEarly } from '~/common/util/fetchFailures';
 import { presentErrorToHumans } from '~/common/util/errorUtils';
 
 
 // AIX client Error Channels (keep the 3 in sync):
 //  [1] transport/connection THROWS    -> aixClassifyStreamingError (below). Fed by the stream-loop catch in aix.client.ts;
-//      pre-filtered by streamingTransportFetch in common/util/trpc.client.ts (tags 413 / text-html as error.cause.aixTransportCode).
+//      pre-filtered by streamingTransportFetch in common/util/trpc.client.ts (throws a TRPCClientFetchError for 413 / text-html).
 //  [2] particle-PROCESSING throws      -> aixClassifyReassemblyError (below). Raised by ContentReassembler.#processWireBacklog.
 //  [3] in-band server/provider errors  -> error PARTICLES inside the 200 stream -> error fragments (ContentReassembler normal path);
 //      never reach [1]/[2]. A valid stream is 200 + application/json, so [1]'s pre-filter passes [3] straight through.
@@ -73,16 +73,18 @@ export function aixClassifyStreamingError(error: any, isUserAbort: boolean, hasF
 
 
 
-  // Engine-independent transport signals tagged by the streaming fetch wrapper (trpc.client.ts streamingTransportFetch),
-  // set BEFORE tRPC's JSONL parser would turn the response into an engine-specific SyntaxError. tRPC wraps a fetch-thrown
-  // error as TRPCClientError with our marker on `.cause`; we also read it directly in case it ever arrives unwrapped.
+  // Engine-independent transport signals thrown by the streaming fetch wrapper (trpc.client.ts streamingTransportFetch),
+  // BEFORE tRPC's JSONL parser would turn the response into an engine-specific SyntaxError. tRPC wraps a fetch-thrown
+  // error as TRPCClientError with ours on `.cause`; the reader also takes it in case it ever arrives unwrapped.
   // The string-match cases further down remain as a V8-only fallback (and cover any path not behind the wrapper).
-  const aixTransportSource: any = error instanceof TRPCClientError ? error.cause : error;
-  switch (aixTransportSource?.aixTransportCode) {
+  switch (getTRPCClientFetchErrorCode(error)) {
     case 'request-exceeded':
       return { errorType: 'request-exceeded', errorMessage: MSG_REQUEST_EXCEEDED };
     case 'response-captive':
       return { errorType: 'response-captive', errorMessage: MSG_RESPONSE_CAPTIVE };
+    case undefined:
+      // not a fetch error of ours: the checks below
+      break;
   }
 
 

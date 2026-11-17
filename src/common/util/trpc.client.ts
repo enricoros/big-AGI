@@ -15,6 +15,7 @@ import { transformer } from '~/server/trpc/trpc.transformer';
 
 import { getBaseUrl } from './urlUtils';
 import { reactQueryClientSingleton } from '../app.queryclient';
+import { TRPCClientFetchError } from './fetchFailures';
 
 
 // configuration
@@ -31,8 +32,8 @@ const enableLoggerLink = (opts: any) => {
  * Fetch wrapper for the STREAMING links only (httpBatchStreamLink).
  *
  * Detects transport-layer failures by HTTP status / content-type, BEFORE tRPC's JSONL parser turns them into
- * engine-specific `SyntaxError`s (which are only string-matchable on V8 - see aix.client.errors.ts). We tag a typed,
- * engine-independent marker (`error.cause.aixTransportCode`), read by [Error Channel 1] aixClassifyStreamingError - see the channel map in aix.client.errors.ts.
+ * engine-specific `SyntaxError`s (which are only string-matchable on V8 - see aix.client.errors.ts). We throw a typed,
+ * engine-independent TRPCClientFetchError (fetchFailures.ts), which callers read with getTRPCClientFetchErrorCode - e.g. [Error Channel 1] aixClassifyStreamingError, see the channel map in aix.client.errors.ts.
  * - 413 from whatever sits in front of the function: the hosted Vercel edge (~4.5MB, as `text/plain`), OR a
  *   self-hosted reverse proxy (nginx `client_max_body_size`, etc.). The classifier emits host-appropriate copy.
  * - text/html where a JSON(L) stream is expected (captive portals / proxies / gateway error pages)
@@ -43,11 +44,11 @@ const enableLoggerLink = (opts: any) => {
 const streamingTransportFetch: typeof fetch = async (input, init) => {
   const res = await fetch(input, init);
   if (res.status === 413)
-    throw Object.assign(new Error('AIX transport: request entity too large'), { aixTransportCode: 'request-exceeded' as const });
+    throw new TRPCClientFetchError('request-exceeded', 'tRPC fetch: request entity too large');
   // A legitimate tRPC stream is always application/json - any text/html means a captive portal / proxy / gateway error
   // page (commonly non-2xx), regardless of status. We flag it before the JSONL parser chokes on the '<!DOCTYPE'.
   if ((res.headers.get('content-type') ?? '').includes('text/html'))
-    throw Object.assign(new Error('AIX transport: captive/HTML response'), { aixTransportCode: 'response-captive' as const });
+    throw new TRPCClientFetchError('response-captive', 'tRPC fetch: captive/HTML response');
   return res;
 };
 

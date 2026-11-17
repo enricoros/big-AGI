@@ -70,3 +70,22 @@ export function isTRPCNetworkError(error: unknown): boolean {
 export function isTRPCStreamClosedEarly(error: unknown): boolean {
   return error instanceof Error && TRPC_STREAM_CLOSED_TEXTS.some(text => error.message === text);
 }
+
+// tRPC client fetch - our own error, not a runtime text. The fetch of the streaming links (streamingTransportFetch,
+// trpc.client.ts) throws it for an HTTP answer that is not a tRPC stream, before tRPC's JSONL parser turns the body
+// into an engine-specific SyntaxError; tRPC then wraps it in a TRPCClientError.
+// - 'request-exceeded': HTTP 413, the request body is over the limit of whatever sits in front of the function
+// - 'response-captive': text/html where a JSON(L) stream is expected - captive portal, proxy, gateway error page
+// TODO: typed errors (kb/modules/aix/AIX-TODO-errors.md) - a custom class until the error table covers the transport
+export class TRPCClientFetchError extends Error {
+  constructor(readonly code: 'request-exceeded' | 'response-captive', message: string) {
+    super(message);
+    this.name = 'TRPCClientFetchError';
+  }
+}
+
+/** The code of a TRPCClientFetchError - bare, or as the `.cause` of a TRPCClientError; undefined for any other error. */
+export function getTRPCClientFetchErrorCode(error: unknown): TRPCClientFetchError['code'] | undefined {
+  const source = error instanceof Error && error.name === 'TRPCClientError' ? error.cause : error;
+  return source instanceof TRPCClientFetchError ? source.code : undefined;
+}
