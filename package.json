@@ -88,7 +88,7 @@
     "zustand": "5.0.16"
   },
   "devDependencies": {
-    "@posthog/nextjs-config": "~1.6",
+    "@posthog/nextjs-config": "~1.12.2",
     "@types/node": "^22",
     "@types/nprogress": "^0.2.3",
     "@types/prismjs": "^1.26.6",
