@@ -10,6 +10,7 @@ export function setupClientFetchErrorsLogging(): () => void {
   if (!isBrowser) return () => { /* no-op */
   };
 
+  // eslint-disable-next-line @typescript-eslint/unbound-method -- kept detached to restore it as-is; called below with the caller's `this`
   const originalFetch = window.fetch;
 
   window.fetch = async function wrappedFetch(input, init) {
@@ -52,6 +53,7 @@ export function setupClientFetchErrorsLogging(): () => void {
   };
 
   // cleanup function
+  // eslint-disable-next-line @typescript-eslint/unbound-method -- identity check only, never called
   const justWrappedFetch = window.fetch;
   return () => {
     if (window.fetch === justWrappedFetch)
