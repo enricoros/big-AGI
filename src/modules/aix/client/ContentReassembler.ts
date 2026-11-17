@@ -43,7 +43,7 @@ const _isClosedReasoningFragment = (f: Parameters<typeof isVoidFragment>[0]): bo
 
 /** The status chip of a server retry, see onAixRetryReset */
 const _isRetryStatus = (f: Parameters<typeof isVoidPlaceholderFragment>[0]) => isVoidPlaceholderFragment(f) && f.part.aixControl?.ctl === 'ec-retry';
-const _RETRY_COUNTDOWN = 'Retrying in ';
+const _RETRY_PENDING = 'Retrying '; // 'Retrying in 0.7s' through the wait, then 'Retrying now': finalizeReassembly rewrites from here when the run ends on it
 /** Output of the attempt a retry status announced, once connected: heartbeats, connect failures and the end are not */
 const _isAttemptOutput = (op: AixWire_Particles.ChatGenerateOp): boolean => !('cg' in op) ? !('p' in op && op.p === '❤')
   : op.cg === 'issue' ? op.issueId !== 'dispatch-prepare' && op.issueId !== 'dispatch-fetch'
@@ -205,11 +205,11 @@ export class ContentReassembler {
     // - mark active operations as errored on non-clean terminations
     if (!vendorEnded) {
       this.S.fragments = this.S.fragments.map(fragment => {
-        // a retry countdown left behind by a stop or by the final failure is no longer true: say what happened
-        if (isVoidPlaceholderFragment(fragment) && fragment.part.aixControl?.ctl === 'ec-retry' && fragment.part.pText.includes(_RETRY_COUNTDOWN)) {
+        // a pending retry left behind by a stop or by the final failure is no longer true: say what happened
+        if (isVoidPlaceholderFragment(fragment) && fragment.part.aixControl?.ctl === 'ec-retry' && fragment.part.pText.includes(_RETRY_PENDING)) {
           const { pText, aixControl: { rAttempt = '-' } } = fragment.part;
           const ending = outcome === 'aborted' ? `Stopped at attempt ${rAttempt}` : `Gave up after ${rAttempt} attempts`;
-          return { ...fragment, part: { ...fragment.part, pText: pText.slice(0, pText.indexOf(_RETRY_COUNTDOWN)) + ending } };
+          return { ...fragment, part: { ...fragment.part, pText: pText.slice(0, pText.indexOf(_RETRY_PENDING)) + ending } };
         }
         if (!isVoidPlaceholderFragment(fragment) || !fragment.part.opLog?.length) return fragment;
         const updatedOpLog = fragment.part.opLog.map(entry => {
@@ -289,7 +289,7 @@ export class ContentReassembler {
       rClearStrategy: strategy === 'reconnect' ? 'all' // client starts from scratch, clear everything
         : 'none', // [resume]: TODO: UNVERIFIED - keep everything assuming the next streaming is incremental (akin to the server-side continuation?)
       reason: strategy === 'resume' ? `Resuming - ${errorMessage}` : `Reconnecting - ${errorMessage}`,
-      attempt, maxAttempts, delayMs, causeHttp, causeConn,
+      attempt, maxAttempts, phase: 'waiting', delayMs, causeHttp, causeConn,
     });
   }
 
@@ -489,7 +489,8 @@ export class ContentReassembler {
             this.onAixInfo(op); // creates a voidPlaceholder
             break;
           case 'aix-retry-reset':
-            await this._removeLastVoidPlaceholderDelayed();
+            if (op.phase !== 'started') // the attempt begins: its countdown is replaced at once
+              await this._removeLastVoidPlaceholderDelayed();
             this.onAixRetryReset(op); // creates a voidPlaceholder
             break;
           case 'set-metrics':
@@ -1239,7 +1240,7 @@ export class ContentReassembler {
     }));
   }
 
-  private onAixRetryReset({ rScope, rClearStrategy, attempt, maxAttempts, delayMs, reason, causeHttp, causeConn, calm }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'aix-retry-reset' }>): void {
+  private onAixRetryReset({ rScope, rClearStrategy, attempt, maxAttempts, phase: sentPhase, delayMs, reason, causeHttp, causeConn, calm }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'aix-retry-reset' }>): void {
     const _prevFragments = DEBUG_FLOW ? this.S.fragments.length : 0;
     switch (rClearStrategy) {
       case 'none':
@@ -1274,8 +1275,9 @@ export class ContentReassembler {
       this._spliceFragment(idx);
 
     // -> ph: show retry status
-    const retryMessage =  delayMs > 0
-      ? `${reason ? `${reason} - ` : ''}${_RETRY_COUNTDOWN}${Math.round(delayMs / 100) / 10}s - ${attempt}/${maxAttempts}`
+    const phase = sentPhase ?? (delayMs > 0 ? 'waiting' : 'gave-up'); // a server older than `phase` says it with delayMs
+    const retryMessage = phase !== 'gave-up'
+      ? `${reason ? `${reason} - ` : ''}${_RETRY_PENDING}${phase === 'started' ? 'now' : `in ${Math.round(delayMs / 100) / 10}s`} - ${attempt}/${maxAttempts}`
       : `Connection failed (${attempt} attempts)`;
     this._pushFragment(createPlaceholderVoidFragment(retryMessage, undefined, {
       ctl: 'ec-retry',
@@ -1285,7 +1287,7 @@ export class ContentReassembler {
       ...(causeConn ? { rCauseConn: causeConn } : undefined),
       ...(calm && { rCalm: true }),
     }));
-    this.retrySettlesOnOutput = delayMs > 0 && attempt < maxAttempts;
+    this.retrySettlesOnOutput = phase !== 'gave-up' && attempt < maxAttempts;
   }
 
   private onMetrics({ metrics }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'set-metrics' }>): void {

@@ -763,7 +763,7 @@ export namespace AixWire_Particles {
     | { cg: 'end', terminationReason: CGEndReason /* we know why we're sending 'end' */, tokenStopReason?: GCTokenStopReason /* we may or not have gotten a logical token stop reason from the dispatch */, tokenStopError?: string /* optional vendor-composed human-readable detail paired with tokenStopReason */ }
     | { cg: 'issue', issueId: CGIssueId, issueText: string, issueCause?: CGIssueCause }
     | { cg: 'aix-info', ait: 'flow-cont' /* important: establishes a checkpoint */, text: string }
-    | { cg: 'aix-retry-reset', rScope: 'srv-dispatch' | 'srv-op' | 'cli-ll', rClearStrategy: 'none' | 'since-checkpoint' | 'all', reason: string, attempt: number, maxAttempts: number, delayMs: number, causeHttp?: number, causeConn?: string, calm?: true /* the retry profile marks the condition as expected (e.g. a busy best-effort tier): rendered without alarm */ }
+    | { cg: 'aix-retry-reset', rScope: 'srv-dispatch' | 'srv-op' | 'cli-ll', rClearStrategy: 'none' | 'since-checkpoint' | 'all', reason: string, attempt: number, maxAttempts: number, phase: 'waiting' | 'started' | 'gave-up' /* what the message announces: the wait before the attempt, the attempt beginning, no attempts left */, delayMs: number /* the wait; sent in every phase, as a client older than `phase` reads the phase from it: > 0 waiting, else gave-up */, causeHttp?: number, causeConn?: string, calm?: true /* the retry profile marks the condition as expected (e.g. a busy best-effort tier): rendered without alarm */ }
     | { cg: 'set-metrics', metrics: CGSelectMetrics }
     | { cg: 'set-model', name: string }
     | { cg: 'set-provider-infra', label: string }

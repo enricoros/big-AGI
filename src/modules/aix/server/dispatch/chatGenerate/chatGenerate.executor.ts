@@ -188,12 +188,11 @@ async function* _connectToDispatch(
     });
     // drain (▼) signal allows to interrupt the heartbeat loop and yield particles
     let singnaldrain = promiseWithResolvers<'▼'>();
-    const onRetryAttempt = (info: RetryAttempt) => {
+    const onRetryAttempt = (attempt: RetryAttempt) => {
       // -> retry-server-dispatch
       chatGenerateTx.sendCGControl({
-        cg: 'aix-retry-reset', rScope: 'srv-dispatch',
-        rClearStrategy: 'none', // clear nothing, because no content has been streamed while trying to connect
-        ...info, // reason, attempt (2..) of maxAttempts: same notation as the operation retrier
+        cg: 'aix-retry-reset', rScope: 'srv-dispatch', rClearStrategy: 'none', // clear nothing, because no content has been streamed while trying to connect
+        ...attempt, // reason, attempt (2..) of maxAttempts: same notation as the operation retrier
       });
       singnaldrain.resolve('▼'); // -> breaks the heartbeat loop
     };

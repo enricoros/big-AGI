@@ -138,10 +138,7 @@ const _429_RETRY_DENY_CODES: readonly string[] = [
 /**
  * Determines if a dispatch error is retryable and which profile to use.
  */
-function selectRetryProfile(error: TRPCFetcherError | unknown): RetryProfile | null {
-  if (!(error instanceof TRPCFetcherError))
-    return null;
-
+function _selectRetryProfile_fromTRPCFetcherError(error: TRPCFetcherError): RetryProfile | null {
   if (error.category === 'connection')
     return RETRY_PROFILES.network; // DNS, TCP, timeouts, ... doesn't connect
 
@@ -196,7 +193,8 @@ export type RetryAttempt = {
   reason: string; // user-facing, from the retry profile
   attempt: number; // 2, 3, ...maxAttempts
   maxAttempts: number;
-  delayMs: number;
+  phase: 'waiting' | 'started' | 'gave-up'; // what the call announces: the wait before the attempt, the attempt beginning, no attempts left
+  delayMs: number; // the wait; -1 with 'gave-up'
   causeHttp?: number;
   causeConn?: string;
   calm?: true; // from the retry profile: an expected condition, rendered without alarm
@@ -216,10 +214,10 @@ export type RetryAttempt = {
  *
  * @param operationFn The operation to retry (must be repeatable/idempotent)
  * @param abortSignal Signal to cancel retries
- * @param onRetry Optional callback invoked before each retry attempt
+ * @param onRetryAttempt Optional callback invoked once per `phase`: when the wait before a retry begins, when that attempt begins, and when no attempts are left
  * @returns Promise that resolves with the successful result or rejects with the final error
  */
-export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Promise<T>, abortSignal: AbortSignal, onRetry?: (retryInfo: RetryAttempt) => void): Promise<T> {
+export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Promise<T>, abortSignal: AbortSignal, onRetryAttempt?: (retryInfo: RetryAttempt) => void): Promise<T> {
   let attemptNumber = 1;
   let waitedMs = 0;
 
@@ -243,42 +241,59 @@ export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Pr
         throw error;
       }
 
+      // Only a TRPCFetcherError says how the request failed, and fetchResponseOrTRPCThrow wraps every fetch failure in one
+      // (abort, connection, HTTP status, parse). Anything else is rethrown without a retry, and named in the log:
+      // - a plain Error from a customConnect that opts out of retries: the Gemini Interactions start, where a retried POST would begin a second billable run
+      // - whatever else a customConnect throws around its own fetch: a bug to fix there
+      if (!(error instanceof TRPCFetcherError)) {
+        // NOTE: this is here so we can aggregate statistics on this in the next month or so, then we know how to subclass/silence this
+        console.warn(`[fetchers.retrier] ⚠️ Not a TRPCFetcherError, not retried: ${error?.name || typeof error}`, { error });
+        throw error;
+      }
+
       // check if error is retryable
-      const rp = selectRetryProfile(error);
+      const rp = _selectRetryProfile_fromTRPCFetcherError(error);
 
       // not retryable
       if (!rp) {
         // disabled: this verdict repeats, on every failure, what the fetcher and the caller already log
         // if (AIX_DEBUG_SERVER_RETRY) {
-        //   const errorInfo = !(error instanceof TRPCFetcherError) ? '' : `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
+        //   const errorInfo = `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
         //   console.log(`[fetchers.retrier] ❌ Not retryable ${errorInfo}}`); // removing the duplicate error message
         //   // console.log(`[fetchers.retrier] ❌ Not retryable ${errorInfo}: ${error?.message || error}`);
         // }
         throw error;
       }
 
+      // build partial retry notification attempt - without `attempt`: the attempts made when giving up, the attempt about to run otherwise
+      const retryAttempt: Omit<RetryAttempt, 'attempt' | 'delayMs' | 'phase'> = {
+        reason: rp.label,
+        maxAttempts: rp.maxAttempts,
+        ...(error.httpStatus ? { causeHttp: error.httpStatus } : undefined),
+        causeConn: error.category,
+        ...(rp.calm && { calm: true }),
+      };
+
       // exhausted attempts
       if (attemptNumber >= rp.maxAttempts) {
         if (AIX_DEBUG_SERVER_RETRY) {
-          const errorInfo = !(error instanceof TRPCFetcherError) ? '' : `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
+          const errorInfo = `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
           console.warn(`[fetchers.retrier] ⚠️ All ${rp.maxAttempts - 1} retry attempts exhausted ${errorInfo}`);
         }
-        // gave up after `attemptNumber` total attempts (incl. the original); the `-1` is a magic constant to signal end of retries
-        onRetry?.({ reason: rp.label, attempt: attemptNumber, maxAttempts: attemptNumber, causeHttp: error instanceof TRPCFetcherError ? error.httpStatus : undefined, causeConn: 'ERR', delayMs: -1, ...(rp.calm && { calm: true }) });
+        // gave up after `attemptNumber` total attempts (incl. the original); delayMs -1 says the same to a client older than `phase`
+        onRetryAttempt?.({ ...retryAttempt, attempt: attemptNumber, delayMs: -1, phase: 'gave-up' });
         throw error;
       }
 
       // log retry decision with error details
       if (AIX_DEBUG_SERVER_RETRY) {
-        const errorInfo = error instanceof TRPCFetcherError
-          ? `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`
-          : '';
+        const errorInfo = `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
         console.log(`[fetchers.retrier] 🔄 Retryable error ${errorInfo} - ${rp.label}`);
       }
 
       // The upstream's own wait (Retry-After) beats our schedule: a retry before it fails, and failed requests can count
       // against the limit. Past this loop's budget it is not worth holding the user: the upstream message says when to come back.
-      const retryAfterMs = error instanceof TRPCFetcherError ? error.httpRetryAfterMs : undefined;
+      const retryAfterMs = error.httpRetryAfterMs;
       if (retryAfterMs !== undefined && waitedMs + retryAfterMs > RETRY_AFTER_BUDGET_MS) {
         if (AIX_DEBUG_SERVER_RETRY)
           console.log(`[fetchers.retrier] ❌ Not retrying: upstream asks to wait ${Math.round(retryAfterMs / 1000)}s (waited ${Math.round(waitedMs / 1000)}s so far)`);
@@ -295,20 +310,15 @@ export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Pr
       if (AIX_DEBUG_SERVER_RETRY)
         console.log(`[fetchers.retrier] 🔄 -> Retrying attempt ${attemptNumber - 1}/${rp.maxAttempts - 1} after ${delayMs}ms delay`);
 
-      // let the caller know about the retry attempt
-      onRetry?.({
-        reason: rp.label,
-        attempt: attemptNumber,
-        maxAttempts: rp.maxAttempts,
-        delayMs,
-        causeHttp: error instanceof TRPCFetcherError ? error.httpStatus : undefined,
-        causeConn: error instanceof TRPCFetcherError ? error.category : undefined,
-        ...(rp.calm && { calm: true }),
-      });
+      // let the caller know about the retry attempt: its wait begins...
+      onRetryAttempt?.({ ...retryAttempt, attempt: attemptNumber, delayMs, phase: 'waiting' });
 
       // abortable wait
       if (await delayOrAbort(delayMs, abortSignal) === 'aborted')
         throw error;
+
+      // ...then the attempt begins: nothing else tells the caller that the wait is over, until the attempt answers
+      onRetryAttempt?.({ ...retryAttempt, attempt: attemptNumber, delayMs, phase: 'started' });
 
       // -> loop continues for next attempt
     }

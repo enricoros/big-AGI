@@ -1,4 +1,4 @@
-import { upstreamRetryBackoffMs, upstreamRetryProfile } from '~/server/trpc/trpc.fetchers.retrier';
+import { RetryAttempt, upstreamRetryBackoffMs, upstreamRetryProfile } from '~/server/trpc/trpc.fetchers.retrier';
 import { delayOrAbort } from '~/common/util/abortUtils';
 
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
@@ -103,9 +103,8 @@ export async function* executeChatGenerateWithOperationRetry(
       attemptNumber++;
 
       // -> retry-server-operation - parent loop of retry-server-dispatch
-      yield {
-        cg: 'aix-retry-reset', rScope: 'srv-op',
-        rClearStrategy: 'since-checkpoint', // clear current-attempt content while preserving prior continuation turns
+      // Same two messages as the connect retrier (RetryAttempt), one per phase the user is told about
+      const retryAttempt: Omit<RetryAttempt, 'phase'> = {
         reason: profile.label, // calm and short for the user; the vendor text is in the server log above, and in the final error if retries run out
         attempt: attemptNumber, maxAttempts: maxAttempts, delayMs: delayMs,
         ...(error.causeHttp ? { causeHttp: error.causeHttp } : undefined),
@@ -113,10 +112,17 @@ export async function* executeChatGenerateWithOperationRetry(
         ...(profile.calm && { calm: true }),
       };
 
+      // 1. the attempt failed and the wait begins: clear the attempt's content (prior continuation turns stay), show the wait
+      yield { cg: 'aix-retry-reset', rScope: 'srv-op', rClearStrategy: 'since-checkpoint', ...retryAttempt, phase: 'waiting' };
+
       // If aborted during delay, let next attempt detect it and create proper terminating particle
       // (throwing here would bypass executor's particle-based messaging contract)
       // Heartbeats keep the intake stream alive through the longer waits.
-      yield* heartbeatsWhileAwaiting(delayOrAbort(delayMs, abortSignal));
+      const waited = yield* heartbeatsWhileAwaiting(delayOrAbort(delayMs, abortSignal));
+      if (waited === 'aborted') continue;
+
+      // 2. the wait is over and the attempt begins: nothing else says so until the attempt answers (nothing to clear this time)
+      yield { cg: 'aix-retry-reset', rScope: 'srv-op', rClearStrategy: 'none', ...retryAttempt, phase: 'started' };
 
       // -> loop continues for next attempt
     }
