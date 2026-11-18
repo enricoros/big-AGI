@@ -15,7 +15,7 @@ import { heartbeatsWhileAwaiting } from '~/modules/aix/server/dispatch/heartbeat
 import { wireLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './wiretypes/localai.wiretypes';
 import { WireOpenRouterCreateImagesRequest, wireOpenRouterCreateImagesResponseSchema } from './wiretypes/openrouter.wiretypes';
 
-import { type ListModelsResponse, ListModelsResponse_schema } from '../llm.server.types';
+import { type ListModelsResponse, ListModelsResponse_schema, UpstreamResourceId_schema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
 import { OPENAI_API_PATHS, openAIAccess, openAIAccessSchema, OpenAIAccessSchema, OPENROUTER_API_PATHS } from './openai.access';
@@ -140,8 +140,8 @@ export const llmOpenAIRouter = createTRPCRouter({
   containerFileDownload: edgeProcedure
     .input(z.object({
       access: openAIAccessSchema,
-      containerId: z.string(),
-      fileId: z.string(),
+      containerId: UpstreamResourceId_schema,
+      fileId: UpstreamResourceId_schema,
     }))
     .query(async ({ input: { access, containerId, fileId } }) => {
       const { headers, url } = openAIAccess(access, null, `/v1/containers/${containerId}/files/${fileId}/content`);
@@ -167,8 +167,8 @@ export const llmOpenAIRouter = createTRPCRouter({
   containerFileDelete: edgeProcedure
     .input(z.object({
       access: openAIAccessSchema,
-      containerId: z.string(),
-      fileId: z.string(),
+      containerId: UpstreamResourceId_schema,
+      fileId: UpstreamResourceId_schema,
     }))
     .mutation(async ({ input: { access, containerId, fileId } }) => {
       const { headers, url } = openAIAccess(access, null, `/v1/containers/${containerId}/files/${fileId}`);

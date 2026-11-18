@@ -7,6 +7,7 @@ import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 import { anthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.access';
 import { bedrockAccessSchema } from '~/modules/llms/server/bedrock/bedrock.access';
 import { geminiAccessSchema } from '~/modules/llms/server/gemini/gemini.access';
+import { UpstreamResourceId_schema } from '~/modules/llms/server/llm.server.types';
 import { ollamaAccessSchema } from '~/modules/llms/server/ollama/ollama.access';
 import { openAIAccessSchema } from '~/modules/llms/server/openai/openai.access';
 
@@ -626,12 +627,12 @@ export namespace AixWire_API {
   export const UpstreamHandle_schema = z.discriminatedUnion('uht', [
     z.object({
       uht: z.literal('vnd.oai.responses'),
-      runId: z.string(), // upstream: OpenAI Responses `response.id`
+      runId: UpstreamResourceId_schema, // upstream: OpenAI Responses `response.id`, placed in the URL path
       startingAfter: z.number().optional(), // the sequence number of event after which to start streaming
     }),
     z.object({
       uht: z.literal('vnd.gem.interactions'),
-      runId: z.string(), // upstream: Gemini Interactions `interaction.id`
+      runId: z.string(), // upstream: Gemini Interactions `interaction.id` (URL-encoded by the path builders)
     }),
   ]);
 

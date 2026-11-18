@@ -187,6 +187,16 @@ export const ListModelsResponse_schema = z.object({
 });
 
 
+/// Upstream resource ids
+
+/**
+ * A vendor-issued id (file, container, skill, stored response) that the server places in an upstream URL path,
+ * on a request that carries the caller's key or the server's. Plain tokens only: with '/', '.', '?' or '%' an id
+ * would address another endpoint of the vendor API.
+ */
+export const UpstreamResourceId_schema = z.string().regex(/^[A-Za-z0-9_-]{1,256}$/, 'invalid id');
+
+
 /// File Metadata Response
 
 export const FileMetadataResponse_schema = z.object({
