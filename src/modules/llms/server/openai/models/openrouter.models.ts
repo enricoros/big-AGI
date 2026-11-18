@@ -3,6 +3,10 @@ import * as z from 'zod/v4';
 import { LLM_IF_ANT_PromptCaching, LLM_IF_Inputs_Video, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
 import { Release } from '~/common/app.release';
 
+import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/wiretypes/openai.wiretypes';
+import { createDebugWireLogger } from '~/server/wire';
+import { fetchJsonOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
+
 import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 import { formatPubDate, fromManualMapping } from '../../models.mappings';
 import { llmOrtAntLookup_ThinkingVariants } from '../../anthropic/anthropic.models';
@@ -13,6 +17,7 @@ import { llmOrtMetaLookup } from './metaai.models';
 import { llmOrtSakLookup } from './sakanaai.models';
 import { llmOrtXaiLookup } from './xai.models';
 import { llmOrtZaiLookup } from './zai.models';
+import { OPENAI_API_PATHS, openAIAccess, type OpenAIAccessSchema, OPENROUTER_API_PATHS } from '../openai.access';
 import { wireOpenrouterModelsListOutputSchema } from '../wiretypes/openrouter.wiretypes';
 
 
@@ -538,6 +543,46 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
     ...(initialTemperature !== undefined && { initialTemperature }),
   });
 }
+
+// -- Listing --
+
+/** What a listing fetches */
+export type OpenRouterListing = {
+  wireModels: OpenAIWire_API_Models_List.Response['data'];
+};
+
+/**
+ * The list is public and loads with any key, so a wrong key would first fail in chat: the key endpoint is asked beside
+ * it, and its 401 alone fails the listing - no other answer, error or delay of it counts.
+ */
+export async function openRouterFetchListing(access: OpenAIAccessSchema, signal?: AbortSignal): Promise<OpenRouterListing> {
+  const _wire = createDebugWireLogger('LLMs/OpenRouter');
+
+  const list = openAIAccess(access, null, OPENAI_API_PATHS.models);
+  const key = openAIAccess(access, null, OPENROUTER_API_PATHS.key);
+
+  _wire?.logRequest('GET', list.url, list.headers);
+  const [wireList, keyRejection] = await Promise.all([
+    fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ url: list.url, headers: list.headers, name: 'OpenAI/Openrouter', signal }),
+    fetchJsonOrTRPCThrow({ url: key.url, headers: key.headers, name: 'OpenAI/Openrouter', signal: AbortSignal.timeout(5000) })
+      .then(() => null, error => error instanceof TRPCFetcherError && error.httpStatus === 401 ? error : null),
+  ]);
+  if (keyRejection) throw keyRejection;
+  _wire?.logResponse(wireList);
+  return { wireModels: wireList?.data || [] };
+}
+
+export function openRouterListingToModelDescriptions(listing: OpenRouterListing): ModelDescriptionSchema[] {
+  return listing.wireModels
+    // unique ids, sorted by id: the order the family sort starts from, and keeps where it has no opinion
+    .filter((model, index, models) => models.findIndex(m => m.id === model.id) === index)
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .sort(openRouterModelFamilySortFn)
+    .map(openRouterModelToModelDescription)
+    .filter(desc => !!desc)
+    .reduce(openRouterInjectVariants, []);
+}
+
 
 /**
  * Inject model variants for OpenRouter models.
