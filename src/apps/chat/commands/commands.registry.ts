@@ -40,12 +40,11 @@ export function extractChatCommand(input: string): TextCommandPiece[] {
   if (!inputTrimmed.startsWith('/'))
     return [{ type: 'nocmd', value: input }];
 
-  // Find the first space to separate the command from its parameters (if any)
-  const firstSpaceIndex = inputTrimmed.indexOf(' ');
+  // The command runs up to the first whitespace (space or newline); the rest, if any, is its parameters
   const commandMatch = inputTrimmed.match(/^\/\S+/);
   const potentialCommand = commandMatch ? commandMatch[0] : inputTrimmed;
 
-  const textAfterCommand = firstSpaceIndex >= 0 ? inputTrimmed.substring(firstSpaceIndex + 1) : '';
+  const textAfterCommand = inputTrimmed.slice(potentialCommand.length).trimStart();
 
   // Check if the potential command is an actual command
   for (const provider of Object.values(ChatCommandsProviders)) {
