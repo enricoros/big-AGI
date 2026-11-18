@@ -15,8 +15,6 @@ import { MiniMaxIcon } from '~/common/components/icons/vendors/MiniMaxIcon';
 import { NousResearchIcon } from '~/common/components/icons/vendors/NousResearchIcon';
 import { NovitaAIIcon } from '~/common/components/icons/vendors/NovitaAIIcon';
 
-import { llmsHostStripV1Suffix } from '../../shared/llm.isomorphic';
-
 
 // Verified OpenAI-compatible providers that work with the 'openai' dialect
 interface VerifiedProvider {
@@ -59,11 +57,11 @@ export function findMatchingOpenAIAutoProvider(host: string): VerifiedProvider |
 }
 
 /**
- * The base URL in typed or pasted text: a full endpoint URL loses its endpoint (.../chat/completions, .../responses), then a
- * trailing /v1 goes. The endpoint must follow a host or path character, or a hostname ('https://responses...') would be cut as it is typed.
+ * The base URL in typed or pasted text: a full endpoint URL loses its endpoint (.../chat/completions, .../responses).
+ * The endpoint must follow a host or path character, or a hostname ('https://responses...') would be cut as it is typed.
  */
 function _baseUrlFromInput(text: string): string {
-  return llmsHostStripV1Suffix(text.replace(/([^/])\/(?:chat\/completions|responses)\/?$/, '$1'));
+  return text.replace(/([^/])\/(?:chat\/completions|responses)\/?$/, '$1');
 }
 
 
@@ -101,7 +99,7 @@ export function OpenAIHostAutocomplete(props: {
     if (reason !== 'input')
       return;
 
-    // reduce to the base URL immediately (no endpoint, no /v1) - gives user clear feedback that they are not needed
+    // reduce a pasted endpoint to its base URL immediately - gives user clear feedback of what is used
     newInputValue = _baseUrlFromInput(newInputValue);
     setInputValue(newInputValue);
     props.onChange(newInputValue);

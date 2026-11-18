@@ -125,8 +125,11 @@ one join: a host that ends in a version keeps it, and the path gives up its own;
 (`/api/tags`) drops the host's version; any other host takes the path as it is. Every request to a host a user can set
 goes through it - the LLM access functions, text-to-speech and transcription - so a new access function must too.
 
+The setup fields store a host as typed, with or without its version: no field rewrites it.
+
 Limits: a host mounted under a path that ends in a version, and that expects `/v1` after it, cannot be expressed. A
-pasted full endpoint (`.../chat/completions`) is reduced to its base only in the OpenAI API Endpoint field.
+pasted full endpoint (`.../chat/completions`) is reduced to its base only in the OpenAI API Endpoint field. A build
+older than the join reads a stored trailing `/v1` as a path prefix, and requests `/v1/v1/...`.
 
 ### Hostname Security
 

@@ -19,7 +19,6 @@ import { SetupFormCorsHint } from '~/common/components/forms/SetupFormCorsHint';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 
 import { ApproximateCosts } from '../ApproximateCosts';
-import { llmsHostStripV1Suffix } from '../../shared/llm.isomorphic';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
@@ -91,7 +90,7 @@ export function LocalAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       required={userHostRequired}
       isError={userHostError}
       rightLabel={backendHasHost ? <AlreadySet overridden={!!localAIHost} /> : <Link level='body-sm' href='https://localai.io' target='_blank'>Learn more</Link>}
-      value={localAIHost} onChange={value => updateSettings({ localAIHost: llmsHostStripV1Suffix(value) })}
+      value={localAIHost} onChange={value => updateSettings({ localAIHost: value })}
     />
 
     <FormInputKey

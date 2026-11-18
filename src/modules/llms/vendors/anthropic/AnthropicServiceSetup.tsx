@@ -17,7 +17,6 @@ import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefet
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
-import { llmsHostStripV1Suffix } from '../../shared/llm.isomorphic';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
@@ -95,7 +94,7 @@ export function AnthropicServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='deployment.service.region.amazonaws.com'
       isError={false}
       value={anthropicHost || ''}
-      onChange={text => updateSettings({ anthropicHost: llmsHostStripV1Suffix(text) })}
+      onChange={text => updateSettings({ anthropicHost: text })}
     />}
 
     {(showAdvanced || !!anthropicInferenceGeo) && <FormSwitchControl
