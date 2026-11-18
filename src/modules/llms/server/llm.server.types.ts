@@ -82,7 +82,6 @@ const ModelParameterSpec_schema = z.object({
     'llmVndOaiEffort',
     'llmVndMiscEffort',
     // Anthropic
-    'llmVndAnt1MContext',
     'llmVndAntCodeSandbox',
     'llmVndAntInfSpeed',
     'llmVndAntSkills',

@@ -292,7 +292,6 @@ export function LLMParametersEditor(props: {
     llmResponseTokens = LLMImplicitParametersRuntimeFallback.llmResponseTokens, // fallback for undefined, result is number | null
     llmTemperature, // null: no temperature, number: temperature value, undefined: shall not happen, we treat is similarly to null
     llmForceNoStream,
-    llmVndAnt1MContext,
     llmVndAntCodeSandbox,
     llmVndAntEffort,
     llmVndAntInfSpeed,
@@ -675,19 +674,6 @@ export function LLMParametersEditor(props: {
 
     {showParam('llmVndAntSkills') && (
       <AnthropicSkillsConfig llmVndAntSkills={llmVndAntSkills} onChangeParameter={onChangeParameter} onRemoveParameter={onRemoveParameter} />
-    )}
-
-    {showParam('llmVndAnt1MContext') && (
-      <FormSwitchControl
-        title='1M Context Window (Beta)'
-        description='Enable 1M token context'
-        tooltip='Enables the 1M token context window with premium pricing for &gt;200K input tokens. - https://docs.claude.com/en/docs/build-with-claude/context-windows#1m-token-context-window'
-        checked={!!llmVndAnt1MContext}
-        onChange={checked => {
-          if (!checked) onRemoveParameter('llmVndAnt1MContext');
-          else onChangeParameter({ llmVndAnt1MContext: true });
-        }}
-      />
     )}
 
     {/* Anthropic Fast Mode - currently hidden via parameterSpec.hidden */}

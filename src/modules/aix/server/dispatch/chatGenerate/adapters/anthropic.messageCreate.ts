@@ -64,7 +64,6 @@ export function aixAnthropicHostedFeatures(model: AixAPI_Model, chatGenerate: Ai
   // system prompt) - https://platform.claude.com/docs/en/agents-and-tools/tool-use/server-tools#dynamic-filtering-with-code-execution
   return {
     disableAllHostedTools: !!(_hasAixCustomTools && _hasAixToolRestrictivePolicy),
-    enable1MContext: model.vndAnt1MContext === true,
     enableCodeExecution:
       model.vndAntCodeSandbox === 'auto' || // standalone user toggle (general-purpose hosted-container sandbox)
       !!model.vndAntSkills || // Skills execute inside the code execution container

@@ -108,7 +108,7 @@ export function isLLMCustomUserParameters(llm: DLLM): boolean {
 
 /**
  * Returns the effective context token limit for a model.
- * Checks user override first, then vendor-specific parameters, then falls back to model default.
+ * Checks user override first, then falls back to model default.
  */
 export function getLLMContextTokens(llm: DLLM | null): DLLMContextTokens | undefined {
   if (!llm)
@@ -118,15 +118,7 @@ export function getLLMContextTokens(llm: DLLM | null): DLLMContextTokens | undef
   if (llm.userContextTokens !== undefined)
     return llm.userContextTokens;
 
-  // 2. Check vendor-specific parameter overrides
-  // [Anthropic, 1M] Check if this is an Anthropic model with 1M context enabled
-  if (llm.vId === 'anthropic') {
-    const vndAnt1MContext = llm.userParameters?.llmVndAnt1MContext ?? llm.initialParameters?.llmVndAnt1MContext;
-    if (vndAnt1MContext === true)
-      return 1_000_000;
-  }
-
-  // 3. Fall back to model default
+  // 2. Fall back to model default
   return llm.contextTokens; // null if unknown
 }
 

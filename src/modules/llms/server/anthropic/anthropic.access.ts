@@ -90,7 +90,6 @@ const PER_MODEL_BETA_FEATURES: { [modelId: string]: string[] } = {
 
 export type AnthropicHostedFeatures = {
   disableAllHostedTools?: boolean;
-  enable1MContext?: boolean;
   enableCodeExecution?: boolean;
   enableFastMode?: boolean; // [Anthropic, fast-mode-2026-02-01]
   enableSkills?: boolean;
@@ -154,10 +153,6 @@ export function anthropicBetaFeatures(options?: AnthropicHostedFeatures): string
       if (key.includes(options.modelIdForPerModelFeatures))
         value.forEach(f => bf.add(f));
   }
-
-  // Add beta feature for 1M context window if enabled
-  if (options?.enable1MContext)
-    bf.add('context-1m-2025-08-07');
 
   // Code execution (for Skills, container reuse, Programmatic Tool Calling) + files API for container downloads.
   // NOT enabled for dynamic web tools (_20260209): those have internal code execution managed by Anthropic.

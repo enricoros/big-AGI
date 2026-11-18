@@ -184,12 +184,7 @@ export const DModelParameterRegistry = {
 
   // Anthropic-specific
 
-  llmVndAnt1MContext: {
-    label: '1M Context Window (Beta)',
-    type: 'boolean',
-    description: 'Enable 1M token context window with premium pricing for >200K input tokens',
-    // undefined means off (e.g. default 200K context window)
-  },
+  // REMOVED: llmVndAnt1MContext: boolean; it's GA and not used anymore. data at rest left untouched and fully bw/fw comp between servers and clients.
 
   llmVndAntCodeSandbox: _enumDef({
     label: 'Code Sandbox',

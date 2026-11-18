@@ -77,7 +77,7 @@ export function aixCreateModelFromLLMOptions(
   const {
     llmRef, llmTemperature, llmResponseTokens, llmTopP, llmForceNoStream,
     llmVndAntEffort, llmVndGemEffort, llmVndOaiEffort, llmVndMiscEffort,
-    llmVndAnt1MContext, llmVndAntCodeSandbox, llmVndAntInfSpeed, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebDynamic, llmVndAntWebFetch, llmVndAntWebFetchMaxUses, llmVndAntWebSearch, llmVndAntWebSearchMaxUses,
+    llmVndAntCodeSandbox, llmVndAntInfSpeed, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebDynamic, llmVndAntWebFetch, llmVndAntWebFetchMaxUses, llmVndAntWebSearch, llmVndAntWebSearchMaxUses,
     llmVndBedrockAPI,
     llmVndGeminiAgentViz, llmVndGeminiAspectRatio, llmVndGeminiImageSize, llmVndGeminiCodeExecution, llmVndGeminiComputerUse, llmVndGeminiGoogleSearch, llmVndGeminiMediaResolution, llmVndGeminiThinkingBudget, llmVndGeminiUrlContext,
     // llmVndMoonshotWebSearch,
@@ -142,7 +142,6 @@ export function aixCreateModelFromLLMOptions(
 
     // Anthropic - (vndAntContainerId, vndAntTransformInlineFiles are set in the decorate function)
     ...(llmVndAntThinkingBudget !== undefined ? { vndAntThinkingBudget: llmVndAntThinkingBudget === -1 ? 'adaptive' as const : llmVndAntThinkingBudget } : {}),
-    ...(llmVndAnt1MContext ? { vndAnt1MContext: llmVndAnt1MContext } : {}),
     ...(llmVndAntCodeSandbox === 'auto' ? { vndAntCodeSandbox: llmVndAntCodeSandbox } : {}), // standalone server-side code sandbox (Skills/PTC also enable it server-side)
     ...(llmVndAntInfSpeed ? { vndAntInfSpeed: 'fast' } : {}), // any tier (fast_2x/fast_6x/legacy fast) collapses to the wire 'fast'
     ...(llmVndAntSkills ? { vndAntSkills: llmVndAntSkills } : {}),

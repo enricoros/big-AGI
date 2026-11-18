@@ -28,7 +28,6 @@ const IF_47_R = [...IF_4_R, LLM_IF_HOTFIX_NoTemperature];
 
 // Anthropic Parameters Semantics:
 // - llmVndAntEffort             Anthropic effort: each model declares its subset via enumValues. 4.7 adds `xhigh`.
-// - llmVndAnt1MContext         RETIRED 2026-04-30 on the Anthropic API (1M is GA where offered); no model declares it.
 // - llmVndAntSkills            2026-02-06: seems GA to any model now: a parameter spec for user/UI configurability
 // - llmVndAntThinkingBudget    2026-02-06: deprecated since 4.6 in favor of adaptive thinking; 4.7 REMOVES manual budgets
 //                              entirely (adaptive-only). We keep the param (hidden, initialValue -1) as our "force adaptive"
@@ -846,9 +845,6 @@ export function llmsAntCreatePlaceholderModel(model: AnthropicWire_API_Models_Li
   }
 
   // +standard tool params
-  // Note: 1M context is GA for recent Anthropic models - we do NOT add the `llmVndAnt1MContext` opt-in
-  // for unknown models. If a 0-day model still requires the beta header (rare now), users can hit it
-  // through a hardcoded definition instead.
   if (caps?.server_tools?.supported !== false)
     parameterSpecs.push(...ANT_TOOLS);
 
@@ -946,7 +942,6 @@ const _BEDROCK_ANT_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
   // bedrock params to not strip
   'llmVndBedrockAPI',
   // supported
-  'llmVndAnt1MContext',
   'llmVndAntEffort', // 4.6+ only: filtered per-model in llmBedrockStripAnthropicMDS via _BEDROCK_EFFORT_REJECTING_MODELS
   'llmVndAntThinkingBudget',
   // Not supported by Bedrock
