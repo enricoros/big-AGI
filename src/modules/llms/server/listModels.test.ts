@@ -349,6 +349,18 @@ describe('listModels enumeration', () => {
     ok(models.some(m => /minimax/i.test(m.id)), 'minimax: MiniMax-* present');
   });
 
+  test('openai-compat/openai via sarvam /v2 host: versioned base URL, models described by the listing', { skip: skipIfMissing('SARVAM_API_KEY') }, async () => {
+    // The host ends in its API version, so the list is at /v2/models (no /v1 after it). The list is PUBLIC; key-gated to stay offline.
+    const models = await expectOk(
+      { dialect: 'openai', ...openAIShape({ oaiKey: E.SARVAM_API_KEY || '', oaiHost: 'https://api.sarvam.ai/v2' }) } as AixAPI_Access,
+      2, 'openai/sarvam',
+    );
+    ok(!models.some(m => llmsIsLabelUncurated(m.label)), 'sarvam: every label comes from the listing');
+    // per Sarvam's reasoning table: sarvam-105b thinks by default and takes reasoning_effort 'none'
+    const effort = models.find(m => m.id === 'sarvam-105b')?.parameterSpecs?.find(spec => spec.paramId === 'llmVndOaiEffort');
+    ok(effort?.enumValues?.includes('none'), 'sarvam-105b: thinking can be turned off');
+  });
+
   test('openai-compat/openrouter: live listing (the list is PUBLIC; the key is checked beside it)', { skip: skipIfMissing('OPENROUTER_API_KEY') }, async () => {
     // OpenRouter's /api/v1/models accepts any bearer token; the listing also asks /api/v1/key,
     // so it needs a real key. Key-gated so a keyless `npm test` stays offline and deterministic (catalog

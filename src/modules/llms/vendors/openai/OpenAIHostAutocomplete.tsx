@@ -39,6 +39,7 @@ const OPENAI_COMPATIBLE_PROVIDERS: VerifiedProvider[] = [
   { id: 'minimax', label: 'MiniMax', host: 'https://api.minimax.io', hostMatch: 'minimax.io', category: 'Example Providers', description: 'Proprietary reasoning models', docsUrl: 'https://platform.minimax.io/docs', icon: MiniMaxIcon },
   { id: 'nous', label: 'Nous Research', host: 'https://inference-api.nousresearch.com', hostMatch: 'nousresearch.com', category: 'Example Providers', description: 'Hermes models + Portal subscription gateway', docsUrl: 'https://portal.nousresearch.com/', icon: NousResearchIcon },
   { id: 'novita', label: 'Novita AI', host: 'https://api.novita.ai/openai', hostMatch: 'novita.ai', category: 'Example Providers', description: 'Budget open model inference', docsUrl: 'https://novita.ai/docs', icon: NovitaAIIcon },
+  { id: 'sarvam', label: 'Sarvam AI', host: 'https://api.sarvam.ai/v2', hostMatch: 'sarvam.ai', category: 'Example Providers', description: 'Indic-language and open-weight models', docsUrl: 'https://docs.sarvam.ai/api/token-factory' },
   // Example Proxies
   { id: 'cloudflare', label: 'Cloudflare AI Gateway', host: 'https://gateway.ai.cloudflare.com/v1/{account}/{gateway}/openai', hostMatch: 'gateway.ai.cloudflare.com', category: 'Example Proxies', description: 'Caching and analytics gateway', docsUrl: 'https://developers.cloudflare.com/ai-gateway/', icon: CloudflareIcon },
 ];

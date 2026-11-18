@@ -1,5 +1,5 @@
 ---
-description: Update/validate dynamic vendor model parsers (OpenRouter, TogetherAI, Azure, Baseten, Novita, ChutesAI, FireworksAI, LM Studio, LocalAI, FastAPI)
+description: Update/validate dynamic vendor model parsers (OpenRouter, TogetherAI, Azure, Baseten, Novita, Sarvam, ChutesAI, FireworksAI, LM Studio, LocalAI, FastAPI)
 ---
 
 Validate that the dynamic (API-fetched) vendor model parsers are up to date and not silently broken.
@@ -34,6 +34,16 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 - `_basetenCurated` map carries what the listing lacks: `reasoning_effort` ladders (docs + live-ablated, per-model llmVndOaiEffort/llmVndMiscEffort) and pubDates - check for stale/missing ids when the slate changes.
 - Effort ladder source: https://docs.baseten.co/inference/model-apis/reasoning - but verify live, the docs both under- and over-claim (GLM-5.3 'none' accepted-and-ignored; gpt-oss only honors low|medium|high).
 - Hostname heuristic: `inference.baseten.co` (deliberately excludes model-*.api.baseten.co dedicated deployments).
+
+**Sarvam** - `src/modules/llms/server/openai/models/sarvam.models.ts`
+- Token Factory on `https://api.sarvam.ai/v2` (the base URL: no `/v1` after it). `GET /v2/models` is public and describes each model; the parser curates nothing.
+- Read: `type` (only 'chat' is listed), `display_name`, `context_length`, `supports_image_input`, `supports_tools`, `reasoning.efforts` + `can_disable` (the effort ladder), `default_parameters`, `access`, `beta`.
+- Not on the listing: prices (INR) and release dates. Sarvam 400s on unknown request fields; `glm5.3` and `glm5.3-flash` also 400 on effort levels they do not list (the other models take any level).
+- `access: 'provisioned'` models are listed for every key and 400 without the organisation's access: listed hidden.
+- The default `max_tokens` is used as the output cap: more is refused on some models (`sarvam-105b` at 32768).
+- Known listing gap: `gemma4` is listed as not reasoning, but thinks when sent any effort level.
+- Probe with `SARVAM_API_KEY` (`.env.api-keys`): chat, each effort level, tools, image input and budgets were run live on 2026-11-17.
+- Hostname heuristic: `api.sarvam.ai`.
 
 **ChutesAI** - `src/modules/llms/server/openai/models/chutesai.models.ts`
 - Custom `max_model_len` field for context window.

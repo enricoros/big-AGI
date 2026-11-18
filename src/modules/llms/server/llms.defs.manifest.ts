@@ -119,6 +119,7 @@ export const LLMS_DEFS_EXTRA_BUCKETS = {
       'openai/models/nvidianim.models.ts',
       'openai/models/openai.models.ts',
       'openai/models/openrouter.models.ts',
+      'openai/models/sarvam.models.ts',
       'openai/wiretypes/baseten.wiretypes.ts',
       'openai/wiretypes/fireworksai.wiretypes.ts',
       'openai/wiretypes/llmapi.wiretypes.ts',

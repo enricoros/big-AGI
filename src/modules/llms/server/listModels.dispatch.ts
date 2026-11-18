@@ -58,6 +58,7 @@ import { moonshotModelFilter, moonshotModelSortFn, moonshotModelToModelDescripti
 import { openRouterInjectVariants, openRouterModelFamilySortFn, openRouterModelToModelDescription } from './openai/models/openrouter.models';
 import { openAIInjectVariants, openAIModelFilter, openAIModelToModelDescription, openAISortModels, openaiValidateModelDefs_DEV } from './openai/models/openai.models';
 import { sakanaAIModelsToModelDescriptions } from './openai/models/sakanaai.models';
+import { sarvamHeuristic, sarvamModelsToModelDescriptions } from './openai/models/sarvam.models';
 import { perplexityHardcodedModelDescriptions, perplexityInjectVariants } from './openai/models/perplexity.models';
 import { togetherAIModelsToModelDescriptions } from './openai/models/together.models';
 import { xaiFetchModelDescriptions, xaiModelSort } from './openai/models/xai.models';
@@ -564,6 +565,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // [Novita] special case for model enumeration
               if (novitaHeuristic(oaiUrl))
                 return novitaModelsToModelDescriptions(openAIWireModelsResponse);
+
+              // [Sarvam] Token Factory - the listing describes each model
+              if (sarvamHeuristic(oaiUrl))
+                return sarvamModelsToModelDescriptions(openAIWireModelsResponse);
 
               // [LLM API] OpenAI-compatible gateway with rich model metadata
               if (llmapiHeuristic(oaiUrl))
