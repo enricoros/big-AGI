@@ -15,6 +15,23 @@ export type LlmsOpenAIModelId = typeof _knownOpenAIChatModels[number]['idPrefix'
 // OpenAI Model Variants
 export const hardcodedOpenAIVariants: ModelVariantMap = {
 
+  // GPT-6.2 Astra: Pro reasoning mode, same contract as GPT-6 Astra Pro below (~1.6K input-token scaffold)
+  'gpt-6.2-astra': {
+    idVariant: '::pro',
+    label: 'GPT-6.2 Astra Pro',
+    description: 'GPT-6.2 Astra with Pro reasoning mode: performs additional model work for the hardest problems. Answers arrive whole (no incremental streaming), billed at standard GPT-6.2 Astra rates.',
+    parameterSpecs: [
+      { paramId: 'llmVndOaiReasoningMode', initialValue: 'pro', hidden: true }, // factory 'pro', not changeable
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['fast', 'ultrafast'] },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+  },
+
   // GPT-6 Astra: Pro reasoning mode, probed live 2026-09-04: the answer streams as one whole delta, ~1.5K input-token scaffold,
   // orthogonal to effort (low..max), billed at standard rates
   'gpt-6-astra': {
@@ -170,10 +187,11 @@ const OAI_PRICE_TOOLS: NonNullable<ModelDescriptionSchema['chatPrice']>['tools']
 
 export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 
-  /// GPT-6 series - Astra September 3, 2026; Sol/Luna September 22; 6.1 Sol September 29; 6.1 Terra October 26
+  /// GPT-6 series - Astra September 3, 2026; Sol/Luna September 22; 6.1 Sol September 29; 6.1 Terra October 26; 6.2 Astra/Sol November 17
   // Tiers: Astra (flagship) > Sol > Terra (6.1) > Luna. Tier names carry no fixed rank across generations: Sol was the GPT-5.6
-  // flagship, here it is the middle tier. Ids are the stable pointers (no dated snapshots; bare 'gpt-6' and 'gpt-6-terra' 404).
-  // Reasoning items replay within a family but not across generations: the API silently omits another family's items.
+  // flagship, here it is the middle tier. Ids are the stable pointers (no dated snapshots; bare 'gpt-6', 'gpt-6-terra', 'gpt-6.2' 404).
+  // Reasoning items replay into the same model or a higher tier of the same generation (Luna -> Sol -> Astra, 6.1 Terra -> 6.1 Sol,
+  // 6.2 Sol -> 6.2 Astra); on a downgrade or a generation switch the API silently omits them.
   // Astra (API-verified at launch: parameter sweep + raw probes):
   // - 1,050,000 context (922,000 max input) / 128,000 max output / knowledge cutoff Apr 30, 2026; text+image in (vision verified), text out
   // - reasoning.effort: low|medium|high|xhigh|max (default medium) - 'none' and 'minimal' 400, so no No-thinking variant; reasoning.mode 'pro' works
@@ -198,21 +216,80 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
   // - Chat Completions: effort none..xhigh, function tools only at 'none'
   // 6.1 Sol (API-verified 2026-09-29): Astra's contract at Sol prices - effort low..max ('none' and 'minimal' 400, so no temperature
   // at any effort), cached input 5% of input (vs 10% on 6 Sol), cutoff Apr 30, 2026; Chat Completions effort low..xhigh, function
-  // tools 400 at every effort. Same reasoning family: items replay both ways with Astra and 6 Sol; 5.6 items are silently omitted.
+  // tools 400 at every effort.
   // 6.1 Terra: effort none..max, temperature 0..2 at 'none', Pro mode, verbosity and function roundtrips verified 2026-10-26.
   // Streaming, code interpreter and Flex/Fast work; Ultrafast fails inside the stream. Cache reads cost 5% of input.
+  // 6.2 Astra and 6.2 Sol: 6.1 Sol's contract (effort low..max, no temperature, Chat Completions effort low..xhigh without function
+  // tools, cache reads 5% of input) except Flex 400s ("use background completion windows", not adopted); Ultrafast bills 3x through
+  // 2027-02-28, 6x after. Cutoffs May 18 / Jun 1, 2026.
   // Multi-agent (beta header `responses_multi_agent=v1`, also on GPT-5.6) - not adopted. GPT-6.1 Astra was pulled before launch.
   // Shipped with GPT-6, accepted on every tier but not adopted: async tool calling (`async: true` on tools; the function_call item
   // echoes `async: true` and the model answers before the result), `configuration_update` input items (change effort mid-conversation,
   // cache prefix intact), `prompt_cache_options.ttl` '30m' or '12h' (2026-10-20, 2.5x write; AIX omits it, so writes bill at the 30m 1.25x).
   // Not probed: mid-turn steering over WebSockets, asynchronous misalignment monitoring (can stop a conversation for review).
 
-  // GPT-6 Astra - flagship
+  // GPT-6.2 Astra - flagship
+  {
+    idPrefix: 'gpt-6.2-astra',
+    label: 'GPT-6.2 Astra',
+    pubDate: '20261117',
+    description: 'Most capable OpenAI model, for the hardest projects from start to finish: building and revising software, computer use, and document work. Reasoning always on. 1M token context.',
+    contextWindow: 1050000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['fast', 'ultrafast'] },
+      { paramId: 'llmVndOaiReasoningMode' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: {
+      input: [{ upTo: 272000, price: 8 }, { upTo: null, price: 16 }],
+      output: [{ upTo: 272000, price: 40 }, { upTo: null, price: 60 }],
+      cache: { read: [{ upTo: 272000, price: 0.4 }, { upTo: null, price: 0.8 }], write: [{ upTo: 272000, price: 10 }, { upTo: null, price: 20 }] },
+      tools: OAI_PRICE_TOOLS,
+    },
+    // benchmark: no arena data yet
+  },
+
+  // GPT-6.2 Sol - balanced
+  {
+    idPrefix: 'gpt-6.2-sol',
+    label: 'GPT-6.2 Sol',
+    pubDate: '20261117',
+    description: 'Go-to model for everyday work, from coding to powering agents at scale, at a quarter of GPT-6.2 Astra\'s price. Reasoning always on. 1M token context.',
+    contextWindow: 1050000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['fast', 'ultrafast'] },
+      { paramId: 'llmVndOaiReasoningMode' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: {
+      input: [{ upTo: 272000, price: 2 }, { upTo: null, price: 4 }],
+      output: [{ upTo: 272000, price: 10 }, { upTo: null, price: 15 }],
+      cache: { read: [{ upTo: 272000, price: 0.1 }, { upTo: null, price: 0.2 }], write: [{ upTo: 272000, price: 2.5 }, { upTo: null, price: 5 }] },
+      tools: OAI_PRICE_TOOLS,
+    },
+    // benchmark: no arena data yet
+  },
+
+  // GPT-6 Astra - GPT-6 flagship
   {
     idPrefix: 'gpt-6-astra',
     label: 'GPT-6 Astra',
     pubDate: '20260903',
-    description: 'Most capable OpenAI model, built for the hardest end-to-end work: reasoning, coding, computer use, research, and document creation. Fewer output tokens per task than GPT-5.6 Sol. 1M token context.',
+    description: 'GPT-6 flagship, built for the hardest end-to-end work: reasoning, coding, computer use, research, and document creation. Fewer output tokens per task than GPT-5.6 Sol. 1M token context.',
     contextWindow: 1050000,
     maxCompletionTokens: 128000,
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
@@ -387,7 +464,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
       { paramId: 'llmVndOaiCodeInterpreter' },
       { paramId: 'llmForceNoStream' },
     ],
-    chatPrice: { // 2026-08-21 promo (-20% in, -33% out) through at least 2026-11-21
+    chatPrice: { // 2026-08-21 promo (-20% in, -33% out) until 2026-11-30
       input: [{ upTo: 272000, price: 4 }, { upTo: null, price: 8 }],
       output: [{ upTo: 272000, price: 20 }, { upTo: null, price: 30 }],
       cache: { read: [{ upTo: 272000, price: 0.4 }, { upTo: null, price: 0.8 }], write: [{ upTo: 272000, price: 5 }, { upTo: null, price: 10 }] },
@@ -465,7 +542,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     idPrefix: 'chat-latest',
     label: 'ChatGPT Instant',
     pubDate: '20260505', // API changelog 2026-05-05: "Released `chat-latest` snapshot which points to the latest Instant model currently used in ChatGPT"
-    description: 'Points to the Instant model currently used in ChatGPT. Updated in place without notice - OpenAI recommends GPT-6 Astra for production.',
+    description: 'Points to the Instant model currently used in ChatGPT. Updated in place without notice - OpenAI recommends GPT-6.2 Astra for production.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE, LLM_IF_HOTFIX_NoTemperature],
@@ -867,7 +944,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     label: 'GPT-5 [Deprecated]',
     pubDate: '20250807',
     isLegacy: true,
-    description: '[Use: GPT-5.6 Sol - Shut down: 2026-12-11] The best model for coding and agentic tasks across domains.',
+    description: '[Use: GPT-6.1 Sol - Shut down: 2026-12-11] The best model for coding and agentic tasks across domains.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
@@ -895,7 +972,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     label: 'GPT-5 Pro [Deprecated]',
     pubDate: '20251006',
     isLegacy: true,
-    description: '[Use: GPT-5.6 Sol with Pro reasoning - Shut down: 2026-12-11] Version of GPT-5 that uses more compute to produce smarter and more precise responses. Designed for tough problems.',
+    description: '[Use: GPT-6.1 Sol with Pro reasoning - Shut down: 2026-12-11] Version of GPT-5 that uses more compute to produce smarter and more precise responses. Designed for tough problems.',
     contextWindow: 400000,
     maxCompletionTokens: 128000, // official docs: 128K max output (272K is input limit within 400K context)
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
@@ -941,7 +1018,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     label: 'GPT-5 Mini [Deprecated]',
     pubDate: '20250807',
     isLegacy: true,
-    description: '[Use: GPT-5.6 Terra - Shut down: 2026-12-11] A faster, more cost-efficient version of GPT-5 for well-defined tasks.',
+    description: '[Use: GPT-6.1 Terra - Shut down: 2026-12-11] A faster, more cost-efficient version of GPT-5 for well-defined tasks.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
@@ -963,7 +1040,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     label: 'GPT-5 Nano [Deprecated]',
     pubDate: '20250807',
     isLegacy: true,
-    description: '[Use: GPT-5.6 Luna - Shut down: 2026-12-11] Fastest, most cost-efficient version of GPT-5 for summarization and classification tasks.',
+    description: '[Use: GPT-6 Luna - Shut down: 2026-12-11] Fastest, most cost-efficient version of GPT-5 for summarization and classification tasks.',
     contextWindow: 400000,
     maxCompletionTokens: 128000,
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
@@ -1001,7 +1078,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     label: 'o3 Pro [Deprecated]',
     pubDate: '20250610',
     isLegacy: true,
-    description: '[Use: GPT-5.6 Sol with Pro reasoning - Shut down: 2026-12-11] Version of o3 with more compute for better responses. Provides consistently better answers for complex tasks.',
+    description: '[Use: GPT-6.1 Sol with Pro reasoning - Shut down: 2026-12-11] Version of o3 with more compute for better responses. Provides consistently better answers for complex tasks.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_MIN, LLM_IF_OAI_Reasoning, LLM_IF_HOTFIX_NoTemperature],
@@ -1022,7 +1099,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     label: 'o3 [Deprecated]',
     pubDate: '20250416',
     isLegacy: true,
-    description: '[Use: GPT-5.6 Sol - Shut down: 2026-12-11] A well-rounded and powerful model across domains. Sets a new standard for math, science, coding, and visual reasoning tasks.',
+    description: '[Use: GPT-6.1 Sol - Shut down: 2026-12-11] A well-rounded and powerful model across domains. Sets a new standard for math, science, coding, and visual reasoning tasks.',
     contextWindow: 200000,
     maxCompletionTokens: 100000,
     interfaces: IFS_CHAT_CACHE_REASON,
@@ -1138,6 +1215,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     symLink: 'gpt-audio-2025-08-28',
   },
   {
+    hidden: true, // deprecated Jul 20, 2026, shutdown 2027-01-20
     idPrefix: 'gpt-audio-mini-2025-12-15',
     label: 'GPT Audio Mini [Deprecated]',
     pubDate: '20251215',
@@ -1366,12 +1444,14 @@ const openAIModelsDenyList: string[] = [
   'daybreak-blue-latest', 'daybreak-red-latest', // deprecated 'gpt-daybreak-*' program aliases -> gpt-5.6-sol / gpt-5.6-cyber
   // Specialized domain models - life sciences, gated behind the GPT-Rosalind trusted-access program (probed 2026-10-21)
   'gpt-rosalind-research', 'gpt-rosalind-discovery', 'gpt-6-rosalind',
+  // Specialized domain models - legal configurations of Astra, gated ('does not exist or you do not have access')
+  'gpt-6-astra-law', 'gpt-6.2-astra-law',
 
   // Safety/moderation models
   'gpt-oss-safeguard',
 
   // Moderation models
-  'omni-moderation-latest', 'omni-moderation-2024-09-26', 'text-moderation-latest',
+  'omni-moderation-latest', 'omni-moderation-2024-09-26', 'omni-moderation-csam-latest', 'text-moderation-latest',
 ];
 
 // [OpenAI Deprecations] Shut-down ids, filtered ONLY on native api.openai.com listings: other OpenAI-compatible
@@ -1439,11 +1519,14 @@ export function openAIInjectVariants(acc: ModelDescriptionSchema[], model: Model
 
 const _manualOrderingIdPrefixes = [
   // GPT-6
+  'gpt-6.2-astra',
+  'gpt-6.2-sol',
   'gpt-6-astra',
   'gpt-6.1-sol',
   'gpt-6.1-terra',
   'gpt-6-sol',
   'gpt-6-luna',
+  'gpt-6.2-',
   'gpt-6.1-',
   'gpt-6-',
   // GPT-5.6 (Sol/Terra/Luna tiers)
@@ -1645,7 +1728,7 @@ const _ORT_OAI_IF_ALLOWLIST: ReadonlySet<string> = new Set([
 const _ORT_OAI_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
   'llmVndOaiEffort', // OpenAI reasoning effort
   'llmVndOaiReasoningMode', // [2026-07-11] GPT-5.6+ reasoning mode - OR-documented `reasoning.mode`: 'pro' on a base id reroutes to the matching '*-pro' model
-  'llmVndOaiServiceTier', // [2026-09-22] `service_tier` routes to the openai/flex|fast|ultrafast endpoints (ultrafast: Astra and 6.1 Sol, Pro ids included, 6x); OR's reported cost carries the tier
+  'llmVndOaiServiceTier', // [2026-09-22] `service_tier` routes to the openai/flex|fast|ultrafast endpoints (ultrafast: 6 Astra and 6.1 Sol at 6x, 6.2 Astra/Sol at 3x through 2027-02-28, Pro ids included); OR's reported cost carries the tier
   'llmVndOaiVerbosity', // verbosity
   // 'llmVndOaiImageGeneration', // OR does NOT support image gen with OAI yet (2026-02-06)
 ] as const satisfies DModelParameterId[]);
@@ -1662,6 +1745,8 @@ export function llmOrtOaiLookup(orModelName: string): OrtVendorLookupResult | un
   const ortOaiRefMap: Record<string, string | null> = {
     // renames
     // [2026-09-14] 'gpt-6-astra-pro' is not an OpenAI id (404 model_not_found): it's Astra with reasoning.mode=pro, priced identically
+    'gpt-6.2-astra-pro': 'gpt-6.2-astra',
+    'gpt-6.2-sol-pro': 'gpt-6.2-sol',
     'gpt-6-astra-pro': 'gpt-6-astra',
     'gpt-6.1-sol-pro': 'gpt-6.1-sol',
     'gpt-6.1-terra-pro': 'gpt-6.1-terra',

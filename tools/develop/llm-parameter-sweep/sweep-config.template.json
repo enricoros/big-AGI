@@ -28,7 +28,7 @@
     },
     "metaai": {
       "access": { "dialect": "metaai", "oaiKey": "LLM_...", "oaiOrg": "", "oaiHost": "" },
-      "modelFilter": ["muse-spark"],
+      "modelFilter": ["muse-spark", "muse-wonder", "muse-ember"],
       "sweeps": ["temperature", "metaai-reasoning-effort", "metaai-web-search"],
       "baseModelOverrides": { "maxTokens": 2048 }
     },

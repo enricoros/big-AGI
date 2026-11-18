@@ -13,13 +13,10 @@
 // [Bedrock, 2026-08-17] Live-verified in us-east-1 with a long-term Bearer key (all three listings 200):
 // 65 on-demand foundation models, 69 SYSTEM_DEFINED inference profiles, 55 Mantle ids.
 // - Anthropic coverage is complete: every served 'anthropic.*' id resolves through llmBedrockFindAnthropicModel
-//   (fable-5, opus-5/4-8/4-7/4-6, sonnet-5/4-6, opus-4-5, sonnet-4-5, haiku-4-5, opus-4-1, sonnet-4, haiku-3).
-//   The one exception is claude-3-sonnet-20240229 (0-day path, hidden). Mythos 5 is not listed (AWS card: Mantle Messages only, not wired).
-//   [2026-09-01] +fable-5-1 (foundation model + us./global. profiles, ACTIVE; invoke 403 on this account). Mythos 5.1 not listed (AWS card: gated preview).
-//   [2026-10-07] +haiku-5-5 beside opus-5-5 / sonnet-5-5 (foundation model + us./global. profiles, ACTIVE; haiku-5-5 invoke
-//   'not available for this account').
-//   [2026-11-09] +fable-5-2 (foundation model + us./global. profiles, ACTIVE; invoke 403 on this account). Mythos 5.2 not listed.
-// - Mantle also lists 6 undated 'anthropic.*' aliases, but they answer NEITHER OpenAI route ("does not support
+//   (fable-5-2/5-1/5, opus-5-5/5/4-8/4-7/4-6/4-5, sonnet-5-5/5/4-6/4-5, haiku-5-5/4-5, opus-4-1; sonnet-4-5 and opus-4-1 LEGACY).
+//   The us. profiles of claude-3-haiku and claude-3-sonnet are still listed ACTIVE but invoke 404s 'end of its life' (0-day path, hidden).
+//   Mythos 5/5.1/5.2 are not listed. Invoke 403s 'not available for this account' on every id newer than opus-4-6 / sonnet-4-6.
+// - Mantle also lists 7 undated 'anthropic.*' aliases, but they answer NEITHER OpenAI route ("does not support
 //   the '/v1/chat/completions' API", same for '/v1/responses') - Anthropic on Bedrock is invoke-only.
 // - Mantle accepts OpenAI tools on every id probed except writer.palmyra-vision-7b (see SKIP_MANTLE_TOOLS_IDS):
 //   zai.glm-4.7, openai.gpt-oss-120b, qwen.qwen3-coder-next and mistral.mistral-large-3-675b-instruct all

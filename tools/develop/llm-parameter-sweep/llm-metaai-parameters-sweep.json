@@ -1,7 +1,13 @@
 {
   "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
   "_evaluated": "Evaluated: fn, metaai-reasoning-effort, metaai-web-search, oai-temperature-think-high, oai-temperature-think-none, temperature. If missing, the parameter is not supported by that model.",
-  "_modelFilter": "muse-wonder",
+  "_modelFilter": "muse-ember",
+  "muse-ember-1.0": {
+    "fn": ["auto","roundtrip"],
+    "metaai-reasoning-effort": ["minimal","low","medium","high","xhigh","max"],
+    "metaai-web-search": ["low","medium","high"],
+    "temperature-range": [0,1.5]
+  },
   "muse-wonder-1.0": {
     "fn": ["auto","roundtrip"],
     "metaai-reasoning-effort": ["minimal","low","medium","high","xhigh","max"],

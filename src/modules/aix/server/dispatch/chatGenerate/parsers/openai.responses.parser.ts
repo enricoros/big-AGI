@@ -1305,7 +1305,8 @@ function _priceMultiplierFromServiceTier(serviceTier: string | null | undefined,
       return modelId?.startsWith('gpt-5.5') ? 2.5 : 2;
     case 'ultrafast':
       // [2026-09-29] 6x on every token class, both context tiers (GPT-6 Astra: $60/$6/$75/$300 vs Standard $10/$1/$12.50/$50)
-      return 6;
+      // GPT-6.2: 3x through 2027-02-28, 6x from 2027-03-01 (TODO: drop the branch then)
+      return modelId?.startsWith('gpt-6.2') ? 3 : 6;
     default: // 'auto', absent
       return undefined;
   }

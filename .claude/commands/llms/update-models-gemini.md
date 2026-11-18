@@ -7,10 +7,10 @@ Update `src/modules/llms/server/gemini/gemini.models.ts` with latest model defin
 Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
 
 **Primary Sources:**
-- Models: https://ai.google.dev/gemini-api/docs/models
-- Pricing: https://ai.google.dev/gemini-api/docs/pricing
-- Changelog: https://ai.google.dev/gemini-api/docs/changelog
-- Deprecations: https://ai.google.dev/gemini-api/docs/deprecations - the authoritative table of release + shutdown dates per model id; it overrides dates inferred from the changelog. "No shutdown date announced" means the def must carry NO `deprecated` field (Google does not auto-retire a stable model one year after release)
+- Models: https://aistudio.google.com/docs/models
+- Pricing: https://aistudio.google.com/docs/pricing
+- Changelog: https://aistudio.google.com/docs/changelog
+- Deprecations: https://aistudio.google.com/docs/deprecations - the authoritative table of release + shutdown dates per model id; it overrides dates inferred from the changelog. "No shutdown date announced" means the def must carry NO `deprecated` field (Google does not auto-retire a stable model one year after release)
 
 **Fallbacks if blocked:** Check Google AI JS SDK at https://github.com/googleapis/js-genai, search "gemini models latest pricing", "gemini latest models", or search GitHub for latest model prices and context windows
 

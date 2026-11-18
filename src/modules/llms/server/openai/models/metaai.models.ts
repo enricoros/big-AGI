@@ -27,9 +27,10 @@ const _wireMetaAIModelItemSchema = z.object({
 });
 
 
-// [Meta AI] Pricing, USD per 1M tokens - https://dev.meta.ai/docs/pricing-rate-limits (2026-10-21).
-// Flat ("no long-context premium"); all Standard Spark versions share one rate. Caching is automatic
-// (prefix KV, no breakpoints, no write charge): cached input bills at the reduced 'read' rate.
+// [Meta AI] Pricing, USD per 1M tokens - https://dev.meta.ai/docs/pricing-rate-limits (2026-11-17).
+// Wonder and Spark are flat ("no long-context premium"); all Standard Spark versions share one rate. Ember bills a request
+// over 200K input tokens (cached included) at its long-context rates in full. Caching is automatic (prefix KV, no
+// breakpoints, no write charge): cached input bills at the reduced 'read' rate.
 // Web search grounding: $2.50 / 1K queries on top of tokens.
 const _wonderStandardPrice: ModelDescriptionSchema['chatPrice'] = {
   input: 4,
@@ -45,9 +46,16 @@ const _sparkStandardPrice: ModelDescriptionSchema['chatPrice'] = {
   tools: { webSearch: 2.5 },
 };
 
+const _emberStandardPrice: ModelDescriptionSchema['chatPrice'] = {
+  input: [{ upTo: 200000, price: 0.10 }, { upTo: null, price: 0.30 }],
+  output: [{ upTo: 200000, price: 0.50 }, { upTo: null, price: 1.50 }],
+  cache: { read: [{ upTo: 200000, price: 0.004 }, { upTo: null, price: 0.012 }] },
+  tools: { webSearch: 2.5 },
+};
+
 // [Meta AI] Contributor tier: the same model at ~12x/21x lower rates, in exchange for permission to train on
 // prompts and completions; also lower team rate limits (150 RPM / 3M TPM vs 3,000 RPM / 4M TPM on Standard).
-// Spark 1.3 and 1.2 only: Wonder has no Contributor tier on the API.
+// Spark 1.3 and 1.2 only: Wonder and Ember have no Contributor tier on the API.
 const _sparkContributorPrice: ModelDescriptionSchema['chatPrice'] = {
   input: 0.10,
   output: 0.20,
@@ -57,9 +65,10 @@ const _sparkContributorPrice: ModelDescriptionSchema['chatPrice'] = {
 
 
 // Muse Spark parameters (Responses API, probed 2026-09-02 on all five Spark ids; effort re-probed 2026-10-21):
-// - reasoning.effort: 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'. 'none' parses but 400s on every Spark and Wonder
-//   model ("not supported for model"). Omitted, the server defaults to 'high' - left as the vendor default (no initialValue).
-// - 'max' (extended reasoning beyond 'xhigh', same per-token price): muse-wonder-1.0, muse-spark-1.3 and 1.3-contributor. 1.1, 1.2
+// - reasoning.effort: 'minimal' | 'low' | 'medium' | 'high' | 'xhigh'. 'none' parses but 400s on every Spark, Wonder and Ember
+//   model ("not supported for model"). Omitted, Wonder and Ember run at 'max' and Spark at 'high' - left as the vendor
+//   default (no initialValue).
+// - 'max' (extended reasoning beyond 'xhigh', same per-token price): muse-wonder-1.0, muse-ember-1.0, muse-spark-1.3 and 1.3-contributor. 1.1, 1.2
 //   and 1.2-contributor 400 on it. reasoning.md excludes 1.3-contributor, but it accepts and honors max (2026-10-15: 2.6-3.1K
 //   reasoning tokens at max vs 0.4-0.8K at xhigh on the same prompt, matching 1.3 Standard). 'max' on Wonder does not select
 //   Muse Wonder Full, a Muse Code-only variant (models.md).
@@ -82,11 +91,11 @@ const _maxEffortParamSpecs: ModelDescriptionSchema['parameterSpecs'] = [
 // Vision: image input (jpeg/png/gif/webp, data URLs, up to 50 per request). PDF, video and audio are accepted upstream
 // too, but AIX has no native parts for them yet. Json: text.format json_schema / json_object verified. Prompt caching:
 // automatic, reported in usage.input_tokens_details.cached_tokens.
-// Muse Wonder takes the same requests on the same endpoints (models.md); verified 2026-10-13 on muse-wonder-1.0: parallel
-// function calls, web search, json_schema, image input, and cached_tokens on a repeated prefix.
+// Muse Wonder and Muse Ember take the same requests on the same endpoints (models.md, muse-ember.md): parallel function
+// calls, web search, json_schema, image input, and cached_tokens on a repeated prefix.
 const _sparkInterfaces: ModelDescriptionSchema['interfaces'] = [LLM_IF_OAI_Responses, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_OAI_Json, LLM_IF_OAI_PromptCaching];
 
-// All Spark versions and Wonder share one context window (dev.meta.ai/docs/models). The output cap is not documented by Meta:
+// All Spark versions, Wonder and Ember share one context window (dev.meta.ai/docs/models). The Spark and Wonder output cap is not documented by Meta:
 // 131072 is what Meta's own agent configs advertise for Spark 1.3 (quickstart, coding-agents) and is assumed for Wonder, while
 // the server accepted max_output_tokens up to 1M without a 400 (probed 2026-09-02) - an advertised figure, not an enforced
 // ceiling. Reasoning tokens share it.
@@ -107,7 +116,8 @@ const _museImageInterfaces: ModelDescriptionSchema['interfaces'] = [LLM_IF_OAI_R
 // Release dates: 1.1 2026-07-09 (ai.meta.com/blog/introducing-muse-spark-meta-model-api, which also dates Muse Image to
 // the same week - 07-07), 1.2 2026-08-05 (research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2), 1.3 2026-09-02
 // (Meta research blog, Wikipedia 'Muse Spark' release table), Wonder 1.0 2026-10-12 (research.meta.ai/blog/muse-wonder,
-// about.fb.com/news/2026/10/introducing-muse-wonder-models). The API exposes no dates (created: 0), so these are editorial.
+// about.fb.com/news/2026/10/introducing-muse-wonder-models), Ember 1.0 2026-11-09 (research.meta.ai/blog/muse-ember). The API
+// exposes no dates (created: 0), so these are editorial.
 //
 // Array order = display order, newest first within a line (the uncurated-id guesser below relies on it). Contributor
 // variants are hidden by default: they train on the user's prompts and completions, so opting in should be a deliberate
@@ -164,6 +174,18 @@ const _knownMetaAIModels = llmsDefineManualMappings([
     benchmark: { cbaElo: 1490 }, // Muse Spark 1.1
     initialTemperature: _SPARK_INITIAL_TEMPERATURE,
     pubDate: '20260709',
+  },
+  {
+    idPrefix: 'muse-ember-1.0',
+    label: 'Muse Ember 1.0',
+    description: 'Meta\'s smallest and most efficient reasoning model, for high-volume repeated work: sub-agent tasks, tool calls, routing, extraction and long-document parsing. Text, image, video, audio and PDF input. 1M context. Higher rates above 200K input tokens. Standard tier only.',
+    contextWindow: _SPARK_CONTEXT_WINDOW,
+    maxCompletionTokens: 524288, // documented (muse-ember.md); the server accepts more
+    interfaces: _sparkInterfaces,
+    parameterSpecs: _maxEffortParamSpecs,
+    chatPrice: _emberStandardPrice,
+    initialTemperature: _SPARK_INITIAL_TEMPERATURE,
+    pubDate: '20261109',
   },
   {
     idPrefix: 'muse-image-1.0',
