@@ -803,11 +803,12 @@ export namespace OpenAIWire_API_Chat_Completions {
     content: z.string().nullish()
       // [Mistral, 2025-10-15] Mistral SPEC-BREAKING thinking fragments
       .or(z.array(z.object({
-        type: z.string(), // 'thinking', but relaxed
+        type: z.string(), // 'thinking' or 'text', but relaxed
         thinking: z.array(z.object({
           type: z.string(),
           text: z.string(),
         })).optional(),
+        text: z.string().optional(), // [Mistral, 2026-11-17] for type: 'text' blocks - Mistral Large 4 sends the first answer chunk beside the last thinking block
       }))),
     // delta-reasoning content
     reasoning_content: z.string().nullable().optional(), // [Deepseek, 2025-01-20]
