@@ -11,7 +11,7 @@ import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { Link } from '~/common/components/Link';
 
-import { isValidGoogleCloudApiKey, isValidGoogleCseId } from './search.client';
+import { isValidGoogleCloudApiKey, isValidGoogleCseHost, isValidGoogleCseId } from './search.client';
 import { useGoogleSearchStore } from './store-module-google';
 
 
@@ -19,9 +19,10 @@ export function GoogleSearchSettings() {
 
   // external state
   const backendHasGoogle = hasServerConf('hasGoogleCustomSearch');
-  const { googleCloudApiKey, setGoogleCloudApiKey, googleCSEId, setGoogleCSEId, restrictToDomain, setRestrictToDomain } = useGoogleSearchStore(useShallow(state => ({
+  const { googleCloudApiKey, setGoogleCloudApiKey, googleCSEId, setGoogleCSEId, googleCSEHost, setGoogleCSEHost, restrictToDomain, setRestrictToDomain } = useGoogleSearchStore(useShallow(state => ({
     googleCloudApiKey: state.googleCloudApiKey, setGoogleCloudApiKey: state.setGoogleCloudApiKey,
     googleCSEId: state.googleCSEId, setGoogleCSEId: state.setGoogleCSEId,
+    googleCSEHost: state.googleCSEHost, setGoogleCSEHost: state.setGoogleCSEHost,
     restrictToDomain: state.restrictToDomain, setRestrictToDomain: state.setRestrictToDomain,
   })));
 
@@ -29,11 +30,14 @@ export function GoogleSearchSettings() {
   // derived state
   const isValidKey = googleCloudApiKey ? isValidGoogleCloudApiKey(googleCloudApiKey) : backendHasGoogle;
   const isValidId = googleCSEId ? isValidGoogleCseId(googleCSEId) : backendHasGoogle;
+  const isValidHost = !googleCSEHost || isValidGoogleCseHost(googleCSEHost);
 
 
   const handleGoogleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => setGoogleCloudApiKey(e.target.value);
 
   const handleCseIdChange = (e: React.ChangeEvent<HTMLInputElement>) => setGoogleCSEId(e.target.value);
+
+  const handleCseHostChange = (e: React.ChangeEvent<HTMLInputElement>) => setGoogleCSEHost(e.target.value);
 
   const handleDomainChange = (e: React.ChangeEvent<HTMLInputElement>) => setRestrictToDomain(e.target.value);
 
@@ -65,6 +69,18 @@ export function GoogleSearchSettings() {
         variant='outlined' placeholder={backendHasGoogle ? '...' : 'missing'} error={!isValidId}
         value={googleCSEId} onChange={handleCseIdChange}
         startDecorator={<SearchIcon />}
+        slotProps={{ input: { sx: { width: '100%' } } }}
+        sx={{ width: '100%' }}
+      />
+    </FormControl>
+
+    <FormControl orientation='horizontal' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+      <FormLabelStart title='API Host'
+                      description='Optional'
+                      tooltip='Base URL of a service with the same Custom Search JSON API. Leave empty for Google.' />
+      <Input
+        variant='outlined' placeholder='https://www.googleapis.com' error={!isValidHost}
+        value={googleCSEHost} onChange={handleCseHostChange}
         slotProps={{ input: { sx: { width: '100%' } } }}
         sx={{ width: '100%' }}
       />

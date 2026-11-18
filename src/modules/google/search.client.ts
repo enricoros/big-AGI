@@ -6,6 +6,7 @@ import { useGoogleSearchStore } from './store-module-google';
 
 export const isValidGoogleCloudApiKey = (apiKey?: string) => !!apiKey && apiKey.trim()?.length >= 39;
 export const isValidGoogleCseId = (cseId?: string) => !!cseId && cseId.trim()?.length >= 17;
+export const isValidGoogleCseHost = (host?: string) => !!host && URL.canParse(host.trim()) && new URL(host.trim()).protocol === 'https:';
 
 
 /**
@@ -14,7 +15,7 @@ export const isValidGoogleCseId = (cseId?: string) => !!cseId && cseId.trim()?.l
 export async function callApiSearchGoogle(query: string, items: number, restrictToDomain?: string): Promise<{ pages: Search.API.BriefResult[] }> {
 
   // get the keys (empty if they're on server)
-  const { googleCloudApiKey, googleCSEId, restrictToDomain: defaultRestrictToDomain } = useGoogleSearchStore.getState();
+  const { googleCloudApiKey, googleCSEId, googleCSEHost, restrictToDomain: defaultRestrictToDomain } = useGoogleSearchStore.getState();
 
   try {
     return await apiAsync.googleSearch.search.query({
@@ -22,6 +23,7 @@ export async function callApiSearchGoogle(query: string, items: number, restrict
       items,
       key: googleCloudApiKey,
       cx: googleCSEId,
+      host: googleCSEHost?.trim() || undefined,
       restrictToDomain: restrictToDomain || defaultRestrictToDomain || null,
     });
   } catch (error: any) {

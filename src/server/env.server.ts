@@ -119,6 +119,7 @@ export const env = createEnv({
     // Google Custom Search
     GOOGLE_CLOUD_API_KEY: z.string().optional(),
     GOOGLE_CSE_ID: z.string().optional(),
+    GOOGLE_CSE_HOST: z.url({ protocol: /^https$/ }).optional(),
 
 
     // Text-To-Speech: ElevenLabs - speech.ts
