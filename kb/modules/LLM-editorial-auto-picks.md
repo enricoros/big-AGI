@@ -64,7 +64,7 @@ export const EditorialDefaults = {
 - **Service levels**: `primaryChat` is the flagship; `codeApply` a workhorse coder with function calling; `fastUtil` the fast, cheap tier; `imageCaption` quick vision.
 - **Order across vendors** follows quality at that level: arena score first, then price and speed.
 - **Bedrock** is the exception to one pick: access is per account and region. The newest model comes first, followed by the newest that an account without the enablement can invoke. The picker cannot see access, so the second applies only where the first is not listed; an account without the enablement gets a 403 on the first.
-- **OpenRouter** serves every upstream, so it gets a single pick per domain, the best across vendors.
+- **OpenRouter** serves every upstream, so it gets a single pick per domain, the best across vendors. A key that cannot pay lists the priced models hidden (at listing, OpenRouter's key endpoint tells a spending limit of zero, or an account that never bought credits and shows neither a balance nor usage through its own provider keys): there the pick is `openrouter/free`, the router across the free models, last in every domain. A single free model is often rate-limited upstream.
 - **NVIDIA NIM** is a free trial catalog: its picks come last, so a configured paid service always wins.
 
 ### Matching logic
