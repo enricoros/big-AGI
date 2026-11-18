@@ -40,8 +40,9 @@ const _hardcodedPerplexityVariants: ModelVariantMap = !PERPLEXITY_ENABLE_VARIANT
 type _PerplexityModelDef = ModelDescriptionSchema & { pubDate: string };
 
 // [Perplexity, 2026-10-11] Sonar Chat Completions support ended 2026-09-27, but sync and streaming requests to the 4 ids below keep
-// working, reformulated as Agent API requests, rolling out per model - https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/overview
-// Reformulated requests no longer bill by the Sonar card prices below; usage.cost (the reported cost) carries the actual charge.
+// working, reformulated as Agent API requests ('resp_' ids, all 4 ids by 2026-11-17) - https://docs.perplexity.ai/docs/agent-api/migrate-from-sonar/overview
+// Reformulated requests no longer bill by the Sonar card prices below (the card is gone from the pricing page; kept as an estimate);
+// usage.cost (the reported cost) carries the actual charge.
 // The Agent API (POST /v1/agent: preset + input -> typed output, not OpenAI-shaped) and the Router (/router/v1) are not wired.
 
 const _knownPerplexityChatModels = llmsDefineModels<_PerplexityModelDef>()([

@@ -43,7 +43,7 @@ const _PS_ReasoningEffortNoOff: ModelDescriptionSchema['parameterSpecs'] = [
  * - models list: https://platform.kimi.ai/docs/models (was platform.moonshot.ai - now 301 redirect)
  * - pricing: https://platform.kimi.ai/docs/pricing/chat
  * - API docs: https://platform.kimi.ai/docs/api/chat + https://platform.kimi.ai/docs/api/models-overview (per-model parameter matrix)
- * - updated: 2026-10-23
+ * - updated: 2026-11-17
  * - NOTE: K2 series discontinued on 2026-05-25, kimi-k2.5 on 2026-08-31 (calls 404); kept hidden as OpenRouter still serves them.
  * - NOTE: K2.6 and K2.7 Code close to new accounts on 2026-10-31 and retire by the end of 2026-12.
  * - NOTE: 'sk-kimi-' subscription keys list a separate 6-model catalog from api.kimi.com/coding (see the Kimi Code section below);
@@ -63,7 +63,7 @@ const _knownMoonshotModels = llmsDefineModels<_MoonshotModelDef>()([
     contextWindow: 1048576,
     maxCompletionTokens: 131072,
     interfaces: IF_K2_7_CODE,
-    parameterSpecs: _PS_ReasoningEffortNoOff, // effort low/high/max (default 'max'); thinking off is rejected (HTTP 400)
+    parameterSpecs: _PS_ReasoningEffortNoOff, // effort low/high/max (default 'high'); thinking off is rejected (HTTP 400)
     benchmark: { cbaElo: 1489 + 2 }, // same weights as kimi-k3.1-pro
   },
   {

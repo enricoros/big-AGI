@@ -7,54 +7,13 @@ import { fromManualMapping, llmsDefineManualMappings, llmsLabelUncurated } from 
 // --- Alibaba Model ID inference (auto-derived from _knownAlibabaChatModels) ---
 export type LlmsAlibabaModelId = typeof _knownAlibabaChatModels[number]['idPrefix'];
 
-// Sources (verified 2026-11-05 against the live /v1/models list + docs):
+// Sources (updated 2026-11-17):
 // - Models:  https://www.alibabacloud.com/help/en/model-studio/models
 // - Pricing: https://www.alibabacloud.com/help/en/model-studio/model-pricing (International/Singapore, USD per 1M tokens)
 // - Per-model pages carry the authoritative caps + cache-hit price, e.g. https://www.alibabacloud.com/help/en/model-studio/qwen3-8-max
 // - Cache:   https://www.alibabacloud.com/help/en/model-studio/context-cache (implicit hit = 20% of input; explicit create 125% / hit 10%; deepseek-v4-pro and
-//            the qwen3.8 line excepted - their rates come off the model pages)
-// 2026-10-21 pass: deepseek-v4.1-flash-1017 curated visible (listed 2026-10-18, same card; model page + live probes); the undated
-//   deepseek-v4.1-flash hidden as superseded (OR's Alibaba endpoint still names it 20260910). No price drift on the Intl table or
-//   model pages. Non-model ids filtered: pre-mock_new_gateway_session_affinity (canned stub text), tongyi-skynet-llm-fd (RouteError).
-//   'ZHIPU/GLM-5.3' and 'kimi/kimi-k3' still 'product not activated'. lmarena 403, ELOs left as-is.
-// 2026-10-13 pass: glm-5.3-prime curated visible (GLM-5.3 on Alibaba's Fast mode 'Prime', listed 2026-09-28; no model page or price
-//   row yet - price from Alibaba's own OpenRouter endpoint, caps and params live-probed). qwen-turbo dropped (no longer listed, no
-//   price row). No price drift on the Intl table, DeepSeek busy/idle rows included; kimi-k3 gained its price-table row ($3/$15).
-//   'ZHIPU/GLM-5.3' and 'kimi/kimi-k3' still 403 'product not activated'. qwen3.8-max-prime is priced in Beijing only, not listed on
-//   Intl. New non-chat ids filtered as before: qwen3.8-omni-flash (+ -realtime), qwen-image-3.0 (+ -pro), qwen3.8-livetranslate-*.
-// 2026-09-14 pass (DeepSeek only): deepseek-v4.1-flash curated visible - DashScope's only route to V4.1 (it lists no undated
-//   'deepseek-flash'), peak card 0.3/1.2 with Alibaba's own 0.03 implicit cache-hit (Intl price table + model page).
-// 2026-09-02 pass: qwen3.8-max-0902 curated visible (upgraded snapshot listed today; the base id still serves the 08-03 checkpoint per
-//   Alibaba's OpenRouter endpoint name, and the price table prints no 'Currently equivalent to' on qwen3.8-max). DeepSeek GA snapshots
-//   repriced: deepseek-v4-pro-0813 and -flash-0731 moved to peak/off-peak billing on 2026-08-17 (Intl table + model pages), we carry
-//   the peak card like deepseek.models.ts. GLM-5.2 / -fast implicit cache-hit 25% -> 20% on the Singapore model pages. The Intl table
-//   finally lists the whole qwen3.8 line + qwen3.7-flash (no drift vs what we had). 'ZHIPU/GLM-5.3' and 'kimi/kimi-k3' still 403
-//   'product not activated' (the recommended list now names GLM-5.3; the table gained a Zhipu-hosted 'ZHIPU/GLM-5.2' row, not on our
-//   list). MiniMax-M2.5 is recommended + has a model page (Beijing-only, $0.304/$1.213, 200K ctx, text-only, thinking-only) but is
-//   absent from the Intl list and 404s live - nothing to curate. lmarena unreachable (301), ELOs left as-is.
-// 2026-08-31 pass: qwen3.8-flash curated (new Flash tier, listed 2026-08-26 - model page + OR's Alibaba endpoint + live
-//   probes all agree; flat pricing, no tiers). No retirements, no price drift on the curated rows. 'ZHIPU/GLM-5.3' still
-//   403s 'product not activated' (re-probed), and a namespaced 'kimi/kimi-k3' appeared with the same gate - both left
-//   uncurated (hidden) pending activation.
-// 2026-08-24 pass: two ids DashScope started serving after the 08-17 pass are curated - qwen3.8-27b (open weights Apache-2.0
-//   2026-08-14, model page 08-19 + live probes) and kimi-k3 (Moonshot flagship, model page 08-24; effort ladder live-ablated
-//   -> _PS_KimiEffort). No retirements and zero price drift on the Intl tables (which still predate the whole qwen3.8 line).
-//   'ZHIPU/GLM-5.3' now appears on the list but 403s with 'The product is not activated', has no model page (404) and no price
-//   row - left uncurated (hidden) pending activation.
-// 2026-08-17 pass (Qwen): live list identical to the 08-14 triage (no new ids, no retirements, zero uncurated) and no price drift
-//   on the Intl table; qwen3.8-* gain the real reasoning_effort ladder (_PS_Qwen38Effort, ablated) and qwen3.8-2.4t-a95b is
-//   thinking-compulsory, so it drops the Off value; that model page is now published and confirms the caps/price we had taken
-//   from OpenRouter. Qwen3.8-27B (open weights, Apache-2.0, 2026-08-14) is not served by DashScope - hosts only. ELOs refreshed.
-// 2026-08-16 pass (GLM only): glm-5.1 context 204800 -> 202745 (model page + probe); glm-5.2 gains the reasoning_effort ladder
-//   (_PS_GlmEffort, ablated).
-// 2026-08-14 triage: deny list added (retired 2025-era lines dropped from the list entirely) + short-form curation for every
-//   other live chat id: qwen3.8-2.4t-a95b (open-weights flagship) and qwen3-coder-next visible; the qwen3.5/3.6 generations,
-//   qwen3-max/-vl-flash/-coder-flash, and glm-5.1 hidden. Zero uncurated ('[?]') ids remain against the live list.
-// 2026-08-14 pass (DeepSeek only): deepseek-v4-pro-0813 curated + made visible by exception (see below); deepseek-v4-flash-0731
-//   curated but hidden; DeepSeek-V4 output cap 64K -> 128K house cap (both model pages state 393216). Qwen rows re-checked, unchanged.
-// 2026-08-06 pass: qwen3.7-flash repriced to its real 3-tier rates - the 0.25/1.50 was qwen3.6-flash's, the model is still absent from the
-//   Intl pricing page (tiers on its model page + Alibaba's own OpenRouter endpoint agree); qwen3.7-max output cap 64K -> 128K; DeepSeek-V4
-//   context 1,048,576 -> 1,000,000 (what Alibaba serves); arena ELOs refreshed; qwen3.8-max caps/price re-confirmed on its model page.
+//            the qwen3.8/qwen4 lines excepted - their rates come off the model pages)
+// - 'ZHIPU/GLM-5.3' and 'kimi/kimi-k3' are listed but 400 'The product is not activated' on our key: left uncurated (hidden).
 // NOTES:
 // - The live API returns only id/created/owned_by (no pricing/caps/context), so EVERYTHING here is editorial.
 // - Alibaba uses tiered pricing keyed on the request's INPUT token count (both input and output prices step up).
@@ -113,6 +72,19 @@ const _PS_KimiEffort: ModelDescriptionSchema['parameterSpecs'] = [
 const _knownAlibabaChatModels = llmsDefineManualMappings([
 
   // --- Qwen flagship / current generation ---
+  {
+    // Next-generation flagship, listed on OpenRouter 2026-11-16; answers on the Intl endpoint but is not on /v1/models yet.
+    // Effort: DashScope accepts the 8-value enum, the model serves low < high (default) < xhigh = max.
+    idPrefix: 'qwen4-max',
+    label: 'Qwen4 Max',
+    parameterSpecs: _PS_Qwen38Effort,
+    pubDate: '20261116',
+    description: 'Next-generation Qwen flagship: multimodal (text, image, video input) with deep reasoning, for coding, frontend design and complex agentic tasks. 1M context.',
+    contextWindow: 1000000, // 1M (model page; live input cap 983,616 with thinking on)
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
+    maxCompletionTokens: 131072, // 128K (model page: 262,144 with thinking on)
+    chatPrice: { input: 1.50, output: 4.50, cache: { read: 0.075 } }, // cache-hit input per the price table (5%; write 5m 1.875 / 1h 3.00)
+  },
   {
     // GA 2026-08-03 (id live in /v1/models); pubDate keeps the 2026-07-19 `qwen3.8-max-preview` Token-Plan availability.
     // Caps live-probed 2026-08-04: input cap 991,808, vision/fn/thinking all OK, thinking on by default.
@@ -197,6 +169,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     maxCompletionTokens: 131072, // 128K (live-probed; docs still say 64K)
     chatPrice: { input: 2.50, output: 7.50, cache: { read: 0.50 } }, // implicit cache hit 0.50 (explicit hit 0.25)
     benchmark: { cbaElo: 1474 }, // lmarena: qwen3.7-max-preview (same model, pre-GA id)
+    hidden: true, // superseded by qwen3.8-max and qwen4-max, both cheaper
   },
   {
     idPrefix: 'qwen3.7-plus',
@@ -228,7 +201,6 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
     }, // Intl price table (row added by 2026-09-02), model page and Alibaba's own OpenRouter endpoint agree. implicit cache: 0.006 / 0.02 / 0.04
   },
   {
-    // kept visible alongside qwen3.7-flash: still on Alibaba's recommended list 2026-08-06
     idPrefix: 'qwen3.6-flash',
     label: 'Qwen3.6 Flash',
     parameterSpecs: _PS_Thinking,
@@ -241,6 +213,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
       input: [{ upTo: 256000, price: 0.25 }, { upTo: null, price: 1.00 }],
       output: [{ upTo: 256000, price: 1.50 }, { upTo: null, price: 4.00 }],
     },
+    hidden: true, // superseded by qwen3.7-flash and qwen3.8-flash, both cheaper
   },
   {
     idPrefix: 'qwen3-vl-plus',
@@ -523,7 +496,7 @@ const _knownAlibabaChatModels = llmsDefineManualMappings([
   },
   {
     // K3 with scaled-up post-training. Model page + Intl price table: Singapore $2/$10, cache hit 0.20, 1,048,576 in / out.
-    // Answers on the Intl endpoint but is not on /v1/models yet; curated so the listed id cannot prefix-match kimi-k3 ($3/$15).
+    // Curated so this id does not inherit kimi-k3 ($3/$15) by prefix match.
     idPrefix: 'kimi-k3.1-pro',
     label: 'Kimi K3.1 Pro (Alibaba)',
     parameterSpecs: _PS_KimiEffort, // same Off / Low / Max buckets as kimi-k3

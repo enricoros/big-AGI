@@ -12,7 +12,7 @@ const DEV_DEBUG_MISTRAL_MODELS = Release.IsNodeDevBuild; // not in staging to re
 
 
 // [Mistral]
-// Updated 2026-11-05
+// Updated 2026-11-17
 // - models on: https://docs.mistral.ai/models/overview (redirects to /models; cards at /models/<slug>)
 // - pricing on: https://docs.mistral.ai/inference/pricing (now server-rendered; cards carry the same numbers)
 // - benchmark elo on CBA
@@ -62,15 +62,15 @@ const _PS_MistralDeepSeekEffort: _MistralModelDef['parameterSpecs'] = [
 
 const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
 
-  // Mistral Large 4 (Oct 2026, Public Preview) - list price
-  'mistral-large-4-0': { pubDate: '20261006', chatPrice: { input: 0.7, output: 2.1, cache: { read: 0.07 } }, parameterSpecs: _PS_MistralLarge4Effort, benchmark: { cbaElo: 1432 } }, // MoE 52B active / 1.05T total + 1.6B vision encoder, open weights announced (leaderboard: mistral-large-4 = 1432)
+  // Mistral Large 4 (Oct 2026 preview, GA Nov 2026)
+  'mistral-large-4-0': { pubDate: '20261006', chatPrice: { input: 0.7, output: 2.1, cache: { read: 0.07 } }, parameterSpecs: _PS_MistralLarge4Effort, benchmark: { cbaElo: 1432 } }, // MoE 52B active / 1.05T total + 1.6B vision encoder, open weights (leaderboard: mistral-large-4 = 1432)
   'mistral-large-4': { pubDate: '20261006', chatPrice: { input: 0.7, output: 2.1, cache: { read: 0.07 } }, parameterSpecs: _PS_MistralLarge4Effort, hidden: true }, // symlink
+  'mistral-large-latest': { pubDate: '20261006', chatPrice: { input: 0.7, output: 2.1, cache: { read: 0.07 } }, parameterSpecs: _PS_MistralLarge4Effort, hidden: true }, // -> Large 4
 
   // Premier models - Mistral 3 (Dec 2025)
-  'mistral-large-2512': { pubDate: '20251202', chatPrice: { input: 0.5, output: 1.5, cache: { read: 0.05 } }, benchmark: { cbaElo: 1415 } }, // Mistral Large 3 - MoE 41B active / 675B total (leaderboard: mistral-large-3 = 1415)
-  'mistral-large-latest': { pubDate: '20251202', chatPrice: { input: 0.5, output: 1.5, cache: { read: 0.05 } }, hidden: true }, // → 2512
+  'mistral-large-2512': { pubDate: '20251202', chatPrice: { input: 0.5, output: 1.5, cache: { read: 0.05 } }, benchmark: { cbaElo: 1415 } }, // Mistral Large 3 - MoE 41B active / 675B total; DEPRECATED 2026-10-31, retires 2027-04-30 -> Large 4 (leaderboard: mistral-large-3 = 1415)
 
-  'mistral-medium-2604': { label: 'Mistral Medium (2604)', pubDate: '20260428', chatPrice: { input: 1.5, output: 7.5, cache: { read: 0.15 } }, parameterSpecs: _PS_MistralEffort, benchmark: { cbaElo: 1427 } }, // Mistral Medium 3.5 - frontier-class multimodal, adjustable reasoning (reasoning_effort: none|high), Modified MIT (leaderboard: mistral-medium-3.5 = 1427)
+  'mistral-medium-2604': { label: 'Mistral Medium (2604)', pubDate: '20260428', chatPrice: { input: 1.5, output: 7.5, cache: { read: 0.15 } }, parameterSpecs: _PS_MistralEffort, benchmark: { cbaElo: 1427 } }, // Mistral Medium 3.5 - frontier-class multimodal, adjustable reasoning (reasoning_effort: none|high), Modified MIT; DEPRECATED 2026-10-31, retires 2027-04-30 -> Large 4 (leaderboard: mistral-medium-3.5 = 1427)
   // RETIRED 2026-08-31 (gone from the API, docs retired table -> Mistral Medium 3.5): mistral-medium-2508 (3.1), mistral-medium-2505 (3)
   'mistral-medium-latest': { pubDate: '20260428', chatPrice: { input: 1.5, output: 7.5, cache: { read: 0.15 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2604
   'mistral-medium': { pubDate: '20260428', chatPrice: { input: 1.5, output: 7.5, cache: { read: 0.15 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2604 (the legacy 2312 prototype ID was reassigned)
@@ -89,7 +89,7 @@ const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
   'mistral-code-latest': { pubDate: '20250730', chatPrice: { input: 0.3, output: 0.9, cache: { read: 0.03 } }, hidden: true }, // symlink
   'mistral-code-fim-latest': { pubDate: '20250730', chatPrice: { input: 0.3, output: 0.9, cache: { read: 0.03 } }, hidden: true }, // symlink
 
-  'voxtral-small-2507': { pubDate: '20250715', chatPrice: { input: 0.1, output: 0.4 } }, // voice (text tokens; audio input billed $0.004/min, not modeled)
+  'voxtral-small-2507': { label: 'Voxtral Small (2507)', pubDate: '20250715', chatPrice: { input: 0.1, output: 0.4 } }, // voice (text tokens; audio input billed $0.004/min, not modeled)
   'voxtral-small-latest': { pubDate: '20250715', chatPrice: { input: 0.1, output: 0.4 }, hidden: true }, // symlink
 
   // Ministral 3 family (Dec 2025) - multimodal, multilingual, Apache 2.0
@@ -108,7 +108,7 @@ const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
   'magistral-small-latest': { pubDate: '20260316', chatPrice: { input: 0.15, output: 0.6, cache: { read: 0.015 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2603 (the Magistral Small line was folded into Small 4)
   'mistral-vibe-cli-fast': { pubDate: '20260316', chatPrice: { input: 0.15, output: 0.6, cache: { read: 0.015 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2603 (Vibe CLI alias)
 
-  'labs-leanstral-1-5-1': { label: 'Leanstral 1.5', pubDate: '20260630', chatPrice: { input: 0, output: 0 }, hidden: true }, // Lean 4 formal proof engineering, Small 4 derivative (Labs, free; docs: retired 2026-09-30, no replacement - still listed 2026-10-07)
+  'labs-leanstral-1-5-1': { label: 'Leanstral 1.5', pubDate: '20260630', chatPrice: { input: 0, output: 0 }, hidden: true }, // Lean 4 formal proof engineering, Small 4 derivative (Labs, free; docs: retired 2026-09-30, no replacement, yet still listed)
   'labs-leanstral-1-5': { pubDate: '20260630', chatPrice: { input: 0, output: 0 }, hidden: true }, // symlink
 
   // Third-party hosted - Mistral serves the model unmodified
@@ -136,20 +136,12 @@ const mistralModelFamilyOrder = [
   'magistral-medium',
   'mistral-medium',
   'mistral-vibe-cli',     // alternate IDs for Mistral Medium 3.5 (except '-fast', matched by exact ID below)
-  'devstral-2512',        // Devstral 2 - must come before generic 'devstral'
-  'mistral-code-agent',   // alternate ID for Devstral 2 - must come before 'mistral-code'
-  'devstral-medium',
-  'mistral-large-pixtral', // Pixtral Large uses 'mistral-large-pixtral-2411' ID - must come before 'mistral-large'
-  'pixtral-large',
   'mistral-large',        // Generic fallback for other mistral-large variants
   'codestral',
   'mistral-code',         // alternate IDs for Codestral
   'magistral-small',
   'mistral-small',
   'mistral-vibe-cli-fast', // Mistral Small 4 (exact ID: takes precedence over the 'mistral-vibe-cli' prefix above)
-  'labs-mistral-small-creative', // Mistral Small Creative (Labs) - must come after mistral-small
-  'labs-devstral-small-2512', // Devstral Small 2 (Labs) - must come before generic prefixes
-  'devstral-small',
   'labs-leanstral', // Leanstral (Labs) - Lean 4 formal proof engineering
   'voxtral-small',
   'voxtral-mini',
@@ -157,18 +149,12 @@ const mistralModelFamilyOrder = [
   'mistral-ocr',
   'codestral-embed',
   'mistral-moderation',
-  // Open
-  'open-codestral-mamba',
-  'pixtral-12b',
-  'open-mistral-nemo',
   // Third-party hosted
   'zai-glm',
   'glm-',
   'deepseek-',
   // Legacy (no longer in API, kept for fallback)
   'open-mistral-7b',
-  // Deprecated
-  'mistral-tiny',
   // Symlinks at the bottom
   '🔗',
 ];

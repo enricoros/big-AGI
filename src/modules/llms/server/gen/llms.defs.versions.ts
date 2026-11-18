@@ -8,9 +8,9 @@ import type { ModelVendorId } from '../../vendors/vendors.registry';
 export type LlmsDefsVersions = Readonly<Record<ModelVendorId | '_shared' | '_openaiCompat', string>>;
 
 export const LLMS_DEFS_VERSIONS = {
-  _openaiCompat: '8f36090378fd',
+  _openaiCompat: 'e688e89e6ed5',
   _shared: '3fab3d41d037',
-  alibaba: '37163099962c',
+  alibaba: '11e356e73fbc',
   anthropic: '6dd7f7a22132',
   azure: '7d91837319cb',
   bedrock: 'e962336c4385',
@@ -22,16 +22,16 @@ export const LLMS_DEFS_VERSIONS = {
   lmstudio: '5f00d214902a',
   localai: '3819a27b50de',
   metaai: 'f15044e9e63e',
-  mistral: 'b3c5343faead',
+  mistral: '97b801276691',
   modular: 'a4d34576a8b7',
   moonshot: '1e68e415d6a8',
-  nvidianim: 'e6308b5a1676',
-  ollama: '4a07cc9c1979',
+  nvidianim: '1a71b2cff947',
+  ollama: 'e273ae4279e3',
   openai: '5fa979a0b07f',
-  openrouter: '8c45c2077abd',
+  openrouter: '9ab0f5a5352c',
   perplexity: 'a5bfe5da5b22',
   sakanaai: 'ff212bf7809f',
   togetherai: '90be8bda3562',
   xai: '35a14cb408aa',
-  zai: 'd91ef080feda',
+  zai: 'e252a3f14e42',
 } as const satisfies LlmsDefsVersions;

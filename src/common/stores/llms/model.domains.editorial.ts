@@ -97,7 +97,7 @@ export const EditorialDefaults = {
     { vendor: 'bedrock',    modelId: 'global.anthropic.claude-sonnet-4-6' },
     { vendor: 'zai',        modelId: 'glm-5.3' }, // 1481
     { vendor: 'deepseek',   modelId: 'deepseek-flash' }, // 1476
-    { vendor: 'moonshot',   modelId: 'kimi-k2.7-code' }, // code-focused, ~180 tok/s, $0.95/$4
+    { vendor: 'moonshot',   modelId: 'kimi-k3.1-pro' }, // $2/$10 - K2.7 Code is closed to new accounts
     { vendor: 'xai',        modelId: 'grok-4.7' },
     { vendor: 'nvidianim',  modelId: 'nvidia/nemotron-3.5-super-vl-120b-a12b' }, // agentic and tool-use tuned
   ],
@@ -114,7 +114,7 @@ export const EditorialDefaults = {
     { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash-lite' }, // 1456, $0.30/$2.50 - "low-latency subagent for high-volume automation"
     { vendor: 'zai',        modelId: 'glm-5.3-flash' }, // 1477, $0.15/$0.5
     { vendor: 'deepseek',   modelId: 'deepseek-flash' }, // $0.3/$1.2
-    { vendor: 'moonshot',   modelId: 'kimi-k2.6' }, // $0.95/$4, as K2.7 Code - which cannot turn thinking off
+    { vendor: 'moonshot',   modelId: 'kimi-k3.1-pro-highspeed' }, // $4/$20, measured titles in 1.3-1.6s; K2.6 is closed to new accounts
     { vendor: 'xai',        modelId: 'grok-4.20-0309-non-reasoning' }, // non-reasoning: no thinking delay
     { vendor: 'nvidianim',  modelId: 'nvidia/nemotron-3.5-lightning-30b-a3b' }, // fastest Nemotron, 3B active
   ],

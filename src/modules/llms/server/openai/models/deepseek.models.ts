@@ -65,8 +65,10 @@ const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 //   Bench 2.1 72.1 -> 87.9), raw knowledge barely moved (HLE no-tools 37.7 -> 42.7).
 // - Pro's effort mapping now matches flash: 'low' is a real cheaper tier, skipping the ~79-token hidden agentic preamble
 //   (8 vs 87 prompt tokens on the same request). /responses serves pro too now (was 400 'available starting early August 2026').
-// - system_fingerprint is stable per model and the only tell of an in-place swap besides the pricing page (current
-//   baselines in the 2026-10-17 block). Self-report is worthless (pro claims to be V3, or Claude, or Qwen, depending on the host).
+// - system_fingerprint is stable per model between deploys but also moves on serving changes, so it hints at an in-place
+//   swap and the pricing page confirms it. Current baselines, both new by 2026-11-17 with MODEL VERSION unchanged: flash
+//   bc19ba97cbe016479903222bb1578db6, pro d400d062347a13495558bb956f2a0a0c. Self-report is worthless (pro claims to be V3,
+//   or Claude, or Qwen, depending on the host).
 
 // [DeepSeek, 2026-07-31] V4-Flash 0731: re-post-trained, swapped IN PLACE - https://api-docs.deepseek.com/updates/
 // - Same 'deepseek-v4-flash' id, same arch/size/pricing, public beta. Reported agentic gains are vs V4-Pro-Preview on
@@ -115,7 +117,7 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
     pubDate: '20260424',
     description: 'Premium reasoning model with 1M context, released GA by DeepSeek on 2026-08-13 with much stronger agentic and tool-use behavior. Supports extended thinking modes, JSON output, and function calling.',
     contextWindow: 1_048_576, // 1M
-    interfaces: [...IF_4, LLM_IF_OAI_Reasoning],
+    interfaces: [...IF_4, LLM_IF_OAI_Reasoning], // IF_4 strips images: pro accepts image parts but silently drops them
     parameterSpecs: [
       // 'low' keeps reasoning on yet skips the hidden agentic preamble (8 vs 87 prompt tokens), so it is cheaper per request
       { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },

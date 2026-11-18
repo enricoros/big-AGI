@@ -21,7 +21,7 @@ export function minimaxHeuristic(urlOrHost: string | undefined): boolean {
  * - Pricing: https://platform.minimax.io/docs/pricing/overview.md
  * - Text generation: https://platform.minimax.io/docs/guides/text-generation.md
  * - OpenAI-compatible reference (model enum, max_completion_tokens caps, thinking/service_tier): https://platform.minimax.io/docs/api-reference/text-chat-openai.md
- * - Updated: 2026-10-23
+ * - Updated: 2026-11-17
  */
 type _MiniMaxModelDef = ModelDescriptionSchema & { pubDate: string };
 
@@ -62,7 +62,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     benchmark: { cbaElo: 1444 }, // lmarena: minimax-m3
   },
 
-  // M2.7 series - [MiniMax, 2026-10-19] closed to new users (probed: 404 'no longer available'), retires 2026-11-18. Kept hidden while
+  // M2.7 series - [MiniMax] closed to new users, retires 2026-11-18; gone from the docs model enum and price list. Kept hidden while
   // /v1/models still lists the M2.x ids: dropping them would resurface each as a '[?]' 0-day arrival.
   {
     id: 'MiniMax-M2.7',
@@ -115,7 +115,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     hidden: true, // retiring
   },
 
-  // M2.1 series - retired (probed: 404 'no longer available'), still listed, kept hidden (see M2.7)
+  // M2.1 series - off the docs, still listed, kept hidden (see M2.7)
   {
     id: 'MiniMax-M2.1',
     label: 'MiniMax M2.1',
@@ -139,7 +139,7 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     hidden: true, // yield to newer
   },
 
-  // M2 - retired (probed: 404 'no longer available'), still listed, kept hidden (see M2.7)
+  // M2 - off the docs, still listed, kept hidden (see M2.7)
   {
     id: 'MiniMax-M2',
     label: 'MiniMax M2',
@@ -165,24 +165,11 @@ const _knownMiniMaxModels = llmsDefineModels<_MiniMaxModelDef>()([
     hidden: true, // yield to newer
   },
 
-  // MiniMax-Text-01 - legacy. [MiniMax, 2026-08-17] dropped from the docs model table and the price list, still served (probed).
-  {
-    id: 'MiniMax-Text-01', // (!) not 'MiniMax-01', which is not served
-    label: 'MiniMax Text 01',
-    pubDate: '20250114',
-    description: 'Legacy flagship. 1M context, 40K max output.',
-    contextWindow: 1000192,
-    maxCompletionTokens: 40000,
-    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
-    chatPrice: { input: 0.20, output: 1.10 },
-    hidden: true, // yield to newer
-  },
-
 ]);
 
 
-// Served but never listed by /v1/models (probed 2026-10-23): two still-answering legacy ids. Exempt from the stale-defs drift check.
-const _minimaxUnlistedIds: string[] = ['MiniMax-M1', 'MiniMax-Text-01'] satisfies LlmsMiniMaxModelId[];
+// Served but never listed by /v1/models: a still-answering legacy id. Exempt from the stale-defs drift check.
+const _minimaxUnlistedIds: string[] = ['MiniMax-M1'] satisfies LlmsMiniMaxModelId[];
 
 /**
  * The curated table as-is, plus each listed id the table lacks as a visible '[?]' 0-day arrival with no context window (the

@@ -23,7 +23,7 @@ const _IF_Vision_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision,
 //   The zai adapter (openai.chatCompletions.ts) maps effort dialect-wide: 'none' -> thinking:disabled, else thinking:enabled + reasoning_effort passthrough
 // - reasoning_effort is GLM-5.2+ only (openapi.json); 5.1 and below are binary -> 'none'/'high', do not widen
 // - GLM-5.2 collapses the 7-value enum (none/minimal skip, low/medium -> high, xhigh -> max) -> 3 distinct tiers
-// - GLM-5.3, 5.3-Flash and 5.3-FlashX: thinking compulsory ('disabled' -> 400 code 1210), effort exactly low|high|max, default max
+// - GLM-5.3, 5.3-Flash and 5.3-FlashX (+ Legal): thinking compulsory ('disabled' -> 400 code 1210), effort exactly low|high|max, default max
 const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
 ] as const;
@@ -37,7 +37,7 @@ const _PS_Reasoning_Compulsory: ModelDescriptionSchema['parameterSpecs'] = [
 // Flash = free tier (1 concurrent request, throttled); FlashX = paid with higher concurrency & priority routing; exception: GLM-5.3-Flash is paid
 // Ref: https://docs.z.ai/openapi.json (authoritative enums + per-model limits), https://docs.z.ai/guides/overview/pricing
 // pubDate is REQUIRED on every entry (same pattern as _AnthropicModelDef in anthropic.models.ts).
-// GET /models lists only 11 of these ids - this curated list stays authoritative. 204800 "200K" entries kept (weights say 202752).
+// GET /models lists only 12 of these ids - this curated list stays authoritative. 204800 "200K" entries kept (weights say 202752).
 type _ZaiModelDef = KnownModel & { pubDate: string };
 
 const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
@@ -92,6 +92,21 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     parameterSpecs: _PS_Reasoning_Compulsory,
     chatPrice: { input: 0.37, output: 1.25, cache: { read: 0.075 } },
     initialTemperature: 1.0,
+  },
+
+  // GLM-5.3-FlashX-Legal - legal-domain variant of GLM-5.3-FlashX (legal mid-training + RL post-training); same surface as glm-5.3-flashx
+  {
+    idPrefix: 'glm-5.3-flashx-legal',
+    label: 'GLM-5.3 FlashX Legal (1M)',
+    pubDate: '20261102', // GET /models created + OpenRouter listing; absent from the docs release notes
+    description: 'Legal-domain GLM-5.3 FlashX for legal research, contract review and legal drafting. Image inputs, thinking always on with low/high/max effort. 1M context, 128K output.',
+    contextWindow: 1048576, // 1M
+    interfaces: _IF_Vision_Reasoning,
+    maxCompletionTokens: 131072, // 128K
+    parameterSpecs: _PS_Reasoning_Compulsory,
+    chatPrice: { input: 0.37, output: 1.25, cache: { read: 0.075 } },
+    initialTemperature: 1.0,
+    hidden: true, // domain specialist
   },
 
   // GLM-5.2 - 1M context flagship (Agentic Coding)
@@ -404,7 +419,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
 /// This is the primary source; the list API is unreliable.
 const _zaiCuratedModelIds: string[] = [
   // GLM-5.3 (+ multimodal Flash/FlashX) / GLM-5.2
-  'glm-5.3', 'glm-5.3-flash', 'glm-5.3-flashx', 'glm-5.2',
+  'glm-5.3', 'glm-5.3-flash', 'glm-5.3-flashx', 'glm-5.3-flashx-legal', 'glm-5.2',
   // Text: GLM-5.1 / GLM-5 series
   'glm-5.1', 'glm-5', 'glm-5-turbo',
   // Text: GLM-4.7 series

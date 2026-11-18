@@ -28,7 +28,7 @@ This merges 4 sources (see the tool's README): live `/v1/models` ids, build.nvid
 - `pubDate` is the upstream model release date: prefer the same model's pubDate from another vendor's `*.models.ts` (add a `// = <file> '<id>'` cross-reference comment), fall back to the harvest `pubDate` (catalog createdDate)
 - Borrowed `benchmark: { cbaElo }` values use the `- 2` yield idiom so native vendors win auto-picks
 - Keep `chatPrice: _freePrice` on all models (the endpoint has no paid tier)
-- Reasoning params: gpt-oss models use `_PS_OaiEffort`; other thinking models use `_PS_Thinking` (wired to `chat_template_kwargs` in the adapter)
+- Reasoning params: thinking models use `_PS_Thinking` (wired to `chat_template_kwargs` in the adapter); a model with native `reasoning_effort` (e.g. gpt-oss) takes `llmVndOaiEffort` with its probed enum
 - Preserve comments and table order (flagships first, hidden tail last); minimize whitespace churn
 
 **Verify:** `npm run tscheck && npm run lint`, then `NVIDIANIM_API_KEY=... npm test` (the nvidianim tests do a live listing; a `[DEV]` stale warning fails the test - that is the drift alarm).
