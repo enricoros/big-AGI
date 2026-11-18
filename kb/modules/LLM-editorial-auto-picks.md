@@ -17,7 +17,7 @@ Absent entry = Auto mode (proceed to layer 2).
 
 ### 2. Editorial pick
 
-`llmsEditorial_ModelIdForDomain_SLOW(domainIds, universe)` walks the editorial table for the domain, then for its registry `editorialFallbackDomain` when set, and returns the first `(vendor, modelId)` pair that matches a model in the user's local LLM list.
+`llmsEditorial_ModelIdForDomain_SLOW(domainIds, universe)` walks the editorial table for the domain, then for its registry `editorialFallbackDomain` when set, and returns the first `(vendor, modelId)` pair that matches a visible model in the user's local LLM list. Hidden models are never picked, here as in layer 3: the listing's default hides what a user should not get by default, and the user's own show or hide choice overrides that default.
 
 See [Editorial table](#editorial-table) below.
 

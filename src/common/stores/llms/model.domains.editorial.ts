@@ -139,10 +139,10 @@ export const EditorialDefaults = {
  * Pick the editor's favorite for a domain, given pre-filtered candidates.
  *
  * Walks `EditorialDefaults[domainId]` for each of `domainIds` in order, each in declared
- * order, and returns the first DLLMId matching a (vendor, modelId) pair. Returns undefined
+ * order, and returns the first visible DLLMId matching a (vendor, modelId) pair. Returns undefined
  * when nothing matches; the caller (auto-resolver) falls through to the ELO/cost strategy.
  */
-export function llmsEditorial_ModelIdForDomain_SLOW<Tllm extends Pick<DLLM, 'id' | 'vId' | 'initialParameters'>>(
+export function llmsEditorial_ModelIdForDomain_SLOW<Tllm extends Pick<DLLM, 'id' | 'vId' | 'initialParameters' | 'hidden' | 'userHidden'>>(
   domainIds: ReadonlyArray<DModelDomainId>,
   universe: ReadonlyArray<Tllm>,
 ): DLLMId | undefined {
@@ -152,7 +152,9 @@ export function llmsEditorial_ModelIdForDomain_SLOW<Tllm extends Pick<DLLM, 'id'
       // exact first: match by (vendor, id)
       let relaxedLlm: Tllm | undefined;
       const exactLlm = universe.find((llm) => {
-        if (llm.vId !== vendor) return false;
+        // hidden models are never picked, as in the ELO/cost strategies: the listing hides what a user should not get by
+        // default (e.g. what an OpenRouter key cannot pay for), and a user's own show or hide choice overrides it
+        if (llm.vId !== vendor || isLLMHidden(llm)) return false;
 
         const llmRef = llm.initialParameters?.llmRef;
         if (!llmRef || typeof llmRef !== 'string') return false;

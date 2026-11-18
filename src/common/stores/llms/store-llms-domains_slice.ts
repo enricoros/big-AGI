@@ -249,7 +249,7 @@ function _allowedDomainLlmsOrUniverse<TLlm extends Pick<DLLM, 'interfaces'>>(
  *
  * Layers, in order:
  * 1. narrow `universe` to the domain's `requiredInterfaces` - relaxed to the full universe when nothing matches
- * 2. editorial picks, for the domain then its `editorialFallbackDomain` (see model.domains.editorial.ts)
+ * 2. editorial picks among the non-hidden models, for the domain then its `editorialFallbackDomain` (see model.domains.editorial.ts)
  * 3. the domain's `autoStrategy` over the ELO-ranked, non-hidden models; `chatPinLlmId`, the user's chat pin, is the
  *    cost strategy's pick on a winning vendor that has nothing rated or priced, when it is one of that vendor's candidates
  *
