@@ -1,7 +1,9 @@
 import * as React from 'react';
 
-import type { DModelsService, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
+import type { DModelsService, DModelsServiceAccessStatus, DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import type { SiteDocSlug } from '~/common/gen/com.site.docs.slug';
+
+import { InlineError } from '~/common/components/InlineError';
 
 import { findModelVendor, ModelVendorId } from '../vendors/vendors.registry';
 
@@ -97,6 +99,24 @@ export const VENDOR_DOCS: Record<ModelVendorId, SiteDocSlug> = {
   zai: 'connect-zai',
 } as const;
 
+// why a key can call the free models only, and what restores the priced ones: a reason added to the type must be worded here to compile
+const _freeModelsOnlyWords: Record<NonNullable<DModelsServiceAccessStatus['freeModelsOnly']>, { what: string, fix: string }> = {
+  'free-tier': { what: 'This is a free key: its account has not bought credits', fix: 'add credits' },
+  'key-limit-zero': { what: 'This key has a spending limit of $0', fix: 'raise the limit' },
+};
+
+/** Words what the vendor told the last listing about the key: the service holds it, as it holds the models of that listing */
+function ServiceAccessStatus(props: { accessStatus: DModelsServiceAccessStatus | undefined, vendorName: string }) {
+  const { freeModelsOnly, freeRequestsPerDay } = props.accessStatus || {};
+  const words = freeModelsOnly && _freeModelsOnlyWords[freeModelsOnly]; // none for a reason this build does not know
+  if (!words) return null;
+  return <InlineError severity='warning' error={
+    `${words.what}, so the priced models are hidden.`
+    + (freeRequestsPerDay ? ` The free models allow ${freeRequestsPerDay.toLocaleString()} requests a day.` : '')
+    + ` To use the priced models, ${words.fix} on ${props.vendorName}, then press Models.`
+  } />;
+}
+
 export function LLMVendorSetup(props: { service: DModelsService }) {
   const vendor = findModelVendor(props.service.vId);
   if (!vendor)
@@ -110,6 +130,7 @@ export function LLMVendorSetup(props: { service: DModelsService }) {
   return (
     <form style={{ display: 'contents' /* the setup's rows stay children of the parent's grid */ }} onSubmit={event => event.preventDefault()}>
       <SetupComponent key={props.service.id} serviceId={props.service.id} />
+      <ServiceAccessStatus accessStatus={props.service.accessStatus} vendorName={vendor.name} />
     </form>
   );
 }

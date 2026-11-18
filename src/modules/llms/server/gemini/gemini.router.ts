@@ -94,9 +94,7 @@ export const llmGeminiRouter = createTRPCRouter({
     .output(ListModelsResponse_schema)
     .query(async ({ input, signal }) => {
 
-      const models = await listModelsRunDispatch(input.access, signal);
-
-      return { models };
+      return await listModelsRunDispatch(input.access, signal);
     }),
 
 

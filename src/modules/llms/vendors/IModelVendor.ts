@@ -3,7 +3,7 @@ import type { AixAPI_Access } from '~/modules/aix/server/api/aix.wiretypes';
 import type { ServerConf, ServerConfFlag } from '~/common/app.serverconf';
 import type { DLLM } from '~/common/stores/llms/llms.types';
 
-import type { ModelDescriptionSchema } from '../server/llm.server.types';
+import type { ListModelsResponse } from '../server/llm.server.types';
 import type { ModelVendorId } from './vendors.registry';
 
 
@@ -40,6 +40,6 @@ export interface IModelVendor<TServiceSettings extends ServiceSettingsBase = {},
   rpcUpdateModelsOrThrow(
     this: void, // detach-safe attestation: vendors cross-reference each other's implementations (e.g. `ModelVendorOpenAI.rpcUpdateModelsOrThrow`)
     access: TAccess,
-  ): Promise<{ models: ModelDescriptionSchema[] }>;
+  ): Promise<ListModelsResponse>;
 
 }

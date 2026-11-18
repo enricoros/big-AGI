@@ -8,7 +8,7 @@ import { applyModelParameterSpecsInitialValues, DModelParameterSpecAny, LLMImpli
 import { isLLMChatPricingFree } from '~/common/stores/llms/llms.pricing';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 
-import type { ModelDescriptionSchema } from './server/llm.server.types';
+import type { ListModelsResponse, ModelDescriptionSchema } from './server/llm.server.types';
 import { findServiceAccessOrThrow } from './vendors/vendor.helpers';
 import { llmsDefsVersionFor } from './llm.client.defs';
 
@@ -61,6 +61,7 @@ export async function llmsUpdateModelsForServiceOrThrow(
 
   // fetch models
   let models: ModelDescriptionSchema[];
+  let accessStatus: ListModelsResponse['accessStatus'];
 
   // a listing failure is logged as an entry, then rethrown verbatim (callers match the messages)
   try {
@@ -76,11 +77,11 @@ export async function llmsUpdateModelsForServiceOrThrow(
 
     // LLMs [CSM] Direct Execution
     if (clientSideListModels)
-      models = await clientSideListModels(transportAccess);
+      ({ models, accessStatus } = await clientSideListModels(transportAccess));
 
     // LLMs tRPC Execution
     else
-      models = (await vendor.rpcUpdateModelsOrThrow(transportAccess)).models;
+      ({ models, accessStatus } = await vendor.rpcUpdateModelsOrThrow(transportAccess));
 
   } catch (error) {
     if (!signal?.aborted)
@@ -104,6 +105,9 @@ export async function llmsUpdateModelsForServiceOrThrow(
     false,
     changelog,
   );
+
+  // what the vendor told about the key is stored with the service, as its models are
+  llmsStoreActions().setServiceAccessStatus(service.id, accessStatus);
 
   // the service is now listed with the current model definitions (see llm.client.defs.ts)
   llmsStoreActions().stampServiceDefs(service.id, llmsDefsVersionFor(vendor.id, service.setup));

@@ -7,7 +7,7 @@ import type { OpenAIWire_API_Models_List } from '~/modules/aix/server/dispatch/w
 import { createDebugWireLogger } from '~/server/wire';
 import { fetchJsonOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 
-import type { ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
+import type { ListModelsAccessStatus, ModelDescriptionSchema, OrtVendorLookupResult } from '../../llm.server.types';
 import { formatPubDate, fromManualMapping } from '../../models.mappings';
 import { llmOrtAntLookup_ThinkingVariants } from '../../anthropic/anthropic.models';
 import { GEM_IMAGE_AR_NO_EXTREMES, llmOrtGemLookup } from '../../gemini/gemini.models';
@@ -551,7 +551,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 /** What a listing fetches */
 export type OpenRouterListing = {
   wireModels: OpenAIWire_API_Models_List.Response['data'];
-  freeModelsOnly?: 'free-tier' | 'key-limit-zero'; // why, when the key can call the free models only
+  accessStatus?: ListModelsAccessStatus; // set when the key can call the free models only
 };
 
 /**
@@ -561,7 +561,7 @@ export type OpenRouterListing = {
  *   keys, or a balance (granted credits), read from the credits endpoint. An answer that cannot be read does not show access.
  * A limit that is used up and a paid account at zero both pay again, after a reset or a top-up: they do not count.
  */
-async function _openRouterFreeModelsOnly(access: OpenAIAccessSchema, key: z.infer<typeof wireOpenrouterKeyOutputSchema>['data'] | undefined): Promise<OpenRouterListing['freeModelsOnly']> {
+async function _openRouterFreeModelsOnly(access: OpenAIAccessSchema, key: z.infer<typeof wireOpenrouterKeyOutputSchema>['data'] | undefined): Promise<ListModelsAccessStatus['freeModelsOnly']> {
   if (key?.limit === 0) return 'key-limit-zero';
   if (key?.is_free_tier !== true || (key.byok_usage ?? 0) > 0) return undefined;
   const { headers, url } = openAIAccess(access, null, OPENROUTER_API_PATHS.credits);
@@ -592,7 +592,11 @@ export async function openRouterFetchListing(access: OpenAIAccessSchema, signal?
   _wire?.logResponse(wireList);
 
   const keyData = wireOpenrouterKeyOutputSchema.safeParse(keyAnswer).data?.data; // an answer of another shape tells nothing
-  return { wireModels: wireList?.data || [], freeModelsOnly: await _openRouterFreeModelsOnly(access, keyData) };
+  const freeModelsOnly = await _openRouterFreeModelsOnly(access, keyData);
+  return {
+    wireModels: wireList?.data || [],
+    ...(freeModelsOnly && { accessStatus: { freeModelsOnly, freeRequestsPerDay: keyData?.free_model_daily_requests?.limit } }),
+  };
 }
 
 export function openRouterListingToModelDescriptions(listing: OpenRouterListing): ModelDescriptionSchema[] {
@@ -604,7 +608,7 @@ export function openRouterListingToModelDescriptions(listing: OpenRouterListing)
     .map(openRouterModelToModelDescription)
     .filter(desc => !!desc)
     // a key that can call the free models only lists the priced ones hidden: they stay in the list, with the user's settings and own show/hide choice
-    .map(desc => !listing.freeModelsOnly || (desc.chatPrice?.input === 'free' && desc.chatPrice.output === 'free') ? desc : { ...desc, hidden: true })
+    .map(desc => !listing.accessStatus?.freeModelsOnly || (desc.chatPrice?.input === 'free' && desc.chatPrice.output === 'free') ? desc : { ...desc, hidden: true })
     .reduce(openRouterInjectVariants, []);
 }
 

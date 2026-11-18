@@ -14,7 +14,7 @@ import { hasKeys } from '~/common/util/objectUtils';
 import { toLocalDateYYYYMMDD } from '~/common/util/timeUtils';
 
 import type { DModelDomainId } from './model.domains.types';
-import type { DModelsService, DModelsServiceId } from './llms.service.types';
+import type { DModelsService, DModelsServiceAccessStatus, DModelsServiceId } from './llms.service.types';
 import type { DModelsChangelogEntry, DModelsChangelogVia } from './llms.changelog';
 import { DLLM, DLLMId, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from './llms.types';
 import { DModelParameterId, DModelParameterRegistry, DModelParameterValues, LLMImplicitParametersRuntimeFallback } from './llms.parameters';
@@ -61,6 +61,7 @@ interface LlmsRootActions {
   updateServiceLabel: (id: DModelsServiceId, label: string, allowEmpty?: boolean) => void;
   updateServiceSettings: <TServiceSettings>(id: DModelsServiceId, partialSettings: Partial<TServiceSettings>) => void;
   stampServiceDefs: (id: DModelsServiceId, defsV: string) => void;
+  setServiceAccessStatus: (id: DModelsServiceId, accessStatus: DModelsServiceAccessStatus | undefined) => void;
 
   setConfServiceId: (id: DModelsServiceId | null) => void;
 
@@ -457,6 +458,15 @@ export const useModelsStore = create<LlmsStore>()(persist(
         sources: state.sources.map((s: DModelsService): DModelsService =>
           s.id === id
             ? { ...s, defsV }
+            : s,
+        ),
+      })),
+
+    setServiceAccessStatus: (id: DModelsServiceId, accessStatus: DModelsServiceAccessStatus | undefined) =>
+      set(state => ({
+        sources: state.sources.map((s: DModelsService): DModelsService =>
+          s.id === id
+            ? { ...s, accessStatus }
             : s,
         ),
       })),

@@ -36,9 +36,7 @@ export const llmAnthropicRouter = createTRPCRouter({
     .output(ListModelsResponse_schema)
     .query(async ({ input: { access }, signal }) => {
 
-      const models = await listModelsRunDispatch(access, signal);
-
-      return { models };
+      return await listModelsRunDispatch(access, signal);
     }),
 
   /* [Anthropic] list skills - https://docs.anthropic.com/en/docs/build-with-claude/skills-api */

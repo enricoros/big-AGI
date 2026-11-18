@@ -56,9 +56,7 @@ export const llmOllamaRouter = createTRPCRouter({
     .output(ListModelsResponse_schema)
     .query(async ({ ctx, input, signal }) => {
 
-      const models = await listModelsRunDispatch(input.access, signal);
-
-      return { models };
+      return await listModelsRunDispatch(input.access, signal);
     }),
 
 

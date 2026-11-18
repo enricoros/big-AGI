@@ -5,7 +5,7 @@
 
 // IMPORTANT: client-side bundle imports server-side code including stubbed code
 import type { AixAPI_Access } from '../aix/server/api/aix.wiretypes';
-import type { ModelDescriptionSchema } from './server/llm.server.types';
+import type { ListModelsResponse } from './server/llm.server.types';
 import { listModelsRunDispatch } from './server/listModels.dispatch';
 
 
@@ -17,6 +17,6 @@ import { listModelsRunDispatch } from './server/listModels.dispatch';
 export async function clientSideListModels(
   access: AixAPI_Access,
   abortSignal?: AbortSignal,
-): Promise<ModelDescriptionSchema[]> {
+): Promise<ListModelsResponse> {
   return await listModelsRunDispatch(access, abortSignal);
 }

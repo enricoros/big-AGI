@@ -60,7 +60,7 @@
 import { describe, test } from 'node:test';
 
 import type { AixAPI_Access } from '../../aix/server/api/aix.wiretypes';
-import type { ModelDescriptionSchema } from './llm.server.types';
+import type { ListModelsResponse, ModelDescriptionSchema } from './llm.server.types';
 
 import { listModelsRunDispatch } from './listModels.dispatch';
 import { llmsIsLabelUncurated } from './models.mappings';
@@ -135,7 +135,7 @@ async function _runCapturingDevWarnings<T>(fn: () => Promise<T>): Promise<{ resu
 }
 
 async function expectOk(access: AixAPI_Access, minModels: number, label: string): Promise<ModelDescriptionSchema[]> {
-  const { result: models, devMessages } = await _runCapturingDevWarnings(() =>
+  const { result: { models }, devMessages } = await _runCapturingDevWarnings(() =>
     listModelsRunDispatch(access, AbortSignal.timeout(REQUEST_TIMEOUT_MS)),
   );
   ok(Array.isArray(models), `${label}: models is array`);
@@ -386,7 +386,7 @@ describe('listModels enumeration', () => {
 
   // we hold no key that cannot pay: the live answers of /api/v1/key and /api/v1/credits pass through with the fields under
   // test replaced, the list and everything else stay live
-  async function listOpenRouterAs(keyData: object, credits: object): Promise<ModelDescriptionSchema[]> {
+  async function listOpenRouterAs(keyData: object, credits: object): Promise<ListModelsResponse> {
     const liveFetch = globalThis.fetch;
     globalThis.fetch = async (input, init) => {
       const response = await liveFetch(input, init);
@@ -396,7 +396,7 @@ describe('listModels enumeration', () => {
       return Response.json({ ...answer, data: { ...answer.data, ...replaced } }, { status: response.status });
     };
     try {
-      return await expectOk({ dialect: 'openrouter', ...openAIShape({ oaiKey: E.OPENROUTER_API_KEY?.trim() }) } as AixAPI_Access, 50, 'openrouter/as');
+      return await listModelsRunDispatch({ dialect: 'openrouter', ...openAIShape({ oaiKey: E.OPENROUTER_API_KEY?.trim() }) } as AixAPI_Access, AbortSignal.timeout(REQUEST_TIMEOUT_MS));
     } finally {
       globalThis.fetch = liveFetch;
     }
@@ -405,11 +405,12 @@ describe('listModels enumeration', () => {
   const neverBought = { is_free_tier: true, limit: null, byok_usage: 0 }, noCredits = { total_credits: 0, total_usage: 0 };
 
   test('openai-compat/openrouter: a key that cannot pay lists the priced models hidden, the free ones as usual', { skip: skipIfMissing('OPENROUTER_API_KEY') }, async () => {
-    for (const [why, keyData, credits] of [
-      ['never bought credits', neverBought, noCredits],
-      ['a key limit of zero, on an account with credits', { is_free_tier: false, limit: 0, byok_usage: 0 }, { total_credits: 50, total_usage: 0 }],
+    for (const [why, keyData, credits, freeModelsOnly] of [
+      ['never bought credits', neverBought, noCredits, 'free-tier'],
+      ['a key limit of zero, on an account with credits', { is_free_tier: false, limit: 0, byok_usage: 0 }, { total_credits: 50, total_usage: 0 }, 'key-limit-zero'],
     ] as const) {
-      const models = await listOpenRouterAs(keyData, credits);
+      const { models, accessStatus } = await listOpenRouterAs({ ...keyData, free_model_daily_requests: { limit: 50 } }, credits);
+      ok(accessStatus?.freeModelsOnly === freeModelsOnly && accessStatus.freeRequestsPerDay === 50, `openrouter (${why}): the access status says why, and what the free models allow`);
       ok(models.some(m => !isFree(m)), `openrouter (${why}): the priced models are still listed`);
       ok(models.every(m => isFree(m) || m.hidden), `openrouter (${why}): every priced model is hidden`);
       ok(models.some(m => m.id === 'openrouter/free' && !m.hidden), `openrouter (${why}): the free router is listed, visible`);
@@ -423,8 +424,9 @@ describe('listModels enumeration', () => {
       ['a limit that is used up, on an account with credits', { is_free_tier: false, limit: 5, limit_remaining: 0, byok_usage: 0 }, noCredits],
       ['a key answer of another shape', { is_free_tier: 'yes', limit: 'none', byok_usage: null }, noCredits],
     ] as const) {
-      const models = await listOpenRouterAs(keyData, credits);
+      const { models, accessStatus } = await listOpenRouterAs(keyData, credits);
       ok(models.some(m => !isFree(m) && !m.hidden), `openrouter (${why}): priced models are visible`);
+      ok(!accessStatus, `openrouter (${why}): no access status`);
     }
   });
 

@@ -7,7 +7,7 @@ import { LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision } from '~/common/stor
 import { createDebugWireLogger } from '~/server/wire';
 import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
-import type { ModelDescriptionSchema } from './llm.server.types';
+import type { ListModelsAccessStatus, ListModelsResponse, ModelDescriptionSchema } from './llm.server.types';
 import { llmDevValidateParameterSpecs_DEV, llmsAutoImplyInterfaces, llmsWireCompatCacheTag } from './models.mappings';
 
 
@@ -70,6 +70,7 @@ import { zaiCuratedModelDescriptions, zaiDiscoverModels, zaiModelSort } from './
 export type ListModelsDispatch<TWireModels = any> = {
   fetchModels: () => Promise<TWireModels>;
   convertToDescriptions: (wireModels: TWireModels) => ReadonlyArray<ModelDescriptionSchema>;
+  accessStatus?: (wireModels: TWireModels) => ListModelsAccessStatus | undefined; // what the vendor told about the key, where it does
 };
 
 /**
@@ -83,7 +84,7 @@ function createListModelsDispatch<T>(dispatch: ListModelsDispatch<T>): ListModel
 
 // -- Specialized Implementations -- Core of Server-side LLM Model Listing abstraction --
 
-export async function listModelsRunDispatch(access: AixAPI_Access, signal?: AbortSignal): Promise<ModelDescriptionSchema[]> {
+export async function listModelsRunDispatch(access: AixAPI_Access, signal?: AbortSignal): Promise<ListModelsResponse> {
   const dispatch = _listModelsCreateDispatch(access, signal);
   const wireModels = await dispatch.fetchModels();
   const models = dispatch.convertToDescriptions(wireModels)
@@ -94,7 +95,8 @@ export async function listModelsRunDispatch(access: AixAPI_Access, signal?: Abor
   if (process.env.NODE_ENV === 'development')
     models.forEach(llmDevValidateParameterSpecs_DEV);
 
-  return models;
+  const accessStatus = dispatch.accessStatus?.(wireModels);
+  return { models, ...(accessStatus && { accessStatus }) };
 }
 
 
@@ -400,6 +402,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
       return createListModelsDispatch({
         fetchModels: async () => openRouterFetchListing(access, signal),
         convertToDescriptions: openRouterListingToModelDescriptions,
+        accessStatus: ({ accessStatus }) => accessStatus,
       });
 
     case 'alibaba':

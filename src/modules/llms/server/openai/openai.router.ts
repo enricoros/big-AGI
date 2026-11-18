@@ -15,7 +15,7 @@ import { heartbeatsWhileAwaiting } from '~/modules/aix/server/dispatch/heartbeat
 import { wireLocalAIModelsApplyOutputSchema, wireLocalAIModelsAvailableOutputSchema, wireLocalAIModelsListOutputSchema } from './wiretypes/localai.wiretypes';
 import { WireOpenRouterCreateImagesRequest, wireOpenRouterCreateImagesResponseSchema } from './wiretypes/openrouter.wiretypes';
 
-import { ListModelsResponse_schema, ModelDescriptionSchema } from '../llm.server.types';
+import { type ListModelsResponse, ListModelsResponse_schema } from '../llm.server.types';
 import { listModelsRunDispatch } from '../listModels.dispatch';
 
 import { OPENAI_API_PATHS, openAIAccess, openAIAccessSchema, OpenAIAccessSchema, OPENROUTER_API_PATHS } from './openai.access';
@@ -130,11 +130,9 @@ export const llmOpenAIRouter = createTRPCRouter({
       return result;
     })
 
-    .query(async ({ input: { access }, signal }): Promise<{ models: ModelDescriptionSchema[] }> => {
+    .query(async ({ input: { access }, signal }): Promise<ListModelsResponse> => {
 
-      const models = await listModelsRunDispatch(access, signal);
-
-      return { models };
+      return await listModelsRunDispatch(access, signal);
     }),
 
 

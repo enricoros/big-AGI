@@ -170,8 +170,20 @@ export type OrtVendorLookupResult = {
 
 /// ListModels Response
 
+/**
+ * What the vendor told about the API key and its account while listing. Facts only: the client words them. Every field
+ * is optional: vendors tell different things, and most tell nothing.
+ */
+export type ListModelsAccessStatus = z.infer<typeof ListModelsAccessStatus_schema>;
+const ListModelsAccessStatus_schema = z.object({
+  freeModelsOnly: z.enum(['free-tier', 'key-limit-zero']).optional(), // the key can call the free models only, and why (a free key, or one limited to $0): the priced ones are listed hidden
+  freeRequestsPerDay: z.number().optional(), // what the free models allow this key
+});
+
+export type ListModelsResponse = z.infer<typeof ListModelsResponse_schema>;
 export const ListModelsResponse_schema = z.object({
   models: z.array(ModelDescription_schema),
+  accessStatus: ListModelsAccessStatus_schema.optional(),
 });
 
 

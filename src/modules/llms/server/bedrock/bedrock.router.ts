@@ -25,9 +25,7 @@ export const llmBedrockRouter = createTRPCRouter({
     .output(ListModelsResponse_schema)
     .query(async ({ input: { access }, signal }) => {
 
-      const models = await listModelsRunDispatch(access, signal);
-
-      return { models };
+      return await listModelsRunDispatch(access, signal);
     }),
 
 });
