@@ -45,6 +45,8 @@ const orModelFamilyOrder = [
   'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'baidu/', 'stepfun/', 'meituan/',
   // Research/open models
   'nvidia/', 'microsoft/', 'nousresearch/', 'ibm-granite/', 'poolside/', 'xiaomi/', 'reflection/',
+  // OpenRouter's own: shows 'openrouter/free', the router across the free models - the other routers quote no price and stay hidden
+  'openrouter/',
 ] as const;
 
 // llmVndMiscEffort thinking levels we expose, in canonical order ('xhigh' deliberately absent) - see llms.parameters.ts

@@ -412,7 +412,7 @@ describe('listModels enumeration', () => {
       const models = await listOpenRouterAs(keyData, credits);
       ok(models.some(m => !isFree(m)), `openrouter (${why}): the priced models are still listed`);
       ok(models.every(m => isFree(m) || m.hidden), `openrouter (${why}): every priced model is hidden`);
-      ok(models.some(m => m.id === 'openrouter/free'), `openrouter (${why}): the free router is listed`);
+      ok(models.some(m => m.id === 'openrouter/free' && !m.hidden), `openrouter (${why}): the free router is listed, visible`);
     }
   });
 
