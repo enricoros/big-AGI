@@ -2,6 +2,38 @@
   "_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",
   "_evaluated": "Evaluated: fn, oai-reasoning-effort, oai-reasoning-mode, oai-temperature-think-high, oai-temperature-think-none, oai-verbosity, temperature. If missing, the parameter is not supported by that model.",
   "_modelFilter": "anthropic/claude, openai/gpt-5, google/gemini",
+  "openai/gpt-6.2-astra-pro": {
+    "fn": ["auto","roundtrip"],
+    "oai-reasoning-effort": ["minimal","low","medium","high","xhigh","max"],
+    "oai-reasoning-mode": ["standard","pro"],
+    "oai-temperature-think-high-range": [0,2],
+    "oai-verbosity": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-6.2-astra": {
+    "fn": ["auto","roundtrip"],
+    "oai-reasoning-effort": ["minimal","low","medium","high","xhigh","max"],
+    "oai-reasoning-mode": ["standard","pro"],
+    "oai-temperature-think-high-range": [0,2],
+    "oai-verbosity": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-6.2-sol-pro": {
+    "fn": ["auto","roundtrip"],
+    "oai-reasoning-effort": ["minimal","low","medium","high","xhigh","max"],
+    "oai-reasoning-mode": ["standard","pro"],
+    "oai-temperature-think-high-range": [0,2],
+    "oai-verbosity": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
+  "openai/gpt-6.2-sol": {
+    "fn": ["auto","roundtrip"],
+    "oai-reasoning-effort": ["minimal","low","medium","high","xhigh","max"],
+    "oai-reasoning-mode": ["standard","pro"],
+    "oai-temperature-think-high-range": [0,2],
+    "oai-verbosity": ["low","medium","high"],
+    "temperature-range": [0,2]
+  },
   "openai/gpt-6-luna-pro": {
     "fn": ["auto","required","roundtrip"],
     "oai-reasoning-effort": ["none","minimal","low","medium","high","xhigh","max"],

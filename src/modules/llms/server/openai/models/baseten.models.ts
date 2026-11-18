@@ -31,7 +31,7 @@ type _BasetenCurated = {
 // the first-party tables for UI parity: llmVndOaiEffort where the ladder has OpenAI-only tiers (medium/xhigh),
 // llmVndMiscEffort for the none/low/high/max thinking families (deepseek/moonshot/fireworks precedent).
 // Ladders live-ablated 2026-08-28 (reasoning_tokens + reasoning_content length, 1-2 arms each):
-// - GLM-5.2/-Fast validate strictly (400: "must be one of high, max, none"); 'none' hard-off.
+// - GLM-5.2/-Fast: 'none' hard-off; 'low' is accepted but not a lower tier (on -Fast low ~= max > high).
 // - GLM-5.3/-Flash accept anything but honor low < high < max; 'none' is a trap (accepted, still reasons,
 //   ~= a low tier) and 'medium' collapses onto 'high' - docs ladder low|high|max published as-is.
 // - DeepSeek + Kimi K3: 'none' hard-off (no reasoning_content), low/high/max real tiers - docs agree.
@@ -48,15 +48,16 @@ const _basetenCurated: Record<string, _BasetenCurated> = {
   'deepseek-ai/DeepSeek-V4.1-Flash-1017': { pubDate: '20261017', parameterSpecs: _PS_MiscEffortFull }, // post-training update of V4.1-Flash, same card; image input (OCR) + tools live-verified 2026-10-21
   'deepseek-ai/DeepSeek-V4.1-Flash-1017-Fast': { pubDate: '20261017', parameterSpecs: _PS_MiscEffortFull }, // same weights and precision as -1017; usage omits image tokens (reads images, bills text only)
   'deepseek-ai/DeepSeek-V4.1-Flash': { pubDate: '20260910', parameterSpecs: _PS_MiscEffortFull }, // V4.1-Flash GA; superseded by -1017 (same card), still on the 0910 weights (hugging_face_id unchanged)
-  'deepseek-ai/DeepSeek-V4.1-Flash-Fast': { pubDate: '20260910', parameterSpecs: _PS_MiscEffortFull }, // same weights as V4.1-Flash at full precision, dedicated capacity
+  'deepseek-ai/DeepSeek-V4.1-Flash-Fast': { pubDate: '20260910', parameterSpecs: _PS_MiscEffortFull }, // responses report model 'DeepSeek-V4.1-Flash-1017-Fast': served by the -1017 weights
   'deepseek-ai/DeepSeek-V4-Flash-0731': { pubDate: '20260731', parameterSpecs: _PS_MiscEffortFull },
   'deepseek-ai/DeepSeek-V4-Pro-0813': { pubDate: '20260813', parameterSpecs: _PS_MiscEffortFull },
   'meta-models/muse-spark-open': { pubDate: '20261015', parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh'] }] }, // always reasons: 'none'/'minimal' run at low
   'moonshotai/Kimi-K3.1-Pro': { pubDate: '20261023', parameterSpecs: _PS_MiscEffortFull }, // 'none' hard-off; minimal = low, medium = high, xhigh = max = default
   'moonshotai/Kimi-K3': { pubDate: '20260716', parameterSpecs: _PS_MiscEffortFull },
   'nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B': { pubDate: '20261015', parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] }] }, // off by default; any value but 'none' turns it on, one depth
-  'nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B': { pubDate: '20260604' }, // reasoning-capable; no effort control on this host
+  'nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B': { pubDate: '20260604', parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] }] }, // off by default; any value but 'none' turns it on, one depth
   'openai/gpt-oss-120b': { pubDate: '20250805', parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }] },
+  'reflection/Beam-1.0': { pubDate: '20261016' }, // always reasons; reasoning_effort accepted (none..max) but shows no tiers, so no control
   'zai-org/GLM-5.2': { pubDate: '20260616', parameterSpecs: _PS_GlmEffort52 },
   'zai-org/GLM-5.2-Fast': { pubDate: '20260616', parameterSpecs: _PS_GlmEffort52 },
   'zai-org/GLM-5.3': { pubDate: '20260814', parameterSpecs: _PS_GlmEffort53 },

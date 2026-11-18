@@ -37,7 +37,7 @@ const orModelFamilyOrder = [
   // Specialized/AI companies
   'perplexity/', 'inclusionai/', 'inception/', 'arcee-ai/', 'thinkingmachines/', 'sakana/', 'upstage/', 'nex-agi/', 'fireworks/',
   // Chinese majors (surfaced on OpenRouter directly)
-  'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'stepfun/', 'meituan/',
+  'minimax/', 'bytedance/', 'bytedance-seed/', 'tencent/', 'baidu/', 'stepfun/', 'meituan/',
   // Research/open models
   'nvidia/', 'microsoft/', 'nousresearch/', 'ibm-granite/', 'poolside/', 'xiaomi/', 'reflection/',
 ] as const;
@@ -375,10 +375,14 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
         console.log('[DEV] openRouterModelToModelDescription: unknown OpenAI model:', model.id);
 
       // 0-day: non-indexed models only - indexed ones use native definitions via llmOrtOaiLookup.
-      // OR sweep may show broader effort ranges than the native API supports (OR adds levels internally).
+      // OR's `supported_efforts` ladder, as in the generic branch: mandatory ids 400 on 'none' ("Reasoning is mandatory"),
+      // and fixed-effort ids (gpt-5-pro: ['high']) get no control.
       if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndOaiEffort')) {
-        // console.log('[DEV] openRouterModelToModelDescription: unexpected OpenAI reasoning model:', model.id);
-        parameterSpecs.push({ paramId: 'llmVndOaiEffort' }); // latest known OpenAI effort levels superset
+        const orOaiLadder = _OAI_EFFORTS.filter(e => model.reasoning?.supported_efforts?.includes(e));
+        if (orOaiLadder.length >= 2)
+          parameterSpecs.push({ paramId: 'llmVndOaiEffort', enumValues: model.reasoning?.mandatory ? orOaiLadder : ['none', ...orOaiLadder] });
+        else if (!model.reasoning?.mandatory)
+          parameterSpecs.push({ paramId: 'llmVndOaiEffort' }); // latest known OpenAI effort levels superset
       }
       break;
 

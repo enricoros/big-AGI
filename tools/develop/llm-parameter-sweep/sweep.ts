@@ -1326,7 +1326,7 @@ function saveDialectResults(dialect: string, dialectResults: DialectReultsByMode
   // Insert header comments after opening brace
   const comment1 = '"_comment": "API-validated parameter values. null=undefined/missing. Values are tested and working. Note: temperature is continuous, not discrete.",';
   const comment2 = `"_evaluated": "Evaluated: ${evaluatedSweeps.sort().join(', ')}. If missing, the parameter is not supported by that model.",`;
-  const comment3 = modelFilter ? `"_modelFilter": "${modelFilter}",` : '';
+  const comment3 = modelFilter ? `"_modelFilter": ${JSON.stringify(modelFilter)},` : '';
   const comments = [comment1, comment2, comment3].filter(Boolean).join('\n  ');
   const json = jsonBody.replace(/^\{\n {2}/, '{\n  ' + comments + '\n  ');
   fs.writeFileSync(filePath, json + '\n', 'utf-8');

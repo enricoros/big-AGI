@@ -120,6 +120,7 @@ const _togetherVisionMatches: readonly (string | RegExp)[] = [
   'llama-4', // Llama 4 Scout/Maverick
   'kimi-k2.6', 'kimi-k2.7', 'kimi-k3', // Moonshot: native visual understanding from K2.6 on
   'inkling', // Thinking Machines: text + image + audio
+  'glimpse', // Elorian visual reasoning model
   'minimax-m3', // MiniMax: M3 only (M2.x accept an image part and drop it)
   'muse-glimmer', 'muse-spark-open', // Meta Muse open weights: Spark Open scaling (156 -> 1516 prompt tokens) + color check 2026-10-21
   'bonsai-27b', // PrismML Bonsai: low-bit build of the multimodal Qwen3.6-27B
@@ -180,6 +181,9 @@ const _togetherEditorialPubDates: Record<string, string> = {
   'deepseek-ai/DeepSeek-V4.1-Flash-1017': '20261017', // HF weights + OpenRouter slug; post-training update of V4.1-Flash
   'MiniMaxAI/MiniMax-M3.1-Flash': '20261019', // = minimax.models.ts 'MiniMax-M3.1-Flash'
   'moonshotai/Kimi-K3.1-Pro': '20261023', // = moonshot.models.ts 'kimi-k3.1-pro'
+  'elorian-labs/glimpse-1.0': '20261017', // no publisher catalog: OpenRouter listing date
+  'ricursive-ai/Ripple-65B-Preview': '20261104', // no publisher catalog: OpenRouter listing date
+  'thinkingmachines/Inkling-2-Small': '20261109', // no publisher catalog: OpenRouter listing date (HF repo 2026-11-04)
 };
 
 /** 'YYYYMMDD' -> Unix epoch seconds (UTC midnight), 0 when absent - for list placement only */

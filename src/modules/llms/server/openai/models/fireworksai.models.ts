@@ -77,6 +77,16 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     chatPrice: { input: 2.10, output: 6.60, cache: { read: 0.39 } },
   },
   {
+    idPrefix: 'accounts/fireworks/routers/glm-5p3-spot',
+    label: 'GLM 5.3 Spot',
+    pubDate: '20260814', // = glm-5p3
+    description: 'Spot serving path for GLM 5.3: same model at 30% lower price, on best-effort capacity that can drop to zero.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_REASON,
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['low', 'high', 'max'] }], // same ladder as glm-5p3 ('none' 400s "thinking-only model")
+    chatPrice: { input: 0.98, output: 3.08, cache: { read: 0.182 } }, // Spot = Standard less 30% (docs: guides/spot-serverless)
+  },
+  {
     // NOTE: listed with supports_image_input=false, yet reads images (live-verified 2026-08-28) - it shares the
     // qwen3p8-max deployment, so Vision is declared explicitly here. Alibaba's own serving of these weights is text-only.
     idPrefix: 'accounts/fireworks/models/qwen3p8-2p4t-a95b',
@@ -114,6 +124,27 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.006 } }, // same card as deepseek-v4p1-flash
   },
   {
+    idPrefix: 'accounts/fireworks/routers/deepseek-v4p1-flash-1017-ultrafast',
+    label: 'DeepSeek V4.1 Flash 1017 Ultra-fast (Vision)',
+    pubDate: '20261017', // = deepseek-v4p1-flash-1017
+    description: 'Ultra-fast serving path (preview) for DeepSeek V4.1 Flash 1017: same model and quality at 6-8x generation speed, 8x the per-token price.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    // 'none' hard-off (0 reasoning tokens); low < medium = xhigh = high < max, Default between high and max
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
+    chatPrice: { input: 2.40, output: 9.60, cache: { read: 0.048 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/routers/deepseek-v4p1-flash-1017-spot',
+    label: 'DeepSeek V4.1 Flash 1017 Spot (Vision)',
+    pubDate: '20261017', // = deepseek-v4p1-flash-1017
+    description: 'Spot serving path for DeepSeek V4.1 Flash 1017: same model at 30% lower price, on best-effort capacity that can drop to zero.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }], // same ladder as the base id ('none' hard-off)
+    chatPrice: { input: 0.21, output: 0.84, cache: { read: 0.0042 } }, // Spot = Standard less 30% (docs: guides/spot-serverless)
+  },
+  {
     idPrefix: 'accounts/fireworks/models/deepseek-v4p1-flash',
     label: 'DeepSeek V4.1 Flash (Vision)',
     pubDate: '20260910', // V4.1-Flash GA (upstream release; Fireworks listed it the same day)
@@ -124,6 +155,17 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
     chatPrice: { input: 0.30, output: 1.20, cache: { read: 0.006 } },
     hidden: true, // superseded by -1017 (same card); still served on the 0910 weights (control-plane HF URL unchanged, changelog: "not affected")
+  },
+  {
+    idPrefix: 'accounts/fireworks/routers/deepseek-v4p1-flash-spot',
+    label: 'DeepSeek V4.1 Flash Spot (Vision)',
+    pubDate: '20260910', // = deepseek-v4p1-flash
+    description: 'Spot serving path for DeepSeek V4.1 Flash: same model at 30% lower price, on best-effort capacity that can drop to zero.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }], // same ladder as the base id ('none' hard-off)
+    chatPrice: { input: 0.21, output: 0.84, cache: { read: 0.0042 } }, // Spot = Standard less 30% (docs: guides/spot-serverless)
+    hidden: true, // superseded by -1017-spot, like its base id
   },
   {
     idPrefix: 'accounts/fireworks/models/ember-1',
@@ -259,6 +301,7 @@ const _fireworksDenyListContains: string[] = [
 const _fireworksDenyListExact: string[] = [
   'accounts/fireworks/models/glm-5p2', // decommissioned 2026-09-25 (docs changelog); control plane still says supportsServerless=true
   'accounts/fireworks/routers/glm-5p2-fast',
+  'accounts/fireworks/routers/kimi-k3-spot', // in the Spot docs table, but 404 "not deployed" (Spot capacity can be zero: re-probe)
 ];
 
 
