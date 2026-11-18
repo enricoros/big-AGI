@@ -13,6 +13,8 @@ import { z } from 'zod';
 
 import { modelPickOrAuto } from '~/common/util/modelPickUtils';
 
+import { llmsApiUrl } from '~/modules/llms/shared/llm.isomorphic';
+
 import type { ASRxAccess_Deepgram } from './batch.access';
 import type { ASRxCoreTranscribeResult, TranscribeBackendFn } from './transcribe.core';
 import type { ASRxDetectedTopic } from '../../asrx.types';
@@ -110,7 +112,7 @@ export const transcribeDeepgram: TranscribeBackendFn<ASRxAccess_Deepgram> = asyn
     for (const term of keyterms) queryParams.append(termParam, term);
   }
 
-  const url = `${host}/v1/listen?${queryParams.toString()}`;
+  const url = llmsApiUrl(host, `/v1/listen?${queryParams.toString()}`);
 
   // Auth & content headers
   if (!access.apiKey) throw new Error('Missing Deepgram API key');

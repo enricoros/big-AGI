@@ -9,7 +9,7 @@ import * as z from 'zod/v4';
 
 import { env } from '~/server/env.server';
 
-import { llmsFixupHost } from '../../shared/llm.isomorphic';
+import { llmsApiUrl, llmsFixupHost } from '../../shared/llm.isomorphic';
 
 
 // configuration
@@ -34,6 +34,6 @@ export function ollamaAccess(access: OllamaAccessSchema, apiPath: string): { hea
     headers: {
       'Content-Type': 'application/json',
     },
-    url: ollamaHost + apiPath,
+    url: llmsApiUrl(ollamaHost, apiPath),
   };
 }

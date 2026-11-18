@@ -17,7 +17,7 @@ import { isBrowser } from '~/common/util/pwaUtils';
 
 import { GeminiWire_Safety } from '~/modules/aix/server/dispatch/wiretypes/gemini.wiretypes';
 
-import { llmsFixupHost, llmsIsNativeGeminiHost } from '../../shared/llm.isomorphic';
+import { llmsApiUrl, llmsFixupHost, llmsIsNativeGeminiHost } from '../../shared/llm.isomorphic';
 import { llmsRandomKeyFromMultiKey } from '../openai/openai.access';
 
 
@@ -79,7 +79,7 @@ export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | nu
         // user-set geminiHost may run a stricter allowlist. Kept minimal:
         // 'x-goog-api-client': `big-agi/${packageJson['version'] || '1.0.0'}`,
       },
-      url: `${geminiHost}${apiPath}${separator}key=${geminiKey}`,
+      url: `${llmsApiUrl(geminiHost, apiPath)}${separator}key=${geminiKey}`,
     };
   }
 
@@ -90,6 +90,6 @@ export function geminiAccess(access: GeminiAccessSchema, modelRefId: string | nu
       'x-goog-api-client': `big-agi/${packageJson['version'] || '1.0.0'}`,
       'x-goog-api-key': geminiKey,
     },
-    url: geminiHost + apiPath,
+    url: llmsApiUrl(geminiHost, apiPath),
   };
 }

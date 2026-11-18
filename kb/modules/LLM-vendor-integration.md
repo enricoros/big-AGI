@@ -117,6 +117,17 @@ In `listModels.dispatch.ts`, the `case 'openai':` handler:
 3. First matching heuristic's converter is used to parse models
 4. Falls back to stock OpenAI parsing if no heuristic matches
 
+### Hosts and API Versions
+
+Vendor docs and SDKs give a base URL that carries the API version (`.../v1`, `.../v2`, `.../paas/v4`), while the access
+code joins a host with paths that carry their own (`/v1/chat/completions`). `llmsApiUrl()` (`llm.isomorphic.ts`) is the
+one join: a host that ends in a version keeps it, and the path gives up its own; a path from the server root
+(`/api/tags`) drops the host's version; any other host takes the path as it is. Every request to a host a user can set
+goes through it - the LLM access functions, text-to-speech and transcription - so a new access function must too.
+
+Limits: a host mounted under a path that ends in a version, and that expects `/v1` after it, cannot be expressed. A
+pasted full endpoint (`.../chat/completions`) is reduced to its base only in the OpenAI API Endpoint field.
+
 ### Hostname Security
 
 Hostname matching uses `llmsHostnameMatches()` from `openai.access.ts` which parses the

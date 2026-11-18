@@ -10,7 +10,7 @@ import { TRPCError } from '@trpc/server';
 
 import { env } from '~/server/env.server';
 
-import { llmsFixupHost, llmsServerKeyForHost } from '../../shared/llm.isomorphic';
+import { llmsApiUrl, llmsFixupHost, llmsServerKeyForHost } from '../../shared/llm.isomorphic';
 
 
 // configuration
@@ -134,7 +134,7 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string, 
       ...(betaFeatures.length && { 'anthropic-beta': betaFeatures.join(',') }),
       'X-API-Key': anthropicKey,
     },
-    url: anthropicHost + apiPath,
+    url: llmsApiUrl(anthropicHost, apiPath),
   };
 }
 

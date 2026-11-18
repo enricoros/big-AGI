@@ -27,6 +27,8 @@ import { z } from 'zod';
 
 import { modelPickOrAuto } from '~/common/util/modelPickUtils';
 
+import { llmsApiUrl } from '~/modules/llms/shared/llm.isomorphic';
+
 import type { ASRxAccess_OpenAI } from './batch.access';
 import type { ASRxCoreTranscribeResult, TranscribeBackendFn } from './transcribe.core';
 
@@ -89,7 +91,7 @@ export const transcribeOpenAI: TranscribeBackendFn<ASRxAccess_OpenAI> = async (p
   if (host.endsWith('/'))
     host = host.slice(0, -1);
 
-  const url = `${host}/v1/audio/transcriptions`;
+  const url = llmsApiUrl(host, '/v1/audio/transcriptions');
 
   // Auth - required for api.openai.com, optional for local/proxy hosts
   const usingDefaultHost = !access.apiHost || access.apiHost.includes('openai.com');

@@ -16,6 +16,8 @@ import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/tr
 
 import { modelPickOrAuto } from '~/common/util/modelPickUtils';
 
+import { llmsApiUrl } from '~/modules/llms/shared/llm.isomorphic';
+
 import type { SpeexSpeechParticle, SpeexWire_Access_Inworld, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
 import type { SynthesizeBackendFn } from './synthesize.core';
 import { SPEEX_DEBUG, SPEEX_DEFAULTS, SPEEX_MODELS } from '../../speex.config';
@@ -285,6 +287,6 @@ function _inworldAccess(access: SpeexWire_Access_Inworld, apiPath: string): { he
       'Authorization': `Basic ${apiKey}`, // Inworld API key is already base64-encoded
       'Content-Type': 'application/json',
     },
-    url: host + apiPath,
+    url: llmsApiUrl(host, apiPath),
   };
 }

@@ -5,6 +5,8 @@ import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/tr
 
 import { modelPickOrAuto } from '~/common/util/modelPickUtils';
 
+import { llmsApiUrl } from '~/modules/llms/shared/llm.isomorphic';
+
 import type { SpeexSpeechParticle, SpeexWire_Access_ElevenLabs, SpeexWire_ListVoices_Output } from './rpc.wiretypes';
 import type { SynthesizeBackendFn } from './synthesize.core';
 import { SPEEX_DEBUG, SPEEX_DEFAULTS, SPEEX_MODELS } from '../../speex.config';
@@ -159,7 +161,7 @@ function _elevenlabsAccess(access: SpeexWire_Access_ElevenLabs, apiPath: string)
       'Content-Type': 'application/json',
       'xi-api-key': apiKey,
     },
-    url: host + apiPath,
+    url: llmsApiUrl(host, apiPath),
   };
 }
 

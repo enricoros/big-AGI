@@ -17,7 +17,7 @@ import { BaseProduct } from '~/common/app.release';
 import { env } from '~/server/env.server';
 
 import type { RequestAccessValues } from '../llm.server.types';
-import { llmsFixupHost, llmsHostnameMatches, llmsServerKeyForHost } from '../../shared/llm.isomorphic';
+import { llmsApiUrl, llmsFixupHost, llmsHostnameMatches, llmsServerKeyForHost } from '../../shared/llm.isomorphic';
 
 
 // configuration
@@ -47,7 +47,8 @@ const DEFAULT_ZAI_HOST = 'https://api.z.ai/api/paas';
 // These are the standard paths used across all OpenAI-compatible dialects.
 // Some dialects (perplexity, cloudflare, azure) have custom path handling.
 // Dialects with user-configurable hosts (lmstudio, localai, openai, ollama) support
-// custom base paths; a /v1 pasted at the end of a host is removed by the setup fields (llmsHostStripV1Suffix), not here.
+// custom base paths; a /v1 pasted at the end of a host is removed by the setup fields (llmsHostStripV1Suffix).
+// A host that ends in another API version (.../v2) is the base URL: these paths then lose their /v1 (llmsApiUrl).
 
 export const OPENAI_API_PATHS = {
   chatCompletions: '/v1/chat/completions',
@@ -131,7 +132,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        url: alibabaOaiHost + apiPath,
+        url: llmsApiUrl(alibabaOaiHost, apiPath),
       };
 
     case 'azure':
@@ -172,7 +173,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${cohereKey}`,
         },
-        url: cohereHost + apiPath,
+        url: llmsApiUrl(cohereHost, apiPath),
       };
 
     case 'deepseek':
@@ -191,7 +192,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Authorization': `Bearer ${deepseekKey}`,
           'Content-Type': 'application/json',
         },
-        url: deepseekHost + apiPath,
+        url: llmsApiUrl(deepseekHost, apiPath),
       };
 
     case 'groq':
@@ -210,7 +211,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Accept': 'application/json',
           'Authorization': `Bearer ${groqKey}`,
         },
-        url: groqHost + apiPath,
+        url: llmsApiUrl(groqHost, apiPath),
       };
 
     case 'lmstudio':
@@ -221,7 +222,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Content-Type': 'application/json',
           ...(lmsAIKey && { Authorization: `Bearer ${lmsAIKey}` }),
         },
-        url: lmsAIHost + apiPath,
+        url: llmsApiUrl(lmsAIHost, apiPath),
       };
 
     case 'localai':
@@ -232,7 +233,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Content-Type': 'application/json',
           ...(localAIKey && { Authorization: `Bearer ${localAIKey}` }),
         },
-        url: localAIHost + apiPath,
+        url: llmsApiUrl(localAIHost, apiPath),
       };
 
     case 'metaai':
@@ -253,7 +254,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Authorization': `Bearer ${metaaiKey}`,
           'Content-Type': 'application/json',
         },
-        url: metaaiHost + apiPath,
+        url: llmsApiUrl(metaaiHost, apiPath),
       };
 
     case 'mistral':
@@ -270,7 +271,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Accept': 'application/json',
           'Authorization': `Bearer ${mistralKey}`,
         },
-        url: mistralHost + apiPath,
+        url: llmsApiUrl(mistralHost, apiPath),
       };
 
     case 'modular':
@@ -292,7 +293,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Accept': 'application/json',
           ...(modularKey && { 'Authorization': `Bearer ${modularKey}` }),
         },
-        url: modularHost + apiPath,
+        url: llmsApiUrl(modularHost, apiPath),
       };
 
     case 'moonshot':
@@ -314,7 +315,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${moonshotKey}`,
         },
-        url: moonshotHost + apiPath,
+        url: llmsApiUrl(moonshotHost, apiPath),
       };
 
     case 'nvidianim':
@@ -336,7 +337,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Accept': 'application/json',
           ...(nvidiaKey && { 'Authorization': `Bearer ${nvidiaKey}` }),
         },
-        url: nvidiaHost + apiPath,
+        url: llmsApiUrl(nvidiaHost, apiPath),
       };
 
     case 'openai': {
@@ -392,7 +393,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           ...(oaiKey && { Authorization: `Bearer ${oaiKey}` }),
           ...(oaiOrg && { 'OpenAI-Organization': oaiOrg }),
         },
-        url: oaiHost + apiPath,
+        url: llmsApiUrl(oaiHost, apiPath),
       };
     }
 
@@ -419,7 +420,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'X-OpenRouter-Title': BaseProduct.ProductName,
           'X-OpenRouter-Categories': 'general-chat,personal-agent', // max 2/request, from their fixed vocabulary
         },
-        url: orHost + apiPath,
+        url: llmsApiUrl(orHost, apiPath),
       };
 
     case 'perplexity':
@@ -447,7 +448,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           // integration attribution (also on Perplexity's CORS allowlist)
           'X-Pplx-Integration': 'big-agi',
         },
-        url: perplexityHost + apiPath,
+        url: llmsApiUrl(perplexityHost, apiPath),
       };
 
     case 'sakanaai':
@@ -466,7 +467,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Authorization': `Bearer ${sakanaKey}`,
           'Content-Type': 'application/json',
         },
-        url: sakanaHost + apiPath,
+        url: llmsApiUrl(sakanaHost, apiPath),
       };
 
     case 'togetherai':
@@ -485,7 +486,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        url: togetherHost + apiPath,
+        url: llmsApiUrl(togetherHost, apiPath),
       };
 
     case 'xai':
@@ -520,7 +521,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
           'Authorization': `Bearer ${zaiKey}`,
           'Content-Type': 'application/json',
         },
-        url: zaiHost + zaiPath,
+        url: llmsApiUrl(zaiHost, zaiPath),
       };
 
   }

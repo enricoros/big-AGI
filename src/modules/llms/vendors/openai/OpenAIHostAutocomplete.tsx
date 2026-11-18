@@ -58,6 +58,14 @@ export function findMatchingOpenAIAutoProvider(host: string): VerifiedProvider |
   );
 }
 
+/**
+ * The base URL in typed or pasted text: a full endpoint URL loses its endpoint (.../chat/completions, .../responses), then a
+ * trailing /v1 goes. The endpoint must follow a host or path character, or a hostname ('https://responses...') would be cut as it is typed.
+ */
+function _baseUrlFromInput(text: string): string {
+  return llmsHostStripV1Suffix(text.replace(/([^/])\/(?:chat\/completions|responses)\/?$/, '$1'));
+}
+
 
 // Autocomplete component for selecting verified OpenAI-compatible providers or typing custom URLs
 
@@ -83,7 +91,7 @@ export function OpenAIHostAutocomplete(props: {
     if (newValue === null)
       props.onChange('');
     else if (typeof newValue === 'string')
-      props.onChange(llmsHostStripV1Suffix(newValue));
+      props.onChange(_baseUrlFromInput(newValue));
     else
       props.onChange(newValue.host);
   }, [props]);
@@ -93,8 +101,8 @@ export function OpenAIHostAutocomplete(props: {
     if (reason !== 'input')
       return;
 
-    // strip /v1 suffix immediately - gives user clear feedback that it's not needed
-    newInputValue = llmsHostStripV1Suffix(newInputValue);
+    // reduce to the base URL immediately (no endpoint, no /v1) - gives user clear feedback that they are not needed
+    newInputValue = _baseUrlFromInput(newInputValue);
     setInputValue(newInputValue);
     props.onChange(newInputValue);
   }, [props]);
@@ -109,7 +117,7 @@ export function OpenAIHostAutocomplete(props: {
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', justifyContent: 'space-between' }}>
         <FormLabel sx={{ flexWrap: 'nowrap', whiteSpace: 'nowrap' }}>
           API Endpoint
-          <GoodTooltip title={`An OpenAI compatible endpoint to be used in place of 'api.openai.com'.\n\nSelect a verified provider from the list, or type any custom URL.`} arrow placement='top'>
+          <GoodTooltip title={`An OpenAI compatible endpoint to be used in place of 'api.openai.com'.\n\nSelect a verified provider from the list, or type the base URL of any other. A trailing /v1 is optional, another version (e.g. /v2) is kept.`} arrow placement='top'>
             <InfoOutlinedIcon sx={{ ml: 0.5, cursor: 'pointer', fontSize: 'md', color: 'primary.solidBg' }} />
           </GoodTooltip>
         </FormLabel>

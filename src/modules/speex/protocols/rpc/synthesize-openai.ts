@@ -3,6 +3,7 @@
  */
 
 import { OPENAI_API_PATHS } from '~/modules/llms/server/openai/openai.access'; // server-side import
+import { llmsApiUrl } from '~/modules/llms/shared/llm.isomorphic';
 import { env } from '~/server/env.server';
 import { fetchJsonOrTRPCThrow, fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
 
@@ -59,7 +60,7 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
 
   // request.headers
   const { host, apiKey } = _resolveAccess(access);
-  const url = `${host}${OPENAI_API_PATHS.audioSpeech}`;
+  const url = llmsApiUrl(host, OPENAI_API_PATHS.audioSpeech);
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(!apiKey ? {} : { 'Authorization': `Bearer ${apiKey}` }),
@@ -161,7 +162,7 @@ export async function listVoicesLocalAIOrThrow(access: SpeexWire_Access_OpenAI):
   let modelsResponse: LocalAIWire_ListModels_Response;
   try {
     modelsResponse = await fetchJsonOrTRPCThrow<LocalAIWire_ListModels_Response>({
-      url: `${localAIHost}${OPENAI_API_PATHS.models}`,
+      url: llmsApiUrl(localAIHost, OPENAI_API_PATHS.models),
       headers,
       name: 'LocalAI',
     });
