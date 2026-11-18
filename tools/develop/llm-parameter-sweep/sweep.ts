@@ -142,7 +142,7 @@ const SWEEP_DEFINITIONS = [
   }),
 
 
-  // Gemini 3+: model-specific thinking levels. Hydrogen adds xhigh.
+  // Gemini 3+: model-specific thinking levels. Gemini 4 Neon and Hydrogen add xhigh.
   defineSweep({
     name: 'gemini-thinking-level',
     description: 'Gemini thinkingConfig.thinkingLevel values',

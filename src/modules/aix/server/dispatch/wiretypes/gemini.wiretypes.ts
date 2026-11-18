@@ -691,7 +691,7 @@ export namespace GeminiWire_API_Generate_Content {
       thinkingBudget: z.int().optional(),
       /**
        * Gemini 3+ uses levels instead of budgets; supported levels and defaults are model-specific.
-       * Hydrogen adds 'xhigh' and defaults to 'high'. Cannot combine with thinkingBudget (400).
+       * Gemini 4 Neon and Hydrogen add 'xhigh' and default to 'high'. Cannot combine with thinkingBudget (400).
        */
       thinkingLevel: z.enum(['xhigh', 'high', 'medium', 'low', 'minimal']).optional(),
     }).optional(),
