@@ -36,6 +36,9 @@ Follow the guide at: https://localai.io/basics/getting_started/
 - Load the models (click on `Models 🔄`)
 - Select the model and chat
 
+LocalAI TTS hosts entered in the UI are fetched by the server and must pass its outbound policy: for a
+local/private address, set `SERVER_ALLOWED_PRIVATE_HOSTS` (e.g. `localhost:8080`) on the deployment.
+
 In addition to using the UI, configuration can also be done using
 [environment variables](environment-variables.md).
 
