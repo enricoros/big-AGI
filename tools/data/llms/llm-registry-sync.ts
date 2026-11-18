@@ -774,8 +774,8 @@ async function validateConfig(config: Record<string, AixAPI_Access>): Promise<vo
     }
 
     try {
-      const models = await listModelsRunDispatch(access);
-      if (models && models.length > 0) {
+      const { models } = await listModelsRunDispatch(access);
+      if (models.length > 0) {
         console.log(`${COLORS.green}✓ OK${COLORS.reset} (${models.length} models)`);
         validCount++;
       } else {
@@ -898,7 +898,7 @@ async function syncService(
     }
 
     // Fetch current models
-    const models = await listModelsRunDispatch(access);
+    const { models } = await listModelsRunDispatch(access);
     const vendor = access.dialect;
 
     // Get existing models
