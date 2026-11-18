@@ -18,7 +18,7 @@ import { llmOrtSakLookup } from './sakanaai.models';
 import { llmOrtXaiLookup } from './xai.models';
 import { llmOrtZaiLookup } from './zai.models';
 import { OPENAI_API_PATHS, openAIAccess, type OpenAIAccessSchema, OPENROUTER_API_PATHS } from '../openai.access';
-import { wireOpenrouterModelsListOutputSchema } from '../wiretypes/openrouter.wiretypes';
+import { wireOpenrouterCreditsOutputSchema, wireOpenrouterKeyOutputSchema, wireOpenrouterModelsListOutputSchema } from '../wiretypes/openrouter.wiretypes';
 
 
 // configuration
@@ -549,11 +549,30 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
 /** What a listing fetches */
 export type OpenRouterListing = {
   wireModels: OpenAIWire_API_Models_List.Response['data'];
+  freeModelsOnly?: 'free-tier' | 'key-limit-zero'; // why, when the key can call the free models only
 };
 
 /**
+ * Why the key can call the free models only, if so, read from the answer of the key endpoint:
+ * - the key has a spending limit of zero: priced models answer 403 'Key limit exceeded', or
+ * - it is a free key: its account never bought credits (402), unless it shows access: usage through its own provider
+ *   keys, or a balance (granted credits), read from the credits endpoint. An answer that cannot be read does not show access.
+ * A limit that is used up and a paid account at zero both pay again, after a reset or a top-up: they do not count.
+ */
+async function _openRouterFreeModelsOnly(access: OpenAIAccessSchema, key: z.infer<typeof wireOpenrouterKeyOutputSchema>['data'] | undefined): Promise<OpenRouterListing['freeModelsOnly']> {
+  if (key?.limit === 0) return 'key-limit-zero';
+  if (key?.is_free_tier !== true || (key.byok_usage ?? 0) > 0) return undefined;
+  const { headers, url } = openAIAccess(access, null, OPENROUTER_API_PATHS.credits);
+  const credits = wireOpenrouterCreditsOutputSchema.safeParse(
+    await fetchJsonOrTRPCThrow({ url, headers, name: 'OpenAI/Openrouter', signal: AbortSignal.timeout(5000) }).catch(() => undefined),
+  ).data?.data;
+  return credits && credits.total_credits - credits.total_usage > 0 ? undefined : 'free-tier';
+}
+
+/**
  * The list is public and loads with any key, so a wrong key would first fail in chat: the key endpoint is asked beside
- * it, and its 401 alone fails the listing - no other answer, error or delay of it counts.
+ * it, and its 401 alone fails the listing - no other answer, error or delay of it counts. Its answer also tells a key
+ * that can call the free models only.
  */
 export async function openRouterFetchListing(access: OpenAIAccessSchema, signal?: AbortSignal): Promise<OpenRouterListing> {
   const _wire = createDebugWireLogger('LLMs/OpenRouter');
@@ -562,14 +581,16 @@ export async function openRouterFetchListing(access: OpenAIAccessSchema, signal?
   const key = openAIAccess(access, null, OPENROUTER_API_PATHS.key);
 
   _wire?.logRequest('GET', list.url, list.headers);
-  const [wireList, keyRejection] = await Promise.all([
+  const [wireList, keyAnswer] = await Promise.all([
     fetchJsonOrTRPCThrow<OpenAIWire_API_Models_List.Response>({ url: list.url, headers: list.headers, name: 'OpenAI/Openrouter', signal }),
     fetchJsonOrTRPCThrow({ url: key.url, headers: key.headers, name: 'OpenAI/Openrouter', signal: AbortSignal.timeout(5000) })
-      .then(() => null, error => error instanceof TRPCFetcherError && error.httpStatus === 401 ? error : null),
+      .catch(error => error instanceof TRPCFetcherError && error.httpStatus === 401 ? error : undefined),
   ]);
-  if (keyRejection) throw keyRejection;
+  if (keyAnswer instanceof TRPCFetcherError) throw keyAnswer;
   _wire?.logResponse(wireList);
-  return { wireModels: wireList?.data || [] };
+
+  const keyData = wireOpenrouterKeyOutputSchema.safeParse(keyAnswer).data?.data; // an answer of another shape tells nothing
+  return { wireModels: wireList?.data || [], freeModelsOnly: await _openRouterFreeModelsOnly(access, keyData) };
 }
 
 export function openRouterListingToModelDescriptions(listing: OpenRouterListing): ModelDescriptionSchema[] {
@@ -580,6 +601,8 @@ export function openRouterListingToModelDescriptions(listing: OpenRouterListing)
     .sort(openRouterModelFamilySortFn)
     .map(openRouterModelToModelDescription)
     .filter(desc => !!desc)
+    // a key that can call the free models only lists the priced ones hidden: they stay in the list, with the user's settings and own show/hide choice
+    .map(desc => !listing.freeModelsOnly || (desc.chatPrice?.input === 'free' && desc.chatPrice.output === 'free') ? desc : { ...desc, hidden: true })
     .reduce(openRouterInjectVariants, []);
 }
 

@@ -384,6 +384,50 @@ describe('listModels enumeration', () => {
     ok(rejection?.httpStatus === 401, 'openrouter: an unknown key throws the upstream 401');
   });
 
+  // we hold no key that cannot pay: the live answers of /api/v1/key and /api/v1/credits pass through with the fields under
+  // test replaced, the list and everything else stay live
+  async function listOpenRouterAs(keyData: object, credits: object): Promise<ModelDescriptionSchema[]> {
+    const liveFetch = globalThis.fetch;
+    globalThis.fetch = async (input, init) => {
+      const response = await liveFetch(input, init);
+      const replaced = String(input).endsWith('/v1/key') ? keyData : String(input).endsWith('/v1/credits') ? credits : null;
+      if (!replaced) return response;
+      const answer = await response.json();
+      return Response.json({ ...answer, data: { ...answer.data, ...replaced } }, { status: response.status });
+    };
+    try {
+      return await expectOk({ dialect: 'openrouter', ...openAIShape({ oaiKey: E.OPENROUTER_API_KEY?.trim() }) } as AixAPI_Access, 50, 'openrouter/as');
+    } finally {
+      globalThis.fetch = liveFetch;
+    }
+  }
+  const isFree = (m: ModelDescriptionSchema) => m.chatPrice?.input === 'free' && m.chatPrice.output === 'free';
+  const neverBought = { is_free_tier: true, limit: null, byok_usage: 0 }, noCredits = { total_credits: 0, total_usage: 0 };
+
+  test('openai-compat/openrouter: a key that cannot pay lists the priced models hidden, the free ones as usual', { skip: skipIfMissing('OPENROUTER_API_KEY') }, async () => {
+    for (const [why, keyData, credits] of [
+      ['never bought credits', neverBought, noCredits],
+      ['a key limit of zero, on an account with credits', { is_free_tier: false, limit: 0, byok_usage: 0 }, { total_credits: 50, total_usage: 0 }],
+    ] as const) {
+      const models = await listOpenRouterAs(keyData, credits);
+      ok(models.some(m => !isFree(m)), `openrouter (${why}): the priced models are still listed`);
+      ok(models.every(m => isFree(m) || m.hidden), `openrouter (${why}): every priced model is hidden`);
+      ok(models.some(m => m.id === 'openrouter/free'), `openrouter (${why}): the free router is listed`);
+    }
+  });
+
+  test('openai-compat/openrouter: a key that never bought credits but shows access lists as usual', { skip: skipIfMissing('OPENROUTER_API_KEY') }, async () => {
+    for (const [why, keyData, credits] of [
+      ['a granted balance', neverBought, { total_credits: 5, total_usage: 1 }],
+      ['usage through its own provider keys', { ...neverBought, byok_usage: 0.5 }, noCredits],
+      ['a limit that is used up, on an account with credits', { is_free_tier: false, limit: 5, limit_remaining: 0, byok_usage: 0 }, noCredits],
+      ['a key answer of another shape', { is_free_tier: 'yes', limit: 'none', byok_usage: null }, noCredits],
+    ] as const) {
+      const models = await listOpenRouterAs(keyData, credits);
+      ok(models.some(m => !isFree(m) && !m.hidden), `openrouter (${why}): priced models are visible`);
+    }
+  });
+
   test('openai-compat/perplexity: hardcoded list (no API, no credentials)', async () => {
     const models = await expectOk(
       { dialect: 'perplexity', ...openAIShape() } as AixAPI_Access,

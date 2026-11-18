@@ -73,6 +73,7 @@ export const OPENAI_API_PATHS = {
 export const OPENROUTER_API_PATHS = {
   images: '/v1/images', // dedicated image generation endpoint, not OpenAI-compatible
   key: '/v1/key', // information on the calling key: 401 for a key OpenRouter does not know
+  credits: '/v1/credits', // credits bought or granted, and used, by the key's account
 } as const;
 
 

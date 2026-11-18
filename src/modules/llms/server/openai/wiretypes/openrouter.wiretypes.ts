@@ -132,6 +132,29 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
 
 });
 
+// [OpenRouter] Key and credits: readers of the fields we use. A field that is missing or of another type reads as absent.
+// - GET /api/v1/key: the calling key
+// - GET /api/v1/credits: what the key's account bought or was granted, and used, in USD
+
+export const wireOpenrouterKeyOutputSchema = z.object({
+  data: z.object({
+    is_free_tier: z.boolean().optional().catch(undefined), // the account never bought credits
+    limit: z.number().nullable().optional().catch(undefined), // the key's spending limit in USD, null without one
+    byok_usage: z.number().optional().catch(undefined), // USD spent through the account's own provider keys
+    free_model_daily_requests: z.object({
+      limit: z.number().optional().catch(undefined),
+    }).optional().catch(undefined),
+  }),
+});
+
+export const wireOpenrouterCreditsOutputSchema = z.object({
+  data: z.object({
+    total_credits: z.number(),
+    total_usage: z.number(),
+  }),
+});
+
+
 // [OpenRouter] Image Generation API - https://openrouter.ai/docs/features/multimodal/image-generation
 // - POST /api/v1/images: { model, prompt, n? } -> { created, data: [{ b64_json, media_type? }], usage? }
 
