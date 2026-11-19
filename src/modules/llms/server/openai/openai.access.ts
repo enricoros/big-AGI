@@ -259,7 +259,7 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
       };
 
     case 'mistral':
-      // https://docs.mistral.ai/platform/client
+      // https://docs.mistral.ai/api
       let mistralKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.MISTRAL_API_KEY, DEFAULT_MISTRAL_HOST);
       const mistralHost = llmsFixupHost(access.oaiHost || DEFAULT_MISTRAL_HOST, apiPath);
 

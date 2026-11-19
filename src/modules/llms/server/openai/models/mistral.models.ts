@@ -12,7 +12,7 @@ const DEV_DEBUG_MISTRAL_MODELS = Release.IsNodeDevBuild; // not in staging to re
 
 
 // [Mistral]
-// Updated 2026-11-17
+// Updated 2026-11-19
 // - models on: https://docs.mistral.ai/models/overview (redirects to /models; cards at /models/<slug>)
 // - pricing on: https://docs.mistral.ai/inference/pricing (now server-rendered; cards carry the same numbers)
 // - benchmark elo on CBA
@@ -108,15 +108,14 @@ const _knownMistralModelDetails: Record<string, _MistralModelDef> = {
   'magistral-small-latest': { pubDate: '20260316', chatPrice: { input: 0.15, output: 0.6, cache: { read: 0.015 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2603 (the Magistral Small line was folded into Small 4)
   'mistral-vibe-cli-fast': { pubDate: '20260316', chatPrice: { input: 0.15, output: 0.6, cache: { read: 0.015 } }, parameterSpecs: _PS_MistralEffort, hidden: true }, // → 2603 (Vibe CLI alias)
 
-  'labs-leanstral-1-5-1': { label: 'Leanstral 1.5', pubDate: '20260630', chatPrice: { input: 0, output: 0 }, hidden: true }, // Lean 4 formal proof engineering, Small 4 derivative (Labs, free; docs: retired 2026-09-30, no replacement, yet still listed)
-  'labs-leanstral-1-5': { pubDate: '20260630', chatPrice: { input: 0, output: 0 }, hidden: true }, // symlink
+  // RETIRED (gone from the API, docs retired table, no replacement): labs-leanstral-1-5-1 / labs-leanstral-1-5 (Leanstral 1.5), retired 2026-09-30
 
   // Third-party hosted - Mistral serves the model unmodified
   'zai-glm-5-3': { label: 'Z.ai GLM 5.3', pubDate: '20260814', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlm53Effort, benchmark: { cbaElo: 1487 - 2 } }, // 1M ctx, 128k max output, text-only; GA on Mistral 2026-09-28 (lmarena: glm-5.3-max - 2, yield to native vendor)
   'zai-glm-5': { pubDate: '20260814', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlm53Effort, hidden: true }, // -> zai-glm-5-3
   'zai-glm-latest': { pubDate: '20260814', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlm53Effort, hidden: true }, // -> zai-glm-5-3
   'zai-glm-5-3-flash': { label: 'Z.ai GLM 5.3 Flash', pubDate: '20260825', chatPrice: { input: 0.15, output: 0.5, cache: { read: 0.03 } }, parameterSpecs: _PS_MistralGlm53Effort, benchmark: { cbaElo: 1477 - 2 } }, // 320B MoE (18B active), 1M ctx, 128k max output, image input; GA on Mistral 2026-10-22 (lmarena: glm-5.3-flash - 2, yield to native vendor)
-  'zai-glm-5-2': { label: 'Z.ai GLM 5.2', pubDate: '20260616', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlmEffort, benchmark: { cbaElo: 1471 - 2 }, hidden: true }, // DEPRECATED 2026-09-29, retires 2026-10-31 -> GLM 5.3; 1M ctx, 128k max output (lmarena: glm-5.2-max - 2, yield to native vendor)
+  'zai-glm-5-2': { label: 'Z.ai GLM 5.2', pubDate: '20260616', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlmEffort, benchmark: { cbaElo: 1471 - 2 }, hidden: true }, // DEPRECATED 2026-09-29, docs: retired 2026-10-31 -> GLM 5.3, yet still listed; 1M ctx, 128k max output (lmarena: glm-5.2-max - 2, yield to native vendor)
   'glm-5-2': { pubDate: '20260616', chatPrice: { input: 1.4, output: 4.4, cache: { read: 0.14 } }, parameterSpecs: _PS_MistralGlmEffort, hidden: true }, // -> zai-glm-5-2
   'deepseek-v4-1-flash-1017': { label: 'DeepSeek V4.1 Flash (1017)', pubDate: '20261017', chatPrice: { input: 0.3, output: 1.2, cache: { read: 0.007 } }, parameterSpecs: _PS_MistralDeepSeekEffort, benchmark: { cbaElo: 1476 - 2 } }, // 1M ctx, 128k max output, image input; Public Preview on Mistral (lmarena: DeepSeek-V4.1-Flash-20260910 (Max) - 2, no 1017 row; yield to native vendor)
 
@@ -142,7 +141,6 @@ const mistralModelFamilyOrder = [
   'magistral-small',
   'mistral-small',
   'mistral-vibe-cli-fast', // Mistral Small 4 (exact ID: takes precedence over the 'mistral-vibe-cli' prefix above)
-  'labs-leanstral', // Leanstral (Labs) - Lean 4 formal proof engineering
   'voxtral-small',
   'voxtral-mini',
   'mistral-embed',
