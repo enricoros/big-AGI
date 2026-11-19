@@ -16,7 +16,7 @@ import { OptimaBarControlMethods, OptimaBarDropdownMemo, OptimaDropdownItems } f
 import { PhGearSixIcon } from '~/common/components/icons/phosphor/PhGearSixIcon';
 import { findModelsServiceOrNull } from '~/common/stores/llms/store-llms';
 import { isDeepEqual } from '~/common/util/hooks/useDeep';
-import { sortLLMsByServiceLabel } from '~/common/stores/llms/components/llms.dropdown.utils';
+import { filterLLMsForDropdown, sortLLMsByServiceLabel } from '~/common/stores/llms/components/llms.dropdown.utils';
 import { optimaActions } from '~/common/layout/optima/useOptima';
 import { useAllLLMs } from '~/common/stores/llms/hooks/useAllLLMs';
 import { setPrimaryChatModelId, useModelDomain } from '~/common/stores/llms/hooks/useModelDomain';
@@ -61,18 +61,7 @@ function LLMDropdown(props: {
     let prevServiceId: DModelsServiceId | null = null;
     let sepCount = 0;
 
-    const lcFilterString = filterString?.toLowerCase();
-    const filteredLLMs = llms.filter(llm => {
-      if (chatLlmId && llm.id === chatLlmId)
-        return true;
-
-      // filter-out models that don't contain the search string
-      if (lcFilterString && !getLLMLabel(llm).toLowerCase().includes(lcFilterString))
-        return false;
-
-      // filter-out hidden models from the dropdown
-      return lcFilterString ? true : isLLMVisible(llm);
-    });
+    const filteredLLMs = filterLLMsForDropdown(llms, { currentModelId: chatLlmId, searchString: filterString });
 
     // sort by service label so vendor groups appear alphabetically (groups remain contiguous because sort is stable on equal keys)
     const sortedLLMs = sortLLMsByServiceLabel(filteredLLMs);
