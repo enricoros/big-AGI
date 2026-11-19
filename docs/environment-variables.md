@@ -67,6 +67,9 @@ ELEVENLABS_VOICE_ID=
 HTTP_BASIC_AUTH_USERNAME=
 HTTP_BASIC_AUTH_PASSWORD=
 
+# Backend: extra Host names trusted over plain http (DNS rebinding guard)
+HTTP_ALLOWED_HOSTS=
+
 
 # Frontend variables 
 NEXT_PUBLIC_BIG_AGI_REMOTE_FEEDS=
@@ -148,6 +151,7 @@ Enable the app to Talk, Draw, and Google things up.
 | **Backend**                |                                                                                                                         |
 | `HTTP_BASIC_AUTH_USERNAME` | Username for HTTP Basic Authentication - the middleware to add to your build is on the website: [Keys and access control](https://big-agi.com/docs/self-host-configuration#keys-and-access-control) |
 | `HTTP_BASIC_AUTH_PASSWORD` | Password for HTTP Basic Authentication.                                                                                 |
+| `HTTP_ALLOWED_HOSTS`       | Extra Host names the API accepts over plain http, comma-separated (`chat.example.com`, `*.example.com`, `*` for any). Not needed for localhost, IPs, single-label or `.local`/`.internal`/`.lan` names, or https. Blocks DNS rebinding |
 
 ### Frontend Variables
 
