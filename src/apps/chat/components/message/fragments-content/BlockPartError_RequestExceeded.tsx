@@ -1,12 +1,14 @@
 import * as React from 'react';
 
-import { Alert, Box, FormHelperText, Switch } from '@mui/joy';
+import { Alert, Box } from '@mui/joy';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
 import type { ContentScaling } from '~/common/app.theme';
 import { Is } from '~/common/util/pwaUtils';
 import { useLLM } from '~/common/stores/llms/llms.hooks';
 import { useModelServiceClientSideFetch } from '~/common/stores/llms/hooks/useModelServiceClientSideFetch';
+
+import { BlockPartError_DirectConnectionRow } from './BlockPartError_DirectConnectionRow';
 
 
 /**
@@ -20,7 +22,8 @@ export function BlockPartError_RequestExceeded(props: {
 
   // external state
   const model = useLLM(props.messageGeneratorLlmId) ?? null;
-  const { csfAvailable, csfActive, csfToggle, vendorName } = useModelServiceClientSideFetch(true, model);
+  const csf = useModelServiceClientSideFetch(true, model);
+  const { csfAvailable, vendorName } = csf;
 
   return (
     <Alert
@@ -45,40 +48,14 @@ export function BlockPartError_RequestExceeded(props: {
         </div>
 
         {/* Recovery options */}
-        {csfAvailable ? <>
-
-          {/* Explanation */}
+        {csfAvailable && (
           <Box color='text.secondary' fontSize='sm' my={2}>
             <strong>Experimental:</strong> enable Direct Connection to {vendorName} to work around size limitations.
           </Box>
+        )}
 
-          {/* Toggle */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-              p: 2,
-              borderRadius: 'sm',
-              bgcolor: 'background.popup',
-              boxShadow: 'md',
-            }}
-          >
-
-            <Box sx={{ flex: 1 }}>
-              <Box color={!csfActive ? undefined : 'primary.solidBg'} fontWeight='lg' mb={0.5}>
-                Direct Connection {csfActive && '- Now Try Again'}
-              </Box>
-              <FormHelperText>
-                Connect directly from this client -&gt; {vendorName || 'AI service'}
-              </FormHelperText>
-            </Box>
-
-            <Switch
-              checked={csfActive}
-              onChange={(e) => csfToggle(e.target.checked)}
-            />
-          </Box>
+        {/* the switch, or the same row off and disabled with the reason */}
+        <BlockPartError_DirectConnectionRow csf={csf} />
 
           {/* Regenerate button */}
           {/*{props.onRegenerate && (*/}
@@ -94,7 +71,7 @@ export function BlockPartError_RequestExceeded(props: {
           {/*  </Button>*/}
           {/*)}*/}
 
-        </> : (
+        {!csfAvailable && (
           <Box>
             <Box sx={{ color: 'text.secondary', my: 1 }}>
               Suggestions:

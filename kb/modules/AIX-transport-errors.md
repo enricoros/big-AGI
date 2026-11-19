@@ -8,7 +8,7 @@ How a broken connection surfaces on each path, what classifies it, and what Verc
 |---|---|---|
 | tRPC client | `streamingTransportFetch` (`src/common/util/trpc.client.ts`) | 413 and `text/html` responses -> `TRPCClientFetchError`, before tRPC parses them |
 | tRPC client | `aixClassifyStreamingError` (`src/modules/aix/client/aix.client.errors.ts`) | thrown transport errors -> error fragment text + `aix-<type>` hint |
-| tRPC client | `BlockPartError` | `aix-net-disconnected` + `**connection terminated**` -> the Connection Terminated card with the Direct Connection toggle; `**network error**` -> plain text |
+| tRPC client | `BlockPartError` | `aix-net-disconnected` + `**connection terminated**` -> the Connection Terminated card with the Direct Connection toggle (off and disabled, with the reason, where it cannot be used); `**network error**` -> plain text |
 | Server dispatch, and CSF in the browser | `fetchResponseOrTRPCThrow`, `fetchWithAbortableConnectionRetry` (`src/server/trpc/`) | connect and HTTP failures -> `TRPCFetcherError` categories; connection errors retried 3 times |
 | Server dispatch, and CSF in the browser | `chatGenerate.executor.ts` | `[Service Issue]`, `[Streaming Issue]`, `[Reading Issue]`, `[Parsing Issue]` in-band error particles (no hint) |
 | Both | `ContentReassembler` termination | a stream that ends without a terminal event -> "The stream ended before a final response status was received. The answer may be incomplete." |

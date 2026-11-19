@@ -21,6 +21,7 @@ export const ModelVendorPerplexity: IModelVendor<DPerpexityServiceSettings, Open
   // NOTE: no `csfAvailable` - api.perplexity.ai sends CORS headers on the preflight and on its errors, but not on a
   // successful response, so the browser cannot read an answer: server-only until
   // the csf-cors-checker job (tools/jobs/) reports it open again
+  csfOffReason: () => 'Perplexity does not allow it',
 
   // functions
   initializeSetup: () => ({

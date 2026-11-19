@@ -25,6 +25,7 @@ export const ModelVendorMoonshot: IModelVendor<DMoonshotServiceSettings, OpenAIA
 
   /// client-side-fetch ///
   csfAvailable: _csfMoonshotAvailable,
+  csfOffReason: s => isKimiCodeSubscriptionKey(s?.moonshotKey) ? 'Kimi Code does not allow it' : null,
 
   // functions
   initializeSetup: () => ({

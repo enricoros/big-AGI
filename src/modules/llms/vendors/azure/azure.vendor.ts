@@ -40,6 +40,7 @@ export const ModelVendorAzure: IModelVendor<DAzureServiceSettings, OpenAIAccessS
 
   /// client-side-fetch ///
   csfAvailable: _csfAzureAvailable,
+  csfOffReason: () => 'Needs your own Azure key and endpoint in this browser', // the server may hold either of the two
 
   // functions
   getTransportAccess: (partialSetup): OpenAIAccessSchema => ({

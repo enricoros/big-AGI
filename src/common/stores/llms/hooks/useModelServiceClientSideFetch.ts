@@ -78,6 +78,12 @@ export function useModelServiceClientSideFetch(enabled: boolean, model: DLLM | n
   const csfAvailable: boolean | undefined = !!vendor?.csfAvailable && vendor?.csfAvailable?.(service?.setup);
   const csfActive: boolean | undefined = csfAvailable && (service?.setup as any)?.[CSF_SETUP_KEY];
 
+  // why it cannot be turned on, for a model that is still configured: the vendor's own reason (it refuses browser
+  // requests, or needs more than a key), else the missing key, where the vendor offers Direct Connection at all.
+  // null when it can be turned on, when the model is gone, and when there is nothing to say (no reason, not offered)
+  const csfOffReason: string | null = csfAvailable || !vendor || !service ? null
+    : vendor.csfOffReason?.(service.setup) ?? (vendor.csfAvailable ? `Needs your own ${vendor.name} key in this browser` : null);
+
   const serviceId = service?.id || '';
   const csfToggle = React.useCallback((value: boolean) => {
     if (serviceId)
@@ -89,5 +95,5 @@ export function useModelServiceClientSideFetch(enabled: boolean, model: DLLM | n
       llmsStoreActions().updateServiceSettings(serviceId, { [CSF_SETUP_KEY]: false });
   }, [serviceId]);
 
-  return { csfAvailable, csfActive, csfToggle, csfReset, vendorName: vendor?.name || vendor?.id || 'AI Service' };
+  return { csfAvailable, csfActive, csfOffReason, csfToggle, csfReset, vendorName: vendor?.name || vendor?.id || 'AI Service' };
 }

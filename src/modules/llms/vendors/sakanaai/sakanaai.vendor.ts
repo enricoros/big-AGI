@@ -18,6 +18,7 @@ export const ModelVendorSakanaAI: IModelVendor<DSakanaAIServiceSettings, OpenAIA
   instanceLimit: 1,
 
   // NOTE: no `csfAvailable` - Sakana's API does not allow browser-direct (CORS) requests, so this vendor is server-only
+  csfOffReason: () => 'Sakana AI does not allow it',
 
   // functions
   initializeSetup: () => ({

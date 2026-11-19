@@ -19,6 +19,7 @@ export const ModelVendorModular: IModelVendor<DModularServiceSettings, OpenAIAcc
   instanceLimit: 2, // one Modular Cloud + one self-hosted MAX service
 
   // NOTE: no `csfAvailable` - api.modular.com does not allow browser-direct (CORS) requests, so this vendor is server-only
+  csfOffReason: s => (s?.mode ?? 'cloud') === 'cloud' ? 'Modular does not allow it' : null, // a self-hosted MAX server is the user's own host: nothing to say
 
   // functions
   initializeSetup: () => ({

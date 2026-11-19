@@ -26,6 +26,7 @@ export interface IModelVendor<TServiceSettings extends ServiceSettingsBase = {},
 
   /// client-side-fetch ///
   readonly csfAvailable?: (setup?: Partial<TServiceSettings>) => boolean; // undefined: not supported, false: conditions not met
+  readonly csfOffReason?: (setup?: Partial<TServiceSettings>) => string | null; // asked while it is not available: why, as shown to the user; null: only the key is missing, or nothing to say
 
   /// abstraction interface ///
 
