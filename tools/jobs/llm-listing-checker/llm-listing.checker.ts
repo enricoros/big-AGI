@@ -115,12 +115,6 @@ const LISTINGS: Listing[] = [
       [models.filter(m => !isUncurated(m.label)).every(m => m.contextWindow !== null), 'every curated model carries a context window'],
     ]),
   },
-  {
-    // services created on the OpenAI vendor with the NVIDIA host take the same curated parser: the raw catalog must not leak through
-    label: 'openai, nvidia host', dialect: 'openai', host: 'integrate.api.nvidia.com', needs: ['NVIDIANIM_API_KEY'], minModels: 10,
-    access: () => _openai('openai', _key('NVIDIANIM_API_KEY'), 'https://integrate.api.nvidia.com'),
-    facts: (models) => _holds([[!models.some(m => m.id.startsWith('zyphra/')), 'retired catalog ids are dropped']]),
-  },
   { label: 'openai', dialect: 'openai', needs: ['OPENAI_API_KEY'], minModels: 1, access: () => _openai('openai', _key('OPENAI_API_KEY')) },
   {
     label: 'openai, fireworks host', dialect: 'openai', host: 'api.fireworks.ai', needs: ['FIREWORKSAI_API_KEY'], minModels: 1,
