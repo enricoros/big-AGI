@@ -9,7 +9,9 @@ import { ClaudeCrabIcon } from '~/common/components/icons/vendors/ClaudeCrabIcon
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
@@ -41,11 +43,11 @@ export function BedrockServiceSetup(props: { serviceId: DModelsServiceId }) {
     useServiceSetup(props.serviceId, ModelVendorBedrock);
 
   // derived state
-  const { bedrockAccessKeyId, bedrockSecretAccessKey, bedrockBearerToken, bedrockRegion } = serviceAccess;
+  const { bedrockAccessKeyId, bedrockSecretAccessKey, bedrockBearerToken, bedrockRegion, clientSideFetch } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
 
-  // advanced mode
-  // const advanced = useToggleableBoolean(!!bedrockSessionToken);
+  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
+  const advanced = useToggleableBoolean(!!clientSideFetch);
   const [showSetupInstructions, setShowSetupInstructions] = React.useState(false);
 
   // Bearer validation
@@ -79,7 +81,7 @@ export function BedrockServiceSetup(props: { serviceId: DModelsServiceId }) {
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
         <ClaudeCrabIcon sx={{ fontSize: '2rem', mt: 0.5 }} />
         <Box sx={{ flex: 1 }}>
-          Access Amazong Nova, Claude, and many more models through your <Link color='neutral' href='https://aws.amazon.com/bedrock/' level='body-sm' target='_blank'>AWS Bedrock</Link> account
+          Access Amazon Nova, Claude, and many more models through your <Link color='neutral' href='https://aws.amazon.com/bedrock/' level='body-sm' target='_blank'>AWS Bedrock</Link> account
           using a long-term <strong>API Key</strong> or <strong>IAM credentials</strong>.
           {showSetupInstructions && (
             <Typography level='body-xs' component='ol' sx={{ pl: 2, mt: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
@@ -142,6 +144,13 @@ export function BedrockServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={value => updateSettings({ bedrockRegion: value })}
     />
 
+    {advanced.on && <SetupFormClientSideToggle
+      visible={hasBearer || (!!bedrockAccessKeyId && !!bedrockSecretAccessKey)}
+      checked={!!clientSideFetch}
+      onChange={on => updateSettings({ csf: on })}
+      helpText='Fetch models and make requests directly to AWS Bedrock using your browser instead of through the server.'
+    />}
+
     {/*{advanced.on && <FormTextField*/}
     {/*  autoCompleteId='bedrock-session-token'*/}
     {/*  title='Session Token'*/}
@@ -152,7 +161,7 @@ export function BedrockServiceSetup(props: { serviceId: DModelsServiceId }) {
     {/*  onChange={text => updateSettings({ bedrockSessionToken: text })}*/}
     {/*/>}*/}
 
-    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} /*advanced={advanced}*/ />
+    <SetupFormRefetchButton refetch={refetch} disabled={!shallFetchSucceed || isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
     {isError && <InlineError error={error} />}
 

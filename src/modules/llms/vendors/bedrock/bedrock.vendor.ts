@@ -28,7 +28,9 @@ export const ModelVendorBedrock: IModelVendor<DBedrockServiceSettings, BedrockAc
   instanceLimit: 1,
   hasServerConfigKey: 'hasLlmBedrock',
 
-  // NOTE: CSF not supported: Bedrock has no CORS headers
+  /// client-side-fetch ///
+  // the control plane, the runtime and Mantle all answer CORS, with an API key and with IAM keys signed in the browser:
+  // opt-in from the setup (re-measured by tools/periodic/weekly-csf-cors.check.ts)
   csfAvailable: _csfBedrockAvailable,
 
   // functions

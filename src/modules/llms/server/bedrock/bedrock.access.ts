@@ -40,7 +40,7 @@ export const bedrockAccessSchema = z.object({
   bedrockSecretAccessKey: z.string().trim(),
   bedrockSessionToken: z.string().trim().nullable(),
   bedrockRegion: z.string().trim(),
-  clientSideFetch: z.boolean(),
+  clientSideFetch: z.boolean().optional(),
 });
 
 
