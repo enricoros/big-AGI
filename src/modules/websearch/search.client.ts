@@ -13,7 +13,7 @@ const providers: Record<WebSearchProviderId, WebSearchProvider> = {
       return apiAsync.contextSearch.search.mutate({
         query, items, key: contextApiKey,
         restrictToDomain: restrictToDomain ?? (contextRestrictToDomain || null),
-      }, { signal });
+      }, { signal, context: { noLog: true } });
     },
   },
 };

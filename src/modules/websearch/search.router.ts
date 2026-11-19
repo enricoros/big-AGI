@@ -4,16 +4,21 @@ import { TRPCError } from '@trpc/server';
 import { env } from '~/server/env.server';
 import { createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 
-import type { Search } from '~/modules/google/search.types';
+import type { WebSearchResult } from './search.types';
 
 import { isValidContextSearchDomain } from './search.validation';
 
 
 const responseSchema = z.object({
+  partial: z.boolean().optional(),
   results: z.array(z.object({
     title: z.string(),
     url: z.url({ protocol: /^https?$/ }),
     description: z.string().nullish(),
+    highlights: z.object({
+      code: z.enum(['SUCCESS', 'NOT_REQUESTED', 'TIMEOUT', 'CONTENT_TOO_LARGE', 'WEBSITE_ACCESS_ERROR', 'WEBSITE_BLOCKED', 'ERROR']),
+      highlights: z.array(z.string()).nullable(),
+    }).optional(),
   })),
 });
 
@@ -25,7 +30,7 @@ export const contextSearchRouter = createTRPCRouter({
       key: z.string().optional(),
       restrictToDomain: z.string().trim().refine(isValidContextSearchDomain, 'Enter a domain, such as example.com').nullable(),
     }))
-    .mutation(async ({ input, ctx }): Promise<{ pages: Search.API.BriefResult[] }> => {
+    .mutation(async ({ input, ctx }): Promise<{ pages: WebSearchResult[], warning?: string }> => {
       const key = input.key?.trim() || env.CONTEXT_DEV_API_KEY?.trim();
       if (!key)
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Configure a Context.dev API key in Tools > Custom Search.' });
@@ -45,6 +50,8 @@ export const contextSearchRouter = createTRPCRouter({
           body: JSON.stringify({
             query: input.query,
             numResults: input.items,
+            highlightsOptions: { enabled: true, maxCharacters: 1000 },
+            timeoutOpts: { milliseconds: 15_000, behavior: 'return-partial' },
             ...(input.restrictToDomain ? { includeDomains: [input.restrictToDomain] } : {}),
           }),
           signal,
@@ -63,9 +70,14 @@ export const contextSearchRouter = createTRPCRouter({
         if (!parsed.success)
           throw new TRPCError({ code: 'BAD_GATEWAY', message: 'Context.dev returned an invalid search response.' });
         return {
-          pages: parsed.data.results.slice(0, input.items).map(result => ({
-            title: result.title, link: result.url, snippet: result.description ?? '',
-          })),
+          pages: parsed.data.results.slice(0, input.items).map(result => {
+            const highlights = result.highlights?.code === 'SUCCESS' ? result.highlights.highlights?.join('\n').trim() : '';
+            return {
+              title: result.title, link: result.url,
+              snippet: highlights || `[Highlights unavailable; search description only.] ${result.description ?? ''}`,
+            };
+          }),
+          ...(parsed.data.partial && { warning: 'Context.dev returned partial search results; some sources may be missing.' }),
         };
       } catch (error) {
         if (error instanceof TRPCError) throw error;

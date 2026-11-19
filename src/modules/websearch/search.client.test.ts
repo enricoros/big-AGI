@@ -33,7 +33,7 @@ beforeEach(() => {
     if (request.url.startsWith('https://www.googleapis.com/customsearch/v1?'))
       return Response.json({ items: [{ title: 'Google source', link: 'https://google.example.com/source', snippet: 'Google snippet' }] });
     assert.equal(request.url, 'https://api.context.dev/v1/web/search');
-    return Response.json({ results: [{ title: 'Context source', url: 'https://context.example.com/source', description: 'Context snippet' }] });
+    return Response.json({ results: [{ title: 'Context source', url: 'https://context.example.com/source', description: 'Context snippet', highlights: { code: 'SUCCESS', highlights: ['Context snippet'] } }] });
   };
 });
 
@@ -69,7 +69,8 @@ describe('standalone search from client settings through tRPC', () => {
       { title: 'Context source', link: 'https://context.example.com/source', snippet: 'Context snippet' },
     ] });
     assert.deepEqual(upstreams, [{ url: 'https://api.context.dev/v1/web/search', body: {
-      query: 'selected provider', numResults: 3, includeDomains: ['context.example.com'],
+      query: 'selected provider', numResults: 3, highlightsOptions: { enabled: true, maxCharacters: 1000 },
+      timeoutOpts: { milliseconds: 15_000, behavior: 'return-partial' }, includeDomains: ['context.example.com'],
     } }]);
     assert.equal(useGoogleSearchStore.getState().googleCloudApiKey, 'google-test-key');
     assert.equal(useGoogleSearchStore.getState().restrictToDomain, 'google.example.com');

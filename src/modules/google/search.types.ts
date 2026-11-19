@@ -1,20 +1,5 @@
 export namespace Search {
 
-  /// Client (Browser) -> Server (Next.js)
-  export namespace API {
-
-    export interface BriefResult {
-      title: string;
-      link: string;
-      snippet: string;
-      // htmlTitle: string;
-      // htmlSnippet: string;
-      // displayLink: string;
-      // formattedUrl: string;
-    }
-
-  }
-
   // This is the upstream API [rev-eng on 2023-04-27], for Server (Next.js) -> Upstream Server
   export namespace Wire {
 

@@ -23,7 +23,7 @@ https://github.com/user-attachments/assets/c3480428-9ab8-4257-a869-2541bf44a062
 The following tools are implemented in Big-AGI:
 
 - **browse**: loads web pages (URLs) and extracts information, using a correctly configured `Tools > Browsing` API
-- **search**: searches the web for page URLs and snippets using the provider selected in `Tools > Custom Search`: [Google Programmable Search](https://programmablesearchengine.google.com/about/) (the default) or [Context.dev](https://context.dev). Google requires an API key and Search Engine ID; Context.dev requires an API key entered in settings or supplied by the server through `CONTEXT_DEV_API_KEY`. Provider selection keeps each provider's credentials and domain restriction separate.
+- **search**: searches the web for page URLs and snippets using the provider selected in `Tools > Custom Search`: [Google Programmable Search](https://programmablesearchengine.google.com/about/) (the default) or [Context.dev](https://context.dev). Google requires an API key and Search Engine ID; Context.dev requires an API key entered in settings or supplied by the server through `CONTEXT_DEV_API_KEY`. Context requests query-relevant Highlights for snippets, marks unavailable Highlights as search descriptions, and reports partial results. Calls consume the connected account's credits. Provider selection keeps each provider's credentials and domain restriction separate.
 - **wikipedia**: looks up information on Wikipedia pages
 - **calculate**: performs mathematical calculations by executing typescript code
   - warning: (!) unsafe and dangerous, do not use for untrusted code/LLMs

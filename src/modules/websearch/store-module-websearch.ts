@@ -1,3 +1,5 @@
+// Browser-local provider preferences, not per-user. Google credentials stay in its existing store;
+// provider-prefixed fields retain each provider's settings when switching.
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 

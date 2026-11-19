@@ -3,7 +3,8 @@ import { TRPCError } from '@trpc/server';
 
 import { authedProcedure, createTRPCRouter, publicProcedure } from '~/server/trpc/trpc.server';
 import { env } from '~/server/env.server';
-import { fetchJsonOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
+
+import type { WebSearchResult } from '~/modules/websearch/search.types';
 
 import type { Search } from './search.types';
 import type { VertexLinkResolution } from './vertexai.types';
@@ -29,7 +30,7 @@ export const googleSearchRouter = createTRPCRouter({
       cx: z.string().optional(), // could be server-set
       restrictToDomain: z.string().nullable(),
     }))
-    .query(async ({ input }): Promise<{ pages: Search.API.BriefResult[] }> => {
+    .query(async ({ input, ctx }): Promise<{ pages: WebSearchResult[] }> => {
 
       const customSearchParams: Search.Wire.RequestParams = {
         q: input.query.trim(),
@@ -48,24 +49,31 @@ export const googleSearchRouter = createTRPCRouter({
         throw new Error('Missing API Key or Custom Search Engine ID');
 
       const url = `https://www.googleapis.com/customsearch/v1?${objectToQueryString(customSearchParams)}`;
-      const data: Search.Wire.SearchResponse & { error?: { message?: string } } = await fetchJsonOrTRPCThrow({
-        url,
-        name: 'Google Custom Search',
-        headers: {
-          'Accept': 'application/json',
-          'Accept-Encoding': 'gzip',
-          'User-Agent': 'Big-AGI (gzip)',
-        },
-      });
-
-      if (data.error)
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `Google Custom Search API error: ${data.error?.message}`,
+      let data: Search.Wire.SearchResponse & { error?: unknown };
+      try {
+        // Google errors can echo the query-string key; never log or relay their payloads.
+        const response = await fetch(url, {
+          headers: {
+            'Accept': 'application/json',
+            'Accept-Encoding': 'gzip',
+            'User-Agent': 'Big-AGI (gzip)',
+          },
+          signal: ctx.reqSignal,
         });
+        if (!response.ok) {
+          await response.body?.cancel();
+          throw new TRPCError({ code: 'BAD_GATEWAY', message: `Google Custom Search failed (HTTP ${response.status}).` });
+        }
+        data = await response.json();
+        if (data.error)
+          throw new TRPCError({ code: 'BAD_GATEWAY', message: 'Google Custom Search rejected the request.' });
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        throw new TRPCError({ code: ctx.reqSignal.aborted ? 'CLIENT_CLOSED_REQUEST' : 'BAD_GATEWAY', message: 'Google Custom Search could not complete the request.' });
+      }
 
       return {
-        pages: data.items?.map((result): Search.API.BriefResult => ({
+        pages: data.items?.map((result): WebSearchResult => ({
           title: result.title,
           link: result.link,
           snippet: result.snippet,
