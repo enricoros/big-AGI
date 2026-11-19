@@ -55,9 +55,9 @@ export const env = createEnv({
 
     // LLM: AWS Bedrock (bearer token OR IAM credentials)
     BEDROCK_BEARER_TOKEN: z.string().optional(), // Bedrock long-term API key (ABSK...) - takes priority over IAM credentials; short-term keys only work for runtime, not model listing
-    BEDROCK_ACCESS_KEY_ID: z.string().optional(),
+    BEDROCK_ACCESS_KEY_ID: z.string().optional(), // IAM key pair; not AWS_*: hosts set their own (Vercel reserves AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN, AWS_REGION)
     BEDROCK_SECRET_ACCESS_KEY: z.string().optional(),
-    BEDROCK_SESSION_TOKEN: z.string().optional(), // required with the other 2 on corporate accounts sometimes
+    BEDROCK_SESSION_TOKEN: z.string().optional(), // temporary credentials only (ASIA... key id), from the same set as the pair above
     BEDROCK_REGION: z.string().optional(),
 
     // LLM: Cerebras

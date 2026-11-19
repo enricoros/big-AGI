@@ -13,7 +13,7 @@ export const LLMS_DEFS_VERSIONS = {
   alibaba: '57f37ae8ac13',
   anthropic: 'dfbf94d929d2',
   azure: '4578985e301f',
-  bedrock: '06fec599b8c7',
+  bedrock: '91f3964ea174',
   cerebras: 'b4717891b83e',
   cohere: '74bf6bb98b71',
   deepseek: '3e8c7858541f',

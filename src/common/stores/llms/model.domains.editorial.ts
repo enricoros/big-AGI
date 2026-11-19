@@ -109,10 +109,10 @@ export const EditorialDefaults = {
   // titles, summaries and other short utility calls: fast and cheap first
   fastUtil: [
     { vendor: 'anthropic',  modelId: 'claude-haiku-5-5' }, // measured ~200 tok/s with thinking off, titles in 0.4-0.8s; short prompts mostly skip thinking
+    { vendor: 'bedrock',    modelId: 'us.anthropic.claude-haiku-4-5-20251001-v1:0' }, // before 5.5: accounts without Claude 4.7+ enablement still list 5.5, and every title 403s "not available for this account"
+    { vendor: 'bedrock',    modelId: 'global.anthropic.claude-haiku-4-5-20251001-v1:0' },
     { vendor: 'bedrock',    modelId: 'us.anthropic.claude-haiku-5-5' },
     { vendor: 'bedrock',    modelId: 'global.anthropic.claude-haiku-5-5' },
-    { vendor: 'bedrock',    modelId: 'us.anthropic.claude-haiku-4-5-20251001-v1:0' },
-    { vendor: 'bedrock',    modelId: 'global.anthropic.claude-haiku-4-5-20251001-v1:0' },
     { vendor: 'openrouter', modelId: 'anthropic/claude-haiku-5-5' },
     { vendor: 'openai',     modelId: 'gpt-6-luna' }, // $0.10/$0.50, measured ~117 tok/s
     { vendor: 'googleai',   modelId: 'models/gemini-3.5-flash-lite' }, // 1456, $0.30/$2.50 - "low-latency subagent for high-volume automation"

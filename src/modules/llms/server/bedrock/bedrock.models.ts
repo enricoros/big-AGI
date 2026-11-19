@@ -38,7 +38,7 @@ import * as z from 'zod/v4';
 import type { ModelDescriptionSchema } from '../llm.server.types';
 
 import { llmsAntInjectVariants, llmBedrockFindAnthropicModel, llmBedrockStripAnthropicMDS } from '../anthropic/anthropic.models';
-import { LLM_IF_ANT_PromptCaching, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
+import { LLM_IF_ANT_PromptCaching, LLM_IF_HOTFIX_NoTemperature, LLM_IF_HOTFIX_Sys0ToUsr0, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image } from '~/common/stores/llms/llms.types';
 import { DModelParameterSpecAny } from '~/common/stores/llms/llms.parameters';
 
 
@@ -47,6 +47,7 @@ import { DModelParameterSpecAny } from '~/common/stores/llms/llms.parameters';
 const SKIP_FM_ID_CONTAINS = ['rerank'];
 const SKIP_IP_ID_STARTSWITH = ['stability.'];
 const SKIP_MANTLE_TOOLS_IDS = ['writer.palmyra-vision-7b']; // 400s: '"auto" tool choice requires --enable-auto-tool-choice and --tool-call-parser to be set' (probed 2026-08-17)
+const SYS0_TO_USR0_IDS = ['writer.palmyra-vision-7b']; // 400s on a system message and on two user messages in a row; the adapter merges the moved system text into the first user message (probed 2026-11-19)
 
 // Known Mantle models (no matching foundation model, or one with wrong metadata) - override heuristics with accurate metadata.
 // All 11 answered /v1/chat/completions on 2026-08-17; 'qwen.qwen3-coder-next' dropped - AWS promoted it to a
@@ -394,6 +395,8 @@ export function bedrockModelsToDescriptions(
       if (isMantle ? !SKIP_MANTLE_TOOLS_IDS.includes(_stripRegionPrefix(modelId)) : isConverseCapable) interfaces.push(LLM_IF_OAI_Fn); // Converse: toolConfig; Mantle: OpenAI tools (both live-probed 2026-08-17)
       if (modelMeta.outputAudio) interfaces.push(LLM_IF_Outputs_Audio);
       if (modelMeta.outputImage) interfaces.push(LLM_IF_Outputs_Image);
+      if (_stripRegionPrefix(modelId).startsWith('moonshotai.kimi-k3')) interfaces.push(LLM_IF_HOTFIX_NoTemperature); // Converse 400s: "This model doesn't support the temperature field" (K3, K3.1) - same as on the Moonshot vendor
+      if (SYS0_TO_USR0_IDS.includes(_stripRegionPrefix(modelId))) interfaces.push(LLM_IF_HOTFIX_Sys0ToUsr0);
       const label = modelMeta.isProfile ? _labelFromProfile(knownBase?.label ?? modelMeta.label, modelId) : modelMeta.label; // a curated profile reads as its base: 'GPT-5.4 · Global'
       const labelRepeatsProvider = [modelMeta.provider, _extractProvider(modelId)].some(p => label.toLowerCase().startsWith(p.toLowerCase())); // AWS's spelling or the id's: 'Moonshot AI Kimi K3', 'Mistral Large 3'
       const apiLabel = isMantle ? 'OpenAI-Compatible' : isConverseCapable ? 'Converse' : 'Unsupported';
@@ -432,6 +435,7 @@ export function bedrockModelsToDescriptions(
     if (!SKIP_MANTLE_TOOLS_IDS.includes(_stripRegionPrefix(mantleId))) interfaces.push(LLM_IF_OAI_Fn); // same no-tools rule as the fused loop above (probed 2026-08-17)
     if (known?.vision) interfaces.push(LLM_IF_OAI_Vision);
     if (known?.reasoning) interfaces.push(LLM_IF_OAI_Reasoning);
+    if (SYS0_TO_USR0_IDS.includes(mantleId)) interfaces.push(LLM_IF_HOTFIX_Sys0ToUsr0);
     if (isResponsesOnly) interfaces.push(LLM_IF_HOTFIX_NoTemperature); // GPT-5.x frontier reasoning models reject temperature ('Unsupported parameter') - same as on the OpenAI vendor
     descriptions.push({
       id: mantleId,

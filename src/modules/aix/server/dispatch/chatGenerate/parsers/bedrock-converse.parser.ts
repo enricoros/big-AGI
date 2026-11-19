@@ -101,11 +101,12 @@ export function createBedrockConverseStreamParser(): ChatGenerateParseFunction {
           return pt.setDialectEnded('done-dialect'); // the last event of a Converse stream
         }
 
-        // case 'error': {
-        //   hasErrored = true;
-        //   const errorText = parsed?.message || parsed?.error?.message || safeErrorString(parsed);
-        //   return pt.setDialectTerminatingIssue(errorText || 'Unknown Bedrock Converse error', IssueSymbols.Generic, 'srv-warn');
-        // }
+        // exception frames, re-emitted as `event: error` by the AWS event-stream transform
+        case 'error': {
+          hasErrored = true;
+          const errorText = parsed?.message || parsed?.error?.message || safeErrorString(parsed);
+          return pt.setDialectTerminatingIssue(errorText || 'Unknown Bedrock Converse error', IssueSymbols.Generic, 'srv-warn');
+        }
 
         default:
           // Unknown event - log and skip
