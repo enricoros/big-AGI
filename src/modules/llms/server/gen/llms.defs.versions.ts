@@ -28,10 +28,10 @@ export const LLMS_DEFS_VERSIONS = {
   nvidianim: '7cfb0959565e',
   ollama: 'e363529720b0',
   openai: 'a0cc6998a77e',
-  openrouter: 'e818e117b52d',
+  openrouter: '94463feaa671',
   perplexity: 'bcec14587b2c',
   sakanaai: '4bb64855a42f',
   togetherai: '5ac1681669aa',
-  xai: 'bff3f6cb385c',
+  xai: '49568791b3dd',
   zai: '915e560d7d58',
 } as const satisfies LlmsDefsVersions;

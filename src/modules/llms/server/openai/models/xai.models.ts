@@ -203,26 +203,9 @@ const _knownXAIChatModels = llmsDefineModels<_XaiModelDef>()([
   // - grok-4-0709
   // - grok-3 / grok-3-mini (all grok-3-* are now aliases of grok-4.3)
   // - grok-2-vision-1212 (gone from API entirely as of 2026-06-16)
+  // - grok-build-0.1, and the grok-code-fast-1 / grok-code-fast / grok-code-fast-1-0825 slugs it had absorbed (gone from API
+  //   entirely as of 2026-11-19, the API answers 'does not exist'; grok-build-latest is an alias of grok-4.5)
   // Removed from manual mappings; will fall through to unknownModelFallback if listed by API.
-  // Note: grok-code-fast-1 / grok-code-fast / grok-code-fast-1-0825 now alias grok-build-0.1 (see below).
-
-  // Grok Build 0.1 (May 2026) - fast coding model, replaces grok-code-fast-1 family
-  {
-    idPrefix: 'grok-build-0.1',
-    label: 'Grok Build 0.1',
-    pubDate: '20260520',
-    description: 'xAI fast coding model with reasoning, function calling, and structured outputs. Text and image inputs, 256K context. Aliases: grok-code-fast-1, grok-code-fast, grok-code-fast-1-0825.',
-    contextWindow: 256000,
-    maxCompletionTokens: undefined,
-    interfaces: [...XAI_IF_Vision, LLM_IF_OAI_Reasoning],
-    parameterSpecs: XAI_PAR_Reasoning, // sweep (2026-06) confirms web search; rolled into the standard Grok-4 server-side toolset
-    chatPrice: {
-      input: [{ upTo: 200000, price: 1.00 }, { upTo: null, price: 2.00 }],
-      output: [{ upTo: 200000, price: 2.00 }, { upTo: null, price: 4.00 }],
-      cache: { read: [{ upTo: 200000, price: 0.20 }, { upTo: null, price: 0.40 }] },
-      tools: XAI_PRICE_TOOLS,
-    },
-  },
 
 ]);
 
@@ -323,7 +306,6 @@ const _xaiIdStartsWithOrder = [
   'grok-4.20-0309-reasoning',
   'grok-4.20-0309-non-reasoning',
   'grok-4.20-multi-agent-0309',
-  'grok-build-0.1',
 ];
 
 export function xaiModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
@@ -389,7 +371,7 @@ const _ORT_XAI_PARAM_ALLOWLIST: ReadonlySet<string> = new Set([
 export function llmOrtXaiLookup(orModelName: string): OrtVendorLookupResult | undefined {
 
   // OR collapses the dated native ids. Unmapped: 'grok-4.20' (native splits reasoning/non-reasoning, OR's single id is
-  // a binary toggle - verified), 'grok-build-0.1' (native has no effort spec).
+  // a binary toggle - verified).
   const ortXaiRefMap: Record<string, string> = {
     'grok-4.20-multi-agent': 'grok-4.20-multi-agent-0309',
   };
@@ -440,7 +422,7 @@ export const wireXAIModelSchema = z.object({
   // Aliases for models
   aliases: z.array(z.string()).optional(),
 
-  // Reasoning effort domain - present only on effort-configurable models (absent on 4.20 and grok-build)
+  // Reasoning effort domain - present only on effort-configurable models (absent on 4.20)
   capabilities: z.object({
     reasoning_effort: z.array(z.string()).optional(),
     default_reasoning_effort: z.string().optional(),
