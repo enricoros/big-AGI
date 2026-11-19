@@ -9,6 +9,10 @@ import { getLLMLabel, isLLMVisible } from '../llms.types';
 /**
  * Filter LLMs for dropdown display.
  * Always includes the current model, respects starred/search/visibility filters.
+ *
+ * Search: every word must appear in the model label or in its service label (the group header), so 'anthropic'
+ * lists the Anthropic service and 'openrouter opus' only OpenRouter's Opus. A hidden model needs a word in its own
+ * label: naming a service shows it as configured, naming a model also finds the hidden ones.
  */
 export function filterLLMsForDropdown(
   llms: ReadonlyArray<DLLM>,
@@ -18,7 +22,12 @@ export function filterLLMsForDropdown(
     starredOnly?: boolean,
   },
 ): DLLM[] {
-  const lcSearch = options.searchString?.toLowerCase();
+  const words = options.searchString?.toLowerCase().split(/\s+/).filter(Boolean) ?? [];
+  const lcServiceLabels = new Map<DModelsServiceId, string>();
+  if (words.length)
+    for (const [sId, label] of _resolveServiceLabels(llms))
+      lcServiceLabels.set(sId, label.toLowerCase());
+
   return llms.filter(llm => {
     // Always include the currently selected model
     if (options.currentModelId && llm.id === options.currentModelId) return true;
@@ -26,11 +35,18 @@ export function filterLLMsForDropdown(
     // Filter by starred status
     if (options.starredOnly && !llm.userStarred) return false;
 
-    // Filter by search string
-    if (lcSearch && !getLLMLabel(llm).toLowerCase().includes(lcSearch)) return false;
+    // Not searching: visible models only
+    if (!words.length) return isLLMVisible(llm);
 
-    // Show visible models, or all if actively searching
-    return lcSearch ? true : isLLMVisible(llm);
+    // Searching: every word in the model or service label; hidden models need one in their own
+    const lcLabel = getLLMLabel(llm).toLowerCase();
+    const lcServiceLabel = lcServiceLabels.get(llm.sId)!;
+    let inLabel = false;
+    for (const word of words) {
+      if (lcLabel.includes(word)) inLabel = true;
+      else if (!lcServiceLabel.includes(word)) return false;
+    }
+    return inLabel || isLLMVisible(llm);
   });
 }
 
