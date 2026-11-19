@@ -73,7 +73,7 @@ export const optimaSelectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] 
       paddingBlock: 0,
 
       // v-size: do not exceed the height of the screen
-      maxHeight: 'calc(100dvh - 56px - 24px)',
+      maxHeight: 'calc(100dvh - 88px - 24px)',
 
       // Option: clip width to 160...360px
       [`& .${optionClasses.root}`]: {
