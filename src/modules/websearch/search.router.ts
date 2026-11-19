@@ -46,6 +46,7 @@ export const contextSearchRouter = createTRPCRouter({
         // Keep credentials out of URLs and upstream error bodies out of application logs.
         const response = await fetch('https://api.context.dev/v1/web/search', {
           method: 'POST',
+          redirect: 'error',
           headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             query: input.query,
