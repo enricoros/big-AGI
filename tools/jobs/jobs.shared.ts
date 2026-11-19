@@ -39,7 +39,7 @@ export function failOn(broken: string[], severity: 'breaks' | 'drift' = 'breaks'
 
 // a map of service name to a ready-made access, kept beside the scanner and never committed. With it, the machine
 // that runs the scanner needs no second key file
-const SCANNER_KEY_FILE = path.join(__dirname, '../data/llms/llm-services.json');
+const SCANNER_KEY_FILE = path.join(__dirname, 'llm-registry-sync/llm-services.json');
 export const SCANNER_KEY_FILE_NAME = path.basename(SCANNER_KEY_FILE);
 
 let _scannerAccesses: AixAPI_Access[] | undefined;

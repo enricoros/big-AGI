@@ -105,7 +105,7 @@ Local-first, all Zustand in memory. Global stores `persist` to localStorage (dis
 
 ### Testing & Quality
 - `npm test` runs `src/**/*.test.ts`. A test earns its place by driving the real code through a hard edge case, not by restating the implementation
-- `tools/jobs/` holds the work that runs against the live world, started by a schedule, a webhook or by hand, and never by `npm test`: one folder per job (`llm-listing-checker`, `csf-cors-checker`), run with `sh tools/jobs/jobs.sh <job>` (rules in that script)
+- `tools/jobs/` holds the work that runs against the live world, started by a schedule, a webhook or by hand, and never by `npm test`: one folder per job, the checkers (`llm-listing-checker`, `csf-cors-checker`) run with `sh tools/jobs/jobs.sh <job>` (rules in that script), the model scanner (`llm-registry-sync`) with its own wrapper
 - Browser floor: lint flags syntax and Web APIs below the engines we support; follow the rule messages, and never lower `browserslist` to silence them (SWC won't polyfill prototype methods)
 - Production builds minify with SWC, which miscompiles some code shapes; `tools/eslint/swc-miscompile.mjs` bans the known ones
 

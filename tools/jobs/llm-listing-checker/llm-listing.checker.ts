@@ -36,7 +36,7 @@ const ASSUMPTIONS = `
 3. Listings run through the server-side dispatch, as the app's server runs them. The browser-direct path is the
    business of csf-cors-checker.
 4. Keys come from the environment or .env.api-keys, else from the registry scanner's key file
-   (tools/data/llms/llm-services.json), so the machine that runs the scanner needs no second key file. A vendor
+   (tools/jobs/llm-registry-sync/llm-services.json), so the machine that runs the scanner needs no second key file. A vendor
    with a key in neither is printed as not measured. The local vendors are measured when their host is given
    (BIGAGI_TEST_OLLAMA_HOST, _LMSTUDIO_HOST, _LOCALAI_HOST) or the scanner's file has them.`;
 

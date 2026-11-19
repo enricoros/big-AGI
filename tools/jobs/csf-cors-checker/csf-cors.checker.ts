@@ -41,7 +41,7 @@ const ASSUMPTIONS = `
    of a newly created service. The other subsystems declare nothing, so their transport is the AS_CODED table
    in this file: keep it in step with the code.
 4. Keys come from the environment or .env.api-keys, else from the registry scanner's key file
-   (tools/data/llms/llm-services.json). A target without a key is probed with a made-up one, which shows the
+   (tools/jobs/llm-registry-sync/llm-services.json). A target without a key is probed with a made-up one, which shows the
    preflight and the error path, never a success. One vendor (Perplexity, 2026-11-18) answers errors
    readably and successes not: an error path alone proves little.`;
 

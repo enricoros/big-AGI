@@ -67,7 +67,7 @@ user demand to warrant a dedicated setup flow.
 `LLMVendorSetup.tsx` component map and `VENDOR_DOCS` (slug must exist in `src/common/gen/com.site.docs.slug.ts`,
 mirrored from the website repo), `llms.defs.manifest.ts` bucket (+ regenerate `gen/llms.defs.versions.ts`),
 `openai.access.ts` dialect enum + switch, `listModels.dispatch.ts` two switches, `chatGenerate.dispatch.ts` two
-fallthrough groups, `tools/data/llms/llm-registry-sync.ts` switch. Silent surfaces: `env.server.ts`, the
+fallthrough groups, `tools/jobs/llm-registry-sync/llm-registry-sync.ts` switch. Silent surfaces: `env.server.ts`, the
 `update-models-<vendor>` skill, `tools/develop/llm-parameter-sweep`, `tools/develop/aix-protocol-lab`, README,
 `docs/environment-variables.md`, `docs/k8s/env-secret.yaml`, `dMessageUtils.prettyShortChatModelName`, the KB rosters.
 A vendor served over the OpenAI Responses API additionally gets: a row in `_RSP_DIALECT_QUIRKS` (`openai.responsesCreate.ts`,
