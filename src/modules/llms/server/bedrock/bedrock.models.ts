@@ -61,23 +61,24 @@ const SKIP_MANTLE_TOOLS_IDS = ['writer.palmyra-vision-7b']; // 400s: '"auto" too
 // Converse: Mantle serves no geo/global ids ("The model 'us.openai.gpt-6-sol' does not exist" on both Mantle routes).
 // Those profiles take label and sizes from this table too: on these ids converse.maxTokensMaximum is the output cap (128000), not the context.
 // A dated id ('openai.gpt-5.4-2026-03-05') takes its alias's entry, labeled with its date and hidden: the alias carries the profiles.
+// Table order is the display order within a provider (OpenAI: as on the OpenAI vendor).
 const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: number; vision?: true; reasoning?: true; api?: 'responses' }> = {
   'deepseek.v3.1': { label: 'DeepSeek V3.1', ctx: 131072, out: 8192 },
   'moonshotai.kimi-k2-thinking': { label: 'Kimi K2 Thinking', ctx: 262144, out: 16384, reasoning: true },
-  'openai.gpt-5.4': { label: 'GPT-5.4', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-5.5': { label: 'GPT-5.5', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-5.6-luna': { label: 'GPT-5.6 Luna', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-5.6-sol': { label: 'GPT-5.6 Sol', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-5.6-terra': { label: 'GPT-5.6 Terra', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-6-astra': { label: 'GPT-6 Astra', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-6-luna': { label: 'GPT-6 Luna', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-6-sol': { label: 'GPT-6 Sol', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-6.1-sol': { label: 'GPT-6.1 Sol', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-6.1-terra': { label: 'GPT-6.1 Terra', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-6.2-astra': { label: 'GPT-6.2 Astra', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-6.2-sol': { label: 'GPT-6.2 Sol', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
-  'openai.gpt-oss-20b': { label: 'GPT-OSS 20B', ctx: 131072, out: 128000 },
+  'openai.gpt-6-astra': { label: 'GPT-6 Astra', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-6.1-sol': { label: 'GPT-6.1 Sol', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-6.1-terra': { label: 'GPT-6.1 Terra', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-6-sol': { label: 'GPT-6 Sol', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-6-luna': { label: 'GPT-6 Luna', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-5.6-sol': { label: 'GPT-5.6 Sol', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-5.6-terra': { label: 'GPT-5.6 Terra', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-5.6-luna': { label: 'GPT-5.6 Luna', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-5.5': { label: 'GPT-5.5', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-5.4': { label: 'GPT-5.4', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-oss-120b': { label: 'GPT-OSS 120B', ctx: 131072, out: 128000 },
+  'openai.gpt-oss-20b': { label: 'GPT-OSS 20B', ctx: 131072, out: 128000 },
   'qwen.qwen3-32b': { label: 'Qwen3 32B', ctx: 131072, out: 16384 },
   'qwen.qwen3-235b-a22b-2507': { label: 'Qwen3 235B A22B', ctx: 131072, out: 16384 },
   'qwen.qwen3-coder-30b-a3b-instruct': { label: 'Qwen3 Coder 30B', ctx: 131072, out: 16384 },
@@ -99,7 +100,8 @@ const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: numbe
  * later than the creator's real release, exactly the case pubDate resolution rule #5 says not to use.
  * Concretely, from a live pull:
  *
- *   - ListFoundationModels -> modelLifecycle.startOfLifeTime (populated on all 66 FMs, NOT captured below):
+ *   - ListFoundationModels -> modelLifecycle.startOfLifeTime (populated on all FMs; captured below only to list a provider's
+ *       models newest-on-Bedrock first, where the host-add order is exactly what is wanted):
  *       bulk-clustered onboarding timestamps. 18 unrelated models shared 2025-12-02T00:00:00Z (a re:Invent
  *       drop): Gemma 3 (real release Mar 2025), Kimi-K2-Thinking (Nov 2025), Qwen3-VL, gpt-oss-safeguard...
  *       6 more shared 2026-02-06T18:00:00Z (DeepSeek V3.2, GLM-4.7, Kimi-K2.5...); Mixtral-8x7B -> 2024-03-01
@@ -133,9 +135,9 @@ export namespace BedrockWire_API_Models_List {
     responseStreamingSupported: z.boolean().nullable().optional(),
     inferenceTypesSupported: z.array(z.enum(['ON_DEMAND', 'INFERENCE_PROFILE', 'PROVISIONED']).or(z.string())).optional(),
     modelLifecycle: z.object({
-      // NOTE: AWS also sends startOfLifeTime (+ publicExtendedAccessTime/legacyTime/endOfLifeTime), but we
-      // only consume `status` - startOfLifeTime is a host-onboarding date, not a release date (see pubDate note above).
+      // NOTE: AWS also sends publicExtendedAccessTime/legacyTime/endOfLifeTime, unused
       status: z.enum(['ACTIVE', 'LEGACY']).or(z.string()),
+      startOfLifeTime: z.string().optional(), // ISO; a host-onboarding date, not a release date (see pubDate note above): sort order only
     }).optional(),
     // Converse API metadata (present on newer models, null on legacy)
     converse: z.object({
@@ -238,6 +240,7 @@ export function bedrockModelsToDescriptions(
     isLegacy: boolean;
     isProfile: boolean;
     metadataOnly: boolean; // a base that is not served on demand: not a model of its own, it only describes its inference profiles
+    onBedrockSince: string | undefined; // FM startOfLifeTime, profiles take their base's
     streaming: boolean;
     converseMaxTokens: number | null;
     // capabilities detected from FM metadata
@@ -276,6 +279,7 @@ export function bedrockModelsToDescriptions(
       isLegacy: fm.modelLifecycle?.status === 'LEGACY',
       isProfile: false,
       metadataOnly,
+      onBedrockSince: fm.modelLifecycle?.startOfLifeTime,
       streaming: fm.responseStreamingSupported ?? true,
       converseMaxTokens: fm.converse?.maxTokensMaximum ?? null,
       reasoning: !!fm.converse?.reasoningSupported?.embedded,
@@ -314,6 +318,7 @@ export function bedrockModelsToDescriptions(
       isLegacy: ip.status === 'LEGACY',
       isProfile: true,
       metadataOnly: false,
+      onBedrockSince: foundationMeta?.onBedrockSince,
       streaming: foundationMeta?.streaming ?? true,
       // a base without on-demand serving reports its output cap there (openai.gpt-* 128000, writer.palmyra-x5 8192), which must not become the context
       converseMaxTokens: (!foundationMeta?.metadataOnly || foundationMeta.provider === 'Amazon') ? foundationMeta?.converseMaxTokens ?? null : null,
@@ -335,6 +340,7 @@ export function bedrockModelsToDescriptions(
 
   // -> ModelDescriptionSchema[], with Anthropic thinking variants injected inline
   const descriptions: ModelDescriptionSchema[] = [];
+  const onBedrockSince = new Map<string, string | undefined>(); // non-Anthropic id -> FM startOfLifeTime, for the sort
   const symbolMantle = ''; // '🐘'; 'Ⓜ️'
   const bedrockAPIAnthropic = { paramId: 'llmVndBedrockAPI', initialValue: 'invoke-anthropic' } as const satisfies DModelParameterSpecAny;
   const bedrockAPIConverse = { paramId: 'llmVndBedrockAPI', initialValue: 'converse' } as const satisfies DModelParameterSpecAny;
@@ -409,6 +415,7 @@ export function bedrockModelsToDescriptions(
         parameterSpecs: [isMantle ? bedrockAPIMantle : bedrockAPIConverse],
         hidden: !(isMantle || isConverseCapable), // show if mantle or converse-capable
       });
+      onBedrockSince.set(modelId, modelMeta.onBedrockSince);
 
     }
   }
@@ -438,7 +445,7 @@ export function bedrockModelsToDescriptions(
     });
   }
 
-  return descriptions.sort(_bedrockModelSort);
+  return descriptions.sort((a, b) => _bedrockModelSort(a, b, onBedrockSince));
 }
 
 
@@ -489,19 +496,35 @@ function _extractProvider(profileId: string): string {
   return parts[0] ? parts[0].charAt(0).toUpperCase() + parts[0].slice(1) : 'Unknown';
 }
 
-/** Sort: Anthropic first, then non-Anthropic by provider > label */
-function _bedrockModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema): number {
+/** Profile region order, shared by every family: global > us > eu > ... > in-region (no prefix) */
+function _regionRank(modelId: string): number {
+  const prefix = _extractRegionPrefix(modelId);
+  return prefix ? ['global', 'us', 'eu', 'jp', 'apac', 'au', 'in', 'ca', 'us-gov'].indexOf(prefix) : 999;
+}
+
+/** Sort: Anthropic first, then non-Anthropic by provider > shown > curated order > newest on Bedrock > label */
+function _bedrockModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema, onBedrockSince: ReadonlyMap<string, string | undefined>): number {
   const aId = _stripRegionPrefix(a.id);
   const bId = _stripRegionPrefix(b.id);
   const aIsAnt = _seemsAnthropicBedrockModel(aId);
   const bIsAnt = _seemsAnthropicBedrockModel(bId);
   if (aIsAnt !== bIsAnt) return aIsAnt ? -1 : 1;
 
-  // --- Non-Anthropic: 🚧-prefixed labels last, then provider, then label ---
-  if (!aIsAnt)
+  // --- Non-Anthropic: 🚧-prefixed labels last, then provider, shown before hidden, curated in table order, newest on Bedrock (undated last), then label; a model's profiles together, by region ---
+  if (!aIsAnt) {
+    const getKnownIdx = (id: string) => {
+      const known = _findKnownMantleModel(id);
+      return known ? Object.values(KNOWN_MANTLE_ONLY).indexOf(known) : 999;
+    };
+    const modelLabel = (label: string) => label.replace(/ · [\w-]+$/, ''); // without the region suffix written by _labelFromProfile
     return (a.label.startsWith('🚧') ? 1 : 0) - (b.label.startsWith('🚧') ? 1 : 0)
       || _extractMantleProvider(aId).localeCompare(_extractMantleProvider(bId))
-      || a.label.localeCompare(b.label);
+      || (a.hidden ? 1 : 0) - (b.hidden ? 1 : 0)
+      || getKnownIdx(aId) - getKnownIdx(bId)
+      || (onBedrockSince.get(b.id) ?? '').localeCompare(onBedrockSince.get(a.id) ?? '')
+      || modelLabel(a.label).localeCompare(modelLabel(b.label))
+      || _regionRank(a.id) - _regionRank(b.id);
+  }
 
   // --- Anthropic: family > class > variant > region ---
   const familyPrecedence: string[][] = [
@@ -529,11 +552,5 @@ function _bedrockModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema)
   const bIsVariant = !!b.idVariant;
   if (aIsVariant !== bIsVariant) return aIsVariant ? -1 : 1;
 
-  // Prefer global > us > eu > regional
-  const prefixOrder = ['global', 'us', 'eu', 'jp', 'apac', 'au', 'in', 'ca', 'us-gov'];
-  const getPrefixIdx = (id: string) => {
-    const prefix = _extractRegionPrefix(id);
-    return prefix ? prefixOrder.indexOf(prefix) : 999;
-  };
-  return getPrefixIdx(a.id) - getPrefixIdx(b.id);
+  return _regionRank(a.id) - _regionRank(b.id);
 }
