@@ -7,7 +7,7 @@ import { ModelVendorOpenAI } from '../openai/openai.vendor';
 export interface DZAIServiceSettings {
   zaiKey: string;
   zaiHost: string;
-  csf?: boolean;
+  csf?: boolean; // stored by earlier versions, not read while Direct Connection is not offered (see below)
 }
 
 export const ModelVendorZAI: IModelVendor<DZAIServiceSettings, OpenAIAccessSchema> = {
@@ -18,8 +18,9 @@ export const ModelVendorZAI: IModelVendor<DZAIServiceSettings, OpenAIAccessSchem
   location: 'cloud',
   instanceLimit: 1,
 
-  /// client-side-fetch ///
-  csfAvailable: _csfZAIAvailable,
+  // NOTE: no `csfAvailable` - the chat endpoint answers the browser's CORS preflight without an allow-origin, so a
+  // browser-direct chat cannot start (the models endpoint still allows it): server-only until
+  // tools/periodic/weekly-csf-cors.check.ts reports it open again
 
   // functions
   initializeSetup: () => ({
@@ -31,7 +32,7 @@ export const ModelVendorZAI: IModelVendor<DZAIServiceSettings, OpenAIAccessSchem
   },
   getTransportAccess: (partialSetup) => ({
     dialect: 'zai',
-    clientSideFetch: _csfZAIAvailable(partialSetup) && !!partialSetup?.csf,
+    clientSideFetch: false, // server-only (no CSF)
     oaiKey: partialSetup?.zaiKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.zaiHost || '',
@@ -41,7 +42,3 @@ export const ModelVendorZAI: IModelVendor<DZAIServiceSettings, OpenAIAccessSchem
   rpcUpdateModelsOrThrow: ModelVendorOpenAI.rpcUpdateModelsOrThrow,
 
 };
-
-function _csfZAIAvailable(s?: Partial<DZAIServiceSettings>) {
-  return !!s?.zaiKey;
-}

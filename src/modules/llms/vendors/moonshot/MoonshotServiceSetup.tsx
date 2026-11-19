@@ -81,12 +81,12 @@ export function MoonshotServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='sk-... or sk-kimi-...'
     />
 
-    {showAdvanced && <SetupFormClientSideToggle
-      visible={!!moonshotKey && !isKimiCodeKey /* the Kimi Code endpoint has no CORS */}
+    {showAdvanced && (isKimiCodeKey ? <SetupFormClientSideToggle visible notAllowedBy='Kimi Code' /* its endpoint has no CORS */ /> : <SetupFormClientSideToggle
+      visible={!!moonshotKey}
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ csf: on })}
       helpText='Connect directly to Moonshot API from your browser instead of through the server.'
-    />}
+    />)}
 
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />
 

@@ -78,13 +78,13 @@ export function NvidiaNIMServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={text => updateSettings({ nvidiaHost: text })}
     />}
 
-    {showAdvanced && <SetupFormClientSideToggle
-      visible={!!nvidiaHost}
+    {showAdvanced && (nvidiaHost ? <SetupFormClientSideToggle
+      visible
       checked={!!clientSideFetch}
       onChange={on => updateSettings({ csf: on })}
       helpText='Connect to your custom host directly from the browser. Not available on the default NVIDIA host (CORS).'
       localHostDetected={nvidiaHost?.includes('localhost') || nvidiaHost?.includes('127.0.0.1') || nvidiaHost?.includes('.local')}
-    />}
+    /> : <SetupFormClientSideToggle visible={!!nvidiaKey} notAllowedBy='NVIDIA' />)}
 
     <SetupFormRefetchButton refetch={refetch} disabled={isFetching} loading={isFetching} error={isError} advanced={advanced} />
 

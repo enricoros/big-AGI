@@ -7,7 +7,9 @@ import { FormChipControl } from '~/common/components/forms/FormChipControl';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
+import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
 import { useLlmUpdateModels } from '../../llm.client.hooks';
@@ -38,6 +40,9 @@ export function ModularServiceSetup(props: { serviceId: DModelsServiceId }) {
 
   // the mode is not carried by the access object (cloud sends an empty host), so read the setting directly
   const isCloud = (partialSettings?.mode ?? 'cloud') === 'cloud';
+
+  // advanced mode: Modular Cloud only, a self-hosted server has nothing there
+  const advanced = useToggleableBoolean();
 
   // key validation
   const shallFetchSucceed = !needsUserKey || (isCloud ? serviceSetupValid : !!modularHost);
@@ -78,7 +83,9 @@ export function ModularServiceSetup(props: { serviceId: DModelsServiceId }) {
       placeholder='sk-mod-...'
     />
 
-    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} />
+    {isCloud && advanced.on && <SetupFormClientSideToggle visible={!!modularKey} notAllowedBy='Modular' />}
+
+    <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={isCloud ? advanced : undefined} />
 
     {isError && <InlineError error={error} />}
 

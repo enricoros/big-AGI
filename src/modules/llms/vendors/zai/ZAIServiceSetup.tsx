@@ -32,9 +32,9 @@ export function ZAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   } = useServiceSetup(props.serviceId, ModelVendorZAI);
 
   // derived state
-  const { clientSideFetch, oaiKey: zaiKey, oaiHost: zaiHost } = serviceAccess;
+  const { oaiKey: zaiKey, oaiHost: zaiHost } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
-  const showAdvanced = advanced.on || !!clientSideFetch || !!zaiHost;
+  const showAdvanced = advanced.on || !!zaiHost;
 
   // validate if url is a well formed proper url with zod
   const shallFetchSucceed = !needsUserKey || (!!zaiKey && serviceSetupValid);
@@ -69,12 +69,7 @@ export function ZAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       onChange={text => updateSettings({ zaiHost: text })}
     />}
 
-    {showAdvanced && <SetupFormClientSideToggle
-      visible={!!zaiKey}
-      checked={!!clientSideFetch}
-      onChange={on => updateSettings({ csf: on })}
-      helpText='Connect directly to Z.ai API from your browser instead of through the server.'
-    />}
+    {showAdvanced && <SetupFormClientSideToggle visible={!!zaiKey} notAllowedBy='Z.ai' />}
 
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />
 

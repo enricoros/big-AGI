@@ -6,6 +6,7 @@ import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
 import { Link } from '~/common/components/Link';
+import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
@@ -67,6 +68,8 @@ export function SakanaAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       value={sakanaHost}
       onChange={text => updateSettings({ sakanaHost: text })}
     />}
+
+    {showAdvanced && <SetupFormClientSideToggle visible={!!sakanaKey} notAllowedBy='Sakana AI' />}
 
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />
 

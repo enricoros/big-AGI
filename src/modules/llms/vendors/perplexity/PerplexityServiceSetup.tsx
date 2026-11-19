@@ -29,12 +29,11 @@ export function PerplexityServiceSetup(props: { serviceId: DModelsServiceId }) {
   } = useServiceSetup(props.serviceId, ModelVendorPerplexity);
 
   // derived state
-  const { clientSideFetch, oaiKey: perplexityKey } = serviceAccess;
+  const { oaiKey: perplexityKey } = serviceAccess;
   const needsUserKey = !serviceHasCloudTenantConfig;
 
-  // advanced mode - initialize open if CSF is enabled, but let user toggle freely
-  const advanced = useToggleableBoolean(!!clientSideFetch);
-  const showAdvanced = advanced.on;
+  // advanced mode
+  const advanced = useToggleableBoolean();
 
   // key validation
   const shallFetchSucceed = !needsUserKey || (!!perplexityKey && serviceSetupValid);
@@ -65,12 +64,7 @@ export function PerplexityServiceSetup(props: { serviceId: DModelsServiceId }) {
       as a service for a variety of models. See the <Link href='https://www.perplexity.ai/' target='_blank'>Perplexity AI</Link> website for more information.
     </Typography>
 
-    {showAdvanced && <SetupFormClientSideToggle
-      visible={!!perplexityKey}
-      checked={!!clientSideFetch}
-      onChange={on => updateSettings({ csf: on })}
-      helpText='Connect directly to Perplexity API from your browser instead of through the server.'
-    />}
+    {advanced.on && <SetupFormClientSideToggle visible={!!perplexityKey} notAllowedBy='Perplexity' />}
 
     <SetupFormRefetchButton refetch={refetch} disabled={/*!shallFetchSucceed ||*/ isFetching} loading={isFetching} error={isError} advanced={advanced} />
 
