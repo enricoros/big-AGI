@@ -18,7 +18,7 @@ import type { ModelDescriptionSchema } from './llm.server.types';
  * Don't:   a type/modality filter proves chat - gemini, xai, together, novita, chutesai, cerebras.
  *
  * Readers: llm-registry-sync (marked + null contextWindow = held off the publication push),
- *          listModels.test, the website (strips brackets, sinks pubDate; own regex, keep in sync).
+ *          the llm-listing-checker job, the website (strips brackets, sinks pubDate; own regex, keep in sync).
  *
  * Legacy, not unified: bedrock ' [?]' suffix; openai-compat hosts keep a lenient bare '?'
  * (unknown is the norm there, marking would blank whole services from publication).
