@@ -63,10 +63,10 @@ export const optimaSelectSlotProps: SelectSlotsAndSlotProps<false>['slotProps'] 
       // in sync with CloseableMenu
       '--ListItem-minHeight': OPTIMA_DROPDOWNS_DENSE_LISTS
         ? '2.25rem' /* 2.25 is the default */
-        : '2.75rem', /* we enlarge the default  */
+        : '2.5rem', /* we enlarge the default  */
       ...(OPTIMA_DROPDOWNS_BIG_ICONS && {
         '--Icon-fontSize': 'var(--joy-fontSize-xl2)',
-        // '--ListItemDecorator-size': '2.75rem',
+        // '--ListItemDecorator-size': '2.5rem',
       }),
 
       // transfer the padding onto the scrollable box
@@ -111,7 +111,9 @@ const _styles = {
 
   itemsScrollable: {
     overflow: 'auto',
-    paddingBlock: 'var(--ListDivider-gap)',
+    // paddingBlock: 'var(--ListDivider-gap)',
+    // paddingBlock: 0,
+    '--ListItem-stickyTop': '0px', // no block padding, so sticky group headers sit flush (Joy's offset assumes the listbox padding)
   } as const,
 
   divider: {
@@ -122,7 +124,11 @@ const _styles = {
     fontSize: 'sm',
     color: 'text.tertiary',
     textAlign: 'center',
-    my: 1.5,
+    py: 1.5,
+    backgroundColor: 'background.popup',
+    zIndex: 1,
+    position: 'sticky',
+    top: 0,
   } as const,
 
   starSeparator: {

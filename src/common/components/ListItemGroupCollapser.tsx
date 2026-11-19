@@ -9,7 +9,7 @@ import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 const _styles = {
   headerButton: {
     color: 'text.tertiary',
-    py: 1.5,
+    '--ListItem-minHeight': '2.5rem', // was py: 1.5
     border: 'none',
     fontSize: 'sm',
     fontWeight: 'md',
@@ -62,7 +62,7 @@ export function ListItemGroupCollapser<TId extends string>(props: {
   }, [onCollapseAll]);
 
   return (
-    <ListItem>
+    <ListItem sticky /* sticky style (bg, pad) is customized in container (<Select/> and also CloseablePopup) */>
       <ListItemButton
         color='neutral'
         aria-expanded={readOnly ? undefined : !props.isCollapsed}

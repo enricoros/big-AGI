@@ -159,6 +159,7 @@ export function CloseablePopup(props: {
 
     // style
     backgroundColor: 'background.popup',
+    '--ListItem-stickyBackground': 'var(--joy-palette-background-popup)', // sticky items (group headers) match the popup, not Joy's body fallback
     boxShadow: props.boxShadow ?? 'md',
     ...(props.maxHeightGapPx !== undefined ? { maxHeight: `calc(100dvh - ${props.maxHeightGapPx}px)`, overflowY: 'auto' } : {}),
     ...(props.maxWidth !== undefined && { maxWidth: props.maxWidth }),
@@ -175,7 +176,7 @@ export function CloseablePopup(props: {
       // '--ListItemDecorator-size': '2.75rem',
     }),
     ...(props.noBottomPadding && { pb: 0 }),
-    ...(props.noTopPadding && { pt: 0 }),
+    ...(props.noTopPadding && { pt: 0, '--ListItem-stickyTop': '0px' }), // Joy offsets sticky items by -padding
 
     // inject
     ...(props.sx || {}),
