@@ -20,6 +20,9 @@ import { listModelsRunDispatch } from '~/modules/llms/server/listModels.dispatch
 
 const DB_PATH = path.join(__dirname, 'llm-registry.db');
 
+// Default services config - llm-services.json in the same directory as the script (and the DB); used when no --config/--dialect is given
+const DEFAULT_CONFIG_PATH = path.join(__dirname || process.cwd(), 'llm-services.json');
+
 const COLORS = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
@@ -688,10 +691,10 @@ function printHelp(): void {
 ${COLORS.bright}Big-AGI LLM Registry Sync${COLORS.reset}
 
 ${COLORS.bright}Usage:${COLORS.reset}
-  llm-registry-sync.sh [options]
+  sh tools/jobs/jobs.sh llm-registry-sync [options]
 
 ${COLORS.bright}Options:${COLORS.reset}
-  -c, --config <file>         Path to services configuration JSON
+  -c, --config <file>         Path to services configuration JSON (default: llm-services.json next to the script)
   -d, --dialect <name>        Single dialect mode
   -k, --key <key>             API key for single dialect mode
   -h, --host <url>            API host override
@@ -706,18 +709,18 @@ ${COLORS.bright}Options:${COLORS.reset}
 
 ${COLORS.bright}Examples:${COLORS.reset}
   # Validate configuration
-  llm-registry-sync.sh --config ./services.json --validate
+  sh tools/jobs/jobs.sh llm-registry-sync --config ./services.json --validate
 
   # Basic usage
-  llm-registry-sync.sh --config ./services.json
+  sh tools/jobs/jobs.sh llm-registry-sync --config ./services.json
 
   # With notifications
-  llm-registry-sync.sh --config ./services.json \\
+  sh tools/jobs/jobs.sh llm-registry-sync --config ./services.json \\
     --posthog-key phc_... \\
     --discord-webhook https://discord.com/api/webhooks/...
 
   # Single vendor
-  llm-registry-sync.sh --dialect openai --key sk-...
+  sh tools/jobs/jobs.sh llm-registry-sync --dialect openai --key sk-...
 `);
 }
 
@@ -1106,6 +1109,17 @@ async function runSync(
   } else if (options.format === 'json') {
     console.log(JSON.stringify(results, null, 2));
   }
+
+  // Nothing to sync, or most services failing: a broken run (a bad build, no network, an emptied config), not a
+  // vendor having a moment. It fails the job, and the launcher posts it where it posts (tools/jobs/jobs.sh). The
+  // text is the same for most and for all, and carries no counts: a finding is posted once, by its text
+  const totalCount = Object.keys(results).length;
+  const failedCount = Object.values(results).filter((r) => !r.success).length;
+  if (!totalCount || failedCount * 2 > totalCount) {
+    const { reportFindings } = await import('../jobs.shared');
+    reportFindings([`llm-registry-sync: ${totalCount ? 'most or all services failed to sync' : 'no services to sync'}`]);
+    process.exitCode = 1;
+  }
 }
 
 // ============================================================================
@@ -1133,10 +1147,13 @@ async function main() {
       servicesConfig = loadConfig(options.config);
     } else if (options.dialect && options.key) {
       servicesConfig = createSingleConfig(options.dialect, options.key, options.host);
-    } else {
-      console.error(`${COLORS.red}Error: Either --config or (--dialect and --key) required${COLORS.reset}`);
-      console.log('Run with --help for usage information');
+    } else if (options.dialect || options.key) {
+      console.error(`${COLORS.red}Error: --dialect and --key go together${COLORS.reset}`);
       process.exit(1);
+    } else {
+      // Default: llm-services.json next to the script (same dir as the DB)
+      console.log(`${COLORS.dim}No --config/--dialect given; using default config ${DEFAULT_CONFIG_PATH}${COLORS.reset}`);
+      servicesConfig = loadConfig(DEFAULT_CONFIG_PATH);
     }
 
     if (options.validate) {

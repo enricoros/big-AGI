@@ -1,5 +1,5 @@
 /**
- * Shared by the jobs of this folder: what a checker prints, how it fails, and where it finds a key.
+ * Shared by the jobs of this folder: what a checker prints, how a job reports what is broken, and where it finds a key.
  */
 
 import * as fs from 'node:fs';
@@ -20,15 +20,20 @@ export function printTable(title: string, header: string[], rows: string[][], de
 }
 
 /**
- * Fails the test with the broken rows and nothing else: a verdict on the outside world has no use for a stack trace.
+ * Hands the launcher what a job found, one "<subject>: <text>" per line. The job then fails with its exit status.
  * - 'breaks': something does not work, for a user or for the job itself. The launcher posts these, where it posts
  * - 'drift': the code is behind the vendor and wants a cleanup. It fails the run and is never posted
  */
-export function failOn(broken: string[], severity: 'breaks' | 'drift' = 'breaks') {
-  if (!broken.length) return;
+export function reportFindings(lines: string[], severity: 'breaks' | 'drift' = 'breaks') {
   // the launcher asks for the findings in a file when it has somewhere to post them (jobs.sh, jobs.notify.mjs)
   if (process.env.JOBS_FINDINGS_FILE)
-    fs.appendFileSync(process.env.JOBS_FINDINGS_FILE, broken.map(line => `${severity}\t${line.replace(/\s+/g, ' ')}\n`).join(''));
+    fs.appendFileSync(process.env.JOBS_FINDINGS_FILE, lines.map(line => `${severity}\t${line.replace(/\s+/g, ' ')}\n`).join(''));
+}
+
+/** A checker's way to fail: the broken rows and nothing else, as a verdict on the outside world has no use for a stack trace. */
+export function failOn(broken: string[], severity: 'breaks' | 'drift' = 'breaks') {
+  if (!broken.length) return;
+  reportFindings(broken, severity);
   const verdict = new Error(broken.join('\n'));
   verdict.stack = verdict.message;
   throw verdict;

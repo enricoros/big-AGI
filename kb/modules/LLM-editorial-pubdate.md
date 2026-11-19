@@ -114,7 +114,7 @@ Canonical symbols: `llmsLabelUncurated()` / `llmsIsLabelUncurated()` in `src/mod
 **Semantics**: the `[?] ` label prefix means "the list API does not establish what this model IS" - an ids-only catalog where a video/TTS/embedding id could masquerade as chat (the FLUX-on-Modular failure, 2026-08-14). It is NOT a "not yet editorialized" badge: API-characterized 0-day arrivals stay unmarked so they publish and badge as new.
 
 **Downstream effects** (why the marker must not be applied loosely):
-- `tools/jobs/llm-registry-sync/llm-registry-sync.ts` drops `[?]`-labeled models with `contextWindow === null` before both its local DB and the PostHog `llms_model_spec` push - they never reach big-agi.com.
+- `tools/jobs/llm-registry-sync/llm-registry.sync.ts` drops `[?]`-labeled models with `contextWindow === null` before both its local DB and the PostHog `llms_model_spec` push - they never reach big-agi.com.
 - The website strips bracketed segments from `[?]` labels and sinks the pubDate (no NEW badge, bottom of Released sort). Its detection is an independent regex in the website repo (`posthog.server.ts` / `llm.vendors.rankings.ts`) - keep in sync on change.
 
 **Marked** (type-blind list APIs): `fromManualMapping` 'super' resolution (unknown variant of a known family), plus the 0-day fallbacks in nvidianim, modular, sakanaai, metaai, moonshot, groq, deepseek, alibaba, and native OpenAI (Azure included via `isLikelyOpenAI: true`).
