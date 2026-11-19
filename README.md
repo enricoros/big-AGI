@@ -4,7 +4,7 @@
 
 <h1><a href="https://big-agi.com">Big-AGI</a></h1>
 
-[![Use Free ⋅ Go Pro](https://img.shields.io/badge/Use_Free-Get_Pro-d5ec31?style=for-the-badge&logo=rocket&logoColor=white&labelColor=000)](https://big-agi.com)
+[![Use Free ⋅ Go Pro](https://img.shields.io/badge/Use_Free-Get_Pro-d5ec31?style=for-the-badge&logo=rocket&logoColor=white&labelColor=000)](https://big-agi.com/?utm_source=github&utm_medium=readme)
 [![Deploy on Docker](https://img.shields.io/badge/Self--Host-Docker-blue?style=for-the-badge&logo=docker&logoColor=white&labelColor=000)](https://github.com/enricoros/big-AGI/pkgs/container/big-agi)
 [![Deploy on Vercel](https://img.shields.io/badge/Vercel-Deploy-blue?style=for-the-badge&logo=vercel&logoColor=white&labelColor=000)](https://vercel.com/new/clone?repository-url=https://github.com/enricoros/big-agi)
 [![Discord](https://img.shields.io/discord/1098796266906980422?style=for-the-badge&label=Discord&logo=discord&logoColor=white&labelColor=000000&color=purple)](https://discord.gg/MkH4qj2Jp9)
@@ -113,7 +113,7 @@ Sure - here is real-world screeengrab as I'm writing this, while running a Beam 
 \*: **Configuration requires your API keys**. *Big-AGI does not charge for model usage or limit your access*.  
 **Why Pro?** As an independent project, Pro subscriptions fund all development. Early subscribers shape the roadmap directly.    
 
-[![Use Free ⋅ Go Pro](https://img.shields.io/badge/Use_Free-Get_Pro-d5ec31?style=for-the-badge&logo=rocket&logoColor=white&labelColor=000)](https://big-agi.com)
+[![Use Free ⋅ Go Pro](https://img.shields.io/badge/Use_Free-Get_Pro-d5ec31?style=for-the-badge&logo=rocket&logoColor=white&labelColor=000)](https://big-agi.com/?utm_source=github&utm_medium=readme)
 
 **Self-host and developers** (full control)  
 - Develop locally or self-host with Docker on your own infrastructure – [guide](docs/installation.md)  
