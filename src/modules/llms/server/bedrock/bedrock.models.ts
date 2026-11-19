@@ -22,9 +22,9 @@
 //   zai.glm-4.7, openai.gpt-oss-120b, qwen.qwen3-coder-next and mistral.mistral-large-3-675b-instruct all
 //   returned finish_reason 'tool_calls'.
 // - Listed but not callable: google.gemma-4-{31b,26b-a4b,e2b} and xai.grok-4.3 400 on both Mantle routes
-//   ("isn't supported on this route"). openai.gpt-5.4/5.5 (+ dated ids), gpt-5.6-{sol,terra,luna} and gpt-6-{astra,sol,luna}
-//   are account-gated (401 access_denied, "contact AWS Sales"; re-checked 2026-09-22) - curated
-//   anyway via #1167 (author live-verified on an access-enabled account): the 401 is self-explanatory for
+//   ("isn't supported on this route"). Every GPT-5.4+ id (dated ids and profiles too) is account-gated: Mantle 401
+//   access_denied, Converse 403, "contact AWS Sales" (re-checked 2026-11-19, with an API key and with IAM keys) - curated
+//   anyway via #1167 (author live-verified on an access-enabled account): the error is self-explanatory for
 //   accounts without the enablement.
 // - Docs-only findings awaiting a live re-check (no AWS creds here): AWS documents an Anthropic-native 'Messages' API on
 //   bedrock-mantle for the Claude 5 / Opus 4.7-4.8 / Haiku 4.5 family (not wired here); qwen.qwen3-235b-a22b-2507 now has a
@@ -48,18 +48,19 @@ const SKIP_FM_ID_CONTAINS = ['rerank'];
 const SKIP_IP_ID_STARTSWITH = ['stability.'];
 const SKIP_MANTLE_TOOLS_IDS = ['writer.palmyra-vision-7b']; // 400s: '"auto" tool choice requires --enable-auto-tool-choice and --tool-call-parser to be set' (probed 2026-08-17)
 
-// Known Mantle-only models (no matching foundation model) - override heuristics with accurate metadata.
+// Known Mantle models (no matching foundation model, or one with wrong metadata) - override heuristics with accurate metadata.
 // All 11 answered /v1/chat/completions on 2026-08-17; 'qwen.qwen3-coder-next' dropped - AWS promoted it to a
 // foundation model, so it is now described from FM metadata. Corrected sizes are the creators' published specs,
 // except the gpt-oss output cap, which is Bedrock's own (converse.maxTokensMaximum on openai.gpt-oss-*-1:0).
 // `api: 'responses'`: model only implements the OpenAI Responses API (on the '/openai/v1/responses' path) and rejects
 // Chat Completions with a 400 - see https://docs.aws.amazon.com/bedrock/latest/userguide/models-api-compatibility.html
 // GPT-5.x ctx is 1M per the AWS model cards (272K is only the short/long pricing-tier boundary); out stays 128000 (cards say
-// "N/A"); GPT-6 1,050,000 / 128,000 per the Astra card; GPT-6.1 Sol 1M per its card (out: card 131,072, OpenAI 128,000); GPT-6.1 Terra 1,050,000 / 128,000 per its card. deepseek.v3.1 out 8192 and kimi-k2-thinking out 16384 per their cards' "Max output tokens".
-// Entries with `api: 'responses'` win over the foundation-model listing: AWS also lists GPT-5.6 and GPT-6 as foundation models
+// "N/A"); GPT-6 1,050,000 / 128,000 per the Astra card; GPT-6.1 Sol 1M per its card (out: card 131,072, OpenAI 128,000); GPT-6.1 Terra and GPT-6.2 Astra/Sol 1,050,000 / 128,000 per their cards. deepseek.v3.1 out 8192 and kimi-k2-thinking out 16384 per their cards' "Max output tokens".
+// Entries with `api: 'responses'` win over the foundation-model listing: AWS also lists GPT-5.4 and later as foundation models
 // (2026-09), which described them as 131K Chat Completions models without reasoning. Their us./global. profiles go through
 // Converse: Mantle serves no geo/global ids ("The model 'us.openai.gpt-6-sol' does not exist" on both Mantle routes).
-// Those profiles are sized from this table too: on these ids converse.maxTokensMaximum is the output cap (128000), not the context.
+// Those profiles take label and sizes from this table too: on these ids converse.maxTokensMaximum is the output cap (128000), not the context.
+// A dated id ('openai.gpt-5.4-2026-03-05') takes its alias's entry, labeled with its date and hidden: the alias carries the profiles.
 const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: number; vision?: true; reasoning?: true; api?: 'responses' }> = {
   'deepseek.v3.1': { label: 'DeepSeek V3.1', ctx: 131072, out: 8192 },
   'moonshotai.kimi-k2-thinking': { label: 'Kimi K2 Thinking', ctx: 262144, out: 16384, reasoning: true },
@@ -73,6 +74,8 @@ const KNOWN_MANTLE_ONLY: Record<string, { label: string; ctx: number; out: numbe
   'openai.gpt-6-sol': { label: 'GPT-6 Sol', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-6.1-sol': { label: 'GPT-6.1 Sol', ctx: 1000000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-6.1-terra': { label: 'GPT-6.1 Terra', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-6.2-astra': { label: 'GPT-6.2 Astra', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
+  'openai.gpt-6.2-sol': { label: 'GPT-6.2 Sol', ctx: 1050000, out: 128000, vision: true, reasoning: true, api: 'responses' },
   'openai.gpt-oss-20b': { label: 'GPT-OSS 20B', ctx: 131072, out: 128000 },
   'openai.gpt-oss-120b': { label: 'GPT-OSS 120B', ctx: 131072, out: 128000 },
   'qwen.qwen3-32b': { label: 'Qwen3 32B', ctx: 131072, out: 16384 },
@@ -305,8 +308,8 @@ export function bedrockModelsToDescriptions(
 
     modelMap.set(ip.inferenceProfileId, {
       id: ip.inferenceProfileId,
-      label: ip.inferenceProfileName + (foundationMeta ? '' : ' [?]'),
-      provider: _extractProvider(ip.inferenceProfileId),
+      label: ip.inferenceProfileName + (foundationMeta || _seemsAnthropicBedrockModel(baseId) ? '' : ' [?]'), // Anthropic: labeled from our table, or marked by the 0-day path
+      provider: foundationMeta?.provider ?? _extractProvider(ip.inferenceProfileId), // AWS's spelling ('Moonshot AI', 'Z.AI'), as on the base
       hasMantle: false, // (was: hadMantle,) 2026-11-05: Mantle serves no geo/global ids (404 "does not exist"): profiles go through Converse, even when the base id is on Mantle
       isLegacy: ip.status === 'LEGACY',
       isProfile: true,
@@ -385,13 +388,13 @@ export function bedrockModelsToDescriptions(
       if (isMantle ? !SKIP_MANTLE_TOOLS_IDS.includes(_stripRegionPrefix(modelId)) : isConverseCapable) interfaces.push(LLM_IF_OAI_Fn); // Converse: toolConfig; Mantle: OpenAI tools (both live-probed 2026-08-17)
       if (modelMeta.outputAudio) interfaces.push(LLM_IF_Outputs_Audio);
       if (modelMeta.outputImage) interfaces.push(LLM_IF_Outputs_Image);
-      const label = modelMeta.isProfile ? _labelFromProfile(modelMeta.label, modelId) : modelMeta.label;
-      const labelRepeatsProvider = label.toLowerCase().startsWith(modelMeta.provider.toLowerCase()); // case-insensitive: 'Openai' vs 'OpenAI GPT-5.6 Sol'
+      const label = modelMeta.isProfile ? _labelFromProfile(knownBase?.label ?? modelMeta.label, modelId) : modelMeta.label; // a curated profile reads as its base: 'GPT-5.4 · Global'
+      const labelRepeatsProvider = [modelMeta.provider, _extractProvider(modelId)].some(p => label.toLowerCase().startsWith(p.toLowerCase())); // AWS's spelling or the id's: 'Moonshot AI Kimi K3', 'Mistral Large 3'
       const apiLabel = isMantle ? 'OpenAI-Compatible' : isConverseCapable ? 'Converse' : 'Unsupported';
       // no `pubDate`: AWS only offers host-onboarding dates for these third-party models (see pubDate note atop the wire types)
       descriptions.push({
         id: modelId,
-        label: `${isMantle || isConverseCapable ? symbolMantle : '🚧 '}${labelRepeatsProvider ? '' : (modelMeta.provider + ' ')}${label}`,
+        label: `${isMantle || isConverseCapable ? symbolMantle : '🚧 '}${labelRepeatsProvider || knownBase ? '' : (modelMeta.provider + ' ')}${label}`,
         description: `${modelMeta.provider} model via ${apiLabel} API${modelMeta.isProfile ? ' (Bedrock Inference Profile)' : ' (Bedrock Foundation Model)'}`,
         // [2026-08-17 probes] converse.maxTokensMaximum means different things per serving stack: on the
         // vLLM-served third-party fleet the backend calls it "this model's maximum context length" and counts
@@ -415,6 +418,7 @@ export function bedrockModelsToDescriptions(
     // Anthropic aliases are listed by Mantle but rejected by both OpenAI routes (invoke-only) - and already described above
     if (_seemsAnthropicBedrockModel(mantleId)) continue;
     const known = _findKnownMantleModel(mantleId);
+    const isSnapshot = !!known && !(mantleId in KNOWN_MANTLE_ONLY); // dated id of a curated alias
     const isResponsesOnly = known?.api === 'responses';
     const provider = _extractMantleProvider(mantleId);
     const interfaces = [LLM_IF_OAI_Chat];
@@ -424,13 +428,13 @@ export function bedrockModelsToDescriptions(
     if (isResponsesOnly) interfaces.push(LLM_IF_HOTFIX_NoTemperature); // GPT-5.x frontier reasoning models reject temperature ('Unsupported parameter') - same as on the OpenAI vendor
     descriptions.push({
       id: mantleId,
-      label: `${symbolMantle}${known?.label ?? labelForMantle(mantleId, provider)}${known ? '' : ' [?]'}`,
+      label: `${symbolMantle}${known?.label ?? labelForMantle(mantleId, provider)}${!known ? ' [?]' : isSnapshot ? ` (${mantleId.slice(-10)})` : ''}`,
       description: `${provider} model via OpenAI-Compatible ${isResponsesOnly ? 'Responses ' : ''}API on AWS Bedrock Mantle`,
       contextWindow: known?.ctx ?? 131072,
       maxCompletionTokens: known?.out ?? 16384,
       interfaces,
       parameterSpecs: [isResponsesOnly ? bedrockAPIMantleResponses : bedrockAPIMantle],
-      hidden: !isResponsesOnly, // show models with a curated API assignment; hide the rest (listed by Mantle, but unverified: some ids 400 with "isn't supported on this route", others are account-gated)
+      hidden: !isResponsesOnly || isSnapshot, // show models with a curated API assignment; hide the rest (listed by Mantle, but unverified: some ids 400 with "isn't supported on this route", others are account-gated) and dated twins of a shown alias
     });
   }
 

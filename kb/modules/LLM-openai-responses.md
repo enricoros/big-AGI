@@ -46,9 +46,9 @@ The native definitions route GPT-5.x, GPT-6 and 6.1 over Responses. On Chat Comp
 
 ## Bedrock
 
-- Mantle lists `openai.gpt-6-sol` and `-luna` in us-east-1 and `openai.gpt-6-astra` in us-west-2. AWS also lists GPT-5.6 and GPT-6 as bedrock-runtime foundation models with `us.`/`global.` profiles.
-- Bare ids that Mantle serves take the curated Mantle Responses route (`KNOWN_MANTLE_ONLY`). Profiles and ids Mantle does not list still describe as 131K Chat Completions or Converse models without reasoning: per the AWS card Mantle serves no geo or global ids, and bedrock-runtime `/openai/v1` is not wired.
-- Our key gets 401 `access_denied` on every OpenAI id, so these routes are not live-verified here.
+- Mantle lists GPT-5.4 through GPT-6.1 in us-east-1, GPT-5.4 and GPT-5.5 also under dated ids. AWS also lists GPT-5.4 and later as bedrock-runtime foundation models with `us.`/`global.` profiles; GPT-6.2 Astra and Sol come only that way so far, though their cards name Mantle in us-east-1.
+- `KNOWN_MANTLE_ONLY` gives each curated id its label, sizes and reasoning, for the bare id (Mantle Responses route) and for its `us.`/`global.` profiles, which go through Converse: Mantle serves no geo or global ids, and bedrock-runtime `/openai/v1` (Responses on profile ids, per the cards) is not wired. A dated id is hidden behind its alias, which carries the profiles.
+- Our API key and IAM keys get 401 `access_denied` (Mantle) and 403 (Converse) on every GPT-5.4+ id, so these routes are not live-verified here.
 
 ## Shipped, not adopted
 

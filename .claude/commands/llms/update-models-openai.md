@@ -4,7 +4,7 @@ description: Update OpenAI model definitions with latest pricing and capabilitie
 
 Update `src/modules/llms/server/openai/models/openai.models.ts` with latest model definitions.
 
-Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file, do not descend into other code.
+Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/server/models.mappings.ts` for context only. Focus on the model file and the Bedrock mirror below, do not descend into other code.
 
 **Primary Sources:** docs moved from `platform.openai.com/docs/*` (301s) to `developers.openai.com/api/docs/*`.
 Appending `.md` to any docs URL returns clean markdown that plain `curl` fetches (no 403, no browser needed):
@@ -32,6 +32,8 @@ same dead ids (equivalent verdict, weaker message). Probe before concluding a mo
    phantom models.
 
 **Live endpoint (extra signal):** If `.env.api-keys` has `OPENAI_API_KEY`, scan the served model list for what's new and cross-check the docs above: `curl https://api.openai.com/v1/models -H "Authorization: Bearer $OPENAI_API_KEY"`. Never commit or echo the key.
+
+**Bedrock mirror:** AWS hosts GPT-5.4 and later as `openai.<id>` (bare id on Mantle Responses, `us.`/`global.` profiles over Converse), described by `KNOWN_MANTLE_ONLY` in `src/modules/llms/server/bedrock/bedrock.models.ts`. For each new GPT id AWS hosts, add a row there in this file's order, ctx/out from its AWS model card (index: https://docs.aws.amazon.com/bedrock/latest/userguide/model-cards.html; a card URL with `.md` returns markdown). Without the row its profiles list with no context and no reasoning. With `BEDROCK_BEARER_TOKEN` in `.env.api-keys`, `curl https://bedrock.us-east-1.amazonaws.com/foundation-models -H "Authorization: Bearer $BEDROCK_BEARER_TOKEN"` lists the `openai.*` ids AWS hosts.
 
 **Important:**
 - Review the full model list for additions, removals, and price changes
