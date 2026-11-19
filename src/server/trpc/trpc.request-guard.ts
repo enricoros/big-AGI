@@ -30,12 +30,18 @@ export function trpcRequestGuard(headers: Headers): TRPCRequestGuardResult {
   if (!hostname)
     return { allowed: false, reason: 'missing or invalid Host header' };
 
-  // cross-origin: the Origin must be this server, as addressed by the browser (Host) or by a fronting proxy
+  // cross-origin: the Origin must be this server, as addressed by the browser (Host) or by a fronting proxy;
+  // a port-less Host matches by name, as proxies forwarding nginx's `$host` drop the public port
   const origin = headers.get('origin')?.trim().toLowerCase() || '';
   if (origin) {
-    const originHost = _hostOfOrigin(origin);
+    const originUrl = _parseOrigin(origin);
     const forwardedHost = headers.get('x-forwarded-host')?.split(',')[0].trim().toLowerCase() || '';
-    if (!originHost || (originHost !== host && originHost !== forwardedHost))
+    const sameOrigin = !!originUrl && (
+      originUrl.host === host
+      || originUrl.host === forwardedHost
+      || (host === hostname && originUrl.hostname === hostname)
+    );
+    if (!sameOrigin)
       return { allowed: false, reason: `cross-origin request from ${origin}` };
   }
 
@@ -64,10 +70,10 @@ function _hostnameOf(host: string): string | null {
   }
 }
 
-function _hostOfOrigin(origin: string): string | null {
+function _parseOrigin(origin: string): URL | null {
   try {
     const url = new URL(origin);
-    return (url.protocol === 'http:' || url.protocol === 'https:') ? url.host : null;
+    return (url.protocol === 'http:' || url.protocol === 'https:') ? url : null;
   } catch {
     return null; // includes the opaque 'null' origin (sandboxed iframes, etc.)
   }
