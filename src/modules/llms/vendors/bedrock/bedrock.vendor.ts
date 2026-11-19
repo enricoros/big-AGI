@@ -30,7 +30,7 @@ export const ModelVendorBedrock: IModelVendor<DBedrockServiceSettings, BedrockAc
 
   /// client-side-fetch ///
   // the control plane, the runtime and Mantle all answer CORS, with an API key and with IAM keys signed in the browser:
-  // opt-in from the setup (re-measured by tools/periodic/weekly-csf-cors.check.ts)
+  // opt-in from the setup (re-measured by the csf-cors-checker job, tools/jobs/)
   csfAvailable: _csfBedrockAvailable,
 
   // functions

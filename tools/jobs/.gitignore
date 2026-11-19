@@ -1,0 +1,3 @@
+# Set per machine, never committed: where jobs.sh posts what breaks, and what it has already posted
+.env
+.state/

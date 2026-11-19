@@ -20,7 +20,7 @@ export const ModelVendorZAI: IModelVendor<DZAIServiceSettings, OpenAIAccessSchem
 
   // NOTE: no `csfAvailable` - the chat endpoint answers the browser's CORS preflight without an allow-origin, so a
   // browser-direct chat cannot start (the models endpoint still allows it): server-only until
-  // tools/periodic/weekly-csf-cors.check.ts reports it open again
+  // the csf-cors-checker job (tools/jobs/) reports it open again
 
   // functions
   initializeSetup: () => ({

@@ -26,6 +26,8 @@ The server never honors the flag. Its only consumer is `geminiAccess`, which tak
 
 Most cloud vendors support CSF (OpenAI, Anthropic, Gemini, Deepseek, Groq, Mistral, xAI, Meta AI, OpenRouter, Together AI, Alibaba, Cohere, Moonshot, Cerebras, Azure, Bedrock). Cerebras defaults CSF on; the others are opt-in. Modular and Sakana serve no CORS headers at all, NVIDIA's hosted endpoint allowlists `*.nvidia.com` origins only (CSF there requires a custom host), and Moonshot's Kimi Code subscription host 404s the preflight - all three are excluded in the vendor files. Bedrock answers CORS on its three hosts (control plane, runtime, Mantle) in every region tried, with an API key and with IAM keys signed in the browser; Mantle's preflight allows headers with `*`, which the Fetch standard does not extend to `Authorization`: Chrome and Firefox accept it, Safari is unchecked. Two more are server-only for a narrower reason: Perplexity sends CORS headers on the preflight and on its errors but not on a successful response, and Z.ai's chat endpoint answers the preflight without an allow-origin (its models endpoint still allows it). Local vendors (Ollama, LocalAI, LM Studio) require CORS enabled on the local server.
 
+The `csf-cors-checker` job (`tools/jobs/`) re-measures this against the live vendors: it runs the browser build of the direct code under the browser's cross-origin rules, per vendor and per subsystem (listing, chat, speech, transcription, images, files), and prints what differs from what the code offers. The Perplexity case is why it runs a completed chat and not only the preflight.
+
 ## Request headers on the CSF path
 
 A non-safelisted request header forces a CORS preflight, so on CSF every added header is a compatibility risk that does not exist server-side. Measured across all vendor hosts 2026-08-14 (one US vantage; vendor CORS config changes without notice), hosts split in two:
@@ -35,7 +37,7 @@ A non-safelisted request header forces a CORS preflight, so on CSF every added h
 
 Consequence: a uniform app-identity header applied to every vendor is a CSF outage on the six allowlist hosts. Identity headers belong on the server path by default; on the CSF path only per-vendor allowlisted names may be added. `User-Agent` is settable server-side only - browsers refuse to set it, whatever the allowlist says. Adding these headers does not change CORS on the actual response anywhere; the preflight is the only risk surface.
 
-Unrelated CSF trap found in the same pass: a wrong OpenAI key (and any Cerebras 401) returns no `access-control-allow-origin`, so the browser surfaces an opaque CORS `TypeError` instead of the readable 401; the CSF connect-failure message lists this among its possible causes (AIX-transport-errors.md).
+Unrelated CSF trap found in the same pass: on a chat request, a well-formed but wrong OpenAI key (and any Cerebras 401) returns no `access-control-allow-origin`, so the browser surfaces an opaque CORS `TypeError` instead of the readable 401 (the same key on the models listing gets a readable 401); the CSF connect-failure message lists this among its possible causes (AIX-transport-errors.md).
 
 ## UI
 
