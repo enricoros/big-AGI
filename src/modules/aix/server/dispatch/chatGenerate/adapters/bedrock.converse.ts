@@ -196,7 +196,7 @@ function* _generateConverseContentBlocks({ parts, role }: AixMessages_ChatMessag
             break;
 
           case 'ma':
-            // Extended thinking / reasoning - Converse API does not support thinking blocks, skip
+            // Reasoning is not sent back: Converse takes `reasoningContent` blocks, not wired
             break;
 
           case 'tool_response':

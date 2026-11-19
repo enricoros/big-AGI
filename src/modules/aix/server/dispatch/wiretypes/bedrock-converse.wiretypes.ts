@@ -7,7 +7,7 @@ import * as z from 'zod/v4';
  * Reference: https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html
  *            https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_ConverseStream.html
  *
- * Supports: text, images, tool use/results. Leaves out: audio, video, reasoningConfig, guardrails.
+ * Supports: text, images, tool use/results, reasoning output. Leaves out: audio, video, reasoningConfig, guardrails.
  */
 
 
@@ -47,12 +47,21 @@ export namespace BedrockConverseWire_Blocks {
     }),
   });
 
+  // reasoning models (openai.gpt-oss-*, kimi, deepseek-r1, ...) put it before the text: { reasoningContent: { reasoningText: { text } } }
+  export const ReasoningContentBlock_schema = z.object({
+    reasoningContent: z.union([
+      z.object({ reasoningText: z.object({ text: z.string(), signature: z.string().optional() }) }),
+      z.object({ redactedContent: z.string() }), // base64
+    ]),
+  });
+
   /** Union of all content block types for messages */
   export const ContentBlock_schema = z.union([
     TextBlock_schema,
     ImageBlock_schema,
     ToolUseBlock_schema,
     ToolResultBlock_schema,
+    ReasoningContentBlock_schema,
   ]);
 
 }
@@ -161,6 +170,7 @@ export namespace BedrockConverseWire_API {
     delta: z.union([
       z.object({ text: z.string() }),
       z.object({ toolUse: z.object({ input: z.string() }) }),
+      z.object({ reasoningContent: z.object({ text: z.string().optional(), signature: z.string().optional(), redactedContent: z.string().optional() }) }), // one of the three per delta
     ]),
   });
 

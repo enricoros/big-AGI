@@ -60,6 +60,12 @@ export function createBedrockConverseStreamParser(): ChatGenerateParseFunction {
             // Tool use input delta (incremental JSON string)
             if (currentToolUseId)
               pt.appendFunctionCallInvocationArgs(currentToolUseId, delta.toolUse.input);
+          } else if ('reasoningContent' in delta) {
+            // Reasoning delta, in its own content block before the text
+            const { text, signature, redactedContent } = delta.reasoningContent;
+            if (text) pt.appendReasoningText(text);
+            if (signature) pt.setReasoningSignature(signature);
+            if (redactedContent) pt.addReasoningRedactedData(redactedContent);
           }
           break;
         }
@@ -140,6 +146,13 @@ export function createBedrockConverseParserNS(): ChatGenerateParseFunction {
           (block.toolUse.input as object) || null,
         );
         pt.endMessagePart();
+      } else if ('reasoningContent' in block) {
+        const reasoning = block.reasoningContent;
+        if ('reasoningText' in reasoning) {
+          pt.appendReasoningText(reasoning.reasoningText.text);
+          if (reasoning.reasoningText.signature) pt.setReasoningSignature(reasoning.reasoningText.signature);
+        } else
+          pt.addReasoningRedactedData(reasoning.redactedContent);
       }
       // image and toolResult blocks are not expected in assistant responses
     }
