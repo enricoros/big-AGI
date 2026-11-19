@@ -52,25 +52,25 @@ type BedrockAuthSigV4 = { type: 'sigv4'; accessKeyId: string; secretAccessKey: s
 /** Resolve Bedrock authentication. */
 function _bedrockResolveAuth(access: BedrockAccessSchema): BedrockAuthBearer | BedrockAuthSigV4 {
 
-  // 1. Client bearer token (highest priority)
-  let region = access.bedrockRegion || DEFAULT_BEDROCK_REGION; // client-provided region
+  // 1A. Client bearer token (highest priority)
+  let clientRegion = access.bedrockRegion || DEFAULT_BEDROCK_REGION; // client-provided region
   if (access.bedrockBearerToken || (access.bedrockAccessKeyId && access.bedrockSecretAccessKey))
-    _bedrockValidateRegion(region); // interpolated into hostnames - must not steer requests elsewhere
+    _bedrockValidateRegion(clientRegion); // interpolated into hostnames - must not steer requests elsewhere
   if (access.bedrockBearerToken)
-    return { type: 'bearer', bearerToken: access.bedrockBearerToken, region };
+    return { type: 'bearer', bearerToken: access.bedrockBearerToken, region: clientRegion };
 
-  // 2. Client IAM credentials
+  // 1B. Client IAM credentials
   if (access.bedrockAccessKeyId && access.bedrockSecretAccessKey)
-    return { type: 'sigv4', accessKeyId: access.bedrockAccessKeyId, secretAccessKey: access.bedrockSecretAccessKey, sessionToken: access.bedrockSessionToken || undefined, region };
+    return { type: 'sigv4', accessKeyId: access.bedrockAccessKeyId, secretAccessKey: access.bedrockSecretAccessKey, sessionToken: access.bedrockSessionToken || undefined, region: clientRegion };
 
-  // 3. Server bearer token
-  region = env.BEDROCK_REGION || DEFAULT_BEDROCK_REGION; // server-provided region (ignores client for security reasons)
+  // 2A. Server bearer token
+  const serverRegion = env.BEDROCK_REGION || DEFAULT_BEDROCK_REGION; // server-provided region (ignores client for security reasons)
   if (env.BEDROCK_BEARER_TOKEN)
-    return { type: 'bearer', bearerToken: env.BEDROCK_BEARER_TOKEN, region };
+    return { type: 'bearer', bearerToken: env.BEDROCK_BEARER_TOKEN, region: serverRegion };
 
-  // 4. Server IAM credentials
+  // 2B. Server IAM credentials
   if (env.BEDROCK_ACCESS_KEY_ID && env.BEDROCK_SECRET_ACCESS_KEY)
-    return { type: 'sigv4', accessKeyId: env.BEDROCK_ACCESS_KEY_ID, secretAccessKey: env.BEDROCK_SECRET_ACCESS_KEY, sessionToken: env.BEDROCK_SESSION_TOKEN || undefined, region };
+    return { type: 'sigv4', accessKeyId: env.BEDROCK_ACCESS_KEY_ID, secretAccessKey: env.BEDROCK_SECRET_ACCESS_KEY, sessionToken: env.BEDROCK_SESSION_TOKEN || undefined, region: serverRegion };
 
   throw new TRPCError({
     code: 'BAD_REQUEST',
