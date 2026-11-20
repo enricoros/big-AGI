@@ -759,9 +759,9 @@ function clientHotFixGenerateRequest_StripImages(aixChatGenerate: AixAPIChatGene
   // Note: other conversions that would translate to system inside the AIX Dispatch will be handled there, as we have a
   // higher level representation here, where the roles are 'user', 'model', and 'tool'.
 
-  // Remove any inline images from the entire chat sequence
-  for (let i = 0; i < aixChatGenerate.chatSequence.length; i++) {
-    const message = aixChatGenerate.chatSequence[i];
+  // Remove any inline images from the system message (persona images) and the entire chat sequence
+  const { systemMessage, chatSequence } = aixChatGenerate;
+  for (const message of systemMessage ? [systemMessage, ...chatSequence] : chatSequence) {
 
     // Iterate over message parts and remove inline images
     for (let j = message.parts.length - 1; j >= 0; j--) {
@@ -785,7 +785,9 @@ async function clientHotFixGenerateRequest_ConvertWebP(aixChatGenerate: AixAPICh
   let workaroundsCount = 0;
   const quality = toFormat === 'image/jpeg' ? 0.92 : 1.0;
 
-  for (const message of aixChatGenerate.chatSequence) {
+  // the system message carries inline images too (persona images)
+  const { systemMessage, chatSequence } = aixChatGenerate;
+  for (const message of systemMessage ? [systemMessage, ...chatSequence] : chatSequence) {
     for (let j = 0; j < message.parts.length; j++) {
       const part = message.parts[j];
       if (part.pt === 'inline_image' && part.mimeType === 'image/webp') {
