@@ -111,6 +111,7 @@ async function getAllLocalStorageKeyValues(): Promise<Record<string, any>> {
 
 async function getAllIndexedDBData(ignoreExclusions: boolean): Promise<Record<string, any>> {
   const data: Record<string, any> = {};
+  const unread: string[] = [];
   try {
     const dbNames = await listIndexedDBDatabaseNames();
     for (const dbName of dbNames) {
@@ -119,12 +120,16 @@ async function getAllIndexedDBData(ignoreExclusions: boolean): Promise<Record<st
         data[dbName] = await getIndexedDBContent(dbName);
       } catch (error) {
         console.error(`Error getting content for IndexedDB "${dbName}":`, error);
+        unread.push(`"${dbName}" (${_getErrorText(error)})`);
       }
     }
   } catch (error) {
     console.error('Error processing IndexedDB databases:', error);
     // return what we have
   }
+  // a file saved as a backup must hold every database it was asked for: fail here, the caller reports it and saves nothing
+  if (unread.length)
+    throw new Error(`Could not read the database ${unread.join(', ')}. Reload the app and retry.`);
   return data;
 }
 
