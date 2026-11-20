@@ -245,6 +245,18 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
   {
 
     name: 'agi-live-file',
+
+    /* Version history:
+     *  1: the file contents are not stored: version 0 wrote them to localStorage on every change (up to 10 MB each),
+     *     from where they also reached the flash backups, and dropped them at the next load with their entry
+     */
+    version: 1,
+
+    // Pre-Saving: the file contents stay in memory and on disk
+    partialize: (state) => ({ ...state, liveFiles: _withoutContents(state.liveFiles) }),
+
+    // 0 -> 1: removes the contents stored by version 0 - a migrated state is saved back at once
+    migrate: (state: any) => ({ ...state, liveFiles: _withoutContents(state?.liveFiles) }),
     // getStorage: () => ...?
 
     onRehydrateStorage: () => (state) => {
@@ -270,6 +282,11 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
 
   },
 ));
+
+
+function _withoutContents(liveFiles: Record<LiveFileId, LiveFile> | undefined): Record<LiveFileId, LiveFile> {
+  return Object.fromEntries(Object.entries(liveFiles || {}).map(([id, file]) => [id, { ...file, content: null }]));
+}
 
 
 // public accessors
