@@ -4,9 +4,8 @@ import { Button, Chip, IconButton, Sheet, Typography } from '@mui/joy';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 
-import { importConversationsFromFilesAtRest, openConversationsAtRestPicker } from '~/modules/trade/trade.client';
+import { tradeFilesPick } from '~/modules/trade/trade.files';
 
-import { addSnackbar } from '~/common/components/snackbar/useSnackbarsStore';
 import { launchAppChat } from '~/common/app.routes';
 import { themeZIndexPageBar } from '~/common/app.theme';
 import { uiSetDismissed, useUIIsDismissed } from '~/common/stores/store-ui';
@@ -14,16 +13,20 @@ import { uiSetDismissed, useUIIsDismissed } from '~/common/stores/store-ui';
 import { FROM_V1_DISMISS_KEY, fromV1ArrivedRecently, fromV1DetectArrival } from './from-v1';
 
 
+const TradeModalLazy = React.lazy(() => import('~/modules/trade/TradeModal').then(module => ({ default: module.TradeModal })));
+
+
 /**
  * Welcome banner for users arriving from Big-AGI V1 (EOL migration, `utm_campaign=eol-v1`).
- * Offers a one-click import of the V1 backup file - chats, folders, and API keys.
+ * Offers the import of the V1 backup file - chats and folders, and the API keys once ticked in the import dialog.
  * Hidden once dismissed, or after a successful import.
  */
 export function FromV1ImportBanner() {
 
   // state
   const [arrived, setArrived] = React.useState(false);
-  const [importing, setImporting] = React.useState(false);
+  const [files, setFiles] = React.useState<File[] | null>(null);
+  const importedRef = React.useRef(false);
 
   // external state
   const dismissed = useUIIsDismissed(FROM_V1_DISMISS_KEY);
@@ -36,25 +39,16 @@ export function FromV1ImportBanner() {
 
 
   const handleImport = React.useCallback(async () => {
-    const files = await openConversationsAtRestPicker();
-    if (!files?.length) return;
-    setImporting(true);
-    try {
-      // restoreModelServices: deliberate migration surface - bring the V1 API keys along
-      const outcome = await importConversationsFromFilesAtRest(files, false, true);
-      const okCount = outcome.conversations.filter(c => c.success).length;
-      const failCount = outcome.conversations.length - okCount;
-      if (okCount > 0) {
-        addSnackbar({ key: 'from-v1-import', message: `Imported ${okCount} chat${okCount === 1 ? '' : 's'} from Big-AGI v1${failCount ? ` (${failCount} skipped)` : ''}.`, type: 'success' });
-        uiSetDismissed(FROM_V1_DISMISS_KEY); // mission accomplished - retire the banner
-        if (outcome.activateConversationId)
-          await launchAppChat(outcome.activateConversationId);
-      } else {
-        addSnackbar({ key: 'from-v1-import', message: 'Could not import that file - use the backup downloaded from Big-AGI v1.', type: 'issue' });
-      }
-    } finally {
-      setImporting(false);
-    }
+    const picked = await tradeFilesPick();
+    if (picked?.length)
+      setFiles(picked);
+  }, []);
+
+  const handleImportClose = React.useCallback(() => {
+    setFiles(null);
+    // mission accomplished - retire the banner, once the import dialog is gone
+    if (importedRef.current)
+      uiSetDismissed(FROM_V1_DISMISS_KEY);
   }, []);
 
   const handleDismiss = React.useCallback(() => {
@@ -97,14 +91,13 @@ export function FromV1ImportBanner() {
 
       {/* Message */}
       <Typography level='body-sm' sx={{ fontWeight: 500 }}>
-        <strong style={{ color: 'var(--joy-palette-text-primary)' }}>Coming from Big-AGI v1?</strong> Import your backup - chats, folders and API keys come along.
+        <strong style={{ color: 'var(--joy-palette-text-primary)' }}>Coming from Big-AGI v1?</strong> Import your backup - chats and folders come along, and your API keys if you tick them.
       </Typography>
 
       {/* CTA */}
       <Button
         size='sm'
         variant='soft'
-        loading={importing}
         onClick={handleImport}
         endDecorator={<FileUploadOutlinedIcon />}
         sx={{ minHeight: 'auto', py: 0.5, px: 1.5, minWidth: 104 }}
@@ -121,6 +114,18 @@ export function FromV1ImportBanner() {
       >
         <CloseRoundedIcon />
       </IconButton>
+
+      {/* The import dialog: shows what the backup holds, before anything is written */}
+      {!!files && (
+        <React.Suspense fallback={null}>
+          <TradeModalLazy
+            config={{ dir: 'import', files }}
+            onConversationActivate={conversationId => void launchAppChat(conversationId)}
+            onImported={() => importedRef.current = true}
+            onClose={handleImportClose}
+          />
+        </React.Suspense>
+      )}
 
     </Sheet>
   );

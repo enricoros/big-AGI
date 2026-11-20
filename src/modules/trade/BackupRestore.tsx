@@ -2,9 +2,9 @@ import * as React from 'react';
 import { fileOpen, fileSave, FileWithHandle } from 'browser-fs-access';
 
 import { Box, Button, Checkbox, Divider, FormControl, FormLabel, Sheet, Switch, Typography } from '@mui/joy';
-import DownloadIcon from '@mui/icons-material/Download';
 import DoneIcon from '@mui/icons-material/Done';
 import ErrorIcon from '@mui/icons-material/Error';
+import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import RestoreIcon from '@mui/icons-material/Restore';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
@@ -668,7 +668,10 @@ async function createFlashObject(backupType: 'full' | 'partial' | 'auto-before-r
  * Backup and Restore (Flashing) functionality for Big-AGI client-side data.
  * Saves and fully restores localStorage and IndexedDB data.
  */
-export function FlashRestore(props: { unlockRestore?: boolean }) {
+export function FlashRestore(props: {
+  unlockRestore?: boolean,
+  file?: File, // the backup to restore, when it is already chosen: the button does not ask for one
+}) {
 
   // state
   const [restoreState, setRestoreState] = React.useState<'idle' | 'processing' | 'confirm' | 'success' | 'error'>('idle');
@@ -680,6 +683,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
   const [tenantSlugWarning, setTenantSlugWarning] = React.useState<string | null>(null);
 
   // derived state
+  const { file: fileGiven } = props;
   const isUnlocked = !!props.unlockRestore;
   const isBusy = restoreState === 'processing';
   const hasLocalStorageData = backupDataForRestore ? hasKeys(backupDataForRestore.storage.localStorage) : false;
@@ -696,9 +700,9 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
     setTenantSlugWarning(null);
 
     // user selects a file
-    let file: FileWithHandle;
+    let file: File;
     try {
-      file = await fileOpen({
+      file = fileGiven ?? await fileOpen({
         // only '.json': the compound '.agi.json' is an invalid extension for Chrome's File System Access API and breaks the picker (the backup file can't be selected). '.json' still matches '*.agi.json' files by suffix.
         extensions: ['.json'],
         description: BACKUP_FILE_FORMAT,
@@ -771,7 +775,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       setRestoreState('error');
       setErrorMessage(`Restore failed: ${_getErrorText(error)}`);
     }
-  }, []);
+  }, [fileGiven]);
 
   const handleRestoreFlashConfirmed = React.useCallback(async () => {
     if (!backupDataForRestore) return;
@@ -842,7 +846,7 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
   return <>
 
     <Typography level='body-sm' mt={2}>
-      Restore from a backup file:
+      {fileGiven ? 'Or replace everything on this device with it:' : 'Restore from a backup file:'}
     </Typography>
     <Button
       variant='soft'
@@ -853,12 +857,10 @@ export function FlashRestore(props: { unlockRestore?: boolean }) {
       endDecorator={restoreState === 'success' ? <DoneIcon /> : restoreState === 'error' ? <ErrorIcon /> : <RestoreIcon />}
       onClick={handleRestoreLoad}
       sx={{
-        boxShadow: 'md',
-        backgroundColor: 'background.popup',
         justifyContent: 'space-between',
       }}
     >
-      {restoreState === 'success' ? 'Restore Complete' : restoreState === 'error' ? 'Restore Failed' : restoreState === 'processing' ? 'Restoring...' : 'Restore from Backup File'}
+      {restoreState === 'success' ? 'Restore Complete' : restoreState === 'error' ? 'Restore Failed' : restoreState === 'processing' ? 'Restoring...' : fileGiven ? 'Restore Device' : 'Restore from Backup File'}
     </Button>
     {/*{!errorMessage && <Typography level='body-xs'>*/}
     {/*  Warning: Replaces current data.<br />Requires page reload.*/}
@@ -1029,8 +1031,8 @@ export function FlashBackup(props: {
 
   return <>
 
-    <Typography level='body-sm' mt={3}>
-      Save <strong>all settings and chats</strong>:
+    <Typography level='body-sm'>
+      A copy of <strong>this device</strong>, to restore it whole:
     </Typography>
     <Button
       variant='soft'
@@ -1038,20 +1040,18 @@ export function FlashBackup(props: {
       color={backupState === 'success' ? 'success' : backupState === 'error' ? 'warning' : 'primary'}
       disabled={isProcessing}
       loading={isProcessing}
-      endDecorator={backupState === 'success' ? <DoneIcon /> : backupState === 'error' ? <ErrorIcon /> : <DownloadIcon />}
+      endDecorator={backupState === 'success' ? <DoneIcon /> : backupState === 'error' ? <ErrorIcon /> : <FileDownloadOutlinedIcon />}
       onClick={handleFullBackup}
       onDoubleClick={console.log}
       sx={{
-        boxShadow: 'md',
-        backgroundColor: 'background.popup',
         justifyContent: 'space-between',
       }}
     >
-      {backupState === 'success' ? 'Backup Saved' : backupState === 'error' ? 'Backup Failed' : isProcessing ? 'Backing Up...' : 'Export All'}
+      {backupState === 'success' ? 'Backup Saved' : backupState === 'error' ? 'Backup Failed' : isProcessing ? 'Backing Up...' : 'Back Up Device'}
     </Button>
     {backupState === 'success' && backupSizeBytes !== null && (
       <Typography level='body-xs' color='success'>
-        Flash backup saved · {humanReadableBytes(backupSizeBytes)}
+        Device backup saved · {humanReadableBytes(backupSizeBytes)}
       </Typography>
     )}
     {!errorMessage && <>

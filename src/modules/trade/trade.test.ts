@@ -318,6 +318,8 @@ describe('files', () => {
     const source = tradeFileRead('backup.json', backup({ state: { conversations: [oneChat] }, version: 4 }, {}));
     assert.deepEqual(source.sections.flatMap(section => section.items.map(item => item.id)), ['app-ui', 'app-models', 'f1', 'c1']);
     assert.equal(source.notes.length, 2); // what is not imported, however much of it; the images
+    assert.equal(source.holdsImages, true); // saved with its images: the device restore is offered for it
+    assert.equal(tradeFileRead('chat.json', oneChat).holdsImages, undefined);
     const [notImported, images] = source.notes;
     assert.deepEqual(notImported.names, ['app-device', 'agi-logger-log', 'app-chats-v3', 'zync-storage-anon']); // not 'app-folders': its folders are a section
     assert.ok(notImported.text.includes('3 stored values and 1 database'));

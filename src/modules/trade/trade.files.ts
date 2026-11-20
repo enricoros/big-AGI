@@ -17,9 +17,11 @@ import { tradeStoreValueSections } from './adapters/trade.settings';
 
 export interface TradeSource {
   fileName: string;
+  file?: File;                          // the file itself, for what takes it whole
   origin?: { tenantSlug?: string, exported?: string };
   sections: TradeSection[];
   notes: TradeNote[];                   // what the file holds that is not imported
+  holdsImages?: true;                   // a device backup saved with its images: only the device restore brings them
   error?: string;                       // the file could not be read at all
 }
 
@@ -51,7 +53,7 @@ export async function tradeFilesRead(files: File[]): Promise<TradeSource[]> {
       continue;
     }
     try {
-      sources.push(tradeFileRead(fileName, json));
+      sources.push({ ...tradeFileRead(fileName, json), file });
     } catch {
       sources.push({ fileName, sections: [], notes: [], error: 'Not a Big-AGI file: it is damaged' }); // a shape the reader did not expect
     }
@@ -150,9 +152,10 @@ function _readDeviceBackup(json: any, source: TradeSource): void {
         } else if (typeof entry?.key === 'string')
           otherValues.push(entry.key); // 'app-chats-v3': the copy of the chats an upgrade left behind
       }
-    } else if (dbName === 'Big-AGI')
-      source.notes.push({ text: 'Images are in this backup: the device restore, under Advanced, brings them back and replaces everything on this device' });
-    else
+    } else if (dbName === 'Big-AGI') {
+      source.holdsImages = true;
+      source.notes.push({ text: 'Images are in this backup: importing brings everything but them' });
+    } else
       otherDatabases.push(dbName);
   }
 

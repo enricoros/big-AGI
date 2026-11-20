@@ -2,7 +2,6 @@ import type { SystemPurposeId } from '../../../data';
 
 import { nanoidToUuidV4 } from '~/common/util/idUtils';
 
-import type { DFolder } from '~/common/stores/folders/store-chat-folders';
 import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { liveFileGetAllValidIDs } from '~/common/livefile/store-live-file';
 
@@ -267,7 +266,7 @@ export namespace DataAtRestV1 {
 
   /// Rest V1 -> Head ///
 
-  /** Used by: AppLinkChat.fetchStoredChatV1, trade_client.loadSingleChatFromAtRestV1 */
+  /** Used by: AppLinkChat.fetchStoredChatV1, trade.client tradeAdapters */
   export function recreateConversation(chatJV1: RestChatJsonV1 & { tokenCount?: number }): DConversation | null {
 
     // sanity check
@@ -292,40 +291,10 @@ export namespace DataAtRestV1 {
     return V3StoreDataToHead.recreateConversation(chatJV1);
   }
 
-  /** Used by: trade_client.loadConversationsFromAtRestV1 */
-  export function recreateFolders(part: RestFolderJsonV1[]): DFolder[] {
-    return (part || []).map(_recreateFolder).filter((f) => f) as DFolder[];
-  }
-
-  function _recreateFolder(part: RestFolderJsonV1): DFolder | null {
-
-    // sanity check
-    if (!part || !part.id || !part.title || !part.conversationIds) {
-      console.warn('createFolderFromJsonV1: invalid folder json', part);
-      return null;
-    }
-
-    return {
-      id: part.id,
-      title: part.title,
-      conversationIds: part.conversationIds,
-      color: part.color,
-    };
-  }
-
 
   /// Head -> Rest V1 ///
 
-  /** Used by: downloadAllJsonV1B */
-  export function formatAllToJsonV1B(conversations: DConversation[], modelSources: DModelsService[], folders: DFolder[], enableFolders: boolean): RestAllJsonV1B {
-    return {
-      conversations: (conversations || []).map(formatChatToJsonV1),
-      models: { sources: modelSources },
-      folders: { folders, enableFolders },
-    };
-  }
-
-  /** Used by: ^, downloadSingleChat, ChatLinkExport.handleCreate */
+  /** Used by: downloadSingleChat, ChatLinkExport.handleCreate */
   export function formatChatToJsonV1(ec: DConversation): RestChatJsonV1 {
     return {
       id: ec.id,

@@ -1,4 +1,4 @@
-import { fileOpen, fileSave, FileWithHandle } from 'browser-fs-access';
+import { fileSave } from 'browser-fs-access';
 
 import { SystemPurposeId, SystemPurposes } from '../../data';
 
@@ -6,15 +6,18 @@ import { Brand } from '~/common/app.config';
 import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
 import { Release } from '~/common/app.release';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
+import { idbFlushWrites } from '~/common/util/idbUtils';
 import { conversationTitle, DConversation, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
-import { llmsStoreActions, llmsStoreState } from '~/common/stores/llms/store-llms';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { prettyShortChatModelName } from '~/common/util/dMessageUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 import { useChatStore } from '~/common/stores/chat/store-chats';
-import { useFolderStore } from '~/common/stores/folders/store-chat-folders';
 
-import type { ImportedOutcome } from './ImportOutcomeModal';
+import type { TradeAdapter } from './trade.types';
+import { tradeChatsAdapter } from './adapters/trade.chats';
+import { tradeFoldersAdapter } from './adapters/trade.folders';
+import { tradeLegacyServicesAdapter } from './adapters/trade.services';
+import { tradeSettingsAdapters } from './adapters/trade.settings';
 
 
 export function tradeFileVariant() {
@@ -22,159 +25,37 @@ export function tradeFileVariant() {
 }
 
 
-/// IMPORT ///
+/// ADAPTERS ///
 
 /**
- * Load conversations from the given Files (we don't need/use the handle here, as no LiveFile is involved in the import)
- * @param files The files to import, if null the user may have cancelled the request
- * @param preventClash If true, the importer will not overwrite existing conversations with the same ID
- * @param restoreModelServices If true, model services (incl. API keys) found in backup files are restored, add-only - keep OFF for casual surfaces (drag-drop), ON only for deliberate restore (Import dialog)
+ * The kinds of data this build can export and import.
+ *
+ * A function, not a constant: it reads the stores, so it is called when a trade dialog opens, never
+ * while the app loads. A build that stores its data differently returns its own.
  */
-export async function importConversationsFromFilesAtRest(files: File[] | null, preventClash: boolean = false, restoreModelServices: boolean = false): Promise<ImportedOutcome> {
-  const outcome: ImportedOutcome = { conversations: [], modelServices: [], activateConversationId: null };
-
-  // user cancelled
-  if (!files)
-    return outcome;
-
-  // unroll files to conversations
-  for (const file of files) {
-    const fileName = file.name || 'unknown file';
-    try {
-      const fileString = await file.text();
-      const fileObject = JSON.parse(fileString);
-      loadConversationsFromAtRestV1(fileName, fileObject, outcome);
-    } catch (error: any) {
-      outcome.conversations.push({
-        success: false,
-        fileName,
-        error: `Issue loading file: ${error?.message || error?.toString() || 'unknown error'}`,
-      });
-    }
-  }
-
-  // import conversations
-  for (const cOutcome of [...outcome.conversations].reverse()) {
-    if (!cOutcome.success)
-      continue;
-    cOutcome.importedConversationId = useChatStore.getState().importConversation(cOutcome.conversation, preventClash);
-    // the last successfully imported is the one to activate
-    if (cOutcome.importedConversationId)
-      outcome.activateConversationId = cOutcome.importedConversationId;
-  }
-
-  // import model services (incl. API keys): explicit opt-in only, and add-only - never overwrites existing services
-  if (restoreModelServices && outcome.modelServices.length)
-    outcome.servicesOutcome = llmsStoreActions().importServicesAppend(outcome.modelServices);
-
-  return outcome;
-}
-
-/**
- * Show a file picker dialog, then return the selected files
- * - this chains well with `importConversationsFromFilesAtRest`
- */
-export async function openConversationsAtRestPicker(): Promise<FileWithHandle[] | null> {
-  try {
-    return await fileOpen({
-      description: `${Brand.Title.Base} JSON Conversations`,
-      mimeTypes: ['application/json', 'application/big-agi'],
-      multiple: true,
-    });
-  } catch (error) {
-    // User closed the dialog
-    return null;
-  }
-}
-
-
-/**
- * Restores all conversations in a JSON
- *  - supports both  DataAtRestV1.RestAllJsonV1B, and DataAtRestV1.RestChatJsonV1 files
- */
-function loadConversationsFromAtRestV1(fileName: string, obj: any, outcome: ImportedOutcome) {
-  // heuristics
-  const hasConversations = obj.hasOwnProperty('conversations');
-  const hasMessages = obj.hasOwnProperty('messages');
-
-  switch (true) {
-
-    // Heuristic (backup): DataAtRestV1.RestAllJsonV1B
-    case hasConversations && !hasMessages:
-      const { conversations, folders, models } = obj as DataAtRestV1.RestAllJsonV1B;
-      for (const conversation of conversations)
-        loadSingleChatFromAtRestV1(fileName, conversation, outcome);
-
-      // in ExportedAllJsonV1b+, folders weren't there before
-      if (folders?.folders) {
-        const dFolders = DataAtRestV1.recreateFolders(folders.folders);
-        if (dFolders.length)
-          useFolderStore.getState().importFoldersAppend(dFolders, folders.enableFolders);
-      }
-
-      // collect model services - light shape check only, the applier (importServicesAppend) validates the vendor and skips duplicates
-      if (models?.sources && Array.isArray(models.sources))
-        for (const service of models.sources)
-          if (service && typeof service === 'object' && service.id && service.vId)
-            outcome.modelServices.push(service);
-      break;
-
-    // Heuristic (single):
-    case hasMessages && !hasConversations:
-      const conversation = obj as DataAtRestV1.RestChatJsonV1;
-      loadSingleChatFromAtRestV1(fileName, conversation, outcome);
-      break;
-
-    default:
-      outcome.conversations.push({ success: false, fileName, error: `Invalid file: ${fileName}` });
-      break;
-
-  }
-}
-
-function loadSingleChatFromAtRestV1(fileName: string, part: DataAtRestV1.RestChatJsonV1, outcome: ImportedOutcome) {
-  const restored = DataAtRestV1.recreateConversation(part);
-  if (!restored)
-    outcome.conversations.push({ success: false, fileName, error: `Invalid conversation: ${part.id}` });
-  else
-    outcome.conversations.push({ success: true, fileName, conversation: restored });
+export function tradeAdapters(): TradeAdapter[] {
+  return [
+    {
+      ...tradeChatsAdapter({
+        schema: 'app-chats.v4',
+        // what the store persists: no incognito, no empty conversations
+        list: () => useChatStore.getState().conversations.filter(c => !c._isIncognito && (c.messages?.length || c.userTitle || c.autoTitle)),
+        fromJson: (json) => DataAtRestV1.recreateConversation(json as DataAtRestV1.RestChatJsonV1),
+        import: (conversation) => useChatStore.getState().importConversation(conversation, false),
+        saved: idbFlushWrites,
+      }),
+      // the chats load from disk after the app starts: an export before that would be an empty one
+      // (no 'persist' where the browser has no IndexedDB: the chats then live in memory only)
+      ...(useChatStore.persist?.hasHydrated() === false && { unavailable: 'Conversations are still loading' }),
+    },
+    tradeFoldersAdapter(),
+    ...tradeSettingsAdapters(),
+    tradeLegacyServicesAdapter(),
+  ];
 }
 
 
 /// EXPORT ///
-
-/**
- * Download all conversations as a JSON file, for backup and future restore
- * @returns the number of conversations saved and the exact file size, for UI confirmation
- * @throws {DOMException} AbortError if the user closes the save dialog
- * @throws {Error} if there are no conversations to save, or the file could not be saved
- */
-export async function downloadAllJsonV1B(): Promise<{ conversationCount: number; sizeBytes: number }> {
-  // conversations and
-  const { folders, enableFolders } = useFolderStore.getState();
-  const conversations = useChatStore.getState().conversations;
-
-  // never write an empty backup - the store may still be hydrating, or there is nothing to save
-  if (!conversations.length)
-    throw new Error('No conversations to backup. If you have chats, wait for the app to finish loading and retry.');
-
-  const payload = DataAtRestV1.formatAllToJsonV1B(
-    conversations,
-    llmsStoreState().sources,
-    folders, enableFolders,
-  );
-  const json = JSON.stringify(payload);
-  const blob = new Blob([json], { type: 'application/json' });
-
-  // save file - let errors (including AbortError on cancel) reach the caller, so the UI never fakes success
-  await fileSave(blob, {
-    fileName: `backup_chats_${window?.location?.hostname || 'all'}_${payload.conversations.length}_${prettyTimestampForFilenames(false)}.agi.json`,
-    // mimeTypes: ['application/json', 'application/big-agi'],
-    extensions: ['.json'],
-  });
-
-  return { conversationCount: payload.conversations.length, sizeBytes: blob.size };
-}
 
 /**
  * Download a conversation as a JSON file, for backup and future restore

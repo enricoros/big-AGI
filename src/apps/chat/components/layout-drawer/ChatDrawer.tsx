@@ -481,7 +481,7 @@ function ChatDrawer(props: {
           {/*<OpenAIIcon sx={{  ml: 'auto' }} />*/}
         </ListItemButton>
 
-        {/* Always enabled: this is also the only route to 'Backup All Chats' / 'Export All', which must stay reachable (e.g. with Beam open, or zero chats).
+        {/* Always enabled: this is also the only route to the export of all data, which must stay reachable (e.g. with Beam open, or zero chats).
           - former gate (d8c78b1a004, 'Export: disable when beam open, as it's not exported for now'), kept for the record:
             disabled={filteredChatsAreEmpty || props.focusedChatBeamOpen} */}
         <ListItemButton onClick={handleConversationsExport} sx={{ flex: 1 }}>

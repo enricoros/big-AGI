@@ -88,6 +88,19 @@ class IndexedDBWriteScheduler {
     return this.#idbWriteString(key, JSON.stringify(newValue));
   }
 
+  /** Writes what is scheduled, without waiting for its timer, and resolves once nothing is left to write. */
+  async flush(): Promise<void> {
+    for (const key in this.writeOperations) {
+      const operation = this.writeOperations[key];
+      while (operation.needsWrite || operation.isWriting) {
+        if (operation.isWriting)
+          await new Promise(resolve => setTimeout(resolve, 20)); // a write in flight: it reschedules itself when done
+        else
+          await this.#performWrite(key);
+      }
+    }
+  }
+
 
   // scheduling
 
@@ -230,6 +243,14 @@ export function createIDBPersistStorage<S>(): PersistStorage<S> | undefined {
       // We do NOT remove! We don't intend to implement this, on purpose
     },
   };
+}
+
+
+/**
+ * Resolves once the stores that persist here are on disk: for what must not be lost to a reload.
+ */
+export function idbFlushWrites(): Promise<void> {
+  return _idbScheduler.flush();
 }
 
 

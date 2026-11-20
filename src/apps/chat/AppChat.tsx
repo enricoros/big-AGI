@@ -6,7 +6,8 @@ import type { SxProps } from '@mui/joy/styles/types';
 
 import type { DiagramConfig } from '~/modules/aifn/digrams/DiagramsModal';
 import type { TradeConfig } from '~/modules/trade/TradeModal';
-import { downloadSingleChat, importConversationsFromFilesAtRest, openConversationsAtRestPicker } from '~/modules/trade/trade.client';
+import { downloadSingleChat } from '~/modules/trade/trade.client';
+import { tradeFilesPick } from '~/modules/trade/trade.files';
 import { imaginePromptFromTextOrThrow } from '~/modules/aifn/imagine/imaginePromptFromText';
 import { useCapabilityTextToImage } from '~/modules/t2i/t2i.client';
 
@@ -304,24 +305,14 @@ export function AppChat() {
     setTradeConfig({ dir: 'export', conversationId, exportAll });
   }, []);
 
-  const handleConversationsImportFromFiles = React.useCallback(
-    (files: File[] | null): Promise<void> =>
-      importConversationsFromFilesAtRest(files, true)
-        .then((outcome) => {
-          // activate the last (most recent) imported conversation
-          if (outcome.activateConversationId) {
-            handleOpenConversationInFocusedPane(outcome.activateConversationId);
-            showFocusedChatTitle();
-          }
-        })
-        .catch(() => {
-          addSnackbar({ key: 'chat-import-fail', message: 'Could not open file.', type: 'issue' });
-        }),
-    [handleOpenConversationInFocusedPane, showFocusedChatTitle],
-  );
+  const handleConversationsImportFromFiles = React.useCallback(async (files: File[] | null): Promise<void> => {
+    // the import dialog shows what the files would do, before anything is written
+    if (files?.length)
+      setTradeConfig({ dir: 'import', files });
+  }, []);
 
   const handleConversationsImportFormFilePicker = React.useCallback(
-    () => openConversationsAtRestPicker().then(handleConversationsImportFromFiles),
+    () => tradeFilesPick().then(handleConversationsImportFromFiles),
     [handleConversationsImportFromFiles],
   );
 

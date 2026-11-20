@@ -17,6 +17,7 @@ Architecture and system documentation is available in the `/kb/` knowledge base,
 - **[CHAT-render-tree.md](modules/CHAT-render-tree.md)** - the render tree behind ChatMessage: rules in force (citation hoist, fused runs, tool pairing, edit mode shape, key continuity, layout), open work (attachments editor, edit session, block reordering, citation-split text), known limits
 
 #### Trade - Export and Import
+- **[TRADE.md](modules/TRADE.md)** - the export file and the import that previews: the model (a file is a snapshot, import is a merge by id), the rules of the persisted file, relations by content, settings and credentials, files written before, gaps
 - **[TRADE-claude-code-export.md](modules/TRADE-claude-code-export.md)** - export for Claude Code: session and chat folder formats, measured Claude Code resume behavior, gaps
 
 #### News - What's New and the Docs Reader
