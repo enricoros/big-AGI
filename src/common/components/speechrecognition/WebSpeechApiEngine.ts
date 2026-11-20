@@ -97,7 +97,7 @@ export class WebSpeechApiEngine implements IRecognitionEngine {
        * an onresult with a final result, we may lose the last interim result.
        */
       if (this.results.interimTranscript && this.results.interimTranscript !== PLACEHOLDER_INTERIM_TRANSCRIPT) {
-        this.results.transcript = _chunkExpressionReplaceEN(((this.results.transcript + ' ').trim() + this.results.interimTranscript + ' '));
+        this.results.transcript = _chunkExpressionReplaceEN((this.results.transcript.trim() + ' ' + this.results.interimTranscript).trim() + ' '); // one space between the final and the pending text, one after
       }
       this.results.interimTranscript = '';
       this.results.done = true;
