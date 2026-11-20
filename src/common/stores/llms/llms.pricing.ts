@@ -95,9 +95,7 @@ export function getLlmCostForTokens(tierTokens: number, tokens: number, pricing:
  *
  * Note: does NOT affect isLLMChatFree_cached (free * N = free). Per-call tool fees are not multiplied.
  */
-export function llmChatPricing_multiplied(llm: Pick<DLLM, 'pricing' | 'userPricing'> | null, multiplier: number): DPricingChatGenerate | undefined {
-  if (!llm) return undefined;
-
+export function llmChatPricing_multiplied(llm: Pick<DLLM, 'pricing' | 'userPricing'>, multiplier: number): DPricingChatGenerate | undefined {
   // base chat pricing
   const gcPricing = (llm.userPricing ?? llm.pricing)?.chat;
   if (!gcPricing) return undefined;
