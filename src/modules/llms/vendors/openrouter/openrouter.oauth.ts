@@ -12,6 +12,7 @@
  * can be long after the sign-in started (an account created on the way). The next sign-in replaces a stale entry.
  */
 
+import { BaseProduct } from '~/common/app.release';
 import { convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
 
 
@@ -40,6 +41,7 @@ export async function openRouterOAuthBegin(callbackUrl: string): Promise<string>
   authUrl.searchParams.set('code_challenge', _base64Url(new Uint8Array(digest)));
   authUrl.searchParams.set('code_challenge_method', 'S256');
   authUrl.searchParams.set('state', state); // returned unchanged on the callback URL
+  authUrl.searchParams.set('key_label', BaseProduct.ProductName); // prefills the new key's label: left blank, OpenRouter uses its own name for this origin, which we do not set
   return authUrl.toString();
 }
 
