@@ -10,8 +10,8 @@ import { tradeRelateByContent } from '../trade.plan';
 
 
 // The stores an export holds. A store that is not listed stays on its device: view state, identity, sessions, logs.
-// Never to be listed: the shared chat links ('app-sharing'), the open panes, the sign-in cache, the V1 arrival
-// marker, the analytics client's 'ph_*'. The device backup leaves the same ones out, by name (BackupRestore.tsx).
+// Never to be listed: the shared chat links ('app-sharing'), the open panes, the sign-in cache, the analytics
+// client's 'ph_*'. The device backup leaves the same ones out, by name (BackupRestore.tsx).
 const STORES: Record<string, { group: 'settings' | 'credentials', title: string }> = {
   'app-ui': { group: 'settings', title: 'Appearance and layout' },
   'joy-mode': { group: 'settings', title: 'Light or dark theme' },

@@ -80,8 +80,8 @@ deliberate: a new store is left out until someone decides it travels, and view s
 and logs never do. Stores that hold API keys are a separate kind, off by default on export.
 
 Some stored values travel in no file at all, the device backup included: the shared chat links with their
-deletion keys, the open panes, the sign-in cache, the marker of an arrival from V1, the analytics client's
-state. A backup does not save them, and a restore neither writes them, from an older backup that holds
+deletion keys, the open panes, the sign-in cache, the analytics client's state, and a marker that a
+removed banner left in some browsers. A backup does not save them, and a restore neither writes them, from an older backup that holds
 them, nor removes this device's.
 
 On import neither is selected by default: they replace this device's values and can point a service at

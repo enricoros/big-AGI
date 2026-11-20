@@ -124,7 +124,6 @@ function _compareText(adapter: TradeAdapter, item: TradeItem): string {
 export function TradeImport(props: {
   files?: File[],
   onConversationActivate: (conversationId: DConversationId) => void,
-  onImported?: () => void,
 }) {
 
   // state
@@ -142,7 +141,7 @@ export function TradeImport(props: {
   // external state
   const isMobile = useIsMobile();
 
-  const { files: initialFiles, onConversationActivate, onImported } = props;
+  const { files: initialFiles, onConversationActivate } = props;
 
 
   // handlers
@@ -226,9 +225,7 @@ export function TradeImport(props: {
       setApplied(result);
       setBusy(false);
     }
-    if (Object.keys(result.counts).length)
-      onImported?.();
-  }, [applied, chosen, onConversationActivate, onImported, opsOf, preview, selected, settled]);
+  }, [applied, chosen, onConversationActivate, opsOf, preview, selected, settled]);
 
   const handleApplyOnReload = React.useCallback(async () => {
     if (!applied) return;

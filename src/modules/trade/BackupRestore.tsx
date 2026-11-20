@@ -30,7 +30,7 @@ const WINDOW_RELOAD_DELAY = 300;
 const EXCLUDED_LOCAL_STORAGE_KEYS = [
   'agi-logger-log', // the log cannot be restored as it's in-mem and being persisted while this is running
   'app-sharing', // the shared chat links, with their deletion keys
-  'app-from-v1-arrival', // when this browser arrived from V1
+  'app-from-v1-arrival', // left in browsers by the banner for arrivals from V1, since removed
   'app-app-chat-panes-2', // the open chat panes
   'app-fabric-cache', // the sign-in cache of the builds with accounts
 ];

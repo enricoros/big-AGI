@@ -9,7 +9,7 @@ import { type ImportConfig, TradeImport } from './TradeImport';
 
 export type TradeConfig = ImportConfig | ExportConfig;
 
-export function TradeModal(props: { config: TradeConfig, onConversationActivate: (conversationId: DConversationId) => void, onImported?: () => void, onClose: () => void }) {
+export function TradeModal(props: { config: TradeConfig, onConversationActivate: (conversationId: DConversationId) => void, onClose: () => void }) {
   return (
     <GoodModal
       open onClose={props.onClose}
@@ -21,7 +21,7 @@ export function TradeModal(props: { config: TradeConfig, onConversationActivate:
     >
 
       {props.config.dir === 'import' && (
-        <TradeImport files={props.config.files} onConversationActivate={props.onConversationActivate} onImported={props.onImported} />
+        <TradeImport files={props.config.files} onConversationActivate={props.onConversationActivate} />
       )}
 
       {props.config.dir === 'export' && (
