@@ -187,7 +187,7 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
               ...liveFile,
               content: null,
               isLoading: false,
-              error: `Error reading: ${error?.message || typeof error === 'string' ? error : 'Unknown error'}`,
+              error: `Error reading: ${error?.message || (typeof error === 'string' ? error : 'Unknown error')}`,
             },
           },
         }));
@@ -233,7 +233,7 @@ export const useLiveFileStore = create<LiveFileState & LiveFileActions>()(persis
             [fileId]: {
               ...liveFile,
               isSaving: false,
-              error: `Error saving File: ${error?.message || typeof error === 'string' ? error : 'Unknown error'}`,
+              error: `Error saving File: ${error?.message || (typeof error === 'string' ? error : 'Unknown error')}`,
             },
           },
         }));

@@ -144,7 +144,7 @@ export function useLiveFileSync(
       // Immediately load the preview on this ID
       await _handleReloadFileContent(liveFileId);
     } catch (error: any) {
-      setStatus({ message: `Error pairing the file: ${error?.message || typeof error === 'string' ? error : 'Unknown error'}`, mtype: 'error' });
+      setStatus({ message: `Error pairing the file: ${error?.message || (typeof error === 'string' ? error : 'Unknown error')}`, mtype: 'error' });
     }
   }, [_handleReloadFileContent, onReplaceLiveFileId, workspaceId]);
 
