@@ -104,7 +104,7 @@ export function ProviderBackendCapabilities(props: { children: React.ReactNode }
 
   // [effect] set the timeout flag if waiting too long for the capabilities
   React.useEffect(() => {
-    if (!haveCapabilities) return;
+    if (haveCapabilities) return;
     const timeout = setTimeout(() => setBackendTimeout(true), BACKEND_WARNING_TIMEOUT);
     return () => {
       clearTimeout(timeout);
