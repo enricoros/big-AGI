@@ -88,14 +88,16 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
   const shallFetchSucceed = oaiKey ? keyValid : !needsUserKey;
 
 
-  // [effect] auto-update the service label when a known provider host is selected
-  React.useEffect(() => {
-    const match = findMatchingOpenAIAutoProvider(oaiHost);
+  // auto-update the service label when the user changes the host: a known provider names it, a cleared host resets it to the vendor default.
+  // In the handler, not in an effect: an effect also runs when the setup opens, and replaced a custom name each time
+  const handleHostChange = React.useCallback((host: string) => {
+    updateSettings({ oaiHost: host });
+    const match = findMatchingOpenAIAutoProvider(host);
     if (match)
       updateLabel(match.label);
-    else if (!oaiHost)
-      updateLabel(''); // resets to vendor default when host is cleared
-  }, [oaiHost, updateLabel]);
+    else if (!host)
+      updateLabel('');
+  }, [updateLabel, updateSettings]);
 
 
   // fetch models
@@ -114,7 +116,7 @@ export function OpenAIServiceSetup(props: { serviceId: DModelsServiceId }) {
     {(showAdvanced || !!oaiHost) && (
       <OpenAIHostAutocomplete
         value={oaiHost}
-        onChange={host => updateSettings({ oaiHost: host })}
+        onChange={handleHostChange}
       />
     )}
 
