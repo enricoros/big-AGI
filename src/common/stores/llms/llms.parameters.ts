@@ -70,8 +70,8 @@ interface _BooleanParamDef extends _ParamDefBase<boolean> {
 interface _EnumParamDef<V extends string = string> extends _ParamDefBase<NoInfer<V>> {
   readonly type: 'enum';
   readonly values: readonly V[];
-  /** Per-value pricing multiplier. When the parameter is set to a value listed here, model pricing is multiplied. */
-  readonly enumPriceMultiplier?: { readonly [k in NoInfer<V>]?: number };
+  /** Per-value pricing multiplier, the rate on every model. When the parameter is set to a value listed here, model pricing is multiplied. A model's spec can layer its own rates over it (`enumOverlayXPrice`). */
+  readonly enumXPrice?: { readonly [k in NoInfer<V>]?: number };
 }
 
 /** Zero-cost identity function - TS infers V from `values` only: NoInfer constrains fallback/initial. */
@@ -202,7 +202,7 @@ export const DModelParameterRegistry = {
     // The wire always sends speed:'fast'; the value encodes the per-model PRICE TIER (the cost multiplier differs by model).
     // Each model exposes exactly one tier via its parameterSpec `enumValues`. 'fast' is the legacy alias (=6x) for params stored before tiers existed.
     values: ['fast_2x', 'fast_6x', 'fast'],
-    enumPriceMultiplier: { fast_2x: 2, fast_6x: 6, fast: 6 },
+    enumXPrice: { fast_2x: 2, fast_6x: 6, fast: 6 },
     // undefined means standard speed (omitted from request)
   }),
 
@@ -429,7 +429,7 @@ export const DModelParameterRegistry = {
     type: 'enum',
     description: 'Flex: slower at half price. Fast: faster at double price. Ultrafast: fastest at 6x price. Downgrades bill at standard rates.',
     values: ['flex', 'fast', 'ultrafast'],
-    enumPriceMultiplier: { flex: 0.5, fast: 2, ultrafast: 6 },
+    enumXPrice: { flex: 0.5, fast: 2, ultrafast: 6 },
     // undefined means standard processing (omitted from the request)
   }),
 
@@ -636,6 +636,12 @@ export interface DModelParameterSpec<T extends DModelParameterId> {
    * Example: llmVndOaiEffort registry has 6 values, but a specific model may only support ['low', 'medium', 'high'].
    */
   enumValues?: readonly DModelParameterValue<T>[];
+  /**
+   * (optional, rare) For enum params whose registry definition has an `enumXPrice` (the rate on every model): this
+   * model's own rates for some values, layered over the definition's. Values not listed keep the definition's rate.
+   * Example: OpenAI's `fast` is 2x on most models, `{ fast: 2.5 }` on GPT-5.5 (its `flex` stays at the definition's 0.5).
+   */
+  enumOverlayXPrice?: { readonly [value: string]: number };
 }
 
 

@@ -113,10 +113,9 @@ export function llmChatPricing_multipliedFromParams(llm: Pick<DLLM, 'pricing' | 
  * The price multiplier that a set of parameter values asks for on a model (service tier, fast mode), vs the
  * listed rates. 1 when none.
  *
- * Scans parameterSpecs for enum parameters with enumPriceMultiplier in the registry, and composes the
- * multipliers of their values.
+ * Composes the multipliers of the model's enum parameters, each from `llmChatPricing_enumValueMultiplier`.
  *
- * Note: any enum with enumPriceMultiplier must have its
+ * Note: any enum with enumXPrice must have its
  * effective default in initialParameters (via spec or registry `initialValue`).
  */
 function _computeMultiplierFromParams(parameterSpecs: DModelParameterSpecAny[], parameterValues: DModelParameterValues): number {
@@ -124,27 +123,36 @@ function _computeMultiplierFromParams(parameterSpecs: DModelParameterSpecAny[], 
 
   let multiplier = 1;
   for (const spec of parameterSpecs) {
-
-    const paramId = spec.paramId;
-    const registryDef = DModelParameterRegistry[paramId];
-
-    // 'enum' values multipliers - guarded: this runs while rendering and while finalizing a message, and malformed values must cost a multiplier, not a crash
+    // guarded: this runs while rendering and while finalizing a message, and malformed values must cost a multiplier, not a crash
     try {
-      if (registryDef?.type === 'enum' && 'enumPriceMultiplier' in registryDef && registryDef.enumPriceMultiplier) {
-        const value = parameterValues[paramId] as string | undefined;
-        if (value !== undefined) {
-          const m = (registryDef.enumPriceMultiplier as Record<string, number | undefined>)[value];
-          if (m !== undefined && m !== 1 && m !== null /* extra caution */)
-            multiplier *= m;
-        }
-      }
+      const value = parameterValues[spec.paramId];
+      if (typeof value !== 'string') continue;
+      const m = llmChatPricing_enumValueMultiplier(spec, value);
+      if (m !== undefined && m !== 1)
+        multiplier *= m;
     } catch (error) {
-      console.warn('[DEV] llmChatPricing: skipping parameter', { paramId, error });
+      console.warn('[DEV] llmChatPricing: skipping parameter', { paramId: spec.paramId, error });
     }
     // NOTE: may add other (e.g. boolean) multipliers in the future
   }
 
   return multiplier;
+}
+
+/**
+ * The price multiplier one enum value asks for on a model: the model's overlay (spec `enumOverlayXPrice`) over
+ * the definition's rate (registry `enumXPrice`). undefined when the value carries none.
+ */
+export function llmChatPricing_enumValueMultiplier(spec: DModelParameterSpecAny, value: string): number | undefined {
+  // only find multipliers for parameters defined with enumXPrice
+  const registryDef = DModelParameterRegistry[spec.paramId];
+  if (registryDef?.type !== 'enum' || !('enumXPrice' in registryDef) || !registryDef.enumXPrice) return undefined;
+
+  // find the multiplier in the spec's overlay, then the registry's definition, or undefined
+  const m =
+    (spec.enumOverlayXPrice as Record<string, number | undefined> | undefined)?.[value]
+    ?? (registryDef.enumXPrice as Record<string, number | undefined>)[value];
+  return typeof m === 'number' ? m : undefined;
 }
 
 

@@ -11,6 +11,8 @@ import { formatPubDate, fromManualMapping, type KnownLink, type KnownModel, llmD
 // --- OpenAI Model ID inference (auto-derived from _knownOpenAIChatModels) ---
 export type LlmsOpenAIModelId = typeof _knownOpenAIChatModels[number]['idPrefix'];
 
+// Updating notes:
+// - Price multipliers: defaults are in the param definition, overrides can be per-model, and client-side/server-side computation shall stay in sync (llms.pricing.ts, openai.responses.parser.ts)
 
 // OpenAI Model Variants
 export const hardcodedOpenAIVariants: ModelVariantMap = {
@@ -23,7 +25,7 @@ export const hardcodedOpenAIVariants: ModelVariantMap = {
     parameterSpecs: [
       { paramId: 'llmVndOaiReasoningMode', initialValue: 'pro', hidden: true }, // factory 'pro', not changeable
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
-      { paramId: 'llmVndOaiServiceTier', enumValues: ['fast', 'ultrafast'] },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['fast', 'ultrafast'], enumOverlayXPrice: { ultrafast: 3 } }, // TODO: 6x from 2027-03-01 - drop the overlay (and the parser branch)
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
       { paramId: 'llmVndOaiImageGeneration' },
@@ -239,7 +241,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
-      { paramId: 'llmVndOaiServiceTier', enumValues: ['fast', 'ultrafast'] },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['fast', 'ultrafast'], enumOverlayXPrice: { ultrafast: 3 } }, // TODO: 6x from 2027-03-01 - drop the overlay (and the parser branch)
       { paramId: 'llmVndOaiReasoningMode' },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
@@ -267,7 +269,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
-      { paramId: 'llmVndOaiServiceTier', enumValues: ['fast', 'ultrafast'] },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['fast', 'ultrafast'], enumOverlayXPrice: { ultrafast: 3 } }, // TODO: 6x from 2027-03-01 - drop the overlay (and the parser branch)
       { paramId: 'llmVndOaiReasoningMode' },
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
@@ -570,7 +572,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
     parameterSpecs: [
       { paramId: 'llmVndOaiEffort', enumValues: ['none', 'low', 'medium', 'high', 'xhigh'], initialValue: 'medium' }, // medium is the new default for 5.5
-      { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast'] },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['flex', 'fast'], enumOverlayXPrice: { fast: 2.5 } }, // Fast $12.50/$75 vs Standard $5/$30
       { paramId: 'llmVndOaiWebSearchContext' },
       { paramId: 'llmVndOaiVerbosity' },
       { paramId: 'llmVndOaiImageGeneration' },

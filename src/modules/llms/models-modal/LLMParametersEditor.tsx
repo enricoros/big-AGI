@@ -13,6 +13,7 @@ import { FormSliderControl } from '~/common/components/forms/FormSliderControl';
 import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { FormTextField } from '~/common/components/forms/FormTextField';
 import { InlineError } from '~/common/components/InlineError';
+import { llmChatPricing_enumValueMultiplier } from '~/common/stores/llms/llms.pricing';
 import { webGeolocationRequest } from '~/common/util/webGeolocationUtils';
 
 import { AnthropicSkillsConfig } from './AnthropicSkillsConfig';
@@ -96,11 +97,12 @@ const _oaiReasoningModeLegacyOptions = [
   { value: 'standard', label: 'Standard', description: 'Regular reasoning' } as const,
 ] as const;
 
+// the price follows per model, from the parameter spec over the registry (llmChatPricing_enumValueMultiplier)
 const _oaiServiceTierOptions = [
   { value: _UNSPECIFIED, label: 'Standard', description: 'Standard processing' } as const,
-  { value: 'flex', label: 'Flex', description: 'Slower, half price' } as const,
-  { value: 'fast', label: 'Fast', description: 'Up to 2.5x faster, 2x price' } as const,
-  { value: 'ultrafast', label: 'Ultrafast', description: 'Up to 6x faster, 6x price' } as const,
+  { value: 'flex', label: 'Flex', description: 'Slower' } as const,
+  { value: 'fast', label: 'Fast', description: 'Up to 2.5x faster' } as const,
+  { value: 'ultrafast', label: 'Ultrafast', description: 'Up to 6x faster' } as const,
 ] as const;
 
 const _verbosityOptions = [
@@ -273,6 +275,7 @@ export function LLMParametersEditor(props: {
     // bare on/off web_search), relabel that lone level as a plain "On" (the "Off" entry is kept as-is).
     const ws = llmParametersFilterEffortOptions(_webSearchContextOptions, modelParamSpec['llmVndOaiWebSearchContext'], 'llmVndOaiWebSearchContext');
     const wsOnOff = ws?.filter(o => o.value !== _UNSPECIFIED).length === 1;
+    const tierSpec = modelParamSpec['llmVndOaiServiceTier'];
     return {
       antEffortOptions: llmParametersFilterEffortOptions(_antEffortOptions, modelParamSpec['llmVndAntEffort'], 'llmVndAntEffort'),
       gemEffortOptions: llmParametersFilterEffortOptions(_gemEffortOptions, modelParamSpec['llmVndGemEffort'], 'llmVndGemEffort'),
@@ -280,7 +283,10 @@ export function LLMParametersEditor(props: {
       gemImageSizeOptions: llmParametersFilterEffortOptions(_geminiImageSizeOptions, modelParamSpec['llmVndGeminiImageSize'], 'llmVndGeminiImageSize'),
       oaiEffortOptions: llmParametersFilterEffortOptions(_oaiEffortOptions, modelParamSpec['llmVndOaiEffort'], 'llmVndOaiEffort'),
       miscEffortOptions: llmParametersFilterEffortOptions(_miscEffortOptions, modelParamSpec['llmVndMiscEffort'], 'llmVndMiscEffort'),
-      oaiServiceTierOptions: llmParametersFilterEffortOptions(_oaiServiceTierOptions, modelParamSpec['llmVndOaiServiceTier'], 'llmVndOaiServiceTier'),
+      oaiServiceTierOptions: llmParametersFilterEffortOptions(_oaiServiceTierOptions, tierSpec, 'llmVndOaiServiceTier')?.map(o => {
+        const m = o.value !== _UNSPECIFIED && tierSpec && llmChatPricing_enumValueMultiplier(tierSpec, o.value);
+        return !m ? o : { ...o, description: `${o.description}, ${m === 0.5 ? 'half' : `${m}x`} price` };
+      }) ?? null,
       oaiWebSearchOptions: ws?.map(o => (wsOnOff && o.value !== _UNSPECIFIED) ? { ...o, label: 'On' } : o) ?? null,
     };
   }, [modelParamSpec]);
@@ -370,8 +376,9 @@ export function LLMParametersEditor(props: {
   const antThinkingEnabled_Adaptive = antThinkingEnabled && llmVndAntThinkingBudget === -1;
   const antThinkingShown = _antThinkingDefined && !modelParamSpec['llmVndAntThinkingBudget']?.hidden;
   const antThinkingAdaptiveOnly = modelParamSpec['llmVndAntThinkingBudget']?.initialValue === -1; // 4.6+ adaptive sentinel: a Thinking switch, not a budget slider
-  const antInfSpeedTier = modelParamSpec['llmVndAntInfSpeed']?.enumValues?.[0];
-  const antInfSpeedMult = antInfSpeedTier && DModelParameterRegistry['llmVndAntInfSpeed'].enumPriceMultiplier?.[antInfSpeedTier];
+  const antInfSpeedSpec = modelParamSpec['llmVndAntInfSpeed'];
+  const antInfSpeedTier = antInfSpeedSpec?.enumValues?.[0];
+  const antInfSpeedMult = antInfSpeedSpec && antInfSpeedTier && llmChatPricing_enumValueMultiplier(antInfSpeedSpec, antInfSpeedTier);
 
   const gemThinkingAuto = llmVndGeminiThinkingBudget === undefined;
   const gemThinkingOff = llmVndGeminiThinkingBudget === 0;

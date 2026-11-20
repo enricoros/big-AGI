@@ -129,6 +129,7 @@ export function llmDevCheckModels_DEV(vendor: string, apiIds: string[], knownIds
  * DEV: Validates parameterSpecs for a model description.
  * - Checks that each paramId exists in the DModelParameterRegistry
  * - For enum params with enumValues, checks that enumValues ⊆ registry.values
+ * - For enumOverlayXPrice, checks that it re-rates only values the registry definition prices (the pricing lookup ignores others)
  */
 export function llmDevValidateParameterSpecs_DEV(model: ModelDescriptionSchema): void {
   if (!model.parameterSpecs?.length) return;
@@ -149,6 +150,14 @@ export function llmDevValidateParameterSpecs_DEV(model: ModelDescriptionSchema):
       const invalid = spec.enumValues.filter(v => !registryValues.includes(v));
       if (invalid.length)
         console.warn(`[DEV] Model '${model.id}': paramId '${paramId}' has enumValues not in registry: [${invalid.join(', ')}] (valid: [${registryValues.join(', ')}])`);
+    }
+
+    // for enumOverlayXPrice, check it re-rates only values the definition prices
+    if (spec.enumOverlayXPrice) {
+      const pricedValues = Object.keys(('enumXPrice' in regDef && regDef.enumXPrice) || {});
+      const invalid = Object.keys(spec.enumOverlayXPrice).filter(v => !pricedValues.includes(v));
+      if (invalid.length)
+        console.warn(`[DEV] Model '${model.id}': paramId '${paramId}' has enumOverlayXPrice for values the registry definition does not price: [${invalid.join(', ')}] (priced: [${pricedValues.join(', ')}])`);
     }
   }
 }

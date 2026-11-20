@@ -35,7 +35,7 @@ chatPrice: {
 
 Rules: prices are per model, never vendor ratios (cache read is 0.1x on most Claude, 0.025x on Fable 5.1). Absent means unknown, and a class with no price bills at its registry parent (write at input, reasoning at output, modality at text) with `partial-price` set.
 
-Multipliers: the card owns the rate (`x.fast: 2` on Opus 5, `6` on Opus 4.6), the parameter is only the request switch, and the parser emits the served tier as a tag (`fast`, `flex`, `standard`, plus `region`) that the finalizer resolves against the card. Today the rate sits in the parameter registry (`enumPriceMultiplier` on `llmVndAntInfSpeed` and `llmVndOaiServiceTier`) and the parser emits a number (`$xPrice`) only when it can compute it without the model, which loses the fast rate on a downgrade-free fast response paired with a region uplift. Moving the rate into the card removes that gap and gives prediction (composer, modal, ranking) and confirmation (echo) one source.
+Multipliers: the card owns the rate (`x.fast: 2` on Opus 5, `6` on Opus 4.6), the parameter is only the request switch, and the parser emits the served tier as a tag (`fast`, `flex`, `standard`, plus `region`) that the finalizer resolves against the card. Today the rate sits in the parameter registry (`enumXPrice` on `llmVndAntInfSpeed` and `llmVndOaiServiceTier`) and the parser emits a number (`$xPrice`) only when it can compute it without the model, which loses the fast rate on a downgrade-free fast response paired with a region uplift. Moving the rate into the card removes that gap and gives prediction (composer, modal, ranking) and confirmation (echo) one source.
 
 ### Usage record (wire and at rest)
 

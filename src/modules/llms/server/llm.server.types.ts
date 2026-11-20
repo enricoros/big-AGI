@@ -134,6 +134,7 @@ const ModelParameterSpec_schema = z.object({
   // special params
   enumValues: z.array(z.string()).optional(), // restrict enum values for this model
   rangeOverride: z.tuple([z.number(), z.number()]).optional(), // [min, max]
+  enumOverlayXPrice: z.record(z.string(), z.number()).optional(), // this model's rates for some enum values, layered over the registry definition's enumXPrice
 });
 
 export const ModelDescription_schema = z.object({
