@@ -275,6 +275,7 @@ export namespace OpenAIWire_Tools {
        */
       properties: z.json().optional(), // FC-DEF params schema
       required: z.array(z.string()).optional(),
+      additionalProperties: z.boolean().optional(), // set to false by the adapter for strict tool invocations: undeclared here, the request parse stripped it
     }).optional(),
     /**
      * [OpenAI Structured Outputs, 2024-08-06]
@@ -1539,6 +1540,7 @@ export namespace OpenAIWire_Responses_Tools {
       type: z.literal('object'),
       properties: z.json().optional(), // FC-DEF params schema (Responses)
       required: z.array(z.string()).optional(),
+      additionalProperties: z.boolean().optional(), // set to false by the adapter for strict tool invocations: undeclared here, the request parse stripped it
     }).optional(),
     strict: z.boolean().optional(), // enforce strict parameter validation
   });
