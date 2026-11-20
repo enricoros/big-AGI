@@ -478,7 +478,7 @@ export async function aixChatGenerateText_Simple(
 
 
   // Client-side late stage model HotFixes
-  const { hotfixNoStream } = await clientHotFixGenerateRequest_ApplyAll(llm.interfaces, aixChatGenerate, llmParameters.llmRef || llm.id);
+  const { hotfixNoStream } = await clientHotFixGenerateRequest_ApplyAll(llm.interfaces, aixChatGenerate, aixModel.id);
   const wireStreaming = !hotfixNoStream && !aixModel.forceNoStream ? callerStreaming : false;
 
 
@@ -670,7 +670,7 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   });
 
   // Client-side late stage model HotFixes - collapse the caller's requested streaming preference into the effective wire-streaming decision after constraints (hotfix gate, model.forceNoStream)
-  const { hotfixNoStream } = await clientHotFixGenerateRequest_ApplyAll(llm.interfaces, aixChatGenerate, llmParameters.llmRef || llm.id);
+  const { hotfixNoStream } = await clientHotFixGenerateRequest_ApplyAll(llm.interfaces, aixChatGenerate, aixModel.id);
   const wireStreaming = !hotfixNoStream && !aixModel.forceNoStream ? aixStreaming : false;
 
   // Legacy Note: awaited OpenAI moderation check was removed (was only on this codepath)
