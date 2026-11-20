@@ -187,9 +187,11 @@ export const RenderCodeMermaid = React.forwardRef(function RenderCodeMermaid(pro
     if (!onReplaceInCode) return;
     setFixupFailure(null);
     refetch().then((result) => {
-      if (result.data)
-        onReplaceInCode(props.mermaidCode, result.data);
-      else if (result.error)
+      if (result.data) {
+        // Keep a closing Markdown fence on its own line when replacing the block body.
+        const correctedCode = props.mermaidCode.endsWith('\n') && !result.data.endsWith('\n') ? result.data + '\n' : result.data;
+        onReplaceInCode(props.mermaidCode, correctedCode);
+      } else if (result.error)
         setFixupFailure({ code: props.mermaidCode, message: result.error.message || 'Unknown error.' });
       else
         setFixupFailure({ code: props.mermaidCode, message: 'Unknown Fixup error.' });

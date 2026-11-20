@@ -235,9 +235,11 @@ export const RenderCodePlantUML = React.forwardRef(function RenderCodePlantUML(p
     setFixupFailure(null);
     refetch()
       .then((result) => {
-        if (result.data)
-          onReplaceInCode(props.plantUMLCode, result.data);
-        else if (result.error)
+        if (result.data) {
+          // Keep a closing Markdown fence on its own line when replacing the block body.
+          const correctedCode = props.plantUMLCode.endsWith('\n') && !result.data.endsWith('\n') ? result.data + '\n' : result.data;
+          onReplaceInCode(props.plantUMLCode, correctedCode);
+        } else if (result.error)
           setFixupFailure({ code: props.plantUMLCode, message: result.error.message || 'Unknown error.' });
         else
           setFixupFailure({ code: props.plantUMLCode, message: 'Unknown Fixup error.' });
