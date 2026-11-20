@@ -18,10 +18,11 @@ export class PersonaChatMessageSpeak implements PersonaProcessorInterface {
   handleMessage(accumulatedMessage: Partial<AixChatGenerateContent_DMessageGuts>, messageComplete: boolean) {
     if (this.autoSpeakType === 'off' || this.spokenLine) return;
 
-    // Require a Content.Text first fragment
-    if (!accumulatedMessage.fragments?.length || !isTextContentFragment(accumulatedMessage.fragments[0]))
+    // Speak the first Content.Text fragment - not necessarily fragments[0]: a reply that starts with reasoning has it later
+    const textFragment = accumulatedMessage.fragments?.find(isTextContentFragment);
+    if (!textFragment)
       return;
-    const text = accumulatedMessage.fragments[0].part.text;
+    const text = textFragment.part.text;
 
     if (!messageComplete)
       this.#handleTextSoFar(text);
