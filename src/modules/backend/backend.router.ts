@@ -82,18 +82,20 @@ export const backendRouter = createTRPCRouter({
   // The following are used for various OAuth integrations
 
   /**
-   * Exchange the OpenRouter authorization code for an OpenRouter API Key
-   * Reference: https://openrouter.ai/docs/quickstart#oauth
+   * Exchange the OpenRouter authorization code for an OpenRouter API Key (OAuth PKCE): a code is exchanged only
+   * together with the verifier of the flow that requested it - https://openrouter.ai/docs/use-cases/oauth-pkce
    */
   exchangeOpenRouterKey: publicProcedure
-    .input(z.object({ code: z.string() }))
-    .query(async ({ input }) => {
-      // Documented here: https://openrouter.ai/docs#oauth
-      return await fetchJsonOrTRPCThrow<{ key: string }, { code: string }>({
+    .input(z.object({
+      code: z.string().min(1),
+      codeVerifier: z.string().min(43).max(128), // RFC 7636
+    }))
+    .mutation(async ({ input }) => {
+      return await fetchJsonOrTRPCThrow<{ key: string }, { code: string, code_verifier: string, code_challenge_method: 'S256' }>({
         url: 'https://openrouter.ai/api/v1/auth/keys',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }, // important to fix 400 error
-        body: { code: input.code },
+        body: { code: input.code, code_verifier: input.codeVerifier, code_challenge_method: 'S256' },
         name: 'Backend.exchangeOpenRouterKey',
       });
     }),

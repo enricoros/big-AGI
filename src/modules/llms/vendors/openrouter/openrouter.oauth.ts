@@ -1,104 +1,78 @@
-// /**
-//  * OpenRouter OAuth PKCE utilities
-//  *
-//  * Implements Proof Key for Code Exchange (PKCE) for secure OAuth flow
-//  * Reference: https://openrouter.ai/docs/use-cases/oauth-pkce
-//  */
-//
-// /**
-//  * Generates a cryptographically secure random string for PKCE code_verifier
-//  * @param length - Length of the verifier (43-128 characters recommended)
-//  */
-// export function generateCodeVerifier(length: number = 64): string {
-//   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-//   const randomValues = new Uint8Array(length);
-//   crypto.getRandomValues(randomValues);
-//
-//   return Array.from(randomValues)
-//     .map(v => charset[v % charset.length])
-//     .join('');
-// }
-//
-// /**
-//  * Creates a SHA-256 hash of the code verifier and returns base64url-encoded string
-//  * @param codeVerifier - The code verifier string
-//  * @returns Promise<string> - base64url-encoded SHA-256 hash (code_challenge)
-//  */
-// export async function createSHA256CodeChallenge(codeVerifier: string): Promise<string> {
-//   const encoder = new TextEncoder();
-//   const data = encoder.encode(codeVerifier);
-//   const hash = await crypto.subtle.digest('SHA-256', data);
-//
-//   // Convert to base64url encoding (RFC 4648)
-//   return base64urlEncode(hash);
-// }
-//
-// /**
-//  * Converts ArrayBuffer to base64url string (RFC 4648)
-//  */
-// function base64urlEncode(buffer: ArrayBuffer): string {
-//   const bytes = new Uint8Array(buffer);
-//   let binary = '';
-//   for (let i = 0; i < bytes.byteLength; i++) {
-//     binary += String.fromCharCode(bytes[i]);
-//   }
-//
-//   return btoa(binary)
-//     .replace(/\+/g, '-')
-//     .replace(/\//g, '_')
-//     .replace(/=/g, '');
-// }
-//
-// /**
-//  * Storage keys for PKCE flow state
-//  */
-// export const OPENROUTER_PKCE_STORAGE = {
-//   CODE_VERIFIER: 'openrouter_code_verifier',
-//   CODE_CHALLENGE_METHOD: 'openrouter_code_challenge_method',
-// } as const;
-//
-// /**
-//  * Stores PKCE state in localStorage for later retrieval during callback
-//  *
-//  * Note: We use localStorage instead of sessionStorage because:
-//  * 1. sessionStorage doesn't persist across redirects in some browsers
-//  * 2. The code_verifier is only valid for ~10 minutes (OpenRouter's OAuth timeout)
-//  * 3. We clear it immediately after use for security
-//  */
-// export function storePKCEState(codeVerifier: string, method: 'S256' = 'S256'): void {
-//   try {
-//     localStorage.setItem(OPENROUTER_PKCE_STORAGE.CODE_VERIFIER, codeVerifier);
-//     localStorage.setItem(OPENROUTER_PKCE_STORAGE.CODE_CHALLENGE_METHOD, method);
-//   } catch (error) {
-//     console.error('[OpenRouter PKCE] Failed to store state:', error);
-//     throw new Error('Unable to store OAuth state. Please check browser storage permissions.');
-//   }
-// }
-//
-// /**
-//  * Retrieves PKCE state from localStorage WITHOUT clearing it
-//  * (clearing happens after successful token exchange to handle React Strict Mode double-mounting)
-//  * @returns Object with codeVerifier and method, or null if not found
-//  */
-// export function retrievePKCEState(): { codeVerifier: string; method: string } | null {
-//   try {
-//     const codeVerifier = localStorage.getItem(OPENROUTER_PKCE_STORAGE.CODE_VERIFIER);
-//     const method = localStorage.getItem(OPENROUTER_PKCE_STORAGE.CODE_CHALLENGE_METHOD);
-//     return (codeVerifier && method) ? { codeVerifier, method } : null;
-//   } catch (error) {
-//     console.error('[OpenRouter PKCE] Failed to retrieve state:', error);
-//     return null;
-//   }
-// }
-//
-// /**
-//  * Clears PKCE state from localStorage after successful exchange
-//  */
-// export function clearPKCEState(): void {
-//   try {
-//     localStorage.removeItem(OPENROUTER_PKCE_STORAGE.CODE_VERIFIER);
-//     localStorage.removeItem(OPENROUTER_PKCE_STORAGE.CODE_CHALLENGE_METHOD);
-//   } catch (error) {
-//     console.error('[OpenRouter PKCE] Failed to clear state:', error);
-//   }
-// }
+/**
+ * OpenRouter sign-in: OAuth with PKCE and state - https://openrouter.ai/docs/use-cases/oauth-pkce
+ *
+ * The callback page exchanges a code only for a flow this browser started: the pending flow (state + code verifier)
+ * is stored before leaving for OpenRouter, the callback must bring back the same state, and the server sends the
+ * verifier with the code. A crafted callback link carrying someone else's code therefore fails, instead of replacing
+ * the user's key.
+ *
+ * localStorage, not sessionStorage: the callback page may load in a popup or after a full-page redirect.
+ *
+ * The pending flow has no expiry of its own: OpenRouter expires the code, 10 minutes from when it issues it, which
+ * can be long after the sign-in started (an account created on the way). The next sign-in replaces a stale entry.
+ */
+
+import { convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
+
+
+const PENDING_FLOW_KEY = 'agi-openrouter-oauth-pending';
+
+interface PendingFlow {
+  state: string;
+  codeVerifier: string;
+}
+
+
+/** Starts a sign-in: stores the pending flow and returns the OpenRouter authorization URL. Throws where it cannot hash or store. */
+export async function openRouterOAuthBegin(callbackUrl: string): Promise<string> {
+  if (!globalThis.crypto?.subtle) // secure contexts only
+    throw new Error('this page must be served over HTTPS, or from localhost');
+
+  const codeVerifier = _randomBase64Url(32); // 43 chars, within the 43-128 of RFC 7636
+  const state = _randomBase64Url(16);
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(codeVerifier));
+
+  const pending: PendingFlow = { state, codeVerifier };
+  localStorage.setItem(PENDING_FLOW_KEY, JSON.stringify(pending));
+
+  const authUrl = new URL('https://openrouter.ai/auth');
+  authUrl.searchParams.set('callback_url', callbackUrl);
+  authUrl.searchParams.set('code_challenge', _base64Url(new Uint8Array(digest)));
+  authUrl.searchParams.set('code_challenge_method', 'S256');
+  authUrl.searchParams.set('state', state); // returned unchanged on the callback URL
+  return authUrl.toString();
+}
+
+/**
+ * The code verifier of the pending flow that `state` belongs to, or null: no flow started here, or another flow.
+ * Not consumed here (React Strict Mode mounts twice) - call openRouterOAuthEnd after the exchange.
+ */
+export function openRouterOAuthVerifierForState(state: string | undefined): string | null {
+  if (!state) return null;
+  try {
+    const pending = JSON.parse(localStorage.getItem(PENDING_FLOW_KEY) || 'null') as PendingFlow | null;
+    if (!pending || pending.state !== state)
+      return null;
+    return pending.codeVerifier;
+  } catch {
+    return null;
+  }
+}
+
+/** Ends the pending flow, whatever the outcome of the exchange: codes are single-use. */
+export function openRouterOAuthEnd(): void {
+  try {
+    localStorage.removeItem(PENDING_FLOW_KEY);
+  } catch {
+    // storage unavailable: nothing to clear
+  }
+}
+
+
+function _randomBase64Url(byteCount: number): string {
+  return _base64Url(crypto.getRandomValues(new Uint8Array(byteCount)));
+}
+
+function _base64Url(bytes: Uint8Array): string {
+  return convert_UInt8Array_To_Base64(bytes, 'openrouter.oauth').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}

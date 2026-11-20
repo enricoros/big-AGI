@@ -31,6 +31,8 @@ export const getCallbackUrl = (source: 'openrouter') => {
   switch (source) {
     case 'openrouter':
       callbackUrl.pathname = ROUTE_CALLBACK_OPENROUTER;
+      callbackUrl.search = ''; // the provider appends its own parameters (code, state)
+      callbackUrl.hash = '';
       break;
     default:
       throw new Error(`Unknown source: ${source}`);

@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { Box, Button, Typography } from '@mui/joy';
-import LaunchIcon from '@mui/icons-material/Launch';
+import NorthEastIcon from '@mui/icons-material/NorthEast';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
@@ -15,6 +15,7 @@ import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormCl
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { getCallbackUrl } from '~/common/app.routes';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { presentErrorToHumans } from '~/common/util/errorUtils';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
@@ -22,6 +23,7 @@ import { useLlmUpdateModels } from '../../llm.client.hooks';
 import { useServiceSetup } from '../useServiceSetup';
 
 import { isValidOpenRouterKey, ModelVendorOpenRouter } from './openrouter.vendor';
+import { openRouterOAuthBegin } from './openrouter.oauth';
 
 
 export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
@@ -49,33 +51,35 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
 
 
   const handleOpenRouterLogin = React.useCallback(() => {
-    const callbackUrl = getCallbackUrl('openrouter');
-    const oauthUrl = 'https://openrouter.ai/auth?callback_url=' + encodeURIComponent(callbackUrl);
 
-    // open in new window/tab (mobile will open in tab, desktop may open popup)
-    // - using just window name - browser decides best presentation for the platform
-    const popup = window.open(oauthUrl, 'openrouter-oauth');
+    // open the window now, inside the click (popup blockers), and navigate it once the PKCE challenge is ready
+    // - using just window name - browser decides best presentation for the platform (mobile: tab, desktop: popup)
+    const popup = window.open('', 'openrouter-oauth');
 
-    // listen for success message from popup/tab
-    const messageHandler = (event: MessageEvent) => {
-      // security: validate origin
-      if (event.origin !== window.location.origin) return;
+    openRouterOAuthBegin(getCallbackUrl('openrouter')).then(oauthUrl => {
 
-      if (event.data?.type === 'openrouter-oauth-success') {
+      // listen for the key from the callback page (popup/tab)
+      const messageHandler = (event: MessageEvent) => {
+        // security: validate origin; ignore unrelated messages (with 'once', any message - e.g. from an extension - consumed the listener)
+        if (event.origin !== window.location.origin || event.data?.type !== 'openrouter-oauth-success') return;
+        window.removeEventListener('message', messageHandler);
         // save the API key (callback page may not have access to store)
         if (event.data.orApiKey)
           llmsStoreActions().setOpenRouterKey(event.data.orApiKey);
         // refresh models list
         refetch();
-      }
-    };
-    window.addEventListener('message', messageHandler, { once: true });
+      };
 
-    // fallback: if window.open blocked, use full-page redirect
-    if (!popup || popup.closed) {
-      window.removeEventListener('message', messageHandler);
-      window.location.href = oauthUrl;
-    }
+      if (popup && !popup.closed) {
+        window.addEventListener('message', messageHandler);
+        popup.location.href = oauthUrl;
+      } else
+        window.location.href = oauthUrl; // window.open blocked: full-page redirect
+
+    }).catch((error: any) => {
+      popup?.close();
+      alert(`Could not start the OpenRouter sign-in: ${presentErrorToHumans(error) || 'unknown error'}`);
+    });
   }, [refetch]);
 
 
@@ -107,10 +111,10 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
       color='neutral' variant={needsLink ? 'solid' : 'outlined'}
       onClick={handleOpenRouterLogin}
       // endDecorator={needsLink ? <LaunchIcon /> /*<PhKey />*/ /*'🎁'*/ : undefined}
-      endDecorator={<LaunchIcon /> /*<PhKey />*/ /*'🎁'*/}
-      sx={{ mx: 'auto', boxShadow: needsLink ? 'md' : undefined }}
+      endDecorator={<NorthEastIcon sx={{ fontSize: 'lg' }} /> /*<PhKey />*/ /*'🎁'*/}
+      sx={{ mx: 'auto', minWidth: 200, /*, boxShadow: needsLink ? 'md' : undefined */ }}
     >
-      {needsLink ? 'Link OpenRouter Key' : 'Create New Key'}
+      {oaiKey ? 'Get New Key' : 'Get OpenRouter Key'}
     </Button>
 
     <FormInputKey

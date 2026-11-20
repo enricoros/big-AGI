@@ -1,41 +1,54 @@
 import * as React from 'react';
 import Head from 'next/head';
 
-import { apiQuery } from '~/common/util/trpc.client';
+import { apiAsync } from '~/common/util/trpc.client';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { openRouterOAuthEnd, openRouterOAuthVerifierForState } from '~/modules/llms/vendors/openrouter/openrouter.oauth';
 import { useRouterQuery } from '~/common/app.routes';
 
 
 export default function CallbackOpenRouterPage() {
 
   // state
-  const [otherError, setOtherError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  const [orKey, setOrKey] = React.useState<string | null>(null);
+  const exchangeStartedRef = React.useRef(false); // codes are single-use: exchange once, also under Strict Mode's double mount
 
   // external state
-  const { code } = useRouterQuery<{ code?: string }>();
-  const { data, error: queryError, isPending } = apiQuery.backend.exchangeOpenRouterKey.useQuery({ code: code ?? '' }, {
-    enabled: !!code, // auto-start only when code is available
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  const { code, state } = useRouterQuery<{ code?: string, state?: string }>();
 
-  // derived state
-  const error = otherError ?? queryError?.message;
-  const orKey = data?.key ?? null;
 
+  // [effect] exchange the code - only for a sign-in this browser started (matching state), with that flow's verifier
+  React.useEffect(() => {
+    if (!code || exchangeStartedRef.current) return;
+    exchangeStartedRef.current = true;
+
+    const codeVerifier = openRouterOAuthVerifierForState(state);
+    if (!codeVerifier) {
+      // only this page fails: a sign-in may still be in progress in another tab
+      setError('This sign-in was not started from this browser. Start it again from Models > OpenRouter.');
+      return;
+    }
+
+    apiAsync.backend.exchangeOpenRouterKey.mutate({ code, codeVerifier })
+      .then(({ key }) => setOrKey(key))
+      .catch((error: any) => setError(error?.message || 'Key exchange failed.'))
+      .finally(openRouterOAuthEnd);
+  }, [code, state]);
 
   // [effect] after 5 seconds, if no code show error
   React.useEffect(() => {
     if (code) return;
-    const timeout = setTimeout(() => setOtherError('No authorization code provided.'), 5000);
+    const timeout = setTimeout(() => setError('No authorization code provided.'), 5000);
     return () => clearTimeout(timeout);
   }, [code]);
 
-  // [effect] after 30 seconds, if still pending show error
+  // [effect] after 30 seconds without an outcome, show an error
   React.useEffect(() => {
-    if (!code || !isPending) return; // without a code the query is disabled (and 'pending' forever): that case has its own message above
-    const timeout = setTimeout(() => setOtherError('Authentication timed out. Please try again.'), 30000);
+    if (!code || orKey || error) return;
+    const timeout = setTimeout(() => setError('Authentication timed out. Please try again.'), 30000);
     return () => clearTimeout(timeout);
-  }, [code, isPending]);
+  }, [code, error, orKey]);
 
 
   // [effect] post exchange handling
