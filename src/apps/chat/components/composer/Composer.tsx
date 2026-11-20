@@ -575,14 +575,14 @@ function Composer(props: {
 
       // Alt (Windows) or Option (Mac) + Enter: append the message instead of sending it
       if (e.altKey && !e.metaKey && !e.ctrlKey) {
-        if (await handleSendAction('append-user', composeText)) // 'alt+enter' -> write
+        if (!assistantAbortible && await handleSendAction('append-user', composeText)) // 'alt+enter' -> write, not while a reply streams (the send would abort it)
           e.stopPropagation();
         return e.preventDefault();
       }
 
       // Ctrl (Windows) or Command (Mac) + Enter: send for beaming
       if (e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (await handleSendAction('beam-content', composeText)) // 'ctrl+enter' -> beam
+        if (!assistantAbortible && await handleSendAction('beam-content', composeText)) // 'ctrl+enter' -> beam, same gate
           e.stopPropagation();
         return e.preventDefault();
       }
