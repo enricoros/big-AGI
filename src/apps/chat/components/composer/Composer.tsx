@@ -36,7 +36,7 @@ import { createHostedResourceContentFragment, createTextContentFragment, DMessag
 import { glueForMessageTokens, marshallWrapDocFragments } from '~/common/stores/chat/chat.tokens';
 import { isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { orderedUserFragments } from '~/common/stores/chat/chat.fragment-order';
-import { getModelParameterValueWithFallback } from '~/common/stores/llms/llms.parameters';
+import { getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { launchAppCall, removeQueryParam, useRouterQuery } from '~/common/app.routes';
 import { lineHeightTextareaMd, themeBgAppChatComposer } from '~/common/app.theme';
 import { optimaOpenPreferences } from '~/common/layout/optima/useOptima';
@@ -255,7 +255,7 @@ function Composer(props: {
   if (chatLLM && tokensComposer > 0)
     tokensComposer += glueForMessageTokens(chatLLM);
   const tokensHistory = _historyTokenCount;
-  const tokensResponseMax = getModelParameterValueWithFallback('llmResponseTokens', chatLLM?.initialParameters, chatLLM?.userParameters, 0) ?? 0 /* if null, assume 0*/;
+  const tokensResponseMax = !chatLLM ? 0 : getAllModelParameterValues(chatLLM.initialParameters, chatLLM.userParameters).llmResponseTokens ?? 0 /* if null, assume 0*/;
   const tokenLimit = getLLMContextTokens(chatLLM) ?? 0;
   const tokenChatPricing = React.useMemo(() => llmChatPricing_adjusted(chatLLM), [chatLLM]);
 

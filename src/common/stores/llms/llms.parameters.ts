@@ -679,37 +679,10 @@ export function getAllModelParameterValues(initialParameters: undefined | DModel
     ...userParameters,
   };
 
-  // legacy persisted values - the stores never validate enum values against the registry, so migrate here (feeds both the UI and the AIX request)
+  // LEGACY persisted values: the store drops unknown enum strings only when the service is re-listed, and keeps non-strings and persona/chat values; migrate here (feeds both the UI and the AIX request)
   const imageGeneration: unknown = values.llmVndOaiImageGeneration;
   if (imageGeneration === true) values.llmVndOaiImageGeneration = 'mq'; // pre-enum boolean
   else if (imageGeneration === 'hq_edit' || imageGeneration === 'hq_png') values.llmVndOaiImageGeneration = 'hq'; // dropped 2026-09-09: input_fidelity is rejected by gpt-image-2+, uncompressed PNG saving never landed
 
   return values;
-}
-
-
-/**
- * NOTE: this is actually only used for `llmResponseTokens` from the Composer for now (!)
- */
-export function getModelParameterValueWithFallback<T extends DModelParameterId>(
-  paramId: T,
-  initialValues: undefined | DModelParameterValues,
-  userValues: undefined | DModelParameterValues,
-  fallbackValue: DModelParameterValue<T>,
-): DModelParameterValue<T> {
-
-  // check user values first
-  if (userValues && paramId in userValues) {
-    const value = userValues[paramId];
-    if (value !== undefined) return value;
-  }
-
-  // then check initial values
-  if (initialValues && paramId in initialValues) {
-    const value = initialValues[paramId];
-    if (value !== undefined) return value;
-  }
-
-  // then try provided fallback
-  return fallbackValue;
 }

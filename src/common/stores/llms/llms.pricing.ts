@@ -106,7 +106,8 @@ export function llmChatPricing_adjusted<TLlm extends Pick<DLLM, 'pricing' | 'use
   if (!gcPricing) return undefined;
 
   // compute composed multiplier from active enum parameters
-  const multiplier = multiplierOverride ?? llmChatPricing_computeMultiplierFromParams(llm.parameterSpecs, getAllModelParameterValues(llm.initialParameters, llm.userParameters));
+  const llmParameters = getAllModelParameterValues(llm.initialParameters, llm.userParameters);
+  const multiplier = multiplierOverride ?? llmChatPricing_computeMultiplierFromParams(llm.parameterSpecs, llmParameters);
   if (multiplier === 1) return gcPricing;
 
   // Apply the multiplier per present class - never emit `key: undefined` (missing and undefined differ on the wire and at rest)

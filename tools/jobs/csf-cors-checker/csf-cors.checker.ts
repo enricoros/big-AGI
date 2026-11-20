@@ -279,7 +279,7 @@ function nextChatModel(app: App, vendorId: string, models: ModelDescriptionSchem
 
   const options: DModelParameterValues = { llmRef: picked.id, llmTemperature: null, ...(picked.maxCompletionTokens && { llmResponseTokens: picked.maxCompletionTokens }) };
   app.applyModelParameterSpecsInitialValues(options, (picked.parameterSpecs ?? []) as DModelParameterSpecAny[], false);
-  return app.aixCreateModelFromLLMOptions(picked.interfaces as DLLM['interfaces'], options, undefined, picked.id);
+  return app.aixCreateModelFromLLMParameters(options, picked.interfaces as DLLM['interfaces'], picked.id);
 }
 
 async function chatOnce(app: App, access: AixAPI_Access, model: AixAPI_Model, signal: AbortSignal): Promise<string> {

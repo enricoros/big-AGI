@@ -56,7 +56,7 @@ Shows only parameters that are:
 
 The AIX client transforms DLLM parameters to wire protocol format. This layer handles parameter precedence rules and name transformations.
 
-**Client Options**: The system supports parameter overrides through `llmOptionsOverride` and complete replacement via `llmUserParametersReplacement`.
+**Client Options**: one resolution gives the values of a request, last wins: the model's values, with `llmUserParametersReplacement` (a persona or chat configuration) replacing `userParameters` whole; then `llmParamsWrite`, per-call writes of single values that never change `llmRef`. The same values build the wire model and price the reply.
 
 ### Layer 5: Vendor Adaptation
 **Files**: `src/modules/aix/server/dispatch/chatGenerate/adapters/*.ts`

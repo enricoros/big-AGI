@@ -60,20 +60,22 @@ async function _loadCsfModuleOrThrow(): Promise<typeof import('./aix.client.dire
   }
 }
 
-export function aixCreateModelFromLLMOptions(
+/**
+ * The parameter values one request is built from, last wins: model defaults, the user's (or a persona/chat replacement), per-call writes.
+ * One object feeds the model, the hotfixes and the cost, so the cost follows what was sent.
+ */
+function _aixResolveLLMParametersForClient(llm: DLLM, clientOptions: Pick<AixClientOptions, 'llmUserParametersReplacement' | 'llmParamsWrite'> | undefined): DModelParameterValues {
+  const llmParameters = getAllModelParameterValues(llm.initialParameters, clientOptions?.llmUserParametersReplacement ?? llm.userParameters);
+  return !clientOptions?.llmParamsWrite ? llmParameters : { ...llmParameters, ...clientOptions.llmParamsWrite, llmRef: llmParameters.llmRef }; // a per-call write never retargets the model
+}
+
+export function aixCreateModelFromLLMParameters(
+  llmParameters: DModelParameterValues, // the request's resolved values, from _aixResolveLLMParametersForClient
   llmInterfaces: DLLM['interfaces'],
-  llmOptions: DModelParameterValues, // this must have been already externally computed, usually as the initial values + user/over replacements
-  llmOptionOverrides: Omit<DModelParameterValues, 'llmRef'> | undefined,
   debugLlmId: string,
 ): AixAPI_Model {
 
-  // make sure llmRef is removed, if present in the override - excess of caution here
-  if (llmOptionOverrides) {
-    llmOptionOverrides = { ...llmOptionOverrides };
-    delete (llmOptionOverrides as { llmRef?: any }).llmRef;
-  }
-
-  // destructure input with the overrides
+  // destructure input
   const {
     llmRef, llmTemperature, llmResponseTokens, llmTopP, llmForceNoStream,
     llmVndAntEffort, llmVndGemEffort, llmVndOaiEffort, llmVndMiscEffort,
@@ -85,14 +87,11 @@ export function aixCreateModelFromLLMOptions(
     llmVndOrtWebFetch, llmVndOrtWebSearch, llmVndOrtWebToolsAdvanced,
     llmVndPerplexityDateFilter, llmVndPerplexitySearchMode,
     llmVndXaiCodeExecution, llmVndXaiSearchInterval, llmVndXaiWebSearch, llmVndXaiXSearch, llmVndXaiXSearchHandles,
-  } = {
-    ...llmOptions,
-    ...llmOptionOverrides,
-  };
+  } = llmParameters;
 
   // llmRef is absolutely required
   if (!llmRef)
-    throw new Error(`AIX: Error in configuration for model ${debugLlmId} (missing ref, temperature): ${JSON.stringify(llmOptions)}`);
+    throw new Error(`AIX: Error in configuration for model ${debugLlmId} (missing ref, temperature): ${JSON.stringify(llmParameters)}`);
 
   // llmTemperature is highly recommended, so we display a note if it's missing
   if (llmTemperature === undefined)
@@ -460,8 +459,8 @@ export async function aixChatGenerateText_Simple(
   const { transportAccess: aixAccess, vendor: llmVendor, serviceSettings: llmServiceSettings } = findServiceAccessOrThrow<object, AixAPI_Access>(llm.sId);
 
   // Aix Model
-  const llmParameters = getAllModelParameterValues(llm.initialParameters, clientOptions?.llmUserParametersReplacement ?? llm.userParameters);
-  const aixModel = aixCreateModelFromLLMOptions(llm.interfaces, llmParameters, clientOptions?.llmParamsWrite, llmId);
+  const llmParameters = _aixResolveLLMParametersForClient(llm, clientOptions);
+  const aixModel = aixCreateModelFromLLMParameters(llmParameters, llm.interfaces, llmId);
   if (clientOptions?.llmResponseHint === 'short' && (aixModel.maxTokens ?? 0) > _SHORT_RESPONSE_MAX_TOKENS)
     aixModel.maxTokens = _SHORT_RESPONSE_MAX_TOKENS; // lowers a set budget, never raises one; unset stays the vendor's default
 
@@ -661,8 +660,8 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   const { transportAccess: aixAccess, vendor: llmVendor, serviceSettings: llmServiceSettings } = findServiceAccessOrThrow<TServiceSettings, TAccess>(llm.sId);
 
   // Aix Model
-  const llmParameters = getAllModelParameterValues(llm.initialParameters, clientOptions?.llmUserParametersReplacement ?? llm.userParameters);
-  const aixModel = aixCreateModelFromLLMOptions(llm.interfaces, llmParameters, clientOptions?.llmParamsWrite, llmId);
+  const llmParameters = _aixResolveLLMParametersForClient(llm, clientOptions);
+  const aixModel = aixCreateModelFromLLMParameters(llmParameters, llm.interfaces, llmId);
   aixDecorateModelFromGlobals(aixModel, {
     vndAntContainerId: clientOptions?.antContainerId,
     vndOaiContainerId: clientOptions?.oaiContainerId,
