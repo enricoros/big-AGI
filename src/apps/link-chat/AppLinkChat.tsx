@@ -214,7 +214,7 @@ export function AppLinkChat(props: { chatLinkId: string | null }) {
         : isError
           ? <ShowError error={error} />
           : !!data?.conversation
-            ? <LinkChatViewer conversation={data.conversation} storedAt={data.storedAt} expiresAt={data.expiresAt} />
+            ? <LinkChatViewer key={linkId} conversation={data.conversation} storedAt={data.storedAt} expiresAt={data.expiresAt} />
             : <Centerer backgroundColor={themeBgAppDarker} />}
 
 
