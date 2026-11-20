@@ -44,6 +44,7 @@ import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models'
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './openai/models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription, groqValidateModelDefs_DEV } from './openai/models/groq.models';
 import { llmapiHeuristic, llmapiModelsToModelDescriptions } from './openai/models/llmapi.models';
+import { llmtrHeuristic, llmtrModelsToModelDescriptions } from './openai/models/llmtr.models';
 import { llmsIsNativeOpenAIHost } from '../shared/llm.isomorphic';
 import { minimaxHeuristic, minimaxModelsToModelDescriptions } from './openai/models/minimax.models';
 import { nousResearchHeuristic, nousResearchModelsToModelDescriptions } from './openai/models/nousresearch.models';
@@ -569,6 +570,10 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
               // [LLM API] OpenAI-compatible gateway with rich model metadata
               if (llmapiHeuristic(oaiUrl))
                 return llmapiModelsToModelDescriptions(openAIWireModelsResponse);
+
+              // [LLMTR] OpenAI-compatible gateway with an OpenRouter-style catalog
+              if (llmtrHeuristic(oaiUrl))
+                return llmtrModelsToModelDescriptions(openAIWireModelsResponse);
 
               // [FastChat] make the best of the little info
               if (fastAPIHeuristic(maybeModels))
