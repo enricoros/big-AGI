@@ -1,4 +1,4 @@
-import { addDBImageAsset, DBlobDBContextId, DBlobDBScopeId, deleteDBAsset, gcDBAssetsByScope, transferDBAssetContextScope } from '~/common/stores/blob/dblobs-portability';
+import { addDBImageAsset, DBlobAssetId, DBlobDBContextId, DBlobDBScopeId, deleteDBAsset, gcDBAssetsByScope, getDBAsset, transferDBAssetContextScope } from '~/common/stores/blob/dblobs-portability';
 import { nanoidToUuidV4 } from '~/common/util/idUtils';
 
 import { CommonImageMimeTypes, imageBlobTransform, LLMImageResizeMode } from '~/common/util/imageUtils';
@@ -109,9 +109,15 @@ export async function imageDataToImageAttachmentFragmentViaDBlob(
  */
 export async function removeAttachmentOwnedDBAsset({ part }: DMessageAttachmentFragment) {
   if (isZyncAssetImageReferencePartWithLegacyDBlob(part) && part._legacyImageRefPart?.dataRef.reftype === 'dblob')
-    await deleteDBAsset(part._legacyImageRefPart.dataRef.dblobAssetId);
+    await _deleteDraftOwnedDBAsset(part._legacyImageRefPart.dataRef.dblobAssetId);
   else if (isImageRefPart(part) && part.dataRef.reftype === 'dblob')
-    await deleteDBAsset(part.dataRef.dblobAssetId);
+    await _deleteDraftOwnedDBAsset(part.dataRef.dblobAssetId);
+}
+
+/** A draft owns the assets of its own scope only: one made from a chat message references that message's image. */
+async function _deleteDraftOwnedDBAsset(dblobAssetId: DBlobAssetId) {
+  if ((await getDBAsset(dblobAssetId))?.scopeId === 'attachment-drafts')
+    await deleteDBAsset(dblobAssetId);
 }
 
 /**
