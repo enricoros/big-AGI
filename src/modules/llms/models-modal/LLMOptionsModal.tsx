@@ -11,7 +11,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import { type DPricingChatGenerate, isLLMChatFree_cached, llmChatPricing_multiplied, llmChatPricing_computeMultiplierFromParams } from '~/common/stores/llms/llms.pricing';
+import { type DPricingChatGenerate, isLLMChatFree_cached, llmChatPricing_multipliedFromParams } from '~/common/stores/llms/llms.pricing';
 import type { ModelOptionsContext } from '~/common/layout/optima/store-layout-optima';
 import { DLLMId, DModelInterfaceV1, getLLMContextTokens, getLLMLabel, getLLMMaxOutputTokens, getLLMPubDate, isLLMVisible, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 import { StarredState } from '~/common/components/StarIcons';
@@ -281,8 +281,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
 
   // cache
   const llmParameters = getAllModelParameterValues(llm.initialParameters, llm.userParameters);
-  const priceMultiplier = llmChatPricing_computeMultiplierFromParams(llm.parameterSpecs, llmParameters);
-  const adjChatPricing = llmChatPricing_multiplied(llm, priceMultiplier);
+  const adjChatPricing = llmChatPricing_multipliedFromParams(llm, llmParameters).pricing;
   const pubDate = getLLMPubDate(llm);
 
 
@@ -588,7 +587,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
               type='number'
               variant='outlined'
               placeholder={
-                // NOTE: direct access to the underlying, instead of via llmChatPricing_multiplied
+                // NOTE: direct access to the underlying, instead of via llmChatPricing_multipliedFromParams
                 typeof llm.pricing?.chat?.input === 'number' ? llm.pricing.chat.input.toString() : 'not set'
               }
               value={
@@ -611,7 +610,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
               type='number'
               variant='outlined'
               placeholder={
-                // NOTE: direct access to the underlying, instead of via llmChatPricing_multiplied
+                // NOTE: direct access to the underlying, instead of via llmChatPricing_multipliedFromParams
                 typeof llm.pricing?.chat?.output === 'number' ? llm.pricing.chat.output.toString() : 'not set'
               }
               value={

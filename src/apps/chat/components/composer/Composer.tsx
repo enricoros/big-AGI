@@ -17,7 +17,7 @@ import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
 import type { DComposerPendingPart } from '~/common/chat-overlay/store-perchat-composer_slice';
 import { getLLMContextTokens, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
-import { llmChatPricing_multiplied, llmChatPricing_computeMultiplierFromParams } from '~/common/stores/llms/llms.pricing';
+import { llmChatPricing_multipliedFromParams } from '~/common/stores/llms/llms.pricing';
 import { AudioGenerator } from '~/common/util/audio/AudioGenerator';
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { ButtonAttachFilesMemo, openFileForAttaching } from '~/common/components/ButtonAttachFiles';
@@ -260,11 +260,10 @@ function Composer(props: {
   const { tokenLimit, tokensResponseMax, tokenChatPricing } = React.useMemo(() => {
     if (!chatLLM) return { tokenLimit: 0, tokensResponseMax: 0, tokenChatPricing: undefined };
     const llmParameters = getAllModelParameterValues(chatLLM.initialParameters, chatLLM.userParameters);
-    const priceMultiplier = llmChatPricing_computeMultiplierFromParams(chatLLM.parameterSpecs, llmParameters);
     return {
       tokenLimit: getLLMContextTokens(chatLLM) ?? 0,
       tokensResponseMax: llmParameters.llmResponseTokens ?? 0, // if null, assume 0
-      tokenChatPricing: llmChatPricing_multiplied(chatLLM, priceMultiplier),
+      tokenChatPricing: llmChatPricing_multipliedFromParams(chatLLM, llmParameters).pricing,
     };
   }, [chatLLM]);
 

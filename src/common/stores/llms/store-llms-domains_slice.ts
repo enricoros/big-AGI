@@ -9,7 +9,7 @@ import { LlmsRootState, useModelsStore } from './store-llms';
 import { ModelDomainsList, ModelDomainsRegistry } from './model.domains.registry';
 import { createDModelConfiguration, DModelConfiguration } from './modelconfiguration.types';
 import { llmsEditorial_ModelIdForDomain_SLOW } from './model.domains.editorial';
-import { type DPricingChatGenerate, getLlmCostForTokens, llmChatPricing_multiplied, llmChatPricing_computeMultiplierFromParams } from './llms.pricing';
+import { type DPricingChatGenerate, getLlmCostForTokens, llmChatPricing_multipliedFromParams } from './llms.pricing';
 
 
 /// LLMs Assignments Slice
@@ -339,8 +339,7 @@ function _groupLlmsByVendorRankedByElo<Tllm extends Pick<DLLM, 'id' | 'vId' | 'b
     const group = acc.find(v => v.vendorId === llm.vId);
     // adjusted: at the multiplier of the model's own settings
     const llmParameters = getAllModelParameterValues(llm.initialParameters, llm.userParameters);
-    const priceMultiplier = llmChatPricing_computeMultiplierFromParams(llm.parameterSpecs, llmParameters);
-    const adjChatPricing = llmChatPricing_multiplied(llm, priceMultiplier);
+    const adjChatPricing = llmChatPricing_multipliedFromParams(llm, llmParameters).pricing;
     const eloCostItem = {
       id: llm.id,
       cbaElo: llm.benchmark?.cbaElo,

@@ -52,8 +52,8 @@ Continuation turns (Anthropic `pause_turn`) are summed server-side: tokens, coun
 Once, at finalization (`_finalizeLlmMetricsWithCosts` in `aix.client.ts`), stored on the message as `DMetricsChatGenerate_Md`. Nothing recomputes history.
 
 ```
-$xPrice  = served tier ?? llmChatPricing_multiplier(specs, request parameters)   // the echo wins; without one, what this request asked for
-pricing  = llmChatPricing_multiplied(llm, $xPrice)
+$xPrice  = served tier ?? multiplier(request parameters)   // the echo wins; without one, what this request asked for
+pricing  = model pricing * $xPrice                         // both from llmChatPricing_multipliedFromParams
 tier     = TIn + TCacheRead + TCacheWrite
 $cIn     = TIn * input[tier]
 $cCacheR = TCacheRead * cache.read[tier]
