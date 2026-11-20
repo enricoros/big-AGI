@@ -74,6 +74,11 @@ const DebouncedInput: React.FC<DebounceInputProps> = (props: DebounceInputProps)
 
   const handleClear = React.useCallback(() => {
     setInputValue(''); // Clear internal state
+    // a pending debounce would re-apply the text typed just before the clear
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = undefined;
+    }
     onDebounce(''); // Call onDebounce with empty string
   }, [onDebounce]);
 
