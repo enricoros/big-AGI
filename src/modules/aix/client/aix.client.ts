@@ -1118,6 +1118,9 @@ async function _aixChatGenerateContent_LL_unlocked(
       // synchronize any pending async tasks
       await reassembler.waitForWireComplete();
 
+      // a Stop during the drain makes the reassembler drop the rest of the backlog, the end particle included - route to catch as aborted
+      abortSignal.throwIfAborted();
+
       break; // -> terminal: completed
 
     } catch (error: any) {
