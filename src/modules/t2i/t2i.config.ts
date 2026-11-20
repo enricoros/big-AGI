@@ -42,7 +42,7 @@ export function isGPTImage26ModelId(modelId: DalleModelId): boolean {
  */
 export function clampGPTImageQuality(modelId: DalleModelId, quality: DalleImageQualityGI): DalleImageQualityGI {
   if ((quality === 'xhigh' || quality === 'max') && !isGPTImage25ModelId(modelId) && !isGPTImage26ModelId(modelId))
-    return 'high';
+    quality = 'high'; // not a return: the mini has no 'high' either
   if (quality === 'high' && modelId === 'gpt-image-1-mini')
     return 'medium';
   return quality;
