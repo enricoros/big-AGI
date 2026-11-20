@@ -3,13 +3,13 @@ import type { StateCreator } from 'zustand/vanilla';
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
 import type { DModelDomainId } from './model.domains.types';
-import type { DModelParameterValues } from './llms.parameters';
+import { type DModelParameterValues, getAllModelParameterValues } from './llms.parameters';
 import { DLLM, DLLMId, DModelInterfaceV1, isLLMHidden, isLLMVisible } from './llms.types';
 import { LlmsRootState, useModelsStore } from './store-llms';
 import { ModelDomainsList, ModelDomainsRegistry } from './model.domains.registry';
 import { createDModelConfiguration, DModelConfiguration } from './modelconfiguration.types';
 import { llmsEditorial_ModelIdForDomain_SLOW } from './model.domains.editorial';
-import { type DPricingChatGenerate, getLlmCostForTokens, llmChatPricing_adjusted } from './llms.pricing';
+import { type DPricingChatGenerate, getLlmCostForTokens, llmChatPricing_multiplied, llmChatPricing_computeMultiplierFromParams } from './llms.pricing';
 
 
 /// LLMs Assignments Slice
@@ -337,8 +337,10 @@ function _groupLlmsByVendorRankedByElo<Tllm extends Pick<DLLM, 'id' | 'vId' | 'b
   const grouped = llms.reduce((acc, llm) => {
     if (isLLMHidden(llm)) return acc;
     const group = acc.find(v => v.vendorId === llm.vId);
-    // adjustd: includes price multipliers
-    const adjChatPricing = llmChatPricing_adjusted(llm);
+    // adjusted: at the multiplier of the model's own settings
+    const llmParameters = getAllModelParameterValues(llm.initialParameters, llm.userParameters);
+    const priceMultiplier = llmChatPricing_computeMultiplierFromParams(llm.parameterSpecs, llmParameters);
+    const adjChatPricing = llmChatPricing_multiplied(llm, priceMultiplier);
     const eloCostItem = {
       id: llm.id,
       cbaElo: llm.benchmark?.cbaElo,

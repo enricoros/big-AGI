@@ -11,13 +11,13 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import { type DPricingChatGenerate, isLLMChatFree_cached, llmChatPricing_adjusted } from '~/common/stores/llms/llms.pricing';
+import { type DPricingChatGenerate, isLLMChatFree_cached, llmChatPricing_multiplied, llmChatPricing_computeMultiplierFromParams } from '~/common/stores/llms/llms.pricing';
 import type { ModelOptionsContext } from '~/common/layout/optima/store-layout-optima';
 import { DLLMId, DModelInterfaceV1, getLLMContextTokens, getLLMLabel, getLLMMaxOutputTokens, getLLMPubDate, isLLMVisible, LLM_IF_HOTFIX_NoStream, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Reasoning } from '~/common/stores/llms/llms.types';
 import { StarredState } from '~/common/components/StarIcons';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { GoodModal } from '~/common/components/modals/GoodModal';
-import { LLMImplicitParametersRuntimeFallback } from '~/common/stores/llms/llms.parameters';
+import { getAllModelParameterValues, LLMImplicitParametersRuntimeFallback } from '~/common/stores/llms/llms.parameters';
 import { ModelDomainsList, ModelDomainsRegistry } from '~/common/stores/llms/model.domains.registry';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
 import { llmsStoreActions } from '~/common/stores/llms/store-llms';
@@ -280,7 +280,9 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
   const showFull = !ENABLE_PURPOSEFUL_VISIBILITY || props.context !== 'parameters';
 
   // cache
-  const adjChatPricing = llmChatPricing_adjusted(llm);
+  const llmParameters = getAllModelParameterValues(llm.initialParameters, llm.userParameters);
+  const priceMultiplier = llmChatPricing_computeMultiplierFromParams(llm.parameterSpecs, llmParameters);
+  const adjChatPricing = llmChatPricing_multiplied(llm, priceMultiplier);
   const pubDate = getLLMPubDate(llm);
 
 
@@ -586,7 +588,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
               type='number'
               variant='outlined'
               placeholder={
-                // NOTE: direct access to the underlying, instead of via llmChatPricing_adjusted
+                // NOTE: direct access to the underlying, instead of via llmChatPricing_multiplied
                 typeof llm.pricing?.chat?.input === 'number' ? llm.pricing.chat.input.toString() : 'not set'
               }
               value={
@@ -609,7 +611,7 @@ export function LLMOptionsModal(props: { id: DLLMId, context?: ModelOptionsConte
               type='number'
               variant='outlined'
               placeholder={
-                // NOTE: direct access to the underlying, instead of via llmChatPricing_adjusted
+                // NOTE: direct access to the underlying, instead of via llmChatPricing_multiplied
                 typeof llm.pricing?.chat?.output === 'number' ? llm.pricing.chat.output.toString() : 'not set'
               }
               value={

@@ -53,7 +53,7 @@ Once, at finalization (`_finalizeLlmMetricsWithCosts` in `aix.client.ts`), store
 
 ```
 $xPrice  = served tier ?? llmChatPricing_multiplier(specs, request parameters)   // the echo wins; without one, what this request asked for
-pricing  = llmChatPricing_adjusted(llm, $xPrice)
+pricing  = llmChatPricing_multiplied(llm, $xPrice)
 tier     = TIn + TCacheRead + TCacheWrite
 $cIn     = TIn * input[tier]
 $cCacheR = TCacheRead * cache.read[tier]

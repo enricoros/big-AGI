@@ -18,7 +18,7 @@ import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import type { AIVndOaiBeamSandboxPolicy } from '~/common/stores/store-ai';
 import { getAixInspectorEnabled } from '~/common/stores/store-ui';
 import { getLabsLosslessImages } from '~/common/stores/store-ux-labs';
-import { llmChatPricing_adjusted, llmChatPricing_computeMultiplierFromParams } from '~/common/stores/llms/llms.pricing';
+import { llmChatPricing_multiplied, llmChatPricing_computeMultiplierFromParams } from '~/common/stores/llms/llms.pricing';
 import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
 import { stripUndefined } from '~/common/util/objectUtils';
 import { videoPlayObjectUrl } from '~/common/util/video/videoPlayManaged';
@@ -752,7 +752,7 @@ function _finalizeLlmMetricsWithCosts(cgMetricsLg: undefined | DMetricsChatGener
   // Compute costs
   const logLlmRefId = llmParameters.llmRef || llm.id;
   const $xPrice = cgMetricsLg?.$xPrice ?? llmChatPricing_computeMultiplierFromParams(llm.parameterSpecs, llmParameters); // the served tier (when echoed) wins over the requested one
-  const adjChatPricing = llmChatPricing_adjusted(llm, $xPrice);
+  const adjChatPricing = llmChatPricing_multiplied(llm, $xPrice);
   const costs = metricsComputeChatGenerateCostsMd(metricsMd, adjChatPricing, logLlmRefId);
   if (!costs) {
     // FIXME: we shall warn that the costs are missing, as the only way to get pricing is through surfacing missing prices

@@ -1,4 +1,4 @@
-import { DModelParameterRegistry, type DModelParameterSpecAny, type DModelParameterValues, getAllModelParameterValues } from './llms.parameters';
+import { DModelParameterRegistry, type DModelParameterSpecAny, type DModelParameterValues } from './llms.parameters';
 import type { DLLM } from './llms.types';
 
 
@@ -87,27 +87,21 @@ export function getLlmCostForTokens(tierTokens: number, tokens: number, pricing:
 }
 
 
-/// Adjusted Chat Pricing - applies registry-defined price multipliers for active enum parameters
+/// Multiplied Chat Pricing - the model's pricing at a price multiplier (service tier, fast mode)
 
 /**
- * Returns the effective chat pricing for a model, adjusted for active parameter-based
- * price multipliers (e.g. fast mode = 6x). Self-contained: reads the DLLM, resolves
- * parameter values, looks up enumPriceMultiplier in the registry, and applies.
- *
- * `multiplierOverride`: replaces the multiplier of the model's own parameters, e.g. with the one a finished generation billed at.
+ * The model's chat pricing at a price multiplier. The caller states which multiplier: the one some parameter values ask
+ * for (`llmChatPricing_computeMultiplierFromParams`), or the one a finished generation billed at (metrics `$xPrice`).
  *
  * Note: does NOT affect isLLMChatFree_cached (free * N = free). Per-call tool fees are not multiplied.
  */
-export function llmChatPricing_adjusted<TLlm extends Pick<DLLM, 'pricing' | 'userPricing' | 'parameterSpecs' | 'initialParameters' | 'userParameters'>>(llm: TLlm | null, multiplierOverride?: number): DPricingChatGenerate | undefined {
+export function llmChatPricing_multiplied(llm: Pick<DLLM, 'pricing' | 'userPricing'> | null, multiplier: number): DPricingChatGenerate | undefined {
   if (!llm) return undefined;
 
   // base chat pricing
   const gcPricing = (llm.userPricing ?? llm.pricing)?.chat;
   if (!gcPricing) return undefined;
 
-  // compute composed multiplier from active enum parameters
-  const llmParameters = getAllModelParameterValues(llm.initialParameters, llm.userParameters);
-  const multiplier = multiplierOverride ?? llmChatPricing_computeMultiplierFromParams(llm.parameterSpecs, llmParameters);
   if (multiplier === 1) return gcPricing;
 
   // Apply the multiplier per present class - never emit `key: undefined` (missing and undefined differ on the wire and at rest)
@@ -185,7 +179,7 @@ interface Was_DModelPricingV2 {
 }
 
 export function portModelPricingV2toV3(llm: DLLM): void {
-  // NOTE: direct .pricing access instead of llmChatPricing_adjusted, because there was no user pricing in this generation
+  // NOTE: direct .pricing access instead of llmChatPricing_multiplied, because there was no user pricing in this generation
   if (!llm.pricing) return;
   if (typeof llm.pricing !== 'object') return;
 
