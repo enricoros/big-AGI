@@ -25,8 +25,17 @@ const BACKUP_FILE_FORMAT = 'Big-AGI Backup File';
 const BACKUP_FORMAT_VERSION = '1.2';
 const BACKUP_FORMAT_VERSION_NUMBER = 102000;
 const WINDOW_RELOAD_DELAY = 300;
+// Stored values that are no part of a backup: not saved, and a restore neither writes them (older backups
+// hold them) nor removes the ones of this device.
 const EXCLUDED_LOCAL_STORAGE_KEYS = [
   'agi-logger-log', // the log cannot be restored as it's in-mem and being persisted while this is running
+  'app-sharing', // the shared chat links, with their deletion keys
+  'app-from-v1-arrival', // when this browser arrived from V1
+  'app-app-chat-panes-2', // the open chat panes
+  'app-fabric-cache', // the sign-in cache of the builds with accounts
+];
+const EXCLUDED_LOCAL_STORAGE_PREFIXES = [
+  'ph_', // the analytics client's state and identity
 ];
 const EXCLUDED_IDB_DATABASES = [
   'Big-AGI', // exclude DBlobs IDB
@@ -68,12 +77,16 @@ function _getErrorText(error: unknown): string {
 
 // -- LocalStorage Read --
 
+function _isExcludedLocalStorageKey(key: string): boolean {
+  return EXCLUDED_LOCAL_STORAGE_KEYS.includes(key) || EXCLUDED_LOCAL_STORAGE_PREFIXES.some(prefix => key.startsWith(prefix));
+}
+
 async function getAllLocalStorageKeyValues(): Promise<Record<string, any>> {
   const data: Record<string, any> = {};
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (!key || EXCLUDED_LOCAL_STORAGE_KEYS.includes(key)) continue;
+      if (!key || _isExcludedLocalStorageKey(key)) continue;
       try {
         const value = localStorage.getItem(key);
         if (value !== null) {
@@ -257,8 +270,17 @@ async function restoreLocalStorage(data: Record<string, any>): Promise<void> {
       return;
     }
 
-    localStorage.clear();
+    // everything goes, but what is no part of a backup: that stays as this device has it
+    const keysToReplace: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && !_isExcludedLocalStorageKey(key)) keysToReplace.push(key);
+    }
+    for (const key of keysToReplace)
+      localStorage.removeItem(key);
+
     for (const key in data) {
+      if (_isExcludedLocalStorageKey(key)) continue;
       try {
         const value = data[key];
         localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
