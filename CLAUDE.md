@@ -13,6 +13,8 @@ Guidance to Claude Code when working with code in this repository.
 
 Dev servers may already run on ports 3xxx, started by the user or other agents: never kill those.
 
+The app is single-instance per browser and origin (`src/common/providers/single-tab/`): in browser automation, open a given dev server in one tab only. A second tab gets a `Transfer Here` screen instead of the app, and transferring wipes the first tab.
+
 ```bash
 # Validate - safe while a dev server runs, and far quicker than `next build` for the same checks
 npm run tscheck && npm run lint  # includes npm install
