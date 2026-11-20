@@ -9,6 +9,7 @@ import { useBrowseCapability } from '~/modules/browse/store-module-browsing';
 
 import type { DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { AttachmentDraftsList } from '~/common/attachment-drafts/attachment-drafts-ui/AttachmentDraftsList';
+import { attachmentDraftIsBusy } from '~/common/attachment-drafts/attachment.types';
 import { AttachmentSourcesMemo } from '~/common/attachment-drafts/attachment-sources/AttachmentSources';
 import { createAttachmentDraftsVanillaStore } from '~/common/attachment-drafts/store-attachment-drafts_vanilla';
 import { supportsCameraCapture } from '~/common/components/camera/useCameraCapture';
@@ -103,7 +104,7 @@ export function CMEditAttach(props: {
 
 
   // drafts still loading or converting: Insert waits
-  const draftsBusy = attachmentDrafts.some(draft => draft.inputLoading || draft.outputsConverting);
+  const draftsBusy = attachmentDrafts.some(attachmentDraftIsBusy);
 
   const handleInsert = React.useCallback(() => {
     void drafts?.takeStore(store);

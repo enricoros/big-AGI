@@ -1,4 +1,5 @@
 import type { AttachmentDraftsStoreApi } from '~/common/attachment-drafts/store-attachment-drafts_slice';
+import { attachmentDraftIsBusy } from '~/common/attachment-drafts/attachment.types';
 import type { DBlobAssetId } from '~/common/stores/blob/dblobs-portability';
 import type { DMessageAttachmentFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { collectFragmentAssetIds } from '~/common/stores/chat/chat.gc';
@@ -51,7 +52,7 @@ export class CMEditDrafts {
     for (const store of this._stores.keys())
       for (const draft of store.getState().attachmentDrafts) {
         state |= 1;
-        if (draft.inputLoading || draft.outputsConverting) return 3;
+        if (attachmentDraftIsBusy(draft)) return 3;
       }
     return state;
   };

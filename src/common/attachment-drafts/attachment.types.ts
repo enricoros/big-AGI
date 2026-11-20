@@ -42,6 +42,11 @@ export type AttachmentDraft = {
   // };
 };
 
+/** Still loading its input or converting it: the draft has no final fragments yet, so a take now would drop it. */
+export function attachmentDraftIsBusy(draft: AttachmentDraft): boolean {
+  return draft.inputLoading || draft.outputsConverting;
+}
+
 export type AttachmentDraftId = string;
 
 export type AttachmentCreationOptions = {
