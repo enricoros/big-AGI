@@ -136,19 +136,23 @@ export function objectDeepCloneWithStringLimit(value: unknown, debugCaller: stri
     // handle other primitives
     if (typeof val !== 'object') return val;
 
-    // cycle detection
+    // cycle detection: `seen` holds the ancestors only (removed on the way out), so an object referenced twice is not a cycle
     if (seen.has(val)) return '[Circular]';
     seen.add(val);
 
     // handle arrays - recurse
-    if (Array.isArray(val))
-      return val.map(item => clone(item));
+    if (Array.isArray(val)) {
+      const cloned = val.map(item => clone(item));
+      seen.delete(val);
+      return cloned;
+    }
 
     // handle objects - recurse
     const result: Record<string, unknown> = {};
     for (const key in val)
       if (Object.prototype.hasOwnProperty.call(val, key))
         result[key] = clone((val as Record<string, unknown>)[key]);
+    seen.delete(val);
     return result;
   }
 
