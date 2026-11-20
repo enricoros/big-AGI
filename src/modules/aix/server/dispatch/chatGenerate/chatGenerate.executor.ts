@@ -414,7 +414,10 @@ async function* _consumeDispatchStream(
 
       } catch (error: any) {
         // pass-through dispatch signals - thrown by parsers to request operation retry or continuation
-        if (error instanceof DispatchContinuationSignal) throw error;
+        if (error instanceof DispatchContinuationSignal) {
+          yield* chatGenerateTx.flushParticles(); // the paused turn's final metrics: sent once at the start, then only on a flush
+          throw error;
+        }
         if (error instanceof OperationRetrySignal) throw error;
 
         // Handle parsing issue (likely a schema break); print it to the server console as well
