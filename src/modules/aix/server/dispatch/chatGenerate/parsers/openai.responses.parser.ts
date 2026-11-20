@@ -682,7 +682,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
       case 'response.output_text.annotation.added': // NEW, CORRECT
       case 'response.output_text_annotation.added': // OLD, for backwards compatibility
         R.contentPartVisit(eventType, event.output_index, event.content_index);
-        _forwardTextAnnotation(pt, event.annotation, event.annotation_index);
+        _forwardTextAnnotation(pt, event.annotation);
         break;
 
       // The following 2 are speculative implementations
@@ -1117,7 +1117,7 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
 
                 // -> URL Citations: Parse annotations if present
                 if (content.annotations && Array.isArray(content.annotations))
-                  content.annotations.forEach((annotation, annotationIndex) => _forwardTextAnnotation(pt, annotation, annotationIndex));
+                  content.annotations.forEach(annotation => _forwardTextAnnotation(pt, annotation));
                 break;
 
               case 'refusal':
@@ -1359,13 +1359,13 @@ function _forwardResponseErrorNS(parsedData: any, pt: IParticleTransmitter, cont
  * IMPORTANT: These are HIGH-QUALITY citations (2-3 per response) that were actually
  * used in generating the response. Different from bulk web search sources (20+ results).
  */
-function _forwardTextAnnotation(pt: IParticleTransmitter, annotation: Exclude<Extract<NonNullable<Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'message' }>['content']>[number], { type: 'output_text' }>['annotations'], undefined>[number], annotationIndex: number): void {
+function _forwardTextAnnotation(pt: IParticleTransmitter, annotation: Exclude<Extract<NonNullable<Extract<OpenAIWire_API_Responses.Response['output'][number], { type: 'message' }>['content']>[number], { type: 'output_text' }>['annotations'], undefined>[number]): void {
   switch (annotation?.type) {
     case 'url_citation':
       pt.appendUrlCitation(
         annotation.title || annotation.url || '',
         annotation.url,
-        annotationIndex,
+        undefined, // no citation number: the annotation's position is not one, and the UI would print it as [n]
         annotation.start_index,
         annotation.end_index,
         (annotation as any)?.text || undefined,
