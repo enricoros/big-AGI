@@ -198,10 +198,10 @@ export async function listVoicesLocalAIOrThrow(access: SpeexWire_Access_OpenAI):
 
 function _resolveAccess(access: Readonly<SpeexWire_Access_OpenAI>): { host: string; apiKey: string } {
 
-  // determine host
+  // determine host - OpenAI with no client host: the server's endpoint (env host, else the default), as chat does
   const isOpenAI = access.dialect === 'openai';
   let host = isOpenAI
-    ? (access.apiHost || 'https://api.openai.com').trim()
+    ? (access.apiHost || env.OPENAI_API_HOST || 'https://api.openai.com').trim()
     : (access.apiHost || '').trim();
   if (!host) throw new Error('LocalAI requires a host URL');
   if (!host.startsWith('http')) {
@@ -211,7 +211,7 @@ function _resolveAccess(access: Readonly<SpeexWire_Access_OpenAI>): { host: stri
   if (host.endsWith('/'))
     host = host.slice(0, -1);
 
-  // OpenAI on the default endpoint: fall back to the server-side env key (as chat/T2I do); never forwarded to a client-set host
+  // OpenAI on the server's endpoint: fall back to the server-side env key (as chat/T2I do); never forwarded to a client-set host
   const apiKey = access.apiKey || ((isOpenAI && !access.apiHost) ? env.OPENAI_API_KEY : '') || '';
 
   return { host, apiKey };
