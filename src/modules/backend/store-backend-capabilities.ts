@@ -35,6 +35,7 @@ export interface LegacyServerConf {
   hasDB: boolean;
   hasBrowsing: boolean;
   hasGoogleCustomSearch: boolean;
+  hasContextSearch: boolean;
   hasVoiceElevenLabs: boolean;
 }
 
@@ -80,6 +81,7 @@ const useBackendCapabilitiesStore = create<BackendStore>()(
     hasDB: false,
     hasBrowsing: false,
     hasGoogleCustomSearch: false,
+    hasContextSearch: false,
     hasVoiceElevenLabs: false,
     hashLlmReconfig: '',
     build: undefined,

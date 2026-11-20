@@ -4,7 +4,7 @@
 
 import { aixChatGenerateText_Simple } from '~/modules/aix/client/aix.client';
 import { promptMixer } from '~/modules/promptMixer/promptMixer';
-import { callApiSearchGoogle } from '~/modules/google/search.client';
+import { callApiWebSearch } from '~/modules/websearch/search.client';
 import { callBrowseFetchPageOrThrow } from '~/modules/browse/browse.client';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
@@ -27,10 +27,10 @@ Never mention your knowledge cutoff date
 
 Your available "Actions" are:
 
-google:
-e.g. google: Django
-Returns google custom search results
-ALWAYS look up on google when the question is related to live events or factual information, such as sports, news, or weather.
+search:
+e.g. search: Django
+Returns web search results from the configured search provider
+ALWAYS search the web when the question is related to live events or factual information, such as sports, news, or weather.
 
 ` + (enableBrowse ? `loadUrl:
 e.g. loadUrl: https://arxiv.org/abs/1706.03762
@@ -159,7 +159,7 @@ export class Agent {
         throw new Error(`Unknown action: ${action}: ${actionInput}`);
       }
       log(`⚡ __${action}__("${actionInput}") → Observation`);
-      S.lastObservation = await knownActions[action](actionInput);
+      S.lastObservation = await knownActions[action](actionInput, this.abortSignal);
       S.nextPrompt = `Observation: ${S.lastObservation}`;
       // will be displayed in the next step
       // log('=>' + S.nextPrompt);
@@ -173,7 +173,7 @@ export class Agent {
 }
 
 
-type ActionFunction = (input: string) => Promise<string>;
+type ActionFunction = (input: string, signal?: AbortSignal) => Promise<string>;
 
 async function wikipedia(q: string): Promise<string> {
   const response = await frontendSideFetch(
@@ -184,13 +184,13 @@ async function wikipedia(q: string): Promise<string> {
   return data?.query?.search?.[0]?.snippet ?? 'No results found on Wikipedia.';
 }
 
-async function search(query: string): Promise<string> {
+async function search(query: string, signal?: AbortSignal): Promise<string> {
   try {
-    const data = await callApiSearchGoogle(query, 10);
+    const data = await callApiWebSearch(query, 10, undefined, signal);
     return JSON.stringify(data);
   } catch (error: any) {
-    console.error('Error fetching search results:', error);
-    return 'An error occurred while searching the internet. Missing Google API Key? Google error: ' + (error?.message || error?.toString() || 'Unknown error');
+    if (signal?.aborted) throw error;
+    return 'Web search failed. ' + (error?.message || 'Check Tools > Custom Search and try again.');
   }
 }
 
@@ -214,6 +214,7 @@ async function browse(url: string): Promise<string> {
 
 const knownActions: { [key: string]: ActionFunction } = {
   wikipedia: wikipedia,
+  search: search,
   google: search,
   loadUrl: browse,
   // calculate: calculate, // DISABLED: security
