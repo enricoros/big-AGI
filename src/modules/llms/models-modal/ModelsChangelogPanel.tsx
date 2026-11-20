@@ -79,11 +79,20 @@ const styles = {
 
   errorText: {
     fontSize: 'xs',
-    color: 'warning.plainColor',
+    color: 'danger.plainColor',
     wordBreak: 'break-word',
   },
 
 } as const;
+
+
+/**
+ * One severity per service across the AI Models dialog (this screen and the service selector):
+ * a failed latest listing is danger (models may be kept); no models otherwise (not listed yet) is warning.
+ */
+export function llmsServiceAlertColor(hasModels: boolean, lastListingFailed: boolean): 'danger' | 'warning' | undefined {
+  return lastListingFailed ? 'danger' : !hasModels ? 'warning' : undefined;
+}
 
 
 // only the automatic trigger is worth a caption: user-triggered listings are self-evident
@@ -211,7 +220,7 @@ export function ModelsChangelogPanel(props: {
       {!!summary.added && <Chip size='sm' variant='soft' color='success'>+{summary.added} added</Chip>}
       {!!summary.changed && <Chip size='sm' variant='soft' color='neutral'>~{summary.changed} changed</Chip>}
       {!!summary.removed && <Chip size='sm' variant='soft' color='neutral'>-{summary.removed} removed</Chip>}
-      {!!summary.failed && <Chip size='sm' variant='soft' color='warning'>{summary.failed} {summary.failed === 1 ? 'error' : 'errors'}</Chip>}
+      {!!summary.failed && <Chip size='sm' variant='soft' color='danger'>{summary.failed} {summary.failed === 1 ? 'error' : 'errors'}</Chip>}
     </>;
   } else {
     headerTitle = summary.at ? `Last checked ${prettyTimeAgoEn(summary.at, now)}` : 'No updates recorded yet';
@@ -289,6 +298,7 @@ function ServiceChangelogRow(props: {
   const isFresh = !!latest && sessionAt !== null && latest.at >= sessionAt;
   const canExpand = !!entries?.length;
   const dimmed = isQueued ? 'text.tertiary' : undefined;
+  const alertColor = llmsServiceAlertColor(props.modelCount > 0, !!latest?.err);
 
   const handleToggle = React.useCallback(() => canExpand && onToggleExpanded(service.id), [canExpand, onToggleExpanded, service.id]);
   const handleConfigure = React.useCallback((event: React.MouseEvent) => {
@@ -334,10 +344,10 @@ function ServiceChangelogRow(props: {
             {/* the link is inline-flex, so the ellipsis needs a block child */}
             <Box component='span' className='agi-ellipsize' sx={{ display: 'block', minWidth: 0 }}>{service.label}</Box>
           </Link>
-          {!!latest?.err && <WarningRoundedIcon sx={{ fontSize: 'md', color: 'warning.plainColor' }} />}
+          {!!latest?.err && <WarningRoundedIcon sx={{ fontSize: 'md', color: 'danger.plainColor' }} />}
         </Box>
       </td>
-      {!isMobile && <td style={{ textAlign: 'right' }}><Typography level='body-sm' textColor={dimmed} noWrap>{props.modelCount}</Typography></td>}
+      {!isMobile && <td style={{ textAlign: 'right' }}><Typography level='body-sm' textColor={dimmed ?? (!props.modelCount && alertColor ? `${alertColor}.plainColor` : undefined)} noWrap>{props.modelCount}</Typography></td>}
       <td>{updatedNode}</td>
       <td>{lastChangeNode}</td>
       <td>{canExpand && <KeyboardArrowRightIcon sx={{ display: 'block', fontSize: 'lg', color: 'text.tertiary', transition: 'transform 0.1s', transform: expanded ? 'rotate(90deg)' : 'none' }} />}</td>

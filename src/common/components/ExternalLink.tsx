@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { ColorPaletteProp, SxProps, TypographySystem } from '@mui/joy/styles/types';
-import LaunchIcon from '@mui/icons-material/Launch';
+import NorthEastIcon from '@mui/icons-material/NorthEast';
 
 import { Link } from './Link';
 import { PhBookOpenText } from './icons/phosphor/PhBookOpenText';
@@ -29,7 +29,7 @@ export function ExternalLink(props: {
     <Link level={props.level} color={props.color} href={props.href} target='_blank' sx={props.highlight ? wowStyle : undefined}>
       {props.children} {(props.icon === 'issue' || props.icon === 'public-docs')
       ? <PhBookOpenText sx={{ mx: 0.5, fontSize: 16 }} />
-      : <LaunchIcon sx={{ mx: 0.5, fontSize: 16 }} />
+      : <NorthEastIcon sx={{ mx: 0.5, fontSize: 16 }} />
     }
     </Link>
   );

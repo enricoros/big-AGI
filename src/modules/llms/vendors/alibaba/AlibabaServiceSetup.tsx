@@ -4,6 +4,7 @@ import { Typography } from '@mui/joy';
 
 import type { DModelsServiceId } from '~/common/stores/llms/llms.service.types';
 import { AlreadySet } from '~/common/components/AlreadySet';
+import { ExternalDocsLink } from '~/common/components/ExternalDocsLink';
 import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormInputKey } from '~/common/components/forms/FormInputKey';
 import { FormTextField } from '~/common/components/forms/FormTextField';
@@ -22,7 +23,7 @@ import { ModelVendorAlibaba } from './alibaba.vendor';
 
 const CLIENT_ALIBABA_DEFAULT_HOST = 'https://dashscope-intl.aliyuncs.com/compatible-mode';
 const ALIBABA_REG_LINK = 'https://bailian.console.alibabacloud.com/?apiKey=1#/api-key';
-const ALIBABA_MODELS = 'https://www.alibabacloud.com/help/en/model-studio/getting-started/models';
+const ALIBABA_MODELS = 'https://www.alibabacloud.com/help/en/model-studio/models';
 
 
 export function AlibabaServiceSetup(props: { serviceId: DModelsServiceId }) {
@@ -52,8 +53,7 @@ export function AlibabaServiceSetup(props: { serviceId: DModelsServiceId }) {
     <ApproximateCosts serviceId={service?.id}>
       <div>
         <Typography level='body-sm'>
-          Alibaba Cloud supports the <ExternalLink href={ALIBABA_MODELS}>following models</ExternalLink> via
-          the OpenAI-compatible endpoint.
+          <ExternalDocsLink docPage='connect-alibaba'>Configure Alibaba Cloud</ExternalDocsLink>. Alibaba Cloud supports <ExternalLink href={ALIBABA_MODELS}>these models</ExternalLink>.
         </Typography>
       </div>
     </ApproximateCosts>

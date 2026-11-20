@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { SxProps } from '@mui/joy/styles/types';
 import { Badge, Box, IconButton, ListDivider, MenuItem, Option, Select, Typography } from '@mui/joy';
@@ -15,13 +16,14 @@ import { GoodTooltip } from '~/common/components/GoodTooltip';
 import { PhGift } from '~/common/components/icons/phosphor/PhGift';
 import { Release } from '~/common/app.release';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
-import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { llmsStoreActions, useModelsStore } from '~/common/stores/llms/store-llms';
 import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import type { IModelVendor } from '../vendors/IModelVendor';
 import { LLMVendorIconSprite } from '../components/LLMVendorIconSprite';
 import { findAllModelVendors, findModelVendor, type ModelVendorId } from '../vendors/vendors.registry';
+import { llmsServiceAlertColor } from './ModelsChangelogPanel';
 import { vendorHasServerConf } from '../vendors/vendor.helpers';
 // import { MODELS_WIZARD_OPTION_ID } from '~/modules/llms/models-modal/ModelsModal';
 
@@ -296,6 +298,15 @@ export function ModelsServiceSelector(props: {
 
   // external state
   const isMobile = useIsMobile();
+  const serviceAlerts = useModelsStore(useShallow(({ sources, llms, changelog }) => {
+    const withModels = new Set(llms.map(llm => llm.sId));
+    const alerts: Record<DModelsServiceId, 'danger' | 'warning' | undefined> = {};
+    for (const { id } of sources) {
+      const lastListingFailed = changelog.find(entry => entry.sId === id)?.err !== undefined;
+      alerts[id] = llmsServiceAlertColor(withModels.has(id), lastListingFailed);
+    }
+    return alerts;
+  }));
 
   const { onSwitchToWizard } = props;
 
@@ -354,7 +365,10 @@ export function ModelsServiceSelector(props: {
     // cloud vendors, alphabetical; collapsed: the configured ones, then by priority, an odd count so that with the toggle tile
     // the rows are full; collapsible only when it hides at least 2 (the toggle tile takes a slot)
     const _byName = (a: VendorItemData, b: VendorItemData) => a.vendor.name.localeCompare(b.vendor.name);
-    const _cloudRank = (id: ModelVendorId) => { const i = CLOUD_PRIORITY.indexOf(id); return i === -1 ? CLOUD_PRIORITY.length : i; };
+    const _cloudRank = (id: ModelVendorId) => {
+      const i = CLOUD_PRIORITY.indexOf(id);
+      return i === -1 ? CLOUD_PRIORITY.length : i;
+    };
     const cloudItems = vendorItems.filter(v => v.vendor.displayGroup === 'cloud').sort(_byName);
     const collapsedIds = new Set(cloudItems.filter(v => v.vendorInstancesCount > 0).map(v => v.vendor.id));
     const collapsedTarget = Math.max(CLOUD_COLLAPSED_COUNT, collapsedIds.size) | 1;
@@ -397,16 +411,18 @@ export function ModelsServiceSelector(props: {
   }, [handleAddServiceForVendor, modelsServices, isMobile, showMoreVendors]);
 
 
-  // memo deployed services items
+  // memo deployed services items - colored by llmsServiceAlertColor (except the selected one): a hint to fix or remove them
+  const { selectedServiceId } = props;
   const serviceItems: { service: DModelsService, icon: React.ReactNode, component: React.ReactNode }[] = React.useMemo(() =>
       modelsServices
         .map(service => {
           const icon = vendorIconWithMark(findModelVendor(service.vId), false);
+          const alertColor = service.id !== selectedServiceId ? serviceAlerts[service.id] : undefined;
           return {
             service,
             icon,
             component: (
-              <Option key={service.id} value={service.id}>
+              <Option key={service.id} value={service.id} color={alertColor}>
                 {/*<ListItemDecorator>{icon}</ListItemDecorator>*/}
                 {service.label}
               </Option>
@@ -414,7 +430,7 @@ export function ModelsServiceSelector(props: {
           };
         })
         .sort((a, b) => a.service.label.localeCompare(b.service.label))
-    , [modelsServices]);
+    , [modelsServices, selectedServiceId, serviceAlerts]);
 
 
   const selectedServiceItem = serviceItems.find(item => item.service.id === props.selectedServiceId);
@@ -435,7 +451,7 @@ export function ModelsServiceSelector(props: {
         onChange={(_event, value) => value && props.setSelectedServiceId(value)}
         startDecorator={isAllServices ? <RefreshIcon /> : selectedServiceItem?.icon}
         slotProps={{
-          root: { sx: { minWidth: 180 } },
+          root: { sx: { minWidth: 200 } },
           indicator: { sx: { opacity: 0.5 } },
         }}
       >

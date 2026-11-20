@@ -45,7 +45,7 @@ export function OllamaServiceSetup(props: { serviceId: DModelsServiceId }) {
     <FormTextField
       autoCompleteId='ollama-host'
       title='Ollama Host'
-      description={<ExternalDocsLink level='body-sm' docPage='connect-ollama'>Information</ExternalDocsLink>}
+      description={<ExternalDocsLink level='body-xs' docPage='connect-ollama'>Learn more</ExternalDocsLink>}
       placeholder='http://127.0.0.1:11434'
       isError={hostError}
       value={ollamaHost || ''}

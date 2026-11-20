@@ -18,7 +18,7 @@ export function SetupFormRefetchButton(props: {
   advanced?: ToggleableBoolean
 }) {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between' }}>
+    <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
 
       {props.leftButton}
 
