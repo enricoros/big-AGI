@@ -184,6 +184,7 @@ export function webShare(title: string, text: string, url: string, onShared?: ()
       .share({ title, text, url })
       .then(() => onShared?.())
       .catch((error) => {
+        if (error?.name === 'AbortError') return; // the user dismissed the share sheet
         console.error('Error sharing', error);
         alert('Sharing failed. This browser may not support sharing.');
       });
