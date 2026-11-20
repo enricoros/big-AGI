@@ -1122,7 +1122,9 @@ export function DocsReaderModal(props: { target: NewsDocsTarget }) {
   // content: search results, a page, a section, or every section
   let content: React.ReactNode = null;
   if (searching)
-    content = docs && <DocsSearchResults hits={hits} words={words} enterTarget={searchFocused} onOpen={openPage} onExitUp={handleSearchFocus} />;
+    content = docs ? <DocsSearchResults hits={hits} words={words} enterTarget={searchFocused} onOpen={openPage} onExitUp={handleSearchFocus} />
+      : indexError ? <DocsFailure error={indexFailure} onRetry={() => void refetchIndex()} /> // not a blank pane when the index failed to load
+        : null;
   else if (shownView.kind === 'page')
     content = shownPage
       ? <DocsPageView page={shownPage} entry={docBySlug.get(shownPage.slug)} />
