@@ -1,4 +1,4 @@
-import { DModelParameterRegistry, type DModelParameterSpecAny, type DModelParameterValues } from './llms.parameters';
+import { DModelParameterRegistry, type DModelParameterSpecAny, type DModelParameterValues, getAllModelParameterValues } from './llms.parameters';
 import type { DLLM } from './llms.types';
 
 
@@ -94,11 +94,11 @@ export function getLlmCostForTokens(tierTokens: number, tokens: number, pricing:
  * price multipliers (e.g. fast mode = 6x). Self-contained: reads the DLLM, resolves
  * parameter values, looks up enumPriceMultiplier in the registry, and applies.
  *
- * `confirmedMultiplier`: the served tier (metrics `$xPrice`) replaces the parameter-derived multiplier.
+ * `multiplierOverride`: replaces the multiplier of the model's own parameters, e.g. with the one a finished generation billed at.
  *
  * Note: does NOT affect isLLMChatFree_cached (free * N = free). Per-call tool fees are not multiplied.
  */
-export function llmChatPricing_adjusted<TLlm extends Pick<DLLM, 'pricing' | 'userPricing' | 'parameterSpecs' | 'initialParameters' | 'userParameters'>>(llm: TLlm | null, confirmedMultiplier?: number): DPricingChatGenerate | undefined {
+export function llmChatPricing_adjusted<TLlm extends Pick<DLLM, 'pricing' | 'userPricing' | 'parameterSpecs' | 'initialParameters' | 'userParameters'>>(llm: TLlm | null, multiplierOverride?: number): DPricingChatGenerate | undefined {
   if (!llm) return undefined;
 
   // base chat pricing
@@ -106,7 +106,7 @@ export function llmChatPricing_adjusted<TLlm extends Pick<DLLM, 'pricing' | 'use
   if (!gcPricing) return undefined;
 
   // compute composed multiplier from active enum parameters
-  const multiplier = confirmedMultiplier ?? _computePriceMultiplier(llm.parameterSpecs, llm.initialParameters, llm.userParameters);
+  const multiplier = multiplierOverride ?? llmChatPricing_computeMultiplierFromParams(llm.parameterSpecs, getAllModelParameterValues(llm.initialParameters, llm.userParameters));
   if (multiplier === 1) return gcPricing;
 
   // Apply the multiplier per present class - never emit `key: undefined` (missing and undefined differ on the wire and at rest)
@@ -125,13 +125,19 @@ export function llmChatPricing_adjusted<TLlm extends Pick<DLLM, 'pricing' | 'use
 }
 
 /**
- * Scans parameterSpecs for enum parameters with enumPriceMultiplier in the registry.
- * For each, resolves the effective value (user > initial) and if it matches a multiplier key, accumulates it.
+ * The price multiplier that a set of parameter values asks for on a model (service tier, fast mode), vs the
+ * listed rates. 1 when none. The provider may serve another tier - see metrics `$xPrice`.
+ *
+ * `parameterValues` are the resolved values of one request, as from getAllModelParameterValues: a persona,
+ * a chat or a call can replace the model's own, so cost must be computed on the values that were sent.
+ *
+ * Scans parameterSpecs for enum parameters with enumPriceMultiplier in the registry, and composes the
+ * multipliers of their values.
  *
  * Note: any enum with enumPriceMultiplier must have its
  * effective default in initialParameters (via spec or registry `initialValue`).
  */
-function _computePriceMultiplier(parameterSpecs: DModelParameterSpecAny[], initialParameters: DModelParameterValues | undefined, userParameters: DModelParameterValues | undefined): number {
+export function llmChatPricing_computeMultiplierFromParams(parameterSpecs: DModelParameterSpecAny[], parameterValues: DModelParameterValues): number {
   if (!parameterSpecs?.length) return 1;
 
   let multiplier = 1;
@@ -140,14 +146,18 @@ function _computePriceMultiplier(parameterSpecs: DModelParameterSpecAny[], initi
     const paramId = spec.paramId;
     const registryDef = DModelParameterRegistry[paramId];
 
-    // 'enum' values multipliers
-    if (registryDef?.type === 'enum' && 'enumPriceMultiplier' in registryDef && registryDef.enumPriceMultiplier) {
-      const value = (userParameters?.[paramId] ?? initialParameters?.[paramId]) as string | undefined;
-      if (value !== undefined) {
-        const m = (registryDef.enumPriceMultiplier as Record<string, number | undefined>)[value];
-        if (m !== undefined && m !== 1 && m !== null /* extra caution */)
-          multiplier *= m;
+    // 'enum' values multipliers - guarded: this runs while rendering and while finalizing a message, and malformed values must cost a multiplier, not a crash
+    try {
+      if (registryDef?.type === 'enum' && 'enumPriceMultiplier' in registryDef && registryDef.enumPriceMultiplier) {
+        const value = parameterValues[paramId] as string | undefined;
+        if (value !== undefined) {
+          const m = (registryDef.enumPriceMultiplier as Record<string, number | undefined>)[value];
+          if (m !== undefined && m !== 1 && m !== null /* extra caution */)
+            multiplier *= m;
+        }
       }
+    } catch (error) {
+      console.warn('[DEV] llmChatPricing_multiplier: skipping parameter', { paramId, error });
     }
     // NOTE: may add other (e.g. boolean) multipliers in the future
   }

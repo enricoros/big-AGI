@@ -52,7 +52,8 @@ Continuation turns (Anthropic `pause_turn`) are summed server-side: tokens, coun
 Once, at finalization (`_finalizeLlmMetricsWithCosts` in `aix.client.ts`), stored on the message as `DMetricsChatGenerate_Md`. Nothing recomputes history.
 
 ```
-pricing  = llmChatPricing_adjusted(llm, $xPrice)   // $xPrice (served tier) replaces the parameter multiplier
+$xPrice  = served tier ?? llmChatPricing_multiplier(specs, request parameters)   // the echo wins; without one, what this request asked for
+pricing  = llmChatPricing_adjusted(llm, $xPrice)
 tier     = TIn + TCacheRead + TCacheWrite
 $cIn     = TIn * input[tier]
 $cCacheR = TCacheRead * cache.read[tier]
@@ -65,9 +66,18 @@ $cdCache = (TIn+TCacheRead+TCacheWrite) * input[tier] - ($cIn + $cCacheR + $cCac
 
 Unknown prices are the norm (dynamic vendors, OpenRouter rows without cache prices, tier gaps): a class with no price contributes nothing to `$c`, emits no breakdown key, and sets `$code: 'partial-price'`. Never an invented rate. Unknown input or output price: no `$c` at all.
 
-`$cReported` wins over `$c` for the headline and the service totals; `$c` stays as the estimate for reconciliation. `$xPrice` is stored only when not 1.
+`$cReported` wins over `$c` for the headline and the service totals; `$c` stays as the estimate for reconciliation.
 
-Parameter-side multipliers (`enumPriceMultiplier` in the parameter registry) predict the tier before the response: `llmVndOaiServiceTier` flex 0.5 / fast 2 / ultrafast 6, `llmVndAntInfSpeed` fast 2x or 6x. The echo corrects a downgrade.
+The stored `$xPrice` is the multiplier `$c` was computed at, whether served or requested, so every multiplied estimate names its tier. Stored only with a `$c`, and only when not 1. The tooltip shows it on the line that shows `$c`: the headline, or the estimate footnote when a billed cost took the headline.
+
+The requested multiplier is read from the parameter values the request was built with, not from the model's stored ones: a persona, a chat or a call can replace them.
+
+Parameter-side multipliers (`enumPriceMultiplier` in the parameter registry) predict the tier before the response: `llmVndOaiServiceTier` flex 0.5 / fast 2 / ultrafast 6, `llmVndAntInfSpeed` fast 2x or 6x. The echo corrects a downgrade. They also stand in where no echo carries a rate: Anthropic echoes `speed: fast` without one (the rate is per model, held by the parameter value), and the Chat Completions tier echo is not parsed.
+
+Open: the rates sit in three places that can disagree, and `LLM-pricing-direction.md` moves them to the model's card with the served tier as a tag.
+- The registry holds one rate per parameter value for every model. The OpenAI Responses parser holds the per-model exceptions (Fast 2.5x on GPT-5.5, Ultrafast 3x on GPT-6.2 while its promotion runs), applied only when the tier is echoed. Anthropic names the rate in the parameter value.
+- Where no echo is parsed the registry rate stands. Measured through OpenRouter: GPT-5.5 Fast bills 2.5x and GPT-6.2 Ultrafast 3x, against estimates at 2x and 6x. The composer and the model options predict with the registry rate on every route.
+- Service-level multipliers (Anthropic US residency, 1.1x) come from the echo alone: never predicted, and dropped under a served fast, where the parser confirms nothing.
 
 ## Surfaces
 

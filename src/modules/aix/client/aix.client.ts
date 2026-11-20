@@ -18,7 +18,7 @@ import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import type { AIVndOaiBeamSandboxPolicy } from '~/common/stores/store-ai';
 import { getAixInspectorEnabled } from '~/common/stores/store-ui';
 import { getLabsLosslessImages } from '~/common/stores/store-ux-labs';
-import { llmChatPricing_adjusted } from '~/common/stores/llms/llms.pricing';
+import { llmChatPricing_adjusted, llmChatPricing_computeMultiplierFromParams } from '~/common/stores/llms/llms.pricing';
 import { metricsStoreAddChatGenerate } from '~/common/stores/metrics/store-metrics';
 import { stripUndefined } from '~/common/util/objectUtils';
 import { videoPlayObjectUrl } from '~/common/util/video/videoPlayManaged';
@@ -524,7 +524,7 @@ export async function aixChatGenerateText_Simple(
 
   // LLM Cost computation & Aggregations
   _llToL2Simple(llFinal, state);
-  const metrics = _finalizeLlmMetricsWithCosts(cgMetricsLg, llm, `aix_chatgenerate_text-${aixContextName}`);
+  const metrics = _finalizeLlmMetricsWithCosts(cgMetricsLg, llm, llmParameters, `aix_chatgenerate_text-${aixContextName}`);
   if (metrics) state.generator = { ...state.generator, metrics };
 
 
@@ -717,7 +717,7 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
 
   // Finalize DMessage
   _llToDMessageGuts(llFinal, dMessage);
-  const metrics = _finalizeLlmMetricsWithCosts(cgMetricsLg, llm, `aix_chatgenerate_content-${aixContext.name}`);
+  const metrics = _finalizeLlmMetricsWithCosts(cgMetricsLg, llm, llmParameters, `aix_chatgenerate_content-${aixContext.name}`);
   if (metrics) dMessage.generator = { ...dMessage.generator, metrics };
   dMessage.pendingIncomplete = false;
 
@@ -745,13 +745,15 @@ function _llToDMessageGuts({ fragments, generator }: AixChatGenerateContent_LL, 
   dest.generator = generator;
 }
 
-function _finalizeLlmMetricsWithCosts(cgMetricsLg: undefined | DMetricsChatGenerate_Lg, llm: DLLM, debugCostSource: string): undefined | DMetricsChatGenerate_Md {
+/** `llmParameters`: the values this request was built from - a persona, a chat or a call can replace the model's own, and cost follows what was sent. */
+function _finalizeLlmMetricsWithCosts(cgMetricsLg: undefined | DMetricsChatGenerate_Lg, llm: DLLM, llmParameters: DModelParameterValues, debugCostSource: string): undefined | DMetricsChatGenerate_Md {
   // Compute the Md metrics from Lg
   let metricsMd = cgMetricsLg ? metricsChatGenerateLgToMd(cgMetricsLg) : undefined;
 
   // Compute costs
-  const logLlmRefId = getAllModelParameterValues(llm.initialParameters, llm.userParameters).llmRef || llm.id;
-  const adjChatPricing = llmChatPricing_adjusted(llm, cgMetricsLg?.$xPrice); // the served tier (when echoed) wins over the requested one
+  const logLlmRefId = llmParameters.llmRef || llm.id;
+  const $xPrice = cgMetricsLg?.$xPrice ?? llmChatPricing_computeMultiplierFromParams(llm.parameterSpecs, llmParameters); // the served tier (when echoed) wins over the requested one
+  const adjChatPricing = llmChatPricing_adjusted(llm, $xPrice);
   const costs = metricsComputeChatGenerateCostsMd(metricsMd, adjChatPricing, logLlmRefId);
   if (!costs) {
     // FIXME: we shall warn that the costs are missing, as the only way to get pricing is through surfacing missing prices
@@ -759,11 +761,15 @@ function _finalizeLlmMetricsWithCosts(cgMetricsLg: undefined | DMetricsChatGener
   }
   metricsMd = { ...metricsMd /* TIn, TOut, ... */, ...costs /* $c, ... $code */ };
 
+  // [#1297] a multiplied estimate names its multiplier, also when no vendor echo carries one (Anthropic echoes 'fast' without the per-model rate)
+  if (costs.$c !== undefined && $xPrice !== 1)
+    metricsMd.$xPrice = $xPrice;
+
   // Run aggregations
   const m = metricsMd;
   const inputTokens = (m?.TIn || 0) + (m?.TCacheRead || 0) + (m?.TCacheWrite || 0);
   const outputTokens = (m?.TOut || 0) /* + (m?.TOutR || 0) THIS IS A BREAKDOWN, IT'S ALREADY IN */;
-  metricsStoreAddChatGenerate(costs, inputTokens, outputTokens, llm, debugCostSource);
+  metricsStoreAddChatGenerate(costs, inputTokens, outputTokens, llm.sId || null, debugCostSource);
 
   // Merge costs into a new generator
   return metricsMd;

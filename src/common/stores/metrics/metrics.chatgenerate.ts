@@ -71,7 +71,7 @@ export type MetricsChatGenerateCost_Md = {
   $cCacheW?: number,    // cache writes (only when write tokens > 0)
   $cOut?: number,       // output, reasoning included
   $cTools?: number,     // per-call tool fees (only when calls > 0)
-  $xPrice?: number,     // provider-confirmed price multiplier vs listed rates (echoed service tier: flex 0.5, fast 2, ...); parsed, and used over the parameter-side multiplier
+  $xPrice?: number,     // price multiplier vs listed rates that $c was computed at: the served tier when the provider echoes it (flex 0.5, fast 2, ...), else the one the request's parameters asked for (Anthropic fast mode)
   $code?:
     | 'free'            // generated for free
     | 'partial-msg'     // partial message generated

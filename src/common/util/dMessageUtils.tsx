@@ -311,6 +311,8 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
   const $cHeadline = metrics.$cReported ?? metrics.$c;
   const $cEstimated = (metrics.$cReported !== undefined && metrics.$c !== undefined) ? metrics.$c : undefined;
   const costCode = metrics.$code ? _prettyCostCode(metrics.$code, $cHeadline !== undefined) : null;
+  // the multiplier is a fact about our own computation, so it sits on the estimate: the headline, unless a billed cost took its place
+  const tierLabel = (metrics.$xPrice !== undefined && metrics.$xPrice !== 1) ? <> at <b>{metrics.$xPrice}x</b> tier</> : null;
   // cost by class, when cache or tools are in play
   const showCostByClass = metrics.$cCacheR !== undefined || metrics.$cCacheW !== undefined || metrics.$cTools !== undefined;
   // hosted tool calls: counts on their own row; priced only where the vendor bills per call (searches)
@@ -363,7 +365,7 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
           : <>cache surcharge: <b>{formatModelsCost(-metrics.$cdCache / 100)}</b></>
         })</small>
       </>}
-      {metrics.$xPrice !== undefined && metrics.$xPrice !== 1 && <>{' '}<small>at <b>{metrics.$xPrice}x</b> tier</small></>}
+      {$cEstimated === undefined && tierLabel}
     </div>}
     {showCostByClass && <div></div>}
     {showCostByClass && <div>
@@ -378,7 +380,7 @@ export function prettyMessageMetrics(metrics: DMessageGenerator['metrics'], uiCo
     {/* Add the local price-table estimate underneath, when the headline is the billed cost */}
     {$cEstimated !== undefined && <div></div>}
     {$cEstimated !== undefined && <div>
-      <small>estimated: {formatModelsCost($cEstimated / 100)}</small>
+      <small>estimated: {formatModelsCost($cEstimated / 100)}</small>{tierLabel}
     </div>}
     {/* Add the cost 'code' underneath, if any */}
     {costCode && <div>{$cHeadline !== undefined ? '' : 'Costs:'}</div>}
