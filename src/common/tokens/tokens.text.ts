@@ -1,7 +1,6 @@
 import type { Tiktoken, TiktokenEncoding, TiktokenModel } from 'tiktoken';
 
 import type { DLLM } from '~/common/stores/llms/llms.types';
-import { getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 
 
 // Do not set this to true in production, it's very verbose
@@ -64,9 +63,8 @@ export function textTokensForLLM(text: string, llm: DLLM, debugFrom: string): nu
     return null;
   }
 
-  // Validate input
-  const llmParameters = getAllModelParameterValues(llm.initialParameters, llm.userParameters);
-  const openaiModel = llmParameters.llmRef;
+  // Validate input - the ref is set once at model creation (never a user value), so no parameter resolution per count
+  const openaiModel = llm.initialParameters?.llmRef;
   if (!openaiModel) {
     console.warn(`textTokensForLLM: LLM ${llm?.id} has no LLM reference id`);
     return null;
