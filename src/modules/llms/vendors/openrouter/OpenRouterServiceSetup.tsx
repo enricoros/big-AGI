@@ -14,6 +14,7 @@ import { FormSwitchControl } from '~/common/components/forms/FormSwitchControl';
 import { SetupFormClientSideToggle } from '~/common/components/forms/SetupFormClientSideToggle';
 import { SetupFormRefetchButton } from '~/common/components/forms/SetupFormRefetchButton';
 import { getCallbackUrl } from '~/common/app.routes';
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import { ApproximateCosts } from '../ApproximateCosts';
@@ -47,13 +48,36 @@ export function OpenRouterServiceSetup(props: { serviceId: DModelsServiceId }) {
     useLlmUpdateModels(!serviceHasLLMs && shallFetchSucceed, service);
 
 
-  const handleOpenRouterLogin = () => {
-    // replace the current page with the OAuth page
+  const handleOpenRouterLogin = React.useCallback(() => {
     const callbackUrl = getCallbackUrl('openrouter');
     const oauthUrl = 'https://openrouter.ai/auth?callback_url=' + encodeURIComponent(callbackUrl);
-    window.open(oauthUrl, '_self');
-    // ...bye / see you soon at the callback location...
-  };
+
+    // open in new window/tab (mobile will open in tab, desktop may open popup)
+    // - using just window name - browser decides best presentation for the platform
+    const popup = window.open(oauthUrl, 'openrouter-oauth');
+
+    // listen for success message from popup/tab
+    const messageHandler = (event: MessageEvent) => {
+      // security: validate origin
+      if (event.origin !== window.location.origin) return;
+
+      if (event.data?.type === 'openrouter-oauth-success') {
+        // save the API key (callback page may not have access to store)
+        if (event.data.orApiKey)
+          llmsStoreActions().setOpenRouterKey(event.data.orApiKey);
+        // refresh models list
+        refetch();
+      }
+    };
+    window.addEventListener('message', messageHandler, { once: true });
+
+    // fallback: if window.open blocked, use full-page redirect
+    if (!popup || popup.closed) {
+      window.removeEventListener('message', messageHandler);
+      window.location.href = oauthUrl;
+    }
+  }, [refetch]);
+
 
   return <>
 

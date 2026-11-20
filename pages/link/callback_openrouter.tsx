@@ -1,90 +1,83 @@
 import * as React from 'react';
+import Head from 'next/head';
 
-import { Box, Typography } from '@mui/joy';
-
-import { llmsStoreActions } from '~/common/stores/llms/store-llms';
-
-import { InlineError } from '~/common/components/InlineError';
 import { apiQuery } from '~/common/util/trpc.client';
-import { navigateToIndex, useRouterQuery } from '~/common/app.routes';
-import { withNextJSPerPageLayout } from '~/common/layout/withLayout';
+import { llmsStoreActions } from '~/common/stores/llms/store-llms';
+import { useRouterQuery } from '~/common/app.routes';
 
 
-function CallbackOpenRouterPage(props: { openRouterCode: string | undefined }) {
+export default function CallbackOpenRouterPage() {
+
+  // state
+  const [otherError, setOtherError] = React.useState<string | null>(null);
 
   // external state
-  const { data, isError, error, isPending } = apiQuery.backend.exchangeOpenRouterKey.useQuery({ code: props.openRouterCode || '' }, {
-    enabled: !!props.openRouterCode,
-    staleTime: Infinity,
+  const { code } = useRouterQuery<{ code?: string }>();
+  const { data, error: queryError, isPending } = apiQuery.backend.exchangeOpenRouterKey.useQuery({ code: code ?? '' }, {
+    enabled: !!code, // auto-start only when code is available
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // derived state
-  const isErrorInput = !props.openRouterCode;
-  const openRouterKey = data?.key ?? undefined;
-  const isSuccess = !!openRouterKey;
+  const error = otherError ?? queryError?.message;
+  const orKey = data?.key ?? null;
 
 
-  // Success: save the key and redirect to the chat app
+  // [effect] after 5 seconds, if no code show error
   React.useEffect(() => {
-    if (!isSuccess)
-      return;
+    if (code) return;
+    const timeout = setTimeout(() => setOtherError('No authorization code provided.'), 5000);
+    return () => clearTimeout(timeout);
+  }, [code]);
 
-    // 1. Save the key as the client key
-    llmsStoreActions().setOpenRouterKey(openRouterKey);
+  // [effect] after 30 seconds, if still pending show error
+  React.useEffect(() => {
+    if (!isPending) return;
+    const timeout = setTimeout(() => setOtherError('Authentication timed out. Please try again.'), 30000);
+    return () => clearTimeout(timeout);
+  }, [isPending]);
 
-    // 2. Navigate to the chat app
-    void navigateToIndex(true); //.then(openModelsSetup);
 
-  }, [isSuccess, openRouterKey]);
+  // [effect] post exchange handling
+  React.useEffect(() => {
+    if (!orKey) return;
 
-  return (
-    <Box sx={{
-      flexGrow: 1,
-      overflowY: 'auto',
-      display: 'flex', justifyContent: 'center',
-      p: { xs: 3, md: 6 },
-    }}>
+    // save key to the first openrouter slot (may not work in popup context)
+    llmsStoreActions().setOpenRouterKey(orKey);
 
-      <Box sx={{
-        // my: 'auto',
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        gap: 4,
-      }}>
+    // if opened as popup, message parent and close
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage(
+        { type: 'openrouter-oauth-success', orApiKey: orKey },
+        window.location.origin,
+      );
+      // close popup after brief success message display
+      setTimeout(() => window.close(), 1500);
+    } else {
+      // fallback: full page redirect (opened directly or parent closed)
+      window.location.href = '/';
+    }
+  }, [orKey]);
 
-        <Typography level='title-lg'>
-          Welcome Back
-        </Typography>
 
-        {isPending && <Typography level='body-sm'>Loading...</Typography>}
+  return <>
+    <Head>
+      <title>OpenRouter | Big-AGI Linking</title>
+    </Head>
 
-        {isErrorInput && <InlineError error='There was an issue retrieving the code from OpenRouter.' />}
-
-        {isError && <InlineError error={error} />}
-
-        {data && (
-          <Typography level='body-md'>
-            Success! You can now close this window.
-          </Typography>
-        )}
-
-      </Box>
-
-    </Box>
-  );
+    <div className='sherpa singletab'>
+      <div className='vcontent'>
+        {error ? <>
+          <h3 style={{ color: '#dc2626' }}>Linking Failed</h3>
+          <p className='error'>{error}</p>
+          <p>Please let us know by opening a GitHub issue.</p>
+        </> : orKey ? <>
+          <h3 style={{ color: '#16a34a' }}>Linking Succeeded</h3>
+          <p style={{ color: '#64748b' }}>Redirecting to Big-AGI...</p>
+        </> : <>
+          <p className='state-loading'>...</p>
+        </>}
+      </div>
+    </div>
+  </>;
 }
-
-
-/**
- * This page will be invoked by OpenRouter as a Callback
- *
- * Docs: https://openrouter.ai/docs#oauth
- * Example URL: https://localhost:3000/link/callback_openrouter?code=SomeCode
- */
-export default withNextJSPerPageLayout({ type: 'container' }, () => {
-
-  // external state - get the 'code=...' from the URL
-  const { code } = useRouterQuery<{ code: string | undefined }>();
-
-  return <CallbackOpenRouterPage openRouterCode={code} />;
-
-});

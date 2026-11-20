@@ -21,7 +21,7 @@ export const ROUTE_APP_CALL = '/call';
 export const ROUTE_APP_LINK_CHAT = '/link/chat/[chatLinkId]';
 export const ROUTE_APP_NEWS = '/news';
 export const ROUTE_APP_PERSONAS = '/personas';
-const ROUTE_CALLBACK_OPENROUTER = '/link/callback_openrouter';
+export const ROUTE_CALLBACK_OPENROUTER = '/link/callback_openrouter';
 
 
 // Get Paths

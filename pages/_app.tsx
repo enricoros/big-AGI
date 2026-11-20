@@ -31,6 +31,7 @@ import { ProviderBackendCapabilities } from '~/common/providers/ProviderBackendC
 import { ProviderBootstrapLogic } from '~/common/providers/ProviderBootstrapLogic';
 import { ProviderSingleTab } from '~/common/providers/single-tab/ProviderSingleTab';
 import { ProviderTheming } from '~/common/providers/ProviderTheming';
+import { ROUTE_CALLBACK_OPENROUTER } from '~/common/app.routes';
 import { SnackbarInsert } from '~/common/components/snackbar/SnackbarInsert';
 import { hasGoogleAnalytics, OptionalGoogleAnalytics } from '~/common/components/3rdparty/GoogleAnalytics';
 import { hasPostHogAnalytics, OptionalPostHogAnalytics } from '~/common/components/3rdparty/PostHogAnalytics';
@@ -46,7 +47,12 @@ interface PageRequirements {
   noBootstrap: boolean;
 }
 
-const PAGES_CONF: Record<string, Partial<PageRequirements>> = {} as const;
+const PAGES_CONF: Record<string, Partial<PageRequirements>> = {
+  [ROUTE_CALLBACK_OPENROUTER]: { // openrouter code->key OAuth callback - a popup next to the app that started the sign-in
+    noSingleTab: true,
+    noBootstrap: true,
+  },
+} as const;
 
 
 const Big_AGI_App = ({ Component, emotionCache, pageProps, router }: MyAppProps) => {
