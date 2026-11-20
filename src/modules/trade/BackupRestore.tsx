@@ -207,22 +207,24 @@ function getIndexedDBContent(dbName: string): Promise<Record<string, { key: any;
           return;
         }
 
-        let transactionError = false;
         const transaction = db.transaction(storeNames, 'readonly');
 
         transaction.onerror = (event) => {
-          transactionError = true;
           const target = event.target as IDBTransaction;
           const errorMsg = target.error ? target.error.message : 'Unknown error';
           logger.error(`transaction error in "${dbName}": ${errorMsg}`);
-          // Don't reject - we'll resolve with partial data at completion
+          // the transaction aborts next: onabort settles
         };
 
         transaction.oncomplete = () => {
           db.close();
-          if (transactionError)
-            logger.warn(`transaction for "${dbName}" completed with some errors. Data may be incomplete.`);
           resolve(dbData);
+        };
+
+        // a failed read aborts the transaction, and an aborted transaction never completes: settle here, or the backup hangs
+        transaction.onabort = () => {
+          db.close();
+          reject(new Error(`read aborted: ${transaction.error?.message || 'unknown error'}`));
         };
 
         storeNames.forEach(storeName => {
