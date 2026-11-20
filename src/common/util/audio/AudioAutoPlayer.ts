@@ -108,7 +108,7 @@ export class AudioAutoPlayer {
       console.warn('[DEV] AudioAutoPlayer: playFullBuffer called twice');
 
     this.isPlayingFullBuffer = true;
-    this.livePlayer?.stop(); // a whole buffer never feeds the live player: release its AudioContext and MediaSource URL
+    this.livePlayer?.stop(); // a whole buffer never feeds the live player: release it
     AudioPlayer.playFullBuffer(buffer, this.fullBufferAbortController.signal).finally(() => {
       if (!this.isStopped)
         this.playbackEndResolve?.();

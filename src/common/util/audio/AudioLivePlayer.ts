@@ -6,7 +6,11 @@ export class AudioLivePlayer {
 
   private readonly mimeType: string = AudioLivePlayer.MIME_TYPE;
 
-  private readonly audioContext: AudioContext;
+  // [2026-11-19] No AudioContext: it only passed the element's audio straight to the destination, with no node in
+  // between, while costing a render thread and an output stream per utterance, and it leaked unless closed. Chrome plays
+  // the same stream to its end without it. The 3 sites stay commented in case Safari (desktop, iPad) proves to need it:
+  // not expected, as an audio element reaches the speakers by itself, but not tested there.
+  // private readonly audioContext: AudioContext;
   private readonly audioElement: HTMLAudioElement;
   private readonly mediaSource: MediaSource;
   private readonly mediaSourceObjectUrl: string;
@@ -16,15 +20,19 @@ export class AudioLivePlayer {
   private isSourceBufferUpdating: boolean = false;
   private isMediaSourceEnded: boolean = false;
   private isMediaSourceOpen: boolean = false;
-  private isSourceBufferFailed: boolean = false;
-  private isStopped: boolean = false;
+  private isStopped: boolean = false; // terminal: set once, by _release()
 
-  // Deferred for waitForPlaybackEnd() - allows stop() to unblock waiters
+  // Settles once, when the player reaches its terminal state - see _release()
+  private readonly playbackEndPromise: Promise<void>;
   private playbackEndResolve: (() => void) | null = null;
 
 
   constructor() {
-    this.audioContext = new AudioContext();
+    this.playbackEndPromise = new Promise<void>((resolve) => {
+      this.playbackEndResolve = resolve;
+    });
+
+    // this.audioContext = new AudioContext();
     this.audioElement = new Audio();
     this.mediaSource = new MediaSource();
     this.mediaSourceObjectUrl = URL.createObjectURL(this.mediaSource);
@@ -36,8 +44,8 @@ export class AudioLivePlayer {
       navigator.mediaSession.metadata = null;
 
     // Connect the audio element to the audio context
-    const sourceNode = this.audioContext.createMediaElementSource(this.audioElement);
-    sourceNode.connect(this.audioContext.destination);
+    // const sourceNode = this.audioContext.createMediaElementSource(this.audioElement);
+    // sourceNode.connect(this.audioContext.destination);
 
     // Set up MediaSource events
     this.mediaSource.addEventListener('sourceopen', this.onMediaSourceOpen);
@@ -45,15 +53,11 @@ export class AudioLivePlayer {
     this.mediaSource.addEventListener('sourceended', this.onMediaSourceEnded);
     this.mediaSource.addEventListener('sourceclose', this.onMediaSourceClosed);
 
-    // Release on natural end too: stop() is the only place that closes the AudioContext and revokes the
-    // MediaSource URL, and callers only call it to interrupt - otherwise each utterance leaks one of each
-    this.audioElement.addEventListener('ended', this.onAudioElementEnded, { once: true });
+    // One instance plays one utterance, and ends in one of three ways: the audio played to its end, the element failed
+    // (no audio arrived, or it could not be decoded), or stop() interrupted it. All three reach _release().
+    this.audioElement.addEventListener('ended', this._release);
+    this.audioElement.addEventListener('error', this._release);
   }
-
-  private onAudioElementEnded = () => {
-    if (!this.isStopped)
-      this.stop();
-  };
 
   private onMediaSourceOpen = () => {
     if (this.isStopped) return; // Prevent race with stop()
@@ -67,8 +71,7 @@ export class AudioLivePlayer {
     } catch (e) {
       // Safety net for any edge cases not caught by isSupported check
       console.error('[DEV] AudioLivePlayer: Failed to create SourceBuffer:', e);
-      this.isSourceBufferFailed = true;
-      this.playbackEndResolve?.(); // Unblock any waiters
+      this._release(); // nothing can play
       return;
     }
 
@@ -117,6 +120,7 @@ export class AudioLivePlayer {
         } catch (e) {
           console.error('[DEV] AudioLivePlayer: Error appending buffer:', e);
           this.isSourceBufferUpdating = false;
+          this.appendNextChunk(); // no 'updateend' follows a failed append: go on with the next chunk, or end the stream
         }
       }
     } else if (this.isMediaSourceEnded) {
@@ -138,6 +142,7 @@ export class AudioLivePlayer {
    * Enqueue an ArrayBuffer chunk to be played
    */
   public enqueueChunk(chunk: ArrayBuffer) {
+    if (this.isStopped) return;
     this.chunkQueue.push(chunk);
     this.appendNextChunk();
   }
@@ -153,69 +158,23 @@ export class AudioLivePlayer {
   }
 
   /**
-   * Returns a Promise that resolves when audio playback completes.
-   * This waits for the actual audio to finish playing, not just streaming to end.
-   * Also resolves if stop() is called (or was already called).
+   * Resolves when this player is done: the audio played to its end, playback failed, or stop() was called.
+   * This waits for the actual audio to finish playing, not just streaming to end. Safe to call at any time.
    */
   public waitForPlaybackEnd(): Promise<void> {
-    return new Promise((resolve) => {
-      // If already stopped, ended, or failed to initialize, resolve immediately
-      if (this.isStopped || this.audioElement.ended || this.isSourceBufferFailed) {
-        resolve();
-        return;
-      }
-
-      const cleanup = () => {
-        this.playbackEndResolve = null;
-        this.audioElement.removeEventListener('ended', onEnded);
-        this.audioElement.removeEventListener('error', onError);
-      };
-
-      const onEnded = () => {
-        cleanup();
-        resolve();
-      };
-
-      const onError = () => {
-        cleanup();
-        resolve(); // Resolve even on error to not hang
-      };
-
-      // store resolver so stop() can call it
-      this.playbackEndResolve = () => {
-        cleanup();
-        resolve();
-      };
-
-      this.audioElement.addEventListener('ended', onEnded);
-      this.audioElement.addEventListener('error', onError);
-
-      // Safety: if audio has duration and already played through, resolve
-      // This handles edge case where 'ended' event was missed
-      if (this.audioElement.duration > 0 && this.audioElement.currentTime >= this.audioElement.duration) {
-        cleanup();
-        resolve();
-      }
-    });
+    return this.playbackEndPromise;
   }
 
   /**
-   * Stop playback and clean up resources
+   * Interrupt playback, then release
    */
   public stop() {
-    this.isStopped = true;
-    this.isSourceBufferFailed = true; // Prevent late initialization
+    // Only an interruption has something to halt: at 'ended' and at 'error' the element is already paused and the
+    // MediaSource is no longer 'open'
     this.audioElement.pause();
-    this.chunkQueue = [];
-    this.isMediaSourceEnded = true;
 
-    // Resolve any pending waitForPlaybackEnd() callers
-    this.playbackEndResolve?.();
-
-    // Clean up SourceBuffer event listeners and abort if open
+    // Abort the SourceBuffer if still open (its queued 'updateend' finds no listener: _release removes them)
     if (this.sourceBuffer) {
-      this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
-      this.sourceBuffer.removeEventListener('error', this.onSourceBufferError);
       try {
         if (this.mediaSource.readyState === 'open') {
           this.sourceBuffer.abort();
@@ -226,15 +185,41 @@ export class AudioLivePlayer {
       }
     }
 
+    this._release();
+  }
+
+  /**
+   * Terminal state, once - on the natural end, on an element error and on stop(): no more work, waiters resolved,
+   * listeners removed, and the object URL (which keeps the MediaSource alive) freed.
+   */
+  private _release = () => {
+    if (this.isStopped) return;
+    this.isStopped = true;
+    this.chunkQueue = [];
+    this.isMediaSourceEnded = true;
+
+    // Resolve waitForPlaybackEnd() callers: they resume only after this function has returned, wherever this line sits.
+    // It sits first so that nothing below can leave them waiting.
+    this.playbackEndResolve?.();
+
+    // Clean up the terminal listeners (clearing 'src' below fires an 'error' of its own)
+    this.audioElement.removeEventListener('ended', this._release);
+    this.audioElement.removeEventListener('error', this._release);
+
+    // Clean up SourceBuffer event listeners (was aborted on stop())
+    if (this.sourceBuffer) {
+      this.sourceBuffer.removeEventListener('updateend', this.onSourceBufferUpdateEnd);
+      this.sourceBuffer.removeEventListener('error', this.onSourceBufferError);
+    }
+
     // Clean up MediaSource event listeners
     this.mediaSource.removeEventListener('sourceopen', this.onMediaSourceOpen);
     this.mediaSource.removeEventListener('error', this.onMediaSourceError);
     this.mediaSource.removeEventListener('sourceended', this.onMediaSourceEnded);
     this.mediaSource.removeEventListener('sourceclose', this.onMediaSourceClosed);
 
-    if (this.audioContext.state !== 'closed')
-      void this.audioContext.close().catch(() => { /* ignore - already closed */
-      });
+    // if (this.audioContext.state !== 'closed')
+    //   void this.audioContext.close().catch(() => { /* ignore - already closed */ });
     URL.revokeObjectURL(this.mediaSourceObjectUrl);
     this.audioElement.src = '';
   }
