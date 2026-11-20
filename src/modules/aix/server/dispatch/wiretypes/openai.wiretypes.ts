@@ -1169,7 +1169,7 @@ export namespace OpenAIWire_Responses_Items {
       }),
     ]).catch((ctx) => {
       console.log('[DEV] AIX: OpenAI Responses: unknown annotation type, ignoring:', (ctx.value as any)?.type);
-      return { type: 'url_citation', url: '' };
+      return { type: 'file_path', file_id: '' }; // a shape the parser ignores: a url_citation stand-in was emitted as an empty citation
     })).optional(),
     // [DO-NOT-CARE] // logprobs: ...
   });
