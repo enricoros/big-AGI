@@ -32,10 +32,10 @@ export default function CallbackOpenRouterPage() {
 
   // [effect] after 30 seconds, if still pending show error
   React.useEffect(() => {
-    if (!isPending) return;
+    if (!code || !isPending) return; // without a code the query is disabled (and 'pending' forever): that case has its own message above
     const timeout = setTimeout(() => setOtherError('Authentication timed out. Please try again.'), 30000);
     return () => clearTimeout(timeout);
-  }, [isPending]);
+  }, [code, isPending]);
 
 
   // [effect] post exchange handling
