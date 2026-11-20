@@ -121,6 +121,7 @@ const _togetherVisionMatches: readonly (string | RegExp)[] = [
   'kimi-k2.6', 'kimi-k2.7', 'kimi-k3', // Moonshot: native visual understanding from K2.6 on
   'inkling', // Thinking Machines: text + image + audio
   'glimpse', // Elorian visual reasoning model
+  /\/hy4$/, // Tencent Hy4: scaling (39 -> 1089 prompt tokens) + color check 2026-11-20; Hy4-preview was text-only
   'minimax-m3', // MiniMax: M3 only (M2.x accept an image part and drop it)
   'muse-glimmer', 'muse-spark-open', // Meta Muse open weights: Spark Open scaling (156 -> 1516 prompt tokens) + color check 2026-10-21
   'bonsai-27b', // PrismML Bonsai: low-bit build of the multimodal Qwen3.6-27B
@@ -129,6 +130,7 @@ const _togetherVisionMatches: readonly (string | RegExp)[] = [
   'gemma-3n', // Gemma 3n E2B/E4B are multimodal
   /gemma-3-(4b|12b|27b)/, // Gemma 3 4B+ are multimodal (1B/270M are text-only)
   /qwen3\.[56]-/, 'qwen3.7-plus', // Qwen 3.5/3.6 (all variants) and 3.7-Plus take image (3.7-Max does not)
+  'qwen4-max', // = alibaba.models.ts 'qwen4-max' (image + video); proxied to Alibaba like the Qwen3.x Plus rows, so not probed here
   'qwen3.8-flash', // scaling (123 -> 843 prompt tokens) + color check 2026-08-31; NOT all of qwen3.8: Together's Qwen3.8-2.4T-A95B is a text-only NVFP4 quant ('is not a multimodal model'), unlike Fireworks' serving of the same weights
   /glm-\d[\d.]*v\b/, // Z.ai vision line (GLM-4.5V, GLM-5V)
   'glm-5.3-flash', // multimodal Flash base, scaling+color check 2026-08-27 (the glm-5.3 text flagship rejects images), see zai.models.ts
@@ -184,6 +186,8 @@ const _togetherEditorialPubDates: Record<string, string> = {
   'elorian-labs/glimpse-1.0': '20261017', // no publisher catalog: OpenRouter listing date
   'ricursive-ai/Ripple-65B-Preview': '20261104', // no publisher catalog: OpenRouter listing date
   'thinkingmachines/Inkling-2-Small': '20261109', // no publisher catalog: OpenRouter listing date (HF repo 2026-11-04)
+  'tencent/Hy4': '20261104', // no publisher catalog: OpenRouter listing date (HF repo 2026-10-29)
+  'Qwen/Qwen4-Max': '20261116', // = alibaba.models.ts 'qwen4-max'
 };
 
 /** 'YYYYMMDD' -> Unix epoch seconds (UTC midnight), 0 when absent - for list placement only */

@@ -55,6 +55,9 @@ const _MISC_EFFORTS = ['low', 'high', 'max'] as const;
 // llmVndOaiEffort levels, canonical ascending order ('none' handled separately) - see llms.parameters.ts
 const _OAI_EFFORTS = ['minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const;
 
+// llmVndGemEffort levels, canonical ascending order - see llms.parameters.ts
+const _GEM_EFFORTS = ['minimal', 'low', 'medium', 'high', 'xhigh'] as const;
+
 // [2026-08-28] re-checked against the live catalog: 'openai/gpt-3.5-turbo' still hides 4 ids, the Claude 1/2/instant,
 // PaLM 2, Llama 2 and dated gpt-4-0314 prefixes matched zero models and were dropped. 'meta-llama/llama-3-' also
 // matches nothing today but stays: Meta rotates its OR listing, and it must not catch 3.1/3.2/3.3/4 when it returns.
@@ -268,7 +271,9 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   // - openai/ excluded from breakpoints: GPT-5.6+ writes to the paid cache automatically even without
   //   cache_control (stamps are a no-op), so a breakpoint toggle would be fake - informational tag +
   //   cache_write_tokens usage read-back give correct cost accounting anyway
-  if (cacheWritePrice && !modelIdUnaliased.startsWith('google/') && !modelIdUnaliased.startsWith('openai/'))
+  // - meta/ excluded from breakpoints: Muse caches automatically, and the write OR quotes on the Meta endpoint is not
+  //   billed (muse-ember, probed 2026-11-20: cache hits without cache_control, cache_write_tokens 0)
+  if (cacheWritePrice && !modelIdUnaliased.startsWith('google/') && !modelIdUnaliased.startsWith('openai/') && !modelIdUnaliased.startsWith('meta/'))
     interfaces.push(LLM_IF_ANT_PromptCaching);
   else if (cacheReadPrice || model.pricing?.input_cache_read !== undefined)
     interfaces.push(LLM_IF_OAI_PromptCaching);
@@ -363,7 +368,10 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       // the native API uses thinkingLevel (discrete) or thinkingBudget (integer) depending on generation.
       if (interfaces.includes(LLM_IF_OAI_Reasoning) && !parameterSpecs.some(p => p.paramId === 'llmVndGeminiThinkingBudget' || p.paramId === 'llmVndGemEffort')) {
         // DEV_DEBUG_OPENROUTER_MODELS && console.log(`[DEV] openRouterModelToModelDescription: tagging ${gemLookup ? 'KNOWN' : 'unknown'} Gemini reasoning model:`, model.id);
-        parameterSpecs.push({ paramId: 'llmVndGemEffort' }); // use the latest known Gemini effort (thinking) levels superset
+        // OR's `supported_efforts` where it gives a ladder (it equals the native one on the indexed Gemini 3.x/4 text models),
+        // e.g. gemini-omni-1.x-flash: low|high; else the latest known Gemini effort (thinking) levels superset
+        const orGemLadder = _GEM_EFFORTS.filter(e => model.reasoning?.supported_efforts?.includes(e));
+        parameterSpecs.push({ paramId: 'llmVndGemEffort', ...(orGemLadder.length >= 2 && { enumValues: orGemLadder }) });
         // parameterSpecs.push({ paramId: 'llmVndGeminiThinkingBudget' }); // fallback with default range
       }
 
@@ -408,7 +416,7 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
       else if (modelIdUnaliased.startsWith('sakana/'))
         _mergeLookup(llmOrtSakLookup(llmRef));
       else if (modelIdUnaliased.startsWith('meta/'))
-        _mergeLookup(llmOrtMetaLookup(llmRef)); // Muse Spark, Wonder, Spark Open; 'meta/muse-glimmer-30b' (open weights, not on api.meta.ai) falls through
+        _mergeLookup(llmOrtMetaLookup(llmRef)); // Muse Spark, Wonder, Ember, and the open-weight Spark Open and Glimmer
 
       // 0-day: xAI/Grok/Moonshot/Z.ai/DeepSeek/Sakana models get default reasoning effort if not inherited.
       // Checks llmVndOaiEffort too (else an inherited spec gets a 2nd control stacked); skips mandatory models,

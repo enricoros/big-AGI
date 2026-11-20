@@ -2,14 +2,14 @@ import * as z from 'zod/v4';
 
 
 // [Together AI] Models List API - Response
+// One schema parses the whole array: a field missing on any row (e.g. an image or video model) would fail the entire
+// listing, so only fields the parser reads are declared, and those with a fallback are optional.
 
 export const wireTogetherAIListOutputSchema = z.array(z.object({
   id: z.string(),
-  object: z.literal('model'),
   created: z.number(),
   type: z.string().nullish(), // e.g., 'chat', 'language', 'image', 'embedding'
-  running: z.boolean(),
-  display_name: z.string(),
+  display_name: z.string().optional(),
 
   organization: z.string().nullable().optional(),
   link: z.string().nullable().optional(),
@@ -26,13 +26,10 @@ export const wireTogetherAIListOutputSchema = z.array(z.object({
 
   // Pricing information
   pricing: z.object({
-    hourly: z.number(),
-    input: z.number(),
-    output: z.number(),
+    input: z.number().optional(),
+    output: z.number().optional(),
     cached_input: z.number().optional(),
-    base: z.number(),
-    finetune: z.number(),
-  }),
+  }).optional(),
 }));
 
 // export type WireTogetherAIListOutput = z.infer<typeof wireTogetherAIListOutputSchema>;
