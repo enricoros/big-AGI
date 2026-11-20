@@ -37,12 +37,47 @@ import { hasPostHogAnalytics, OptionalPostHogAnalytics } from '~/common/componen
 import { OptionalUrlTrackingCleaner } from '~/common/components/3rdparty/UrlTrackingCleaner';
 
 
-const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
+/**
+ * Modifiers of the page component hierarchy.
+ * From the outer components (affect all) to the inner components (affect the page).
+ */
+interface PageRequirements {
+  noSingleTab: boolean; // the page opens next to a running app: pair with noBootstrap, which maintains the app's storage
+  noBootstrap: boolean;
+}
+
+const PAGES_CONF: Record<string, Partial<PageRequirements>> = {} as const;
+
+
+const Big_AGI_App = ({ Component, emotionCache, pageProps, router }: MyAppProps) => {
 
   // We are using a nextjs per-page layout pattern to bring the (Optima) layout creation to a shared place
   // This reduces the flicker and the time switching between apps, and seems to not have impact on
   // the build. This is a good trade-off for now.
-  const getLayout = Component.getLayout ?? ((page: any) => page);
+  const withLayout = Component.getLayout ?? ((page: any) => page);
+
+
+  // build the page tree (wrapping of providers) based on the page requirements
+  const { noSingleTab, noBootstrap }: Partial<PageRequirements> = PAGES_CONF[router.pathname] ?? {};
+
+  let page = <>
+    <SnackbarInsert />
+    {withLayout(<Component {...pageProps} />)}
+    <OverlaysInsert />
+  </>;
+
+  if (!noBootstrap)
+    page = <ProviderBootstrapLogic>{page}</ProviderBootstrapLogic>;
+
+  // Error Boundary - always have it
+  page = <ErrorBoundary outer>{page}</ErrorBoundary>;
+
+  // Backend capabilities & SSR boundary - always have it
+  page = <ProviderBackendCapabilities>{page}</ProviderBackendCapabilities>;
+
+  if (!noSingleTab)
+    page = <ProviderSingleTab>{page}</ProviderSingleTab>;
+
 
   return <>
 
@@ -52,18 +87,7 @@ const Big_AGI_App = ({ Component, emotionCache, pageProps }: MyAppProps) => {
     </Head>
 
     <ProviderTheming emotionCache={emotionCache}>
-      <ProviderSingleTab>
-        <ProviderBackendCapabilities>
-          {/* ^ Backend capabilities & SSR boundary */}
-          <ErrorBoundary outer>
-            <ProviderBootstrapLogic>
-              <SnackbarInsert />
-              {getLayout(<Component {...pageProps} />)}
-              <OverlaysInsert />
-            </ProviderBootstrapLogic>
-          </ErrorBoundary>
-        </ProviderBackendCapabilities>
-      </ProviderSingleTab>
+      {page}
     </ProviderTheming>
 
     {hasGoogleAnalytics && <OptionalGoogleAnalytics />}

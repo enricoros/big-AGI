@@ -58,7 +58,7 @@ flowchart TD
 _app.tsx (Root)
 ├── ProviderTheming ← Always Applied
 ├── ErrorBoundary ← Always Applied
-├── ProviderBootstrapLogic ← Always Applied
+├── ProviderBootstrapLogic ← Applied unless the page drops it
 │   ├── Tiktoken preload & Model auto-config
 │   ├── Storage maintenance & cleanup
 │   └── News Redirect (if conditions met)
@@ -79,6 +79,8 @@ _app.tsx (Root)
 | **ProviderTheming** | UI theme management | Theme switching, CSS variables |
 | **ErrorBoundary** | Error handling | Catches and displays errors gracefully |
 | **ProviderBootstrapLogic** | App initialization | • Tiktoken preload<br>• Model auto-config<br>• Storage cleanup<br>• News redirect logic |
+
+A page can drop a provider: `PAGES_CONF` in `pages/_app.tsx` maps a route to `noSingleTab` (the page opens next to a running app) and `noBootstrap` (no app initialization).
 
 For detailed initialization sequence and provider functions, see [app-startup-sequence.md](app-startup-sequence.md), if present.
 
