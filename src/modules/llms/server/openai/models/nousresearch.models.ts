@@ -68,18 +68,14 @@ const _nousDroppedParamIds: string[] = [
   'llmVndOaiReasoningMode',
 ];
 
-/** Adapt an OpenRouter-mapped description to the plain 'openai' request dialect. */
-function _nousAdaptToOpenAIDialect(model: ModelDescriptionSchema): ModelDescriptionSchema {
+/**
+ * Adapt an OpenRouter-mapped description to the plain 'openai' request dialect.
+ * Shared by the gateways that serve OpenRouter's /v1/models schema over the 'openai' dialect (Nous, LLMTR).
+ */
+export function openRouterDescriptionToOpenAIDialect(model: ModelDescriptionSchema): ModelDescriptionSchema {
 
   let parameterSpecs = model.parameterSpecs?.filter(p => !p.paramId.startsWith('llmVndOrt') && !_nousDroppedParamIds.includes(p.paramId));
 
-  // Hermes runs on Nous' own vLLM backend, which ignores `reasoning_effort` (probe-verified: 'high'
-  // and 'none' both no-op) - drop the effort control there; hybrid reasoning stays prompt-triggered.
-  // Inert since the Hermes retirement - kept for a relist.
-  // Everywhere else the control works: OpenRouter translates `reasoning_effort` upstream even for
-  // models whose supported_parameters don't list it (probe-verified on qwen3.6-plus).
-  if (model.id.startsWith('nousresearch/'))
-    parameterSpecs = parameterSpecs?.filter(p => p.paramId !== 'llmVndMiscEffort' && p.paramId !== 'llmVndOaiEffort');
   const droppedAntThinking = !!model.parameterSpecs?.some(p => p.paramId === 'llmVndAntThinkingBudget');
   // Anthropic effort goes out as plain `reasoning_effort`, honored on adaptive-thinking models (probe: Opus 5.5 'max'
   // spends 3-4x the reasoning tokens of 'low'); budget-thinking models ignore it, so it goes with the budget
@@ -99,6 +95,21 @@ function _nousAdaptToOpenAIDialect(model: ModelDescriptionSchema): ModelDescript
       .filter((i, idx, arr) => arr.indexOf(i) === idx);
 
   return { ...model, interfaces, parameterSpecs };
+}
+
+/** Nous-specific on top of the shared adaptation. */
+function _nousAdaptToOpenAIDialect(model: ModelDescriptionSchema): ModelDescriptionSchema {
+  const adapted = openRouterDescriptionToOpenAIDialect(model);
+
+  // Hermes runs on Nous' own vLLM backend, which ignores `reasoning_effort` (probe-verified: 'high'
+  // and 'none' both no-op) - drop the effort control there; hybrid reasoning stays prompt-triggered.
+  // Inert since the Hermes retirement - kept for a relist.
+  // Everywhere else the control works: OpenRouter translates `reasoning_effort` upstream even for
+  // models whose supported_parameters don't list it (probe-verified on qwen3.6-plus).
+  if (model.id.startsWith('nousresearch/'))
+    return { ...adapted, parameterSpecs: adapted.parameterSpecs?.filter(p => p.paramId !== 'llmVndMiscEffort' && p.paramId !== 'llmVndOaiEffort') };
+
+  return adapted;
 }
 
 export function nousResearchModelsToModelDescriptions(wireModels: unknown): ModelDescriptionSchema[] {

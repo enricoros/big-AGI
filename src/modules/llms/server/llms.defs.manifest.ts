@@ -113,6 +113,7 @@ export const LLMS_DEFS_EXTRA_BUCKETS = {
       'openai/models/fastapi.models.ts',
       'openai/models/fireworksai.models.ts',
       'openai/models/llmapi.models.ts',
+      'openai/models/llmtr.models.ts',
       'openai/models/minimax.models.ts',
       'openai/models/nousresearch.models.ts',
       'openai/models/novita.models.ts',
