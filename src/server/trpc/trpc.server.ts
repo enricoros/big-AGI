@@ -8,9 +8,10 @@
  */
 import type { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
 import * as z from 'zod/v4';
-import { initTRPC } from '@trpc/server';
+import { initTRPC, TRPCError } from '@trpc/server';
 import { transformer } from './trpc.transformer';
 import { TRPCFetcherError } from './trpc.router.fetchers';
+import { trpcRequestGuard } from './trpc.request-guard';
 
 
 /**
@@ -27,8 +28,11 @@ export type ChatGenerateContentContext = Awaited<ReturnType<typeof createTRPCFet
  * These allow you to access things when processing a request, like the database, the session, etc.
  */
 export const createTRPCFetchContext = async ({ req }: FetchCreateContextFnOptions) => {
-  // const user = { name: req.headers.get('username') ?? 'anonymous' };
-  // return { req, resHeaders };
+  // reject cross-origin and DNS-rebinding requests before any procedure runs
+  const guard = trpcRequestGuard(req.headers);
+  if (!guard.allowed)
+    throw new TRPCError({ code: 'FORBIDDEN', message: `Request blocked: ${guard.reason}` });
+
   return {
     // only used by Backend Analytics
     hostName: req.headers?.get('host') ?? 'localhost',
