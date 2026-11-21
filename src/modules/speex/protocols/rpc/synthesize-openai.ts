@@ -108,6 +108,7 @@ export const synthesizeOpenAIProtocol: SynthesizeBackendFn<SpeexWire_Access_Open
       body,
       signal,
       name: dialectName,
+      ...(!!access.apiHost && { redirect: 'error' as const }),
     });
   } catch (error: any) {
     yield { t: 'error', e: `${dialectName} TTS fetch failed: ${error.message || 'Unknown error'}` };
@@ -165,6 +166,7 @@ export async function listVoicesLocalAIOrThrow(access: SpeexWire_Access_OpenAI):
       url: llmsApiUrl(localAIHost, OPENAI_API_PATHS.models),
       headers,
       name: 'LocalAI',
+      ...(!!access.apiHost && { redirect: 'error' as const }),
     });
   } catch (error: any) {
     // ok to be user visible
