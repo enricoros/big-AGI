@@ -6,6 +6,7 @@ import { ModelVendorAzure } from './azure/azure.vendor';
 import { ModelVendorBedrock } from './bedrock/bedrock.vendor';
 import { ModelVendorCerebras } from './cerebras/cerebras.vendor';
 import { ModelVendorCohere } from './cohere/cohere.vendor';
+import { ModelVendorCrowLLM } from './crowllm/crowllm.vendor';
 import { ModelVendorDeepseek } from './deepseek/deepseekai.vendor';
 import { ModelVendorGemini } from './gemini/gemini.vendor';
 import { ModelVendorGroq } from './groq/groq.vendor';
@@ -35,6 +36,7 @@ export type ModelVendorId =
   | 'bedrock'
   | 'cerebras'
   | 'cohere'
+  | 'crowllm'
   | 'deepseek'
   | 'googleai'
   | 'groq'
@@ -63,6 +65,7 @@ const MODEL_VENDOR_REGISTRY = {
   bedrock: ModelVendorBedrock,
   cerebras: ModelVendorCerebras,
   cohere: ModelVendorCohere,
+  crowllm: ModelVendorCrowLLM,
   deepseek: ModelVendorDeepseek,
   googleai: ModelVendorGemini,
   groq: ModelVendorGroq,
