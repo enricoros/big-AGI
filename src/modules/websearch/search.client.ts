@@ -8,12 +8,16 @@ import { useWebSearchStore } from './store-module-websearch';
 const providers: Record<WebSearchProviderId, WebSearchProvider> = {
   google: { search: callApiSearchGoogle },
   context: {
-    search: (query, items, restrictToDomain, signal) => {
+    search: async (query, items, restrictToDomain, signal) => {
       const { contextApiKey, contextRestrictToDomain } = useWebSearchStore.getState();
-      return apiAsync.contextSearch.search.mutate({
-        query, items, key: contextApiKey,
-        restrictToDomain: restrictToDomain ?? (contextRestrictToDomain || null),
-      }, { signal, context: { noLog: true } });
+      try {
+        return await apiAsync.contextSearch.search.mutate({
+          query, items, key: contextApiKey,
+          restrictToDomain: restrictToDomain ?? (contextRestrictToDomain || null),
+        }, { signal, context: { noLog: true } });
+      } catch {
+        throw new Error(signal?.aborted ? 'Context.dev search cancelled.' : 'Context.dev search failed. Check Tools > Custom Search and try again.');
+      }
     },
   },
 };
