@@ -114,9 +114,16 @@ export interface TradeAdapter {
 
 /**
  * What is known of a kind of data wherever it is stored: reading its files, relating two versions, showing
- * one, writing one. An adapter is this plus a store; a build that stores the kind differently puts its own around it.
+ * one, and making a copy of one. An adapter is this plus a store, and does every other write; a build that
+ * stores the kind differently puts its own around it.
  */
-export type TradeContent = Pick<TradeAdapter, 'readSection' | 'relate' | 'describe' | 'compareText' | 'refersTo' | 'apply'>;
+export type TradeContent = Pick<TradeAdapter, 'readSection' | 'relate' | 'describe' | 'compareText' | 'refersTo'> & {
+  /**
+   * Adds the item as a new object with new ids, the way the app makes one: the write of 'keep-both'.
+   * @throws if the copy cannot be made
+   */
+  copy: (item: TradeItem) => void;
+};
 
 export interface TradeRejected {
   id?: string;                          // the item's

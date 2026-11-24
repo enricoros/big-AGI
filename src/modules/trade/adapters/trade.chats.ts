@@ -48,13 +48,13 @@ export interface TradeChatsStore extends TradeChatsConverters {
  * The adapter over a chat store that is a list of conversations.
  */
 export function tradeChatsAdapter(store: TradeChatsStore): TradeAdapter {
-  const content = tradeChatsContent(store);
+  const { copy, ...rules } = tradeChatsContent(store);
   return {
     type: 'chat',
     label: 'conversation',
     labelPlural: 'conversations',
     schema: store.schema,
-    ...content,
+    ...rules,
 
     localItems: async () => ({ items: store.list().map(_toItem) }),
 
@@ -68,13 +68,26 @@ export function tradeChatsAdapter(store: TradeChatsStore): TradeAdapter {
       for (const op of ops) {
         const conversation = now.get(op.item.id);
         const replaces = op.resolution === 'accept-incoming' || op.resolution === 'merge';
-        if (replaces && op.local && !(conversation && _isSame(content, _toItem(conversation), op.local)))
+        if (replaces && op.local && !(conversation && _isSame(rules, _toItem(conversation), op.local)))
           failed.push({ id: op.item.id, reason: 'Changed on this device since the preview: review it again' });
         else
           current.push(op);
       }
 
-      failed.push(...(await content.apply(current)).failed);
+      // last to first: the store puts each import on top, so the file's order is the order shown
+      for (const op of current.reverse()) {
+        try {
+          // the store changes what it is given: never hand it the object the preview still shows
+          if (op.resolution === 'add' || op.resolution === 'accept-incoming')
+            store.import(structuredClone(op.item.data) as DConversation);
+          else if (op.resolution === 'merge')
+            store.import(structuredClone(op.merged) as DConversation);
+          else if (op.resolution === 'keep-both')
+            copy(op.item);
+        } catch (error: any) {
+          failed.push({ id: op.item.id, reason: error?.message || 'Could not be imported' });
+        }
+      }
       await store.saved();
       return { failed };
     },
@@ -84,7 +97,7 @@ export function tradeChatsAdapter(store: TradeChatsStore): TradeAdapter {
 
 /**
  * What is known of conversations wherever they are stored: reading their files, relating two versions,
- * showing one, and writing one through the store's import.
+ * showing one, and making a copy of one through the store's import.
  */
 export function tradeChatsContent(converters: TradeChatsConverters): TradeContent {
   return {
@@ -142,23 +155,8 @@ export function tradeChatsContent(converters: TradeChatsConverters): TradeConten
       return [conversationTitle(conversation, 'Untitled'), ...conversation.messages.map(message => `${message.role}:\n${messageFragmentsReduceText(message.fragments)}`)].join('\n\n');
     },
 
-    apply: async (ops) => {
-      const failed: TradeRejected[] = [];
-      // last to first: the store puts each import on top, so the file's order is the order shown
-      for (const op of [...ops].reverse()) {
-        try {
-          // the store changes what it is given: never hand it the object the preview still shows
-          if (op.resolution === 'add' || op.resolution === 'accept-incoming')
-            converters.import(structuredClone(op.item.data) as DConversation);
-          else if (op.resolution === 'merge')
-            converters.import(structuredClone(op.merged) as DConversation);
-          else if (op.resolution === 'keep-both')
-            converters.import(duplicateDConversation(op.item.data as DConversation, undefined, false));
-        } catch (error: any) {
-          failed.push({ id: op.item.id, reason: error?.message || 'Could not be imported' });
-        }
-      }
-      return { failed };
+    copy: (item) => {
+      converters.import(duplicateDConversation(item.data as DConversation, undefined, false));
     },
 
   };
@@ -173,7 +171,7 @@ function _toItem(conversation: Immutable<DConversation>): TradeItem {
   return { id: conversation.id, data };
 }
 
-function _isSame(content: TradeContent, now: TradeItem, previewed: TradeItem): boolean {
+function _isSame(content: Pick<TradeContent, 'relate'>, now: TradeItem, previewed: TradeItem): boolean {
   try {
     return content.relate(now, previewed).relation === 'same';
   } catch {
