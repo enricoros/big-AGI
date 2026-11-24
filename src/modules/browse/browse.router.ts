@@ -395,7 +395,9 @@ function cleanHtml(html: string, pageUrl?: string): string {
       '[aria-hidden="true"]',
       '[hidden]',
       '[style*="display: none"]',
+      '[style*="display:none"]',
       '[style*="visibility: hidden"]',
+      '[style*="visibility:hidden"]',
 
       // tracking and analytics
       '[data-analytics]',
@@ -455,8 +457,8 @@ function cleanHtml(html: string, pageUrl?: string): string {
           // -javascript: links
           if (href.toLowerCase().startsWith('javascript:'))
             el.removeAttribute('href');
-          // -tracking parameters
-          else if (href.includes('?')) {
+          // -tracking parameters, on web links only: mailto:, tel: and other schemes keep their query as written (their origin is 'null')
+          else if (href.includes('?') && /^https?:/i.test(toAbsolute(href))) {
             try {
               const url = new URL(toAbsolute(href));
               const cleanParams = new URLSearchParams();
@@ -489,6 +491,7 @@ function cleanHtml(html: string, pageUrl?: string): string {
     const preserveTags = new Set([
       'img', 'br', 'hr', 'input', 'source', 'meta', 'link',
       'area', 'base', 'col', 'embed', 'param', 'track', 'wbr',
+      'td', 'th', // an empty cell holds its column: removing it shifts the rest of the row left
     ]);
     for (const el of all('*')) {
       const tagName = el.localName.toLowerCase();
@@ -505,7 +508,8 @@ function cleanHtml(html: string, pageUrl?: string): string {
     // 5. simplify nested structure
     for (const el of all('div > div:only-child, section > section:only-child')) {
       const parent = el.parentElement;
-      if (parent?.children.length === 1)
+      // only when the child is all there is: .children counts elements, and the parent's own text would be dropped with it
+      if (parent?.children.length === 1 && !Array.from(parent.childNodes).some(node => node.nodeType === node.TEXT_NODE && node.nodeValue?.trim()))
         replaceNode(parent, [el]);
     }
 
