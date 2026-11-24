@@ -154,6 +154,12 @@ function WizardProviderSetup(props: {
     onUnsavedChange(providerVendor.id, hasUnsaved && hasValue);
   }, [onUnsavedChange, providerOmit, providerVendor.id, serviceKeyValue]);
 
+  // the typed value is local state: gone on unmount, so is its unsaved flag
+  React.useEffect(() => () => {
+    if (!providerOmit)
+      onUnsavedChange(providerVendor.id, false);
+  }, [onUnsavedChange, providerOmit, providerVendor.id]);
+
 
   // handlers
 
