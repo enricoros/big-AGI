@@ -426,6 +426,115 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
     benchmark: { cbaElo: 1441 }, // gpt-6-luna-max
   },
 
+  // Healthcare configurations: the base model with a harness tailored to clinical questions; web search queries a dedicated
+  // index of medical sources. Base rates (promotional through at least 2026-12-31) and base contract, except tiers: Standard
+  // and Fast only (flex and ultrafast 400). No model pages, so sizes are the base's. 6 Astra and 6.1 Sol Healthcare list no
+  // cache-write rate although the API reports cache_write_tokens: write omitted (bills as input).
+  {
+    hidden: true, // specialized configuration
+    idPrefix: 'gpt-6.2-astra-healthcare',
+    label: 'GPT-6.2 Astra Healthcare',
+    pubDate: '20261124',
+    description: 'GPT-6.2 Astra with a harness tailored to clinical questions. Web search uses a dedicated index of medical sources. Reasoning always on. 1M token context.',
+    contextWindow: 1050000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['fast'] },
+      { paramId: 'llmVndOaiReasoningMode' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: {
+      input: [{ upTo: 272000, price: 8 }, { upTo: null, price: 16 }],
+      output: [{ upTo: 272000, price: 40 }, { upTo: null, price: 60 }],
+      cache: { read: [{ upTo: 272000, price: 0.4 }, { upTo: null, price: 0.8 }], write: [{ upTo: 272000, price: 10 }, { upTo: null, price: 20 }] },
+      tools: OAI_PRICE_TOOLS,
+    },
+  },
+  {
+    hidden: true, // specialized configuration
+    idPrefix: 'gpt-6.2-sol-healthcare',
+    label: 'GPT-6.2 Sol Healthcare',
+    pubDate: '20261124',
+    description: 'GPT-6.2 Sol with a harness tailored to clinical questions. Web search uses a dedicated index of medical sources. Reasoning always on. 1M token context.',
+    contextWindow: 1050000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['fast'] },
+      { paramId: 'llmVndOaiReasoningMode' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: {
+      input: [{ upTo: 272000, price: 2 }, { upTo: null, price: 4 }],
+      output: [{ upTo: 272000, price: 10 }, { upTo: null, price: 15 }],
+      cache: { read: [{ upTo: 272000, price: 0.1 }, { upTo: null, price: 0.2 }], write: [{ upTo: 272000, price: 2.5 }, { upTo: null, price: 5 }] },
+      tools: OAI_PRICE_TOOLS,
+    },
+  },
+  {
+    hidden: true, // specialized configuration
+    idPrefix: 'gpt-6-astra-healthcare',
+    label: 'GPT-6 Astra Healthcare',
+    pubDate: '20261124',
+    description: 'GPT-6 Astra with a harness tailored to clinical questions. Web search uses a dedicated index of medical sources. Reasoning always on. 1M token context.',
+    contextWindow: 1050000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['fast'] },
+      { paramId: 'llmVndOaiReasoningMode' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: {
+      input: [{ upTo: 272000, price: 10 }, { upTo: null, price: 20 }],
+      output: [{ upTo: 272000, price: 50 }, { upTo: null, price: 75 }],
+      cache: { read: [{ upTo: 272000, price: 1 }, { upTo: null, price: 2 }] },
+      tools: OAI_PRICE_TOOLS,
+    },
+  },
+  {
+    hidden: true, // specialized configuration
+    idPrefix: 'gpt-6.1-sol-healthcare',
+    label: 'GPT-6.1 Sol Healthcare',
+    pubDate: '20261124',
+    description: 'GPT-6.1 Sol with a harness tailored to clinical questions. Web search uses a dedicated index of medical sources. Reasoning always on. 1M token context.',
+    contextWindow: 1050000,
+    maxCompletionTokens: 128000,
+    interfaces: [LLM_IF_OAI_Responses, ...IFS_CHAT_CACHE_REASON, LLM_IF_HOTFIX_NoTemperature],
+    parameterSpecs: [
+      { paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high', 'xhigh', 'max'], initialValue: 'medium' },
+      { paramId: 'llmVndOaiServiceTier', enumValues: ['fast'] },
+      { paramId: 'llmVndOaiReasoningMode' },
+      { paramId: 'llmVndOaiWebSearchContext' },
+      { paramId: 'llmVndOaiVerbosity' },
+      { paramId: 'llmVndOaiImageGeneration' },
+      { paramId: 'llmVndOaiCodeInterpreter' },
+      { paramId: 'llmForceNoStream' },
+    ],
+    chatPrice: {
+      input: [{ upTo: 272000, price: 2 }, { upTo: null, price: 4 }],
+      output: [{ upTo: 272000, price: 10 }, { upTo: null, price: 15 }],
+      cache: { read: [{ upTo: 272000, price: 0.1 }, { upTo: null, price: 0.2 }] },
+      tools: OAI_PRICE_TOOLS,
+    },
+  },
+
 
   /// GPT-5.6 series - Announced June 26, 2026 (limited preview); GA on the API July 9, 2026 (tier pointers listed on /v1/models)
   // Naming: the number is the generation, the name the tier (here Sol flagship, Terra balanced, Luna cost).
@@ -538,7 +647,7 @@ export const _knownOpenAIChatModels = llmsDefineModels<_OpenAIModelDef>()([
 
 
   /// ChatGPT Instant - version-less rolling pointer to the Instant model currently served in ChatGPT.
-  // No snapshots: OpenAI re-points it in place without notice (last moved 2026-10-07). Replaces the per-generation
+  // No snapshots: OpenAI re-points it in place without notice (last moved 2026-11-24). Replaces the per-generation
   // 'gpt-5.x-chat-latest' ids, which are all shut down. Priced at $5 in / $30 out per 1M.
   {
     idPrefix: 'chat-latest',
@@ -1430,7 +1539,7 @@ const openAIModelsDenyList: string[] = [
   // STT models: /v1/audio/transcriptions, /v1/audio/translations - not chat models (supported by ASRx batch instead)
   'whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', 'gpt-4o-transcribe-diarize', 'gpt-transcribe',
   'gpt-live-transcribe', // STT via realtime transcription sessions only - no batch endpoint, not supported yet
-  'gpt-live-1', // full-duplex voice (speech-to-speech), served on /v1/live/sessions only - chat 404, responses 500
+  'gpt-live-1', // full-duplex voice (speech-to-speech), served on /v1/live/sessions only - chat 404, responses 500; catches gpt-live-1.1 too
 
   // Image-focused chat models (non-standard image output pricing)
   'gpt-5-image', 'gpt-5-image-mini',
@@ -1658,6 +1767,11 @@ export function openAISortModels(a: ModelDescriptionSchema, b: ModelDescriptionS
     if (bOrder === -1) return -1;
     return aOrder - bOrder;
   }
+
+  // Healthcare configurations right after their base model (the label order below would put them before it)
+  const aHealthcare = a.id.includes('-healthcare');
+  const bHealthcare = b.id.includes('-healthcare');
+  if (aHealthcare !== bHealthcare) return aHealthcare ? 1 : -1;
 
   // fix the OpenAI model names to be chronologically sorted
   function remapReleaseDate(id: string): string {

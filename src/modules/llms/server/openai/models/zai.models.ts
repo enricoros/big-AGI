@@ -11,7 +11,7 @@ export type LlmsZAIModelId = typeof _knownZAIModels[number]['idPrefix'];
 
 
 // Interfaces for Z.ai models
-// - Thinking mode: supported by GLM-4.5 series and higher (GLM-4.5, 4.6, 4.7, 5, 5.1, 5.2, 5.3)
+// - Thinking mode: supported by GLM-4.5 series and higher (GLM-4.5, 4.6, 4.7, 5, 5.1, 5.2, 5.3, 5.4)
 // - Text-only models strip images (Z.ai API rejects image parts on non-vision models)
 // - Ref: https://docs.z.ai/guides/capabilities/thinking-mode
 const _IF_Chat = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_HOTFIX_StripImages];
@@ -23,7 +23,7 @@ const _IF_Vision_Reasoning = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision,
 //   The zai adapter (openai.chatCompletions.ts) maps effort dialect-wide: 'none' -> thinking:disabled, else thinking:enabled + reasoning_effort passthrough
 // - reasoning_effort is GLM-5.2+ only (openapi.json); 5.1 and below are binary -> 'none'/'high', do not widen
 // - GLM-5.2 collapses the 7-value enum (none/minimal skip, low/medium -> high, xhigh -> max) -> 3 distinct tiers
-// - GLM-5.3, 5.3-Flash and 5.3-FlashX (+ Legal): thinking compulsory ('disabled' -> 400 code 1210), effort exactly low|high|max, default max
+// - GLM-5.4, GLM-5.3, 5.3-Flash and 5.3-FlashX (+ Legal): thinking compulsory ('disabled' -> 400 code 1210), effort exactly low|high|max, default max
 const _PS_Reasoning: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
 ] as const;
@@ -37,10 +37,27 @@ const _PS_Reasoning_Compulsory: ModelDescriptionSchema['parameterSpecs'] = [
 // Flash = free tier (1 concurrent request, throttled); FlashX = paid with higher concurrency & priority routing; exception: GLM-5.3-Flash is paid
 // Ref: https://docs.z.ai/openapi.json (authoritative enums + per-model limits), https://docs.z.ai/guides/overview/pricing
 // pubDate is REQUIRED on every entry (same pattern as _AnthropicModelDef in anthropic.models.ts).
-// GET /models lists only 12 of these ids - this curated list stays authoritative. 204800 "200K" entries kept (weights say 202752).
+// GET /models lists only 13 of these ids - this curated list stays authoritative. 204800 "200K" entries kept (weights say 202752).
 type _ZaiModelDef = KnownModel & { pubDate: string };
 
 const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
+
+  // GLM-5.4 - 1M context flagship. Released 2026-11-23 on the GLM Coding Plan; the standard API lists the id but
+  // pay-as-you-go keys get 403 code 1220 until the Model API opens. Thinking compulsory, effort low|high|max,
+  // max_tokens ceiling 131072, image parts accepted (glm-5.3 rejects them).
+  // TODO: thinking.clear_thinking defaults to false from GLM-5.4: Z.ai expects prior-turn reasoning_content back, which the zai adapter does not send
+  {
+    idPrefix: 'glm-5.4',
+    label: 'GLM-5.4 (1M)',
+    pubDate: '20261123',
+    description: 'Z.ai flagship and first Loop Transformer, reusing GLM-5 base layers across two passes for deeper reasoning. Generalized coding with image inputs. Thinking always on, with low/high/max effort. 1M context, 128K output.',
+    contextWindow: 1048576, // 1M
+    interfaces: _IF_Vision_Reasoning,
+    maxCompletionTokens: 131072, // 128K
+    parameterSpecs: _PS_Reasoning_Compulsory,
+    // chatPrice: not on the rate card (https://docs.z.ai/guides/overview/pricing) - add when the Model API opens
+    initialTemperature: 1.0,
+  },
 
   // GLM-5.3 - 1M context flagship (post-train of the GLM-5.2 base; coding, cyber, agentic)
   // 1M context, 128K output (max_tokens ceiling live-verified 131072). Thinking compulsory, reasoning_effort low|high|max.
@@ -418,8 +435,8 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
 /// Curated model IDs - authoritative list of Z.ai models
 /// This is the primary source; the list API is unreliable.
 const _zaiCuratedModelIds: string[] = [
-  // GLM-5.3 (+ multimodal Flash/FlashX) / GLM-5.2
-  'glm-5.3', 'glm-5.3-flash', 'glm-5.3-flashx', 'glm-5.3-flashx-legal', 'glm-5.2',
+  // GLM-5.4 / GLM-5.3 (+ multimodal Flash/FlashX) / GLM-5.2
+  'glm-5.4', 'glm-5.3', 'glm-5.3-flash', 'glm-5.3-flashx', 'glm-5.3-flashx-legal', 'glm-5.2',
   // Text: GLM-5.1 / GLM-5 series
   'glm-5.1', 'glm-5', 'glm-5-turbo',
   // Text: GLM-4.7 series
