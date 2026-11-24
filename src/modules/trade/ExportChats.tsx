@@ -34,6 +34,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
 
   // state
   const [downloadedJSONState, setDownloadedJSONState] = React.useState<'busy' | 'ok' | 'fail' | null>(null);
+  const [downloadedJSONFailure, setDownloadedJSONFailure] = React.useState<string | null>(null);
   const [downloadedMarkdownState, setDownloadedMarkdownState] = React.useState<'busy' | 'ok' | 'fail' | null>(null);
   const [showAdvanced, setShowAdvanced] = React.useState(false);
 
@@ -51,9 +52,15 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
     const conversation = getConversation(props.config.conversationId);
     if (!conversation) return;
     setDownloadedJSONState('busy');
+    setDownloadedJSONFailure(null);
     downloadSingleChat(conversation, 'json')
       .then(() => setDownloadedJSONState('ok'))
-      .catch((error: any) => setDownloadedJSONState(error?.name === 'AbortError' ? null : 'fail'));
+      .catch((error: any) => {
+        // closing the save dialog is not a failure; a conversation this device does not export is one, and says why
+        const failure = error?.name === 'AbortError' ? null : error?.message || 'Could not save the file';
+        setDownloadedJSONState(failure ? 'fail' : null);
+        setDownloadedJSONFailure(failure);
+      });
   };
 
   const handleDownloadConversationMarkdown = () => {
@@ -93,6 +100,7 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
               Download · JSON
             </Button>
           </GoodTooltip>
+          {!!downloadedJSONFailure && <Typography level='body-xs' color='warning' sx={{ maxWidth: 240 }}>{downloadedJSONFailure}</Typography>}
 
           <Button
             variant='soft' disabled={!hasConversation || downloadedMarkdownState === 'busy'} loading={downloadedMarkdownState === 'busy'}

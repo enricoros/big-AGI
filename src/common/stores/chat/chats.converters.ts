@@ -294,7 +294,7 @@ export namespace DataAtRestV1 {
 
   /// Head -> Rest V1 ///
 
-  /** Used by: downloadSingleChat, ChatLinkExport.handleCreate */
+  /** Used by: ChatLinkExport.handleCreate */
   export function formatChatToJsonV1(ec: DConversation): RestChatJsonV1 {
     return {
       id: ec.id,

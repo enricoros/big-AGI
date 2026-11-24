@@ -74,7 +74,7 @@ function _tradeChatsAdapter(store: _TradeChatsStore): TradeAdapter {
     schema: store.schema,
     ...rules,
 
-    localItems: async () => ({ items: store.list().map(tradeChatItem) }),
+    localItems: async (onlyIds) => ({ items: store.list().filter(conversation => !onlyIds || onlyIds.has(conversation.id)).map(tradeChatItem) }),
 
     apply: async (ops) => {
       const failed: TradeRejected[] = [];

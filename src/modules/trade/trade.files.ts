@@ -225,10 +225,11 @@ export function tradeFileName(base: string, extension: '.json' | '.md'): string 
 }
 
 /**
+ * @param fileBase the name of the file without its ending: absent for an export of this build's data
  * @throws {DOMException} AbortError if the user closes the save dialog
  * @throws {Error} if the export is too large to be one file
  */
-export async function tradeFileSave(sections: TradeSection[]): Promise<{ fileName: string, sizeBytes: number }> {
+export async function tradeFileSave(sections: TradeSection[], fileBase?: string): Promise<{ fileName: string, sizeBytes: number }> {
   const file: TradeFile = {
     schema: 'vnd.agi.export',
     schemaVersion: 1,
@@ -248,7 +249,7 @@ export async function tradeFileSave(sections: TradeSection[]): Promise<{ fileNam
   }
   if (!blob || blob.size > FILE_MAX_BYTES)
     throw new Error(`${FILE_TOO_LARGE}: export fewer kinds of data at a time`);
-  const fileName = tradeFileName(`Big-AGI-${capitalizeFirstLetter(Release.TenantSlug)}-export-${prettyTimestampForFilenames(false)}`, '.json');
+  const fileName = tradeFileName(fileBase ?? `Big-AGI-${capitalizeFirstLetter(Release.TenantSlug)}-export-${prettyTimestampForFilenames(false)}`, '.json');
   await fileSave(blob, { fileName, extensions: ['.json'] });
   return { fileName, sizeBytes: blob.size };
 }

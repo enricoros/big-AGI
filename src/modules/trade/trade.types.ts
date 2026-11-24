@@ -81,8 +81,11 @@ export interface TradeAdapter {
   appliesOnReload?: true;               // its writes take effect at the next load
   unavailable?: string;                 // cannot be traded right now: shown disabled with this reason
 
-  /** Local items in portable form: the comparison side, and the export source. */
-  localItems: () => Promise<{ items: TradeItem[], removedIds?: readonly string[] }>;
+  /**
+   * Local items in portable form: the comparison side, and the export source.
+   * @param onlyIds the caller needs these alone: an adapter may leave the others out, or return them all
+   */
+  localItems: (onlyIds?: ReadonlySet<string>) => Promise<{ items: TradeItem[], removedIds?: readonly string[] }>;
 
   /**
    * A file section into portable items of this build. Reads the adapter's own schema, older ones, the other line's.

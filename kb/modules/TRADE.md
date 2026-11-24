@@ -59,6 +59,10 @@ row of a kind, how many of its items need something the selection leaves out. Th
 the items that arrive need something that is neither on the device nor in the files. Both only count:
 nothing is added to a selection, and nothing is refused. No kind of this build names any.
 
+The download of one conversation is an export of that item together with the items it needs that are on
+the device, so that it arrives whole. A conversation the device does not save (an incognito one) has no
+such file: the download says so, and Markdown remains.
+
 ## Relations
 
 | relation | meaning | default |
@@ -128,7 +132,6 @@ offered in that preview only for a backup saved with its images, which nothing e
 - Images and other binaries are not in the export; chats import with their image references and show a
   missing image where the device does not have it. Both dialogs say so.
 - Deletions are not exported, so an import never deletes.
-- The per-chat JSON download still writes the older single-chat file.
 - There is no undo: a conflict resolved to the file's version replaces the local one. Saving the replaced
   versions from the result is PROPOSED.
 - Comparing the two versions of a conflict is a side by side text diff, the same for every kind of data.

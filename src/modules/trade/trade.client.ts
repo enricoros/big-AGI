@@ -3,53 +3,39 @@ import { fileSave } from 'browser-fs-access';
 import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { Brand } from '~/common/app.config';
-import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
 import { conversationTitle, DConversation, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { prettyShortChatModelName } from '~/common/util/dMessageUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 
-import { tradeFileName } from './trade.files';
+import { tradeAdapters } from './trade.adapters';
+import { tradeFileName, tradeFileSave } from './trade.files';
+import { tradeSectionsOfItem } from './trade.plan';
 
 
 /// EXPORT ///
 
 /**
- * Download a conversation as a JSON file, for backup and future restore
+ * Download a conversation: as an export file that an import reads back, with what the conversation needs,
+ * or as Markdown to read.
  * @throws {DOMException} AbortError if the user closes the save dialog
- * @throws {Error} if the file could not be saved
+ * @throws {Error} if the conversation is not one this device exports, or the file could not be saved
  */
 export async function downloadSingleChat(conversation: DConversation, format: 'json' | 'markdown') {
+  const fileTitle = conversationTitle(conversation).replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'untitled';
+  const fileBase = `conversation_${fileTitle}_${prettyTimestampForFilenames(false)}`;
 
-  let blob: Blob;
-  let extension: '.json' | '.md';
-
-  if (format == 'json') {
-
-    // remove fields (abortController, etc.) from the export
-    const exportableConversation = DataAtRestV1.formatChatToJsonV1(conversation);
-    const json = JSON.stringify(exportableConversation, null, 2);
-    blob = new Blob([json], { type: 'application/json' });
-    extension = '.json';
-
-  } else if (format == 'markdown') {
-
-    const exportableMarkdown = conversationToMarkdown(conversation, false, true, (name: string) => `## ${name} ##`);
-    blob = new Blob([exportableMarkdown], { type: 'text/markdown' });
-    extension = '.md';
-
-  } else {
-    throw new Error(`Invalid download format: ${format}`);
+  // errors (AbortError on cancel included) reach the caller, so the UI never fakes success
+  if (format === 'json') {
+    await tradeFileSave(await tradeSectionsOfItem(tradeAdapters(), 'chat', conversation.id), fileBase);
+    return;
   }
 
-  // const fileConvId = conversation.id.slice(0, 8);
-  const fileTitle = conversationTitle(conversation).replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'untitled';
-
-  // save file - let errors (including AbortError on cancel) reach the caller, so the UI never fakes success
-  await fileSave(blob, {
-    fileName: tradeFileName(`conversation_${fileTitle}_${prettyTimestampForFilenames(false)}`, extension),
-    extensions: [extension],
+  const exportableMarkdown = conversationToMarkdown(conversation, false, true, (name: string) => `## ${name} ##`);
+  await fileSave(new Blob([exportableMarkdown], { type: 'text/markdown' }), {
+    fileName: tradeFileName(fileBase, '.md'),
+    extensions: ['.md'],
   });
 }
 

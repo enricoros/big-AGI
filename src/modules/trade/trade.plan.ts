@@ -1,5 +1,6 @@
 /**
- * Trade planner: relates the items of the loaded files to the local items, before anything is written.
+ * Trade planner: relates the items of the loaded files to the local items, before anything is written,
+ * and says which items an export of one item holds.
  *
  * Pure: no stores, no clocks, no time. What a kind of data means lives in its adapter's relate();
  * tradeRelateByContent is the default any JSON entity can use.
@@ -98,6 +99,29 @@ export function tradeMissingRefs(adapter: TradeAdapter, items: readonly TradeIte
     const referred = adapters.find(other => other.type === type);
     return referred ? [{ referred, count }] : [];
   });
+}
+
+/**
+ * One local item as the sections of an export, with the local items of other kinds that it needs:
+ * a file of one item that arrives whole.
+ * @throws if the item is not one this device exports
+ */
+export async function tradeSectionsOfItem(adapters: readonly TradeAdapter[], type: string, id: string): Promise<TradeSection[]> {
+  const read = async (ofType: string, ids: ReadonlySet<string>): Promise<TradeSection | null> => {
+    const adapter = adapters.find(other => other.type === ofType && !other.importOnly);
+    if (!adapter || adapter.unavailable) return null;
+    const items = (await adapter.localItems(ids)).items.filter(item => ids.has(item.id));
+    return !items.length ? null : { type: adapter.type, schema: adapter.schema, items };
+  };
+  const own = await read(type, new Set([id]));
+  if (!own) throw new Error('Not something this device exports, or still loading: it cannot be saved as a file');
+  const sections = [own];
+  const adapter = adapters.find(other => other.type === type)!;
+  for (const { type: referredType, ids } of _refsOf(adapter, own.items[0])) {
+    const referred = await read(referredType, new Set(ids));
+    if (referred) sections.push(referred);
+  }
+  return sections;
 }
 
 // a file is untrusted input: an item that cannot be read refers to nothing, and is shown by its id
