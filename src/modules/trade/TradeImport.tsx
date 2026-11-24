@@ -14,7 +14,7 @@ import { useIsMobile } from '~/common/components/useMatchMedia';
 
 import type { TradeAdapter, TradeItem, TradeOp, TradeRejected, TradeRelation, TradeResolution } from './trade.types';
 import { FlashRestore } from './BackupRestore';
-import { tradeAdapters } from './trade.client';
+import { tradeAdapters } from './trade.adapters';
 import { type TradeConflictPolicy, tradeDefaultResolution, tradePlanOps, type TradePlanRow, tradePreview, type TradePreviewGroup, tradeResolutionChoices } from './trade.plan';
 import { tradeFilesPick, tradeFilesRead, type TradeNote, type TradeSource } from './trade.files';
 

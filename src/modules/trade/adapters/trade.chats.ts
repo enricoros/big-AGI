@@ -12,7 +12,7 @@ import type { Immutable } from '~/common/types/immutable.types';
 import { conversationTitle, type DConversation, type DConversationId, duplicateDConversation } from '~/common/stores/chat/chat.conversation';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 
-import type { TradeAdapter, TradeContent, TradeItem, TradeOp, TradeRejected, TradeRelated } from '../trade.types';
+import type { TradeContent, TradeItem, TradeRejected, TradeRelated } from '../trade.types';
 import { tradeRelateByContent } from '../trade.plan';
 
 
@@ -32,66 +32,6 @@ export interface TradeChatsConverters {
   fromJson: (json: unknown) => DConversation | null;
   /** Adds the conversation, or replaces the one with its id. */
   import: (conversation: DConversation) => DConversationId;
-}
-
-export interface TradeChatsStore extends TradeChatsConverters {
-  /** The schema of the conversations this store keeps: what an export of them is labeled. */
-  schema: string;
-  /** The conversations the app saves: no incognito, no empty ones. */
-  list: () => Immutable<DConversation[]>;
-  /** Resolves once what was imported is on disk. */
-  saved: () => Promise<void>;
-}
-
-
-/**
- * The adapter over a chat store that is a list of conversations.
- */
-export function tradeChatsAdapter(store: TradeChatsStore): TradeAdapter {
-  const { copy, ...rules } = tradeChatsContent(store);
-  return {
-    type: 'chat',
-    label: 'conversation',
-    labelPlural: 'conversations',
-    schema: store.schema,
-    ...rules,
-
-    localItems: async () => ({ items: store.list().map(_toItem) }),
-
-    apply: async (ops) => {
-      const failed: TradeRejected[] = [];
-      const current: TradeOp[] = [];
-
-      // the version the preview showed is the one that was decided on: a chat that moved since, such as
-      // one with a reply still arriving, is not replaced
-      const now = new Map(store.list().map(conversation => [conversation.id, conversation]));
-      for (const op of ops) {
-        const conversation = now.get(op.item.id);
-        const replaces = op.resolution === 'accept-incoming' || op.resolution === 'merge';
-        if (replaces && op.local && !(conversation && _isSame(rules, _toItem(conversation), op.local)))
-          failed.push({ id: op.item.id, reason: 'Changed on this device since the preview: review it again' });
-        else
-          current.push(op);
-      }
-
-      // last to first: the store puts each import on top, so the file's order is the order shown
-      for (const op of current.reverse()) {
-        try {
-          // the store changes what it is given: never hand it the object the preview still shows
-          if (op.resolution === 'add' || op.resolution === 'accept-incoming')
-            store.import(structuredClone(op.item.data) as DConversation);
-          else if (op.resolution === 'merge')
-            store.import(structuredClone(op.merged) as DConversation);
-          else if (op.resolution === 'keep-both')
-            copy(op.item);
-        } catch (error: any) {
-          failed.push({ id: op.item.id, reason: error?.message || 'Could not be imported' });
-        }
-      }
-      await store.saved();
-      return { failed };
-    },
-  };
 }
 
 
@@ -135,7 +75,7 @@ export function tradeChatsContent(converters: TradeChatsConverters): TradeConten
         if (typeof isArchived === 'boolean') conversation.isArchived = isArchived; else delete conversation.isArchived;
         if (typeof userSymbol === 'string') conversation.userSymbol = userSymbol; else delete conversation.userSymbol;
 
-        items.push(_toItem(conversation));
+        items.push(tradeChatItem(conversation));
       }
       return { items, rejected };
     },
@@ -163,20 +103,12 @@ export function tradeChatsContent(converters: TradeChatsConverters): TradeConten
 }
 
 
-function _toItem(conversation: Immutable<DConversation>): TradeItem {
-  // without what only lives in memory
+/** A conversation as an item: without what only lives in memory. */
+export function tradeChatItem(conversation: Immutable<DConversation>): TradeItem {
   const data: Record<string, unknown> = { ...conversation };
   delete data._abortController;
   delete data._isIncognito;
   return { id: conversation.id, data };
-}
-
-function _isSame(content: Pick<TradeContent, 'relate'>, now: TradeItem, previewed: TradeItem): boolean {
-  try {
-    return content.relate(now, previewed).relation === 'same';
-  } catch {
-    return false;
-  }
 }
 
 function _relateMergeable(incoming: DConversation, local: DConversation, merged: object): TradeRelated {

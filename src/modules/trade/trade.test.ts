@@ -18,7 +18,7 @@ import { describe, test } from 'node:test';
 import type { DConversation } from '../../common/stores/chat/chat.conversation';
 
 import type { TradeAdapter, TradeItem, TradeRelated } from './trade.types';
-import { tradeChatsAdapter } from './adapters/trade.chats';
+import { tradeChatsContent } from './adapters/trade.chats';
 import { tradeFileRead } from './trade.files';
 import { tradePlan, tradePlanOps, tradePreview, tradeRelateByContent } from './trade.plan';
 import { tradeSettingsAdapters } from './adapters/trade.settings';
@@ -150,33 +150,23 @@ describe('plan', () => {
 
 describe('conversations', () => {
 
-  // the store's calls, without a store: what it reads from a file is the conversation itself, and, as
-  // the real one does, it changes what it is given to import
-  const imported: DConversation[] = [];
-  let stored: DConversation[] = [];
-  const adapter = tradeChatsAdapter({
-    schema: 'app-chats.v4',
-    list: () => stored,
+  // the rules, with the store's calls as plain functions: what is read from a file is the conversation itself
+  const rules = tradeChatsContent({
     fromJson: json => ({ ...(json as DConversation) }),
-    import: conversation => {
-      imported.push(structuredClone(conversation));
-      conversation.messages.length = 0;
-      return conversation.id;
-    },
-    saved: async () => undefined,
+    import: conversation => conversation.id,
   });
 
   const [m1, m2, m3, m4] = [message('m1', 'one'), message('m2', 'two'), message('m3', 'continued here'), message('m4', 'continued in the file')];
   const item = (data: object): TradeItem => ({ id: 'c1', data });
   const read = (schema: string, data: object, local?: TradeItem) =>
-    adapter.readSection({ type: 'chat', schema, items: [item(data)] }, new Map(local ? [['c1', local]] : []));
+    rules.readSection({ type: 'chat', schema, items: [item(data)] }, new Map(local ? [['c1', local]] : []));
 
   test('two continuations of one chat are a conflict, never one merged list', () => {
-    assert.deepEqual(adapter.relate(item(chat([m1, m2, m4])), item(chat([m1, m2, m3]))), { relation: 'conflict' });
+    assert.deepEqual(rules.relate(item(chat([m1, m2, m4])), item(chat([m1, m2, m3]))), { relation: 'conflict' });
   });
 
   test('a rename here and new messages in the file merge: the list of the file, the title of this device', () => {
-    const related = adapter.relate(item(chat([m1, m2, m4])), item(chat([m1, m2], { userTitle: 'Renamed here' })));
+    const related = rules.relate(item(chat([m1, m2, m4])), item(chat([m1, m2], { userTitle: 'Renamed here' })));
     assert.equal(related.relation, 'mergeable');
     const merged = (related as { merged: DConversation }).merged;
     assert.equal(merged.userTitle, 'Renamed here');
@@ -188,47 +178,18 @@ describe('conversations', () => {
     const { items, rejected } = read('rest-chat.v1', chat([m1]), local);
     assert.deepEqual(rejected, []);
     assert.equal((items[0].data as DConversation).isArchived, true);
-    assert.deepEqual(adapter.relate(items[0], local), { relation: 'same' });
+    assert.deepEqual(rules.relate(items[0], local), { relation: 'same' });
   });
 
   test('a file is untrusted: an id that is not the one of its data, and fields of the wrong type, do not get in', () => {
-    assert.deepEqual(adapter.readSection({ type: 'chat', schema: 'app-chats.v4', items: [{ id: 'other', data: chat([m1]) }] }, new Map()).rejected.map(r => r.id), ['other']);
+    assert.deepEqual(rules.readSection({ type: 'chat', schema: 'app-chats.v4', items: [{ id: 'other', data: chat([m1]) }] }, new Map()).rejected.map(r => r.id), ['other']);
     const { data } = read('app-chats.v4', chat([m1], { userSymbol: { not: 'a string' }, isArchived: 'yes', userTitle: 7 })).items[0];
     assert.deepEqual([(data as DConversation).userSymbol, (data as DConversation).isArchived, (data as DConversation).userTitle], [undefined, undefined, undefined]);
   });
 
   test('fragment ids are not content: the messages of the oldest files get new ones at every read, and are the same chat', () => {
     const reread = { ...m1, fragments: [{ ...m1.fragments[0], fId: 'minted-at-this-read' }] };
-    assert.deepEqual(adapter.relate(item(chat([reread])), item(chat([m1]))), { relation: 'same' });
-  });
-
-  test('what was decided is the pair the preview showed: a chat that moved since is not replaced', async () => {
-    const previewed = item(chat([m1, m2]));
-    const incoming = item(chat([m1, message('m2', 'two, as the file has it')]));
-    const op = { item: incoming, local: previewed, relation: 'conflict', resolution: 'accept-incoming' } as const;
-
-    // a reply arrived after the preview
-    stored = [chat([m1, m2, m3]) as DConversation];
-    const count = imported.length;
-    assert.deepEqual((await adapter.apply([op])).failed.map(f => f.id), ['c1']);
-    assert.equal(imported.length, count);
-
-    // unchanged, apart from what the device rewrites on its own: written
-    stored = [chat([m1, m2], { updated: 99, tokenCount: 7 }) as DConversation];
-    assert.deepEqual((await adapter.apply([op])).failed, []);
-    assert.equal(imported.length, count + 1);
-
-    // keeping both does not replace: the chat may move
-    stored = [chat([m1, m2, m3]) as DConversation];
-    assert.deepEqual((await adapter.apply([{ ...op, resolution: 'keep-both' }])).failed, []);
-    stored = [];
-  });
-
-  test('the store changes what it is given: the copy the preview shows is not the one it gets', async () => {
-    const incoming = item(chat([m1, m2]));
-    await adapter.apply([{ item: incoming, relation: 'new', resolution: 'add' }]);
-    assert.equal(imported.at(-1)!.messages.length, 2);
-    assert.equal((incoming.data as DConversation).messages.length, 2);
+    assert.deepEqual(rules.relate(item(chat([reread])), item(chat([m1]))), { relation: 'same' });
   });
 
 });

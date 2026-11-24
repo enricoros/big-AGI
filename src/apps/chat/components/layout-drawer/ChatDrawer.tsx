@@ -132,7 +132,7 @@ function ChatDrawer(props: {
   }, [onConversationsDelete]);
 
   const handleConversationsExport = React.useCallback(() => {
-    // null conversationId is fine: the dialog disables the single-chat buttons and still offers the all-chats/flash backups
+    // null conversationId is fine: the dialog disables the single-chat buttons and still offers the export of everything
     onConversationsExportDialog(props.activeConversationId, true);
   }, [onConversationsExportDialog, props.activeConversationId]);
 

@@ -7,7 +7,7 @@ import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { capitalizeFirstLetter, humanReadableBytes } from '~/common/util/textUtils';
 
 import type { TradeAdapter, TradeItem } from './trade.types';
-import { tradeAdapters } from './trade.client';
+import { tradeAdapters } from './trade.adapters';
 import { tradeFileSave } from './trade.files';
 import { tradeMissingRefs } from './trade.plan';
 

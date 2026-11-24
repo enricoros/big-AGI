@@ -4,56 +4,13 @@ import { SystemPurposeId, SystemPurposes } from '../../data';
 
 import { Brand } from '~/common/app.config';
 import { DataAtRestV1 } from '~/common/stores/chat/chats.converters';
-import { Release } from '~/common/app.release';
 import { capitalizeFirstLetter } from '~/common/util/textUtils';
-import { idbFlushWrites } from '~/common/util/idbUtils';
 import { conversationTitle, DConversation, excludeSystemMessages } from '~/common/stores/chat/chat.conversation';
 import { messageFragmentsReduceText } from '~/common/stores/chat/chat.message';
 import { prettyShortChatModelName } from '~/common/util/dMessageUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
-import { useChatStore } from '~/common/stores/chat/store-chats';
 
-import type { TradeAdapter } from './trade.types';
-import { tradeChatsAdapter } from './adapters/trade.chats';
 import { tradeFileName } from './trade.files';
-import { tradeFoldersAdapter } from './adapters/trade.folders';
-import { tradeLegacyServicesAdapter } from './adapters/trade.services';
-import { tradeSettingsAdapters } from './adapters/trade.settings';
-
-
-export function tradeFileVariant() {
-  return `${capitalizeFirstLetter(Release.TenantSlug)}`
-}
-
-
-/// ADAPTERS ///
-
-/**
- * The kinds of data this build can export and import.
- *
- * A function, not a constant: it reads the stores, so it is called when a trade dialog opens, never
- * while the app loads. A build that stores its data differently returns its own.
- */
-export function tradeAdapters(): TradeAdapter[] {
-  return [
-    {
-      ...tradeChatsAdapter({
-        schema: 'app-chats.v4',
-        // what the store persists: no incognito, no empty conversations
-        list: () => useChatStore.getState().conversations.filter(c => !c._isIncognito && (c.messages?.length || c.userTitle || c.autoTitle)),
-        fromJson: (json) => DataAtRestV1.recreateConversation(json as DataAtRestV1.RestChatJsonV1),
-        import: (conversation) => useChatStore.getState().importConversation(conversation, false),
-        saved: idbFlushWrites,
-      }),
-      // the chats load from disk after the app starts: an export before that would be an empty one
-      // (no 'persist' where the browser has no IndexedDB: the chats then live in memory only)
-      ...(useChatStore.persist?.hasHydrated() === false && { unavailable: 'Conversations are still loading' }),
-    },
-    tradeFoldersAdapter(),
-    ...tradeSettingsAdapters(),
-    tradeLegacyServicesAdapter(),
-  ];
-}
 
 
 /// EXPORT ///
@@ -99,7 +56,7 @@ export async function downloadSingleChat(conversation: DConversation, format: 'j
 /**
  * Primitive rendering of a Conversation to Markdown
  */
-export function conversationToMarkdown(conversation: DConversation, hideSystemMessage: boolean, exportTitle: boolean, senderWrap?: (text: string) => string): string {
+function conversationToMarkdown(conversation: DConversation, hideSystemMessage: boolean, exportTitle: boolean, senderWrap?: (text: string) => string): string {
   const mdTitle = exportTitle
     ? `# ${capitalizeFirstLetter(conversationTitle(conversation, Brand.Title.Common + ' Chat'))}\nA ${Brand.Title.Common} conversation, updated on ${(new Date(conversation.updated || conversation.created)).toLocaleString()}.\n\n`
     : '';

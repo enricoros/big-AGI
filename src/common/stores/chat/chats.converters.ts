@@ -266,7 +266,7 @@ export namespace DataAtRestV1 {
 
   /// Rest V1 -> Head ///
 
-  /** Used by: AppLinkChat.fetchStoredChatV1, trade.client tradeAdapters */
+  /** Used by: AppLinkChat.fetchStoredChatV1, trade.adapters tradeAdapters */
   export function recreateConversation(chatJV1: RestChatJsonV1 & { tokenCount?: number }): DConversation | null {
 
     // sanity check

@@ -15,7 +15,6 @@ import { Release } from '~/common/app.release';
 import { createModuleLogger } from '~/common/logger';
 import { downloadBlob } from '~/common/util/downloadUtils';
 
-import { tradeFileVariant } from './trade.client';
 import { capitalizeFirstLetter, humanReadableBytes } from '~/common/util/textUtils';
 import { prettyTimestampForFilenames } from '~/common/util/timeUtils';
 
@@ -1033,7 +1032,7 @@ export function FlashBackup(props: {
         includeImages,
         includeSettings,
         true, // includeIndexedDB - full backup includes everything
-        `Big-AGI-${tradeFileVariant()}-flash${includeImages ? '+images' : ''}${includeSettings ? '' : '-nosets'}${event.ctrlKey ? '-download' : ''}-${dateStr}.json`,
+        `Big-AGI-${capitalizeFirstLetter(Release.TenantSlug)}-flash${includeImages ? '+images' : ''}${includeSettings ? '' : '-nosets'}${event.ctrlKey ? '-download' : ''}-${dateStr}.json`,
       );
       setBackupState(success ? 'success' : 'idle');
       if (typeof success === 'number')
