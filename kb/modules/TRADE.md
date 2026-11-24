@@ -94,10 +94,14 @@ An allowlist names the stores an export holds; a store that is not listed stays 
 deliberate: a new store is left out until someone decides it travels, and view state, identity, sessions
 and logs never do. Stores that hold API keys are a separate kind, off by default on export.
 
+Inside a listed store, the state that describes the device stays as well: usage counters, dismissed hints,
+what was last open. It differs between any two devices, so it is not exported, not compared, and an import
+leaves this device's in place. Files written before hold it, and are read past it.
+
 Some stored values travel in no file at all, the device backup included: the shared chat links with their
 deletion keys, the open panes, the sign-in cache, the analytics client's state, and a marker that a
-removed banner left in some browsers. A backup does not save them, and a restore neither writes them, from an older backup that holds
-them, nor removes this device's.
+removed banner left in some browsers. A backup does not save them, and a restore neither writes them, from
+an older backup that holds them, nor removes this device's.
 
 On import neither is selected by default: they replace this device's values and can point a service at
 another host, so the user ticks them. A store the file does not hold is unchanged. Writes take effect at

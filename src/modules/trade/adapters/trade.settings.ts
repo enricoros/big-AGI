@@ -12,8 +12,12 @@ import { tradeRelateByContent } from '../trade.plan';
 // The stores an export holds. A store that is not listed stays on its device: view state, identity, sessions, logs.
 // Never to be listed: the shared chat links ('app-sharing'), the open panes, the sign-in cache, the analytics
 // client's 'ph_*'. The device backup leaves the same ones out, by name (BackupRestore.tsx).
-const STORES: Record<string, { group: 'settings' | 'credentials', title: string }> = {
-  'app-ui': { group: 'settings', title: 'Appearance and layout' },
+//
+// 'device' names the state keys of a store that describe the device, not a choice of the user: usage counters,
+// dismissed hints, what was last open. They differ between any two devices, so they are not exported, not
+// compared, and an import leaves this device's in place. Files written before hold them: they are read past.
+const STORES: Record<string, { group: 'settings' | 'credentials', title: string, device?: readonly string[] }> = {
+  'app-ui': { group: 'settings', title: 'Appearance and layout', device: ['actionCounters', 'dismissals', 'panelGroupCollapseStates', 'aixInspector'] },
   'joy-mode': { group: 'settings', title: 'Light or dark theme' },
   'joy-color-scheme-light': { group: 'settings', title: 'Light theme' },
   'joy-color-scheme-dark': { group: 'settings', title: 'Dark theme' },
@@ -21,7 +25,7 @@ const STORES: Record<string, { group: 'settings' | 'credentials', title: string 
   'app-app-call': { group: 'settings', title: 'Call preferences' },
   'app-ai-preferences': { group: 'settings', title: 'AI preferences' },
   'app-ux-labs': { group: 'settings', title: 'Labs' },
-  'app-module-beam': { group: 'settings', title: 'Beam presets and preferences' },
+  'app-module-beam': { group: 'settings', title: 'Beam presets and preferences', device: ['lastConfig'] },
   'app-purpose': { group: 'settings', title: 'Hidden personas' },
   'app-app-personas': { group: 'settings', title: 'Personas made with the Persona Creator' },
   'app-news-seen': { group: 'settings', title: 'News already seen' },
@@ -71,7 +75,7 @@ function _storeValuesAdapter(group: 'settings' | 'credentials', label: string, l
         if (STORES[key].group !== group) continue;
         const stored = localStorage.getItem(key);
         if (stored !== null)
-          items.push({ id: key, data: _parseStored(stored) });
+          items.push({ id: key, data: _withoutDeviceState(key, stored) });
       }
       return { items };
     },
@@ -83,10 +87,10 @@ function _storeValuesAdapter(group: 'settings' | 'credentials', label: string, l
         const here = local.get(item.id);
         if (section.schema !== SCHEMA_STORE_VALUE || STORES[item.id]?.group !== group)
           rejected.push({ id: item.id, reason: 'Not a setting this version knows' });
-        else if (!(_storeVersion(item.data) <= (here ? _storeVersion(here.data) : Infinity)))
-          rejected.push({ id: STORES[item.id].title, reason: 'Saved by a newer version of Big-AGI' }); // a store migrates forward only
+        else if (!(_storeVersion(_withoutDeviceState(item.id, item.data)) <= (here ? _storeVersion(here.data) : Infinity)))
+          rejected.push({ id: item.id, title: STORES[item.id].title, reason: 'Saved by a newer version of Big-AGI' }); // a store migrates forward only
         else
-          items.push({ id: item.id, data: item.data });
+          items.push({ id: item.id, data: _withoutDeviceState(item.id, item.data) });
       }
       return { items, rejected };
     },
@@ -101,14 +105,38 @@ function _storeValuesAdapter(group: 'settings' | 'credentials', label: string, l
       for (const { item, resolution } of ops) {
         if (resolution !== 'add' && resolution !== 'accept-incoming') continue;
         try {
-          localStorage.setItem(item.id, typeof item.data === 'string' ? item.data : JSON.stringify(item.data));
+          const value = _withDeviceStateOf(item.id, item.data, localStorage.getItem(item.id));
+          localStorage.setItem(item.id, typeof value === 'string' ? value : JSON.stringify(value));
         } catch (error: any) {
-          failed.push({ id: STORES[item.id]?.title ?? item.id, reason: error?.message || 'Could not be saved' });
+          failed.push({ id: item.id, title: STORES[item.id]?.title, reason: error?.message || 'Could not be saved' });
         }
       }
       return { failed };
     },
   };
+}
+
+/** A stored value, parsed, without the state that stays on its device. */
+function _withoutDeviceState(key: string, stored: unknown): unknown {
+  const value = typeof stored === 'string' ? _parseStored(stored) : stored;
+  const device = STORES[key]?.device;
+  const state = _stateOf(value);
+  if (!device || !state) return value;
+  return { ...(value as object), state: Object.fromEntries(Object.entries(state).filter(([stateKey]) => !device.includes(stateKey))) };
+}
+
+/** The value to store: the file's, with the device state this device has now. */
+function _withDeviceStateOf(key: string, value: unknown, storedHere: string | null): unknown {
+  const device = STORES[key]?.device;
+  const state = _stateOf(value);
+  const stateHere = storedHere === null ? null : _stateOf(_parseStored(storedHere));
+  if (!device || !state || !stateHere) return value;
+  return { ...(value as object), state: { ...state, ...Object.fromEntries(device.filter(stateKey => stateKey in stateHere).map(stateKey => [stateKey, stateHere[stateKey]])) } };
+}
+
+function _stateOf(value: unknown): Record<string, unknown> | null {
+  const state = value && typeof value === 'object' && 'state' in value ? value.state : null;
+  return state && typeof state === 'object' ? state as Record<string, unknown> : null;
 }
 
 function _parseStored(stored: string): unknown {

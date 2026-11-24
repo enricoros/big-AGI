@@ -285,6 +285,27 @@ describe('settings', () => {
     assert.deepEqual(settings.relate(stored('app-ui', { zen: true }, 3), stored('app-ui', { zen: true }, 3)), { relation: 'same' });
   });
 
+  test('what describes the device is not a setting: it is not exported, not compared, and an import leaves it as it is here', async () => {
+    const values = new Map<string, string>();
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => void values.set(key, value) } });
+    try {
+      values.set('app-ui', JSON.stringify({ state: { zen: false, actionCounters: { sent: 5 }, dismissals: { tip: true } }, version: 3 }));
+      const [here] = (await settings.localItems()).items;
+      assert.deepEqual(here.data, { state: { zen: false }, version: 3 });
+
+      // a file written before holds the counters of its device
+      const read = (state: object) => settings.readSection({ type: 'settings', schema: 'store-value', items: [stored('app-ui', state, 3)] }, new Map([['app-ui', here]])).items[0];
+      assert.deepEqual(settings.relate(read({ zen: false, actionCounters: { sent: 99 }, dismissals: {} }), here), { relation: 'same' });
+
+      const changed = read({ zen: true, actionCounters: { sent: 99 } });
+      assert.deepEqual(settings.relate(changed, here), { relation: 'ahead' });
+      assert.deepEqual((await settings.apply([{ item: changed, local: here, relation: 'ahead', resolution: 'accept-incoming' }])).failed, []);
+      assert.deepEqual(JSON.parse(values.get('app-ui')!), { state: { zen: true, actionCounters: { sent: 5 }, dismissals: { tip: true } }, version: 3 });
+    } finally {
+      delete (globalThis as { localStorage?: unknown }).localStorage;
+    }
+  });
+
 });
 
 
