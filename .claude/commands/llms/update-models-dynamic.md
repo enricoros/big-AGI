@@ -52,8 +52,8 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 
 **FireworksAI** - `src/modules/llms/server/openai/models/fireworksai.models.ts`
 - Relies on provider capability flags: `supports_chat`, `supports_image_input`, `supports_tools`; `kind` also gates (embedding/reranker models are listed with `supports_chat: true`).
-- Two id shapes: `accounts/fireworks/models/*` and `accounts/fireworks/routers/*` (the Fast/Turbo serving tiers, which need their own editorial price: 1.5x-2.1x Standard, no fixed multiplier); slugs use 'p' as decimal point.
-- `/inference/v1/models` is unpaginated (20 serverless models today) and has no name/description/price: labels+descriptions from `GET /v1/accounts/fireworks/models/{id}` (control plane, same key), prices from https://docs.fireworks.ai/serverless/pricing (NOT fireworks.ai/pricing, which is training-only).
+- Id shapes: `accounts/fireworks/models/*`, `accounts/fireworks/routers/*` (the Fast/Turbo serving tiers, which need their own editorial price: 1.5x-2.1x Standard, no fixed multiplier), and the bare `auto` router (`kind: 'ROUTER'`, no context length, billed at the serving model's rate); slugs use 'p' as decimal point.
+- `/inference/v1/models` is unpaginated and has no name/description/price: labels+descriptions from `GET /v1/accounts/fireworks/models/{id}` (control plane, same key), prices from https://docs.fireworks.ai/serverless/pricing (NOT fireworks.ai/pricing, which is training-only).
 - Hostname heuristic: `fireworks.ai/`.
 
 **TogetherAI** - `src/modules/llms/server/openai/models/together.models.ts`

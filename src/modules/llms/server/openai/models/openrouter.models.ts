@@ -528,7 +528,8 @@ export function openRouterModelToModelDescription(wireModel: object): ModelDescr
   const hidden = orOldModelIDs.some(prefix => modelIdUnaliased.startsWith(prefix))
     || orOldExactModelIDs.some(oldId => modelIdUnaliased === oldId)
     || !orModelFamilyOrder.some(prefix => modelIdUnaliased.startsWith(prefix))
-    || isPostRoutingPrice;
+    || isPostRoutingPrice
+    || !!model.expiration_date; // deprecated upstream, with a removal date
 
 
   // -- pubDate fallback --

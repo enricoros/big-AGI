@@ -25,8 +25,7 @@ const IF_CHAT_FN_VISION_REASON = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vis
 // [FireworksAI, 2026-08-17] Ladders re-ablated on this host (the 'openai' dialect passthrough; temperature 0, n=3 per arm,
 // read off reasoning_content length + the prompt-token template fingerprint). Binary shape: 'none' cleanly disables thinking
 // (no reasoning_content, the completion collapses to the bare answer) and every other accepted value is one tier - kimi-k3
-// (+ its Fast router), ember-1, minimax-m3, and both Nemotrons. Left without a spec on purpose: inkling ('none' is accepted
-// but not honored - same trace length as Default).
+// (+ its Fast router), ember-1, minimax-m3, both Nemotrons, hy4-flash and inkling-2-small.
 const _PS_Thinking: ModelDescriptionSchema['parameterSpecs'] = [
   { paramId: 'llmVndMiscEffort', enumValues: ['none', 'high'] },
 ] as const;
@@ -41,6 +40,39 @@ const _PS_Thinking: ModelDescriptionSchema['parameterSpecs'] = [
 // Un-curated / future models still render via _prettyModelId + the fromManualMapping '[?]' fallback.
 // Serverless ids 404 intermittently on cold paths - capacity, not a delisting: re-probe before retiring an id.
 const _fireworksKnownModels = llmsDefineManualMappings([
+  {
+    idPrefix: 'accounts/fireworks/models/qwen4-max',
+    label: 'Qwen4 Max (Vision)',
+    pubDate: '20261116', // = alibaba.models.ts 'qwen4-max' (upstream release; the Fireworks listing is 20261123)
+    description: 'Alibaba flagship of the Qwen4 series: a ~2.7T-parameter sparse MoE with image input and controllable thinking, for coding and complex agentic tasks.',
+    contextWindow: 262_144, // 256K on Fireworks - Alibaba's own serving is 1M
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    // 'none' hard-off; low < high < max by trace length (minimal = low, medium = high, xhigh = max). Default may skip thinking
+    parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
+    chatPrice: { input: 1.50, output: 4.50, cache: { read: 0.075 } },
+  },
+  {
+    idPrefix: 'accounts/fireworks/models/hy4-flash',
+    label: 'Hy4 Flash (Vision)',
+    pubDate: '20261116', // no publisher catalog: OpenRouter listing date
+    description: 'Tencent most cost-efficient Hy4 model: a 220B MoE (~12B active) with image input, for document processing, deep search, slide creation and computer use.',
+    contextWindow: 262_144, // 256K on Fireworks (the model card claims up to 512K)
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    parameterSpecs: _PS_Thinking, // 'none' hard-off; low/high/max = Default
+    chatPrice: { input: 0.07, output: 0.281, cache: { read: 0.003 } }, // model page only - absent from the serverless pricing table
+  },
+  {
+    // NOTE: listed with supports_chat=false, supports_image_input=false and supports_tools=false (the model page also
+    // says "Function Calling Not Supported"), yet it serves chat, reads images (prompt tokens scale with image size) and calls tools
+    idPrefix: 'accounts/fireworks/models/inkling-2-small',
+    label: 'Inkling 2 Small (Vision)',
+    pubDate: '20261109', // = together.models.ts 'thinkingmachines/Inkling-2-Small'
+    description: 'Thinking Machines Lab second-generation open-weights model: a 594B multimodal MoE (17B active) for agentic and tool-use applications, with a 1M-token context.',
+    contextWindow: 1_048_576, // 1M
+    interfaces: IF_CHAT_FN_VISION_REASON,
+    parameterSpecs: _PS_Thinking, // 'none' hard-off; low/high/max show no tier order
+    chatPrice: { input: 0.30, output: 1.00, cache: { read: 0.03 } },
+  },
   {
     idPrefix: 'accounts/fireworks/models/glm-5p3-flash',
     label: 'GLM 5.3 Flash (Vision)',
@@ -109,7 +141,7 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Thinking,
     benchmark: { cbaElo: 1348 }, // lmarena: nvidia-nemotron-3.5-lightning-30b-a3b-nvfp4
     chatPrice: { input: 0.05, output: 0.20, cache: { read: 0.01 } },
-    hidden: true, // serverless shutdown 2026-11-07 (docs changelog)
+    hidden: true, // serverless shutdown announced for 2026-11-07 (docs changelog), yet still served and in the pricing table
   },
   {
     idPrefix: 'accounts/fireworks/models/deepseek-v4p1-flash-1017',
@@ -127,12 +159,12 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     idPrefix: 'accounts/fireworks/routers/deepseek-v4p1-flash-1017-ultrafast',
     label: 'DeepSeek V4.1 Flash 1017 Ultra-fast (Vision)',
     pubDate: '20261017', // = deepseek-v4p1-flash-1017
-    description: 'Ultra-fast serving path (preview) for DeepSeek V4.1 Flash 1017: same model and quality at 6-8x generation speed, 8x the per-token price.',
+    description: 'Ultra-fast serving path (preview) for DeepSeek V4.1 Flash 1017: same model and quality at 6-8x generation speed, 4x the per-token price.',
     contextWindow: 1_048_576, // 1M
     interfaces: IF_CHAT_FN_VISION_REASON,
     // 'none' hard-off (0 reasoning tokens); low < medium = xhigh = high < max, Default between high and max
     parameterSpecs: [{ paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }],
-    chatPrice: { input: 2.40, output: 9.60, cache: { read: 0.048 } },
+    chatPrice: { input: 1.20, output: 4.80, cache: { read: 0.024 } },
   },
   {
     idPrefix: 'accounts/fireworks/routers/deepseek-v4p1-flash-1017-spot',
@@ -234,17 +266,6 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     chatPrice: { input: 1.25, output: 4.25, cache: { read: 0.15 } }, // US-only capacity, the 50% US premium waived
   },
   {
-    idPrefix: 'accounts/fireworks/models/inkling',
-    label: 'Inkling (Vision)',
-    pubDate: '20260714',
-    description: 'Thinking Machines Lab first open-weights model: a 975B MoE (41B active) trained natively across text, image, and audio, with controllable thinking effort.',
-    contextWindow: 1_048_576, // 1M
-    interfaces: IF_CHAT_FN_VISION_REASON,
-    benchmark: { cbaElo: 1442 }, // lmarena: inkling
-    chatPrice: { input: 1.00, output: 4.05, cache: { read: 0.17 } }, // model page only - still absent from the serverless pricing table
-    hidden: true, // serverless shutdown 2026-11-07 (docs changelog; replacement: Muse Spark Open)
-  },
-  {
     idPrefix: 'accounts/fireworks/models/minimax-m3p1-flash',
     label: 'MiniMax M3.1 Flash (Vision)',
     pubDate: '20261019', // = minimax.models.ts 'MiniMax-M3.1-Flash'
@@ -276,20 +297,17 @@ const _fireworksKnownModels = llmsDefineManualMappings([
     parameterSpecs: _PS_Thinking,
     benchmark: { cbaElo: 1427 }, // lmarena: nvidia-nemotron-3-ultra-550b-a55b-nvfp4
     chatPrice: { input: 0.60, output: 2.40, cache: { read: 0.12 } },
-    hidden: true, // serverless shutdown 2026-11-07 (docs changelog)
+    hidden: true, // serverless shutdown announced for 2026-11-07 (docs changelog), yet still served and in the pricing table
   },
   {
-    idPrefix: 'accounts/fireworks/models/gpt-oss-120b',
-    label: 'GPT-OSS 120B',
-    pubDate: '20250805', // = groq/cerebras/nvidianim/together 'gpt-oss-120b'
-    description: 'OpenAI open-weight model for high-reasoning, agentic, general-purpose use that fits on a single H100.',
-    contextWindow: 131_072, // 128K
-    interfaces: IF_CHAT_FN_REASON,
-    // [2026-08-17] native OpenAI ladder, strictly validated ('none'/'max' -> 400); tiers real (~0.5K chars low vs ~3.7K high)
-    parameterSpecs: [{ paramId: 'llmVndOaiEffort', enumValues: ['low', 'medium', 'high'] }],
-    benchmark: { cbaElo: 1352 }, // lmarena: gpt-oss-120b
-    chatPrice: { input: 0.15, output: 0.60, cache: { read: 0.015 } },
-    hidden: true, // serverless shutdown 2026-11-07 (docs changelog)
+    // Nexus Auto (formerly FireRouter, listed kind 'ROUTER'): each user turn goes to the open model predicted to handle it at the
+    // lowest cost (closed models only with an x-anthropic-api-key / x-openai-api-key header, which we do not send); the response
+    // 'model' names the server. Billed at the serving model's rate, hence no chatPrice. No effort spec: 'none' is not honored.
+    idPrefix: 'auto',
+    label: 'Nexus Auto (Vision)',
+    description: 'Fireworks router that picks, for each user turn, the open model predicted to handle it well at the lowest cost, billed at that model\'s rate.',
+    contextWindow: null, // not listed - depends on the serving model
+    interfaces: IF_CHAT_FN_VISION_REASON,
   },
 ]);
 
@@ -297,11 +315,16 @@ const _fireworksDenyListContains: string[] = [
   // 'kimi-k2p5', // deprecated 2026-06-16 (Fireworks control-plane deprecationDate); still listed serverless but retired, and absent from the pricing table
 ];
 
-// Exact ids that /inference/v1/models still returns although serving is gone (generation 404s, absent from the docs pricing table).
+// Exact ids that /inference/v1/models still returns although serving is gone (generation 404s, absent from the docs pricing table),
+// or that still serve but are not offered (legacy aliases, retired models behind an old router).
 const _fireworksDenyListExact: string[] = [
   'accounts/fireworks/models/glm-5p2', // decommissioned 2026-09-25 (docs changelog); control plane still says supportsServerless=true
   'accounts/fireworks/routers/glm-5p2-fast',
   'accounts/fireworks/routers/kimi-k3-spot', // in the Spot docs table, but 404 "not deployed" (Spot capacity can be zero: re-probe)
+  'accounts/fireworks/models/gpt-oss-120b', // decommissioned 2026-11-07 (docs changelog); control plane supportsServerless=false
+  'accounts/fireworks/models/inkling', // decommissioned 2026-11-07 (docs changelog; replacement: Muse Spark Open); control plane supportsServerless=false
+  'accounts/fireworks/routers/spot-deepseek-v4-flash', // serves the retired DeepSeek V4 Flash (decommissioned 2026-09-25); absent from the Spot docs table
+  'firerouter/auto', // legacy FireRouter alias of 'auto' (docs: use 'auto')
 ];
 
 
@@ -363,7 +386,8 @@ export function fireworksAIModelsToModelDescriptions(wireModels: unknown): Model
     .parse(wireModels)
 
     .filter((model) => {
-      // filter-out non-llms - curated ids pass: kimi-k3p1-pro and muse-spark-open are listed supports_chat=false, yet serve chat completions
+      // filter-out non-llms - curated ids pass: kimi-k3p1-pro, muse-spark-open, qwen4-max and inkling-2-small are listed supports_chat=false,
+      // yet serve chat completions (rune, also supports_chat=false, truly does not: 400 "This model only serves /v1/systemone.")
       if (model.supports_chat === false && !_fireworksKnownModels.some(known => known.idPrefix === model.id))
         return false;
 

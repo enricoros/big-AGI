@@ -17,6 +17,8 @@ export const wireOpenrouterModelsListOutputSchema = z.object({
     name: z.string(),
     slug: z.string(),
   }).nullish(),
+  // [OpenRouter, 2026-11-24] deprecation date of the model endpoint ('YYYY-MM-DD'), null if not deprecated
+  expiration_date: z.string().nullish(),
   // NOTE: for 'openrouter/auto', this is:  {
   //   "prompt": "-1",
   //   "completion": "-1"

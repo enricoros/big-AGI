@@ -165,7 +165,7 @@ const _togetherEditorialPubDates: Record<string, string> = {
   'zai-org/GLM-5.2-FP8': '20260616', // dedicated-only quant of the above (0/0-priced, no serverless row)
   'Qwen/Qwen3.7-Max': '20260622', // = alibaba.models.ts 'qwen3.7-max'
   'Prism-ML/Ternary-Bonsai-27B': '20260714', // PrismML announcement (prismml.com/news/bonsai-27b)
-  'thinkingmachines/Inkling': '20260714', // = fireworksai.models.ts 'inkling'
+  'thinkingmachines/Inkling': '20260714',
   'moonshotai/Kimi-K3': '20260716', // = moonshot.models.ts 'kimi-k3'
   'thinkingmachines/Inkling-Small': '20260730', // no publisher catalog: OpenRouter listing date (HF repo 2026-07-27)
   'deepseek-ai/DeepSeek-V4-Flash-0731': '20260731',
