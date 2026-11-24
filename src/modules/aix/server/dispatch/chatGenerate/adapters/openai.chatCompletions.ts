@@ -219,6 +219,9 @@ export function aixToOpenAIChatCompletions(openAIDialect: OpenAIDialects, model:
     if (reasoningEffort !== 'none') // effort takes effect only when thinking is enabled
       payload.reasoning_effort = reasoningEffort;
   }
+  // [Z.ai] keep the reasoning_content sent back: without clear_thinking false, earlier turns' reasoning is dropped unread when no thinking block is sent (GLM-5.1, 5.3, 5.3-Flash)
+  if (openAIDialect === 'zai' && payload.thinking?.type !== 'disabled' && payload.messages.some(m => m.role === 'assistant' && m.reasoning_content))
+    payload.thinking = { ...payload.thinking, clear_thinking: false };
 
   // [Alibaba, 2026-06-26] Qwen thinking control via 'enable_thinking' (binary). Verified on compatible-mode for qwen3.x + DashScope-hosted DeepSeek-V4/GLM-5.2.
   // Models exposing this use a `llmVndMiscEffort` spec with enumValues ['none','high'] -> Off/On (unset = Default = vendor default, usually on).
@@ -643,6 +646,9 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
   // [DeepSeek, 2026-04-24] V4 thinking-by-default - reasoning_content must round-trip on tool-call turns; payload is the 'ma' part's aText (unlike Gemini/OpenAI-Responses which carry opaque handles).
   // [Moonshot] no echo needed: K3 (also thinking-by-default) accepts tool-call turns without reasoning_content (probe-verified 2026-07-18)
   const echoDeepseekReasoning = openAIDialect === 'deepseek';
+  // [Z.ai] Preserved Thinking (https://docs.z.ai/guides/capabilities/thinking-mode): each step's reasoning_content goes back unmodified on the
+  //   assistant message that follows it; which turns still carry reasoning is the app's thinking policy (chatThinkingPolicy)
+  const echoZaiReasoning = openAIDialect === 'zai';
 
   // [OpenRouter, 2026-07-10] OR translates Anthropic-style ephemeral breakpoints for paid-cache-write
   // providers where breakpoints control caching (Anthropic, Qwen). The client strips the hints for models
@@ -779,8 +785,15 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
         break;
 
       case 'model':
-        // Accumulate 'ma' reasoning text across this turn; echoed below onto the assistant message if it carries tool_calls (DeepSeek only).
+        // Accumulate 'ma' reasoning text across this turn; DeepSeek: echoed below onto the assistant message if it carries tool_calls;
+        // Z.ai: attached to the next assistant message as it is built, then reset (a trailing reasoning with no message after it is not sent)
         let pendingReasoningText = '';
+        const attachZaiReasoning = () => {
+          const m = chatMessages[chatMessages.length - 1];
+          if (!echoZaiReasoning || !pendingReasoningText || m?.role !== 'assistant') return;
+          m.reasoning_content = (m.reasoning_content ?? '') + pendingReasoningText;
+          pendingReasoningText = '';
+        };
         for (const part of parts) {
           const currentMessage = chatMessages[chatMessages.length - 1];
           switch (part.pt) {
@@ -788,6 +801,7 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
             case 'text':
               // create a new OpenAIWire_AssistantMessage
               chatMessages.push({ role: 'assistant', content: part.text });
+              attachZaiReasoning();
               break;
 
             case 'inline_audio':
@@ -854,11 +868,12 @@ function _toOpenAIMessages(openAIDialect: OpenAIDialects, systemMessage: AixMess
                   currentMessage.tool_calls.push(toolCallPart);
               } else
                 chatMessages.push({ role: 'assistant', content: null, tool_calls: [toolCallPart] });
+              attachZaiReasoning();
               break;
 
             case 'ma':
-              // [DeepSeek only] accumulate reasoning text for the echo-back below. Other dialects ignore 'ma' (reasoning continuity flows via _vnd opaque handles, not via this adapter).
-              if (echoDeepseekReasoning && part.aType === 'reasoning' && part.aText)
+              // [DeepSeek, Z.ai] accumulate reasoning text for the echo-back. Other dialects ignore 'ma' (reasoning continuity flows via _vnd opaque handles, not via this adapter).
+              if ((echoDeepseekReasoning || echoZaiReasoning) && part.aType === 'reasoning' && part.aText)
                 pendingReasoningText += part.aText;
               break;
 

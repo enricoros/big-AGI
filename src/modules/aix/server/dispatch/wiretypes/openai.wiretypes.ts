@@ -518,7 +518,8 @@ export namespace OpenAIWire_API_Chat_Completions {
     // [Z.ai, 2025-xx] GLM thinking mode: type 'enabled' | 'disabled'
     // [DeepSeek, 2026-04-23] V4 thinking mode: same binary shape; depth is controlled via top-level `reasoning_effort`
     thinking: z.object({
-      type: z.enum(['enabled', 'disabled']),
+      type: z.enum(['enabled', 'disabled']).optional(), // [Z.ai] may be omitted when only clear_thinking is sent
+      clear_thinking: z.boolean().optional(), // [Z.ai] false: keep the reasoning_content sent back on earlier turns
     }).optional(),
 
     // [Alibaba, 2026-06-26] Qwen (and DashScope-hosted third-party) thinking toggle via compatible-mode; Qwen ignores `reasoning_effort`

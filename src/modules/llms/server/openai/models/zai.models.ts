@@ -45,7 +45,7 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
   // GLM-5.4 - 1M context flagship. Released 2026-11-23 on the GLM Coding Plan; the standard API lists the id but
   // pay-as-you-go keys get 403 code 1220 until the Model API opens. Thinking compulsory, effort low|high|max,
   // max_tokens ceiling 131072, image parts accepted (glm-5.3 rejects them).
-  // TODO: thinking.clear_thinking defaults to false from GLM-5.4: Z.ai expects prior-turn reasoning_content back, which the zai adapter does not send
+  // thinking.clear_thinking defaults to false (Preserved Thinking): the zai adapter sends each earlier step's reasoning_content back
   {
     idPrefix: 'glm-5.4',
     label: 'GLM-5.4 (1M)',
