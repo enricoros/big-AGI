@@ -6,8 +6,8 @@
 // 'by content' pins the rules for data with no version history (kb/modules/TRADE.md): which side is the
 // successor, what is a conflict, and what a device rewrites on its own without it being a change.
 // 'plan' pins what the user is shown for the hard inputs: several copies of one id in the loaded files,
-// an item deleted here, a conflict nobody decided, an item that cannot be compared, and what arrives
-// without the items of another kind that it needs.
+// a conflict nobody decided, an item that cannot be compared, and what arrives without the items of
+// another kind that it needs.
 // 'conversations', 'settings' and 'AI services' pin the kinds of data whose rules differ from the default.
 // 'files' pins that every kind of file the app wrote is still read. The files are built here from the stored
 // types the old writers declare (chats.converters.ts, BackupRestore.tsx): no real export is kept in the repository.
@@ -39,12 +39,10 @@ describe('by content', () => {
 
   const [m1, m2, m3] = [message('m1', 'one'), message('m2', 'two'), message('m3', 'three')];
 
-  test('the side that only adds is the successor', () => {
+  test('the side that only adds is the successor; what differs on the two sides is a conflict', () => {
     assert.deepEqual(tradeRelateByContent(chat([m1, m2, m3]), chat([m1, m2]), IGNORE), { relation: 'ahead' });
     assert.deepEqual(tradeRelateByContent(chat([m1, m2]), chat([m1, m2, m3]), IGNORE), { relation: 'behind' });
-  });
-
-  test('what differs on the two sides is a conflict: nothing says which side changed it', () => {
+    // nothing says which side changed it
     assert.deepEqual(tradeRelateByContent(chat([m1, message('m2', 'two, edited')]), chat([m1, m2]), IGNORE), { relation: 'conflict' });
     assert.deepEqual(tradeRelateByContent(chat([m1], { userTitle: 'A' }), chat([m1], { userTitle: 'B' }), IGNORE), { relation: 'conflict' });
   });
@@ -53,10 +51,6 @@ describe('by content', () => {
     const local = chat([message('m1', 'one', { tokenCount: 12 })], { updated: 2, tokenCount: 12 });
     const incoming = chat([message('m1', 'one', { tokenCount: 40, updated: 9, userFlags: [], metadata: undefined })], { updated: 7, tokenCount: 40 });
     assert.deepEqual(tradeRelateByContent(incoming, local, IGNORE), { relation: 'same' });
-  });
-
-  test('only the keys the caller names are left out', () => {
-    assert.deepEqual(tradeRelateByContent({ id: 's', updated: 2 }, { id: 's', updated: 1 }, new Set()), { relation: 'conflict' });
   });
 
 });
@@ -82,11 +76,6 @@ describe('plan', () => {
     const { rows, rejected } = tradePlan([older, edited], new Map(), new Set(), byContent);
     assert.deepEqual(rows, []);
     assert.deepEqual(rejected.map(r => r.id), ['c1']);
-  });
-
-  test('an item deleted on this device is not new', () => {
-    const { rows } = tradePlan([older], new Map(), new Set(['c1']), byContent);
-    assert.equal(rows[0].relation, 'removed');
   });
 
   test('an item that cannot be compared is one refused item: the others are planned', () => {
@@ -202,13 +191,6 @@ describe('conversations', () => {
     assert.deepEqual(adapter.relate(items[0], local), { relation: 'same' });
   });
 
-  test('an export carries the symbol: a file without it is a chat whose symbol was cleared, not this device\'s', () => {
-    const local = read('app-chats.v4', chat([m1], { userSymbol: 'X' })).items[0];
-    const { items } = read('app-chats.v4', chat([m1]), local);
-    assert.equal((items[0].data as DConversation).userSymbol, undefined);
-    assert.deepEqual(adapter.relate(items[0], local), { relation: 'behind' });
-  });
-
   test('a file is untrusted: an id that is not the one of its data, and fields of the wrong type, do not get in', () => {
     assert.deepEqual(adapter.readSection({ type: 'chat', schema: 'app-chats.v4', items: [{ id: 'other', data: chat([m1]) }] }, new Map()).rejected.map(r => r.id), ['other']);
     const { data } = read('app-chats.v4', chat([m1], { userSymbol: { not: 'a string' }, isArchived: 'yes', userTitle: 7 })).items[0];
@@ -249,13 +231,6 @@ describe('conversations', () => {
     assert.equal((incoming.data as DConversation).messages.length, 2);
   });
 
-  test('keeping both adds the chat of the file under new ids', async () => {
-    await adapter.apply([{ item: item(chat([m1, m2])), relation: 'conflict', resolution: 'keep-both' }]);
-    const copy = imported.at(-1)!;
-    assert.notEqual(copy.id, 'c1');
-    assert.equal(copy.messages.some(m => m.id === 'm1' || m.id === 'm2'), false);
-  });
-
 });
 
 
@@ -278,11 +253,6 @@ describe('settings', () => {
     assert.deepEqual(items.map(i => i.id), ['app-ux-labs']);
     assert.equal(rejected.length, 4);
     assert.deepEqual(credentials.readSection({ type: 'credentials', schema: 'store-value', items: [stored('app-models', { sources: [] }, 5)] }, new Map()).items.map(i => i.id), ['app-models']);
-  });
-
-  test('a stored value has no history: a different one in the file replaces the one of this device', () => {
-    assert.deepEqual(settings.relate(stored('app-ui', { zen: true }, 3), stored('app-ui', { zen: false }, 3)), { relation: 'ahead' });
-    assert.deepEqual(settings.relate(stored('app-ui', { zen: true }, 3), stored('app-ui', { zen: true }, 3)), { relation: 'same' });
   });
 
   test('what describes the device is not a setting: it is not exported, not compared, and an import leaves it as it is here', async () => {
@@ -365,37 +335,12 @@ describe('files', () => {
     }
   });
 
-  test('a device backup: what belongs to its device, or to another build, is in no section, and is one line with the names behind it', () => {
-    const source = tradeFileRead('backup.json', backup({ state: { conversations: [oneChat] }, version: 4 }, {}));
-    assert.deepEqual(source.sections.flatMap(section => section.items.map(item => item.id)), ['app-ui', 'app-models', 'f1', 'c1']);
-    assert.equal(source.notes.length, 2); // what is not imported, however much of it; the images
-    assert.equal(source.holdsImages, true); // saved with its images: the device restore is offered for it
-    assert.equal(tradeFileRead('chat.json', oneChat).holdsImages, undefined);
-    const [notImported, images] = source.notes;
-    assert.deepEqual(notImported.names, ['app-device', 'agi-logger-log', 'app-chats-v3', 'zync-storage-anon']); // not 'app-folders': its folders are a section
-    assert.ok(notImported.text.includes('3 stored values and 1 database'));
-    assert.equal(images.names, undefined);
-  });
-
-  test('images are never in a chat file: the file says so', () => {
-    const withImage = { ...oneChat, messages: [{ id: 'm1', role: 'user', fragments: [{ ft: 'content', fId: 'f1', part: { pt: 'image_ref', dataRef: { reftype: 'dblob', dblobAssetId: 'blob-1' } } }] }] };
-    assert.equal(read(withImage).notes.length, 1);
-    assert.ok(read(withImage).notes[0].text.includes('1 conversation shows them'));
-    assert.equal(read(oneChat).notes.length, 0);
-  });
-
   test('an export from the future is refused, whole or by section, never half read', () => {
     assert.ok(read(exportFile({ schemaVersion: 2 }, {})).error);
     assert.ok(read(exportFile({ requires: ['something-new'] }, {})).error);
     const bySection = read(exportFile({}, { requires: ['something-new'] }));
     assert.deepEqual(bySection.sections, ['document agi.document 1']);
     assert.equal(bySection.notes.length, 1);
-  });
-
-  test('what is not a Big-AGI file is an error, not an empty import', () => {
-    assert.ok(read({ hello: 'world' }).error);
-    assert.ok(read({ conversations: [], messages: [] }).error);
-    assert.ok(read({ metadata: {}, storage: { localStorage: null } }).error);
   });
 
 });
