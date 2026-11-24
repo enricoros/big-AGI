@@ -50,6 +50,13 @@ A file name ends in `_agi.json`, one extension only. A compound `.agi.json` is s
 dialog that hides the known extension, where `.agi` is a type the system knows. Reading goes by content,
 never by name; the name only decides whether a file dropped on a chat is imported or attached.
 
+## What an item needs
+
+A kind can name the items of other kinds that one of its items needs to be whole. The export says, on the
+row of a kind, how many of its items need something the selection leaves out. The import says how many of
+the items that arrive need something that is neither on the device nor in the files. Both only count:
+nothing is added to a selection, and nothing is refused. No kind of this build names any.
+
 ## Relations
 
 | relation | meaning | default |

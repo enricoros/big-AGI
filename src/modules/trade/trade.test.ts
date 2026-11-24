@@ -6,7 +6,8 @@
 // 'by content' pins the rules for data with no version history (kb/modules/TRADE.md): which side is the
 // successor, what is a conflict, and what a device rewrites on its own without it being a change.
 // 'plan' pins what the user is shown for the hard inputs: several copies of one id in the loaded files,
-// an item deleted here, a conflict nobody decided, an item that cannot be compared.
+// an item deleted here, a conflict nobody decided, an item that cannot be compared, and what arrives
+// without the items of another kind that it needs.
 // 'conversations', 'settings' and 'AI services' pin the kinds of data whose rules differ from the default.
 // 'files' pins that every kind of file the app wrote is still read. The files are built here from the stored
 // types the old writers declare (chats.converters.ts, BackupRestore.tsx): no real export is kept in the repository.
@@ -16,10 +17,10 @@ import { describe, test } from 'node:test';
 
 import type { DConversation } from '../../common/stores/chat/chat.conversation';
 
-import type { TradeItem, TradeRelated } from './trade.types';
+import type { TradeAdapter, TradeItem, TradeRelated } from './trade.types';
 import { tradeChatsAdapter } from './adapters/trade.chats';
 import { tradeFileRead } from './trade.files';
-import { tradePlan, tradePlanOps, tradeRelateByContent } from './trade.plan';
+import { tradePlan, tradePlanOps, tradePreview, tradeRelateByContent } from './trade.plan';
 import { tradeSettingsAdapters } from './adapters/trade.settings';
 
 
@@ -124,6 +125,35 @@ describe('plan', () => {
       resolutions(tradePlanOps(rows, new Map([['conflict', 'accept-local'], ['new', null]] as const), null)),
       { ahead: 'accept-incoming', merge: 'merge', conflict: 'accept-local' },
     );
+  });
+
+  test('what arrives is counted when it needs an item that is neither on this device nor in the files', async () => {
+    // a kind of data over a list, whose items name the personas they need
+    const kind = (type: string, local: TradeItem[]): TradeAdapter => ({
+      type, label: type, labelPlural: type + 's', schema: type,
+      localItems: async () => ({ items: local }),
+      readSection: section => ({ items: section.items, rejected: [] }),
+      relate: byContent,
+      describe: item => ({ title: item.id }),
+      refersTo: item => [{ type: 'persona', ids: (item.data as { needs?: string[] }).needs ?? [] }],
+      apply: async () => ({ failed: [] }),
+    });
+    const chats = kind('chat', [item('c-here', { needs: ['p-nowhere'] })]);
+    const personas = kind('persona', [item('p-here', {})]);
+    const chatSection = {
+      type: 'chat', schema: 'chat', items: [
+        item('c-whole', { needs: ['p-here', 'p-file'] }),
+        item('c-lacking', { needs: ['p-here', 'p-nowhere'] }),
+        item('c-here', { needs: ['p-nowhere'] }), // not arriving: this device stays as it is
+      ],
+    };
+    const personaSection = { type: 'persona', schema: 'persona', items: [item('p-file', {})] };
+    const missing = async (sections: typeof chatSection[]) =>
+      (await tradePreview(sections, [chats, personas])).groups[0].missing.map(({ referred, count }) => [referred.type, count]);
+
+    assert.deepEqual(await missing([chatSection, personaSection]), [['persona', 1]]);
+    // conversations alone: this device's personas are still read, and the one of the other file is now missing
+    assert.deepEqual(await missing([chatSection]), [['persona', 2]]);
   });
 
 });

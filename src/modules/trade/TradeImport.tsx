@@ -199,7 +199,7 @@ export function TradeImport(props: {
         const { failed } = await adapter.apply(ops);
         const failedIds = new Set(failed.map(failure => failure.id));
         const titles = new Map(ops.map(op => [op.item.id, op.item]));
-        result.failed.push(...failed.map(failure => ({ ...failure, id: failure.id && titles.has(failure.id) ? _describe(adapter, titles.get(failure.id)!).title : failure.id })));
+        result.failed.push(...failed.map(failure => ({ ...failure, title: failure.title ?? (failure.id && titles.has(failure.id) ? _describe(adapter, titles.get(failure.id)!).title : undefined) })));
         const done = ops.filter(op => !failedIds.has(op.item.id));
         for (const op of done) {
           result.counts[op.resolution] = (result.counts[op.resolution] ?? 0) + 1;
@@ -235,7 +235,7 @@ export function TradeImport(props: {
     for (const { adapter, ops } of applied.onReload)
       failed.push(...(await adapter.apply(ops)).failed);
     if (failed.length)
-      alert(`Not saved: ${failed.map(failure => `${failure.id} (${failure.reason})`).join(', ')}.\n\nThe application will now reload with what was saved.`);
+      alert(`Not saved: ${failed.map(failure => `${failure.title ?? failure.id} (${failure.reason})`).join(', ')}.\n\nThe application will now reload with what was saved.`);
     window.location.reload();
   }, [applied]);
 
@@ -311,7 +311,7 @@ export function TradeImport(props: {
           {(Object.keys(RESOLUTION_DONE) as TradeResolution[]).filter(resolution => applied.counts[resolution]).map(resolution => `${applied.counts[resolution]!.toLocaleString()} ${RESOLUTION_DONE[resolution]}`).join(' - ') || (reloadPending ? '' : 'Nothing was written.')}
           {!!applied.failed.length && ` - ${applied.failed.length.toLocaleString()} failed`}
         </Typography>
-        {applied.failed.slice(0, MAX_REJECTED_SHOWN).map((failure, index) => <Typography key={index} level='body-xs' color='danger' sx={{ overflowWrap: 'anywhere' }}>{failure.id}: {failure.reason}</Typography>)}
+        {applied.failed.slice(0, MAX_REJECTED_SHOWN).map((failure, index) => <Typography key={index} level='body-xs' color='danger' sx={{ overflowWrap: 'anywhere' }}>{failure.title ?? failure.id}: {failure.reason}</Typography>)}
         {reloadPending && <>
           <Typography level='body-sm'>
             Not written yet: {applied.onReload.map(pending => pending.adapter.labelPlural).join(' and ')}. They replace this device&apos;s when the application reloads; closing this dialog leaves them out.
@@ -326,7 +326,7 @@ export function TradeImport(props: {
     {!!error && <Typography level='body-sm' color='danger'>{error}</Typography>}
 
     {/* One row per kind of data */}
-    {groups.map(({ adapter, rows, rejected }) => {
+    {groups.map(({ adapter, rows, rejected, missing }) => {
       const isSelected = selected.has(adapter.type);
       const isExpanded = expandedType === adapter.type;
       const counts = RELATION_ORDER.map(relation => [relation, rows.filter(row => row.relation === relation).length] as const).filter(([, count]) => count);
@@ -355,6 +355,11 @@ export function TradeImport(props: {
                   {adapter.secrets ? 'Holds API keys. ' : ''}{adapter.appliesOnReload ? 'The file\'s values replace this device\'s, at reload.' : ''}
                 </Typography>
               )}
+              {missing.map(({ referred, count }) => (
+                <Typography key={referred.type} level='body-xs' color='warning'>
+                  {count.toLocaleString()} {count === 1 ? 'needs' : 'need'} {referred.labelPlural} that are neither on this device nor in {preview.sources.length > 1 ? 'these files' : 'this file'}.
+                </Typography>
+              ))}
             </Box>
             {(!!changing.length || !!rejected.length) && (
               <IconButton size='sm' onClick={() => setExpandedType(isExpanded ? null : adapter.type)}>
@@ -397,7 +402,7 @@ export function TradeImport(props: {
               );
             })}
             {changing.length > shownRows.length && <Typography level='body-xs'>and {(changing.length - shownRows.length).toLocaleString()} more</Typography>}
-            {rejected.slice(0, MAX_REJECTED_SHOWN).map((rejection, index) => <Typography key={index} level='body-xs' color='danger' sx={{ overflowWrap: 'anywhere' }}>{rejection.id}: {rejection.reason}</Typography>)}
+            {rejected.slice(0, MAX_REJECTED_SHOWN).map((rejection, index) => <Typography key={index} level='body-xs' color='danger' sx={{ overflowWrap: 'anywhere' }}>{rejection.title ?? rejection.id}: {rejection.reason}</Typography>)}
             {rejected.length > MAX_REJECTED_SHOWN && <Typography level='body-xs'>and {(rejected.length - MAX_REJECTED_SHOWN).toLocaleString()} more not imported</Typography>}
           </Box>}
 

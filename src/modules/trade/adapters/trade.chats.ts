@@ -94,12 +94,13 @@ export function tradeChatsContent(converters: TradeChatsConverters): TradeConten
       const rejected: TradeRejected[] = [];
       const isOlderFile = SCHEMAS_OLDER_FILES.includes(section.schema);
       for (const item of section.items) {
-        if (!isOlderFile && !SCHEMAS_STORED.includes(section.schema)) {
-          rejected.push({ id: item.id, reason: 'A kind of conversation this version cannot read' });
-          continue;
-        }
         // a file is untrusted input: a damaged conversation is one rejected row
         const fileData = (item.data ?? {}) as Partial<Record<keyof DConversation, unknown>>;
+        const title = [fileData.userTitle, fileData.autoTitle].find((text): text is string => typeof text === 'string' && !!text);
+        if (!isOlderFile && !SCHEMAS_STORED.includes(section.schema)) {
+          rejected.push({ id: item.id, title, reason: 'A kind of conversation this version cannot read' });
+          continue;
+        }
         let conversation: DConversation | null = null;
         try {
           if (fileData.id === item.id)
@@ -108,7 +109,7 @@ export function tradeChatsContent(converters: TradeChatsConverters): TradeConten
           // rejected below
         }
         if (!conversation) {
-          rejected.push({ id: item.id, reason: 'Not a conversation' });
+          rejected.push({ id: item.id, title, reason: 'Not a conversation' });
           continue;
         }
         if (typeof conversation.userTitle !== 'string') delete conversation.userTitle;

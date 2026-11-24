@@ -100,6 +100,12 @@ export interface TradeAdapter {
   compareText?: (item: TradeItem) => string;
 
   /**
+   * The items of other kinds that this one needs to be whole, by section type: a conversation, its personas.
+   * An export says which of them it leaves out, an import which of them it does not bring. Absent: none.
+   */
+  refersTo?: (item: TradeItem) => { type: string, ids: readonly string[] }[];
+
+  /**
    * Writes the decided operations. What was decided is the pair the preview showed: an item that changed
    * on the device since then is not replaced, and comes back as failed with the reason.
    */
@@ -110,9 +116,10 @@ export interface TradeAdapter {
  * What is known of a kind of data wherever it is stored: reading its files, relating two versions, showing
  * one, writing one. An adapter is this plus a store; a build that stores the kind differently puts its own around it.
  */
-export type TradeContent = Pick<TradeAdapter, 'readSection' | 'relate' | 'describe' | 'compareText' | 'apply'>;
+export type TradeContent = Pick<TradeAdapter, 'readSection' | 'relate' | 'describe' | 'compareText' | 'refersTo' | 'apply'>;
 
 export interface TradeRejected {
-  id?: string;
+  id?: string;                          // the item's
+  title?: string;                       // what it is shown by, where it could be read: otherwise its id
   reason: string;
 }

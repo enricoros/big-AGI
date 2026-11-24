@@ -9,6 +9,7 @@ import { capitalizeFirstLetter, humanReadableBytes } from '~/common/util/textUti
 import type { TradeAdapter, TradeItem } from './trade.types';
 import { tradeAdapters } from './trade.client';
 import { tradeFileSave } from './trade.files';
+import { tradeMissingRefs } from './trade.plan';
 
 
 interface Exportable {
@@ -16,7 +17,7 @@ interface Exportable {
   items: TradeItem[];
 }
 
-function _Row(props: { label: string, detail: string, checked: boolean, disabled: boolean, onChange?: (checked: boolean) => void }) {
+function _Row(props: { label: string, detail: string, warning?: string, checked: boolean, disabled: boolean, onChange?: (checked: boolean) => void }) {
   return (
     <FormControl orientation='horizontal' sx={{ gap: 1 }}>
       <Checkbox
@@ -29,6 +30,11 @@ function _Row(props: { label: string, detail: string, checked: boolean, disabled
         <Typography level='body-xs' sx={{ fontWeight: 'normal', color: 'text.secondary', maxWidth: 220 }}>
           {props.detail}
         </Typography>
+        {!!props.warning && (
+          <Typography level='body-xs' color='warning' sx={{ fontWeight: 'normal', maxWidth: 220 }}>
+            {props.warning}
+          </Typography>
+        )}
       </FormLabel>
     </FormControl>
   );
@@ -81,6 +87,21 @@ export function TradeExportAll() {
 
   const hasSelection = !!exportables?.some(({ adapter, items }) => selected.has(adapter.type) && items.length);
 
+  // what the selected kinds need of the kinds that are left out: by kind, said on its row
+  const leftOut = React.useMemo(() => {
+    const warnings = new Map<string, string>();
+    if (!exportables) return warnings;
+    const adapters = exportables.map(({ adapter }) => adapter);
+    const ids = new Map(exportables.map(({ adapter, items }) => [adapter.type, new Set(items.map(item => item.id))]));
+    for (const { adapter, items } of exportables)
+      if (selected.has(adapter.type) && adapter.refersTo) {
+        const missing = tradeMissingRefs(adapter, items, adapters, (type, id) => !selected.has(type) && !!ids.get(type)?.has(id));
+        if (missing.length)
+          warnings.set(adapter.type, missing.map(({ referred, count }) => `${count.toLocaleString()} ${count === 1 ? 'needs' : 'need'} ${referred.labelPlural} that this export leaves out`).join(', '));
+      }
+    return warnings;
+  }, [exportables, selected]);
+
 
   return <>
 
@@ -102,6 +123,7 @@ export function TradeExportAll() {
           key={adapter.type}
           label={capitalizeFirstLetter(adapter.labelPlural)}
           detail={adapter.unavailable || (!items.length ? 'none' : `${items.length.toLocaleString()}${adapter.secrets ? ' - API keys, as plain text in the file' : ''}`)}
+          warning={leftOut.get(adapter.type)}
           checked={selected.has(adapter.type) && !!items.length}
           disabled={!items.length}
           onChange={checked => setSelected(current => {
