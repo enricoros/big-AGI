@@ -622,8 +622,9 @@ export function CMRenderTreeNodes(props: {
             messageGeneratorLlmId={props.messageGeneratorLlmId}
             contentScaling={props.contentScaling}
             isEditingMessage={isEditing}
-            onFragmentDelete={props.onFragmentDelete}
-            onFragmentReplace={props.onFragmentReplace}
+            // not while streaming: the stream would overwrite the local change, with the remote file already gone
+            onFragmentDelete={props.messagePendingIncomplete ? undefined : props.onFragmentDelete}
+            onFragmentReplace={props.messagePendingIncomplete ? undefined : props.onFragmentReplace}
           />
         );
 
