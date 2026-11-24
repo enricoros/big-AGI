@@ -156,6 +156,7 @@ let nextConfig: NextConfig = {
     ];
   },
   async redirects() {
+    // NOTE: moved dev-tool URLs get no redirects, by decision: the old /dev/inspect hub and /info/debug 404 on purpose
     return [
       // /preview: 2025 dark-launch marketing page (prod-only [PROD] commit) - Google indexed it, keep the 301 to preserve searchers
       { source: '/preview', destination: 'https://big-agi.com/', permanent: true },

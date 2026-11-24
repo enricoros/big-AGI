@@ -286,6 +286,8 @@ export function aixToAnthropicMessageCreate(target: AixAnthropicTarget, model: A
   // Not on 'between_tools' (400 'Extra inputs'): there, and on Haiku 5.x 'disabled', earlier turns' thinking is stripped instead (below).
   if (hostedFeatures.enableThinkingBindingControls && (payload.thinking?.type === 'adaptive' || payload.thinking?.type === 'enabled'))
     payload.thinking.block_binding = { prefix_mismatch_behavior: 'drop_block' };
+  // TODO: a caller that omits the thinking param sends no thinking, so no drop_block, and its second turn 400s on Fable 5.2
+  // (no app path omits it today)
 
   // [Anthropic, 2026-11-05, hypothesis: the 400 is documented, not reproduced - our key predates the cutoff] Haiku 5.x 'disabled' (or unset, with forced tools) and Sonnet 5.x 'between_tools' take no block_binding, yet replayed blocks
   // still face the prefix check: a 400 on accounts created on or after 2026-08-31 after any prefix change (routine here: the system prompt's

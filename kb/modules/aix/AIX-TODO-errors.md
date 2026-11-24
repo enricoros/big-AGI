@@ -70,6 +70,11 @@ On the blocked image (2026-11-06), the TODO left at the site:
 - Gemini: "Deadline expired before operation could complete" comes under two statuses: `504 DEADLINE_EXCEEDED` when the request's own deadline expires (the `X-Server-Timeout` header, which we do not send), `503 UNAVAILABLE` from Google's side (#1287). Classify by status, not by message
 - A last attempt that goes through and then fails for another reason still reads "Gave up after N attempts": the reassembler cannot tell it from the same error returning
 - Anthropic: a zero fast mode rate limit is matched by message text in the fetch retrier, not by a typed cause
+- Groq 498 (flex tier at capacity) is not retried; it belongs to the overloaded class
+- OpenRouter HTTP 503 means no provider meets the request's routing configuration, not a transient fault; it is retried as transient
+- HTTP 500 is not retried at connect
+- Bedrock Invoke (Anthropic models): a `{message}` exception payload throws in the parser's error handler (P53 in [AIX-ingestion.md](../AIX-ingestion.md)) before any retry classification; Converse reads it
+- Unverified: a Gemini per-minute 429 may match the `quota` text denylist and not be retried; needs a free-tier probe
 
 ### Retry after partial output (#1211, #1287)
 
@@ -113,3 +118,4 @@ The wire a new design has to fit. Not a design: the direction is the author's, u
 - The error keeps its type, code, message and param, and the response and event ids
 - A final failure less specific than the earlier `error` does not replace it
 - Multiple errors are preserved (the stopgap keeps the last)
+- Replay test rows (`chatGenerate.replay.test.ts`) for the rest of the #1288 cases, built from the real container-deleted stream: error then `response.incomplete`, error then `response.completed`, a read failure after the error, Stop after the error, `response.failed` with `error: null`

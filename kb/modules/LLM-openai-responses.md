@@ -30,6 +30,7 @@ Native OpenAI models carry `LLM_IF_OAI_Responses` and go to `/v1/responses` (`op
 - Family rule (docs: guides/reasoning, "Preserve reasoning across calls"): items render only in the same model or a higher tier of the same generation (Luna to Sol to Astra, 6.1 Terra to 6.1 Sol, 6.2 Sol to 6.2 Astra). A downgrade (Astra to Sol) and a generation switch (6.1 Sol to 6 Astra or 6 Sol, 5.6 to 6, 6 to 5.5) drop them. No parameter overrides it.
 - The omission is silent: no error, no warning, no header, and the echoed `reasoning.context` still says `all_turns`. The only trace is `usage.input_tokens`: omitted items are not billed, so the count equals the reasoning-stripped history. The same holds through OpenRouter's Responses endpoint.
 - Consequence: after a family switch the model sees only the visible transcript. Facts that lived only in reasoning are gone, and the model may invent them (5.6 Sol produced a made-up code instead of saying it had none). This applies to model switches mid-chat and to mixed-family Beam rays. AIX has no family gate; the send-side lever is the chat 'Reasoning traces' policy.
+- Behavioral check (a code planted only in reasoning, then asked for): it worked on GPT-5.6; on GPT-6.x it is inconclusive, since same-model controls also answer NONE. Usage is no check on gpt-5.2: replayed items add no measurable input tokens there.
 - Every OpenAI-compatible Responses service (native, Azure, Bedrock Mantle) shares the `openai` namespace, so a handle from one is replayed to another. Cross-organization and cross-provider replay is untested.
 
 ## Chat Completions
@@ -43,6 +44,8 @@ The native definitions route GPT-5.x, GPT-6 and 6.1 over Responses. On Chat Comp
 - Chat Completions on OpenRouter accepts every effort (including `minimal`) and `temperature` at any effort, normalizing upstream. Effort is honored (`max` spent 8x the reasoning tokens of `low` on Sol), `reasoning.mode: 'pro'` reroutes to the `-pro` id, and function tools work together with reasoning.
 - `service_tier` routes to the `openai/flex` and `openai/fast` endpoints on every model that exposes `llmVndOaiServiceTier` natively (GPT-5.4 through GPT-6): `flex` bills 0.5x, `fast` and `priority` 2x (2.5x on GPT-5.5), echoed as `priority`. `ultrafast` routes to `openai/ultrafast` on Astra and Astra Pro, both dialects, echoed as `ultrafast` at 6x (2026-10-06); 6.1 Sol and its Pro id list it too (6.1 Sol: echoed `ultrafast` at 6x). Wired through `_ORT_OAI_PARAM_ALLOWLIST`; the reported `cost` carries the tier.
 - Auto picks match the exact `llmRef` first: OpenRouter lists `-pro` ids before the base on same-day releases.
+- Responses-only features are not threaded through OpenRouter's Chat Completions: it never round-trips reasoning items.
+- Cache-write pricing on `openai/gpt-5.6-*` keeps the both-prices heuristic (Anthropic-style breakpoints) until explicit cache controls land.
 
 ## Bedrock
 
@@ -53,6 +56,8 @@ The native definitions route GPT-5.x, GPT-6 and 6.1 over Responses. On Chat Comp
 ## Shipped, not adopted
 
 Async tool calling (`async: true` on tools; the model answers before the result and may emit two message items), `configuration_update` input items (change effort mid-conversation, cache prefix intact), `prompt_cache_options.ttl` (next paragraph), the `{ type: 'computer' }` tool (batched `actions[]`), `shell` and `apply_patch`, programmatic tool calling, image detail `original`, WebSocket mode (docs recommend it for Ultrafast in tool-heavy loops; AIX streams over HTTP SSE), Multi-agent (next section). Not probed: mid-turn steering over WebSockets, misalignment monitoring (can stop a conversation for review).
+
+Programmatic tool calling, explicit prompt-cache controls and image detail `original` are on hold by the author: adopted only on his word.
 
 Cache TTL (2026-10-20): `prompt_cache_options.ttl` is `30m` (default, 1.25x write) or `12h` (2.5x write); reads cost the same for both. GPT-5.6 and later on Responses; GPT-5.5 and `chat-latest` 400 `prompt_cache_options is not supported`, Chat Completions accepts only `30m`. With the option set, usage adds `input_tokens_details.cache_write_tokens_details` (`ttl_30m_tokens`, `ttl_12h_tokens`); without it the field is absent. Requests with and without the option do not share cache entries (GPT-6 Luna, both directions, reproduced): adopting it mid-conversation rewrites the prefix once. `30m` requests read `12h` entries.
 

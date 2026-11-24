@@ -206,6 +206,7 @@ export function Telephone(props: {
         setCallMessages(messages => [...messages, createDMessageTextContent('user', userSpeechTranscribed)]); // [state] append user:speech
     }
   }, []);
+  // TODO: #1188 stage 2 - Long take (ASRx batch) as a Call engine, push-to-talk only
   const chatMicTimeoutMs = useChatMicTimeoutMsValue();
   const { sendAfterMs, sendAfterMode } = useAppCallStore(useShallow(state => ({ sendAfterMs: state.sendAfterMs, sendAfterMode: state.sendAfterMode })));
   const { recognitionState, startRecognition, stopRecognition, toggleRecognition } = useSpeechRecognition('webSpeechApi', onSpeechResultCallback, (sendAfterMode === 'global' ? chatMicTimeoutMs : sendAfterMs) || 2000);

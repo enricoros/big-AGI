@@ -81,6 +81,8 @@ export function withDecimator<T extends (...args: any[]) => MaybePromise<void>>(
       const result = fn.call(this, ...args);
       
       // compute next hold time
+      // NOTE: open loop by decision: tElapsed times only fn, not the React render its store set schedules in a microtask after it, so
+      // renders slower than intervalMs run back to back. If revisited: a MessageChannel probe after fn, hold = max(interval - cost, cost, 20)
       const tStop = Date.now();
       const tElapsed = tStop - tCall;
       if (DEBUG_DECIMATOR)

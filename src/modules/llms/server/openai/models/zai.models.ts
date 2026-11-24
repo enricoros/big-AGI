@@ -55,7 +55,8 @@ const _knownZAIModels = llmsDefineModels<_ZaiModelDef>()([
     interfaces: _IF_Vision_Reasoning,
     maxCompletionTokens: 131072, // 128K
     parameterSpecs: _PS_Reasoning_Compulsory,
-    // chatPrice: not on the rate card (https://docs.z.ai/guides/overview/pricing) - add when the Model API opens
+    // chatPrice: not on the rate card (https://docs.z.ai/guides/overview/pricing) - add when the Model API opens,
+    // then move the zai primaryChat and codeApply picks (model.domains.editorial.ts) from glm-5.3 to glm-5.4
     initialTemperature: 1.0,
   },
 

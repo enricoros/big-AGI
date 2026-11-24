@@ -18,6 +18,9 @@ export interface ScreenCaptureStream {
 /**
  * Opens a screen capture stream (shows the browser's screen picker).
  * Returns stream + track metadata, or null if the user canceled.
+ *
+ * NOTE: Chrome on Windows delivers a window share from a rotated monitor sideways (Entire Screen arrives upright), and no API
+ * reports it (track settings, getScreenDetails, screen.orientation): the fix is a manual per-feed rotate control, not built.
  */
 export async function startScreenCaptureStream(): Promise<ScreenCaptureStream | null> {
   if (!supportsScreenCapture) return null;

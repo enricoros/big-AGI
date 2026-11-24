@@ -19,8 +19,9 @@ export type LlmsAzureModelId = typeof _knownAzureChatModels[number]['idPrefix'];
  */
 const AZURE_FORCE_DISABLE_WEB_SEARCH_TOOL = true;
 /**
- * Azure OpenAI does not support the image_generation tool as of 2025-11-18 - however we let this through
- * to enable future no-code image generation support once Azure enables it.
+ * Azure OpenAI picks the image_generation tool's model by an 'x-ms-oai-image-generation-deployment' request header, which
+ * we never send, and has no streaming mode for the tool (#832): the tool cannot work there yet.
+ * TODO: flip this to true, or send the header.
  */
 const AZURE_FORCE_DISABLE_IMAGE_GENERATION_TOOL = false;
 

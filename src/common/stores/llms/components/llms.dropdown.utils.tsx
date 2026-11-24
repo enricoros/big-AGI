@@ -74,6 +74,7 @@ function _resolveServiceLabels(llms: ReadonlyArray<DLLM>): Map<DModelsServiceId,
 /**
  * Stably sort LLMs by their service label (alphabetical, locale-aware).
  * Preserves intra-service order (e.g. starred-first), since JS sort is stable.
+ * NOTE: search never reorders groups: a service named in the search keeps its alphabetical place (named-first was rejected).
  */
 export function sortLLMsByServiceLabel<T extends DLLM>(llms: ReadonlyArray<T>): T[] {
   if (llms.length < 2) return [...llms];

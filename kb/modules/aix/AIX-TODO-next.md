@@ -6,6 +6,7 @@ As with `AIX-TODO-errors.md` this is partially defined by the author, and largel
 == what precedes was written by the author, what follows is added by AI ==
 
 Inputs for planned AIX work other than error handling ([AIX-TODO-errors.md](AIX-TODO-errors.md)). One line per item; a larger item gets its own `AIX-TODO-*.md` page.
+Subagents do not edit the `AIX-TODO-*.md` pages: they end their report with a "TODO inputs" list split into errors and next.
 
 ## Requests
 
@@ -15,6 +16,14 @@ Inputs for planned AIX work other than error handling ([AIX-TODO-errors.md](AIX-
 - Bedrock: Mantle uses the OpenAI dialect, so Kimi and DeepSeek get a forced call with thinking on, which the native dialects work around; a Claude 5.x model on Converse sends a forced call with no fallback. Needs a probe
 - Gemini: continuation support (`requires_continuation` on Interactions, the `CONTINUATION` finish reason on generateContent); both are only read today
 - Anthropic: the date in the system prompt rolls after an idle hour (`PROMPT_MIXER_CHAT_CLOCK`) and that send drops the previous reply's reasoning. With reasoning kept from every reply, the API then drops the same older blocks on each later turn: not sending them again stops the notice with the cache intact (one Opus 5.5 chain, to confirm on more models)
+- Cache-prefix movers besides the date roll, not addressed: older assistant images are re-encoded at send; the Gemini search time filter (`_buildGoogleSearchConfig`) puts the current time, to the second, in `tools` on every request; `{{RenderHTML}}` renders desktop or mobile wording by device
+- Anthropic: `thinking.display: 'summarized'` costs about 1 s of TTFT against `omitted` (Opus 5, effort low; adaptive with `omitted` starts as fast as thinking off); whether `display` becomes a per-model choice is undecided
+- DeepSeek: server tools (API 2026-11-13) are not wired
+- OpenAI: no family gate on reasoning replay; across a family or generation switch the API drops the items silently ([LLM-openai-responses.md](../LLM-openai-responses.md), Reasoning continuity). A gate in the send path was proposed, not decided
+- OpenAI on Chat Completions (compatible hosts): GPT-6 function tools 400 unless effort is `none` (at every effort on Astra and 6.1 Sol), and the adapter sends them anyway; a guard was proposed, not built
+- Gemini: a request that ends on a model turn 400s on 3.5 Flash-Lite, 3.6 and later, and 4; the fix (append a synthetic user "Continue") is a product call
+- Gemini 3+: an unsigned `functionCall` in the current tool turn 400s; no product path yet
+- Unprobed: explicit `strict` on function tools on Meta AI, Azure and Bedrock Mantle; Gemini accepts `store: false`, whether it keeps a request out of the logs is unproven
 
 ## Responses
 
@@ -26,6 +35,7 @@ Inputs for planned AIX work other than error handling ([AIX-TODO-errors.md](AIX-
 ## Model data
 
 - Sakana's search fee is never priced
+- OpenAI `tool_usage.image_gen` (the image tool's own token split) is not priced; it matters more on gpt-image-2.6
 - The gpt-image-1-mini quality clamp is stale
 - Arena scores in the definitions lag the snapshot quoted by the editorial picks
 

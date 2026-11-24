@@ -22,6 +22,7 @@
  *           `word_info` annotations on the content item carry `speaker: 'spk:N'` per turn with
  *           start/end indices into it; rebuilt here as 'Speaker N:' turns, like Deepgram and OpenAI.
  *           Smart mode dropped one speaker's turns on a two-speaker clip where verbatim was complete.
+ *           TODO: default to verbatim? smart is the default (gemini.vendor.ts, and the fallback below).
  * Config:   `mode` takes 'smart' | 'verbatim' as plain strings; `language_codes` (BCP-47) and
  *           `custom_vocabulary` (<=1000 terms; 400s with diarization or word timestamps).
  * Limits:   audio bills at 25 tok/s against the 98,304-token input cap -> ~65 minutes; over-cap

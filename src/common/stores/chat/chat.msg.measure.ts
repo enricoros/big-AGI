@@ -18,6 +18,8 @@ const _CHARS_PER_TOKEN = 4; // rough cross-vendor heuristic to bring provider-re
  *    placeholder (e.g. "I'm planning right now"), so it badly under-represents real thinking
  *
  * text is measured directly from content fragments (reliable); total = text + chosen reasoning.
+ *
+ * TODO: verify TOutR reliability, and whether the encrypted byte length tracks it, before trusting this ranking.
  */
 export interface MsgMeasureSizes {
   // ranking dimensions (character-equivalent)

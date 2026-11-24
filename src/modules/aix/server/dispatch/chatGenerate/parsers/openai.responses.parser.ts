@@ -1298,6 +1298,8 @@ function _fromResponseMetrics(response: Pick<OpenAIWire_API_Responses.Response, 
  * over the registry definition): change both together.
  * This is likely for 'this point in time' pricing.
  * Keep this in sync when updating OpenAI models.
+ * TODO: drop the model-id branches and let the parameter side price served Fast/Ultrafast - needs a ruling: a project whose
+ *       default tier is priority would then price at 1x, unless the wire echoes the served tier name for the client to rate.
  */
 function _priceMultiplierFromServiceTier(serviceTier: string | null | undefined, modelId: string | undefined): number | undefined {
   switch (serviceTier) {

@@ -136,3 +136,9 @@ Append a letter and its word, and add it to the noise or priority set if it belo
 reuse a letter: stored entries keep their meaning. On `dev`, the backend-capability helper the
 eligibility check calls has a different name; the rebase reports no conflict on the new session file,
 so rename that one call when the type check flags it.
+
+## Decided against
+
+`useShallow` on whole-store batch reads, a `defsV` stamp guard, a refactor where the changelog owns
+the listing outcome, unit tests for the diff, a byte backstop on the log (the count cap is the bound,
+see Retention). Reason: localStorage frugality, and nothing added for its own sake.

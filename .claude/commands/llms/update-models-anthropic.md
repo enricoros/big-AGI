@@ -44,6 +44,8 @@ for "anthropic models latest pricing" / "anthropic latest models".
 
 **Live endpoint (extra signal):** If `.env.api-keys` has `ANTHROPIC_API_KEY`, scan the served model list as ground-truth for what's new/available and cross-check the docs above: `curl https://api.anthropic.com/v1/models -H "x-api-key: $ANTHROPIC_API_KEY" -H 'anthropic-version: 2023-06-01'`. Never commit or echo the key.
 
+**End-to-end check (new model):** the protocol lab's `chain` (`tools/develop/aix-protocol-lab/README.md`) runs turn 1 and the replayed turn 2 through the real adapters: `node --require ./tools/develop/aix-protocol-lab/stub-preload.cjs --import tsx tools/develop/aix-protocol-lab/lab.ts chain anthropic-messages <scenario> --model <id> --live`. Pick a scenario with reasoning on (e.g. `reason`): `search` sends no thinking, so no `drop_block`, and 400s on turn 2 on Fable 5.2; `kitchen-sink` is refused by Fable 5.2 (`reasoning_extraction`).
+
 **Important:**
 - Review the full model list for additions, removals, and price changes
 - For new models: check which `parameterSpecs` are needed (thinking mode,

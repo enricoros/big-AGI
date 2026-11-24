@@ -138,6 +138,8 @@ export default function CustomMarkdownRenderer({ content, disablePreprocessor, u
 
   // parse here, called directly - `Markdown` is a plain function (the hooks live in `MarkdownHooks`) - so an in-flux block
   // measured by a render decay zone can time it; reported after the commit, as the zone's update re-renders other components
+  // TODO: each streaming update re-parses the whole block: memoize closed top-level MDAST nodes and re-parse only the open tail (cut
+  // after a node only once the next node's first line is terminated); a single giant paragraph still re-parses in full
   const parseMsRef = React.useRef(0);
   const tStart = onParseCost ? performance.now() : 0;
   const markdown = ReactMarkdown({

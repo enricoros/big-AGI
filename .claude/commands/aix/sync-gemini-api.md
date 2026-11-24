@@ -8,6 +8,7 @@ Please take a look at my API code for Google Gemini: message wire types `src/mod
 IMPORTANT: we support the generateContent API and the Interactions API (`adapters/gemini.interactionsCreate.ts`, `parsers/gemini.interactions.parser.ts`) on both paths: agents (Deep Research, Antigravity) and models (Omni video) - see `kb/modules/LLM-gemini-interactions.md`. Not other Gemini APIs such as embeddings, etc.
 Caching is only supported when implicit, we do not explicitly manage Gemini Caches. Same for file uploads and other systems.
 Image generation happens through models, i.e. 'Gemini 2.5 Flash - Nano Banana' generates images using AIX from generateContent (chat input).
+Gemini 2.x is out of scope (owner's ruling): a 2.x-only finding gets one line in the report at most, never a fix or a TODO item.
 
 Then take a look at the newest API information available. Try these sources, and be creative if some are blocked:
 

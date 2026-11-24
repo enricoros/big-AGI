@@ -92,6 +92,7 @@ export const hardcodedOpenAIVariants: ModelVariantMap = {
 
   // NOTE: variants go to each generation's flagship only (5.2/5.4/5.5 minis never got one). Lower tiers reach Pro mode
   // through llmVndOaiReasoningMode, and temperature through effort 'none' (the client lifts the NoTemperature hotfix there).
+  // TODO: the '::thinking-none' variants (5.2 to 5.6 Sol) are then redundant presets: retirement candidates
 
   // GPT-5.5 with reasoning disabled (non-thinking) - supports temperature control
   'gpt-5.5-2026-04-23': {

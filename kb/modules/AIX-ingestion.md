@@ -23,6 +23,7 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **P6** (low) Unknown block types skipped in production, fatal to the stream in development builds and strict mode; `mcp_tool_use`/`mcp_tool_result` throw (MCP is never sent)
 - [ ] **P8** (low) `web_fetch_tool_result` synthesizes a citation, the only fetch source left in the record - `_handleCBS_WebFetchToolResult`. Not replayed
 - [ ] **P9** (low) Message `id`, `stop_sequence` dropped; `stop_details` flattened into error text, replayed as `[ERROR]` (Q1)
+- [ ] **P57** (low) Strict enums fail the event on a new vendor value: usage `service_tier` and `speed`, the skills `type`, the citations union. Latent
 
 ### Parse: Responses (`P/openai.responses.parser.ts`: OpenAI, xAI, Meta AI, Sakana)
 
@@ -34,6 +35,9 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **P12** (medium) Code interpreter outputs regrouped (logs joined, images last); synthesized image text, failure text and container expiry replay as vendor logs - `_forwardDoneCodeInterpreterCallItem`
 - [ ] **P15** (medium) NS: synthetic `**Incomplete response**` text stored before the reasoning and replayed as assistant text; S sets an issue instead
 - [ ] **P18** (medium) Annotation offsets part-relative and unlinked from their fragment (wrong span in the joined text 16/23); `file_citation`/`file_path` dropped; `container_file_citation` loses offsets - `_forwardTextAnnotation`
+- [ ] **P58** (medium) `response.failed` drops the misalignment explanation; the stored error is the code and message only
+- [ ] **P59** (medium) An `error` before any text ends the read, so the `response.failed` after it is dropped, and with it the tool counts (it carries no `usage`)
+- [ ] **P60** (medium) `nWebSearch` is read only past the `usage` gate in `_fromResponseMetrics`: a failed response carries `tool_usage` and no `usage`, so its searches are not counted. Moving it out shows a search-only cost on token-less failures
 - [ ] **P17** (low) Message and `function_call` item `id`/`status` dropped; unknown `phase` values dropped. Replay accepted, no measured effect
 - [ ] **P49** (low) xAI: a message item kept open across later search and reasoning items is stored as two text fragments and replayed as two assistant messages
 - [ ] **P11** (low) Summary parts joined with `\n\n` in S, with nothing in NS; NS skips empty summaries - `summaryPartEnter`. Summaries are not replayed
@@ -53,6 +57,7 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **P25** (medium) Grounding becomes message-wide citations; `groundingSupports`, `searchEntryPoint`, `citationMetadata`, `retrievalMetadata` dropped; a chunk without `web` fails the parse
 - [ ] **P31** (medium) Interactions: tool steps become `vp` cut to 80/240 chars in S, skipped in NS; the follow-up re-ran both searches when told not to; unknown steps, `user_input`, empty text skipped
 - [ ] **P52** (medium) Interactions: the NS (Recover) parser ignores `environment_id`, so the next turn gets a fresh sandbox
+- [ ] **P61** (medium) Interactions: a `cancelled` interaction shows as "Error" with no text
 - [ ] **P22** (low) Empty text parts collapsed; their signature moves to the preceding text - `COLLAPSE_EMPTY_TEXT_PARTS`. Accepted on replay (21/21)
 - [ ] **P30** (low) Interactions: thought summary items concatenated into one reasoning run - `_emitThoughtSummary`
 - [ ] **P27** (low) A `functionCall` with non-object args dropped while its signature is still emitted, next turn 400 (synthetic); `OUTCOME_DEADLINE_EXCEEDED` output moved into error text
@@ -71,10 +76,12 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **P47** (medium, client tools) `tool_calls[].id: null` fails the chunk schema and kills the stream (Arcee, qwen3.8-max)
 - [ ] **P32** (medium) S splits only a leading `<think>` on the first chunk (an empty or newline first chunk, or a split tag, defeats it); MiniMax S stores both the tag content and `delta.reasoning`; NS keeps `<think>` in the text
 - [ ] **P34** (medium) `annotations`, Perplexity `search_results` become message-wide citations (`snippet`, `last_updated`, `source` dropped; S stores them before the text, NS after); a non-`url_citation` or untitled annotation fails the parse
+- [ ] **P62** (medium) OpenRouter: the read ends at the in-band `{error}` chunk; the `finish_reason` and billed-usage chunks after it are dropped
 - [ ] **P35** (low) NS stores `content` before reasoning; S stores reasoning first
 - [ ] **P36** (low) NS merges `reasoning_content` and `reasoning_details` into one `ma` (synthetic; no live provider sends both)
 - [ ] **P39** (low) `refusal` never read (synthetic)
 - [ ] **P40** (low) Audio `id` dropped, transcript kept only as the label; OpenRouter non-`data:` images dropped (synthetic)
+- [ ] **P63** (low) Unknown `finish_reason` values are dropped: the message says the finish reason was not provided by the model
 
 ### Parse: Bedrock (`P/bedrock-converse.parser.ts`, Anthropic-on-Bedrock)
 

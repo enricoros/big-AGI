@@ -26,6 +26,8 @@ The server never honors the flag. Its only consumer is `geminiAccess`, which tak
 
 Most cloud vendors support CSF (OpenAI, Anthropic, Gemini, Deepseek, Groq, Mistral, xAI, Meta AI, OpenRouter, Together AI, Alibaba, Cohere, Moonshot, Cerebras, Azure, Bedrock). Cerebras defaults CSF on; the others are opt-in. Modular and Sakana serve no CORS headers at all, NVIDIA's hosted endpoint allowlists `*.nvidia.com` origins only (CSF there requires a custom host), and Moonshot's Kimi Code subscription host 404s the preflight - all three are excluded in the vendor files. Bedrock answers CORS on its three hosts (control plane, runtime, Mantle) in every region tried, with an API key and with IAM keys signed in the browser; Mantle's preflight allows headers with `*`, which the Fetch standard does not extend to `Authorization`: Chrome and Firefox accept it, Safari is unchecked. Two more are server-only for a narrower reason: Perplexity sends CORS headers on the preflight and on its errors but not on a successful response, and Z.ai's chat endpoint answers the preflight without an allow-origin (its models endpoint still allows it). Local vendors (Ollama, LocalAI, LM Studio) require CORS enabled on the local server.
 
+New services stay opt-in: the author ruled out a Direct Connection default for them, and a staged rollout or telemetry toward one.
+
 The `csf-cors-checker` job (`tools/jobs/`) re-measures this against the live vendors: it runs the browser build of the direct code under the browser's cross-origin rules, per vendor and per subsystem (listing, chat, speech, transcription, images, files), and prints what differs from what the code offers. The Perplexity case is why it runs a completed chat and not only the preflight.
 
 ## Request headers on the CSF path
