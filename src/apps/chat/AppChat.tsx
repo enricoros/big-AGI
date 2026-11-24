@@ -276,10 +276,12 @@ export function AppChat() {
 
   const handleConversationNewInFocusedPane = React.useCallback((forceNoRecycle: boolean, isIncognito: boolean) => {
 
-    // create conversation (or recycle the existing top-of-stack empty conversation)
+    // create conversation (or recycle the newest non-incognito conversation, if empty)
+    // incognito chats are skipped: the new chat would not be saved, and an empty normal chat below them is reused, not duplicated
     // never recycle a chat shown in another pane: both panes would end up on the same chat
     const { conversations, prependNewConversation } = useChatStore.getState();
-    const recycleNewConversationId = (conversations.length && !conversations[0].messages.length) ? conversations[0].id : null;
+    const newestNonIncognito = conversations.find(c => !c._isIncognito);
+    const recycleNewConversationId = (newestNonIncognito && !newestNonIncognito.messages.length) ? newestNonIncognito.id : null;
     const recycleShownElsewhere = !!recycleNewConversationId && getOtherPanesConversationIds().includes(recycleNewConversationId);
     const conversationId = (recycleNewConversationId && !forceNoRecycle && !isIncognito && !recycleShownElsewhere)
       ? recycleNewConversationId
