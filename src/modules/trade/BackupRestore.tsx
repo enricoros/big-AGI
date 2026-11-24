@@ -268,12 +268,14 @@ function getIndexedDBContent(dbName: string): Promise<Record<string, { key: any;
 
 // --- Data Restore Functions ---
 
-async function restoreLocalStorage(data: Record<string, any>): Promise<void> {
+/** @returns the keys that could not be written, for the caller to report */
+async function restoreLocalStorage(data: Record<string, any>): Promise<string[]> {
+  const failures: string[] = [];
   try {
     // Skip restoration if backup contains no localStorage data
     if (!hasKeys(data)) {
       logger.info('Skipping localStorage restore - backup contains no localStorage data');
-      return;
+      return failures;
     }
 
     // everything goes, but what is no part of a backup: that stays as this device has it
@@ -292,14 +294,17 @@ async function restoreLocalStorage(data: Record<string, any>): Promise<void> {
         localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
       } catch (error) {
         logger.error(`Error restoring localStorage key "${key}":`, error);
+        failures.push(`setting "${key}": ${_getErrorText(error)}`);
       }
     }
   } catch (error) {
     throw new Error(`Failed to restore localStorage: ${_getErrorText(error)}`);
   }
+  return failures;
 }
 
-async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
+/** @returns the databases and stores that were not restored, for the caller to report */
+async function restoreIndexedDB(allDbData: Record<string, any>): Promise<string[]> {
   // expected local DBs to restore over, from the latest `main` (was: `v2-dev`, 2025-05-14)
   const dbTargetVersions: { [dbName: string]: number } = {
     'keyval-store': 1,
@@ -373,8 +378,10 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
             const existingStoreNames = Array.from(db.objectStoreNames);
             const storesToRestore = dbStoreNames.filter(name => existingStoreNames.includes(name));
 
-            if (storesToRestore.length < dbStoreNames.length)
+            if (storesToRestore.length < dbStoreNames.length) {
               logger.error(`No matching stores found in ${dbName}, expected '${dbStoreNames.join(', ')}' but found '${existingStoreNames.join(', ')}'`);
+              failures.push(`"${dbName}": expected stores '${dbStoreNames.join(', ')}' but found '${existingStoreNames.join(', ')}'`); // their items are not restored
+            }
             if (storesToRestore.length === 0) {
               db.close();
               resolve();
@@ -430,6 +437,12 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
                   // Add each item from the backup
                   items.forEach(item => {
                     try {
+                      // the backup's JSON turned the image assets' Dates into ISO strings: back to Date, as both fields are indexed and sorted as dates
+                      if (dbName === 'Big-AGI' && storeName === 'largeAssets' && item.value) {
+                        if (typeof item.value.createdAt === 'string') item.value.createdAt = new Date(item.value.createdAt);
+                        if (typeof item.value.updatedAt === 'string') item.value.updatedAt = new Date(item.value.updatedAt);
+                      }
+
                       // Handle possible cases:
                       // 1. Store with keyPath - add value directly
                       // 2. Store without keyPath - add value with explicit key
@@ -522,9 +535,8 @@ async function restoreIndexedDB(allDbData: Record<string, any>): Promise<void> {
     }
   }
 
-  // a failed database kept its old content (an aborted transaction rolls back): the caller must not report success
-  if (failures.length)
-    throw new Error(failures.join('; '));
+  // a failed database kept its old content (an aborted transaction rolls back)
+  return failures;
 }
 
 // --- Validation and Utility Functions ---
@@ -830,12 +842,13 @@ export function FlashRestore(props: {
       // }
 
       // 2. Restore data based on user selections
+      const failures: string[] = [];
       if (restoreLocalStorageEnabled) {
-        await restoreLocalStorage(backupDataForRestore.storage.localStorage);
+        failures.push(...await restoreLocalStorage(backupDataForRestore.storage.localStorage));
         logger.info('localStorage restore complete');
       }
       if (restoreIndexedDBEnabled) {
-        await restoreIndexedDB(backupDataForRestore.storage.indexedDB || {});
+        failures.push(...await restoreIndexedDB(backupDataForRestore.storage.indexedDB || {}));
         logger.info('indexedDB restore complete');
       }
 
@@ -847,14 +860,17 @@ export function FlashRestore(props: {
 
       // 3. Close the modal cleanly first to prevent React DOM errors during unmount
       // Set state to idle and clear backup data to trigger modal close
-      setRestoreState('success');
+      setRestoreState(failures.length ? 'error' : 'success');
 
       // 3. Alert and reload - Close modal first, then wait for storage flush and DOM cleanup
       setBackupDataForRestore(null);
 
       // 4. Wait for React to complete the modal unmount and storage to flush
+      // reload also after a partial restore: the stores hold the old data in memory, and would write it back over what was restored
       setTimeout(() => {
-        alert('Backup restored successfully.\n\nThe application will now reload to apply the changes.');
+        alert(failures.length
+          ? `The backup was restored in part. Not restored: ${failures.join('; ')}\n\nThe application will now reload with what was restored.`
+          : 'Backup restored successfully.\n\nThe application will now reload to apply the changes.');
         window.location.reload();
       }, WINDOW_RELOAD_DELAY); // 300ms allows modal to unmount and storage to flush
 
