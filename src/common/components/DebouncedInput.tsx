@@ -22,6 +22,7 @@ type DebounceInputProps = Omit<InputProps, 'onChange'> & {
    */
   retainFocus?: boolean;
   debounceTimeout: number;
+  /** a shorter value is reported as '', never skipped: a skip would leave the previous, longer value applied */
   minChars?: number;
   onDebounce: (value: string) => void;
 };
@@ -50,12 +51,8 @@ const DebouncedInput: React.FC<DebounceInputProps> = (props: DebounceInputProps)
       // reset the timer
       debounceTimerRef.current = undefined;
 
-      // Don't call onDebounce if the input value is too short
-      if (newValue && minChars && newValue?.length < minChars)
-        return;
-
-      // Call onDebounce with the new value
-      onDebounce(newValue);
+      // Call onDebounce with the new value (see minChars)
+      onDebounce(minChars && newValue.length < minChars ? '' : newValue);
 
       // Repair pass: if the synchronous bounce (onBlur below) missed the focus steal,
       // restore focus late - flickers the mobile keyboard, but never loses the input
