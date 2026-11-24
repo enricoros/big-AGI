@@ -21,7 +21,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { describe, it } from 'node:test';
 
 import type { RenderBlockInputs } from './blocks.types';
-import { parseBlocksFromText } from './blocks.textparser';
+import { parseBlocksFromText, replaceInBlockSource } from './blocks.textparser';
 
 
 type FenceExpectBlock =
@@ -385,10 +385,13 @@ function streamingViolation(c: FenceCase): string | null {
     const prefix = c.input.slice(0, n);
     const blocks = parseBlocksFromText(prefix);
     const at = `at prefix ${n}: ${JSON.stringify(prefix)}`;
-    // a code block's source span stays inside the text
-    for (const b of blocks)
-      if (b.bkt === 'code-bk' && !(b.sourceStart !== undefined && b.sourceEnd !== undefined && b.sourceStart < b.sourceEnd && b.sourceEnd <= n))
+    // a block's source span stays inside the text, and a markdown block's span is exactly its content
+    for (const b of blocks) {
+      if (!(b.sourceStart !== undefined && b.sourceEnd !== undefined && b.sourceStart < b.sourceEnd && b.sourceEnd <= n))
         return `span out of range ${at}`;
+      if (b.bkt === 'md-bk' && prefix.slice(b.sourceStart, b.sourceEnd) !== b.content)
+        return `markdown span is not its content ${at}`;
+    }
     // a block keeps its kind once a later block exists (the hook recycles ids on that assumption)
     if (!isDeepStrictEqual(kinds(blocks).slice(0, -1), finalKinds.slice(0, blocks.length - 1)))
       return `block kind changed ${at}`;
@@ -437,6 +440,38 @@ describe('parseBlocksFromText: fences', () => {
   it(`${gaps.length} known gaps still open`, () => {
     const closed = gaps.filter(c => isDeepStrictEqual(project(parseBlocksFromText(c.input)), c.expect));
     assert.equal(closed.length, 0, `${closed.length} gap(s) now pass; promote them by removing \`open\`:\n    ${closed.map(c => c.name).join('\n    ')}`);
+  });
+
+});
+
+
+// A block writes its edit back into the message text. Blocks repeat, so the edit must land in the span of the block
+// that made it: a search for the block's text across the whole message hits the first copy instead.
+describe('replaceInBlockSource: a block edits its own span', () => {
+
+  // reported 2026-11: the same task lines before a fence, inside it, and after it
+  const TASKS = 'Hi! How can I help you today?\n\n- [ ] good\n- [ ] good\n- [ ] good\n\n```\n- [ ] good\n- [ ] good\n- [ ] good\n```\n\n- [ ] good\n- [ ] good\n';
+
+  it('a toggle in the last task list changes that list, not the same lines above it or in the fence', () => {
+    const last = parseBlocksFromText(TASKS).at(-1);
+    assert.ok(last?.bkt === 'md-bk');
+    const toggled = last.content.replace(/- \[ \] good\n$/, '- [x] good\n'); // what the toggler hands back: its last line checked
+    assert.equal(
+      replaceInBlockSource(TASKS, last, last.content, toggled),
+      TASKS.slice(0, -'- [ ] good\n'.length) + '- [x] good\n',
+    );
+  });
+
+  it('an edit of a fenced block leaves the same text in the prose above it alone', () => {
+    const text = 'graph TD\n\n```mermaid\ngraph TD\n```\n';
+    const fenced = parseBlocksFromText(text)[1];
+    assert.equal(replaceInBlockSource(text, fenced, 'graph TD', 'graph LR'), 'graph TD\n\n```mermaid\ngraph LR\n```\n');
+  });
+
+  it('text the block does not hold edits nothing', () => {
+    const first = parseBlocksFromText(TASKS)[0];
+    assert.equal(replaceInBlockSource(TASKS, first, '- [x] good', '- [ ] good'), null);
+    assert.equal(replaceInBlockSource(TASKS, undefined, '- [ ] good', '- [x] good'), null);
   });
 
 });

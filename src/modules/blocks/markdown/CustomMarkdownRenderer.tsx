@@ -11,7 +11,7 @@ import { useUXLabsStore } from '~/common/stores/store-ux-labs';
 
 import type { RenderMarkdownRendererProps } from './RenderMarkdown';
 import { CustomARenderer } from './CustomARenderer';
-import { CustomInputRenderer, rehypeTaskListRenumber, useMarkdownTaskListToggler } from './CustomTaskListRenderer';
+import { CustomInputRenderer, rehypeTaskListSourceLines, useMarkdownTaskListToggler } from './CustomTaskListRenderer';
 import { CustomTableRenderer } from './CustomTableRenderer';
 import { remarkTableCellBreaks } from './tableBreaks.remark';
 import { remarkUserText } from './userText.remark';
@@ -130,7 +130,7 @@ export default function CustomMarkdownRenderer({ content, disablePreprocessor, u
   ], [singleDollarLatex, userTextFlavor]);
   const rehypePluginsStable: UnifiedPluggable[] = React.useMemo(() => [
     rehypeKatex, // KaTeX
-    ...(enableCustomTaskList ? [rehypeTaskListRenumber] : []), // supports numbering of checkboxes
+    ...(enableCustomTaskList ? [rehypeTaskListSourceLines] : []), // maps checkboxes to their source lines, for toggling
   ], [enableCustomTaskList]);
 
 

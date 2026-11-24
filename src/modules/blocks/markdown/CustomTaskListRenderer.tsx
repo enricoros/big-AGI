@@ -20,59 +20,50 @@ const _checkboxSlotProps = {
 
 
 /**
- * Visits the full tree and renumbers <input type="checkbox"> elements, if any
+ * Stamps each <input type="checkbox"> with the source line of its list item, the line the toggler rewrites.
+ * The parser decides what is a task (block quotes yes, code no), so the line comes from it, not from a second parse.
  */
-export function rehypeTaskListRenumber() {
+export function rehypeTaskListSourceLines() {
   return (tree: any) => {
     if (!tree || typeof tree !== 'object') return;
 
-    let checkboxIndex = 0;
-
-    function _traverseRehypeNode(node: any) {
+    // the checkbox element has no position of its own: it takes the line of its nearest positioned ancestor, the list item
+    function _traverseRehypeNode(node: any, line: number | undefined) {
       if (!node || typeof node !== 'object') return;
+      const nodeLine: number | undefined = node.position?.start?.line ?? line;
 
       if (node.tagName === 'input' && node.properties && node.properties.type === 'checkbox') {
-        // renumber the checkbox
-        node.properties['data-task-index'] = checkboxIndex++;
+        node.properties['data-task-line'] = nodeLine ?? -1;
 
         // remove the disabled property, which otherwise we get by now
         delete node.properties.disabled;
       }
 
       if (Array.isArray(node.children))
-        node.children.forEach(_traverseRehypeNode);
+        for (const child of node.children)
+          _traverseRehypeNode(child, nodeLine);
     }
 
     if (Array.isArray(tree.children))
-      tree.children.forEach(_traverseRehypeNode);
+      for (const child of tree.children)
+        _traverseRehypeNode(child, undefined);
   };
 }
 
 
 /**
- * Toggles the checkbox state of a task in a markdown content string
+ * Toggles the task checkbox on one line (1-based) of a markdown content string; a line without one is left alone.
+ * The lines are those the renderer parsed: the markdown preprocessor rewrites within lines only.
  */
-function _markdownToggleTaskByIndex(content: string, taskIndex: number, setChecked: boolean): string {
-  let currentTaskIndex = -1;
+function _markdownToggleTaskAtLine(content: string, line: number, setChecked: boolean): string {
   const lines = content.split('\n');
 
-  // This will match a bullet/numbered task list item in Markdown format
-  // Note: we decide not to support empty checkboxes, to be consistent with rendering
-  const taskListRegex = /^(\s*(?:[-*+]|\d+[.)])\s+\[)([ xX☑✓])(]\s+.+)$/;
+  // container markers only (block quotes, bullets, numbers), then the checkbox
+  const match = lines[line - 1]?.match(/^([\s>*+\d.)-]*\[)[ xX]]/);
+  if (!match) return content;
 
-  for (let i = 0; i < lines.length; i++) {
-    const match = lines[i].match(taskListRegex);
-    if (match) {
-      currentTaskIndex++;
-
-      if (currentTaskIndex === taskIndex) {
-        // Replace just the checkbox state character
-        lines[i] = match[1] + (setChecked ? 'x' : ' ') + match[3];
-        break;
-      }
-    }
-  }
-
+  // replace just the checkbox state character
+  lines[line - 1] = match[1] + (setChecked ? 'x' : ' ') + lines[line - 1].slice(match[1].length + 1);
   return lines.join('\n');
 }
 
@@ -94,16 +85,16 @@ export function useMarkdownTaskListToggler(content: string, replaceContent?: (cu
     const handleCheckboxChange = (e: Event) => {
       const target = e.target as HTMLElement;
 
-      // only work on checkboxes with task indices
+      // only work on checkboxes with task lines
       if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return;
 
-      // find the closest parent with the 'data-task-index' attribute
-      const taskIndex = parseInt(target.closest('[data-task-index]')?.getAttribute('data-task-index') ?? '-1');
-      if (taskIndex === -1) return;
+      // find the closest parent with the 'data-task-line' attribute
+      const taskLine = parseInt(target.closest('[data-task-line]')?.getAttribute('data-task-line') ?? '-1');
+      if (!(taskLine >= 1)) return;
 
       // toggle the checkbox in the markdown
       const isChecked = target.checked;
-      const newContent = _markdownToggleTaskByIndex(content, taskIndex, !isChecked);
+      const newContent = _markdownToggleTaskAtLine(content, taskLine, !isChecked);
 
       if (newContent !== content)
         replaceContent(content, newContent);
@@ -133,12 +124,12 @@ export function CustomInputRenderer({ node, children, ...props }: {
   if (!('type' in props) || props.type !== 'checkbox')
     return <input {...props} />;
 
-  // this is set by our rehype plugin, which renumbers at render time
-  const taskIndex = 'data-task-index' in props ? props['data-task-index'] ?? -1 : -1;
+  // this is set by our rehype plugin, at render time
+  const taskLine = 'data-task-line' in props ? props['data-task-line'] ?? -1 : -1;
 
   return (
     <Checkbox
-      data-task-index={taskIndex}
+      data-task-line={taskLine}
       size='sm'
       color='neutral'
       checked={'checked' in props && !!props.checked}

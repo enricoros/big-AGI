@@ -15,7 +15,7 @@ import { isTextChatCommand, RenderPlainText } from './plaintext/RenderPlainText'
 import { RenderWordsDiff, WordsDiff } from './wordsdiff/RenderWordsDiff';
 import { ToggleExpansionButton } from './ToggleExpansionButton';
 import { heuristicIsBlockPureHTML, RenderDangerousHtml } from './danger-html/RenderDangerousHtml';
-import { removeCodeBlockFromText } from './blocks.textparser';
+import { removeCodeBlockFromText, replaceInBlockSource } from './blocks.textparser';
 import { useAutoBlocksMemoSemiStable, useHeightCollapser } from './blocks.hooks';
 import { useScaledCodeSx, useScaledImageSx, useScaledTypographySx, useToggleExpansionButtonSx } from './blocks.styles';
 
@@ -124,17 +124,23 @@ export function AutoBlocksRenderer(props: {
   const curBlocksRef = React.useRef(autoBlocksStable);
   curBlocksRef.current = autoBlocksStable;
 
-  const handleReplaceCode = React.useCallback((search: string, replace: string): boolean => {
-    if (setText) {
-      const text = curTextRef.current;
-      const newText = text.replace(search, () => replace); // function replacer: the code may contain '$$', '$&' (replacement patterns)
-      if (newText !== text) {
-        setText(newText);
+  const setTextRef = React.useRef(setText);
+  setTextRef.current = setText;
+
+  // A block's edit goes to that block's own source span: one replacer per block index, created once so that
+  // memoized blocks keep the same callback while the text streams.
+  const blockReplacersRef = React.useRef<((search: string, replace: string) => boolean)[]>([]);
+  const replacerForBlock = (index: number) => {
+    const replacers = blockReplacersRef.current;
+    if (!replacers[index])
+      replacers[index] = (search, replace) => {
+        const newText = replaceInBlockSource(curTextRef.current, curBlocksRef.current[index], search, replace);
+        if (newText === null || !setTextRef.current) return false;
+        setTextRef.current(newText);
         return true;
-      }
-    }
-    return false;
-  }, [setText]);
+      };
+    return replacers[index];
+  };
 
   const handleDeleteContainingCodeBlock = React.useCallback((code: string, semiStableId: string | undefined) => {
     if (!setText || props.inFlux || !semiStableId) return;
@@ -188,7 +194,7 @@ export function AutoBlocksRenderer(props: {
                 userTextFlavor={userTextFlavor}
                 lite={lastBlockInFlux && decayActive}
                 onParseCost={lastBlockInFlux ? decayOnParseCost : undefined}
-                replaceContent={!setText ? undefined : handleReplaceCode}
+                replaceContent={!setText ? undefined : replacerForBlock(index)}
                 sx={scaledTypographySx}
               />
             );
@@ -221,7 +227,7 @@ export function AutoBlocksRenderer(props: {
                 optimizeLightweight={lastBlockInFlux}
                 onDeleteContainingCodeBlock={!setText || props.inFlux || bkInput.isPartial || bkInput.sourceStart === undefined ? undefined : handleDeleteContainingCodeBlock}
                 onReattachAsFile={props.onReattachAsFile}
-                onReplaceInCode={!setText ? undefined : handleReplaceCode}
+                onReplaceInCode={!setText ? undefined : replacerForBlock(index)}
                 codeSx={scaledCodeSx}
               />
             ) : (
@@ -234,7 +240,7 @@ export function AutoBlocksRenderer(props: {
                 noCopyButton={props.blocksProcessor === 'diagram'}
                 optimizeLightweight={lastBlockInFlux}
                 onReattachAsFile={props.onReattachAsFile}
-                onReplaceInCode={!setText ? undefined : handleReplaceCode}
+                onReplaceInCode={!setText ? undefined : replacerForBlock(index)}
                 sx={scaledCodeSx}
               />
             );

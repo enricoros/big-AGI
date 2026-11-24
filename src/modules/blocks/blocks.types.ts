@@ -7,7 +7,9 @@ export type RenderBlockInputs = BlockInput[];
 // In order of priority from the most frequent to the least
 type BlockInput = {
   bkId?: string;
-  /* Other fields remain the same */
+  /** Exact span in the source text, only on the blocks the parser cut out of it; absent when the block is the whole text. */
+  sourceStart?: number;
+  sourceEnd?: number;
 } & ({
   /* Rendered as markdown or plain text */
   bkt: 'md-bk';
@@ -20,9 +22,6 @@ type BlockInput = {
   code: string;
   lines: number;
   isPartial: boolean;
-  /** Exact source span, only present on parsed blocks. */
-  sourceStart?: number;
-  sourceEnd?: number;
 } | {
   /* Rendered as HTML (dangerous) */
   bkt: 'dang-html-bk';

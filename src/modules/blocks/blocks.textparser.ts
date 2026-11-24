@@ -76,7 +76,7 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
 
     // anything leftover before the match is text
     if (match.index > lastIndex)
-      blocks.push({ bkt: 'md-bk', content: text.slice(lastIndex, match.index) });
+      blocks.push({ bkt: 'md-bk', sourceStart: lastIndex, sourceEnd: match.index, content: text.slice(lastIndex, match.index) });
 
     // add the block
     switch (matchType) {
@@ -109,9 +109,24 @@ export function parseBlocksFromText(text: string): RenderBlockInputs {
 
   // remainder is text
   if (lastIndex < text.length)
-    blocks.push({ bkt: 'md-bk', content: text.slice(lastIndex) });
+    blocks.push({ bkt: 'md-bk', sourceStart: lastIndex, sourceEnd: text.length, content: text.slice(lastIndex) });
 
   return blocks;
+}
+
+
+/**
+ * Applies an edit made by one block (its `search` text replaced once) inside that block's own source span.
+ * The same text in another block is never the one rewritten: blocks repeat (two task lists around a code block,
+ * a diagram quoted in the prose above it). Null when the span does not hold the text, so stale input edits nothing.
+ */
+export function replaceInBlockSource(fullText: string, block: RenderBlockInputs[number] | undefined, search: string, replace: string): string | null {
+  if (!block) return null;
+  const start = block.sourceStart ?? 0;
+  const end = block.sourceEnd ?? fullText.length;
+  const source = fullText.slice(start, end);
+  const newSource = source.replace(search, () => replace); // function replacer: the text may contain '$$', '$&' (replacement patterns)
+  return newSource === source ? null : fullText.slice(0, start) + newSource + fullText.slice(end);
 }
 
 
