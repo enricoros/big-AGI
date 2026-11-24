@@ -8,11 +8,13 @@ import type { DBlobAssetId } from '~/common/stores/blob/dblobs-portability';
 import type { DConversationId } from '~/common/stores/chat/chat.conversation';
 import { ChatActions, getConversationSystemPurposeId, isValidConversation, useChatStore } from '~/common/stores/chat/store-chats';
 import { createDMessageFromFragments, createDMessagePlaceholderIncomplete, createDMessageTextContent, DMessage, DMessageGenerator, DMessageId, DMessageUserFlag, MESSAGE_FLAG_VND_ANT_CACHE_AUTO, MESSAGE_FLAG_VND_ANT_CACHE_USER, messageHasUserFlag, messageSetUserFlag } from '~/common/stores/chat/chat.message';
-import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
+import { createTextContentFragment, DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
 import { collectFragmentAssetIds, gcChatImageAssets } from '~/common/stores/chat/chat.gc';
 import { getChatLLMId } from '~/common/stores/llms/store-llms';
+import { historyApply_systemInstruction } from '~/common/stores/chat/apply/history.apply.system-instruction';
 
 import { getChatAutoAI, getChatThinkingPolicy } from '../../apps/chat/store-app-chat';
+import { SystemPurposes } from '../../data';
 
 import { createDEphemeral, EPHEMERALS_DEFAULT_TIMEOUT } from './store-perchat-ephemerals_slice';
 import { createPerChatVanillaStore, PerChatOverlayStore } from './store-perchat_vanilla';
@@ -227,6 +229,17 @@ export class ConversationHandler {
     return _chatStoreActions.historyStripThinking(this.conversationId, keepCount);
   }
 
+  /** The history with the persona's instruction as its system message, as a send now renders it. Stores nothing. */
+  historyWithPersonaInstruction(history: Readonly<DMessage[]>): Readonly<DMessage[]> {
+    const purposeId = getConversationSystemPurposeId(this.conversationId);
+    const purposeInstruction = purposeId ? SystemPurposes[purposeId]?.systemMessage : undefined;
+    return !purposeId || !purposeInstruction ? history
+      : historyApply_systemInstruction(history, [createTextContentFragment(purposeInstruction)], {
+        freeze: purposeId === 'Custom', // typed by the user: its first render is kept, as an edit would be
+        stamp: systemMessage => { systemMessage.purposeId = purposeId; },
+      }).nextHistory as Readonly<DMessage[]>; // callers copy the array before they change it, and no message is written to
+  }
+
   title(): string | undefined {
     return _chatStoreActions.title(this.conversationId);
   }
@@ -276,7 +289,8 @@ export class ConversationHandler {
         void autoConversationTitle(this.conversationId, false);
     };
 
-    beamOpen(viewHistory, getChatLLMId(), !!destReplaceMessageId, onBeamSuccess);
+    // the rays share the instruction as rendered at open: a Beam opened after a pause takes a new date, a restart keeps it
+    beamOpen(this.historyWithPersonaInstruction(viewHistory), getChatLLMId(), !!destReplaceMessageId, onBeamSuccess);
     importMessages.length && beamImportRays(importMessages, getChatLLMId());
   }
 

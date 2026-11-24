@@ -7,9 +7,6 @@ import { ConversationsManager } from '~/common/chat-overlay/ConversationsManager
 import { createTextContentFragment, isContentOrAttachmentFragment, isImagePart } from '~/common/stores/chat/chat.fragments';
 import { findFirstUserPromptFragment } from '~/common/stores/chat/chat.fragment-order';
 import { getConversationSystemPurposeId } from '~/common/stores/chat/store-chats';
-import { historyApply_systemInstruction } from '~/common/stores/chat/apply/history.apply.system-instruction';
-
-import { SystemPurposes } from '../../../data';
 
 import type { ChatExecuteMode } from '../execute-mode/execute-mode.types';
 import { textToDrawCommand } from '../commands/CommandsDraw';
@@ -34,14 +31,7 @@ export async function _handleExecute(chatExecuteMode: ChatExecuteMode, conversat
   // NOTE: this does NOT call setMessages anymore (optimization). make sure to:
   //       1. all the callers need to pass a new array
   //       2. all the exit points need to call setMessages
-  const purposeId = getConversationSystemPurposeId(conversationId);
-  const purposeInstruction = purposeId ? SystemPurposes[purposeId]?.systemMessage : undefined;
-  const historyWithInstruction = !purposeId || !purposeInstruction ? initialHistory
-    : historyApply_systemInstruction(initialHistory, [createTextContentFragment(purposeInstruction)], {
-      freeze: purposeId === 'Custom', // typed by the user: its first render is kept, as an edit would be
-      stamp: systemMessage => { systemMessage.purposeId = purposeId; },
-    }).nextHistory;
-  const _inplaceEditableHistory = [...historyWithInstruction] as DMessage[]; // new array: the caching step below replaces messages in it
+  const _inplaceEditableHistory = [...cHandler.historyWithPersonaInstruction(initialHistory)]; // new array: the caching step below replaces messages in it
 
   // Support for Prompt Caching - it's here rather than upstream to apply to user-initiated workflows
   ConversationHandler.inlineUpdateAutoPromptCaching(_inplaceEditableHistory);

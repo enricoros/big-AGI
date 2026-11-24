@@ -244,7 +244,7 @@ export function ChatMessageList(props: {
     const inputHistory = conversationHandler.historyViewHeadOrThrow('chat-beam-message');
     if (!inputHistory.length) return;
 
-    // TODO: replace the Persona and Auto-Cache-hint in the history?
+    // TODO: replace the Auto-Cache-hint in the history?
 
     // truncate the history to the given message (may or may not have more after)
     const truncatedHistory = inputHistory.slice(0, inputHistory.findIndex(m => m.id === messageId) + 1);

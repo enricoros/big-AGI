@@ -243,7 +243,7 @@ export function AppChat() {
     const inputHistory = cHandler.historyViewHeadOrThrow('chat-beam-shortcut');
     if (!inputHistory.length) return;
 
-    // TODO: replace the Persona and Auto-Cache-hint in the history?
+    // TODO: replace the Auto-Cache-hint in the history?
 
     // replace the prompt in history
     const lastMessage = inputHistory[inputHistory.length - 1];
