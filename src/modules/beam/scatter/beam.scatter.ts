@@ -152,8 +152,12 @@ export function rayIsSelectable(ray: BRay | null): boolean {
 }
 
 export function rayHasMergeableContent(ray: BRay | null): boolean {
-  // a reply with something to merge: a content fragment that is not an error and not blank text; a void placeholder is not content
-  return !!ray?.message.fragments.some(f => isContentFragment(f) && !isErrorPart(f.part) && !(f.part.pt === 'text' && !f.part.text.trim()));
+  return fragmentsHaveMergeableContent(ray?.message.fragments);
+}
+
+/** A reply with something to merge, copy or use: a content fragment that is not an error and not blank text; a void placeholder is not content. */
+export function fragmentsHaveMergeableContent(fragments: DMessageFragment[] | undefined): boolean {
+  return !!fragments?.some(f => isContentFragment(f) && !isErrorPart(f.part) && !(f.part.pt === 'text' && !f.part.text.trim()));
 }
 
 export function rayIsMessageErrorOnly(ray: BRay | null): boolean {

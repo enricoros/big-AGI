@@ -31,6 +31,7 @@ import { GATHER_COLOR } from '../beam.config';
 import { findFusionFactory, fusionCardTitle } from './instructions/beam.gather.factories';
 import { fusionIsEditable, fusionIsError, fusionIsFusing, fusionIsIdle, fusionIsStopped, fusionIsUsableOutput, fusionIsWaiting } from './beam.gather';
 import { beamStoreGatherInputsNextCount } from './beam.gather.inputs';
+import { fragmentsHaveMergeableContent } from '../scatter/beam.scatter';
 import { useBeamCardScrolling } from '../store-module-beam';
 import { useMessageAvatarLabel } from '~/common/util/dMessageUtils';
 
@@ -57,7 +58,7 @@ export function Fusion(props: {
   const isWaiting = fusionIsWaiting(fusion);
   const isStopped = fusionIsStopped(fusion);
   const isUsable = fusionIsUsableOutput(fusion);
-  const showUseButtons = isUsable && !isFusing;
+  const showUseButtons = !isFusing && fragmentsHaveMergeableContent(fusion?.outputDMessage?.fragments); // nothing to copy or use in an empty, placeholder-only or error-only merge
   const { tooltip: fusionAvatarTooltip } = useMessageAvatarLabel(fusion?.outputDMessage, 'pro');
   const issueColor = isError ? 'danger' : beamStatusColor(fusion?.stage ?? 'idle'); // errorText outside the stage still reads as danger
 
