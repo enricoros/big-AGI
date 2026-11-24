@@ -1,0 +1,71 @@
+{
+  "note": "The reasoning of the first reply was made under another system prompt, in a request that is not saved: the vendor ignores it here (input_transformations), and again on the request that continues the paused turn.",
+  "betas": [
+    "thinking-binding-controls-2026-08-01"
+  ],
+  "body": {
+    "max_tokens": 8000,
+    "model": "claude-haiku-5-5",
+    "system": [
+      {
+        "type": "text",
+        "text": "You are a helpful assistant."
+      }
+    ],
+    "messages": [
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Why is the sky blue? Think it through first, then answer in one sentence."
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "The user wants a one-sentence explanation of why the sky is blue, so I'll keep the answer to a single sentence: sunlight holds every color, and air molecules scatter the shorter blue wavelengths far more than the longer ones, which is why blue reaches our eyes from all over the sky.\n\n",
+            "signature": "CAQS1gcKEAgUGAI4AUIIdGhpbmtpbmcSDFcF/zmwuxU0quaemhoMT6R1puS0LP69hqUWIjB/RJfCYife2D95d2tkSLKgxmOYnftxcfcPti1dm4jGAUAcKeep2DZy8jb8wFPYAx8q8wZoxI5RCsl48JlwPN3mi265vBE3FC0ilQYETMRZZWL8ynjaUP8gtqyEgszOHv2fxnNMruPbcYwDB2/Nxy3Xdr+F7Kr6SK0bHOICZZZMFnk8qtbi3zzk79Jb8Mb4qzpcLZbXj2pkavohH7+d5xt9hUwEhUhYjufMhnjk74wJjs7kVibnS98q+rlgFAgt8IJ4oIEKm9CjT/VAfuZFLMFRZgFzVdWfx8NWL20MzJs7o6HljdPJouVyl1yHk6xkNAituKjCRBnrIbzOehoLGhgXX6yjSrs+VZmJKBEEowxtWDEwaVQj6UzKjIlZuxfeixufsiG+YCyUsiv6jPy01D6EC74Z/E6Y9hlVLRujbuxYIJFpFzyfMElP4ccO97FYd2vDlrSkwGC/I6JI4ZaAHgHkQrpj341NYXI3I3fekT3jYixO5c3rnhN9duy7oEtTwAQ6/tz7D2CPte3ggmumPprApBn3PbkGK9CFSnOKpbrTM4vVvWv2mBu3A4E9AH1DqANKrmX06ilxg5UazKn4Hjj9YYgIwehJNOUMHXsZUuncbufu0xAOP39Fhno0a6mP0ace4q3HHVlmyZXffm0n7+Jy15i+tDrQrWXK3K6zDAQiemZDe66pXsZv/BgwVjXUFK15vLro1MbEpwnvat8igWLyJHfnKAHFunQdSQb2hIRqudaexbe4NhXyxA/ysoLLX+lEKJP9qI8Lt6ymS+BbzitTsmTyNRfrezAH91dELRV9Pk27oaLgwmhd+KJquO2yfk5SS08Myy6NrEuTiZWRwQ80R6EBxgzj22Beboyt1dfz7+EhwFshV9pX9Zb6QEsxgy9AwM7aevqbxvCcRKBXlSI+Dna/eWIRPGFTqAWW1JdiWoXbO0BOWWC6a2NFaxZ+tCR73GYTcenzxe1qFGOr4I402E9iWPiwXj2Bu++INyRR30Z40upLzI9qSJHiqSJNy/ILZ5dE0Y/J00vGQJlhEPRODbSom+jbAFfbf+wG5tk6VUBUlkVdqRjOJUt8HmeZMh2AVQirl25zZ/K9qY+1L0M45jF/g6koTIqZbETg9qeV6xnzaSwexJ9Ek8L4EVVCIAjoTo188ZEFs6vCOe1J9d1jSIG976nN16shEqbZR5DzXlihyUlmndbRrnPEYtcHfL5T7v6AjODnoUsTKT+6MHe/Tc2wc0rYGAE="
+          },
+          {
+            "type": "text",
+            "text": "The sky looks blue because air molecules scatter short-wavelength blue light from sunlight far more strongly than longer-wavelength red light (Rayleigh scattering), sending that blue light toward our eyes from all directions overhead."
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": "Before starting, think briefly about the plan. Then call the web_fetch tool 13 separate times, one call per URL, in this order, waiting for each result before the next call: https://example.com/?n=1 , https://example.com/?n=2 , https://example.com/?n=3 , https://example.com/?n=4 , https://example.com/?n=5 , https://example.com/?n=6 , https://example.com/?n=7 , https://example.com/?n=8 , https://example.com/?n=9 , https://example.com/?n=10 , https://example.com/?n=11 , https://example.com/?n=12 , https://example.com/?n=13. Never combine calls. After the last one, reply DONE."
+          }
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "name": "web_fetch",
+        "type": "web_fetch_20250910",
+        "citations": {
+          "enabled": true
+        },
+        "max_uses": 50
+      }
+    ],
+    "cache_control": {
+      "type": "ephemeral"
+    },
+    "stream": true,
+    "thinking": {
+      "type": "adaptive",
+      "display": "summarized",
+      "block_binding": {
+        "prefix_mismatch_behavior": "drop_block"
+      }
+    }
+  }
+}

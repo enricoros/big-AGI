@@ -140,6 +140,9 @@ export async function* executeChatGenerateWithContinuation(
   let metricsBase: AixWire_Particles.CGSelectMetrics | undefined = undefined;
   let metricsTurn: AixWire_Particles.CGSelectMetrics | undefined = undefined;
 
+  // Dropped reasoning: the wire paths the first request reports as dropped. Those blocks are in the chat history
+  const historyDrops = new Set<string>();
+
   for (let turn = 0; turn <= MAX_CONTINUATION_TURNS; turn++) {
     try {
 
@@ -151,10 +154,15 @@ export async function* executeChatGenerateWithContinuation(
             continue;
           }
         }
-        // A dropped-reasoning notice on a continuation turn means the paused turn we sent back was not accepted
-        // as unchanged: the one case this loop must never produce. Mark it so the client renders a warning
+        if (!metricsBase && 'p' in particle && particle.p === 'vnt' && particle.nt === 'input-transform')
+          particle.paths.forEach(path => historyDrops.add(path));
+        // The vendor checks the whole request again on every continuation turn, so each one reports the chat history's
+        // drops again: the client was told on the first request, skip (#1304). Any other dropped-reasoning notice on a
+        // continuation turn means the request was not accepted as unchanged, in the paused turn we sent back or in the
+        // chat rebuilt before it: the one case this loop must never produce. Mark it so the client renders a warning
         // instead of the harmless informational chip, with copy asking for a report.
         if (metricsBase && 'p' in particle && particle.p === 'vnt' && particle.nt === 'input-transform') {
+          if (particle.paths.every(path => historyDrops.has(path))) continue;
           const indices = particle.detail?.split('\n').pop();
           yield {
             ...particle,

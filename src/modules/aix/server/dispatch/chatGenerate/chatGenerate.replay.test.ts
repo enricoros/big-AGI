@@ -793,6 +793,28 @@ describe('Anthropic Messages', () => {
       assert.deepEqual(shown.map(notice => `${'cause' in notice ? notice.cause : ''}: ${notice.text}`), notices);
     });
 
+  // A paused turn is sent back with the chat before it, and the vendor checks all of it again: the response that continues the
+  // turn lists the blocks the first response listed, and the user was told of those (#1304). A block it adds was ignored because
+  // something before it changed between the two requests (in the edited capture, a word added to the user message before the
+  // paused turn): that is a warning
+  const DROPS_PAUSED = 'anthropic/haiku-5.5_pause-turn-thinking-dropped';
+  for (const [continuation, adds, what] of [
+    [`${DROPS_PAUSED}_2-continuation.sse`, 0, 'listed again when a paused turn continues: told once'],
+    [`${DROPS_PAUSED}_continuation-edited.sse`, 1, 'one of the paused turn too, after an edit to the chat before it: a warning'],
+  ] as const)
+    test(`ignored thinking blocks: ${what}`, { skip: missing(`${DROPS_PAUSED}_1-initial.sse`, `${DROPS_PAUSED}_1-initial.req.json`, continuation) }, async () => {
+      const listed = (file: string): string[] => sseData(capture(file)).find(event => event.type === 'message_start').message.input_transformations.map((dropped: any) => dropped.path);
+      const first = listed(`${DROPS_PAUSED}_1-initial.sse`), added = listed(continuation).filter(path => !first.includes(path));
+      assert.equal(added.length, adds, 'the capture: blocks the continuation lists and the first response did not');
+      const { particles } = await replay([capture(`${DROPS_PAUSED}_1-initial.sse`), capture(continuation)], true, createAnthropicMessageParser, JSON.parse(capture(`${DROPS_PAUSED}_1-initial.req.json`)).body);
+
+      const shown = particles.filter(isPart('vnt')).filter((notice): notice is Extract<typeof notice, { nt: 'input-transform' }> => notice.nt === 'input-transform');
+      assert.deepEqual(shown.map(notice => notice.level), added.length ? [undefined, 'warn'] : [undefined]);
+      assert.deepEqual(shown[0].paths, first);
+      for (const path of added)
+        assert.ok(shown[1].paths.includes(path), `the warning does not name ${path}`);
+    });
+
   // Searches and fetches come from the usage block; code runs have no counter and are counted from the calls on the wire
   hostedToolCounts([
     ['anthropic/fable-5.1_dynamic-web-filtering.sse', { nWebSearch: 3, nWebFetch: 3, nCodeExec: 8 }, 'dynamic filtering: 8 code calls drive 3 searches and 3 fetches'],
