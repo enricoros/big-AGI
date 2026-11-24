@@ -121,6 +121,9 @@ export class ProcessingQueue<TItem> extends EventTarget {
           this.dispatchEvent(new QueueUpdatedEvent(this.getQueueState()));
           this.processQueue();
         });
+
+      // re-arm: enqueues and completions that landed while this timer was pending returned early, so start the next item now if a slot is free
+      this.processQueue();
     }, delay);
   }
 
