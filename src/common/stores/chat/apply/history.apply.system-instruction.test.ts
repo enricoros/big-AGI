@@ -44,10 +44,16 @@ const attached = { mapAttachment: (fragment: Immutable<DMessageAttachmentFragmen
 describe('the system instruction of a chat', () => {
 
   // The system message is the prefix of every request of a chat: while the chat is active its text must not move, or
-  // every vendor's prompt cache misses. It takes a new date only with the user message that follows an idle hour.
-  it('keeps its date while the chat is active, and takes a new one after an idle hour', () => {
+  // every vendor's prompt cache misses. It takes a new date with the first send after an idle hour: a new message, or a
+  // regenerate, which adds no message before it renders.
+  it('keeps its date while the chat is active, and takes a new one after an idle hour', (t) => {
     const dated = instruction('You are a helper.\nToday is {{Today}}, {{LocaleNow}}.');
-    const send = (history: Immutable<DMessage[]>) => historyApply_systemInstruction(history, dated);
+    // a send renders when its last message was created, or at the instant it is given
+    t.mock.timers.enable({ apis: ['Date'] });
+    const send = (history: Immutable<DMessage[]>, at = history[history.length - 1].created) => {
+      t.mock.timers.setTime(at);
+      return historyApply_systemInstruction(history, dated);
+    };
 
     // the first send dates it: the day and the hour of the message that started the chat
     let history = send([user('hi', NOON)]).nextHistory;
@@ -64,15 +70,20 @@ describe('the system instruction of a chat', () => {
       assert.equal(history[0], first);
     }
 
+    // a regenerate half an hour after the last message: no pause, the date stays
+    assert.equal(send(history, last + 30 * MINUTE).systemMessage, first);
+
     // a reply that takes 50 minutes, answered 15 minutes after it ended: the prefix was in use 15 minutes ago
     history = send([...history, reply('long', last + MINUTE, last + 51 * MINUTE), user('and?', last + 66 * MINUTE)]).nextHistory;
     assert.equal(history[0], first);
 
-    // the reply to it is regenerated the next afternoon, and a message follows two minutes later: that reply answers
-    // a request that carried the old date, so the date stays until a user message follows a pause
+    // the reply to it is regenerated the next afternoon: a send after a pause, dated then, as a new message would be.
+    // The new reply, created as its request starts, keeps that date for the message two minutes later
     const nextDay = new Date(2001, 2, 5, 15, 46).getTime();
-    history = send([...history, reply('again', nextDay), user('thanks', nextDay + 2 * MINUTE)]).nextHistory;
-    assert.equal(history[0], first);
+    const regenerated = send(history, nextDay);
+    assert.match(textOf(regenerated.systemMessage)!, /^You are a helper\.\nToday is 2001-03-05, Mon, Mar 5, 2001, 03\sPM \S+\.$/);
+    history = send([...regenerated.nextHistory, reply('again', nextDay + 5), user('thanks', nextDay + 2 * MINUTE)]).nextHistory;
+    assert.equal(history[0], regenerated.systemMessage);
 
     // 61 minutes later, a user message: an idle hour passed, so the date is that message's. It is the same message
     // and the same text fragment, edited: ids stay

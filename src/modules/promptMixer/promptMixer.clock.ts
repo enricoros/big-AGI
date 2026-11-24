@@ -16,32 +16,39 @@ import type { Immutable } from '~/common/types/immutable.types';
 /** When the date in a chat's system instruction may change. */
 type PromptMixerChatClockPolicy =
   | { roll: 'never' }                         // the date of the chat's first message, for good
-  | { roll: 'after-idle', idleMs: number };   // the date of the first user message sent at least idleMs after the chat was last active
+  | { roll: 'after-idle', idleMs: number }    // the date of the first message or send at least idleMs after the chat was last active
+  | { roll: 'always' };                       // the date of each send: the prefix changes whenever the hour does
 
 export const PROMPT_MIXER_CHAT_CLOCK: PromptMixerChatClockPolicy = { roll: 'after-idle', idleMs: 3_601_000 }; // an hour, and a second past it
 
 
 /**
- * The `created` of the message that starts the current stretch of activity: the chat's first message, then each user
- * message that follows a pause. A pure function of stored timestamps: as a chat grows, every send in the same stretch
- * renders the same date, on any device in the same time zone, and a regenerate or a branch renders the date its
- * messages had. Deleting the latest messages can move it: the pause is then counted from what is left. Null when the
- * chat has no message yet.
+ * The instant the date variables of a chat render for a send at `now`, under a policy.
+ *
+ * With 'after-idle' it is when the current stretch of activity started: the chat's first message, then each message
+ * that follows a pause, and the send itself when it follows one. A send leaves its instant in the message it creates
+ * (the user message it sends, or the reply a regenerate creates as its request starts), so every later send of the
+ * stretch derives the same date from stored timestamps, on any device in the same time zone.
  *
  * - The chat was last active at the latest of its messages' creation times and reply end times: a long generation is
  *   not a pause, and neither is a message whose device clock is behind.
- * - Only a user message starts a stretch. A reply answers a request that was already rendered: if a reply regenerated
- *   after a pause moved the clock, the next send would change the prefix of a request made minutes ago. So a stretch
- *   that begins with a regenerate keeps the earlier date, until a user message follows a pause.
+ * - A regenerate after a pause is a send like a new message, with no warm cache to keep, so a reply can start a
+ *   stretch too. It is created a few milliseconds after the render: an hour turning in between moves the date once.
+ * - Only stored messages are seen, so activity that left none reads as a pause: the messages a send deletes first (a
+ *   regenerate, a restart from an earlier message) and a Beam's rays until a reply is accepted. The date then moves
+ *   once, also in a chat active a minute ago, at one cache miss.
  */
-export function promptMixerClock_chatUserMessageAnchor(messages: Immutable<DMessage[]>, policy: PromptMixerChatClockPolicy): number | null {
+export function promptMixerClock_chatInstant(messages: Immutable<DMessage[]>, now: number, policy: PromptMixerChatClockPolicy): number {
+  if (policy.roll === 'always') return now;
+  const idleMs = policy.roll === 'after-idle' ? policy.idleMs : Infinity; // 'never': no pause is long enough
   let anchor: number | null = null;
   let lastActive = 0;
   for (const { role, created, generator } of messages) {
     if (role === 'system' || !created) continue; // the system message is created at the first send, after the message that caused it
-    if (anchor === null || (role === 'user' && policy.roll === 'after-idle' && created - lastActive >= policy.idleMs))
+    if (anchor === null || created - lastActive >= idleMs)
       anchor = created;
     lastActive = Math.max(lastActive, created, generator?.endedAt ?? 0);
   }
-  return anchor;
+  // now: no message yet, or a send after a pause that adds none before it renders (a regenerate)
+  return anchor === null || now - lastActive >= idleMs ? now : anchor;
 }

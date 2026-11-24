@@ -10,7 +10,7 @@ import type { Immutable } from '~/common/types/immutable.types';
 import { Is } from '~/common/util/pwaUtils';
 
 import { PromptMixerContext, PromptMixerVariables } from './promptMixer.variables';
-import { PROMPT_MIXER_CHAT_CLOCK, promptMixerClock_chatUserMessageAnchor } from './promptMixer.clock';
+import { PROMPT_MIXER_CHAT_CLOCK, promptMixerClock_chatInstant } from './promptMixer.clock';
 
 
 function _render(template: string, context: PromptMixerContext): string {
@@ -51,7 +51,7 @@ export const promptMixer = {
      * @param messages the chat the instruction is for
      */
     mixInstruction: (template: string, messages: Immutable<DMessage[]>): string => _render(template, {
-      clock: promptMixerClock_chatUserMessageAnchor(messages, PROMPT_MIXER_CHAT_CLOCK) ?? Date.now(), // a chat with no message yet: now
+      clock: promptMixerClock_chatInstant(messages, Date.now(), PROMPT_MIXER_CHAT_CLOCK),
       deviceIsDesktop: Is.Desktop,
     }),
   },
