@@ -15,6 +15,7 @@ import { useChatStore } from '~/common/stores/chat/store-chats';
 
 import type { TradeAdapter } from './trade.types';
 import { tradeChatsAdapter } from './adapters/trade.chats';
+import { tradeFileName } from './trade.files';
 import { tradeFoldersAdapter } from './adapters/trade.folders';
 import { tradeLegacyServicesAdapter } from './adapters/trade.services';
 import { tradeSettingsAdapters } from './adapters/trade.settings';
@@ -65,7 +66,7 @@ export function tradeAdapters(): TradeAdapter[] {
 export async function downloadSingleChat(conversation: DConversation, format: 'json' | 'markdown') {
 
   let blob: Blob;
-  let extension: string;
+  let extension: '.json' | '.md';
 
   if (format == 'json') {
 
@@ -90,7 +91,7 @@ export async function downloadSingleChat(conversation: DConversation, format: 'j
 
   // save file - let errors (including AbortError on cancel) reach the caller, so the UI never fakes success
   await fileSave(blob, {
-    fileName: `conversation_${fileTitle}_${prettyTimestampForFilenames(false)}.agi${extension}`,
+    fileName: tradeFileName(`conversation_${fileTitle}_${prettyTimestampForFilenames(false)}`, extension),
     extensions: [extension],
   });
 }

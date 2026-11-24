@@ -31,11 +31,18 @@ export interface TradeNote {
 }
 
 
+// A file is one string when it is written and when it is read, and an engine caps a string (Chrome near 512 MB).
+// Past this size a file is refused by name, on both sides: what is saved can be read back in any browser.
+const FILE_MAX_BYTES = 500 * 1024 * 1024;
+const FILE_TOO_LARGE = 'Too large for one file (over 500 MB)';
+
+
 /// READ ///
 
 export async function tradeFilesPick(): Promise<File[] | null> {
   try {
-    return await fileOpen({ description: `${BaseProduct.ProductName} files`, mimeTypes: ['application/json', 'application/big-agi'], multiple: true });
+    // '.agi': what a save dialog made of the earlier '<name>.agi.json' where it hides the known '.json'
+    return await fileOpen({ description: `${BaseProduct.ProductName} files`, mimeTypes: ['application/json', 'application/big-agi'], extensions: ['.json', '.agi'], multiple: true });
   } catch {
     return null; // the user closed the dialog
   }
@@ -45,6 +52,10 @@ export async function tradeFilesRead(files: File[]): Promise<TradeSource[]> {
   const sources: TradeSource[] = [];
   for (const file of files) {
     const fileName = file.name || 'unknown file';
+    if (file.size > FILE_MAX_BYTES) {
+      sources.push({ fileName, sections: [], notes: [], error: FILE_TOO_LARGE });
+      continue;
+    }
     let json: unknown;
     try {
       json = JSON.parse(await file.text());
@@ -205,7 +216,17 @@ function _parseIfString(value: unknown): any {
 /// WRITE ///
 
 /**
+ * The name of a file this app writes: '<base>_agi<extension>', with one extension only. A save dialog
+ * that hides the known one (Windows) shows a compound '<base>.agi.json' as '<base>.agi', and saves
+ * that where '.agi' is a type the system knows.
+ */
+export function tradeFileName(base: string, extension: '.json' | '.md'): string {
+  return `${base}_agi${extension}`;
+}
+
+/**
  * @throws {DOMException} AbortError if the user closes the save dialog
+ * @throws {Error} if the export is too large to be one file
  */
 export async function tradeFileSave(sections: TradeSection[]): Promise<{ fileName: string, sizeBytes: number }> {
   const file: TradeFile = {
@@ -218,9 +239,16 @@ export async function tradeFileSave(sections: TradeSection[]): Promise<{ fileNam
     },
     sections,
   };
-  const blob = new Blob([JSON.stringify(file)], { type: 'application/json' });
-  const fileName = `Big-AGI-${capitalizeFirstLetter(Release.TenantSlug)}-export-${prettyTimestampForFilenames(false)}.agi.json`;
-  // only '.json': Chrome's file picker rejects the compound '.agi.json' as an extension; the file name carries it
+  // past its own limit an engine refuses to make the string, before any size can be measured
+  let blob: Blob | null = null;
+  try {
+    blob = new Blob([JSON.stringify(file)], { type: 'application/json' });
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error;
+  }
+  if (!blob || blob.size > FILE_MAX_BYTES)
+    throw new Error(`${FILE_TOO_LARGE}: export fewer kinds of data at a time`);
+  const fileName = tradeFileName(`Big-AGI-${capitalizeFirstLetter(Release.TenantSlug)}-export-${prettyTimestampForFilenames(false)}`, '.json');
   await fileSave(blob, { fileName, extensions: ['.json'] });
   return { fileName, sizeBytes: blob.size };
 }

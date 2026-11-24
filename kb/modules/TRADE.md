@@ -42,6 +42,14 @@ A section's `schema` names the schema its items already have at rest, which has 
 path: a conversation as the chat store persists it, a store's value as the store persists it (so the
 store migrates it at the next load). The export defines no entity format of its own.
 
+The file is one JSON text, one string when it is written and when it is read, and an engine caps a string
+(Chrome near 512 MB). A file over 500 MB is refused with a message, on both sides, so that what is saved can
+be read back in any browser.
+
+A file name ends in `_agi.json`, one extension only. A compound `.agi.json` is saved as `.agi` by a save
+dialog that hides the known extension, where `.agi` is a type the system knows. Reading goes by content,
+never by name; the name only decides whether a file dropped on a chat is imported or attached.
+
 ## Relations
 
 | relation | meaning | default |
@@ -110,4 +118,4 @@ that preview only for a backup saved with its images, which nothing else brings 
 - There is no undo: a conflict resolved to the file's version replaces the local one. Saving the replaced
   versions from the result is PROPOSED.
 - Comparing the two versions of a conflict is a side by side text diff, the same for every kind of data.
-- The whole export is one JSON text in memory, on write and on read.
+- An export is one JSON text of at most 500 MB: a larger history does not export as one file yet.
