@@ -209,7 +209,15 @@ export const createAttachmentDraftsStoreSlice: StateCreator<AttachmentsDraftsSto
     // Perform the conversion
     const attachmentDraft = _getAttachment(attachmentDraftId);
     if (!attachmentDraft) return;
-    await attachmentPerformConversion(attachmentDraft, _editAttachment, _replaceAttachmentOutputFragments);
+    await attachmentPerformConversion(attachmentDraft, _editAttachment, (draftId, outputFragments) => {
+      if (_getAttachment(draftId)) {
+        _replaceAttachmentOutputFragments(draftId, outputFragments);
+        return;
+      }
+      // removed while converting (cancelled from its spinner): the late fragments have no draft to go to, release what they own
+      for (const lateFragment of outputFragments)
+        void removeAttachmentOwnedDBAsset(lateFragment);
+    });
   },
 
   takeAllFragments: async (newContextId: DBlobDBContextId, newScopeId: DBlobDBScopeId) => {

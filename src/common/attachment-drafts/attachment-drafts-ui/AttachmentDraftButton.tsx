@@ -3,6 +3,7 @@ import TimeAgo from 'react-timeago';
 
 import { Box, Button, CircularProgress, ColorPaletteProp, Sheet, Typography, VariantProp } from '@mui/joy';
 import AbcIcon from '@mui/icons-material/Abc';
+import ClearIcon from '@mui/icons-material/Clear';
 import CodeIcon from '@mui/icons-material/Code';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import HtmlIcon from '@mui/icons-material/Html';
@@ -58,10 +59,27 @@ const ellipsizeLabel = (label?: string) => {
 };
 
 
+const busyCancelSx = { cursor: 'pointer' } as const;
+const busyCancelIconSx = { fontSize: 'sm' } as const;
+
+/**
+ * The spinner of a draft that is loading or converting. With onCancel it is also the way out of that state:
+ * an X inside the ring removes the draft, and the store discards what its load or conversion yields later.
+ */
+function BusySpinner(props: { onCancel?: (event: React.MouseEvent) => void }) {
+  if (!props.onCancel)
+    return <CircularProgress color='success' size='sm' />;
+  return (
+    <CircularProgress color='success' size='sm' title='Cancel' onClick={props.onCancel} sx={busyCancelSx}>
+      <ClearIcon sx={busyCancelIconSx} />
+    </CircularProgress>
+  );
+}
+
 /**
  * Displayed while a source is loading
  */
-function InputLoadingPlaceholder(props: { label: string }) {
+function InputLoadingPlaceholder(props: { label: string, onCancel?: (event: React.MouseEvent) => void }) {
   return <Sheet
     color='success' variant='soft'
     sx={{
@@ -74,7 +92,7 @@ function InputLoadingPlaceholder(props: { label: string }) {
       px: 1, py: 0.5, // reduce
     }}
   >
-    <CircularProgress color='success' size='sm' />
+    <BusySpinner onCancel={props.onCancel} />
     <Typography level='title-sm' sx={{ whiteSpace: 'nowrap' }}>
       {ellipsizeLabel(props.label)}
     </Typography>
@@ -231,6 +249,7 @@ function AttachmentDraftButton(props: {
   draft: AttachmentDraft,
   enrichment?: IAttachmentEnrichment,
   menuShown: boolean,
+  onRemove?: (attachmentDraftId: AttachmentDraftId) => void,
   onToggleMenu: (attachmentDraftId: AttachmentDraftId, anchor: HTMLAnchorElement) => void,
   onViewImageRefPart: (imageRefPart: DMessageImageRefPart) => void,
 }) {
@@ -252,12 +271,18 @@ function AttachmentDraftButton(props: {
 
   // handlers
 
-  const { onToggleMenu } = props;
+  const { onRemove, onToggleMenu } = props;
 
   const handleToggleMenu = React.useCallback((event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault(); // added for the Right mouse click (to prevent the menu)
     onToggleMenu(draft.id, event.currentTarget);
   }, [draft.id, onToggleMenu]);
+
+  const handleCancelBusy = React.useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation(); // the spinner sits inside the chip: this click is not for the chip's menu
+    onRemove?.(draft.id);
+  }, [draft.id, onRemove]);
 
   // choose variants and color
   const color: ColorPaletteProp =
@@ -272,7 +297,7 @@ function AttachmentDraftButton(props: {
 
   // loading indicator before we are ready for a button
   if (isInputLoading)
-    return <InputLoadingPlaceholder label={draft.label} />;
+    return <InputLoadingPlaceholder label={draft.label} onCancel={onRemove ? handleCancelBusy : undefined} />;
 
   // tooltip for truncated filenames (only show when menu is closed)
   const displayedLabel = attachmentLabelText(draft);
@@ -315,7 +340,7 @@ function AttachmentDraftButton(props: {
       }
 
       {/* Is Converting icon */}
-      {isOutputLoading && <CircularProgress color='success' size='sm' />}
+      {isOutputLoading && <BusySpinner onCancel={onRemove ? handleCancelBusy : undefined} />}
 
       {/* LiveFile is supported icon */}
       {hasLiveFiles && (

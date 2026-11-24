@@ -151,6 +151,12 @@ export function AttachmentDraftsList(props: {
     setDraftMenu(prev => prev?.attachmentDraftId === attachmentDraftId ? null : { anchor, attachmentDraftId });
   }, [handleOverallMenuHide]);
 
+  // a busy draft is cancelled from its own spinner: the menu's removal, and its menu (if open) goes with it
+  const handleDraftRemove = React.useCallback((attachmentDraftId: AttachmentDraftId) => {
+    setDraftMenu(prev => prev?.attachmentDraftId === attachmentDraftId ? null : prev);
+    props.attachmentDraftsStoreApi.getState().removeAttachmentDraft(attachmentDraftId);
+  }, [props.attachmentDraftsStoreApi]);
+
   const handleDraftAction = React.useCallback((attachmentDraftId: AttachmentDraftId, actionId: AttachmentDraftsAction) => {
     // pass-through, but close the menu as well, as the action is destructive for the caller
     handleDraftMenuHide();
@@ -184,6 +190,7 @@ export function AttachmentDraftsList(props: {
             draft={draft}
             enrichment={props.enrichment}
             menuShown={draft.id === itemMenuAttachmentDraftId}
+            onRemove={handleDraftRemove}
             onToggleMenu={handleDraftMenuToggle}
             onViewImageRefPart={setViewerImageRefPart}
           />,
