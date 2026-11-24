@@ -59,9 +59,10 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
 
   // very dull heuristics
   const interfaces = [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
-  if (['vision', 'llava', '-vl-', 'minicpm-v'].some(match => modelId.includes(match)))
+  const lcModelId = modelId.toLowerCase(); // gallery ids keep their upper case ('Qwen3-VL-...-GGUF')
+  if (['vision', 'llava', '-vl-', 'minicpm-v'].some(match => lcModelId.includes(match)))
     interfaces.push(LLM_IF_OAI_Vision);
-  if (['r1', 'thinking', 'reasoning', 'qwq'].some(match => modelId.includes(match)))
+  if (['r1', 'thinking', 'reasoning', 'qwq'].some(match => lcModelId.includes(match)))
     interfaces.push(LLM_IF_OAI_Reasoning);
 
   return fromManualMapping(_knownLocalAIChatModels, modelId, undefined, undefined, {
@@ -74,6 +75,6 @@ export function localAIModelToModelDescription(modelId: string): ModelDescriptio
     // maxCompletionTokens
     // benchmark
     chatPrice: _knownLocalAIPrice,
-    hidden: _hideLocalAIModels.some(match => modelId.toLowerCase().includes(match)),
+    hidden: _hideLocalAIModels.some(match => lcModelId.includes(match)),
   });
 }
