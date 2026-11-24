@@ -79,8 +79,8 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
 
     <Grid container spacing={3}>
 
-      {/* Current Chat */}
-      <Grid xs={12} md={6} sx={{ display: 'flex', alignItems: 'flex-start', py: 2 }}>
+      {/* Current Chat: not shown without one (the export opened from outside a chat) */}
+      {hasConversation && <Grid xs={12} md={6} sx={{ display: 'flex', alignItems: 'flex-start', py: 2 }}>
         <Box sx={{ display: 'grid', gap: 1, mx: 'auto' }}>
 
           {exportAll && (
@@ -132,11 +132,11 @@ export function ExportChats(props: { config: ExportConfig, onClose: () => void }
           <ExportClaudeCode conversationId={props.config.conversationId} getConversation={getConversation} />
 
         </Box>
-      </Grid>
+      </Grid>}
 
       {/* All Chats */}
       {exportAll && (
-        <Grid xs={12} md={6} sx={{ display: 'flex', alignItems: 'flex-start', py: 2 }}>
+        <Grid xs={12} md={hasConversation ? 6 : 12} sx={{ display: 'flex', alignItems: 'flex-start', py: 2 }}>
           <Box sx={{ display: 'grid', gap: 1, mx: 'auto' }}>
 
             <TradeExportAll />

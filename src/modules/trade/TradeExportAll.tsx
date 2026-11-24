@@ -54,21 +54,43 @@ export function TradeExportAll() {
   const [error, setError] = React.useState<string | null>(null);
 
 
-  // read what there is to export, once shown
+  // read what there is to export, once shown; and while a kind is not available (its store still loading),
+  // look again, so that it is offered without reopening the dialog
   React.useEffect(() => {
     let cancelled = false;
-    (async () => {
+    let again: ReturnType<typeof setTimeout> | undefined;
+    const read = new Map<string, TradeItem[]>(); // a kind is read once: a later pass reads only what was not available
+
+    const pass = async () => {
       const loaded: Exportable[] = [];
-      for (const adapter of tradeAdapters())
-        if (!adapter.importOnly)
-          loaded.push({ adapter, items: adapter.unavailable ? [] : (await adapter.localItems()).items });
+      const arrived: string[] = [];
+      for (const adapter of tradeAdapters()) {
+        if (adapter.importOnly) continue;
+        if (!adapter.unavailable && !read.has(adapter.type)) {
+          const { items } = await adapter.localItems();
+          read.set(adapter.type, items);
+          // everything but the credentials, which the user adds knowingly
+          if (!adapter.secrets && items.length) arrived.push(adapter.type);
+        }
+        loaded.push({ adapter, items: adapter.unavailable ? [] : read.get(adapter.type) ?? [] });
+      }
       if (cancelled) return;
       setExportables(loaded);
-      // everything but the credentials, which the user adds knowingly
-      setSelected(new Set(loaded.filter(({ adapter, items }) => !adapter.secrets && items.length).map(({ adapter }) => adapter.type)));
-    })().catch((error: any) => !cancelled && setError(error?.message || 'Could not read what there is to export.'));
+      if (arrived.length)
+        setSelected(current => {
+          const next = new Set(current);
+          arrived.forEach(type => next.add(type));
+          return next;
+        });
+      if (loaded.some(({ adapter }) => adapter.unavailable))
+        again = setTimeout(() => pass().catch(failed), 1000);
+    };
+    const failed = (error: any) => !cancelled && setError(error?.message || 'Could not read what there is to export.');
+
+    pass().catch(failed);
     return () => {
       cancelled = true;
+      clearTimeout(again);
     };
   }, []);
 
