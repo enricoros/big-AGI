@@ -46,9 +46,11 @@ The file is one JSON text, one string when it is written and when it is read, an
 (Chrome near 512 MB). A file over 500 MB is refused with a message, on both sides, so that what is saved can
 be read back in any browser.
 
-A file name ends in `_agi.json`, one extension only. A compound `.agi.json` is saved as `.agi` by a save
-dialog that hides the known extension, where `.agi` is a type the system knows. Reading goes by content,
-never by name; the name only decides whether a file dropped on a chat is imported or attached.
+An export, and a single conversation download, is named `<name>_agi.json` (`_agi.md` for Markdown): one
+extension only. A compound `.agi.json` is saved as `.agi` by a save dialog that hides the known extension,
+where `.agi` is a type the system knows. A device backup, where a build writes one, keeps its own name.
+Reading goes by content, never by name; the name only decides whether a file dropped on a chat is imported
+or attached.
 
 ## What an item needs
 
@@ -81,8 +83,9 @@ cannot be recovered.
 
 Each kind of data states its own rule on top:
 - Conversations match messages by id. Two sides that each have messages the other lacks are two
-  continuations, and a linear chat cannot hold both: a conflict, resolved by keeping both.
-- Folders merge membership as a union; a title that differs is a conflict.
+  continuations, and a linear chat cannot hold both: a conflict, where the user takes the file's, keeps
+  this device's, or keeps both.
+- Folders merge membership as a union; a title or a color that differs is a conflict.
 - Stored values (settings, credentials) have no history: a different value in the file replaces this
   device's. A value saved by a newer version of its store is refused, since stores migrate forward only.
 
@@ -116,9 +119,9 @@ chat file cannot carry (the archive flag, the chat symbol) keep this device's va
 all-chats files embed, keys included, are offered unselected, and added only where this device has no
 service with that id. What a device backup holds that belongs to its device is named, not imported.
 
-The device restore, which replaces everything, is not a second way in. A device backup imports like any
-file: its chats, folders, settings and credentials, merged, with the preview. The restore is offered in
-that preview only for a backup saved with its images, which nothing else brings back.
+A device backup imports like any file: its chats, folders, settings and credentials, merged, with the
+preview. Where a build has the device restore, which replaces everything, it is not a second way in: it is
+offered in that preview only for a backup saved with its images, which nothing else brings back.
 
 ## Gaps
 

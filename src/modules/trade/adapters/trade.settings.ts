@@ -11,7 +11,7 @@ import { tradeRelateByContent } from '../trade.plan';
 
 // The stores an export holds. A store that is not listed stays on its device: view state, identity, sessions, logs.
 // Never to be listed: the shared chat links ('app-sharing'), the open panes, the sign-in cache, the analytics
-// client's 'ph_*'. The device backup leaves the same ones out, by name (BackupRestore.tsx).
+// client's 'ph_*'. The device backup, in the build that has one, leaves the same ones out, by name.
 //
 // 'device' names the state keys of a store that describe the device, not a choice of the user: usage counters,
 // dismissed hints, what was last open. They differ between any two devices, so they are not exported, not

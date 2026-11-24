@@ -8,9 +8,9 @@
 // 'plan' pins what the user is shown for the hard inputs: several copies of one id in the loaded files,
 // a conflict nobody decided, an item that cannot be compared, and what arrives without the items of
 // another kind that it needs.
-// 'conversations', 'settings' and 'AI services' pin the kinds of data whose rules differ from the default.
-// 'files' pins that every kind of file the app wrote is still read. The files are built here from the stored
-// types the old writers declare (chats.converters.ts, BackupRestore.tsx): no real export is kept in the repository.
+// 'conversations' and 'settings' pin the kinds of data whose rules differ from the default.
+// 'files' pins that every kind of file the app wrote is still read. The files are built here in the shapes
+// their writers gave them: no real export is kept in the repository.
 
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';

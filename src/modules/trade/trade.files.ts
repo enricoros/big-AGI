@@ -21,7 +21,7 @@ export interface TradeSource {
   origin?: { tenantSlug?: string, exported?: string };
   sections: TradeSection[];
   notes: TradeNote[];                   // what the file holds that is not imported
-  holdsImages?: true;                   // a device backup saved with its images: only the device restore brings them
+  holdsImages?: true;                   // a device backup saved with its images: an import does not bring them
   error?: string;                       // the file could not be read at all
 }
 
@@ -101,8 +101,8 @@ export function tradeFileRead(fileName: string, json: any): TradeSource {
   else
     return { ...source, error: 'Not a Big-AGI file' };
 
-  // images live outside the conversations, on the device: no file but the device backup holds them
-  if (!source.error && !source.notes.some(note => note.text.startsWith('Images'))) {
+  // images live outside the conversations, on the device: no file holds them but a device backup saved with them
+  if (!source.error && !source.holdsImages) {
     const withImages = source.sections.filter(section => section.type === 'chat').flatMap(section => section.items).filter(item => JSON.stringify(item.data).includes('"dblobAssetId"')).length;
     if (withImages)
       source.notes.push({ text: `Images are not in this file: ${_count(withImages, 'conversation shows', 'conversations show')} them only where the device has them` });
