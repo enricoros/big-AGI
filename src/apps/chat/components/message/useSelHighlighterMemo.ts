@@ -158,7 +158,7 @@ export function useSelHighlighterMemo(
 
     // Create the highlighter function, if there's 1 and only 1 occurrence of the selection
     const highlightFunction = fragments.reduce((acc: false /* not found */ | ((tool: HighlightTool) => void) | true /* more than one */, fragment) => {
-      if (!acc && isTextContentFragment(fragment)) {
+      if (acc !== true && isTextContentFragment(fragment)) { // keep looking after the first match: a second fragment with the same text makes it ambiguous
         const fragmentText = fragment.part.text;
         const match = MATCH_METHOD === 'md-approx'
           ? findInMarkdownSource(selText, fragmentText)
