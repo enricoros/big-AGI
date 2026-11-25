@@ -93,6 +93,8 @@ export const transcribeDeepgram: TranscribeBackendFn<ASRxAccess_Deepgram> = asyn
   // Build query params
   const queryParams = new URLSearchParams();
   queryParams.set('model', model);
+  // out of Deepgram's Model Improvement Program, which is on by default: the audio is kept only while it is processed
+  queryParams.set('mip_opt_out', 'true');
 
   const language = languageCode ?? profile.language ?? ASRX_DEFAULTS.DEEPGRAM_LANGUAGE;
   if (language) queryParams.set('language', language);
