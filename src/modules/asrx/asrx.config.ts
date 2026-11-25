@@ -34,3 +34,23 @@ export const ASRX_MODELS = {
   gemini: ['gemini-3.5-transcribe'],
   openai: ['gpt-transcribe', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe', 'whisper-1'],
 } as const;
+
+
+// engine test: a clip of known text goes through the engine, the transcript is graded against the text (asrx.engine-test.ts).
+// The clips are fetched on click, never bundled. Recorded with Gemini TTS gemini-3.8-flash-tts, voice kore, the input
+// spelled 'Big A-G-I' so the letters are spoken; leveled to -20 dBFS speech RMS, Opus 24 kbps mono in Ogg.
+export const ASRX_TEST_CLIPS = [
+  {
+    url: '/audio/asrx-test-known-universe.ogg',
+    mimeType: 'audio/ogg',
+    text: 'Big-AGI is the best AI workspace in the known universe, and your transcription engine just agreed with me, word for word.',
+  },
+  {
+    url: '/audio/asrx-test-loud-and-clear.ogg',
+    mimeType: 'audio/ogg',
+    text: 'Hello from Big-AGI. If you can read this, your transcription engine heard me loud and clear. Now go beam something brilliant.',
+  },
+] as const;
+
+// share of the clip's words an engine may get wrong and still pass: 2 slips in a 21-word clip
+export const ASRX_TEST_MAX_WORD_ERROR = 0.1;

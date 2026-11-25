@@ -197,9 +197,10 @@ export function SpeexConfigureEngineFull(props: {
         parent-grid cell so the Topic's grid gap only applies between sections. */}
     <div>
       <ExpanderSection
-        title={`${engine.label} synthesis`}
+        title={`${engine.label} options`}
         initialExpanded={true}
         persistentDivider
+        isCollapsible={false}
       >
         <Box sx={_styles.sectionBody}>
 

@@ -10,7 +10,7 @@
 
 import * as React from 'react';
 
-import { Box, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
+import { Box, Divider, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 // import AutoModeIcon from '@mui/icons-material/AutoMode';
 import GraphicEqRoundedIcon from '@mui/icons-material/GraphicEqRounded';
 import KeyIcon from '@mui/icons-material/Key';
@@ -28,6 +28,8 @@ import { themeZIndexOverMobileDrawer } from '~/common/app.theme';
 import type { DASRxEngineAny, DASRxVendorType } from '../asrx.types';
 import { ASRxConfigureEngineFull } from './ASRxConfigureEngineFull';
 import { asrxAreCredentialsValid, useASRxEngines, useASRxGlobalEngine, useASRxStore } from '../store-module-asrx';
+import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
+import { PhRamble } from '~/common/components/icons/phosphor/PhRamble';
 
 
 const VENDOR_INFO: { [key in DASRxVendorType]: { label: string; description: string; icon: React.ElementType } } = {
@@ -182,6 +184,8 @@ export function ASRxConfigureEngines(props: { isMobile: boolean }) {
 
 
   return <>
+
+    <Divider inset='context' sx={{ mt: 0.5, mb: 1 }}><PhRamble sx={{ fontSize: 'lg', mr: 1, color: 'text.tertiary' }} />Speech Transcription</Divider>
 
     {/* Row: "Active Engine" label  +  Select + Add dropdown */}
     <Box sx={_styles.row}>

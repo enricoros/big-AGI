@@ -9,7 +9,7 @@
 
 import * as React from 'react';
 
-import { Box, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
+import { Box, Divider, IconButton, ListItemDecorator, MenuItem, Option, Select, Typography } from '@mui/joy';
 // import AutoModeIcon from '@mui/icons-material/AutoMode';
 import KeyIcon from '@mui/icons-material/Key';
 import LinkIcon from '@mui/icons-material/Link';
@@ -31,6 +31,8 @@ import type { DSpeexEngineAny, DSpeexVendorType } from '../speex.types';
 import { SpeexConfigureEngineFull } from './SpeexConfigureEngineFull';
 import { SpeexSystemTest } from './SpeexSystemTest';
 import { speexAreCredentialsValid, useSpeexEngines, useSpeexGlobalEngine, useSpeexStore } from '../store-module-speex';
+import { PhRamble } from '~/common/components/icons/phosphor/PhRamble';
+import { PhVoice } from '~/common/components/icons/phosphor/PhVoice';
 
 
 const VENDOR_INFO: { [key in DSpeexVendorType]: { label: string; description: string; icon: React.ElementType; addable?: boolean } } = {
@@ -167,12 +169,14 @@ export function SpeexConfigureEngines(props: { isMobile: boolean }) {
 
   return <>
 
+    <Divider inset='context' sx={{ mt: 0.5, mb: 1 }}>Voice Generation<PhVoice sx={{ fontSize: 'lg', ml: 1, color: 'text.tertiary' }} /></Divider>
+
     {/* Row: "Speech Generation" label  +  Select + Add dropdown */}
     <Box sx={_styles.row}>
 
       <Box onClick={event => event.shiftKey && setShowSystemTest(on => !on)}>
         <FormLabelStart
-          title='Voice generation'
+          title='Generation'
           description={
             !activeEngine ? 'Please add engine'
               : warnInvalidConfig ? 'Incomplete'

@@ -18,6 +18,7 @@ import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
 import type { DASRxEngine, DASRxEngineAny, DASRxVendorType, DCredentialsApiKey, DProfileDeepgram, DProfileGemini, DProfileOpenAI } from '../asrx.types';
 import { ASRX_DEFAULTS, ASRX_MODELS } from '../asrx.config';
+import { ASRxEngineTestButton, ASRxEngineTestResultLine, useASRxEngineTest } from './ASRxEngineTest';
 import { ASRxVendorDeepgram } from '../vendors/deepgram.vendor';
 import { ASRxVendorGemini } from '../vendors/gemini.vendor';
 import { ASRxVendorOpenAI } from '../vendors/openai.vendor';
@@ -64,9 +65,10 @@ export function ASRxConfigureEngineFull(props: {
         parent-grid cell so the Topic's grid gap only applies between sections. */}
     <div>
       <ExpanderSection
-        title={`${engine.label} transcription`}
+        title={`${engine.label} options`}
         initialExpanded={true}
         persistentDivider
+        isCollapsible={false}
       >
         <Box sx={_styles.sectionBody}>
           {engine.vendorType === 'deepgram' ? (
@@ -147,6 +149,7 @@ const _styles = {
   },
   bottomRow: {
     display: 'flex',
+    alignItems: 'center',
     justifyContent: 'flex-end',
   },
   advancedToggle: {
@@ -210,13 +213,18 @@ function ManualCredentials({ engine, credentials, onUpdate, advancedOn }: {
 
 // --- Shared panel chrome ---
 
-/** Bottom row shared by every vendor panel: 'Advanced...' toggle left, 'Reset to defaults' right when off-default. */
-function PanelFooter({ advanced, showReset, onReset }: {
+/**
+ * Bottom row shared by every vendor panel: 'Advanced...' toggle left, 'Reset to defaults' when off-default,
+ * the engine Test right; the test result goes on the lines below.
+ */
+function PanelFooter({ engine, advanced, showReset, onReset }: {
+  engine: DASRxEngineAny;
   advanced: { on: boolean; toggle: () => void };
   showReset: boolean;
   onReset: () => void;
 }) {
-  return (
+  const test = useASRxEngineTest(engine);
+  return <>
     <Box sx={_styles.bottomRow}>
       <Typography
         level='body-xs'
@@ -235,8 +243,10 @@ function PanelFooter({ advanced, showReset, onReset }: {
           Reset to defaults ...
         </Link>
       )}
+      <ASRxEngineTestButton test={test} disabled={!asrxAreCredentialsValid(engine.credentials)} />
     </Box>
-  );
+    {test.result && <ASRxEngineTestResultLine result={test.result} />}
+  </>;
 }
 
 /**
@@ -377,7 +387,7 @@ function DeepgramParameters({ engine, onUpdate }: {
       onSave={terms => handleProfileUpdate({ keyterms: terms.length ? terms : undefined })}
     />
 
-    <PanelFooter advanced={advanced} showReset={hasUserParameters} onReset={handleResetParameters} />
+    <PanelFooter engine={engine} advanced={advanced} showReset={hasUserParameters} onReset={handleResetParameters} />
 
   </>;
 }
@@ -504,7 +514,7 @@ function GeminiParameters({ engine, onUpdate, isMobile }: {
       onSave={terms => handleProfileUpdate({ keywords: terms.length ? terms : undefined })}
     />
 
-    <PanelFooter advanced={advanced} showReset={hasUserParameters} onReset={handleResetParameters} />
+    <PanelFooter engine={engine} advanced={advanced} showReset={hasUserParameters} onReset={handleResetParameters} />
 
   </>;
 }
@@ -616,7 +626,7 @@ function OpenAIParameters({ engine, onUpdate, isMobile }: {
       onSave={terms => handleProfileUpdate({ keywords: terms.length ? terms : undefined })}
     />
 
-    <PanelFooter advanced={advanced} showReset={hasUserParameters} onReset={handleResetParameters} />
+    <PanelFooter engine={engine} advanced={advanced} showReset={hasUserParameters} onReset={handleResetParameters} />
 
   </>;
 }
