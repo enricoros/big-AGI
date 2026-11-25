@@ -38,7 +38,7 @@ export const Is = {
     // the 413 "edge network" limit) on self-hosted deployments sitting behind nginx/other reverse proxies.
     VercelFromFrontend: (process.env.NEXT_PUBLIC_DEPLOYMENT_TYPE ?? '').startsWith('vercel'),
   },
-  // first-run UI, banners, analytics and news fetches step aside (see _isAutomated)
+  // first-run UI, banners, analytics and news fetches step aside
   Automated: _isAutomated(),
 } as const;
 

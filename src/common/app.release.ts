@@ -55,6 +55,7 @@ export const Release = {
   }),
 
   IsNodeDevBuild: process.env.NODE_ENV === 'development' as const,
+  // IsAutomation: see instead Is.Automated in pawUtils.ts
 
 } as const;
 
