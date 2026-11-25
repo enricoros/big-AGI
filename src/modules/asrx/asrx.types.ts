@@ -8,7 +8,7 @@ import type { ASRX_MODELS } from './asrx.config';
 
 // ASRx Vendor Types (supported ASR / transcription providers)
 
-export type DASRxVendorType = 'deepgram' | 'gemini' | 'openai';
+export type DASRxVendorType = 'assemblyai' | 'deepgram' | 'gemini' | 'openai';
 
 
 // ASRx Engines - instances of ASRx Vendor Types - persisted in store-module-asrx
@@ -33,6 +33,7 @@ export type DASRxEngineId = string; // agiUuidV4('asrx.engine.instance')
 
 // helper for mapping credentials and profile types to the engine type
 interface _TypeMap extends Record<DASRxVendorType, { profile: unknown; credentials: unknown }> {
+  'assemblyai': { profile: DProfileAssemblyAI; credentials: DCredentialsApiKey };
   'deepgram': { profile: DProfileDeepgram; credentials: DCredentialsApiKey };
   'gemini': { profile: DProfileGemini; credentials: DCredentialsLLMSService | DCredentialsApiKey };
   'openai': { profile: DProfileOpenAI; credentials: DCredentialsLLMSService | DCredentialsApiKey };
@@ -45,6 +46,18 @@ interface _TypeMap extends Record<DASRxVendorType, { profile: unknown; credentia
 export type DASRxProfileAny = { [TVt in DASRxVendorType]: DASRxProfile<TVt> }[DASRxVendorType];
 
 export type DASRxProfile<TVt extends DASRxVendorType> = _TypeMap[TVt]['profile'];
+
+export interface DProfileAssemblyAI {
+  dialect: 'assemblyai';
+  api?: 'dictation' | 'prerecorded'; // unset = Auto (Sync); any pick moves to Pre-recorded for what it cannot take (see adapter)
+  region?: 'us' | 'eu';    // data zone pin for all three APIs (unset = AssemblyAI's default routing)
+  language?: string;       // ISO-639-1, comma-separated list allowed (undefined = auto-detect); a code outside Sync/Dictation's 32 runs on Pre-recorded
+  prompt?: string;         // context: what the audio is about (a description, not an instruction)
+  keywords?: string[];     // user dictionary -> keyterms_prompt
+  rewriteMode?: 'fast' | 'smart'; // Dictation cleanup: smart follows detailed instructions, at higher latency (undefined = fast)
+  instruction?: string;    // Dictation cleanup: replaces the default task, e.g. 'a bulleted list'
+  diarize?: boolean;       // speaker labels - runs on Pre-recorded
+}
 
 export interface DProfileDeepgram {
   dialect: 'deepgram';
@@ -118,6 +131,8 @@ export interface ASRxTranscribeBatchOptions {
   topicsHint?: boolean;
   // speaker labels: undefined honors the engine profile's policy; true/false overrides it (dictation turns them off: 'Speaker 0:' must not reach the text)
   diarizeHint?: boolean;
+  // the recording's length, when the caller knows it: a vendor with length-capped APIs picks one that fits up front (AssemblyAI)
+  audioDurationMs?: number;
   // abort the transcription mid-flight
   signal?: AbortSignal;
   // NorthBridge-style operation metadata (for future use in an ops panel)

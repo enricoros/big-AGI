@@ -399,6 +399,14 @@ const AS_CODED: AsCodedRow[] = [
       return (await app.asrxBatchCoreTranscribe({ access: { dialect, apiKey }, profile: { dialect }, audio: silentWav(), mimeType: 'audio/wav', signal })).model;
     },
   })),
+  // AssemblyAI: one row per API, each on its own host (Auto is Sync)
+  ...([undefined, 'dictation', 'prerecorded'] as const).map((api): AsCodedRow => ({
+    subsystem: 'asrx', label: `assemblyai ${api ?? 'sync'}`, coded: 'direct', when: 'always, no server route',
+    run: async (app, signal) => {
+      const access = { dialect: 'assemblyai', apiKey: _keyOrMadeUp('ASSEMBLYAI_API_KEY') } as const;
+      return (await app.asrxBatchCoreTranscribe({ access, profile: { dialect: 'assemblyai', ...(api && { api }) }, audio: silentWav(), mimeType: 'audio/wav', signal })).model;
+    },
+  })),
 
   // T2I (images): the tRPC createImages procedures, there is no direct path
   {

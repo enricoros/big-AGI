@@ -13,8 +13,8 @@ const SERVER_DEBUG_FETCH_HEADERS = false; // log response headers (rate limits, 
 //
 // Fetches data from external APIs, throwing TRPC errors on failure: connection, HTTP and parsing.
 //
-// NOT server-only despite the name: three CSF entry points (AIX chat, model listing, Speex TTS)
-// pull this into the browser bundle.
+// NOT server-only despite the name: four CSF entry points (AIX chat, model listing, Speex TTS,
+// ASRx transcription) pull this into the browser bundle.
 //
 
 // JSON fetcher
@@ -190,8 +190,9 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
   let response: Response;
   try {
 
-    // handle FormData automatically
+    // handle FormData automatically; a binary body (Blob) goes as it is, anything else as JSON
     const isFormData = method === 'POST' && body instanceof FormData;
+    const isBinary = body instanceof Blob;
 
     // prepare headers, DO NOT set Content-Type for FormData, let the browser do it
     const headers: HeadersInit | undefined = !configHeaders ? undefined : { ...configHeaders };
@@ -209,7 +210,7 @@ async function _fetchFromTRPC<TBody extends object | undefined | FormData, TOut>
     const request: RequestInit = {
       method,
       headers,
-      body: body === undefined ? undefined : isFormData ? body : JSON.stringify(body),
+      body: body === undefined ? undefined : (isFormData || isBinary) ? body : JSON.stringify(body),
       signal,
     };
 
@@ -462,7 +463,7 @@ async function _jsonResponseParserOrThrow(response: Response) {
  * `error` member. One that says only "not found" names none - OpenRouter answers a wrong base path that way.
  */
 function _upstreamGaveReason(payload: any): boolean {
-  const error = payload?.error;
+  const error = payload?.error ?? payload?.detail; // detail: RFC 9457 problem details (AssemblyAI)
   if (!error) return false;
   const text = typeof error === 'string' ? error : typeof error.message === 'string' ? error.message : '';
   return !/^not found\.?$/i.test(text.trim());

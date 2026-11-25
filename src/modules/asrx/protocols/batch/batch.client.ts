@@ -87,6 +87,7 @@ export async function asrxTranscribeBatch(
       audio: audioBytes,
       mimeType,
       languageCode: options?.languageCode,
+      audioDurationMs: options?.audioDurationMs,
       signal: options?.signal,
     });
     return {
@@ -162,6 +163,12 @@ function _buildBatchWireAccess(engine: DASRxEngineAny): ASRxAccess | null {
 
     case 'api-key':
       switch (engine.vendorType) {
+        case 'assemblyai':
+          return {
+            dialect: 'assemblyai',
+            apiKey: c.apiKey,
+          };
+
         case 'deepgram':
           return {
             dialect: 'deepgram',
@@ -189,7 +196,7 @@ function _buildBatchWireAccess(engine: DASRxEngineAny): ASRxAccess | null {
       }
 
     case 'llms-service': {
-      // Deepgram never links (credentials forced api-key by _TypeMap)
+      // AssemblyAI and Deepgram never link (credentials forced api-key by _TypeMap)
       const service = findModelsServiceOrNull(c.serviceId);
       if (!service) return null;
       switch (engine.vendorType) {

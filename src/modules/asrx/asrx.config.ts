@@ -5,6 +5,18 @@ export const ASRX_DEBUG = false;
 // default profile parameters for each vendor
 export const ASRX_DEFAULTS = {
 
+  // AssemblyAI - three APIs on one key, picked per take (see the batch adapter); hosts per data zone
+  ASSEMBLYAI_HOSTS: {
+    default: { sync: 'https://sync.assemblyai.com', dictation: 'https://dictation.assemblyai.com', prerecorded: 'https://api.assemblyai.com' },
+    us: { sync: 'https://sync.us.assemblyai.com', dictation: 'https://dictation.us.assemblyai.com', prerecorded: 'https://api.assemblyai.com' },
+    eu: { sync: 'https://sync.eu.assemblyai.com', dictation: 'https://dictation.eu.assemblyai.com', prerecorded: 'https://api.eu.assemblyai.com' },
+  },
+  ASSEMBLYAI_SYNC_MODEL: 'universal-3-6-pro',
+  // Pre-recorded: STT-3.7 runs wherever it can, Universal-2 takes the languages outside its 32
+  ASSEMBLYAI_PRERECORDED_MODELS: ['assemblyai-stt-3-7', 'universal-2'],
+  // Sync and Dictation answer 413 past 20 minutes
+  ASSEMBLYAI_SHORT_MAX_MS: 20 * 60 * 1000,
+
   // Deepgram - nova-3 is current flagship, multi language auto-detects 10+ common languages
   DEEPGRAM_MODEL: 'nova-3',
   DEEPGRAM_LANGUAGE: 'multi',

@@ -12,7 +12,12 @@
  */
 
 
-export type ASRxAccess = ASRxAccess_Deepgram | ASRxAccess_Gemini | ASRxAccess_OpenAI;
+export type ASRxAccess = ASRxAccess_AssemblyAI | ASRxAccess_Deepgram | ASRxAccess_Gemini | ASRxAccess_OpenAI;
+
+export interface ASRxAccess_AssemblyAI {
+  dialect: 'assemblyai';
+  apiKey: string;     // no host: the profile's region picks the hosts of its three APIs
+}
 
 export interface ASRxAccess_Deepgram {
   dialect: 'deepgram';

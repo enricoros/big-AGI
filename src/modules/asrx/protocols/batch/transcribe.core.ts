@@ -9,6 +9,7 @@
 
 import type { ASRxAccess } from './batch.access';
 import type { ASRxDetectedSentiment, ASRxDetectedTopic, DASRxProfileAny } from '../../asrx.types';
+import { transcribeAssemblyAI } from './transcribe-assemblyai';
 import { transcribeDeepgram } from './transcribe-deepgram';
 import { asrxTranscribeGemini } from './transcribe-gemini';
 import { transcribeOpenAI } from './transcribe-openai';
@@ -35,6 +36,7 @@ export interface TranscribeBackendFnParams<TAccess extends ASRxAccess> {
   audio: Uint8Array;
   mimeType: string;
   languageCode?: string;
+  audioDurationMs?: number;
   signal?: AbortSignal;
 }
 
@@ -51,11 +53,17 @@ export async function asrxBatchCoreTranscribe(params: {
   audio: Uint8Array;
   mimeType: string;
   languageCode?: string;
+  audioDurationMs?: number;
   signal?: AbortSignal;
 }): Promise<ASRxCoreTranscribeResult> {
-  const { access, profile, audio, mimeType, languageCode, signal } = params;
+  const { access, profile, audio, mimeType, languageCode, audioDurationMs, signal } = params;
 
   switch (access.dialect) {
+    case 'assemblyai':
+      if (profile.dialect !== 'assemblyai')
+        throw new Error(`Profile dialect '${profile.dialect}' does not match access dialect 'assemblyai'`);
+      return await transcribeAssemblyAI({ access, profile, audio, mimeType, languageCode, audioDurationMs, signal });
+
     case 'deepgram':
       if (profile.dialect !== 'deepgram')
         throw new Error(`Profile dialect '${profile.dialect}' does not match access dialect 'deepgram'`);

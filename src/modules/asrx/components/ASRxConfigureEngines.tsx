@@ -20,6 +20,7 @@ import { ButtonServiceAdd } from '~/common/components/ButtonServiceAdd';
 import { CloseablePopup } from '~/common/components/CloseablePopup';
 import { ConfirmIconButton } from '~/common/components/ConfirmIconButton';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
+import { AssemblyAIIcon } from '~/common/components/icons/vendors/AssemblyAIIcon';
 import { GeminiIcon } from '~/common/components/icons/vendors/GeminiIcon';
 import { OpenAIIcon } from '~/common/components/icons/vendors/OpenAIIcon';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
@@ -33,6 +34,11 @@ import { PhRamble } from '~/common/components/icons/phosphor/PhRamble';
 
 
 const VENDOR_INFO: { [key in DASRxVendorType]: { label: string; description: string; icon: React.ElementType } } = {
+  assemblyai: {
+    label: 'AssemblyAI',
+    description: 'Sync / Dictation / Pre-recorded',
+    icon: AssemblyAIIcon,
+  },
   deepgram: {
     label: 'Deepgram',
     description: 'Specialized ASR, fast',

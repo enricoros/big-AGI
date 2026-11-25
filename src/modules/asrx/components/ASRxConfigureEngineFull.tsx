@@ -16,9 +16,10 @@ import { GoodModal } from '~/common/components/modals/GoodModal';
 import { modelPickOrAuto } from '~/common/util/modelPickUtils';
 import { useToggleableBoolean } from '~/common/util/hooks/useToggleableBoolean';
 
-import type { DASRxEngine, DASRxEngineAny, DASRxVendorType, DCredentialsApiKey, DProfileDeepgram, DProfileGemini, DProfileOpenAI } from '../asrx.types';
+import type { DASRxEngine, DASRxEngineAny, DASRxVendorType, DCredentialsApiKey, DProfileAssemblyAI, DProfileDeepgram, DProfileGemini, DProfileOpenAI } from '../asrx.types';
 import { ASRX_DEFAULTS, ASRX_MODELS } from '../asrx.config';
 import { ASRxEngineTestButton, ASRxEngineTestResultLine, useASRxEngineTest } from './ASRxEngineTest';
+import { ASRxVendorAssemblyAI } from '../vendors/assemblyai.vendor';
 import { ASRxVendorDeepgram } from '../vendors/deepgram.vendor';
 import { ASRxVendorGemini } from '../vendors/gemini.vendor';
 import { ASRxVendorOpenAI } from '../vendors/openai.vendor';
@@ -41,7 +42,9 @@ export function ASRxConfigureEngineFull(props: {
 
   // Advanced toggle (manual only) lifted here so it can share the bottom row with Delete
   // off-default values stay visible even with the toggle closed (see ManualCredentials)
-  const manualHasHost = isManual && engine.credentials.type === 'api-key' && !!engine.credentials.apiHost;
+  // AssemblyAI has no host field: the Region option picks the hosts of its three APIs
+  const manualHostField = isManual && engine.vendorType !== 'assemblyai';
+  const manualHasHost = manualHostField && engine.credentials.type === 'api-key' && !!engine.credentials.apiHost;
   const advanced = useToggleableBoolean();
 
 
@@ -71,7 +74,9 @@ export function ASRxConfigureEngineFull(props: {
         isCollapsible={false}
       >
         <Box sx={_styles.sectionBody}>
-          {engine.vendorType === 'deepgram' ? (
+          {engine.vendorType === 'assemblyai' ? (
+            <AssemblyAIParameters engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
+          ) : engine.vendorType === 'deepgram' ? (
             <DeepgramParameters engine={engine} onUpdate={onUpdate} />
           ) : engine.vendorType === 'gemini' ? (
             <GeminiParameters engine={engine} onUpdate={onUpdate} isMobile={isMobile} />
@@ -112,12 +117,12 @@ export function ASRxConfigureEngineFull(props: {
               engine={engine}
               credentials={engine.credentials}
               onUpdate={onUpdate}
-              advancedOn={advanced.on || manualHasHost}
+              advancedOn={manualHostField && (advanced.on || manualHasHost)}
             />
           )}
 
-          {/* Advanced toggle (manual only) */}
-          {isManual && (
+          {/* Advanced toggle (manual, when there is a host field) */}
+          {manualHostField && (
             <Box sx={_styles.bottomRow}>
               <Typography
                 level='body-xs'
@@ -281,6 +286,143 @@ function PersonalDictionaryRow({ show, terms, description, onSave }: {
         onClose={() => setOpen(false)}
       />
     )}
+  </>;
+}
+
+
+// --- AssemblyAI parameters ---
+
+// rates on hover, from the AssemblyAI pricing page - each API bills by the length of the audio
+const _ASSEMBLYAI_API_OPTIONS = [
+  { value: 'auto', label: 'Auto', description: 'Best fit', tooltip: 'Sync, $0.30 per hour; Pre-recorded past 20 min, for speaker labels and other languages' },
+  { value: 'dictation', label: 'Dictation', description: 'Cleaned up', tooltip: 'Fillers removed, $0.62 per hour; Pre-recorded past 20 min' },
+  { value: 'prerecorded', label: 'Pre-recorded', description: 'Cheapest', tooltip: '$0.21 per hour; dictionary +$0.05, context +$0.05, speaker labels +$0.02; slower on short takes' },
+] as const;
+
+function AssemblyAIParameters({ engine, onUpdate, isMobile }: {
+  engine: DASRxEngine<'assemblyai'>;
+  onUpdate: (updates: Partial<DASRxEngineAny>) => void;
+  isMobile: boolean;
+}) {
+
+  const { profile } = engine;
+  const isDictation = profile.api === 'dictation';
+
+  // advanced starts closed; features off their default stay visible individually below
+  const advanced = useToggleableBoolean();
+
+  const handleProfileUpdate = React.useCallback((patch: Partial<DProfileAssemblyAI>) => {
+    onUpdate({ profile: { ...profile, ...patch } });
+  }, [onUpdate, profile]);
+
+  // any parameter off its default (region, context, instruction and dictionary are kept by the reset)
+  const hasUserParameters = !!profile.api || !!profile.language || !!profile.rewriteMode || !!profile.diarize;
+
+  const handleResetParameters = React.useCallback(() => {
+    onUpdate({
+      profile: {
+        ...ASRxVendorAssemblyAI.getDefaultProfile(),
+        ...(profile.region && { region: profile.region }),
+        ...(profile.prompt && { prompt: profile.prompt }),
+        ...(profile.instruction && { instruction: profile.instruction }),
+        ...(profile.keywords?.length && { keywords: profile.keywords }),
+      },
+    });
+  }, [onUpdate, profile.instruction, profile.keywords, profile.prompt, profile.region]);
+
+  const keywordsCount = profile.keywords?.length ?? 0;
+
+  return <>
+
+    {/* API - the routing policy: any pick moves to Pre-recorded for what it cannot take */}
+    <FormChipControl<'auto' | NonNullable<DProfileAssemblyAI['api']>>
+      title='API'
+      alignEnd
+      options={_ASSEMBLYAI_API_OPTIONS}
+      value={profile.api ?? 'auto'}
+      onChange={value => handleProfileUpdate({ api: value === 'auto' ? undefined : value })}
+    />
+
+    {/* Language(s) */}
+    <FormTextField
+      autoCompleteId='asrx-assemblyai-language'
+      title='Language'
+      description={isMobile ? undefined : `'en' or 'en,it' - blank = auto`}
+      placeholder='(auto-detect)'
+      value={profile.language ?? ''}
+      onChange={text => handleProfileUpdate({ language: text || undefined })}
+      inputSx={{ maxWidth: 210 }}
+    />
+
+    {/* Context */}
+    <FormTextField
+      autoCompleteId='asrx-assemblyai-prompt'
+      title='Context'
+      description={isMobile ? undefined : 'What the audio is about'}
+      placeholder='Optional - topic or setting'
+      value={profile.prompt ?? ''}
+      onChange={text => handleProfileUpdate({ prompt: text || undefined })}
+      inputSx={{ maxWidth: 210 }}
+    />
+
+    {/* Dictation cleanup */}
+    {isDictation && (advanced.on || !!profile.rewriteMode) && (
+      <FormChipControl<NonNullable<DProfileAssemblyAI['rewriteMode']>>
+        title='Cleanup'
+        alignEnd
+        options={[
+          { value: 'fast', label: 'Fast', description: 'Lowest latency' },
+          { value: 'smart', label: 'Smart', description: 'Follows instructions', tooltip: 'Follows a detailed Instruction more reliably, at higher latency' },
+        ]}
+        value={profile.rewriteMode ?? 'fast'}
+        onChange={value => handleProfileUpdate({ rewriteMode: value === 'fast' ? undefined : value })}
+      />
+    )}
+
+    {isDictation && (advanced.on || !!profile.instruction) && (
+      <FormTextField
+        autoCompleteId='asrx-assemblyai-instruction'
+        title='Instruction'
+        description={isMobile ? undefined : 'Replaces the default cleanup'}
+        placeholder='e.g. A bulleted list'
+        value={profile.instruction ?? ''}
+        onChange={text => handleProfileUpdate({ instruction: text || undefined })}
+        inputSx={{ maxWidth: 210 }}
+      />
+    )}
+
+    {(advanced.on || !!profile.diarize) && (
+      <FormSwitchControl
+        title='Label Speakers'
+        description='Runs on Pre-recorded'
+        checked={!!profile.diarize}
+        onChange={checked => handleProfileUpdate({ diarize: checked || undefined })}
+      />
+    )}
+
+    {(advanced.on || !!profile.region) && (
+      <FormChipControl<'default' | NonNullable<DProfileAssemblyAI['region']>>
+        title='Region'
+        description='Data residency'
+        alignEnd
+        options={[
+          { value: 'default', label: 'Global' },
+          { value: 'us', label: 'US' },
+          { value: 'eu', label: 'EU' },
+        ]}
+        value={profile.region ?? 'default'}
+        onChange={value => handleProfileUpdate({ region: value === 'default' ? undefined : value })}
+      />
+    )}
+
+    <PersonalDictionaryRow
+      show={advanced.on || keywordsCount > 0}
+      terms={profile.keywords ?? []}
+      onSave={terms => handleProfileUpdate({ keywords: terms.length ? terms : undefined })}
+    />
+
+    <PanelFooter engine={engine} advanced={advanced} showReset={hasUserParameters} onReset={handleResetParameters} />
+
   </>;
 }
 

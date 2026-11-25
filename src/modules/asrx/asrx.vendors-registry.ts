@@ -4,6 +4,7 @@ import type { DASRxEngineAny, DASRxVendorType } from './asrx.types';
 import type { ASRxProtocol, IASRxVendor, IASRxVendorAny } from './IASRxVendor';
 
 // vendor imports
+import { ASRxVendorAssemblyAI } from './vendors/assemblyai.vendor';
 import { ASRxVendorDeepgram } from './vendors/deepgram.vendor';
 import { ASRxVendorGemini } from './vendors/gemini.vendor';
 import { ASRxVendorOpenAI } from './vendors/openai.vendor';
@@ -12,6 +13,7 @@ import { ASRxVendorOpenAI } from './vendors/openai.vendor';
 // registry of ASRx Vendors, for engine creation, priority ranking, etc.
 
 const _ASRX_VENDOR_REGISTRY: { [key in DASRxVendorType]: IASRxVendor<key> } = {
+  assemblyai: ASRxVendorAssemblyAI,
   deepgram: ASRxVendorDeepgram,
   gemini: ASRxVendorGemini,
   openai: ASRxVendorOpenAI,
