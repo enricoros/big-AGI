@@ -2,10 +2,11 @@
 // Resolves Gemini/Vertex AI grounding redirect links through the server, the only side that can read the redirects (the
 // host sends no CORS headers), and rewrites them in place in text parts and citations.
 
+import type { MaybePromise } from '~/common/types/useful.types';
 import { apiAsync } from '~/common/util/trpc.client';
 import { delayOrAbort } from '~/common/util/abortUtils';
 
-import { DMessageFragment, isTextContentFragment, isVoidAnnotationsFragment, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
+import { createPlaceholderVoidFragment, DMessageFragment, DMessageVoidFragment, isTextContentFragment, isVoidAnnotationsFragment, updateFragmentWithEditedText } from '~/common/stores/chat/chat.fragments';
 
 import type { VertexLinkResolution, VertexLinkUnresolved } from './vertexai.types';
 import { VERTEX_GROUNDING_REDIRECT_PREFIX, VERTEX_GROUNDING_REDIRECT_REGEX } from './vertexai.types';
@@ -42,18 +43,25 @@ export function vertexLinksInFragments(fragments: readonly DMessageFragment[]) {
  * Resolves the redirect links of the fragments and returns the fragments it rewrote, under their fIds. Rewritten text loses
  * its vendor state, as an edit does: signatures cover the original. A rewritten citation keeps its redirect in vndGemVertexUrl.
  * Idempotent: a rewritten link no longer matches; a link that fails stays as it was, for the chip to retry.
+ * While links are retried, onProgress gets a placeholder to show after the fragments: one fId across rounds, the count updated.
  */
-export async function vertexLinksResolveFragments(fragments: readonly DMessageFragment[], signal?: AbortSignal) {
-  const { destinations, unresolved } = await vertexLinksResolveUrls(vertexLinksInFragments(fragments), signal);
+export async function vertexLinksResolveFragments(fragments: readonly DMessageFragment[], signal?: AbortSignal, onProgress?: (placeholder: DMessageVoidFragment) => MaybePromise<void>) {
+  let placeholder: DMessageVoidFragment | undefined;
+  const onRetry = onProgress && ((pendingCount: number) => {
+    const next = createPlaceholderVoidFragment(`Resolving ${pendingCount} Vertex AI link${pendingCount !== 1 ? 's' : ''}...`);
+    return onProgress(placeholder = placeholder ? { ...next, fId: placeholder.fId } : next);
+  });
+  const { destinations, unresolved } = await vertexLinksResolveUrls(vertexLinksInFragments(fragments), signal, onRetry);
   const rewritten = !destinations.size ? [] : fragments.flatMap(fragment => _rewriteFragment(fragment, destinations) ?? []);
   return { rewritten, unresolved };
 }
 
 /**
- * Resolves redirect links in rounds, each asking again for the links still unknown, for up to a minute. Never throws; logs why
- * links stay unresolved.
+ * Resolves redirect links in rounds, each asking again for the links still unknown, for up to a minute. Throws only what onRetry
+ * throws; logs why links stay unresolved. onRetry is awaited before each retry round with the count still unknown: never called
+ * when the first round answers every link.
  */
-export async function vertexLinksResolveUrls(urls: Iterable<string>, signal?: AbortSignal) {
+export async function vertexLinksResolveUrls(urls: Iterable<string>, signal?: AbortSignal, onRetry?: (pendingCount: number) => MaybePromise<void>) {
   const destinations = new Map<string, string>();
   const unresolved = new Map<string, VertexLinkUnresolved>();
   for (const url of urls) {
@@ -67,6 +75,7 @@ export async function vertexLinksResolveUrls(urls: Iterable<string>, signal?: Ab
     const pending = [...unresolved.values()].filter(({ outcome }) => outcome === 'unknown').map(({ url }) => url);
     const delayMs = !round ? 0 : RETRY_DELAYS_MS[Math.min(round, RETRY_DELAYS_MS.length) - 1];
     if (!pending.length || Date.now() - startMs + delayMs + CALL_CUTOFF_MS > RESOLVE_BUDGET_MS) break;
+    if (round && !signal?.aborted) await onRetry?.(pending.length);
     if (await delayOrAbort(delayMs, signal) === 'aborted') break;
     for (const answer of await _askServer(pending, signal)) {
       if (answer.outcome !== 'resolved') {

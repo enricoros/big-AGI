@@ -718,18 +718,18 @@ export async function aixChatGenerateContent_DMessage_orThrow<TServiceSettings e
   _llToDMessageGuts(llFinal, dMessage);
   const metrics = _finalizeLlmMetricsWithCosts(cgMetricsLg, llm, llmParameters, `aix_chatgenerate_content-${aixContext.name}`);
   if (metrics) dMessage.generator = { ...dMessage.generator, metrics };
-  dMessage.pendingIncomplete = false;
 
-  // [#1114] resolve Gemini/Vertex AI grounding redirect links before the final update, so every caller (chat, Beam, reattach)
-  // gets them with completion, whatever the outcome: failed and truncated replies show their partial content too. After a user
-  // stop the aborted signal skips the server: only links already resolved in the session are rewritten, the rest stay for the chip.
-  // While links fail, completion waits up to a minute for them (#1270)
+  // [#1114] resolve Vertex AI redirect links before the final update, for every caller and outcome. After a Stop only links known
+  // to the session are rewritten, the rest stay for the chip. While links fail, completion waits up to a minute (#1270), showing
+  // a placeholder that the final update drops
   if (getVndGeminiVertexLinks() === 'resolve') {
-    const { rewritten } = await vertexLinksResolveFragments(dMessage.fragments, clientOptions.abortSignal);
+    const { rewritten } = await vertexLinksResolveFragments(dMessage.fragments, clientOptions.abortSignal,
+      onStreamingUpdate && (placeholder => onStreamingUpdate({ ...dMessage, fragments: [...dMessage.fragments, placeholder] }, false)));
     if (rewritten.length) dMessage.fragments = dMessage.fragments.map(fragment => rewritten.find(({ fId }) => fId === fragment.fId) ?? fragment);
   }
 
-  // final update
+  // final update: complete only now, the link pass above still counts as generation
+  dMessage.pendingIncomplete = false;
   await onStreamingUpdate?.(dMessage, true);
 
   // return DMessageGuts spread + outcome
