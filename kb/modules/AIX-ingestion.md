@@ -114,7 +114,7 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **R11** (low) Responses message items without a phase merge into one fragment; a pending phase can land on another item's text (synthetic; GPT-6 tags every item)
 - [ ] **R12** (low) Generated PNGs re-encoded to WebP or JPEG at q0.98 unless Labs lossless images is on: hits code-execution charts (Gemini image models return JPEG) - `onAppendInlineImage`
 - [ ] **R14** (low) One `upstreamContainer` per message, last write wins; handle dropped without `expiresAt` (synthetic)
-- [ ] **R15** (low) Opt-in Vertex redirect resolution rewrites URLs in text and citations - `vertexLinksAutoResolveFragments`
+- [ ] **R15** (low) Opt-in Vertex redirect resolution rewrites URLs in text and citations - `vertexLinksResolveFragments`
 - [ ] **R17** (low) A generated-media breadcrumb inherits the media part's Gemini signature, replayed on synthesized text
 
 ### Store

@@ -11,14 +11,13 @@ import type { VertexLinkResolution, VertexLinkUnresolved } from './vertexai.type
 import { VERTEX_GROUNDING_REDIRECT_PREFIX, VERTEX_GROUNDING_REDIRECT_REGEX } from './vertexai.types';
 
 
-// configuration: a complete link answers in 0.2s or not at all, so a fresh attempt recovers it, not a longer wait
+// configuration: the vendor answers a link in about 0.2s; what fails is the way there and back (a dropped server fetch, an
+// answer reaching the browser past the call cutoff), and both clear on a later round
 const MAX_URLS_PER_CALL = 16; // a quarter of the server limit: more calls in parallel, shorter connection queue per call
-const ROUNDS = [ // each round asks again for the links still unknown; about 7s at worst, one round trip when all answer
-  { delayMs: 0, deadlineMs: 2000 },
-  { delayMs: 250, deadlineMs: 2000 },
-  { delayMs: 1000, deadlineMs: 2000 },
-];
-const CALL_MARGIN_MS = 1000; // past the server deadline, for a lost call
+const SERVER_DEADLINE_MS = 2000; // the server answers by then, 'unknown' for the links still waiting
+const CALL_CUTOFF_MS = 8000; // a call without an answer by then is lost; in production a burst's answer took 4.2s from arrival
+const RETRY_DELAYS_MS = [1000, 5000]; // before each round for the links still unknown, the last one repeating
+const RESOLVE_BUDGET_MS = 60_000; // no round starts that could end later: one round trip when all answer (#1270)
 
 const _sessionDestinations = new Map<string, string>(); // shared by the live tooltips, the completion pass and the chip
 
@@ -50,7 +49,10 @@ export async function vertexLinksResolveFragments(fragments: readonly DMessageFr
   return { rewritten, unresolved };
 }
 
-/** Resolves redirect links in rounds, each asking again for the links still unknown. Never throws; logs why links stay unresolved. */
+/**
+ * Resolves redirect links in rounds, each asking again for the links still unknown, for up to a minute. Never throws; logs why
+ * links stay unresolved.
+ */
 export async function vertexLinksResolveUrls(urls: Iterable<string>, signal?: AbortSignal) {
   const destinations = new Map<string, string>();
   const unresolved = new Map<string, VertexLinkUnresolved>();
@@ -60,10 +62,13 @@ export async function vertexLinksResolveUrls(urls: Iterable<string>, signal?: Ab
     else unresolved.set(url, { url, outcome: 'unknown', reason: 'not asked' });
   }
 
-  for (const { delayMs, deadlineMs } of ROUNDS) {
+  const startMs = Date.now();
+  for (let round = 0; ; round++) {
     const pending = [...unresolved.values()].filter(({ outcome }) => outcome === 'unknown').map(({ url }) => url);
-    if (!pending.length || await delayOrAbort(delayMs, signal) === 'aborted') break;
-    for (const answer of await _askServer(pending, deadlineMs, signal)) {
+    const delayMs = !round ? 0 : RETRY_DELAYS_MS[Math.min(round, RETRY_DELAYS_MS.length) - 1];
+    if (!pending.length || Date.now() - startMs + delayMs + CALL_CUTOFF_MS > RESOLVE_BUDGET_MS) break;
+    if (await delayOrAbort(delayMs, signal) === 'aborted') break;
+    for (const answer of await _askServer(pending, signal)) {
       if (answer.outcome !== 'resolved') {
         unresolved.set(answer.url, answer);
         continue;
@@ -99,18 +104,18 @@ function _rewriteFragment(fragment: DMessageFragment, destinations: ReadonlyMap<
   return null;
 }
 
-/** Asks in parallel chunks under one deadline. Every url gets an answer: a failed call answers 'unknown' for its chunk, with why. */
-async function _askServer(urls: string[], deadlineMs: number, signal?: AbortSignal) {
+/** Asks in parallel chunks under one cutoff. Every url gets an answer: a failed call answers 'unknown' for its chunk, with why. */
+async function _askServer(urls: string[], signal?: AbortSignal) {
   const controller = new AbortController();
   const abort = () => controller.abort();
-  const timer = setTimeout(abort, deadlineMs + CALL_MARGIN_MS);
+  const timer = setTimeout(abort, CALL_CUTOFF_MS);
   signal?.addEventListener('abort', abort);
   try {
     const chunks: string[][] = [];
     for (let i = 0; i < urls.length; i += MAX_URLS_PER_CALL)
       chunks.push(urls.slice(i, i + MAX_URLS_PER_CALL));
     const answers = await Promise.all(chunks.map(chunk =>
-      apiAsync.googleSearch.resolveGroundingRedirects.mutate({ urls: chunk, deadlineMs }, { signal: controller.signal })
+      apiAsync.googleSearch.resolveGroundingRedirects.mutate({ urls: chunk, deadlineMs: SERVER_DEADLINE_MS }, { signal: controller.signal })
         .then(({ resolutions }) => resolutions)
         .catch((error): VertexLinkResolution[] => chunk.map(url => ({
           url, outcome: 'unknown',
