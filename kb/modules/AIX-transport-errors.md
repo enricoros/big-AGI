@@ -18,6 +18,20 @@ Every failure becomes one record, `DAixIssue` (`src/modules/aix/shared/aix.issue
 
 The failure texts live in one place, `src/common/util/fetchFailures.ts`, as checks by who throws them: `isBrowserNetworkError`, `isNodeStreamTerminated`, `isEdgeConnectionLost`, `isTRPCNetworkError` (bare or wrapped in a `TRPCClientError`), `isTRPCStreamClosedEarly`, plus `isBrowserOffline`. Each site sits on one leg, uses the checks of that leg, and builds its record: the sentence is the code's, the engine text goes to `detail`.
 
+## tRPC's own errors
+
+The server classifies none of them: `errorFormatter` (`src/server/trpc/trpc.server.ts`) only reshapes the envelope, and the route handler's `onError` logs in development only. The client files them by `data.code` (`aixClassifyStreamingError`).
+
+| Source | Envelope code | Record |
+|---|---|---|
+| The input fails the procedure's zod schema | `BAD_REQUEST`; the message is zod's JSON | `relay-rejected`, the code as `causeCode`, the message as detail |
+| A code a middleware sets (`UNAUTHORIZED`, `TOO_MANY_REQUESTS`, `TIMEOUT`, ...); none is installed | that code | `relay-rejected`, advice by code (`_REJECTED_NOT_A_BUG`, `_isAuthRejection` in `aix.issues.policy.ts`) |
+| Context creation throws, or the procedure throws outside the executor | `INTERNAL_SERVER_ERROR` | `aix-unknown`; after the verdict, logged only |
+
+- `errorFormatter` removes the stack and adds `zodError` (no reader) and, for a `TRPCFetcherError`, `aixFCategory`, `aixFHttpStatus`, `aixFNetError`. Only `aixFHttpStatus` is read, by two 404 checks (`BlockPartHostedResource.tsx`, `geminiFiles.client.ts`)
+- `TRPCFetcherError` is a `TRPCError` with code `BAD_REQUEST`, `UNPROCESSABLE_CONTENT` or `CLIENT_CLOSED_REQUEST`. The executor catches it and builds `dispatch-*`; one that escaped a streaming procedure would read `relay-rejected`
+- Other procedures (model lists, images, speech, browse, `upstreamDeleteContent`) are not classified: the caller gets the `TRPCClientError` and shows its message; no record
+
 ## Browser fetch failure texts
 
 All are `TypeError`; the Fetch spec fixes the type, not the text. Measured with a local server that fails on purpose.
@@ -45,7 +59,7 @@ The record's code per event; the sentence is the code's text in `aix.issues.ts`,
 | Front-door 413 | `relay-http` 413, the Request Too Large card | provider 413 -> `dispatch-http` 413 |
 | Front-door 5xx, 429, 401, 403, 404 (a gateway, a firewall, a platform limit), plain or JSON | `relay-http` with the status: 'Try again in a moment.', or 'Reload the app, then try again.' for 401/403/404 | - |
 | HTML instead of JSON | `relay-html` | - |
-| Our server's procedure throws | `aix-unknown`, `causeCode` `INTERNAL_SERVER_ERROR` (an executor throw is `dispatch-unknown` before it gets there) | `dispatch-unknown` |
+| Our server's procedure throws, or rejects the input | `aix-unknown` or `relay-rejected`: tRPC's own errors, above (an executor throw is `dispatch-unknown` before it gets there) | `dispatch-unknown` |
 | Provider closes the body with no end event and no finish reason | `dispatch-cutoff` | same |
 | Provider ends (`[DONE]`) without a finish reason | `model-unfinished` notice, outcome completed | same |
 | Stop | aborted, no record stored (the executor's closing `dispatch-aborted` is not applied) | same |
@@ -84,6 +98,7 @@ On 11.19.0 the 300s cut surfaced as a minified `TypeError` (`i is not iterable` 
 ## Open
 
 - The Stop leak above: the server cannot learn about the abort on Vercel; a fix needs another signal (a stop call, or the provider's own cancel).
+- A procedure throw leaves no server log in production: the route's `onError` is development-only. `zodError` has no reader, so a rejected input shows zod's JSON.
 - Client-side retry is off (`new AixStreamRetry(0, 0)`): its policy is open. `shallRetry` reads the record's policy `recovery` and `httpStatus`; an abort during the backoff ends `aborted`; a throw after the verdict is not retried.
 
 ## Re-measuring
