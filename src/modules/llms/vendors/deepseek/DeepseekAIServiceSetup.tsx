@@ -23,9 +23,9 @@ const DEEPSEEK_REG_LINK = 'https://platform.deepseek.com/api_keys';
 
 type ProtocolChoice = 'auto' | 'messages' | 'chat-completions';
 const _protocolOptions = (autoIsMessages: boolean): FormSelectOption<ProtocolChoice>[] => [
-  { value: 'auto', label: 'Auto', description: autoIsMessages ? 'Anthropic Messages' : 'Chat Completions: custom host' },
-  { value: 'messages', label: 'Anthropic Messages', description: 'Served at /anthropic' },
-  { value: 'chat-completions', label: 'Chat Completions', description: 'OpenAI-compatible' },
+  { value: 'auto', label: 'Auto', description: autoIsMessages ? 'Anthropic Messages, with web search' : 'Chat Completions (custom host), no web search' },
+  { value: 'messages', label: 'Anthropic Messages', description: 'With web search' },
+  { value: 'chat-completions', label: 'Chat Completions', description: 'No web search' },
 ];
 
 
@@ -83,7 +83,11 @@ export function DeepseekAIServiceSetup(props: { serviceId: DModelsServiceId }) {
       tooltip={`Auto calls api.deepseek.com with Anthropic Messages, and any other host with Chat Completions.\n\nSet Anthropic Messages for a proxy that serves it, or Chat Completions to go back to it on DeepSeek's own host.`}
       options={_protocolOptions(llmsDeepseekWire(undefined, deepseekHost) === 'messages')}
       value={dsProtocol ?? 'auto'}
-      onChange={value => updateSettings({ deepseekProtocol: value === 'auto' ? undefined : value })}
+      onChange={value => {
+        // the models are listed for the wire: list again (the listing reads the settings just written)
+        updateSettings({ deepseekProtocol: value === 'auto' ? undefined : value });
+        void refetch();
+      }}
     />}
 
     {showAdvanced && <SetupFormClientSideToggle

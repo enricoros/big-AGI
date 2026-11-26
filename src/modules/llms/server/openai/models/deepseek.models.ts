@@ -1,5 +1,6 @@
 import { LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Reasoning, LLM_IF_OAI_Vision } from '~/common/stores/llms/llms.types';
 
+import type { LlmsDeepseekWire } from '../../../shared/llm.isomorphic';
 import type { ModelDescriptionSchema } from '../../llm.server.types';
 
 import { llmsDefineManualMappings, fromManualMapping, llmsLabelUncurated } from '../../models.mappings';
@@ -9,6 +10,14 @@ export type LlmsDeepseekModelId = typeof _knownDeepseekChatModels[number]['idPre
 
 
 const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
+
+// [DeepSeek, 2026-11-13] Web tools: deepseek_web_search (quick with thinking off, a multi-step deep search with it on, by image when
+// the message has one) and deepseek_read_url (the links of the last user message) - https://api-docs.deepseek.com/guides/web_tools
+// - deepseek-flash only: a 400 on deepseek-v4-pro ("unavailable for model deepseek-v4-pro. Please use deepseek-flash instead")
+// - free: no per-call fee, the tokens of every inference step are billed (a deep search bills 20K-400K input tokens, mostly cache hits)
+// - wired on the Messages wire, so the two parameters are listed only when the service speaks it (deepseekModelToModelDescription);
+//   request and stream contract in kb/modules/LLM-deepseek-messages.md
+const _messagesWireParamIds: ReadonlySet<string> = new Set(['llmVndDeepseekWebSearch', 'llmVndDeepseekReadUrl']);
 
 // [DeepSeek, 2026-10-17] V4.1-Flash-1017: re-post-trained, swapped IN PLACE - https://api-docs.deepseek.com/news/news261017/
 // - Same 'deepseek-flash' id, arch and price; the pricing page MODEL VERSION row reads DeepSeek-V4.1-Flash-1017. Self-feedback
@@ -103,6 +112,8 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision, LLM_IF_OAI_Reasoning],
     parameterSpecs: [
       { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] }, // documented low/high/max, live-ablated 2026-10-21
+      { paramId: 'llmVndDeepseekWebSearch' },
+      { paramId: 'llmVndDeepseekReadUrl' },
     ],
     maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
     chatPrice: { input: 0.3, output: 1.2, cache: { read: 0.006 } }, // peak card; images billed as input tokens by dimensions
@@ -182,8 +193,9 @@ export function deepseekModelFilter(deepseekModelId: string) {
   return !_unsupportedModelIds.includes(deepseekModelId);
 }
 
-export function deepseekModelToModelDescription(deepseekModelId: string): ModelDescriptionSchema {
-  return fromManualMapping(_knownDeepseekChatModels, deepseekModelId, undefined, undefined, {
+/** `wire` is the one the service speaks (llmsDeepseekWire): what only the Messages wire carries is not listed on Chat Completions */
+export function deepseekModelToModelDescription(deepseekModelId: string, wire: LlmsDeepseekWire): ModelDescriptionSchema {
+  const description = fromManualMapping(_knownDeepseekChatModels, deepseekModelId, undefined, undefined, {
     idPrefix: deepseekModelId,
     label: llmsLabelUncurated(deepseekModelId.replaceAll(/[_-]/g, ' ')),
     description: 'New DeepSeek arrival, not yet curated - capabilities and context window unverified.',
@@ -191,6 +203,8 @@ export function deepseekModelToModelDescription(deepseekModelId: string): ModelD
     interfaces: [LLM_IF_OAI_Chat],
     hidden: true,
   });
+  return (wire === 'messages' || !description.parameterSpecs) ? description
+    : { ...description, parameterSpecs: description.parameterSpecs.filter(spec => !_messagesWireParamIds.has(spec.paramId)) };
 }
 
 export function deepseekModelSort(a: ModelDescriptionSchema, b: ModelDescriptionSchema) {

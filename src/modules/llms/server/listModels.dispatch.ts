@@ -44,7 +44,7 @@ import { fastAPIHeuristic, fastAPIModels } from './openai/models/fastapi.models'
 import { fireworksAIHeuristic, fireworksAIModelsToModelDescriptions } from './openai/models/fireworksai.models';
 import { groqModelFilter, groqModelSortFn, groqModelToModelDescription, groqValidateModelDefs_DEV } from './openai/models/groq.models';
 import { llmapiHeuristic, llmapiModelsToModelDescriptions } from './openai/models/llmapi.models';
-import { llmsIsNativeOpenAIHost } from '../shared/llm.isomorphic';
+import { llmsDeepseekWire, llmsIsNativeOpenAIHost } from '../shared/llm.isomorphic';
 import { minimaxHeuristic, minimaxModelsToModelDescriptions } from './openai/models/minimax.models';
 import { nousResearchHeuristic, nousResearchModelsToModelDescriptions } from './openai/models/nousresearch.models';
 import { novitaHeuristic, novitaModelsToModelDescriptions } from './openai/models/novita.models';
@@ -492,7 +492,7 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
             case 'deepseek':
               return maybeModels
                 .filter(({ id }) => deepseekModelFilter(id))
-                .map(({ id }) => deepseekModelToModelDescription(id))
+                .map(({ id }) => deepseekModelToModelDescription(id, llmsDeepseekWire(access.dsProtocol, access.oaiHost)))
                 // an inject step lived here twice (V3.2-Speciale, the V4.1-Flash beta) for ids /models never listed
                 .sort(deepseekModelSort);
 
