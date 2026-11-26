@@ -3,6 +3,8 @@ import type { LiveFileId } from '~/common/livefile/liveFile.types';
 import { agiId } from '~/common/util/idUtils';
 import { ellipsizeMiddle, humanReadableHyphenated } from '~/common/util/textUtils';
 
+import { aixIssueFails, aixIssuePlainText, type DAixIssue } from '~/modules/aix/shared/aix.issues';
+
 
 /// Fragments - forward compatible ///
 
@@ -38,6 +40,7 @@ export type DMessageContentFragment = _DMessageFragmentWrapper<'content',
   | DMessageToolResponsePart      // shown to dev only, response of the llm
   | DMessageHostedResourcePart    // provider-hosted resource (e.g. Anthropic file from Skills) with download affordance
   | DMessageErrorPart             // red message, e.g. non-content application issues
+  | DMessageAixIssuePart          // an issue of a chat generation, as its typed record
   | _SentinelPart
 >;
 
@@ -137,6 +140,13 @@ type _DMessageFragmentRspState = {
 export type DMessageTextPart = { pt: 'text', text: string };
 
 export type DMessageErrorPart = { pt: 'error', error: string, hint?: DMessageErrorPartHint };
+
+/**
+ * An issue of a chat generation, where it arrived, whatever its effect: the record is the data, every reader derives from
+ * it (aix.issues.ts, aix.issues.policy.ts). Not editable. Copied verbatim (structuredClone): a field or code a newer build
+ * added must survive this build.
+ */
+export type DMessageAixIssuePart = { pt: 'aix.issue', issue: DAixIssue };
 
 type DMessageErrorPartHint =
   // AIX streaming errors (from aixClassifyStreamingError)
@@ -452,6 +462,10 @@ export function isErrorPart(part: DMessageContentFragment['part']) {
   return part.pt === 'error';
 }
 
+export function isAixIssuePart(part: DMessageContentFragment['part']): part is DMessageAixIssuePart {
+  return part.pt === 'aix.issue';
+}
+
 export function isToolInvocationPart(part: DMessageContentFragment['part']): part is DMessageToolInvocationPart {
   return part.pt === 'tool_invocation';
 }
@@ -466,6 +480,31 @@ export function isToolResponseFunctionCallPart(part: DMessageContentFragment['pa
 
 export function isHostedResourcePart(part: DMessageContentFragment['part']): part is DMessageHostedResourcePart {
   return part.pt === 'hosted_resource';
+}
+
+
+/// Helpers - Failure text: what a message says failed, for callers that show or throw it
+
+/** An error part's text, or the plain text of an issue that failed the generation; null for anything else */
+export function fragmentFailureText(fragment: Immutable<DMessageFragment>): string | null {
+  if (fragment.ft !== 'content') return null;
+  const part = fragment.part;
+  if (part.pt === 'error') return part.error;
+  if (part.pt === 'aix.issue') return aixIssueFails(part.issue) ? aixIssuePlainText(part.issue) : null;
+  return null;
+}
+
+/** The failure of a message: the issue that failed its generation (the first, on a message joined from several), else the last error part */
+export function messageFailureText(fragments: Immutable<DMessageFragment[]>): string | null {
+  for (const fragment of fragments)
+    if (fragment.ft === 'content' && fragment.part.pt === 'aix.issue' && aixIssueFails(fragment.part.issue))
+      return aixIssuePlainText(fragment.part.issue);
+  for (let i = fragments.length - 1; i >= 0; i--) {
+    const fragment = fragments[i];
+    if (fragment.ft === 'content' && fragment.part.pt === 'error')
+      return fragment.part.error;
+  }
+  return null;
 }
 
 export function isAnnotationsPart(part: DMessageVoidFragment['part']) {
@@ -492,6 +531,11 @@ export function createTextContentFragment(text: string): DMessageContentFragment
 
 export function createErrorContentFragment(error: string, hint?: DMessageErrorPartHint): DMessageContentFragment {
   return _createContentFragment(_create_Error_Part(error, hint));
+}
+
+/** The record is stored as given: built for this generation, never rebuilt */
+export function createAixIssueContentFragment(issue: DAixIssue): DMessageContentFragment {
+  return _createContentFragment({ pt: 'aix.issue', issue });
 }
 
 export function createZyncAssetReferenceContentFragment(assetUuid: ZYNC_Entity.UUID, refSummary: string | undefined, assetType: 'image' | 'audio', legacyImageRefPart?: DMessageZyncAssetReferencePart['_legacyImageRefPart']): DMessageContentFragment {
@@ -619,8 +663,9 @@ function _createSentinelFragment(): _SentinelFragment {
 }
 
 
+/** `skipVoid`: a copy made to send again (attach a message, send as a new message) also drops issue parts: they are not content to resend */
 export function duplicateDMessageFragments(fragments: Immutable<DMessageFragment[]>, skipVoid: boolean): DMessageFragment[] {
-  return (!skipVoid ? fragments : fragments.filter(f => f.ft !== 'void')).map(_duplicateFragment);
+  return (!skipVoid ? fragments : fragments.filter(f => f.ft !== 'void' && !(f.ft === 'content' && f.part.pt === 'aix.issue'))).map(_duplicateFragment);
 }
 
 /**
@@ -751,6 +796,9 @@ function _duplicate_Part<TPart extends (DMessageContentFragment | DMessageAttach
 
     case 'error':
       return _create_Error_Part(part.error, part.hint) as TPart;
+
+    case 'aix.issue':
+      return structuredClone(part) as TPart; // verbatim: never rebuilt by field list
 
     case 'reference':
       const rt = part.rt;
@@ -1019,6 +1067,7 @@ export function updateFragmentWithEditedText(
 
       case 'image_ref':
       case 'hosted_resource':
+      case 'aix.issue': // a record: deleted, never rewritten
       case '_pt_sentinel':
         // nothing to do here - not editable
         break;

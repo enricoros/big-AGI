@@ -1,4 +1,6 @@
-import { DMessageFragment, isContentFragment, isErrorPart } from './chat.fragments';
+import { aixIssueFails } from '~/modules/aix/shared/aix.issues';
+
+import { DMessageFragment, isAixIssuePart, isContentFragment, isErrorPart } from './chat.fragments';
 import type { DMessage, DMessageGenerator } from './chat.message';
 
 
@@ -7,7 +9,7 @@ import type { DMessage, DMessageGenerator } from './chat.message';
  * The LL outcome (AixChatGenerateTerminal_LL) is this same type: the reassembler derives it from the final message.
  * - 'completed': success - the only one
  * - 'truncated': out of tokens - an error typed apart from 'failed', so it renders as warning rather than danger
- * - 'failed':    error - stop reason 'issue' or 'filter', or a trailing error fragment on a message without a known stop reason
+ * - 'failed':    error - stop reason 'issue' or 'filter'; without a known stop reason, a trailing issue that failed the generation, or error fragment
  * - 'aborted':   stopped by the user - neither success nor error
  */
 export type DMessageTerminalOutcome = 'completed' | 'truncated' | 'failed' | 'aborted';
@@ -55,11 +57,17 @@ export function messageTerminalOutcome(message: Omit<MessageOutcomeSource, 'pend
   if (stopReason !== undefined && Object.hasOwn(_outcomeByStopReason, stopReason))
     return _outcomeByStopReason[stopReason];
   // no stop reason (pre-stop-reason messages, clean ends without a finish reason), or one this build does not know (a newer build or peer):
-  // the last content fragment decides - evidence, not absence; trailing void notices do not weigh in
+  // the last content fragment decides - evidence, not absence; issues that did not fail and trailing void notices do not weigh in.
+  // Content after a failing issue reads completed, as after an error part: a message joined from several generations
+  // (Beam 'Use all', a call transcript) has no stop reason, while one generation an issue failed stores stop reason 'issue'
   for (let i = message.fragments.length - 1; i >= 0; i--) {
     const fragment = message.fragments[i];
-    if (isContentFragment(fragment))
-      return isErrorPart(fragment.part) ? 'failed' : 'completed';
+    if (!isContentFragment(fragment)) continue;
+    if (isAixIssuePart(fragment.part)) {
+      if (aixIssueFails(fragment.part.issue)) return 'failed';
+      continue;
+    }
+    return isErrorPart(fragment.part) ? 'failed' : 'completed';
   }
   return 'completed';
 }

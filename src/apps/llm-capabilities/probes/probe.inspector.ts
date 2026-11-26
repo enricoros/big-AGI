@@ -1,4 +1,5 @@
 import type { DMessageContentFragment, DMessageFragmentVendorState, DMessageVoidFragment } from '~/common/stores/chat/chat.fragments';
+import { fragmentFailureText } from '~/common/stores/chat/chat.fragments';
 
 import type { ProbeOutcome } from './probe.types';
 
@@ -54,6 +55,12 @@ export function inspectFragments(fragments: readonly (DMessageContentFragment | 
         case 'error':
           emittedSequence.push('err');
           if (!firstError) firstError = part.error;
+          break;
+        case 'aix.issue':
+          // an issue that did not fail the generation (a notice, a lost output item) is not the probe's error
+          const failureText = fragmentFailureText(frag);
+          emittedSequence.push(failureText !== null ? 'err' : 'iss');
+          if (!firstError && failureText) firstError = failureText;
           break;
         default:
           emittedSequence.push('?');

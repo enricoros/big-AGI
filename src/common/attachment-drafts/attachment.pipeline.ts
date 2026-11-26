@@ -1061,6 +1061,8 @@ export async function attachmentPerformConversion(
               console.log('Skipping doc part in ego-fragments-inlined:', fragment);
               continue;
             }
+            if (fragment.part.pt === 'aix.issue') // an issue record is not content to send again (never an 'Error' doc)
+              continue;
             const fragmentTitle = `Chat Message: ${attachment.label}`;
             const fragmentCaption = 'From chat: ' + draftEgoData.conversationTitle;
             const fragmentRef = humanReadableHyphenated(refString + '-' + draftEgoData.messageId + '-' + fragment.fId);

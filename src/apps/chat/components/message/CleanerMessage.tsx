@@ -11,6 +11,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 import { DMessage, MESSAGE_FLAG_AIX_SKIP, messageFragmentsReduceText, messageHasUserFlag } from '~/common/stores/chat/chat.message';
 import { messageOutcome, messageOutcomeColor } from '~/common/stores/chat/chat.message.outcome';
+import { aixIssueFails } from '~/modules/aix/shared/aix.issues';
 import { DMessageAttachmentFragment, DMessageFragment, isAttachmentFragment, isContentFragment, isImagePart, isImageRefPart, isZyncAssetImageReferencePart } from '~/common/stores/chat/chat.fragments';
 import { ConfirmIconButton } from '~/common/components/ConfirmIconButton';
 import { PhImageSquare } from '~/common/components/icons/phosphor/PhImageSquare';
@@ -58,6 +59,9 @@ function analyzeMessageFragments(messageFragments: ReadonlyArray<DMessageFragmen
           break;
         case 'error':
           result.errorCount++;
+          break;
+        case 'aix.issue':
+          if (aixIssueFails(fragment.part.issue)) result.errorCount++;
           break;
         case 'reference':
           if (isZyncAssetImageReferencePart(fragment.part))

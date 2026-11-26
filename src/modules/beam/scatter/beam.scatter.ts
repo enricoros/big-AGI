@@ -9,6 +9,7 @@ import { createDMessageEmpty, DMessage, duplicateDMessage, messageSetGeneratorNa
 import { createPlaceholderVoidFragment, DMessageFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import { getVndOaiBeamSandbox } from '~/common/stores/store-ai';
+import { isAixIssuePart, messageFailureText } from '~/common/stores/chat/chat.fragments';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 import { messageTerminalOutcome } from '~/common/stores/chat/chat.message.outcome';
 import { splitSystemMessageFromHistory } from '~/common/stores/chat/chat.conversation';
@@ -97,8 +98,7 @@ function rayScatterStart(ray: BRay, llmId: DLLMId | null, inputHistory: DMessage
       _rayUpdate(ray.rayId, {
         ...(clearFragments && { message: createDMessageEmpty('assistant') }),
         status: status.outcome,
-        scatterIssue: status.outcomeFailedMessage || undefined,
-        genAbortController: undefined,
+        genAbortController: undefined, // a failure is an issue part of the ray's message, shown there: no scatterIssue beside it
       });
     })
     .finally(() => {
@@ -155,18 +155,14 @@ export function rayHasMergeableContent(ray: BRay | null): boolean {
   return fragmentsHaveMergeableContent(ray?.message.fragments);
 }
 
-/** A reply with something to merge, copy or use: a content fragment that is not an error and not blank text; a void placeholder is not content. */
+/** A reply with something to merge, copy or use: a content fragment that is not an error or an issue record (failing or not) and not blank text; a void placeholder is not content. */
 export function fragmentsHaveMergeableContent(fragments: DMessageFragment[] | undefined): boolean {
-  return !!fragments?.some(f => isContentFragment(f) && !isErrorPart(f.part) && !(f.part.pt === 'text' && !f.part.text.trim()));
+  return !!fragments?.some(f => isContentFragment(f) && !isErrorPart(f.part) && !isAixIssuePart(f.part) && !(f.part.pt === 'text' && !f.part.text.trim()));
 }
 
 export function rayIsMessageErrorOnly(ray: BRay | null): boolean {
-  if (ray?.message.fragments.length === 1) {
-    const onlyFragment = ray.message.fragments[0];
-    if (isContentFragment(onlyFragment) && isErrorPart(onlyFragment.part))
-      return true;
-  }
-  return false;
+  // nothing to merge and a failure to show: placeholders and further records around the failure do not count
+  return !!ray && !rayHasMergeableContent(ray) && messageFailureText(ray.message.fragments) !== null;
 }
 
 export function rayIsUserSelected(ray: BRay | null): boolean {

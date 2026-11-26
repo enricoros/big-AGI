@@ -13,7 +13,7 @@ import type { DMessageTerminalOutcome } from '~/common/stores/chat/chat.message.
 import { DMetricsChatGenerate_Lg, DMetricsChatGenerate_Md, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd, } from '~/common/stores/metrics/metrics.chatgenerate';
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { apiAsync, apiStream } from '~/common/util/trpc.client';
-import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, isContentFragment, isErrorPart } from '~/common/stores/chat/chat.fragments';
+import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, fragmentFailureText } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import type { AIVndOaiBeamSandboxPolicy } from '~/common/stores/store-ai';
 import { getAixInspectorEnabled } from '~/common/stores/store-ui';
@@ -535,10 +535,10 @@ export async function aixChatGenerateText_Simple(
   if (state.text === null)
     throw new Error('AIX: Empty text response.');
 
-  // throw if there are error fragments
+  // throw if there are error fragments, or an issue that failed the generation; an issue it survived is not a failure
   const errorMessage = llFinal.fragments
-    .filter(f => isContentFragment(f) && isErrorPart(f.part))
-    .map(f => (f.part as DMessageErrorPart).error).join('\n');
+    .map(fragmentFailureText)
+    .filter(text => text !== null).join('\n');
   if (errorMessage)
     throw new Error('AIX: Error in response: ' + errorMessage);
 
@@ -581,6 +581,13 @@ function _llToL2Simple({ fragments, generator }: AixChatGenerateContent_LL, dest
       case 'error':
         dest.text += (dest.text ? '\n' : '') + fragment.part.error;
         break;
+      case 'aix.issue': {
+        // only what failed the generation (shown while streaming, then thrown): a caller's result holds what the model wrote
+        const failureText = fragmentFailureText(fragment);
+        if (failureText !== null)
+          dest.text += (dest.text ? '\n' : '') + failureText;
+        break;
+      }
       case 'tool_invocation':
         throw new Error(`AIX: Unexpected tool invocation ${fragment.part.invocation?.type === 'function_call' ? fragment.part.invocation.name : fragment.part.id} in the Text response.`);
       case 'annotations': // citations - ignored

@@ -1,4 +1,4 @@
-import type { DMessageAttachmentFragment, DMessageContentFragment, DMessageErrorPart, DMessageFragment, DMessageFragmentId, DMessageHostedResourcePart, DMessageReferencePart, DMessageTextPart, DMessageToolInvocationPart, DMessageToolResponsePart, DMessageVoidFragment, DVoidFragmentModelAnnotations, DVoidModelAuxPart, DVoidPlaceholderPart } from '~/common/stores/chat/chat.fragments';
+import type { DMessageAixIssuePart, DMessageAttachmentFragment, DMessageContentFragment, DMessageErrorPart, DMessageFragment, DMessageFragmentId, DMessageHostedResourcePart, DMessageReferencePart, DMessageTextPart, DMessageToolInvocationPart, DMessageToolResponsePart, DMessageVoidFragment, DVoidFragmentModelAnnotations, DVoidModelAuxPart, DVoidPlaceholderPart } from '~/common/stores/chat/chat.fragments';
 
 
 /**
@@ -16,6 +16,7 @@ export type CMRenderMode = 'view' | 'edit';
 
 export type CMTextFragment = DMessageContentFragment & { part: DMessageTextPart };
 export type CMErrorFragment = DMessageContentFragment & { part: DMessageErrorPart };
+export type CMAixIssueFragment = DMessageContentFragment & { part: DMessageAixIssuePart };
 export type CMToolInvocationFragment = DMessageContentFragment & { part: DMessageToolInvocationPart };
 export type CMToolResponseFragment = DMessageContentFragment & { part: DMessageToolResponsePart };
 export type CMImageRefFragment = DMessageContentFragment & { part: Extract<DMessageContentFragment['part'], { pt: 'image_ref' }> };
@@ -106,6 +107,11 @@ export interface CMNodeError extends _CMNodeBase<'error'> {
   fragment: CMErrorFragment;
 }
 
+/** An issue record of a generation: never text-editable (it is replayed from the record), deletable in edit mode. */
+export interface CMNodeAixIssue extends _CMNodeBase<'aix-issue'> {
+  fragment: CMAixIssueFragment;
+}
+
 export interface CMNodeImageRef extends _CMNodeBase<'image-ref'> {
   fragment: CMImageRefFragment;
 }
@@ -148,6 +154,7 @@ export type CMRenderNode =
   | CMNodeSeparator
   | CMNodePlaceholder
   | CMNodeError
+  | CMNodeAixIssue
   | CMNodeImageRef
   | CMNodeReference
   | CMNodeHostedResource

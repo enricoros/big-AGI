@@ -2,6 +2,9 @@ import * as z from 'zod/v4';
 
 import type { AixTools_FunctionCallDefinition } from '../server/api/aix.wiretypes';
 import { DMessageContentFragment, DMessageToolInvocationPart, DMessageVoidFragment, isContentFragment } from '~/common/stores/chat/chat.fragments';
+import { fragmentFailureText, isAixIssuePart } from '~/common/stores/chat/chat.fragments';
+
+import { aixIssueFails } from '../shared/aix.issues';
 
 
 // configuration
@@ -70,8 +73,9 @@ export function aixRequireSingleFunctionCallInvocation(fragments: (DMessageConte
   }
 
   // Positional logic over CONTENT fragments only: void fragments (e.g. 'ma' reasoning, which always-on
-  // adaptive thinking models like Fable/Mythos 5 prepend) must not shift the expected invocation position
-  const contentFragments = fragments.filter(isContentFragment);
+  // adaptive thinking models like Fable/Mythos 5 prepend) must not shift the expected invocation position; nor must an issue
+  // that did not fail the generation (a notice, a lost output item)
+  const contentFragments = fragments.filter(isContentFragment).filter(f => !isAixIssuePart(f.part) || aixIssueFails(f.part.issue));
   // leading text is skipped: a model that cannot be forced to call (tools policy degraded to 'auto') may write a line before the call
   const toolIdx = allowThinkPart ? contentFragments.length - 1 : contentFragments.findIndex(f => f.part.pt !== 'text');
   const toolFragment = contentFragments[toolIdx];
@@ -79,9 +83,10 @@ export function aixRequireSingleFunctionCallInvocation(fragments: (DMessageConte
     if (AIX_DEBUG_CLIENT_TOOLS)
       console.error(`[DEV] single-function-call (${debugLabel}): invalid fragment part:`, { part: toolFragment?.part });
 
-    // special case, if we have an error part, rethrow that message instead (better error message)
-    if (toolFragment?.part.pt === 'error')
-      throw new Error('AIX: Error invoking function: ' + toolFragment.part.error);
+    // special case, if the generation failed there, rethrow that message instead (better error message)
+    const failureText = toolFragment ? fragmentFailureText(toolFragment) : null;
+    if (failureText !== null)
+      throw new Error('AIX: Error invoking function: ' + failureText);
 
     throw new Error('AIX: Missing function invocation.');
   }

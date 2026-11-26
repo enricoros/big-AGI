@@ -3,6 +3,7 @@ import { agiUuid } from '~/common/util/idUtils';
 import { createPlaceholderVoidFragment, createTextContentFragment, DMessageFragment, DMessageFragmentId, duplicateDMessageFragments } from './chat.fragments';
 
 import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
+import { aixIssueInMessageText, aixIssuePlainText } from '~/modules/aix/shared/aix.issues';
 
 import type { DLLMId } from '~/common/stores/llms/llms.types';
 import type { DMetricsChatGenerate_Md } from '~/common/stores/metrics/metrics.chatgenerate';
@@ -414,6 +415,11 @@ export function messageFragmentsReduceText(fragments: Immutable<DMessageFragment
             break;
           case 'error':
             text = fragment.part.error;
+            break;
+          case 'aix.issue':
+            // a failure, or a lost output item, is part of what the message says; a notice is not
+            if (aixIssueInMessageText(fragment.part.issue))
+              text = aixIssuePlainText(fragment.part.issue);
             break;
           case 'reference':
           case 'image_ref':

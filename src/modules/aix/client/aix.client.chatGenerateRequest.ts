@@ -12,6 +12,7 @@ import { imageBlobConvertType, imageBlobResizeIfNeeded, LLMImageResizeMode } fro
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPIChatGenerate_Request, AixMessages_ModelMessage, AixMessages_UserMessage, AixParts_InlineImagePart, AixParts_MetaCacheControl, AixParts_MetaInReferenceToPart, AixParts_ModelAuxPart } from '../server/api/aix.wiretypes';
 import { AixWire_Vendors } from '../server/api/aix.wiretypes';
+import { aixIssueReplayText } from '../shared/aix.issues.policy';
 
 // TODO: remove console messages to zero, or replace with throws or something
 
@@ -107,6 +108,7 @@ export async function aixCGR_SystemMessage_FromDMessageOrThrow(
           case 'tool_response':
           case 'hosted_resource':
           case 'error':
+          case 'aix.issue':
           case '_pt_sentinel':
             console.warn('[DEV] aixCGR_systemMessageFromInstruction: unexpected System Content fragment', { sFragment });
             break;
@@ -383,6 +385,7 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
           // skipped (non-user)
           case 'error':
+          case 'aix.issue':
           case 'tool_invocation':
           case 'tool_response':
             console.warn('aixCGR_FromDMessages: unexpected Non-User fragment part type', (uFragment.part as any).pt);
@@ -455,10 +458,19 @@ export async function aixCGR_ChatSequence_FromDMessagesOrThrow(
 
           case 'error':
             // after content, the error tells the model what went wrong (a cut reply, a failed image); a turn of errors alone is not sent (below)
-            // TODO: AIX typed errors - a per-error replay policy replaces this '[ERROR]' text and the errors-alone rule
             modelMessage.parts.push({ pt: 'text', text: `[ERROR] ${aPart.error}` });
             modelErrorParts++;
             break;
+
+          case 'aix.issue': {
+            // the record's policy decides what the model sees (aix.issues.policy.ts); a replayed issue counts as an error part for the errors-alone rule
+            const replayText = aixIssueReplayText(aPart.issue);
+            if (replayText) {
+              modelMessage.parts.push({ pt: 'text', text: replayText });
+              modelErrorParts++;
+            }
+            break;
+          }
 
           case 'reference':
             const refPart = aPart;

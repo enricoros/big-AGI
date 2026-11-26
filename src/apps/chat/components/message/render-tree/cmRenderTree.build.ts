@@ -36,7 +36,7 @@ export const CMRT_REASONING_SEPARATOR = '\n\n';
  * - edit mode gives text, errors and tool parts their own `edit-text` node, keeps reasoning as its chip, and fuses
  *   adjacent attachments of any kind
  * - a change of `originId` between fragments inserts a `separator` (attachments and citations don't take part)
- * - leaves (placeholders, errors, content images, hosted resources, references) render alone in both modes
+ * - leaves (placeholders, errors, issues, content images, hosted resources, references) render alone in both modes
  * - `ungrouped`: runs never extend, responses stay `tool-response` leaves where they sit (proposal tools included)
  *   and each invocation is a group of one, citations stay in place as single-member nodes; the rest as above
  *
@@ -202,6 +202,9 @@ export function buildCMRenderTree(fragments: Immutable<DMessageFragment[]>, mode
             pushLeaf({ kind: 'tool-response', key: `tool-response:${fragment.fId}`, fragment: _withPart(fragment, part) });
             break;
           }
+          case 'aix.issue':
+            pushLeaf({ kind: 'aix-issue', key: `aix-issue:${fragment.fId}`, fragment: _withPart(fragment, part) });
+            break;
           case 'image_ref':
             pushLeaf({ kind: 'image-ref', key: `image-ref:${fragment.fId}`, fragment: _withPart(fragment, part) });
             break;

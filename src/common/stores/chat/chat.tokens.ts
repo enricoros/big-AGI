@@ -2,6 +2,7 @@ import { getChatTokenCountingMethod } from '../../../apps/chat/store-app-chat';
 
 import type { DLLM } from '~/common/stores/llms/llms.types';
 import { approximateTextTokens } from '~/common/tokens/tokens.approximate';
+import { aixIssueReplayText } from '~/modules/aix/shared/aix.issues.policy';
 import { imageTokensForLLM } from '~/common/tokens/tokens.image';
 import { textTokensForLLM } from '~/common/tokens/tokens.text';
 
@@ -76,6 +77,11 @@ function _fragmentTokens(llm: DLLM, role: DMessageRole, fragment: DMessageFragme
     switch (cPt) {
       case 'error':
         return estimateTextTokens(cPart.error, llm, debugFrom);
+      case 'aix.issue': {
+        // what the model is sent for the record
+        const replay = aixIssueReplayText(cPart.issue);
+        return replay ? estimateTextTokens(replay, llm, debugFrom) : 0;
+      }
       case 'reference':
         // "fallback" to inline computation for Asset Reference fragments with legacy image refs
         if (cPart.rt === 'zync' && cPart.assetType === 'image' && cPart._legacyImageRefPart?.dataRef?.reftype === 'dblob') {

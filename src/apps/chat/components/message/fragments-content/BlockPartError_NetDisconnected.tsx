@@ -5,6 +5,7 @@ import WifiOffRoundedIcon from '@mui/icons-material/WifiOffRounded';
 
 import type { ContentScaling } from '~/common/app.theme';
 import { Is } from '~/common/util/pwaUtils';
+import { prettyDuration } from '~/common/util/timeUtils';
 import { useLLM } from '~/common/stores/llms/llms.hooks';
 import { useModelServiceClientSideFetch } from '~/common/stores/llms/hooks/useModelServiceClientSideFetch';
 
@@ -16,6 +17,7 @@ import { BlockPartError_DirectConnectionRow } from './BlockPartError_DirectConne
  */
 export function BlockPartError_NetDisconnected(props: {
   disconnectionKind: 'net-client-closed' | 'net-server-closed' | 'net-unknown-closed';
+  elapsedMs?: number; // when the cut came, from the call's start: a round 5 minutes is a platform limit
   messageGeneratorLlmId?: string | null;
   contentScaling: ContentScaling;
 }) {
@@ -45,7 +47,7 @@ export function BlockPartError_NetDisconnected(props: {
               Connection Terminated
             </Box>
             <div>
-              The connection was unexpectedly closed before the response completed.
+              The connection was unexpectedly closed before the response completed{props.elapsedMs !== undefined && props.elapsedMs >= 1000 && `, after ${prettyDuration(props.elapsedMs)}`}.
             </div>
           </div>
         </Box>

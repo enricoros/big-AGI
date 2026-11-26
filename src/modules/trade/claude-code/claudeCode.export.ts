@@ -5,6 +5,8 @@ import type { DMessage } from '~/common/stores/chat/chat.message';
 import type { DMessageFragment, DMessageImageRefPart, DMessageZyncAssetReferencePart, DVoidWebCitation } from '~/common/stores/chat/chat.fragments';
 import type { Immutable } from '~/common/types/immutable.types';
 import { aixConvertImageRefToInlineImageOrThrow, aixConvertZyncImageAssetRefToInlineImageOrThrow } from '~/modules/aix/client/aix.client.chatGenerateRequest';
+import { aixIssuePlainText } from '~/modules/aix/shared/aix.issues';
+import { aixIssueReplayText } from '~/modules/aix/shared/aix.issues.policy';
 import { attachmentFragmentDocTitle, isZyncAssetImageReferencePart, isZyncAssetReferencePart } from '~/common/stores/chat/chat.fragments';
 import { convert_Base64_To_UInt8Array } from '~/common/util/blobUtils';
 import { createZipBlob, ZipEntry } from '~/common/util/zipUtils';
@@ -112,7 +114,7 @@ export namespace ClaudeCodeExport {
 /// Lowering: DMessage[] -> turns of exportable blocks, shared by all formats
 
 type _ExportBlock =
-  | { bt: 'text', text: string }
+  | { bt: 'text', text: string, mdText?: string } // mdText: what chat.md shows in its place, for a human reader
   | { bt: 'doc', title: string, ref: string, text: string, language?: string }
   | { bt: 'image', mimeType: string, base64: string, fileName: string, altText: string };
 
@@ -180,6 +182,14 @@ async function _lowerFragment(fragment: Immutable<DMessageFragment>, blocks: _Ex
 
     case 'error':
       blocks.push({ bt: 'text', text: `[ERROR] ${part.error}` });
+      break;
+
+    case 'aix.issue':
+      // the session gets what the model was sent (it resumes from it), chat.md the message text, with the detail; both
+      // select the same records (aixIssueInMessageText)
+      const issueReplay = aixIssueReplayText(part.issue);
+      if (issueReplay)
+        blocks.push({ bt: 'text', text: issueReplay, mdText: `[ERROR] ${aixIssuePlainText(part.issue)}` });
       break;
 
     case 'doc':
@@ -354,7 +364,7 @@ function _renderChatMarkdown(conversation: Immutable<DConversation>, title: stri
     const body = turn.blocks.map(block => {
       switch (block.bt) {
         case 'text':
-          return block.text;
+          return block.mdText ?? block.text;
         case 'doc':
           return `**Attachment: ${block.title}**\n\n${_fence(block.text, block.language)}`;
         case 'image':

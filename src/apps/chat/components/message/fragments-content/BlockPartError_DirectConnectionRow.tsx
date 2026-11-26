@@ -8,14 +8,21 @@ import type { useModelServiceClientSideFetch } from '~/common/stores/llms/hooks/
 /**
  * The Direct Connection row of the error recovery cards: the switch where it can be used, the same row off and
  * disabled with the reason where it cannot, and nothing where there is no reason to give (the model is gone).
+ * 'turn-off' offers the way back through the server, for a failure of the browser's own connection: no row when
+ * Direct Connection cannot be on, as the next request goes through the server already.
  */
 export function BlockPartError_DirectConnectionRow(props: {
   csf: ReturnType<typeof useModelServiceClientSideFetch>;
+  direction?: 'turn-on' | 'turn-off';
 }) {
 
   const { csfAvailable, csfActive, csfOffReason, csfToggle, vendorName } = props.csf;
-  if (!csfAvailable && !csfOffReason)
+  const turnOff = props.direction === 'turn-off';
+  if (!csfAvailable && (turnOff || !csfOffReason))
     return null;
+
+  // the switch is where the user wants it: the next request takes the other path
+  const switched = turnOff ? !csfActive : !!csfActive;
 
   return (
     <Box
@@ -32,11 +39,13 @@ export function BlockPartError_DirectConnectionRow(props: {
     >
 
       <Box sx={{ flex: 1 }}>
-        <Box color={csfOffReason ? 'neutral.plainDisabledColor' : !csfActive ? undefined : 'primary.solidBg'} fontWeight='lg' mb={0.5}>
-          Direct Connection {csfActive && '- Now Try Again'}
+        <Box color={csfOffReason ? 'neutral.plainDisabledColor' : !switched ? undefined : 'primary.solidBg'} fontWeight='lg' mb={0.5}>
+          Direct Connection {switched && '- Now Try Again'}
         </Box>
         <FormHelperText>
-          {csfOffReason || <>Connect directly from this client -&gt; {vendorName || 'AI service'}</>}
+          {csfOffReason || (turnOff
+            ? <>Turn off to reach {vendorName || 'the AI service'} through the server</>
+            : <>Connect directly from this client -&gt; {vendorName || 'AI service'}</>)}
         </FormHelperText>
       </Box>
 

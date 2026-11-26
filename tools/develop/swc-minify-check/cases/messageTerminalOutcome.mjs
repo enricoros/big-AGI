@@ -4,19 +4,27 @@ const text = { ft: 'content', part: { pt: 'text', text: 'x' } };
 const error = { ft: 'content', part: { pt: 'error', error: 'e' } };
 const tool = { ft: 'content', part: { pt: 'tool_invocation' } };
 const notice = { ft: 'void', part: { pt: 'ph', pType: 'notice' } };
+const issue = (code, effect) => ({ ft: 'content', part: { pt: 'aix.issue', issue: { code, effect, text: 'i' } } });
 const generator = (tokenStopReason) => (tokenStopReason === undefined ? {} : { tokenStopReason });
 
 const spec = {
   source: 'src/common/stores/chat/chat.message.outcome.ts',
   export: 'messageTerminalOutcome',
   stubs: {
-    'chat.fragments': { isContentFragment: (f) => f.ft === 'content', isErrorPart: (p) => p.pt === 'error' },
+    'chat.fragments': { isContentFragment: (f) => f.ft === 'content', isErrorPart: (p) => p.pt === 'error', isAixIssuePart: (p) => p.pt === 'aix.issue' },
+    'aix.issues': { aixIssueFails: (i) => i.effect === 'failed' },
   },
   cases: [
     [[{ generator: generator(), fragments: [text] }], 'completed'],
     [[{ generator: generator(), fragments: [text, error] }], 'failed'],
     [[{ generator: generator(), fragments: [error, text] }], 'completed'],
     [[{ generator: generator(), fragments: [text, notice] }], 'completed'],
+    [[{ generator: generator(), fragments: [text, issue('service-error', 'failed')] }], 'failed'],
+    [[{ generator: generator(), fragments: [text, issue('service-error', 'failed'), text] }], 'completed'],
+    [[{ generator: generator(), fragments: [text, issue('service-tool', 'lost')] }], 'completed'],
+    [[{ generator: generator(), fragments: [text, issue('service-error', 'notice')] }], 'completed'],
+    [[{ generator: generator(), fragments: [text, issue('future-code', 'failed')] }], 'failed'],
+    [[{ generator: generator(), fragments: [error, issue('model-unfinished', 'notice')] }], 'failed'],
     [[{ generator: generator(), fragments: [tool] }], 'completed'],
     [[{ generator: generator(), fragments: [] }], 'completed'],
     [[{ generator: undefined, fragments: [text] }], 'completed'],

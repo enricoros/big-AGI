@@ -8,7 +8,7 @@ import { promptMixer } from '~/modules/promptMixer/promptMixer';
 import { createDMessageTextContent, DMessage, messageFragmentsReduceText, messageWasInterruptedAtStart } from '~/common/stores/chat/chat.message';
 import { getLabsHighPerformance } from '~/common/stores/store-ux-labs';
 import { getVndOaiBeamSandbox } from '~/common/stores/store-ai';
-import { isErrorContentFragment, isVoidThinkingFragment } from '~/common/stores/chat/chat.fragments';
+import { isVoidThinkingFragment, messageFailureText } from '~/common/stores/chat/chat.fragments';
 
 import type { BaseInstruction, ExecutionInputState } from './beam.gather.execution';
 
@@ -116,9 +116,7 @@ export async function executeGatherInstruction(_i: GatherInstruction, inputs: Ex
       throw new Error('Instruction Stopped.');
     }
     if (status.outcome === 'failed')
-      throw new Error(status.outcomeFailedMessage
-        || inputs.intermediateDMessage.fragments.findLast(isErrorContentFragment)?.part?.error
-        || 'Unknown error');
+      throw new Error(messageFailureText(status.lastDMessage.fragments) || 'Unknown error');
 
     // Proceed to the next step
     return messageFragmentsReduceText(inputs.intermediateDMessage.fragments); // returns the PipedValueType

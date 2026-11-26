@@ -10,6 +10,8 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { AutoBlocksHtmlRenderVariant } from '~/modules/blocks/AutoBlocksRenderer';
 import { HostedLinksProvider } from '~/modules/blocks/markdown/HostedLinksContext';
 import { ScaledTextBlockRenderer } from '~/modules/blocks/ScaledTextBlockRenderer';
+import type { ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
+import { aixIssueFails } from '~/modules/aix/shared/aix.issues';
 
 import type { ContentScaling, UIComplexityMode } from '~/common/app.theme';
 import type { DMessageFragment, DMessageFragmentId } from '~/common/stores/chat/chat.fragments';
@@ -27,6 +29,7 @@ import { BlockEdit_TextFragment } from '../fragments-content/BlockEdit_TextFragm
 import { CMEditAttach } from '../CMEditAttach';
 import { BlockOpEmpty } from '../fragments-content/BlockOpEmpty';
 import { BlockPartError } from '../fragments-content/BlockPartError';
+import { BlockPartAixIssue } from '../fragments-content/BlockPartAixIssue';
 import { BlockPartHostedResource } from '../fragments-content/BlockPartHostedResource';
 import { BlockPartImageRef } from '../fragments-content/BlockPartImageRef';
 import { BlockPartModelAnnotations } from '../fragments-void/BlockPartModelAnnotations';
@@ -141,6 +144,14 @@ const _blockDeleteStackedSx: SxProps = {
 
 const _blockDeleteIconSx = {
   fontSize: '1.25rem',
+} as const;
+
+// edit mode, an issue that is not a sortable block: the record beside its Delete
+const _issueEditSx: SxProps = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr) auto',
+  alignItems: 'start',
+  columnGap: 0.5,
 } as const;
 
 
@@ -270,11 +281,26 @@ const CMTextNode = React.memo(function CMTextNode(props: {
 /** Edit mode: a node as one block, movable by its gutter handle and deletable from the right gutter (on mobile, under the handle). */
 function CMSortableBlock(props: { id: string, isMobile: boolean, deleteConfirm: string | null, onDelete?: () => void, children: React.ReactNode }) {
   const { dragContainerSetRef, dragContainerStyle, dragHandle } = useDndDragHandleSortable(props.id, false, 'warning');
-  const { showPromisedOverlay } = useOverlayComponents();
   const { isMobile, deleteConfirm, onDelete } = props;
 
-  // the dialog only when there is something to lose (null: an empty text block, which Done would drop anyway)
   const deleteButton = !onDelete ? null : (
+    <CMBlockDeleteButton deleteConfirm={deleteConfirm} onDelete={onDelete} sx={isMobile ? _blockDeleteStackedSx : _blockDeleteSx} />
+  );
+
+  return (
+    <Box ref={dragContainerSetRef} style={dragContainerStyle} sx={isMobile ? _blockMobileSx : _blockSx}>
+      <Box sx={_blockGutterSx}>{dragHandle}{isMobile && deleteButton}</Box>
+      <Box>{props.children}</Box>
+      {!isMobile && <Box>{deleteButton}</Box>}
+    </Box>
+  );
+}
+
+/** Edit mode: deletes a block, after a dialog when there is something to lose (null: an empty text block, which Done would drop anyway). */
+function CMBlockDeleteButton(props: { deleteConfirm: string | null, onDelete: () => void, sx: SxProps }) {
+  const { showPromisedOverlay } = useOverlayComponents();
+  const { deleteConfirm, onDelete } = props;
+  return (
     <IconButton
       size='sm' variant='plain' color='warning' aria-label='Delete block' title='Delete this block'
       onClick={async () => {
@@ -288,18 +314,10 @@ function CMSortableBlock(props: { id: string, isMobile: boolean, deleteConfirm: 
         )) return;
         onDelete();
       }}
-      sx={isMobile ? _blockDeleteStackedSx : _blockDeleteSx}
+      sx={props.sx}
     >
       <DeleteOutlineIcon sx={_blockDeleteIconSx} />
     </IconButton>
-  );
-
-  return (
-    <Box ref={dragContainerSetRef} style={dragContainerStyle} sx={isMobile ? _blockMobileSx : _blockSx}>
-      <Box sx={_blockGutterSx}>{dragHandle}{isMobile && deleteButton}</Box>
-      <Box>{props.children}</Box>
-      {!isMobile && <Box>{deleteButton}</Box>}
-    </Box>
   );
 }
 
@@ -332,6 +350,7 @@ export function CMRenderTreeNodes(props: {
   isMobile: boolean,
   messageRole: DMessageRole,
   messagePendingIncomplete?: boolean,
+  messageGeneratorVendorId?: ModelVendorId | null,
   messageGeneratorLlmId?: string | null,
   disableMarkdownText: boolean,
   disableMarkdownDocuments: boolean,
@@ -378,8 +397,8 @@ export function CMRenderTreeNodes(props: {
     && body.length === 1
     && body[0].kind === 'placeholder';
 
-  // input-transform notices are neutral infos: hidden (not removed) beside an error, where they'd read as its cause
-  const noticesYieldToError = body.some(node => node.kind === 'error' || (node.kind === 'edit-text' && node.fragment.part.pt === 'error'));
+  // input-transform notices are neutral infos: hidden (not removed) beside an error, where they'd read as its cause; an issue that did not fail the generation is no such error
+  const noticesYieldToError = body.some(node => node.kind === 'error' || (node.kind === 'edit-text' && node.fragment.part.pt === 'error') || (node.kind === 'aix-issue' && aixIssueFails(node.fragment.part.issue)));
 
   // block reordering: edit mode moves whole nodes; a drop permutes the blocks' fragments among the slots they held
   const { onFragmentsReorder } = props;
@@ -597,6 +616,27 @@ export function CMRenderTreeNodes(props: {
             contentScaling={props.contentScaling}
           />
         );
+
+      case 'aix-issue': {
+        // a notice is dismissed like a void notice; in edit mode a block outside the sortable list gets its own Delete
+        const issueNode = (
+          <BlockPartAixIssue
+            key={node.key}
+            issue={node.fragment.part.issue}
+            messageGeneratorVendorId={props.messageGeneratorVendorId}
+            messageGeneratorLlmId={props.messageGeneratorLlmId}
+            contentScaling={props.contentScaling}
+            showNotice={!zenMode || isEditing /* a block in edit mode shows what its Delete removes */}
+            onNoticeDismiss={props.messagePendingIncomplete || !onFragmentDelete ? undefined : () => onFragmentDelete(node.fragment.fId)}
+          />
+        );
+        return !isEditing || canReorderBlocks || !onFragmentDelete ? issueNode : (
+          <Box key={node.key} sx={_issueEditSx}>
+            {issueNode}
+            <CMBlockDeleteButton deleteConfirm={_blockDeleteConfirm(node)} onDelete={() => onFragmentDelete(node.fragment.fId)} sx={_blockDeleteSx} />
+          </Box>
+        );
+      }
 
       case 'image-ref':
         return (

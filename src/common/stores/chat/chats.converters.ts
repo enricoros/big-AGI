@@ -11,6 +11,8 @@ import { createDConversation, DConversation, type DConversationId } from './chat
 import { createDMessageTextContent, DMessage, MESSAGE_FLAG_NOTIFY_COMPLETE, messageSetUserFlag } from './chat.message';
 import { createDMessageZyncAssetReferencePart, createErrorContentFragment, isAttachmentFragment, isContentOrAttachmentFragment, isDocPart, isImageRefPart, isTextContentFragment, isVoidPlaceholderFragment } from './chat.fragments';
 
+import { aixIssueFails, aixIssueIsWellFormed } from '~/modules/aix/shared/aix.issues';
+
 
 // configuration
 const EMERGENCY_CLEANUP_PARTS = false;
@@ -52,7 +54,12 @@ export namespace V4ToHeadConverters {
       const fragment = m.fragments[i];
 
       // [SANITIZE] If the fragment is damaged (e.g. null or missing the 'ft' property), remove it
-      if (!fragment || !fragment.ft) {
+      if (
+        !fragment ||        // null or undefined
+        !fragment.ft ||     // missing fragment type
+        // [Aix.Issue Malformed Guard] an issue part without a readable record: its readers would throw
+        (fragment.ft === 'content' && fragment.part?.pt === 'aix.issue' && !aixIssueIsWellFormed(fragment.part.issue))
+      ) {
         m.fragments.splice(i, 1);
         i--; // Adjust index since we modified the array
         continue;
@@ -64,8 +71,10 @@ export namespace V4ToHeadConverters {
           delete fragment.liveFileId;
 
       // [Show Terminated] convert a Placeholder fragment [part.pt='ph'] to an Error fragment
-      const isLastFragment = (i === m.fragments.length - 1);
-      if (isLastFragment && isVoidPlaceholderFragment(fragment) && fragment.part.pType !== 'notice') // [PH-LIFECYCLE] - notices are user-dismissed, not incomplete
+      const isLastFragment = (i === m.fragments.length - 1) || m.fragments.slice(i + 1).every(f => f?.ft === 'content' && f.part?.pt === 'aix.issue' && !(aixIssueIsWellFormed(f.part.issue) && aixIssueFails(f.part.issue))); // issues that did not fail arrived live, before the cut; later fragments are not cleaned yet (a malformed one is removed above)
+      if (isLastFragment && isVoidPlaceholderFragment(fragment) && fragment.part.pType !== 'notice' // [PH-LIFECYCLE] - notices are user-dismissed, not incomplete
+        // a message that holds the issue that failed it is explained and settled: its last placeholder stays as it was shown, no second error on reload
+        && !m.fragments.some(f => f?.ft === 'content' && f.part?.pt === 'aix.issue' && aixIssueIsWellFormed(f.part.issue) && aixIssueFails(f.part.issue)))
         m.fragments[i] = createErrorContentFragment(
           'opLog' in fragment.part ? '(message incomplete)'
             : fragment.part.pText ? `(did not complete: ${fragment.part.pText})`

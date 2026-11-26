@@ -996,6 +996,7 @@ export function ChatMessage(props: {
             messageRole={messageRole}
             messageGeneratorLlmId={messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.mId : undefined}
             messagePendingIncomplete={messagePendingIncomplete}
+            messageGeneratorVendorId={messageGenerator?.mgt === 'aix' ? messageGenerator.aix?.vId : undefined}
             disableMarkdownText={textMode === 'plain'}
             disableMarkdownDocuments={disableMarkdown}
             htmlRenderVariant={props.htmlRenderVariant}
