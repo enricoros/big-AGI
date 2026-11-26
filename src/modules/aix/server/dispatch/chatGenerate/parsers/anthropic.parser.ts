@@ -85,7 +85,24 @@ const hotFixAntInjectToolsTextSpacer = true;
 // here) - noted in this file as the spot we track Anthropic protocol deltas pending wider model support past Opus 4.8.
 // See: https://platform.claude.com/docs/en/build-with-claude/mid-conversation-system-messages
 
-export function createAnthropicMessageParser(thinkingOrigins?: () => AnthropicThinkingOrigins): ChatGenerateParseFunction {
+/**
+ * Extensions of a vendor that serves this wire with its own additions: the parser stays Anthropic's, the vendor plugs in.
+ * [DeepSeek Messages] is the one user (deepseek.messages.parser.ts).
+ */
+export type AnthropicParserPlugin = {
+  /** Thinking signatures are not sent to the client, so none is stored or replayed: for a vendor whose signature signs nothing */
+  dropThinkingSignatures?: boolean;
+  /**
+   * A server tool of the vendor's own: show its operation and return true, or false for this parser's handling.
+   * `block.input` is the object in non-streaming, and its JSON string in streaming when the block starts complete.
+   */
+  onServerToolUse?: (pt: IParticleTransmitter, block: AnthropicServerToolUseBlock, op: { opId: string, parentOpId?: string }) => boolean;
+};
+
+export type AnthropicServerToolUseBlock = Extract<AnthropicWire_API_Message_Create.Response['content'][number], { type: 'server_tool_use' }>;
+
+
+export function createAnthropicMessageParser(thinkingOrigins?: () => AnthropicThinkingOrigins, plugin?: AnthropicParserPlugin): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
   let responseMessage: AnthropicWire_API_Message_Create.Response;
   let hasErrored = false;
@@ -215,8 +232,9 @@ export function createAnthropicMessageParser(thinkingOrigins?: () => AnthropicTh
             break;
 
           case 'thinking':
-            pt.appendReasoningText(contentBlock.thinking);
-            if (contentBlock.signature)
+            // a thinking block is its own reasoning fragment: without the restart, unsigned text joins the block before it
+            pt.appendReasoningText(contentBlock.thinking, { restart: true });
+            if (contentBlock.signature && !plugin?.dropThinkingSignatures)
               pt.setReasoningSignature(contentBlock.signature);
             break;
 
@@ -247,7 +265,7 @@ export function createAnthropicMessageParser(thinkingOrigins?: () => AnthropicTh
             if (contentBlock && contentBlock.input && typeof contentBlock.input === 'object')
               contentBlock.input = _antStreamingToolInputToString(contentBlock.input);
 
-            _handleCBS_ServerToolUse(pt, contentBlock);
+            _handleCBS_ServerToolUse(pt, contentBlock, plugin);
             break;
 
           case 'web_search_tool_result':
@@ -363,7 +381,8 @@ export function createAnthropicMessageParser(thinkingOrigins?: () => AnthropicTh
           case 'signature_delta':
             if (contentBlock.type === 'thinking') {
               contentBlock.signature = delta.signature;
-              pt.setReasoningSignature(delta.signature);
+              if (!plugin?.dropThinkingSignatures)
+                pt.setReasoningSignature(delta.signature);
             } else
               throw new Error('Unexpected signature delta');
             break;
@@ -550,7 +569,7 @@ export function createAnthropicMessageParser(thinkingOrigins?: () => AnthropicTh
 }
 
 
-export function createAnthropicMessageParserNS(thinkingOrigins?: () => AnthropicThinkingOrigins): ChatGenerateParseFunction {
+export function createAnthropicMessageParserNS(thinkingOrigins?: () => AnthropicThinkingOrigins, plugin?: AnthropicParserPlugin): ChatGenerateParseFunction {
   const parserCreationTimestamp = Date.now();
   let needsTextSeparator = false; // insert text separator when text follows server tool
 
@@ -633,8 +652,9 @@ export function createAnthropicMessageParserNS(thinkingOrigins?: () => Anthropic
           break;
 
         case 'thinking':
-          pt.appendReasoningText(contentBlock.thinking);
-          contentBlock.signature && pt.setReasoningSignature(contentBlock.signature);
+          pt.appendReasoningText(contentBlock.thinking, { restart: true }); // its own reasoning fragment, as in streaming
+          if (contentBlock.signature && !plugin?.dropThinkingSignatures)
+            pt.setReasoningSignature(contentBlock.signature);
           break;
 
         case 'redacted_thinking':
@@ -654,7 +674,7 @@ export function createAnthropicMessageParserNS(thinkingOrigins?: () => Anthropic
           break;
 
         case 'server_tool_use':
-          _handleCBS_ServerToolUse(pt, contentBlock);
+          _handleCBS_ServerToolUse(pt, contentBlock, plugin);
           break;
 
         case 'web_search_tool_result':
@@ -996,7 +1016,7 @@ function _serverToolInput<TInput>(schema: z.ZodType<TInput>, input: unknown): TI
 
 const _serverToolInputs = AnthropicWire_Blocks.ServerToolUseInput_schemas;
 
-function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_ContentBlock, { type: 'server_tool_use' }>): void {
+function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: AnthropicServerToolUseBlock, plugin?: AnthropicParserPlugin): void {
   // Server-side tool execution (e.g., web_search, web_fetch, Skills API tools)
   // NOTE: We don't create tool invocations for server tools - just show operation state
 
@@ -1005,6 +1025,10 @@ function _handleCBS_ServerToolUse(pt: IParticleTransmitter, block: Extract<_Cont
     opId: block.id,
     ...((block.caller?.type && block.caller.type !== 'direct') && { parentOpId: block.caller.tool_id }),
   };
+
+  // a vendor's own server tools are shown by its plugin
+  if (plugin?.onServerToolUse?.(pt, block, srvOp))
+    return;
 
   switch (block.name) { // .server_tool_use.name
     case 'web_search':
