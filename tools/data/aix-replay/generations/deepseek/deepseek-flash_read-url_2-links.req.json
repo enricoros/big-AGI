@@ -1,0 +1,28 @@
+{
+ "model": "deepseek-flash",
+ "messages": [
+  {
+   "role": "user",
+   "content": [
+    {
+     "type": "text",
+     "text": "Summarize https://example.com/ and https://www.iana.org/help/example-domains in two sentences."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "type": "deepseek_web_search",
+   "name": "deepseek_web_search"
+  },
+  {
+   "type": "deepseek_read_url",
+   "name": "deepseek_read_url"
+  }
+ ],
+ "thinking": {
+  "type": "disabled"
+ },
+ "stream": true
+}

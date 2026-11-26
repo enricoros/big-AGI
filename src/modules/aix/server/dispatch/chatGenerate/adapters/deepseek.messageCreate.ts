@@ -22,7 +22,7 @@ export type DeepseekMessagesRequest = {
   model: string,
   system?: TAntRequest['system'],
   messages: TAntMessages,
-  tools?: DeepseekMessagesClientTool[],
+  tools?: (DeepseekMessagesWebTool | DeepseekMessagesClientTool)[],
   tool_choice?: TAntRequest['tool_choice'],
   max_tokens?: number, // unset takes the vendor's limit, which follows model, thinking and effort
   temperature?: number,
@@ -35,6 +35,9 @@ export type DeepseekMessagesRequest = {
 /** A client tool carries no `type` here: 'custom' is a 422 ("unknown variant `custom`") */
 type DeepseekMessagesClientTool = { name: string, description?: string, input_schema: object };
 
+/** DeepSeek's web tools: run by the vendor, the model deciding when. On deepseek-flash only (a 400 on deepseek-v4-pro) */
+type DeepseekMessagesWebTool = { type: 'deepseek_web_search', name: 'deepseek_web_search' } | { type: 'deepseek_read_url', name: 'deepseek_read_url' };
+
 type DeepseekEffort = 'low' | 'high' | 'max';
 
 // the vendor's own table (guides/thinking_mode): the wire takes the three levels on the right
@@ -44,6 +47,14 @@ const _EFFORT: Record<Exclude<NonNullable<AixAPI_Model['reasoningEffort']>, 'non
 
 // no Anthropic hosted tool, container or beta: each is a 422 or is ignored here
 const _NO_HOSTED_FEATURES: AnthropicHostedFeatures = { disableAllHostedTools: true };
+
+/**
+ * The web tools next to client tools. Measured 2026-11-25: a 400 with thinking off ("client tools can only be used
+ * together with `deepseek_web_search` in thinking mode"); with thinking on the request passes and the tools are dead,
+ * the model answering that it has none (searched in 0 of 16 runs, read a link in 0 of 6). So they are left out of a
+ * request that carries client tools. True once the vendor serves the two together.
+ */
+const DEEPSEEK_WEB_TOOLS_WITH_CLIENT_TOOLS = false;
 
 
 export function aixToDeepseekMessageCreate(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): DeepseekMessagesRequest {
@@ -67,11 +78,16 @@ export function aixToDeepseekMessageCreate(model: AixAPI_Model, chatGenerate: Ai
   const thinkingOff = model.reasoningEffort === 'none' || forcedCall;
   const effort = (!thinkingOff && model.reasoningEffort) ? _EFFORT[model.reasoningEffort as keyof typeof _EFFORT] : undefined;
 
+  const clientTools = ant.tools?.flatMap(_toClientTool) ?? [];
+  // a forced call is for a client tool, and has thinking off: the first line of the rule above
+  const webTools = (forcedCall || (clientTools.length && !DEEPSEEK_WEB_TOOLS_WITH_CLIENT_TOOLS)) ? [] : _webTools(model);
+  const tools = [...webTools, ...clientTools];
+
   return {
     model: ant.model,
     ...(ant.system?.length ? { system: ant.system } : {}),
     messages: _returnReasoningOnToolTurns(ant.messages, reasoningByCallId),
-    ...(ant.tools?.length ? { tools: ant.tools.flatMap(_toClientTool) } : {}),
+    ...(tools.length ? { tools } : {}),
     ...(ant.tool_choice ? { tool_choice: ant.tool_choice } : {}),
     // the Anthropic adapter defaults max_tokens to 8192, a cap this wire would then apply to every inference step
     ...(model.maxTokens !== undefined ? { max_tokens: model.maxTokens } : {}),
@@ -142,6 +158,14 @@ function _returnReasoningOnToolTurns(messages: TAntMessages, reasoningByCallId: 
       message.content.unshift(AnthropicWire_Blocks.ThinkingBlock(reasoningByCallId.get(firstCall.id) ?? '', ''));
   }
   return messages;
+}
+
+/** Search works in two modes, by thinking: off, one round of queries; on, several steps that search, open pages and find text in them */
+function _webTools(model: AixAPI_Model): DeepseekMessagesWebTool[] {
+  return [
+    ...(model.vndDeepseekWebSearch === 'auto' ? [{ type: 'deepseek_web_search', name: 'deepseek_web_search' } as const] : []),
+    ...(model.vndDeepseekReadUrl === 'auto' ? [{ type: 'deepseek_read_url', name: 'deepseek_read_url' } as const] : []),
+  ];
 }
 
 function _toClientTool(tool: NonNullable<TAntRequest['tools']>[number]): DeepseekMessagesClientTool[] {

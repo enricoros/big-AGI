@@ -1178,7 +1178,11 @@ function _handleCBS_WebSearchToolResult(pt: IParticleTransmitter, block: Extract
   // NOTE: We don't add citations for bulk search results (too noisy - could be 20+ URLs)
   //       Only high-quality citations that appear in text annotations should be shown
   const opId = block.tool_use_id;
-  if (Array.isArray(block.content)) {
+  // [DeepSeek Messages] a failed search is the error inside an array, where Anthropic sends the error object
+  const errorInArray = Array.isArray(block.content) ? block.content.find(result => result.type === 'web_search_tool_result_error') : undefined;
+  if (errorInArray?.type === 'web_search_tool_result_error') {
+    pt.sendOperationState('search-web', `Search error: ${errorInArray.error_code}`, { opId, state: 'error' });
+  } else if (Array.isArray(block.content)) {
     // Success - array of search results
     const oTexts = block.content.map((r: any) => r.url).filter(Boolean);
     pt.sendOperationState('search-web', `Search completed: ${block.content.length} results`, { opId, state: 'done', ...oTexts.length ? { oTexts } : undefined });
@@ -1201,6 +1205,7 @@ function _handleCBS_WebFetchToolResult(pt: IParticleTransmitter, block: Extract<
 
       // Add citation for the fetched content
       const fetchedContent = block.content.content;
+      const fetchedTs = Date.parse(block.content.retrieved_at ?? block.content.published_at ?? '');
       pt.appendUrlCitation(
         fetchedContent?.title || 'Web Content',
         block.content.url,
@@ -1208,7 +1213,8 @@ function _handleCBS_WebFetchToolResult(pt: IParticleTransmitter, block: Extract<
         undefined, // startIndex
         undefined, // endIndex
         undefined, // textSnippet
-        block.content.retrieved_at ? Date.parse(block.content.retrieved_at) : undefined,
+        // [DeepSeek Messages] sends the page's own date (published_at), in no fixed format on a link read: a date that does not parse is left out
+        Number.isFinite(fetchedTs) ? fetchedTs : undefined,
       );
       break;
 

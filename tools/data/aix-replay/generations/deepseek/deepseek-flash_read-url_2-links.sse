@@ -1,0 +1,225 @@
+event: message_start
+data: {"type":"message_start","message":{"id":"9b0d33eb-4701-4b66-90e6-38298d7b0b4f","type":"message","role":"assistant","model":"deepseek-flash","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":28,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":0,"service_tier":"standard"}}}
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"server_tool_use","id":"srvtoolu_rl_00_33fa34c25f9d4fc4b7f62facd41268b4","name":"deepseek_read_url","input":{"action":"read_link","url":"https://example.com"},"caller":{"type":"direct"},"kind":"read_link"}}
+
+event: ping
+data: {"type":"ping"}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+event: content_block_start
+data: {"type":"content_block_start","index":1,"content_block":{"type":"server_tool_use","id":"srvtoolu_rl_01_842694877f5c43979bf97ed1d8e0d794","name":"deepseek_read_url","input":{"action":"read_link","url":"https://www.iana.org/help/example-domains"},"caller":{"type":"direct"},"kind":"read_link"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":1}
+
+event: content_block_start
+data: {"type":"content_block_start","index":2,"content_block":{"type":"web_fetch_tool_result","tool_use_id":"srvtoolu_rl_00_33fa34c25f9d4fc4b7f62facd41268b4","content":{"type":"web_fetch_result","url":"https://example.com","content":{"type":"document","source":{"type":"text","media_type":"text/plain","data":""},"title":"Example Domain"},"published_at":null},"kind":"read_link","signature":"1bZ+1TV6HdB/tyVTRpeGw8Ri2tysGkWtN9NTLOFGxUAp+8gCKnESTs33uA6WEt4eWyn+NYxempvOFMMdYEdm2QB4GQK+2yOHgp5rUuwfhVCMGRY6gXa5+T1BCtEluro10S0yvlrjy/io4r2lHjOZcmW1jRc2lJJLkkfirfZ4IRmGhU2TZDjFtilxDj+3pY+DqMsNzm7Y2Z9quy7SMqvECtbtmMyOrm+FtHitRWU5ey12bv29cxveER2ueu/P8fhQNGRIp9Rg1sgNBmzdY3a2MuMa4a694bBkuCGhazaj0rKQLAnlS4P+KkSGkGomLknZcYCyJZgjqR65hL0gNsBi59pTqJeG9+8KArjlyDiVPjTWj3r6Fb6dxCiG8I4AV7berUoFpuv97cM0QsqFnpSUgMp7YqwPAu1d+jSHGOOZFfh9vfNMJenydVlYvVJ+wam1myv657PcLVfLjS7L5y0Utg1EZMiRq0LJ2icU+dtV2dhR6l/pbPk1gs2+f5jgZbxJo+DqoarPrW3ETcslpb4C83+N32ADgK7LjD7t2R+ztaIArIi/ZhaqxYnTBVBcS3tZQNhwttEKxU5YLxQDq5tRrBV4IWMupGN7V0Ueuxf3qcTTnvcjbtEtj+elWO0FfL43VAPTQzDE6pMlxKL8xicuQwwqtvs9njYY2tvszLTN/PBPIV1k/csIE1qPlMwO4J8NUm0T+VC3jiV84xmE4d8JBY6hfU5HSYouPo/9rzkTtcdKirl/ndGlbxAn2lKHPL7aqetw8Rw/6UsncV4mmgS+aG1gBlvrxigIgttluWilHdU7JZ/j4b+Ay35CKVwG2qwDEDR8louPIKxoq9rSVJfZ5qDo+KH5EDlKTOWy8JPohllqj1cMY3wEg1O6pyyCZ75oSaZYdImoiN/wFstS7fgd1nu4LWp6oGQmSP+Gw1YS5GaWNuXONEImfZdRTiYzEAS3eEew0VIKEiP768M00Won9gin0f4VcxK2rLL52SddGUjZhlI7cXjNkDjsYTAHxMZaNHGoO7ZgLoM0IdUfRPFj1+LcXeQ/6I+n+XMaZABHmHrKtgX4ykRrQ39jeocoYhyznOxDYmh7HgQWGC00s/4m8A4nE/zcUPIn/OFvZ+MQJSVJIzX/gRvzVwda8JXar5yjNRQr+o63vRbDLuug36H64p1DqhmOJpPQQQZnphkMk41Ub8kxGHboGttXov1dhe8eYOhI2EfitVZBnVwZ4JEjNFXJcNDI/h28YVXf30RD9uqr7aYV0utpksmfAIW1qxuU0ORGMxefP6apMv4HaM21y7DdpvwDB7Uq1MpL+3H/4cOt4oLenBfvpber8PYVYKEytGSdmldbxnTo2SczrZWEcp6XjHeH44dkEFUl+sA3xJxD0Jtxv7DUMV+fw4NeugsAewcI9Lx396HmcuU+TwvHhv/R3kV3UyqssXen8p6NDcH9mQYxMHLplxv9xSBwP/kugXFpEQlS6db2KRPUjt6DAhfZDFZZjfSbij0172wuVf99cExRRdcOwZJHCHOWc61K8xYfzl3vOS2J+nrbXEVqOPZibx443GiQ2XqdUAUTB9L2ooau8tWFIZOnpU9HxatD6xUDU37R2iApI5H9ezZN7dWzXDCUBTZn07yFPrgEkx9rwnAXGgLADQnfRv2om/hseZUpSHFg5bisDDH6zjw9Btvbb88sFYbUKZQYysL42TluhHcqnWqDFrBd5iQjiXxDU/t1X6TVGHksZOu4ppfb8+RekxNDK283HigGYKPNT+YwhOpx9fMEfOrkkh1aAqC/W8bpde1qBfFfK7j9OD6z/7tAFcjxx6tc146iOwWRorKYdDcoigeiVRKg3WO3ngAB4rnino/Hr1y5fKJyQU/Q1Qio+OnvGC+crzzKfLZP8KZX1A=="}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":2}
+
+event: content_block_start
+data: {"type":"content_block_start","index":3,"content_block":{"type":"web_fetch_tool_result","tool_use_id":"srvtoolu_rl_01_842694877f5c43979bf97ed1d8e0d794","content":{"type":"web_fetch_result","url":"https://www.iana.org/help/example-domains","content":{"type":"document","source":{"type":"text","media_type":"text/plain","data":""},"title":"Example Domains"},"published_at":"2026-09-27"},"kind":"read_link","signature":"BvjbKJ6+zP1vxNgxf/Fb1NDsHcsDkIfXkgcg9SMkG6aGBwV2JjLa0dCTTAfvBprvleTedsaHj0oOmpm53Melhqo079NwF7/avnKat6MQxMSwqyYMdl+P7QWhM93Gxp3qwcSlNP0KR1cbbV2ah5zTf8cLhsMBtsbypy7NRu7IaN7Dlt6Gq+icrVk330KR2LQIbcSpk8zXXdJyfXZB3ABIzBHDOVsODFjK70F6VOlIhDUtTAtLuFDODSbPJyDBKjD7SXfbehKpmcTVM9xPPLFjjh6VaW08g5xUOEt0xquII6DDC5wMo7u/oMzdgUUR0gUynwQioofip5LJ0Esf+4eo0sDyAfY89e/OmJItXPIPLANfkWAssuFETWMYb2Fbda5v7vf7eSCDM5VOBvrQ6bo2Bam0eZ8H+q1oh4cvwGM2apZRiT/Er1CLGtoDuizYPtwZukcyYxXXM149LaHVo12vmyekwsKvd7qJPIiGnK23YbIAHXz9idj4VUiWkeDKOiKfAbYmtNviU73nLZmK5LsjurMryQWfKRifnk0VJFSPHnnEw4XbaHCBJs1Gou+1TvR5hqlSKIBDtaw1Tlk97eFVwzcZKAEcjG42WF5jgp8tmISdVhVkwq0HRNpKKzUQNIeX7jFN5yum/KLcQFAB6Llx/AKG6HpxwPStzV34vhv1jG0Fs+Jv/cuk1WdJ8B5HUMknJ9BwAKDootp4ca9JcXICNuFGtgQwylnWZnyieAyb88mVM+vUd2AQPdYVwa1HqfbPHutCI90incjYzmBR0s5lXmcWVHlbX4FH0rFN3k0BEWp9e67kbnfIWUftEdlqZdty6kNVy/844WG6g5KINubgcyNoNZp3jwT41nJmz4d0rLJv5Yj7ojLKSss38CVwTKKd2Q+k2CHOWqWRioZ98Sh8Cp8VtqRfjUzMSzapuc2GKCV5lnx7g/oy+Mz6iFTaFjexsv3dUbR3gHzEvtJqTkbVWv2RmJHVsimB8NPqU5zh9Q3VlzbSFqxt77ytl90gW230rJzLwg08ad7mqXBjopJ9hrWM3McCp2n1ZCEytgsm"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":3}
+
+event: content_block_start
+data: {"type":"content_block_start","index":4,"content_block":{"type":"text","text":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"The"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" example"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":".com"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" page"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" states"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" that"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" the"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" domain"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" is"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" reserved"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" for"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" documentation"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" examples"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" and"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" should"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" not"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" be"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" relied"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" on"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" for"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" testing"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" or"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" monitoring"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"."}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" The"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" I"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"ANA"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" page"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" explains"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" that"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" domains"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" like"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" example"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":".com"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" and"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" example"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":".org"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" are"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" maintained"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" for"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" illustrative"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" documentation"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" use"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":","}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" are"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" not"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" available"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" for"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" registration"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" or"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" transfer"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":","}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" and"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" are"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" not"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" intended"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" to"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" support"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" production"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" applications"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"."}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":4}
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"input_tokens":233,"cache_creation_input_tokens":0,"cache_read_input_tokens":256,"output_tokens":61,"service_tier":"standard","server_tool_use":{"web_search_requests":0,"web_fetch_requests":2,"tool_search":0,"tool_fetch":2,"tool_image_search":0}}}
+
+event: message_stop
+data: {"type":"message_stop"}
+

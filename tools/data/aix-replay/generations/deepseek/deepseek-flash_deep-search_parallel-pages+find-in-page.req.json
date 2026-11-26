@@ -1,0 +1,27 @@
+{
+ "model": "deepseek-flash",
+ "stream": true,
+ "max_tokens": 16000,
+ "messages": [
+  {
+   "role": "user",
+   "content": "What is the population of Iceland? Cite sources."
+  }
+ ],
+ "thinking": {
+  "type": "enabled"
+ },
+ "output_config": {
+  "effort": "high"
+ },
+ "tools": [
+  {
+   "type": "deepseek_web_search",
+   "name": "deepseek_web_search"
+  },
+  {
+   "type": "deepseek_read_url",
+   "name": "deepseek_read_url"
+  }
+ ]
+}

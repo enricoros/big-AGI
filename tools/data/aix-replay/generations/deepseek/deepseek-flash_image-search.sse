@@ -1,0 +1,651 @@
+event: message_start
+data: {"type":"message_start","message":{"id":"46ff294a-7209-422e-9ae2-659450659120","type":"message","role":"assistant","model":"deepseek-flash","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":224,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":0,"service_tier":"standard"}}}
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"server_tool_use","id":"srvtoolu_is_00_99d9c5ad6bc642a0807e94010cbf007a","name":"deepseek_web_search","input":{"action":"search","queries":[]},"caller":{"type":"direct"},"kind":"image_search"}}
+
+event: ping
+data: {"type":"ping"}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+event: content_block_start
+data: {"type":"content_block_start","index":1,"content_block":{"type":"web_search_tool_result","tool_use_id":"srvtoolu_is_00_99d9c5ad6bc642a0807e94010cbf007a","content":[{"type":"web_search_result","title":"Eiffel Tower","url":"https://en.wikipedia.org/wiki/Eiffel_Tower","encrypted_content":"w87AlI5h+bnj/NkTEp4WkyyIRdEWfrvvuzjM4oBsnSSmk3KBF77YWXenygqBJUfodA2NgLnmRrzG/JF1gHhOj4Ss8ZUprdmey3dDWlqOt6f8Lhg0LHDRx3CmkAn8vw0Df22KlZJ5N2lnwxTQTc6oLEjja0nY3TNW466WRxniaktlbdzgD6WS6Ns+rWTk/16Q0fHKkPa+0GsuK1wwSZQTWaE1WaSG9hf512c9eSp+i143Bn9vEcKdiP/xXb+oqAZ4p/APTvEwC+pqTZaFAhnX/sd68pnjzRPmRzBFFGXzEzrK8S9YCY3E8KAos2dTQGOE6e0XLN0RMz2ewcpXD1exqoHWXp4JTjDiHT/S3SEuToA9gzxoZ6Edzg1w6HHgd8v+wthhRe1CGcqPUq3Y14kk8K71bcp3XOhWmG4h1cez7z5qKZ6l5iuQRjEXn/h+RumB9kQ9AFJ2PrH5w/Y2G81q0ySjVf095wJSVDEKHOh/9Aq1hs8n1WmR1AXtmZ8awWXt1AazLkmI1RORe4ho83K2BmqzXNI2","page_age":"2001-03-01T00:00:00+00:00","snippet":"\nTower in Paris, France\n\nThis article is about the landmark in Paris, France. For other uses, see Eiffel Tower (disambiguation).\n\n\"300-metre tower\" and \"Tour Eiffel\" redirect here. For other tall towers, see List of tallest towers. For other uses, see Tour Eiffel (disambiguation).\n\nEiffel Tower \n\nTour Eiffel (French)\n\n\n \n\n\nSeen from the Champ de Mars, 2009\n\n\nMap\n\nInteractive","site_name":"Wikipedia","site_icon":"https://cdn.deepseek.com/site-icons/wikipedia.org","image_url":"http://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg/960px-Tour_Eiffel_Wikimedia_Commons_%28cropped%29.jpg"},{"type":"web_search_result","title":"Eiffel Tower","url":"https://www.heritage.site/europe/france/ile-de-france/paris/eiffel-tower","encrypted_content":"Aj0zAGz7ghlxlTl2pJ0btJj8ic0AY2fznSi8gXWmytbGCvYYel7b8Wy4SdhL8rFAPQKcXsVXkNvbFpb6b8zYEwqq9kdVbWK5W60RKLrhcCYZqX9xXegv4fZ97+87HlfeB6hORIPZFGColLzf+CKPiIO59uKvRiaS8lIozwYmd7+jAICPHWxF+6Fut2xBn5UCnTjesI0nOQp8EQ8zNqADPJXZBvJ7cxtNTvdY9fr3QzLw5oT+Mofkw2ODQ1IPwFxFTANkTUGHBB1j57DcXY2X0L/WEzlLCAJhCftUFBFKKJa7ATNsutXSn+HuRGfbHhgrBDDzpPvAppJ7+P4U3XZNnPT85bl90L60YBkvYIzDNkRcNXfsRCpRbGhYqq6GuECC53BoTA8jfN2pIMbMrz1qOQkTumLHtrScZ2z9dUyjTcgWkd2z4gdOm/+XSyv7u4TIEiO+JJq8QfCG3JY5mEldOZjX0t55MFcNodJMjJZgz5A08CtMXYaGIGph7XtmqFa+dtjPlQ==","page_age":null,"snippet":"\n\nEiffel Tower\n\nEiffel Tower - Credit: Wikimedia Commons\n\nThe Eiffel Tower ( ; ) is a wrought-iron lattice tower on the Champ de Mars in Paris, France. It is named after the engineer Gustave Eiffel, whose company designed and built the tower from 1887 to 1889. Read more on Wikipedia\n\n- type: building\n- date from: 1889\n- official website: toureiffel.paris/en\n","site_name":null,"site_icon":"https://cdn.deepseek.com/site-icons/heritage.site","image_url":"https://www.heritage.site/assets/images/1280px/8/n/8/1280px-Tour_Eiffel_Wikimedia_Commons_(cropped).jpg.08n8ecfa4cjtbwj1jufqghehimztu1s7t.webp"},{"type":"web_search_result","title":"Carleton College","url":"https://serc.carleton.edu/details/images/33372.html","encrypted_content":"XOkG3SrUv/igQ9/cjmpw4eyEDcL7Mz7MPb7SpZNT6x/Jqw4LUBMpxu8Rc03nWJPooWDQqdQCEUKNYF2dwOLDhdgoWAuSwdJ6BuWRSNFizFKWfch6AMZ1waooJs4y6UtETk2ROkifjnUQmcJsHkk0XdDoJbEntxz2TtYiyJ1hrBiWFKJpfWwpMXm/pVSFsQjYs21K4i0plqxeyTV2l9gauvTUkmvx36BOiO6bM4hBlBCN1CTMngGx5GoW2LgPCeETu7+tCTRldmJyHvwrjhtWy7PrjTbyp5X/4ISKLPm2oyd5UXnMBVB2b23FJg/KDQi8aspCnWMThUibvLL9d4GaO1yd2xiyK/Gn3Ezr6lm0/j7XaC1MVw1P1orpiM3bndqpDpzGl0cKli4G+BIoUD9nzIfVMXl7tWOkKgv6ss4B+rEXh68Op+gZvvcohr0mQY8EnhiUVe1YKnWzJLalRt9Wn2lffHnjojYgmXYuUQ==","page_age":null,"snippet":"SERC Media\n\nEiffel Tower\n\n\nView Original Image at Full Size\n\nThe Eiffel Tower, seen from the champ de Mars, Paris, France\n\nOriginally uploaded in Cutting Edge:Topics:Rates and Time.\n\nImage 33372 is a 1023 by 553 pixel JPEG\n\nUploaded: May7 12\n\nLast Modified: 2012-05-07 16:59:40\n\nPermanent URL: https://serc.carleton.edu/download/images/","site_name":"Carleton College","site_icon":"https://cdn.deepseek.com/site-icons/carleton.edu","image_url":"https://serc.carleton.edu/images/NAGTWorkshops/time/eiffel_tower_351.jpg"},{"type":"web_search_result","title":"Eiffel Tower","url":"https://help.g2rail.com/poi/W__5013364","encrypted_content":"jTnYjy94/T0YXZ5T5Cu53T9SCBoslFcNNkA/0PZGR15zcRnar+Ckq248Q3W2Q7rpw2owgHu0h4/DkgFpIQ2YhltXWo7DJkLYSsN0BDPj8xSzaG2Mt/8AAXpM9i8LnvaHR+6Ts7h3ikj6oFDMYLRD+pYqTM86CDm50JgTuoHkWOGhVwaT22aLjZBVubnxSvoarMUMLlxWAEeFkthagtbQF4pp3xUNMVIQoAdCsdfHBC45McD+rNeCDnGFF0fEjdY8CGXVS1GCM3QYsWsZ+u7QXrwNjEpaN46utQzErujn+erU2pWaFdzUBbXOLCbkkuuDwn70bp7V+HoAG2Ty6KeHGAATuYNSa1VsdfArXxn1RfgXXW0KPQNEC3xkNVutO4xz88Kri2JrosKjFd0du00lwNy4zvxsaw1/EjYA78AQFWwRbJUVY3r5BtyEQzYuiiW8qDIcSt3KiRT+z520HjRcP7hBLVk2Y5SRI1MtmsKNJkH5nezZHYt6rsksX1FMsQk6nOtbmnmDCSIAifs7kiWmpd7iP64Yl9SFudktLoOUhAIfU4VA451kLfGqMlIgeTqm4RljNYF2L4iv/cYcZG9ekv18unEUUZBF5E5J1cMyCIucr4qSmjR/","page_age":null,"snippet":"\n## Paris, France\n\n\nThe Eiffel Tower is a wrought iron lattice tower on the Champ de Mars in Paris, France. It is named after the engineer Gustave Eiffel, whose company designed and built the tower. Constructed from 1887–89 as the entrance to the 1889 World's Fair, it was initially criticized by some of France's leading artists and intellectuals for its design, but it has become a global cultural icon of France and one of the most recogn","site_name":"G2Rail","site_icon":"https://cdn.deepseek.com/site-icons/g2rail.com","image_url":"https://sematicweb.detie.cn/content/W__5013364__6ac2c08af632.jpg"},{"type":"web_search_result","title":"Places like Eiffel Tower","url":"https://tastedive.com/places/like/eiffel-tower","encrypted_content":"U0W7sbHFwUTY27d/i1mXyGRc5WLlEGk6mquGpiJwJm8kE3o/daKAGc8wdAaxhfBaPQgE4gQn6zo0FMj4FY3q3RpCWh2fm8Gh3Mh3k5VeCDMcNM50ezjUCRR/9Mi3x1f9f/bchuBSRd5ktsoKh1/xctCJf996Up/E7J9psDhg9O8BFdU3EAdmA/SoTeZ/qKguy3RdKlMX06NgeVmwHHD6ABUYFFn2Gn6DBEKhz1judZ9Gm+nGvMHH9bQDYqrQLbW8aPAzObv+Ein7+3G0IDVVuP+y4NVNgMozDknlnBPYvtx8KlDVv7Xyqrwx8Q4TPD0Dz7lsQVxJDAxpQDj42LZntaeZK+BOrOmL8Allc+RB+4gqRygoKymP6XpUjmyHyXSDkdDkcCBgmpHe/qfdMZ0Y6kaQ2pcHFlZd88XzdbKRpfTsZMI/gzJDGeyRXPWSjyrorkuk5J3sfAmEYBbte8S4AQZxzK4uoT/Tjq5ZE8GOMDQOmy20FHCFna/z+OhRZetwirOrF6f2824=","page_age":null,"snippet":"places\n\nHistorical Landmark\n\nTourist Attraction\n\nPlace\n\n\n## Eiffel Tower\n\nAv. Gustave Eiffel 75007 Paris France\n\n3.9/5\n\nGustave Eiffel's iconic, wrought-iron 1889 tower, with steps and elevators to observation decks.\n\nPicture of a place: Eiffel Tower\n\nFilter by:\n\n## Cross-category suggestions\n\nFilter by:\n\nFilter by:\n\nFilter by:\n\nFilter by:\n\nFilter by:\n\nFilter by","site_name":"TasteDive","site_icon":"https://cdn.deepseek.com/site-icons/tastedive.com","image_url":"https://images.qloo.com/i/5947d28c-2684-41eb-9d8b-f1ea26ab7a77-400x300-outside.webp"},{"type":"web_search_result","title":"","url":"https://touradvice.info/france/paris/eiffeltower.html","encrypted_content":"tdWUi4aHeNJLhV1b82SRtwbfYMLXqdHjScgnJAcWPHndOZQiBZCIk5yG0bRljcdew0Vz3hiVvp/wxc1Zh7A+ZHTl6phu06ezmp1cXgFCK7m5m2HISHOTj0wuXOYrVdWfoyzYH7jiFlxdorJWXP8S+haqmIugeK+z7R+aMoBACGr0/mzusP3hBHzbartLNgHiec4IqSrTkKfyoZB/3O5au1oJodsuEeLoGO2/MKQUbmGOg0a3alYJK/dg8Mejp3NAZGvNkhNUQ/ZV60xcKAwX1VRYrlS6n5iB8XiXyr4W4nuW1yYBuAh5BAMQN8y7TJUBfQWMy5XuZiQZzDEbFpAR8CqF8ZZkYgq3kDdFQyBSYnB1OHw2K+POnVxT5sBTl0nLE/S6CcQ1MxkImJMZHu/Eb2l+k+X1dwxTvAoZ+0FreTAQa42tjdlMZ7YS8VDsneeAijoivH1i6uK+5dl8q+UkCUrT9bH8xF12ZU50zjnvBHiWQmO10I6h6nY//l18+fk2ZcOO+bhVu4s=","page_age":null,"snippet":"www.touradvice.info\n\nTravel and Vacation Advice\n\nEiffel Tower\n\n\nEiffel tower\n\n\nEiffel Tower is in Paris. Its height is 1063 feet. It was inaugurated on 31st March, 1889. It is the highest iron tower in the world.\n\nEiffel Tower was not built as a permanent monument. It was built as a temporary monument. Now, this is one of the wonders of the world. In 1889, there","site_name":null,"site_icon":"https://cdn.deepseek.com/site-icons/touradvice.info","image_url":"https://touradvice.info/images/eiffel%20tower.jpg"},{"type":"web_search_result","title":"World's most visited monument with an entrance fee: The Eiffel Tower","url":"https://www.worldrecordacademy.org/2023/8/world-s-most-visited-monument-with-an-entrance-fee-the-eiffel-tower-423322","encrypted_content":"4WRXnZ8WSHJ9MB7RRWuXxN2TBLTnV6XUvyoucA7yVqYvSaDDm2splTPc3OwA3cArmSwitITJNZykTGD/XCJYDawDCXs5ER5Pp8AyJNYPMi4Vrv9MpANcMlNfgKSGRO88w0g0sGFiJj/GKjah+ssrnVbA3/EUSzZDOyo86VRv2AQpLM3C5lmbhN310jeESVRCc5SVBUSewDcvwEvToADdIJHz6GLf/OIb08rwkZT8EnNNWBaANANrRPDMLJdTzl6CsSKAR5mDq94PjsOYQCNBBAMCU9irv/faAEtO+APM18iDZcdsK+CRsHsMI4y+yaE2NKsXEs64SL/n9kBCttd/a8XQTAZwshhJ4WDFDgrvqUIg92DgkO/CCfkikLSwYbxRLwk60Ghp+YrBPUu/j9leCrLd+bVwOjJU8HjKz9GN0KUTDwGO1PGTZEtrNYbpz6wlt88f/XTeEv/9dWjcfU+U+7zi/7+O4hpXjqE5uyqbd2K4uJCcEH1UfMGXOJ+K7QeSgyo0nDGu3XF75DEAEs1RwlKhV7CRuVc12EeEaFAa0EGt+zCkHcmkitUXWSBr","page_age":"2023-08-15T00:00:00+00:00","snippet":"Blog Post\n\n\nAug 15, 2023\n\nWorld's most visited monument with an entrance fee: The Eiffel Tower\n\nParis, France--The Eiffel Tower, nicknamed \"La dame de fer\" (French for \"Iron Lady\"), a wrought-iron lattice tower on the Champ de Mars in Paris, France, was named after the engineer Gustave Eiffel, whose company designed and built the tower; named part of a UNESCO World Heritage Site, the tower received","site_name":"World Record Academy","site_icon":"https://cdn.deepseek.com/site-icons/worldrecordacademy.org","image_url":"https://irp.cdn-website.com/08d31351/dms3rep/multi/423322-b1-most-visited-monument-eiffel-tower.jpg"},{"type":"web_search_result","title":"巴黎鐵塔","url":"https://web.archive.org/web/20230328121359/https://zh-yue.wikipedia.org/wiki/%E5%B7%B4%E9%BB%8E%E9%90%B5%E5%A1%94","encrypted_content":"vGepBhgOrx4kwi9mJRUyOny5QZxXwrFdGWcR8w2eZzWneJuQTyi6TsAseD34KQuGSACGI8OSq6BbYWUygjjAvzfGoDcbOCQCcMKyGp9uGk6ID0U18qcBZ6r3GI6X0bSjFY77Vjou5ldfNbFgExki5Md9uCQXhoYjVi3w5QC4ShubOiSGz4EzBtowmACCq1EmbP28ojC6b+P4A0T7rNnLcegk89WHDqO39xutp+TB7z81f+TdRvqr6TJ8Hf8ULC7G2qCr0mh0fX5PV4EU3qzvkhzJX23WzpAq8LuzjVg+bh+QNUhH4iX5nP9vPn1SMmg0gXlkjweVxtPy2TWm/ulSYSnT7n5qLltcRJO09QzGaqyIYQxmL6Xw+H1PhH0Yumeq/Qw9cX8DJnjPjHLRhehVY+3e273pOroAF87h5qAmby7skf2hCpY=","page_age":null,"snippet":"COLLECTED BY\n\nCollection: Common Crawl\n\nWeb crawl data from Common Crawl.\n\nTIMESTAMPS\n\nThe Wayback Machine - https://web.archive.org/web/20230328121359/https://zh-yue.wikipedia.org/wiki/%E5%B7%B4%E9%BB%8E%E9%90%B5%E5%A1%94\n\n\n出自維基百科，自由嘅百科全書\n\n跳去導覽 跳去搵嘢\n\n |","site_name":"Wayback Machine","site_icon":"https://cdn.deepseek.com/site-icons/archive.org","image_url":"http://web.archive.org/web/20230328121359im_/https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Tour_Eiffel_Wikimedia_Commons.jpg/330px-Tour_Eiffel_Wikimedia_Commons.jpg"},{"type":"web_search_result","title":"Where in the World quiz – the answers","url":"https://joethecockershikes.com/2023/11/29/where-in-the-world-quiz-the-answers/","encrypted_content":"0S6I4XPxFWGMxu1zVMjUj46iaX1HNueac8W6DZsn8mKxKu5xw3VXp9DouS21EI+bpVbgEcs8caURt2PChX0tPk1T7isYXGO88xpYdAuqJ8supHdLgJfn7r7m8Bi7BCy5KbtArGpClcLrl9VRfHe5FVBgY3eWXJ8CPakhH88X3aMVN73xQ5aSAfaO/3lo0ngsUPKNPHeXLO26SvjQeTBKxU1HYGPKp+q5IRpHuz45MlsCcJ5KMYEgLDn8UFysz6XwvqQKwMnp2sANRGSi61/w09LkIv81Mkudlt+FsfqarFheZ/cBQJjsrGHgY0rVIO+d0asOuWiMUEVuip9oRQFyTDR33ewpwVyeyZdU5JWXlhT6pbi4o4mR1trlhJCJwReHbL9enqa/5AqyYQsgiKSt4xQHfciaJ8u1cjYVE70KD8ZZdTvrO+JbQ9g/tbSaJgk8iWLR5Cb8GXuwUZjTR9pZIH+qqm7HlRkhlch6hhPPwpXPm5rQpVhRG9o=","page_age":null,"snippet":"Skip to content\n\n\nWe hope that you spotted where the photographs were taken. The answers are below 👍🐾🐾\n\n1. Machu Picchu, Peru\n\n\n2. Angkor Wat, Cambodia\n\n\n3. Eifel Tower, Paris, France\n\n\n4. John Lennon Memorial, Strawberry Field, Central Park in New York\n\n\n5. Mt. Rushmore, South Dakota, USA\n\n\n6. The Sphinx, Giza, Egypt\n\n\n7. Taj Mahal, Agra","site_name":"Joe the Cocker's Hikes","site_icon":"https://cdn.deepseek.com/site-icons/joethecockershikes.com","image_url":"https://joethecockershikeshome.files.wordpress.com/2023/11/screenshot_20231128_205543_chrome.jpg"}],"kind":"image_search"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":1}
+
+event: content_block_start
+data: {"type":"content_block_start","index":2,"content_block":{"type":"text","text":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"这张"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"图片"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"拍摄"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"的是"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"法国"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"巴黎"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"的"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"**"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"埃"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"菲尔"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"铁"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"塔"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"**"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"（"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"E"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"iff"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"el"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":" Tower"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"），"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"视角"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"是从"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"**"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"战神"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"广场"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"**"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"（"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"Ch"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"amp"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":" de"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":" Mars"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"）"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"的"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"草坪"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"望向"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"铁"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"text_delta","text":"塔"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"citations_delta","citation":{"type":"web_search_result_location","url":"https://en.wikipedia.org/wiki/Eiffel_Tower","title":"Eiffel Tower","encrypted_index":"","cited_text":"这张图片拍摄的是法国巴黎的**埃菲尔铁塔**（Eiffel Tower），视角是从**战神广场**（Champ de Mars）的草坪望向铁塔"}}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":2,"delta":{"type":"citations_delta","citation":{"type":"web_search_result_location","url":"https://serc.carleton.edu/details/images/33372.html","title":"Carleton College","encrypted_index":"","cited_text":"这张图片拍摄的是法国巴黎的**埃菲尔铁塔**（Eiffel Tower），视角是从**战神广场**（Champ de Mars）的草坪望向铁塔"}}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":2}
+
+event: content_block_start
+data: {"type":"content_block_start","index":3,"content_block":{"type":"text","text":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"。\n\n"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"###"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":" 🗼"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":" "}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"关键"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"信息"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"\n"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"*"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"  "}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":" **"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"地点"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"与"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"身份"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"**"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"："}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"位于"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"巴黎"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"第七"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"区"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"，"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"是"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"法国的"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"文化"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"象征"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"和"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"全球"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"性地"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"text_delta","text":"标"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"citations_delta","citation":{"type":"web_search_result_location","url":"https://en.wikipedia.org/wiki/Eiffel_Tower","title":"Eiffel Tower","encrypted_index":"","cited_text":"。\n\n### 🗼 关键信息\n*   **地点与身份**：位于巴黎第七区，是法国的文化象征和全球性地标"}}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":3,"delta":{"type":"citations_delta","citation":{"type":"web_search_result_location","url":"https://tastedive.com/places/like/eiffel-tower","title":"Places like Eiffel Tower","encrypted_index":"","cited_text":"。\n\n### 🗼 关键信息\n*   **地点与身份**：位于巴黎第七区，是法国的文化象征和全球性地标"}}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":3}
+
+event: content_block_start
+data: {"type":"content_block_start","index":4,"content_block":{"type":"text","text":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"。\n"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"*"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"  "}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":" **"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"建造"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"背景"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"**"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"："}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"为"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"188"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"9"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"年"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"世界"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"博览会"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"而"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"建"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"，"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"由"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"工程师"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"古"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"斯塔"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"夫"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"·"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"埃"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"菲尔"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"的公司"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"设计"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"text_delta","text":"建造"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"citations_delta","citation":{"type":"web_search_result_location","url":"https://en.wikipedia.org/wiki/Eiffel_Tower","title":"Eiffel Tower","encrypted_index":"","cited_text":"。\n*   **建造背景**：为1889年世界博览会而建，由工程师古斯塔夫·埃菲尔的公司设计建造"}}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":4,"delta":{"type":"citations_delta","citation":{"type":"web_search_result_location","url":"https://help.g2rail.com/poi/W__5013364","title":"Eiffel Tower","encrypted_index":"","cited_text":"。\n*   **建造背景**：为1889年世界博览会而建，由工程师古斯塔夫·埃菲尔的公司设计建造"}}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":4}
+
+event: content_block_start
+data: {"type":"content_block_start","index":5,"content_block":{"type":"text","text":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"。\n"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"*"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"  "}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":" **"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"建筑"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"数据"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"**"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"："}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"是一座"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"镂"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"空"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"结构的"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"锻"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"铁"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"塔"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"，"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"塔"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"高"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"约"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"**"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"330"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"米"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"**"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"（"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"含"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"天线"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"），"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"底部"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"呈"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"正方形"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"，"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"边长"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"约"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"125"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"text_delta","text":"米"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"citations_delta","citation":{"type":"web_search_result_location","url":"https://en.wikipedia.org/wiki/Eiffel_Tower","title":"Eiffel Tower","encrypted_index":"","cited_text":"。\n*   **建筑数据**：是一座镂空结构的锻铁塔，塔高约**330米**（含天线），底部呈正方形，边长约125米"}}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":5,"delta":{"type":"citations_delta","citation":{"type":"web_search_result_location","url":"https://www.worldrecordacademy.org/2023/8/world-s-most-visited-monument-with-an-entrance-fee-the-eiffel-tower-423322","title":"World's most visited monument with an entrance fee: The Eiffel Tower","encrypted_index":"","cited_text":"。\n*   **建筑数据**：是一座镂空结构的锻铁塔，塔高约**330米**（含天线），底部呈正方形，边长约125米"}}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":5}
+
+event: content_block_start
+data: {"type":"content_block_start","index":6,"content_block":{"type":"text","text":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"。\n"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"*"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"  "}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":" **"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"历史"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"地位"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"**"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"："}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"落"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"成"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"时"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"曾"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"超越"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"华盛顿"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"纪念碑"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"成为"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"世界"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"最高"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"建筑"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"，"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"保持"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"该"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"纪录"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"长达"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"41"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"text_delta","text":"年"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"citations_delta","citation":{"type":"web_search_result_location","url":"https://en.wikipedia.org/wiki/Eiffel_Tower","title":"Eiffel Tower","encrypted_index":"","cited_text":"。\n*   **历史地位**：落成时曾超越华盛顿纪念碑成为世界最高建筑，保持该纪录长达41年"}}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":6,"delta":{"type":"citations_delta","citation":{"type":"web_search_result_location","url":"https://help.g2rail.com/poi/W__5013364","title":"Eiffel Tower","encrypted_index":"","cited_text":"。\n*   **历史地位**：落成时曾超越华盛顿纪念碑成为世界最高建筑，保持该纪录长达41年"}}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":6}
+
+event: content_block_start
+data: {"type":"content_block_start","index":7,"content_block":{"type":"text","text":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"。\n"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"*"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"  "}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":" **"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"参观"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"信息"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"**"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"："}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"设有"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"三层"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"观"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"景"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"台"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"，"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"是"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"世界上最"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"受欢迎的"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"付费"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"景点"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"之一"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"，"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"201"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"5"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"年"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"访问"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"量"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"达"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"691"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"text_delta","text":"万人次"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"citations_delta","citation":{"type":"web_search_result_location","url":"https://en.wikipedia.org/wiki/Eiffel_Tower","title":"Eiffel Tower","encrypted_index":"","cited_text":"。\n*   **参观信息**：设有三层观景台，是世界上最受欢迎的付费景点之一，2015年访问量达691万人次"}}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":7,"delta":{"type":"citations_delta","citation":{"type":"web_search_result_location","url":"https://www.worldrecordacademy.org/2023/8/world-s-most-visited-monument-with-an-entrance-fee-the-eiffel-tower-423322","title":"World's most visited monument with an entrance fee: The Eiffel Tower","encrypted_index":"","cited_text":"。\n*   **参观信息**：设有三层观景台，是世界上最受欢迎的付费景点之一，2015年访问量达691万人次"}}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":7}
+
+event: content_block_start
+data: {"type":"content_block_start","index":8,"content_block":{"type":"text","text":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":8,"delta":{"type":"text_delta","text":"。"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":8}
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"input_tokens":8389,"cache_creation_input_tokens":0,"cache_read_input_tokens":128,"output_tokens":237,"service_tier":"standard","server_tool_use":{"web_search_requests":1,"web_fetch_requests":0,"tool_search":0,"tool_fetch":0,"tool_image_search":1}}}
+
+event: message_stop
+data: {"type":"message_stop"}
+

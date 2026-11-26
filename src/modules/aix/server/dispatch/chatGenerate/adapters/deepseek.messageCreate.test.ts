@@ -30,9 +30,21 @@ function violations(body: DeepseekMessagesRequest): string[] {
   const thinkingOn = body.thinking?.type !== 'disabled'; // on is the default
 
   // 422 "tools[0]: unknown variant `custom`, expected one of `web_search_20250305`, ..., `deepseek_read_url`": a typed tool is a server tool
-  for (const tool of body.tools ?? [])
-    if ('type' in tool)
-      found.push(`the client tool ${tool.name} carries a type`);
+  const webTools = (body.tools ?? []).flatMap(tool => 'type' in tool ? [tool.type as string] : []);
+  const clientTools = (body.tools ?? []).filter(tool => !('type' in tool));
+  for (const type of webTools)
+    if (type !== 'deepseek_web_search' && type !== 'deepseek_read_url')
+      found.push(`a tool of type ${type}`);
+
+  // 400 "tools: `deepseek_web_search` can only be declared once"
+  if (new Set(webTools).size !== webTools.length)
+    found.push('a web tool declared twice');
+  // 400 "The server-side tool calls (deepseek_web_search, deepseek_read_url) ... are unavailable for model deepseek-v4-pro"
+  if (webTools.length && body.model !== 'deepseek-flash')
+    found.push(`web tools on ${body.model}`);
+  // 400 "tools: client tools can only be used together with `deepseek_web_search` in thinking mode"
+  if (webTools.length && clientTools.length && !thinkingOn)
+    found.push('web tools next to client tools with thinking off');
 
   // 400 "Thinking mode does not support this tool_choice"
   if (thinkingOn && (body.tool_choice?.type === 'any' || body.tool_choice?.type === 'tool'))
@@ -94,7 +106,14 @@ const HISTORIES: Record<string, AixMessages_ChatMessage[]> = {
 
 const EFFORTS = [undefined, 'none', 'low', 'high', 'max'] as const;
 const POLICIES = [undefined, 'auto', 'any'] as const;
-const MODELS = ['deepseek-flash', 'deepseek-v4-pro'];
+// the models with the web tools each can have set: the listing gives the two parameters to deepseek-flash alone
+const MODELS: [id: string, web: Partial<AixAPI_Model>][] = [
+  ['deepseek-flash', {}],
+  ['deepseek-flash', { vndDeepseekWebSearch: 'auto' }],
+  ['deepseek-flash', { vndDeepseekWebSearch: 'auto', vndDeepseekReadUrl: 'auto' }],
+  ['deepseek-v4-pro', {}],
+];
+const WEB = { vndDeepseekWebSearch: 'auto', vndDeepseekReadUrl: 'auto' } as const;
 
 function request(history: AixMessages_ChatMessage[], policy: typeof POLICIES[number], tools = [WEATHER]): AixAPIChatGenerate_Request {
   return { systemMessage: { parts: [text('Be brief.')] }, chatSequence: history, ...(policy ? { tools, toolsPolicy: { type: policy } } : {}) };
@@ -115,11 +134,11 @@ describe('DeepSeek Messages request: nothing DeepSeek rejects', () => {
 
   for (const [name, history] of Object.entries(HISTORIES))
     test(name, () => {
-      for (const id of MODELS)
+      for (const [id, web] of MODELS)
         for (const effort of EFFORTS)
           for (const policy of POLICIES) {
-            const body = aixToDeepseekMessageCreate(aixModel(id, effort), request(history, policy), true);
-            assert.deepEqual(violations(body), [], `${id}, effort ${effort}, policy ${policy}`);
+            const body = aixToDeepseekMessageCreate(aixModel(id, effort, web), request(history, policy), true);
+            assert.deepEqual(violations(body), [], `${id} ${JSON.stringify(web)}, effort ${effort}, policy ${policy}`);
           }
     });
 
@@ -183,6 +202,34 @@ describe('DeepSeek Messages request: what is sent', () => {
     assert.deepEqual(sampled(undefined), { temperature: undefined, top_p: undefined });
   });
 
+  const typedTools = (body: DeepseekMessagesRequest) => (body.tools ?? []).flatMap(tool => 'type' in tool ? [tool.type] : []);
+
+  test('each web tool is declared when its parameter is on, on its own', () => {
+    const declared = (web: Partial<AixAPI_Model>) => typedTools(aixToDeepseekMessageCreate(aixModel('deepseek-flash', 'high', web), request([ASK], undefined), true));
+    assert.deepEqual(declared({}), []);
+    assert.deepEqual(declared({ vndDeepseekWebSearch: 'auto' }), ['deepseek_web_search']);
+    assert.deepEqual(declared({ vndDeepseekReadUrl: 'auto' }), ['deepseek_read_url']);
+    assert.deepEqual(declared(WEB), ['deepseek_web_search', 'deepseek_read_url']);
+  });
+
+  // measured: a 400 with thinking off, and with thinking on a model that answers it has no such tool (0 of 16 searches)
+  test('the web tools are left out of a request that carries client tools, whatever the thinking, and the client tools stay', () => {
+    for (const effort of EFFORTS)
+      for (const policy of ['auto', 'any'] as const) {
+        const body = aixToDeepseekMessageCreate(aixModel('deepseek-flash', effort, WEB), request([ASK], policy), true);
+        assert.deepEqual(typedTools(body), [], `effort ${effort}, policy ${policy}`);
+        assert.deepEqual(body.tools?.map(tool => tool.name), ['get_weather'], `effort ${effort}, policy ${policy}`);
+      }
+  });
+
+  test('the web tools change nothing else: thinking and effort are the model\'s, so search is quick with thinking off and deep with it on', () => {
+    for (const effort of EFFORTS) {
+      const { tools: _with, ...withWeb } = aixToDeepseekMessageCreate(aixModel('deepseek-flash', effort, WEB), request([ASK], undefined), true);
+      const { tools: _without, ...without } = aixToDeepseekMessageCreate(aixModel('deepseek-flash', effort), request([ASK], undefined), true);
+      assert.deepEqual(withWeb, without, `effort ${effort}`);
+    }
+  });
+
   test('max_tokens is the model\'s, and absent when it sets none: the vendor\'s limit then applies, not Anthropic\'s 8192', () => {
     assert.equal('max_tokens' in aixToDeepseekMessageCreate(aixModel('deepseek-flash', 'high'), request([ASK], undefined), true), false);
     assert.equal(aixToDeepseekMessageCreate(aixModel('deepseek-flash', 'high', { maxTokens: 32000 }), request([ASK], undefined), true).max_tokens, 32000);
@@ -233,7 +280,7 @@ describe('DeepSeek Messages request: the Chat Completions wire sends the same re
 
   for (const name of SHARED)
     test(name, () => {
-      for (const id of MODELS)
+      for (const id of ['deepseek-flash', 'deepseek-v4-pro'])
         for (const effort of EFFORTS)
           for (const policy of POLICIES) {
             const aix = aixModel(id, effort, { temperature: 0.3, maxTokens: 4096 });

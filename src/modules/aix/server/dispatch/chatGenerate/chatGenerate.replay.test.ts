@@ -1229,6 +1229,63 @@ describe('DeepSeek Messages', () => {
     assert.ok(cancelled, 'the vendor\'s stream is still open');
   });
 
+  // The web tools (deepseek_web_search, deepseek_read_url). The deep search is a battery run, sent by hand, of 3 searches,
+  // 3 pages opened at once and 3 more one by one, and one text found in a page; the others were sent by the adapter.
+  // The image search request carried a photo, masked in its .req.json.
+  const DEEP = 'deepseek/deepseek-flash_deep-search_parallel-pages+find-in-page.sse';
+  const QUICK_NS = 'deepseek/deepseek-flash_quick-search_nonstream.json';
+  const LINKS = 'deepseek/deepseek-flash_read-url_2-links.sse';
+  const LINK_FAILS = 'deepseek/deepseek-flash_read-url_not-accessible.sse';
+  const BY_IMAGE = 'deepseek/deepseek-flash_image-search.sse';
+  const WEB_TOOLS = [DEEP, QUICK_NS, LINKS, LINK_FAILS, BY_IMAGE];
+
+  // what counts: the result blocks of each kind, failed ones included (usage.server_tool_use, web_search_requests and web_fetch_requests)
+  hostedToolCounts([
+    [DEEP, { nWebSearch: 3, nWebFetch: 7 }, 'a deep search: 3 searches, 6 pages opened, 1 text found in a page'],
+    [QUICK_NS, { nWebSearch: 1 }, 'a quick search: 1 search of 3 queries'],
+    [LINKS, { nWebFetch: 2 }, '2 links read'],
+    [LINK_FAILS, { nWebFetch: 1 }, '1 link that could not be read'],
+    [BY_IMAGE, { nWebSearch: 1 }, '1 search by image'],
+  ]);
+
+  /** The blocks the vendor sent, whole: a web tool's call and its result each arrive complete */
+  const blocksSent = (g: Generation): any[] => g.streaming ? g.payloads.flat().filter(event => event.type === 'content_block_start').map(event => event.content_block) : g.payloads[0][0].content;
+
+  test('every web tool call is shown under its id with what it looks for, and its result closes it: done, or failed for a link that cannot be read', { skip: missing(...WEB_TOOLS) }, () => overCaptures(WEB_TOOLS, g => {
+    const blocks = blocksSent(g);
+    const calls = blocks.filter(block => block.type === 'server_tool_use');
+    assert.ok(calls.length, 'the capture has no web tool call');
+
+    for (const call of calls) {
+      const shown = g.particles.filter(isPart('vp')).filter(op => op.opId === call.id);
+      const lookedFor: string[] = [...(call.input.queries ?? []), call.input.action === 'find_in_page' ? call.input.pattern : call.input.url].filter(Boolean);
+      for (const what of lookedFor)
+        assert.ok(shown[0]?.iTexts?.some(text => text.includes(what)), `${call.input.action} ${call.id}: ${what} is not shown`);
+
+      const result = blocks.find(block => block.tool_use_id === call.id);
+      assert.ok(result, `${call.id}: the capture has no result for it`);
+      const failed = result.type === 'web_fetch_tool_result' ? result.content.type !== 'web_fetch_result' : !Array.isArray(result.content) || result.content[0]?.type === 'web_search_tool_result_error';
+      assert.equal(shown.at(-1)?.state, failed ? 'error' : 'done', `${call.input.action} ${call.id}`);
+    }
+    // each is a web operation, and none is left to the parser's line for a tool it does not know
+    assert.deepEqual(g.particles.filter(isPart('vp')).filter(op => op.mot !== 'search-web' || op.text.includes('deepseek_')), []);
+  }));
+
+  test('a search by image, which has no query, is announced as one', { skip: missing(BY_IMAGE) }, async () => {
+    const operations = (await replayCapture(BY_IMAGE)).filter(isPart('vp'));
+    assert.equal(operations[0]?.text, 'Searching by image...');
+    assert.equal(operations[0]?.iTexts, undefined);
+  });
+
+  test('every source the answer cites reaches the client', { skip: missing(...WEB_TOOLS) }, () => overCaptures(WEB_TOOLS, g => {
+    const cited: string[] = g.streaming
+      ? g.payloads.flat().filter(event => event.delta?.type === 'citations_delta').map(event => event.delta.citation.url)
+      : g.payloads[0][0].content.flatMap((block: any) => block.citations ?? []).map((citation: any) => citation.url);
+    if (!cited.length) return false;
+    const received = g.particles.filter(isPart('urlc')).map(op => op.url);
+    assert.deepEqual([...new Set(cited)].filter(url => !received.includes(url)), []);
+  }));
+
 });
 
 

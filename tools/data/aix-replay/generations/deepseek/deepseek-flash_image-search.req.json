@@ -1,0 +1,39 @@
+{
+ "body": {
+  "model": "deepseek-flash",
+  "messages": [
+   {
+    "role": "user",
+    "content": [
+     {
+      "type": "image",
+      "source": {
+       "type": "base64",
+       "media_type": "image/jpeg",
+       "data": "(masked)"
+      }
+     },
+     {
+      "type": "text",
+      "text": "Find where this photo comes from on the web: search by image."
+     }
+    ]
+   }
+  ],
+  "tools": [
+   {
+    "type": "deepseek_web_search",
+    "name": "deepseek_web_search"
+   },
+   {
+    "type": "deepseek_read_url",
+    "name": "deepseek_read_url"
+   }
+  ],
+  "thinking": {
+   "type": "disabled"
+  },
+  "stream": true
+ },
+ "note": "The image is a 330x550 JPEG photo of the Eiffel Tower (36 KB), sent as base64 and masked here."
+}

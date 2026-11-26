@@ -19,7 +19,56 @@ import { type AnthropicParserPlugin, createAnthropicMessageParser, createAnthrop
  */
 const _PLUGIN: AnthropicParserPlugin = {
   dropThinkingSignatures: true,
+  onServerToolUse: _showWebTool,
 };
+
+/**
+ * The web tools' calls. One `server_tool_use` per step, complete when it starts, its `input.action` saying which:
+ * `search` (several queries in one call; none on an image search, where the image is the query), `open_page` and
+ * `find_in_page` (a deep search working through its results), `read_link` (a link of the user's message).
+ * Their results are Anthropic's `web_search_tool_result` and `web_fetch_tool_result`, which the parser closes by id.
+ */
+function _showWebTool(pt: IParticleTransmitter, block: Parameters<NonNullable<AnthropicParserPlugin['onServerToolUse']>>[1], op: { opId: string, parentOpId?: string }): boolean {
+  if (block.name !== 'deepseek_web_search' && block.name !== 'deepseek_read_url')
+    return false;
+
+  const { action, queries, url, pattern } = _webToolInput(block.input);
+  switch (action) {
+    case 'search':
+      pt.sendOperationState('search-web', block.kind?.includes('image') ? 'Searching by image...' : 'Searching the web...', { ...op, iTexts: queries.map(query => `Search query: "${query}"`) });
+      break;
+    case 'open_page':
+    case 'read_link':
+      pt.sendOperationState('search-web', `Fetching ${url || 'web content'}...`, { ...op, ...(url ? { iTexts: [`URL: ${url}`] } : {}) });
+      break;
+    case 'find_in_page':
+      pt.sendOperationState('search-web', `Finding "${pattern ?? ''}" in ${url || 'the page'}...`, { ...op, ...(pattern ? { iTexts: [`pattern: ${pattern}`] } : {}) });
+      break;
+    default:
+      pt.sendOperationState('search-web', 'Using the web...', op); // an action added since: shown, and closed by its result as the others
+      break;
+  }
+  return true;
+}
+
+/** The input is the object non-streaming, and its JSON as a string when streaming: the Anthropic parser keeps a started block's input as text */
+function _webToolInput(input: unknown): { action?: string, queries: string[], url?: string, pattern?: string } {
+  let value = input;
+  if (typeof value === 'string')
+    try {
+      value = JSON.parse(value);
+    } catch {
+      value = null;
+    }
+  const fields: Record<string, unknown> = (value && typeof value === 'object') ? value as Record<string, unknown> : {};
+  const text = (field: unknown) => typeof field === 'string' ? field : undefined;
+  return {
+    action: text(fields.action),
+    queries: Array.isArray(fields.queries) ? fields.queries.filter((query): query is string => typeof query === 'string') : [],
+    url: text(fields.url),
+    pattern: text(fields.pattern),
+  };
+}
 
 /**
  * Pings in a row, about 15 seconds apart, that end a stream. A stalled stream is HTTP 200, `message_start`, then pings

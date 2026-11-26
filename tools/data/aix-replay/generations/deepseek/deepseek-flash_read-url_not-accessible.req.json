@@ -1,0 +1,24 @@
+{
+ "model": "deepseek-flash",
+ "messages": [
+  {
+   "role": "user",
+   "content": [
+    {
+     "type": "text",
+     "text": "Read these three pages and say in one line each what you found: https://example.com/ , https://www.iana.org/this-page-does-not-exist-404 , http://10.255.255.1/secret"
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "type": "deepseek_read_url",
+   "name": "deepseek_read_url"
+  }
+ ],
+ "thinking": {
+  "type": "disabled"
+ },
+ "stream": true
+}
