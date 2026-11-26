@@ -345,7 +345,7 @@ export function Telephone(props: {
       if (messageWasInterruptedAtStart(status.lastDMessage))
         return;
 
-      // whether status.outcome === 'completed' or not, we get a valid DMessage, eventually with Error Fragments inside
+      // whether status.outcome === 'completed' or not, we get a valid DMessage, a failure inside as an `aix.issue` part
       const fullMessage = createDMessageFromFragments('assistant', status.lastDMessage.fragments);
       fullMessage.generator = status.lastDMessage.generator;
       setCallMessages(messages => [...messages, fullMessage]); // [state] append assistant:call_response

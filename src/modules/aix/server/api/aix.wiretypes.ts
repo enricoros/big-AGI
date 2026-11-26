@@ -730,11 +730,6 @@ export namespace AixWire_API_ChatContentGenerate {
   // const AixControlProto_schema = z.object({
   //   type: z.enum(['start', 'done']),
   // });
-  //
-  // const AixErrorProto_schema = z.object({
-  //   issueId: z.enum(['dispatch-prepare', 'dispatch-fetch', 'dispatch-read', 'dispatch-parse']),
-  //   issueText: z.string(),
-  // });
 
 }
 

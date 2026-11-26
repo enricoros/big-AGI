@@ -155,7 +155,7 @@ export type DMessageGenerator = ({
   tokenStopReason?:
     | 'client-abort'                  // if the generator stopped due to a client abort signal
     | 'filter'                        // (inline filter message injected) if the generator stopped due to a filter
-    | 'issue'                         // (error fragment follows) if the generator stopped due to an issue
+    | 'issue'                         // if the generator stopped due to an issue: the aix.issue part that failed it follows (an error part, in older stored data)
     | 'out-of-tokens'                 // if the generator stopped due to running out of tokens
 };
 

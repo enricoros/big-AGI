@@ -77,7 +77,7 @@ export function isTRPCStreamClosedEarly(error: unknown): boolean {
 // - 'request-exceeded': HTTP 413, the request body is over the limit of whatever sits in front of the function
 // - 'response-captive': text/html where a JSON(L) stream is expected - captive portal, proxy, gateway error page
 // - 'response-status': any other non-2xx that is not tRPC's own error envelope - a gateway's 502/504, a firewall's 403, a 429
-// TODO: typed errors (kb/modules/aix/AIX-TODO-errors.md) - a custom class until the error table covers the transport
+// A class, so the code and status survive tRPC's wrapping: aixClassifyStreamingError maps each code to a `relay-*` record.
 export class TRPCClientFetchError extends Error {
   constructor(readonly code: 'request-exceeded' | 'response-captive' | 'response-status', message: string, readonly httpStatus?: number) {
     super(message);

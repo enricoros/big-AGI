@@ -8,7 +8,7 @@ import { aixIssueDetailAddingToText, aixIssueFails, aixIssueInMessageText, aixIs
  * - aixIssuePolicy: what the machinery does (retry, replay)
  * - aixIssuePresentation: what the user is shown (label, tint, form, advice, the Direct Connection row)
  * Both are total: a record of a code this build does not know (a newer build wrote it) gets the fallback row.
- * No decision here reads `text` or `detail`. Plan: kb/modules/aix/AIX-TODO-errors.md
+ * No decision here reads `text` or `detail`. As built: kb/modules/aix/AIX-TODO-errors.md
  */
 export type AixIssuePolicy = {
   /** the action a loop or the user takes; 'resume' means reattach when an upstream handle exists, else retry; 'reroute' means the other path (Direct Connection on or off), not a retry */

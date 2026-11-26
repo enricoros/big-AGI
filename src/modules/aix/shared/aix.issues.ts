@@ -5,7 +5,7 @@
  * particle), the client for what throws across the relay, the reassembler for its own work. Stored as a
  * `DMessageAixIssuePart` (`pt: 'aix.issue'`), read by every decision: outcome, presentation, retry, replay.
  * `effect` is the one decision stored, a snapshot of what the issue did to its generation. The others are derived,
- * never stored: aix.issues.policy.ts, which holds their table. Plan: kb/modules/aix/AIX-TODO-errors.md
+ * never stored: aix.issues.policy.ts, which holds their table. As built: kb/modules/aix/AIX-TODO-errors.md
  *
  * Facts only. No markup in `text`, no advice, no `cause` chain: what a wrapped error carried goes into `detail`,
  * `causeCode` or `httpStatus`.

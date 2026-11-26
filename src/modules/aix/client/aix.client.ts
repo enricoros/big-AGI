@@ -549,7 +549,7 @@ export async function aixChatGenerateText_Simple(
   if (state.text === null)
     throw new Error('AIX: Empty text response.');
 
-  // throw if there are error fragments, or an issue that failed the generation; an issue it survived is not a failure
+  // throw if an issue failed the generation; an issue it survived is not a failure
   const errorMessage = llFinal.fragments
     .map(fragmentFailureText)
     .filter(text => text !== null).join('\n');

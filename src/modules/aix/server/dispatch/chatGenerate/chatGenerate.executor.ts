@@ -267,10 +267,6 @@ async function* _connectToDispatch(
     }
   } catch (error: any) {
 
-    // CSF - rethrow aborts to prevent particle creation and instead break the outer loops, as-if it was a tRPC client-side error
-    // if (intakeAbortSignal.aborted && error && error?.name === 'TRPCFetcherError' /* CSF */)
-    //   throw new DOMException('CSF aborted in dispatch-fetch', 'AbortError');
-
     // aborted while connecting
     if (_isDispatchAbort(error, intakeAbortSignal)) {
       chatGenerateTx.setDispatchEnded('done-dispatch-aborted');

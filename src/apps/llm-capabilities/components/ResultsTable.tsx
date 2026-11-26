@@ -18,7 +18,7 @@ const OUTCOME_DISPLAY: Record<ProbeOutcome, { short: string; color: ColorName; d
   code_execution: { short: 'CODE', color: 'primary', desc: 'Model invoked a code-execution tool instead of a function call.' },
   no_tool_text_only: { short: 'TEXT', color: 'warning', desc: 'Only text returned - no tool invocation.' },
   empty: { short: 'EMPTY', color: 'neutral', desc: 'No content fragments returned.' },
-  error: { short: 'ERR', color: 'danger', desc: 'Error fragment or failed request.' },
+  error: { short: 'ERR', color: 'danger', desc: 'The generation failed, or the request threw.' },
   aborted: { short: 'ABRT', color: 'neutral', desc: 'Aborted - user stop or timeout.' },
   not_configured: { short: 'N/C', color: 'neutral', desc: 'Model or service not configured / no access.' },
   roundtrip_loop: { short: 'LOOP', color: 'danger', desc: 'Roundtrip: turn 2 re-emitted a tool call instead of answering.' },

@@ -13,7 +13,7 @@ export type ProbeOutcome =
   | 'code_execution'              // emitted a code_execution invocation instead of a function_call
   | 'no_tool_text_only'           // only text output, no tool invocation
   | 'empty'                       // model returned no content fragments
-  | 'error'                       // AIX produced an error fragment, or the request failed
+  | 'error'                       // an issue failed the generation, or the request threw
   | 'aborted'                     // user stopped or per-probe timeout fired
   | 'not_configured'              // pre-LL error (e.g. service/access missing, model not found)
   | 'roundtrip_loop'              // roundtrip turn 2 re-emitted a tool call instead of answering

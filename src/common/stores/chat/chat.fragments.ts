@@ -359,7 +359,7 @@ type DVoidPlaceholderAixControlRetry = {
   rAttempt?: number,  // attempt number (starts from 2 to be clear it's a retry)
   rStrat?: 'cli-ll-reconnect' | 'cli-ll-resume',  // strategy for cli-ll scope (reconnect: new request, resume: continue from handle)
   rCauseHttp?: number,  // HTTP status code if available (e.g., 429, 503, 502)
-  rCauseConn?: string,  // connection error type if available (e.g., 'net-disconnected', 'timeout')
+  rCauseConn?: string,  // cause, if known: the fetch error category (srv-dispatch), the vendor's error code (srv-op), the issue's causeCode (cli-ll); older stored data holds values such as 'net-disconnected'
   rCalm?: true,  // the retry profile marks the condition as expected (e.g. a busy best-effort tier): render without alarm
 };
 
