@@ -78,7 +78,7 @@ function missing(...files: string[]): string | false {
  * Runs one generation: each upstream request the chain makes is answered with the next response, in order.
  * Returns the particles the client would receive, and the request bodies the chain sent (the first is `requestBody`).
  */
-async function replay(responses: string[], streaming: boolean, createParser: () => ChatGenerateParseFunction, requestBody: object = {}): Promise<{ particles: Op[], requestBodies: any[] }> {
+async function replay(responses: (string | ReadableStream<Uint8Array>)[], streaming: boolean, createParser: () => ChatGenerateParseFunction, requestBody: object = {}): Promise<{ particles: Op[], requestBodies: any[] }> {
   const particles: Op[] = [];
   const requestBodies: any[] = [];
   const dispatchCreator = async (): Promise<ChatGenerateDispatch> => {
@@ -1211,6 +1211,22 @@ describe('DeepSeek Messages', () => {
     const { particles } = await replay([slow], true, () => createDeepseekMessagesParser(true));
     assert.deepEqual(explanations(particles), []);
     assert.equal(theEnd(particles).tokenStopReason, 'ok-tool_invocations');
+  });
+
+  // The stalled stream never closes: once we end it, nothing reads its body. In the browser (CSF) no function teardown
+  // closes it either, so the connection would stay open, pinging, until the page goes
+  const STALLED = 'deepseek/deepseek-flash_stalled_pings-only_synthetic.sse';
+
+  test('a stream we stop reading is released: its body is cancelled, not left open', { skip: missing(STALLED) }, async () => {
+    let cancelled = false;
+    const neverCloses = new ReadableStream<Uint8Array>({
+      start: controller => controller.enqueue(new TextEncoder().encode(capture(STALLED))),
+      cancel: () => void (cancelled = true),
+    });
+
+    const { particles } = await replay([neverCloses], true, () => createDeepseekMessagesParser(true));
+    theEnd(particles);
+    assert.ok(cancelled, 'the vendor\'s stream is still open');
   });
 
 });

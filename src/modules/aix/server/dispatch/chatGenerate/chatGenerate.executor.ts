@@ -367,6 +367,28 @@ async function* _consumeDispatchStream(
 
   // Body reader with optional transform (e.g. AWS EventStream binary -> SSE text)
   const dispatchReader = AixDemuxers.applyBodyTransformer(dispatchResponse.body || createEmptyReadableStream(), dispatchBodyTransform).getReader();
+  try {
+    yield* _pumpDispatchStream(dispatchReader, dispatchDemuxerFormat, dispatchParser, intakeAbortSignal, chatGenerateTx, _d, parseContext);
+  } finally {
+    // We read no further, however we got here (the dialect ended, an issue, a retry or continuation signal, the consumer
+    // closing): release the upstream body. A vendor that keeps its stream open past the event that ended it, or that only
+    // pings, would otherwise hold the connection - for good in the browser (CSF), where no function teardown closes it.
+    // Best effort: a body that is closed or aborted already rejects.
+    dispatchReader.cancel().catch(() => undefined);
+  }
+}
+
+/** The data pump of _consumeDispatchStream, which owns the reader: chunks -> events -> particles, until the stream or the generation ends */
+async function* _pumpDispatchStream(
+  dispatchReader: ReadableStreamDefaultReader<Uint8Array>,
+  dispatchDemuxerFormat: AixDemuxers.StreamDemuxerFormat,
+  dispatchParser: ChatGenerateParseFunction,
+  intakeAbortSignal: AbortSignal,
+  chatGenerateTx: ChatGenerateTransmitter,
+  _d: AixDebugObject,
+  parseContext?: ChatGenerateParseContext,
+): AsyncGenerator<AixWire_Particles.ChatGenerateOp, void> {
+
   const dispatchDecoder = new TextDecoder('utf-8', { fatal: false /* malformed data -> " " (U+FFFD) */ });
   const dispatchDemuxer = AixDemuxers.createStreamDemuxer(dispatchDemuxerFormat);
 
