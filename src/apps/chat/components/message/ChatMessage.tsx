@@ -37,6 +37,7 @@ import { ChatMessageInfoPopup } from './ChatMessageInfoPopup';
 import { ChatMessageMenu } from './ChatMessageMenu';
 import { ChatMessageTimestamp } from './ChatMessageTimestamp';
 import type { CMBuildOptions } from './render-tree/cmRenderTree.build';
+import { BlockAccentBar } from './fragments-content/BlockAccentBar';
 import { CMRenderTreeNodes } from './render-tree/CMRenderTreeNodes';
 import { InReferenceToList } from './in-reference-to/InReferenceToList';
 import { useCMRenderTree } from './render-tree/useCMRenderTree';
@@ -1017,6 +1018,16 @@ export function ChatMessage(props: {
             onDoubleClick={(onMessageFragmentsReplace /*&& doubleClickToEdit disabled, as we may have shift too */) ? handleBlocksDoubleClick : undefined}
             onReattachAsFile={props.onReattachAsFile}
           />
+
+          {/* Out of tokens: said at the end of the content, where the reply was cut. Derived from the outcome, nothing
+              stored; here so that every surface that renders a message shows it (chat, Beam rays and merges) */}
+          {msgGenOutOfTokens && !messagePendingIncomplete && !isEditingText && (
+            <BlockAccentBar tint='warning'>
+              <Typography component='div' color='warning' sx={{ fontWeight: 'md', fontSize: themeScalingMap[adjContentScaling]?.blockFontSize, lineHeight: themeScalingMap[adjContentScaling]?.blockLineHeight }}>
+                <b>Out of tokens</b>: the response was cut short.
+              </Typography>
+            </BlockAccentBar>
+          )}
 
           {/* [#1114] Resolve the Vertex AI grounding redirect links in place */}
           {vertexLinksCount > 0 && !isEditingText && !!onMessageFragmentsReplace && (

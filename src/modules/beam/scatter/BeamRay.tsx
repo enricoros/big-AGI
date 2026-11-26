@@ -30,7 +30,7 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
 import { beamStatusColor } from '../beam.status';
 import { BeamUpstreamResume } from '../BeamUpstreamResume';
-import { BeamCardNotice, BeamModelUnavailable } from '../components/BeamCardNotice';
+import { BeamModelUnavailable } from '../components/BeamCardNotice';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { BEAM_SHOW_REASONING_ICON, GATHER_COLOR, SCATTER_COLOR, SCATTER_RAY_SHOW_DRAG_HANDLE } from '../beam.config';
 import { TooltipOutlined } from '~/common/components/TooltipOutlined';
@@ -283,7 +283,6 @@ export function BeamRay(props: {
 
       {/* Show issue, if any */}
       {!!ray?.scatterIssue && <InlineError error={ray.scatterIssue} />}
-      {issueColor === 'warning' && <BeamCardNotice color='warning' variant='solid' fullWidth>Out of tokens - response cut short.</BeamCardNotice>}
 
       {/* Ray Message */}
       {(!!ray?.message?.fragments.length || ray?.status === 'running') && (

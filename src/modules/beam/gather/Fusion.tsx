@@ -22,7 +22,7 @@ import { useLLMSelect } from '~/common/components/forms/useLLMSelect';
 import { BeamCard, beamCardClasses, beamCardMessageScrollingSx, beamCardMessageSx, beamCardMessageWrapperSx } from '../BeamCard';
 import { beamStatusColor } from '../beam.status';
 import { BeamUpstreamResume } from '../BeamUpstreamResume';
-import { BeamCardNotice, BeamModelUnavailable } from '../components/BeamCardNotice';
+import { BeamModelUnavailable } from '../components/BeamCardNotice';
 import { BeamStoreApi, useBeamStore } from '../store-beam.hooks';
 import { FusionControlsMemo } from './FusionControls';
 import { FusionInputsWait } from './FusionInputsWait';
@@ -191,7 +191,6 @@ export function Fusion(props: {
 
       {/* Show issue, if any */}
       {isError && <InlineError error={fusion?.errorText || 'Merge Issue'} />}
-      {issueColor === 'warning' && <BeamCardNotice color='warning' variant='solid' fullWidth>Out of tokens - response cut short.</BeamCardNotice>}
 
 
       {/* Start requested, waiting for the replies still generating */}
