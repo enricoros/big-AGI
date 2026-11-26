@@ -1,0 +1,4 @@
+{
+ "body": null,
+ "note": "Synthetic. The first event of deepseek-flash_thinking+function-call.sse, then its ping event 12 times, with no end. Rebuilds the stream seen on 2026-11-25 (1 in about 4,400 requests): HTTP 200, message_start, then a ping about every 15 seconds for 7 minutes, until the client gave up. That stream was not saved."
+}

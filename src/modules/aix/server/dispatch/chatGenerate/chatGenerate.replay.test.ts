@@ -43,6 +43,7 @@ import type { ChatGenerateDispatch, ChatGenerateParseFunction } from './chatGene
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
 import { createBedrockConverseParserNS, createBedrockConverseStreamParser } from './parsers/bedrock-converse.parser';
 import { createEventStreamToSSETransform } from '../stream.demuxer.aws-eventstream';
+import { createDeepseekMessagesParser } from './parsers/deepseek.messages.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
 import { createGeminiInteractionsParserNS, createGeminiInteractionsParserSSE } from './parsers/gemini.interactions.parser';
 import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsParserNS } from './parsers/openai.parser';
@@ -256,32 +257,40 @@ const responsesApi = (rspVendor: AixWire_Vendors.RspVendor): VendorReplay => ({
     .filter((item: any) => item.type === 'function_call').map((item: any) => callKey(item.name, item.arguments)),
 });
 
+const anthropicMessages: VendorReplay = {
+  parser: streaming => streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
+  answerText: (payloads, streaming) => streaming
+    ? payloads.filter(event => event.type === 'content_block_delta' && event.delta?.type === 'text_delta').map(event => event.delta.text).join('')
+    : payloads[0].content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join(''),
+  usage: (payloads, streaming) => {
+    // streaming: the start carries the input side, the last delta the final counts
+    const usage = streaming
+      ? { ...payloads.find(event => event.type === 'message_start')?.message?.usage, ...payloads.filter(event => event.type === 'message_delta').at(-1)?.usage }
+      : payloads[0].usage;
+    return usage?.output_tokens === undefined ? undefined
+      : { input: (usage.input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0), output: usage.output_tokens };
+  },
+  errors: payloads => payloads.filter(event => event.type === 'error').map(event => event.error?.message).filter(Boolean),
+  reasoningText: (payloads, streaming) => streaming
+    ? payloads.filter(event => event.type === 'content_block_delta' && event.delta?.type === 'thinking_delta').map(event => event.delta.thinking).join('')
+    : payloads[0].content.filter((block: any) => block.type === 'thinking').map((block: any) => block.thinking).join(''),
+  calls: (payloads, streaming) => {
+    if (!streaming) return payloads[0].content.filter((block: any) => block.type === 'tool_use').map((block: any) => callKey(block.name, block.input));
+    const calls = new Map<number, { name: string, args: string }>(); // by block index: the arguments stream as partial JSON
+    for (const event of payloads)
+      if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') calls.set(event.index, { name: event.content_block.name, args: '' });
+      else if (event.type === 'content_block_delta' && event.delta?.type === 'input_json_delta' && calls.has(event.index)) calls.get(event.index)!.args += event.delta.partial_json;
+    return [...calls.values()].map(call => callKey(call.name, call.args));
+  },
+};
+
 const VENDORS: Record<string, VendorReplay> = {
-  anthropic: {
-    parser: streaming => streaming ? createAnthropicMessageParser() : createAnthropicMessageParserNS(),
-    answerText: (payloads, streaming) => streaming
-      ? payloads.filter(event => event.type === 'content_block_delta' && event.delta?.type === 'text_delta').map(event => event.delta.text).join('')
-      : payloads[0].content.filter((block: any) => block.type === 'text').map((block: any) => block.text).join(''),
-    usage: (payloads, streaming) => {
-      // streaming: the start carries the input side, the last delta the final counts
-      const usage = streaming
-        ? { ...payloads.find(event => event.type === 'message_start')?.message?.usage, ...payloads.filter(event => event.type === 'message_delta').at(-1)?.usage }
-        : payloads[0].usage;
-      return usage?.output_tokens === undefined ? undefined
-        : { input: (usage.input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0) + (usage.cache_read_input_tokens ?? 0), output: usage.output_tokens };
-    },
-    errors: payloads => payloads.filter(event => event.type === 'error').map(event => event.error?.message).filter(Boolean),
-    reasoningText: (payloads, streaming) => streaming
-      ? payloads.filter(event => event.type === 'content_block_delta' && event.delta?.type === 'thinking_delta').map(event => event.delta.thinking).join('')
-      : payloads[0].content.filter((block: any) => block.type === 'thinking').map((block: any) => block.thinking).join(''),
-    calls: (payloads, streaming) => {
-      if (!streaming) return payloads[0].content.filter((block: any) => block.type === 'tool_use').map((block: any) => callKey(block.name, block.input));
-      const calls = new Map<number, { name: string, args: string }>(); // by block index: the arguments stream as partial JSON
-      for (const event of payloads)
-        if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') calls.set(event.index, { name: event.content_block.name, args: '' });
-        else if (event.type === 'content_block_delta' && event.delta?.type === 'input_json_delta' && calls.has(event.index)) calls.get(event.index)!.args += event.delta.partial_json;
-      return [...calls.values()].map(call => callKey(call.name, call.args));
-    },
+  anthropic: anthropicMessages,
+  // Anthropic's wire, read the same way; its own parser; and an error DeepSeek also sends with no event name and no `type`
+  deepseek: {
+    ...anthropicMessages,
+    parser: streaming => createDeepseekMessagesParser(streaming),
+    errors: payloads => payloads.filter(event => event.error && (event.type === 'error' || event.type === undefined)).map(event => event.error.message).filter(Boolean),
   },
   openai: responsesApi('openai'),
   xai: responsesApi('xai'),
@@ -505,6 +514,20 @@ const ENDINGS: Ending[] = [
     stop: NOT_CLEAN,
     notYet: 'only the usage tells (255,994 of 256,000 tokens) and it is not read: the answer ends ok',
     files: ['xai/grok-build-0.1_context-window-cut_ends-completed.sse'],
+  },
+  {
+    // Synthetic: the frame DeepSeek documents for a generation that does not start in time, after a real stream's first
+    // event. It has no event name and no `type`, and the vendor closes after it. The message text is ours (not documented)
+    ending: 'DeepSeek gave up before generating: its frame with no event name ends the message as failed, with its words',
+    stop: FAILED, says: /Timed out waiting for the generation to start/,
+    files: ['deepseek/deepseek-flash_start-timeout_bare-error-frame_synthetic.sse'],
+  },
+  {
+    // Synthetic: a real stream's first event, then its ping 12 times and no end. Rebuilds the stream seen on 2026-11-25
+    // (1 in about 4,400), which pinged every 15 seconds for as long as the client stayed. The vendor says nothing: the words are ours
+    ending: 'a DeepSeek stream that only pings is ended, as failed: nothing else would end it',
+    stop: FAILED, says: /No content for 2 minutes, keep-alive pings only/,
+    files: ['deepseek/deepseek-flash_stalled_pings-only_synthetic.sse'],
   },
 ];
 
@@ -1148,6 +1171,46 @@ describe('Anthropic Messages', () => {
       assert.equal(theEnd(particles).terminationReason, 'issue-dialect');
     });
 
+  });
+
+});
+
+
+// --- DeepSeek ---
+
+describe('DeepSeek Messages', () => {
+
+  const THINKING_CALL = 'deepseek/deepseek-flash_thinking+function-call.sse';
+
+  test('a thinking signature is not handed to the client: here it is a UUID that signs nothing, and it would be stored and replayed as a signature', { skip: missing(THINKING_CALL) }, async () => {
+    const signatures: string[] = sseData(capture(THINKING_CALL)).filter(event => event.delta?.type === 'signature_delta').map(event => event.delta.signature);
+    assert.ok(signatures.length, 'the capture carries no signature');
+
+    const particles = await replayCapture(THINKING_CALL);
+    assert.deepEqual(particles.filter(isPart('trs')), []);
+    assert.deepEqual(signatures.filter(signature => JSON.stringify(particles).includes(signature)), []);
+  });
+
+  // The rule is the wire's, so Anthropic's captures are held to it too. Without a stored signature nothing else keeps the
+  // thinking of two steps apart: the client joins unsigned reasoning into the block before it
+  test('each thinking block opens its own reasoning', async () => {
+    const files = [...capturesOf('deepseek'), ...capturesOf('anthropic')].filter(file => !/_\d+-continuation\./.test(file));
+    await overCaptures(files, g => {
+      const blocks = g.payloads.flat().flatMap(payload => g.streaming ? (payload.type === 'content_block_start' ? [payload.content_block] : []) : (payload.content ?? []))
+        .filter((block: any) => block.type === 'thinking').length;
+      if (!blocks) return false;
+      assert.equal(g.particles.filter(isPart('tr_')).filter(op => op.restart).length, blocks);
+    });
+  });
+
+  test('pings in a row end the stream at the 8th: 7, then content, is read to its end', { skip: missing(THINKING_CALL) }, async () => {
+    const events = capture(THINKING_CALL).split('\n\n').filter(Boolean).map(event => event + '\n\n');
+    const ping = events.find(event => event.startsWith('event: ping'))!;
+    const slow = [events[0], ping.repeat(7), ...events.slice(1)].join('');
+
+    const { particles } = await replay([slow], true, () => createDeepseekMessagesParser(true));
+    assert.deepEqual(explanations(particles), []);
+    assert.equal(theEnd(particles).tokenStopReason, 'ok-tool_invocations');
   });
 
 });

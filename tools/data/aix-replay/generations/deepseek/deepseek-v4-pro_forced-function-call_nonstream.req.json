@@ -1,0 +1,39 @@
+{
+ "model": "deepseek-v4-pro",
+ "messages": [
+  {
+   "role": "user",
+   "content": [
+    {
+     "type": "text",
+     "text": "Weather in Paris?"
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "name": "get_weather",
+   "description": "Get the current weather for a city",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "city": {
+      "type": "string",
+      "description": "City name"
+     }
+    },
+    "required": [
+     "city"
+    ]
+   }
+  }
+ ],
+ "tool_choice": {
+  "type": "any"
+ },
+ "thinking": {
+  "type": "disabled"
+ },
+ "stream": false
+}

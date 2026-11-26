@@ -1,0 +1,39 @@
+event: message_start
+data: {"type":"message_start","message":{"id":"2bc117e2-27a4-4175-83d0-98970b620261","type":"message","role":"assistant","model":"deepseek-flash","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":189,"cache_creation_input_tokens":0,"cache_read_input_tokens":128,"output_tokens":0,"service_tier":"standard"}}}
+
+event: ping
+data: {"type":"ping"}
+
+event: ping
+data: {"type":"ping"}
+
+event: ping
+data: {"type":"ping"}
+
+event: ping
+data: {"type":"ping"}
+
+event: ping
+data: {"type":"ping"}
+
+event: ping
+data: {"type":"ping"}
+
+event: ping
+data: {"type":"ping"}
+
+event: ping
+data: {"type":"ping"}
+
+event: ping
+data: {"type":"ping"}
+
+event: ping
+data: {"type":"ping"}
+
+event: ping
+data: {"type":"ping"}
+
+event: ping
+data: {"type":"ping"}
+

@@ -1,0 +1,39 @@
+{
+ "model": "deepseek-flash",
+ "messages": [
+  {
+   "role": "user",
+   "content": [
+    {
+     "type": "text",
+     "text": "What is the weather in Paris right now? Think about which tool to use, then use it."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "name": "get_weather",
+   "description": "Get the current weather for a city",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "city": {
+      "type": "string",
+      "description": "City name"
+     }
+    },
+    "required": [
+     "city"
+    ]
+   }
+  }
+ ],
+ "tool_choice": {
+  "type": "auto"
+ },
+ "output_config": {
+  "effort": "high"
+ },
+ "stream": true
+}

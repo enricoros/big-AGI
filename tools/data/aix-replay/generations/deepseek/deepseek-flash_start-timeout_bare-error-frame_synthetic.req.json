@@ -1,0 +1,4 @@
+{
+ "body": null,
+ "note": "Synthetic. The first event and the ping of deepseek-flash_thinking+function-call.sse, then the frame DeepSeek documents for a generation that does not start in time (guides/anthropic_api, Streaming and token usage): a data line with no event name and no top-level type, after which it closes. The frame was not seen live, and its message text is ours: the vendor documents the shape, not the words."
+}
