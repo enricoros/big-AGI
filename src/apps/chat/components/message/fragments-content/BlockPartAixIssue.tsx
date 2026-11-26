@@ -4,9 +4,8 @@ import type { SxProps } from '@mui/joy/styles/types';
 import { Box, Button, Chip, ChipDelete, Link, Tooltip, Typography } from '@mui/joy';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import WarningRoundedIcon from '@mui/icons-material/WarningRounded';
 
-import { aixIssueDetailAddingToText, type DAixIssue } from '~/modules/aix/shared/aix.issues';
+import { aixIssueDetailAddingToText, aixIssueLayer, type DAixIssue } from '~/modules/aix/shared/aix.issues';
 import { aixIssuePresentation, type AixIssuePresentation } from '~/modules/aix/shared/aix.issues.policy';
 import { findModelVendor, type ModelVendorId } from '~/modules/llms/vendors/vendors.registry';
 
@@ -16,6 +15,7 @@ import { prettyDuration } from '~/common/util/timeUtils';
 import { useLLM } from '~/common/stores/llms/llms.hooks';
 import { useModelServiceClientSideFetch } from '~/common/stores/llms/hooks/useModelServiceClientSideFetch';
 
+import { BlockAccentBar } from './BlockAccentBar';
 import { BlockPartError_DirectConnectionRow } from './BlockPartError_DirectConnectionRow';
 import { BlockPartError_NetDisconnected } from './BlockPartError_NetDisconnected';
 import { BlockPartError_RequestExceeded } from './BlockPartError_RequestExceeded';
@@ -26,29 +26,27 @@ const DETAIL_INLINE_LINES = 3; // an inline detail is clamped to this many lines
 
 
 const _styles = {
-  block: {
-    mx: 1.5, // aligns with the text blocks (RenderPlainText)
-    pl: 1.5,
-    borderLeft: '3px solid',
-    display: 'grid',
-    justifyItems: 'start',
-    gap: 0.5,
-    overflowWrap: 'anywhere',
-  },
   headline: {
     fontWeight: 'md',
     whiteSpace: 'break-spaces',
   },
+  // what to do: the one line to act on, so it outweighs the vendor's words above it
+  advice: {
+    fontWeight: 'md',
+  },
   secondary: {
+    color: 'text.tertiary',
     whiteSpace: 'pre-wrap',
   },
   secondaryClamped: {
+    color: 'text.tertiary',
     whiteSpace: 'pre-wrap',
     display: '-webkit-box',
     WebkitBoxOrient: 'vertical',
     WebkitLineClamp: DETAIL_INLINE_LINES,
     overflow: 'hidden',
   },
+
   toggle: {
     minHeight: 0,
     px: 0.5,
@@ -60,12 +58,17 @@ const _styles = {
     fontFamily: 'code',
     color: 'text.tertiary',
   },
-  notice: {
+
+  // the compact form of the block: the same bar, one line; a small radius, as the text wraps on narrow cards
+  noticeChip: {
+    mx: 1.5, // aligns with the text blocks (RenderPlainText)
     my: '1px',
     pl: 1.5,
     pr: 1.75,
-    minHeight: '1.5rem',
+    py: 0.5,
     gap: 1,
+    borderRadius: 'sm',
+    borderLeft: '3px solid',
     whiteSpace: 'normal',
     wordBreak: 'break-word',
   },
@@ -118,7 +121,8 @@ function IssueBlock(props: {
 }) {
 
   // state
-  const [expanded, setExpanded] = React.useState(false);
+  // open from the start when the advice asks for a report: a screenshot then carries the detail and the facts
+  const [expanded, setExpanded] = React.useState(!!props.presentation.report);
 
   // external state
   const { issue, presentation: { label, byService, tint, advice, directConnection, detail: detailPlace } } = props;
@@ -135,20 +139,20 @@ function IssueBlock(props: {
   const smallScaling = themeScalingMap[adjustContentScaling(props.contentScaling, -1)];
 
   return (
-    <Box sx={{ ..._styles.block, borderColor: `${tint}.outlinedBorder` }}>
+    <BlockAccentBar tint={tint}>
 
       <Typography component='div' color={tint} sx={{ ..._styles.headline, fontSize: scaling?.blockFontSize, lineHeight: scaling?.blockLineHeight }}>
         <b>{name}</b>: {_withLinks(issue.text)}
       </Typography>
 
       {detailInline && (
-        <Typography component='div' textColor='text.secondary' sx={{ ...(!expanded ? _styles.secondaryClamped : _styles.secondary), fontSize: smallScaling?.blockFontSize }}>
+        <Typography component='div' sx={{ ...(!expanded ? _styles.secondaryClamped : _styles.secondary), fontSize: smallScaling?.blockFontSize }}>
           {_withLinks(detail)}
         </Typography>
       )}
 
       {advice && (
-        <Typography component='div' textColor='text.secondary' sx={{ fontSize: smallScaling?.blockFontSize }}>
+        <Typography component='div' sx={{ ..._styles.advice, fontSize: smallScaling?.blockFontSize }}>
           {advice}
         </Typography>
       )}
@@ -176,7 +180,7 @@ function IssueBlock(props: {
 
       {directConnection && <BlockPartError_DirectConnectionRow csf={csf} direction={directConnection} />}
 
-    </Box>
+    </BlockAccentBar>
   );
 }
 
@@ -192,17 +196,18 @@ function IssueNotice(props: {
   const llm = useLLM(byService && !props.vendorId ? props.llmId : null);
   const name = (byService && findModelVendor(props.vendorId ?? llm?.vId)?.name) || label;
   const tooltip = aixIssueDetailAddingToText(issue);
+  // a service's own error stored as a notice came after the verdict (a complete answer, or an earlier failure): say it is an addition
+  const alsoReported = aixIssueLayer(issue.code) === 'service';
 
   const chip = (
     <Chip
       size='sm'
       color={tint}
       variant='soft'
-      startDecorator={<WarningRoundedIcon />}
       endDecorator={!props.onDismiss ? undefined : <ChipDelete onDelete={props.onDismiss} />}
-      sx={_styles.notice}
+      sx={{ ..._styles.noticeChip, borderColor: `${tint}.400` }}
     >
-      {name}: {issue.text}
+      {name}{alsoReported ? ' also reported' : ''}: {issue.text}
     </Chip>
   );
   return !tooltip ? chip : (

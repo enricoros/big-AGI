@@ -262,10 +262,14 @@ function RenderChipAixControl({ aixControl, text }: {
     const { rCalm, rCauseConn, rCauseHttp, rScope } = aixControl;
     // calm (from the retry profile): an expected condition, e.g. a busy best-effort tier - the icon instead of a cause, and the color of connection retries
     startText = rCalm ? undefined : rCauseHttp || rCauseConn || rScope;
-    color = rCalm ? 'primary'
-      : rScope === 'srv-dispatch' ? 'primary'
-        : rScope === 'srv-op' ? 'warning'
-          : 'danger';
+    // a retry that is over ('Gave up after N attempts', 'Stopped at attempt N') is history beside the record that says
+    // what failed: neutral. Pending is read off the text, as the reassembler does when it rewrites it at the end
+    const pending = text.includes('Retrying ');
+    color = !pending ? 'neutral'
+      : rCalm ? 'primary'
+        : rScope === 'srv-dispatch' ? 'primary'
+          : rScope === 'srv-op' ? 'warning'
+            : 'danger';
     Icon = RepeatIcon;
   } else
     color = 'danger';

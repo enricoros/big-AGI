@@ -35,6 +35,8 @@ export type AixIssuePresentation = {
   form: 'block' | 'notice' | 'card-cutoff' | 'card-size';
   /** one short sentence on what to do, when there is something to do */
   advice?: string;
+  /** the advice asks for a bug report: Details opens by default, so a screenshot carries what the report needs */
+  report?: true;
   /** where a detail that adds to the text goes: inline for words a user can act on (the service's own, a setup or request problem, a failed connect's address), behind Details for an engine or tRPC text. Absent when nothing adds */
   detail?: 'inline' | 'details';
   /** offer the Direct Connection switch: on to bypass our server, off to route through it */
@@ -164,29 +166,40 @@ export function aixIssuePresentation(issue: DAixIssue): AixIssuePresentation {
         : (issue.code === 'relay-http' && issue.httpStatus === 413) ? 'card-size'
           : 'block';
   const detail = aixIssueDetailAddingToText(issue) === null ? undefined : _detailIsActionable(issue) ? 'inline' : 'details';
+  const report = !!advice?.endsWith(_REPORT); // our own sentence, the one home of the report ask
   return {
     label,
     byService,
     tint: failed ? 'danger' : 'warning',
     form,
     ...(advice && { advice }),
+    ...(report && { report: true }),
     ...(directConnection && { directConnection }),
     ...(detail && { detail }),
   };
 }
 
 /**
- * The detail shows inline when it is words a user can act on: the service's own (a 400's reason, a quota), a setup or request
- * problem, the address of a failed connect. A bare engine or tRPC text ('terminated', 'Failed to fetch') waits under Details.
+ * The detail shows inline when it is words a user can act on: the service's own (a 400's reason, a quota), a setup
+ * problem, the address of a failed connect. Text for a bug report waits under Details: a bare engine or tRPC text
+ * ('terminated', 'Failed to fetch'), a schema error, a rejected request's validation dump, a throw's message.
  */
 function _detailIsActionable(issue: DAixIssue): boolean {
   const layer = aixIssueLayer(issue.code);
   return layer === 'service' || layer === 'model' || _DETAIL_ACTIONABLE_CODES.has(issue.code);
 }
 
+/** Codes outside the service and model layers whose detail shows inline. A commented code waits under Details, for the reason given. */
 const _DETAIL_ACTIONABLE_CODES: ReadonlySet<string> = new Set<DAixIssueCode>([
-  'dispatch-http', 'dispatch-connect',
-  'aix-prepare', 'dispatch-prepare', 'relay-rejected', 'aix-unknown', 'dispatch-unknown', 'dispatch-parse',
+  'dispatch-http',      // the service's own reason for the status: a 400's message, a quota
+  'dispatch-connect',   // the address that could not be reached
+  'aix-prepare',        // what in the request could not be prepared
+  'dispatch-prepare',   // what in the service's setup is wrong
+  'dispatch-unknown',   // the continuation limit and its count
+  // 'dispatch-parse',  // a schema error: for a bug report, not for the user
+  // 'relay-rejected',  // the server's validation dump, raw JSON: for a bug report
+  // 'aix-unknown',     // a thrown error's message: for a bug report
+  // the other relay-*, dispatch-read, aix-load: a bare engine or tRPC text ('terminated', 'Failed to fetch')
 ]);
 
 function _directConnection(issue: DAixIssue): AixIssuePresentation['directConnection'] {
