@@ -1,10 +1,10 @@
-import { safeErrorString } from '~/server/wire';
+import { openRouterErrorMetadataString, safeErrorString } from '~/server/wire';
 import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
+import { aixIssueCodeShaped } from '../../../../shared/aix.issues';
 import type { ChatGenerateParseContext, ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import type { IParticleTransmitter } from './IParticleTransmitter';
-import { IssueSymbols } from '../ChatGenerateTransmitter';
+import type { IParticleTransmitter, ParticleDialectIssue } from './IParticleTransmitter';
 
 import { convert_Base64_To_UInt8Array, convert_UInt8Array_To_Base64 } from '~/common/util/blobUtils';
 
@@ -50,6 +50,8 @@ export function createOpenAIChatCompletionsChunkParser(ortFetchCountable = false
   let openRouterProviderInfraSent = false;
   // whether the user has been shown any output: from then on a whole-operation retry would wipe it and bill it twice
   let hasStreamedOutput = false;
+  // whether the finish's issue (a filter, an error finish) was stated: a streamed finish can repeat
+  let stopIssueStated = false;
 
   // Supporting structure to accumulate the assistant message
   const accumulator: {
@@ -88,9 +90,9 @@ export function createOpenAIChatCompletionsChunkParser(ortFetchCountable = false
     if (chunkData?.type === 'keepalive')
       return;
 
-    // [OpenRouter/others] transmits upstream errors pre-parsing (object wouldn't be valid)
+    // [OpenRouter/others] transmits upstream errors pre-parsing (object wouldn't be valid); the error ends the read
     if (_forwardOpenRouterDataError(chunkData, pt, hasStreamedOutput ? undefined : context))
-      return;
+      return pt.setDialectEnded('issue-dialect');
 
     // [OpenAI] Obfuscation message with no data -> skip
     if (!chunkData?.['choices'] && chunkData?.['obfuscation']) {
@@ -133,11 +135,12 @@ export function createOpenAIChatCompletionsChunkParser(ortFetchCountable = false
       pt.setModelName(json.model);
     }
 
-    // [OpenAI] an upstream error without a `message` (the ones with it were forwarded above): retry if transient, else transmit as text
+    // [OpenAI] an upstream error without a `message` (the ones with it were forwarded above): fails the generation and ends the read
     if (json.error) {
       // FIXME: potential point for throwing OperationRetrySignal
-      // return _transmitOrRetryUpstreamError(json.error, safeErrorString(json.error) || 'unknown.', pt, hasStreamedOutput ? undefined : context);
-      return pt.setDialectTerminatingIssue(safeErrorString(json.error) || 'unknown.', IssueSymbols.Generic, openAIUpstreamErrorLogLevel(json.error));
+      // return _transmitOrRetryUpstreamError(json.error, pt, hasStreamedOutput ? undefined : context);
+      pt.addDialectIssue(_inBandErrorFacts(json.error), openAIUpstreamErrorLogLevel(json.error));
+      return pt.setDialectEnded('issue-dialect');
     }
 
     // [OpenAI] if there's a warning, log it once
@@ -284,7 +287,8 @@ export function createOpenAIChatCompletionsChunkParser(ortFetchCountable = false
 
       // delta: Text
       if (typeof delta.content === 'string' &&
-        (!deltaHasReasoning || delta.content) // suppress if reasoning and empty
+        (!deltaHasReasoning || delta.content) && // suppress if reasoning and empty
+        (!stopIssueStated || delta.content) // [OpenRouter] the usage chunk repeats the finish with an empty content: after the finish's issue it would open an empty text part
       ) {
 
         accumulator.content = (accumulator.content || '') + delta.content;
@@ -409,7 +413,8 @@ export function createOpenAIChatCompletionsChunkParser(ortFetchCountable = false
                 pt.setTokenStopReason('ok');
               } catch (error) {
                 console.warn('[OpenAI] Failed to process streaming audio:', error);
-                pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null, 'srv-warn');
+                pt.addDialectIssue({ code: 'dispatch-parse', text: _AUDIO_FAILED_TEXT, detail: safeErrorString(error) ?? undefined }, 'srv-warn');
+                pt.setDialectEnded('issue-dialect');
               }
             } else
               console.warn('[OpenAI] Ignoring audio expires_at without a valid audio stream');
@@ -436,20 +441,20 @@ export function createOpenAIChatCompletionsChunkParser(ortFetchCountable = false
       // Token Stop Reason - usually missing in all but the last chunk, but we don't rely on it
       if (finish_reason) {
         // [Z.ai, 2026-02-26] 'network_error' is an upstream error, not a normal stop reason
-        if (finish_reason === 'network_error')
-          pt.setDialectTerminatingIssue('Upstream network error.', IssueSymbols.Generic, 'srv-warn');
-        else if (finish_reason === 'error')
-          pt.setTokenStopReason(..._fromOpenRouterErrorFinish(native_finish_reason));
-        else {
-          const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
+        if (finish_reason === 'network_error') {
+          pt.addDialectIssue(_NETWORK_ERROR_ISSUE, 'srv-warn');
+          pt.setDialectEnded('issue-dialect');
+        } else {
+          const [tokenStopReason, stopIssue] = _fromFinish(finish_reason, native_finish_reason);
           if (tokenStopReason !== null)
             pt.setTokenStopReason(tokenStopReason);
+          // once: a streamed finish can repeat (the usage chunk repeats it)
+          if (stopIssue && !stopIssueStated) {
+            stopIssueStated = true;
+            pt.addDialectIssue(stopIssue, tokenStopReason === 'cg-issue' ? 'srv-warn' : false);
+          }
         }
       }
-
-      // Note: not needed anymore - Workaround for implementations that don't send the [DONE] event
-      // if (finish_reason === 'max_tokens')
-      //   pt.setDialectTerminatingIssue('finish-reason');
 
     } // .choices[]
 
@@ -470,7 +475,7 @@ export function createOpenAIChatCompletionsParserNS(ortFetchCountable = false): 
 
     // [OpenRouter/others] transmits upstream errors pre-parsing (object wouldn't be valid)
     if (_forwardOpenRouterDataError(completeData, pt, context))
-      return;
+      return pt.setDialectEnded('issue-dialect');
 
     // [OpenAI] we don't know yet if warning messages are sent in non-streaming - for now we log
     if (completeData.warning)
@@ -612,7 +617,8 @@ export function createOpenAIChatCompletionsParserNS(ortFetchCountable = false): 
           pt.appendAudioInline(a.mimeType, a.base64Data, message.audio.transcript || 'OpenAI Generated Audio', `OpenAI ${json.model || ''}`.trim(), a.durationMs);
         } catch (error) {
           console.warn('[OpenAI] Failed to process audio:', error);
-          pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null, 'srv-warn');
+          pt.addDialectIssue({ code: 'dispatch-parse', text: _AUDIO_FAILED_TEXT, detail: safeErrorString(error) ?? undefined }, 'srv-warn');
+          pt.setDialectEnded('issue-dialect');
         }
       }
 
@@ -633,14 +639,15 @@ export function createOpenAIChatCompletionsParserNS(ortFetchCountable = false): 
 
       // Token Stop Reason - expected to be set; after the content above, which can still fail
       // [Z.ai, 2026-02-26] 'network_error' is an upstream error, not a normal stop reason
-      if (finish_reason === 'network_error')
-        pt.setDialectTerminatingIssue('Upstream network error.', IssueSymbols.Generic, 'srv-log');
-      else if (finish_reason === 'error')
-        pt.setTokenStopReason(..._fromOpenRouterErrorFinish(native_finish_reason));
-      else {
-        const tokenStopReason = _fromOpenAIFinishReason(finish_reason);
+      if (finish_reason === 'network_error') {
+        pt.addDialectIssue(_NETWORK_ERROR_ISSUE, 'srv-log');
+        pt.setDialectEnded('issue-dialect');
+      } else {
+        const [tokenStopReason, stopIssue] = _fromFinish(finish_reason, native_finish_reason);
         if (tokenStopReason !== null)
           pt.setTokenStopReason(tokenStopReason);
+        if (stopIssue)
+          pt.addDialectIssue(stopIssue, tokenStopReason === 'cg-issue' ? 'srv-warn' : false);
       }
 
     } // .choices[]
@@ -710,17 +717,30 @@ function _fromOpenAIFinishReason(finish_reason: string | null | undefined) {
 }
 
 /**
- * [OpenRouter] finish_reason 'error', one of its normalized values: the provider failed the reply, or stopped it for a
- * reason with no normalized name; native_finish_reason is the provider's own. A stop reason, not a dialect end: the usage
- * chunk that follows still counts.
- * TODO: typed errors - queue an issue (subkind 'upstream-error', subCause: native_finish_reason, aiRender: false, uiColor: 'danger'); the stop reason keeps only the vendor's final status
+ * The stop reason of a finish, and the issue that explains it when the finish is a filter or an error. The parser states the
+ * issue once, after the stop reason, and does not end the read: the usage chunk that follows still counts.
+ * - a filter stop carries the vendor's finish reason ([OpenRouter] the provider's own, when given); its sentence is the stop reason's
+ * - [OpenRouter] finish_reason 'error', one of its normalized values: the provider failed the reply, or stopped it for a
+ *   reason with no normalized name; native_finish_reason is the provider's own
  */
-function _fromOpenRouterErrorFinish(nativeFinishReason: string | null | undefined): [AixWire_Particles.GCTokenStopReason, string] {
-  // [OpenRouter -> Gemini] a recitation stop arrives as 'error'
-  if (nativeFinishReason === 'RECITATION')
-    return ['filter-recitation', 'Generation stopped due to RECITATION'];
-  return ['cg-issue', `The provider ended the reply with an error${nativeFinishReason ? ` (${nativeFinishReason})` : ''}.`];
+function _fromFinish(finishReason: string | null | undefined, nativeFinishReason: string | null | undefined): [AixWire_Particles.GCTokenStopReason | null, ParticleDialectIssue | undefined] {
+  if (finishReason === 'error') {
+    const causeCode = nativeFinishReason || undefined;
+    // [OpenRouter -> Gemini] a recitation stop arrives as 'error'
+    if (nativeFinishReason === 'RECITATION')
+      return ['filter-recitation', { code: 'model-filter', causeCode }];
+    return ['cg-issue', { causeCode, text: `The provider ended the reply with an error${nativeFinishReason ? ` (${nativeFinishReason})` : ''}.` }];
+  }
+  const tokenStopReason = _fromOpenAIFinishReason(finishReason);
+  const vendorReason = nativeFinishReason || finishReason;
+  return [tokenStopReason, tokenStopReason?.startsWith('filter-') && vendorReason ? { code: 'model-filter', causeCode: vendorReason } : undefined];
 }
+
+/** [Z.ai] finish_reason 'network_error': the vendor's only words are the finish reason */
+const _NETWORK_ERROR_ISSUE: ParticleDialectIssue = { text: 'The service reported a network error.', causeCode: 'network_error' };
+
+/** Our conversion of the model's PCM16 audio failed: the detail is the conversion's error */
+const _AUDIO_FAILED_TEXT = 'The audio the model generated could not be processed.';
 
 function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usage'], parserCreationTimestamp: number, timeToFirstEvent: number | undefined, ortFetchCountable: boolean): AixWire_Particles.CGSelectMetrics {
 
@@ -824,8 +844,8 @@ function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usa
 }
 
 /**
- * In-band upstream error: unwind to the operation retrier when transient and attempts remain, else transmit it as text
- * (throw to transmit as 'error' instead).
+ * In-band upstream error: unwind to the operation retrier when transient and attempts remain, else queue it as the issue
+ * that fails the generation (the caller ends the read).
  *
  * Transient, by HTTP-equivalent status:
  * [OpenRouter] after the 200, errors arrive as a chunk with a top-level `error` whose numeric `code` mirrors the HTTP status:
@@ -839,13 +859,42 @@ function _fromOpenAIMetrics(usage: OpenAIWire_API_Chat_Completions.Response['usa
  *
  * @param retryContext only when a whole-operation retry is harmless: nothing has been streamed to the user yet
  */
-function _transmitOrRetryUpstreamError(error: { type?: string | null, code?: string | number | null, message?: string | null }, errorText: string, pt: IParticleTransmitter, retryContext: ChatGenerateParseContext | undefined): void {
+function _transmitOrRetryUpstreamError(error: _InBandError, pt: IParticleTransmitter, retryContext: ChatGenerateParseContext | undefined): void {
   const status = typeof error.code === 'number' ? error.code : typeof error.code === 'string' ? Number(error.code) : NaN;
   const retryHttpStatus: 429 | 500 | 502 | 529 | undefined = status === 429 ? 429 : status === 502 ? 502 : openAITransientErrorToHttpStatus(error);
   const retryUpstreamCode = typeof error.code === 'string' ? error.code : undefined;
   if (retryHttpStatus && retryContext?.hasRetriesForHttpStatus(retryHttpStatus, retryUpstreamCode))
-    throw new OperationRetrySignal(errorText, { causeHttp: retryHttpStatus, causeConn: retryUpstreamCode });
-  pt.setDialectTerminatingIssue(errorText, IssueSymbols.Generic, openAIUpstreamErrorLogLevel(error));
+    throw new OperationRetrySignal(safeErrorString(error) || 'unknown.', { causeHttp: retryHttpStatus, causeConn: retryUpstreamCode });
+  pt.addDialectIssue(_inBandErrorFacts(error), openAIUpstreamErrorLogLevel(error));
+}
+
+type _InBandError = { type?: string | null, code?: string | number | null, message?: string | null, param?: string | null, metadata?: unknown };
+
+/**
+ * The issue of an in-band error object. `text`: the vendor's message (none: the record's own sentence). `causeCode`: the
+ * first code-shaped of the string code, the numeric one ([OpenRouter] it mirrors an HTTP status, but the stream was a 200)
+ * and the type, as in the Responses parser. `detail`: [OpenRouter] the upstream provider's own error, unwrapped from
+ * `metadata`; the type when it is not the cause code; a string code that is not a code; the param. With no message, the whole object.
+ */
+function _inBandErrorFacts(error: _InBandError): Pick<ParticleDialectIssue, 'text' | 'causeCode' | 'detail'> {
+  const message = typeof error.message === 'string' ? error.message : '';
+  const stringCode = typeof error.code === 'string' && error.code ? error.code : undefined;
+  const causeCode = aixIssueCodeShaped(stringCode) ?? (typeof error.code === 'number' ? String(error.code) : undefined) ?? aixIssueCodeShaped(error.type);
+  if (!message)
+    return { causeCode, detail: _compactJson(error) };
+  const cause = openRouterErrorMetadataString(error.metadata);
+  const typeLine = error.type && error.type !== causeCode ? `type: ${error.type}` : undefined;
+  const proseCode = stringCode && !aixIssueCodeShaped(stringCode) ? `code: ${stringCode}` : undefined;
+  const detail = [cause, typeLine, proseCode, error.param ? `param: ${error.param}` : undefined].filter(Boolean).join(' - ');
+  return { text: message, causeCode, ...(detail && { detail }) };
+}
+
+function _compactJson(value: unknown): string | undefined {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -864,11 +913,8 @@ function _forwardOpenRouterDataError(parsedData: any, pt: IParticleTransmitter, 
     return false;
   }
 
-  // prepare the text message - safeErrorString unwraps the [OpenRouter] 'metadata' upstream cause
-  const errorMessage = safeErrorString(error) || 'unknown.';
-
-  // Transient and retries left: unwind to the operation retrier, else transmit the error as text
-  _transmitOrRetryUpstreamError(error, errorMessage, pt, retryContext);
+  // Transient and retries left: unwind to the operation retrier, else queue the issue
+  _transmitOrRetryUpstreamError(error, pt, retryContext);
   return true;
 }
 

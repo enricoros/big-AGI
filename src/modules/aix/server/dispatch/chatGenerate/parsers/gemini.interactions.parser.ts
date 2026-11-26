@@ -2,10 +2,10 @@ import type * as z from 'zod/v4';
 
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import type { IParticleTransmitter } from './IParticleTransmitter';
+import type { IParticleTransmitter, ParticleDialectIssue } from './IParticleTransmitter';
 
 import { GeminiInteractionsWire_API_Interactions } from '../../wiretypes/gemini.interactions.wiretypes';
-import { IssueSymbols } from '../ChatGenerateTransmitter';
+import { aixIssueCodeShaped } from '../../../../shared/aix.issues';
 import { geminiConvertPCM2WAV } from './gemini.audioutils';
 
 
@@ -357,10 +357,11 @@ export function createGeminiInteractionsParserSSE(requestedModelName: string | n
         //     eventually an interaction.completed - silent-skip.
         //  2) Populated payload with message/code: terminal upstream error (also how Gemini reports
         //     cancelled interactions: HTTP 500 to the cancel call + an error SSE on the stream).
-        //     Surface as a dialect-terminating issue so the UI renders it and the stream ends cleanly.
+        //     It fails the generation: the run is over (the Deep Research guide treats it like interaction.completed).
         if (event.error?.message || event.error?.code) {
-          const errorText = `${event.error.code ? `${event.error.code}: ` : ''}${event.error.message || 'Upstream error.'}`;
-          pt.setDialectTerminatingIssue(errorText, IssueSymbols.Generic, 'srv-warn');
+          // no message: the record's own sentence
+          pt.addDialectIssue({ text: event.error.message ?? undefined, ..._errorCodeFacts(event.error.code) }, 'srv-warn');
+          pt.setDialectEnded('issue-dialect');
         }
         break;
 
@@ -469,25 +470,27 @@ export function createGeminiInteractionsParserNS(requestedModelName: string | nu
         pt.setDialectEnded('done-dialect');
         break;
       case 'failed':
-        pt.setDialectTerminatingIssue('Deep Research interaction failed', null, 'srv-warn');
+        pt.addDialectIssue(_failedRunIssue(interaction), 'srv-warn');
+        pt.setDialectEnded('issue-dialect');
         break;
       case 'cancelled':
         pt.setTokenStopReason('cg-issue');
+        pt.addDialectIssue(_cancelledIssue(interaction.status));
         pt.setDialectEnded('done-dialect');
         break;
       case 'incomplete':
       case 'requires_continuation':
-        pt.appendText('\n_Response incomplete (run stopped early)._\n');
         pt.setTokenStopReason('out-of-tokens');
         pt.setDialectEnded('done-dialect');
         break;
       case 'budget_exceeded':
-        pt.appendText('\n_Run stopped: budget exceeded._\n');
         pt.setTokenStopReason('out-of-tokens');
+        pt.addDialectIssue(_budgetExceededNotice(interaction.status));
         pt.setDialectEnded('done-dialect');
         break;
       case 'requires_action':
-        pt.setDialectTerminatingIssue('Deep Research returned requires_action (not supported in this client)', null, 'srv-warn');
+        pt.addDialectIssue(_requiresActionIssue(interaction.status), 'srv-warn');
+        pt.setDialectEnded('issue-dialect');
         break;
       case 'queued':
       case 'in_progress': {
@@ -514,6 +517,7 @@ export function createGeminiInteractionsParserNS(requestedModelName: string | nu
           lines.push('\nTry **Recover** again in a few minutes; if it stays empty, click **Cancel** to delete and retry.');
         pt.appendText(lines.join('\n') + '\n');
         pt.setTokenStopReason('cg-issue');
+        pt.addDialectIssue(_unfinishedIssue(interaction.status));
         pt.setDialectEnded('done-dialect');
         break;
       }
@@ -801,6 +805,64 @@ function _emitAntigravityToolDeltaRefine(pt: IParticleTransmitter, delta: unknow
 
 // --- terminal status + usage ---
 
+// Status issues, shared by the SSE and NS parsers. `causeCode` is the vendor's status or error code; texts are plain
+// sentences, the vendor's own words where it gave any.
+
+/** A vendor error code as facts: `causeCode` when code-shaped; the spec calls it a URI, which goes to the detail instead */
+function _errorCodeFacts(code: string | undefined): { causeCode?: string, detail?: string } {
+  if (!code) return {};
+  return aixIssueCodeShaped(code) ? { causeCode: code } : { detail: `code: ${code}` };
+}
+
+/**
+ * `failed`: in the words of `errors[]` (spec: Error { code, message }; not in the wiretypes, read off the loose resource).
+ * The first error with a message is the text, and its code-shaped code the cause code; the detail lists every error in order, each
+ * message beside its own code, so no code reads as another error's.
+ */
+function _failedRunIssue(interaction: TInteraction): ParticleDialectIssue {
+  const errors = (Array.isArray(interaction.errors) ? interaction.errors : [])
+    .filter((error): error is { code?: unknown, message?: unknown } => !!error && typeof error === 'object')
+    .map(error => ({
+      message: typeof error.message === 'string' ? error.message.trim() : '',
+      code: typeof error.code === 'string' ? error.code.trim() : '',
+    }));
+  const primary = errors.find(error => error.message) ?? errors[0];
+  const causeCode = aixIssueCodeShaped(primary?.code) ?? interaction.status;
+  const detail = errors
+    .map(error => {
+      const message = error === primary ? '' : error.message;
+      const code = error.code && error.code !== causeCode ? `code: ${error.code}` : '';
+      return message && code ? `${message} (${code})` : message || code;
+    })
+    .filter(Boolean)
+    .join('; ');
+  return {
+    text: primary?.message || 'The run failed.',
+    causeCode,
+    ...(detail && { detail }),
+  };
+}
+
+/** `requires_action`: the app answers no actions */
+function _requiresActionIssue(status: TInteraction['status']): ParticleDialectIssue {
+  return { text: 'The agent asked for an action this app does not support.', causeCode: status };
+}
+
+/** `budget_exceeded`: a notice beside the 'out-of-tokens' stop reason, which alone would misstate the cause */
+function _budgetExceededNotice(status: TInteraction['status']): ParticleDialectIssue {
+  return { text: 'The run stopped: budget exceeded.', causeCode: status, effect: 'notice' };
+}
+
+/** `cancelled`: explains 'cg-issue', the stop reason that keeps the upstream handle */
+function _cancelledIssue(status: TInteraction['status']): ParticleDialectIssue {
+  return { text: 'The run was cancelled.', causeCode: status };
+}
+
+/** `in_progress` / `queued` at the end: explains 'cg-issue', the stop reason that keeps the upstream handle for Recover */
+function _unfinishedIssue(status: TInteraction['status']): ParticleDialectIssue {
+  return { text: 'The run has not finished on the service.', causeCode: status };
+}
+
 function _handleInteractionCompleted(
   pt: IParticleTransmitter,
   interaction: TInteraction,
@@ -830,13 +892,15 @@ function _handleInteractionCompleted(
     case 'failed':
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} failed`, { opId: operationOpId, state: 'error' });
-      pt.setDialectTerminatingIssue(`${agentLabel} interaction failed`, null, 'srv-warn');
+      pt.addDialectIssue(_failedRunIssue(interaction), 'srv-warn');
+      pt.setDialectEnded('issue-dialect');
       break;
 
     case 'cancelled':
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} cancelled`, { opId: operationOpId, state: 'done' });
       pt.setTokenStopReason('cg-issue');
+      pt.addDialectIssue(_cancelledIssue(interaction.status));
       pt.setDialectEnded('done-dialect');
       break;
 
@@ -844,15 +908,15 @@ function _handleInteractionCompleted(
       // Not expected for Deep Research; not expected for Antigravity in current preview
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} needs action`, { opId: operationOpId, state: 'error' });
-      pt.setDialectTerminatingIssue(`${agentLabel} returned requires_action (not supported in this client)`, null, 'srv-warn');
+      pt.addDialectIssue(_requiresActionIssue(interaction.status), 'srv-warn');
+      pt.setDialectEnded('issue-dialect');
       break;
 
     case 'incomplete':
     case 'requires_continuation':
-      // Run stopped early (token limit, etc.). Terminate gracefully with a visible note; we keep any content already emitted.
+      // Run stopped early (token limit, etc.): the stop reason says it; we keep any content already emitted.
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} incomplete`, { opId: operationOpId, state: 'done' });
-      pt.appendText('\n_Response incomplete (run stopped early)._\n');
       pt.setTokenStopReason('out-of-tokens');
       pt.setDialectEnded('done-dialect');
       break;
@@ -861,8 +925,8 @@ function _handleInteractionCompleted(
       // New steps-schema terminal status: the run hit a spend/compute budget cap. Keep emitted content.
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} budget exceeded`, { opId: operationOpId, state: 'error' });
-      pt.appendText('\n_Run stopped: budget exceeded._\n');
       pt.setTokenStopReason('out-of-tokens');
+      pt.addDialectIssue(_budgetExceededNotice(interaction.status));
       pt.setDialectEnded('done-dialect');
       break;
 
@@ -876,6 +940,7 @@ function _handleInteractionCompleted(
       if (operationOpId)
         pt.sendOperationState(runChipMotif, `${agentLabel} interrupted`, { opId: operationOpId, state: 'error' });
       pt.setTokenStopReason('cg-issue');
+      pt.addDialectIssue(_unfinishedIssue(interaction.status));
       pt.setDialectEnded('done-dialect');
       break;
 

@@ -39,14 +39,6 @@ function _redactUrlSecrets(url: string): string {
  */
 const LLM_HOTFIX_TRANSFORM_THINKING = true;
 
-/** [Aix.Issue shim] unused by the records: here until the parsers stop passing them */
-export const IssueSymbols = {
-  Generic: '❌',
-  PromptBlocked: '🚫',
-  Recitation: '🦜',
-  Language: '🌐',
-};
-
 
 /**
  * Queues up and emits small messages (particles) to the client, for the purpose of a stateful
@@ -80,7 +72,6 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
   // Token stop reason
   private tokenStopReason: AixWire_Particles.GCTokenStopReason | undefined = undefined;
-  private shimStopText: string | undefined = undefined; // [Aix.Issue shim] the text a parser sent with its stop reason, stated at the end
 
   // Issues
   private failedQueued: boolean = false; // an issue that failed the generation was queued
@@ -240,15 +231,9 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     }), serverLog);
   }
 
-  /** [Aix.Issue shim] the pre-record call: an issue that fails, then the end */
-  setDialectTerminatingIssue(dialectText: string, _symbol: string | null, serverLog: ParticleServerLogLevel = false) {
-    this.addDialectIssue({ text: dialectText }, serverLog);
-    this.setDialectEnded('issue-dialect');
-  }
-
-  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason, shimErrorText?: string) {
+  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason) {
     if (SERVER_DEBUG_WIRE)
-      console.log('|token-stop|', reason, shimErrorText ?? '');
+      console.log('|token-stop|', reason);
 
     // a generation that failed cannot finish clean
     if (this.failedQueued && AixWire_Particles.gcStopReasonRow(reason)?.class !== 'error') {
@@ -259,7 +244,6 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     if (this.tokenStopReason && this.tokenStopReason !== reason)
       console.warn(`[Aix.${this.prettyDialect}] setTokenStopReason('${reason}'): already has token stop reason '${this.tokenStopReason}' (overriding)`);
     this.tokenStopReason = reason;
-    this.shimStopText = shimErrorText || undefined; // last wins: a later stop reason drops the text of an earlier one (#1288)
   }
 
 
@@ -459,9 +443,6 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
    * At most one applies; none once an issue failed the generation.
    */
   private _queueEndIssues(): void {
-    // [Aix.Issue shim] the text a parser sent with its stop reason
-    if (this.shimStopText)
-      this.addIssue(aixIssue(this.tokenStopReason?.startsWith('filter-') ? 'model-filter' : 'service-error', 'failed', { text: this.shimStopText }), false);
     if (this.failedQueued) return;
     const reason = this.terminationReason, stop = this.tokenStopReason;
 

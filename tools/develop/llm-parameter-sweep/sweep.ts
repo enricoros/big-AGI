@@ -471,7 +471,7 @@ type ErrorCategory =
 
 class SweepCollectorTransmitter implements IParticleTransmitter {
   text: string = '';
-  dialectIssue: string | null = null; // the first issue that failed the generation
+  dialectIssue: string | null = null; // the first issue that failed the generation, or a filter stop: the probe failed
   tokenStopReason: AixWire_Particles.GCTokenStopReason | null = null;
   endReason: string | null = null;
 
@@ -495,13 +495,9 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
   }
 
   addDialectIssue(issue: ParticleDialectIssue, _serverLog?: ParticleServerLogLevel): void {
-    // the first issue that fails the generation: the probe failed
-    if (issue.code !== 'service-tool' && issue.effect !== 'notice')
-      this.dialectIssue ??= issue.text || issue.code || 'service-error';
-  }
-
-  setDialectTerminatingIssue(dialectText: string, _symbol: string | null, _serverLog: ParticleServerLogLevel): void {
-    this.dialectIssue = dialectText;
+    // the first issue that fails the generation: the probe failed (its words replace a bare filter stop reason)
+    if (issue.code !== 'service-tool' && issue.effect !== 'notice' && (this.dialectIssue === null || this.dialectIssue === this.tokenStopReason))
+      this.dialectIssue = issue.text || [issue.code ?? 'service-error', issue.causeCode, issue.detail].filter(Boolean).join(': ');
   }
 
   // Parts data - only collect text, everything else is a no-op
@@ -554,7 +550,12 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
   setModelName(_modelName: string): void { /* no-op */ }
   setProviderInfraLabel(_label: string): void { /* no-op */ }
   setUpstreamHandle(_handle: string, _type: string): void { /* no-op */ }
-  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason): void { this.tokenStopReason = reason; }
+  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason): void {
+    this.tokenStopReason = reason;
+    // a filter stop the parser has no words for is stated by the transmitter's end, which this collector has none of
+    if (reason.startsWith('filter-'))
+      this.dialectIssue ??= reason;
+  }
   updateMetrics(_update: Partial<AixWire_Particles.CGSelectMetrics>): void { /* no-op */ }
 }
 

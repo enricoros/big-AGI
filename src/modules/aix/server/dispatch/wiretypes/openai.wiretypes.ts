@@ -1762,6 +1762,9 @@ export namespace OpenAIWire_API_Responses {
 
   /// Response
 
+  // the HTTP headers OpenAI copies into an in-band error object; any other shape is dropped, never a parse failure
+  const _errorHeaders_schema = z.record(z.string(), z.unknown()).nullish().catch(undefined);
+
 
   export type Response = z.infer<typeof Response_schema>;
   export const Response_schema = z.object({
@@ -1774,7 +1777,13 @@ export namespace OpenAIWire_API_Responses {
     incomplete_details: z.object({
       reason: z.union([z.enum(['max_output_tokens']), z.string()]),
     }).nullish(), // why the response is incomplete
-    error: z.object({ code: z.string(), message: z.string() }).nullish(), // (null)
+    error: z.object({ // every field tolerant: an odd value drops that field, never the vendor's error and the output beside it
+      code: z.string().nullish().catch(undefined), // 'unknown' when the preceding 'error' event had none
+      message: z.string().nullish().catch(undefined),
+      type: z.string().nullish().catch(undefined), // e.g. 'invalid_request_error', 'tokens'
+      param: z.string().nullish().catch(undefined),
+      headers: _errorHeaders_schema, // rate limits: 'retry-after', 'retry-after-ms'
+    }).nullish(), // (null)
 
     model: z.string(), // model used for the response
 
@@ -2153,6 +2162,7 @@ export namespace OpenAIWire_API_Responses {
       message: z.string().nullish(),
       code: z.number().or(z.string()).nullish(),
       param: z.string().nullish(),
+      headers: _errorHeaders_schema,
     }).nullish(),
   });
 

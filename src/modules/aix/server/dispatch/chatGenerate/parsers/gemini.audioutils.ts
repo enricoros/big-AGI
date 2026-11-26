@@ -59,7 +59,7 @@ function parseGeminiAudioMimeType(mimeType: string): AudioFormat {
     switch (key) {
       case 'codec':
         if (value !== 'pcm')
-          throw new Error('Unsupported codec: PCM. Gemini audio should be in PCM format.');
+          throw new Error(`Unsupported audio codec: ${value} (expected pcm)`);
         break;
       case 'rate':
         const rate = parseInt(value, 10);

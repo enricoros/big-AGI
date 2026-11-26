@@ -4,9 +4,9 @@ import { safeErrorString } from '~/server/wire';
 
 import type { AixAPIChatGenerate_Request, AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseContext, ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import type { IParticleTransmitter } from './IParticleTransmitter';
-import { IssueSymbols } from '../ChatGenerateTransmitter';
+import type { IParticleTransmitter, ParticleDialectIssue } from './IParticleTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
+import { aixIssueCodeShaped } from '../../../../shared/aix.issues';
 
 import { AnthropicWire_API_Message_Create, AnthropicWire_Blocks, AnthropicWire_Messages } from '../../wiretypes/anthropic.wiretypes';
 import { DispatchContinuationSignal } from '../chatGenerate.continuation';
@@ -453,7 +453,7 @@ export function createAnthropicMessageParser(thinkingOrigins?: () => AnthropicTh
         // -> Token Stop Reason
         const tokenStopReason = _fromAnthropicStopReason(delta.stop_reason, 'message_delta');
         if (tokenStopReason !== null)
-          pt.setTokenStopReason(tokenStopReason, _formatAnthropicStopError(delta.stop_details));
+          _setAnthropicStop(pt, tokenStopReason, delta.stop_details);
 
         // NOTE: we have more fields we're not parsing yet - https://platform.claude.com/docs/en/api/typescript/messages#message_delta_usage
         // Metrics: timing is emitted whenever we have a start reference, independent of upstream usage; token
@@ -537,8 +537,9 @@ export function createAnthropicMessageParser(thinkingOrigins?: () => AnthropicTh
             console.log(`[Aix.Anthropic] ⛔ No retries available for error '${errorText}'`);
         }
 
-        // Non-retryable errors (or no retries left): show to user
-        return pt.setDialectTerminatingIssue(errorText || 'unknown server issue.', IssueSymbols.Generic, 'srv-warn');
+        // Non-retryable errors (or no retries left): show to user, and stop reading - the error event ends the stream
+        pt.addDialectIssue(_fromAnthropicErrorEvent(error), 'srv-warn');
+        return pt.setDialectEnded('issue-dialect');
 
       default:
         if (ANTHROPIC_DEBUG_EVENT_SEQUENCE) console.log(`ant unknown event: ${eventName}`);
@@ -720,7 +721,7 @@ export function createAnthropicMessageParserNS(thinkingOrigins?: () => Anthropic
     // -> Token Stop Reason (pause_turn already thrown above)
     const tokenStopReason = _fromAnthropicStopReason(stop_reason, 'parser_NS');
     if (tokenStopReason !== null)
-      pt.setTokenStopReason(tokenStopReason, _formatAnthropicStopError(stop_details));
+      _setAnthropicStop(pt, tokenStopReason, stop_details);
   };
 }
 
@@ -915,18 +916,68 @@ function _numberRanges(sorted: number[]): string {
   return ranges.join(', ');
 }
 
-/** Compose a human-readable error string from Anthropic's stop_details. Returns undefined when nothing useful to surface. */
-function _formatAnthropicStopError(stopDetails: { type: string; category?: string | null; explanation?: string | null; recommended_model?: string | null } | null | undefined): string | undefined {
+type _AnthropicStopDetails = { type: string; category?: string | null; explanation?: string | null; recommended_model?: string | null } | null | undefined;
+
+/** The stop reason, and for a refusal the one issue that explains its filter stop */
+function _setAnthropicStop(pt: IParticleTransmitter, tokenStopReason: AixWire_Particles.GCTokenStopReason, stopDetails: _AnthropicStopDetails): void {
+  pt.setTokenStopReason(tokenStopReason);
+  const refusal = tokenStopReason.startsWith('filter-') && _fromAnthropicStopDetails(stopDetails);
+  if (refusal)
+    pt.addDialectIssue({ code: 'model-filter', ...refusal });
+}
+
+/**
+ * A refusal's facts. `causeCode` is the category (the most specific code), `detail` the vendor's explanation and the model
+ * it suggests. The category is an open set: one that is not code-shaped would be dropped from `causeCode`, so it leads the
+ * detail and the type is the code.
+ */
+function _fromAnthropicStopDetails(stopDetails: _AnthropicStopDetails): Pick<ParticleDialectIssue, 'causeCode' | 'detail'> | undefined {
   if (!stopDetails) return undefined;
   if (stopDetails.type !== 'refusal') {
     aixResilientUnknownValue('Anthropic', 'stopDetailsType', stopDetails.type);
     return undefined;
   }
-  const parts: string[] = [];
-  if (stopDetails.category) parts.push(`[${stopDetails.category}]`);
-  if (stopDetails.explanation) parts.push(stopDetails.explanation);
-  if (stopDetails.recommended_model) parts.push(`(consider retrying with ${stopDetails.recommended_model})`);
-  return parts.length ? `Refusal: ${parts.join(' ')}` : undefined;
+  const categoryCode = aixIssueCodeShaped(stopDetails.category);
+  const detail = [
+    stopDetails.category && !categoryCode && `category: ${stopDetails.category}`,
+    stopDetails.explanation,
+    stopDetails.recommended_model && `recommended_model: ${stopDetails.recommended_model}`,
+  ].filter(Boolean).join(' - ');
+  return { causeCode: categoryCode || stopDetails.type, ...(detail && { detail }) };
+}
+
+/**
+ * The in-stream `error` event, which fails the generation: the vendor's message, and its most specific code (`details.error_code`, as the HTTP
+ * path reads it, else the type; the type then goes to `detail`). Bedrock's exception frames carry their body as a JSON string in
+ * `message`: its own message is the text, its other fields the detail as `name: value`, a body without a message the detail.
+ * No message at all: our sentence, the error object as the detail. `transform_error` is our Bedrock demuxer's own decode failure.
+ */
+function _fromAnthropicErrorEvent(error: { type?: unknown; message?: unknown; details?: { error_code?: unknown } | null }): ParticleDialectIssue {
+  if (error.type === 'transform_error')
+    return { code: 'dispatch-parse', ...(typeof error.message === 'string' && error.message && { detail: error.message }) };
+  const errorCode = error.details?.error_code;
+  const causeCode = typeof errorCode === 'string' ? errorCode : typeof error.type === 'string' ? error.type : undefined;
+  if (typeof error.message !== 'string' || !error.message)
+    return { detail: safeErrorString(error) || undefined, causeCode };
+  const facts = typeof errorCode === 'string' && typeof error.type === 'string' && error.type !== errorCode ? [`type: ${error.type}`] : [];
+  let text = error.message;
+  if (error.message.startsWith('{')) {
+    let body: unknown;
+    try {
+      body = JSON.parse(error.message);
+    } catch {
+      // not JSON: the message as sent
+    }
+    if (body && typeof body === 'object') {
+      const { message: bodyMessage, ...others } = body as Record<string, unknown>;
+      if (typeof bodyMessage !== 'string' || !bodyMessage)
+        return { detail: error.message, causeCode };
+      text = bodyMessage;
+      facts.push(...Object.entries(others).map(([name, value]) => `${name}: ${typeof value === 'string' ? value : JSON.stringify(value)}`));
+    }
+  }
+  const detail = facts.join(', ');
+  return { text, causeCode, ...(detail && { detail }) };
 }
 
 

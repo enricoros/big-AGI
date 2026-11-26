@@ -76,7 +76,7 @@ export function safeErrorString(error: any): string | null {
       return `AggregateError: ${safeErrorString(error.stack)}`;
     const message = safeErrorString(error.message);
     // [OpenRouter] 'metadata' carries the upstream provider's error - without it the message is just 'Provider returned error'
-    const metadataCause = _openRouterErrorMetadataString(error.metadata);
+    const metadataCause = openRouterErrorMetadataString(error.metadata);
     return (message && metadataCause) ? `${message} - ${metadataCause}` : message;
   }
   if (typeof error === 'string')
@@ -107,7 +107,7 @@ export function safeErrorString(error: any): string | null {
  * `{ provider_name: 'Alibaba', raw: 'data: {"error":{...}}', is_byok }` - 'raw' is the provider's
  * response body, SSE-framed on streaming requests. Unwrap it down to the provider's own message.
  */
-function _openRouterErrorMetadataString(metadata: any): string | null {
+export function openRouterErrorMetadataString(metadata: any): string | null {
   if (!metadata || typeof metadata !== 'object')
     return null;
   const { provider_name: providerName, raw } = metadata;

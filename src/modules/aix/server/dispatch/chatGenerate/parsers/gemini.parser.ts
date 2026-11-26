@@ -2,9 +2,9 @@ import { Release } from '~/common/app.release';
 
 import type { AixWire_Particles } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import type { IParticleTransmitter } from './IParticleTransmitter';
-import { IssueSymbols } from '../ChatGenerateTransmitter';
+import type { IParticleTransmitter, ParticleDialectIssue } from './IParticleTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
+import { aixIssueCodeShaped } from '../../../../shared/aix.issues';
 
 import type { GeminiWire_ContentParts } from '../../wiretypes/gemini.wiretypes';
 import { GeminiWire_API_Generate_Content, GeminiWire_Safety } from '../../wiretypes/gemini.wiretypes';
@@ -59,12 +59,10 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
     const eventData = JSON.parse(rawEventData);
 
     // In-band error after HTTP 200, Google's error object (https://google.aip.dev/193): {"error":{"code":503,"message":"...","status":"UNAVAILABLE","details":[...]}}
-    // `details` is a list of typed entries (reason, retry delay, quota): shown as JSON after the message until typed errors carry them. None was seen in-stream yet
     // [Gemini, 2026-11-09, hypothesis] a bare-string error was never observed: it is surfaced as the message rather than dropped
     if (eventData?.error) {
-      const { code, message, status, details } = typeof eventData.error === 'object' ? eventData.error : { code: undefined, message: `${eventData.error}`, status: undefined };
-      const detailsText = Array.isArray(details) && details.length ? ` Details: ${JSON.stringify(details)}` : '';
-      return pt.setDialectTerminatingIssue(`${status || 'Error'}${code ? ` (${code})` : ''}: ${message || 'Upstream error.'}${detailsText}`, IssueSymbols.Generic, 'srv-warn');
+      pt.addDialectIssue(_geminiInBandErrorIssue(eventData.error), 'srv-warn');
+      return pt.setDialectEnded('issue-dialect');
     }
 
     // [Gemini, 2025-10-22] Early detection of proxy errors - being sent as an assistant message
@@ -75,21 +73,16 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
         // FIXME: potential point for throwing OperationRetrySignal (using 'srv-warn' for now)
         //        in case of transient errors (502, 503, proxy queue, etc.) - not for good codes.
 
+        // the string is free text, not a code: it goes to `detail`, and there is no `causeCode`
         switch (true) {
           case finishReason.includes('503 Service Unavailable'):
-            // pt.setTokenStopReason('cg-issue');
-            // TODO: tell the client about a classification code?
-            //       E.g. send a TRPCFetcherError-compatible `error` downstream, or also send
-            //       the equivalent of .aixFCategory/.aixFHttpStatus/.aixFNetError (see trpc.server.ts)
-            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${finishReason}`, null, 'srv-warn');
+          case finishReason.startsWith('Proxy error'):
+            pt.addDialectIssue({ text: 'The service\'s internal proxy failed.', detail: finishReason }, 'srv-warn');
+            return pt.setDialectEnded('issue-dialect');
 
           case finishReason.startsWith('Proxy queue error'):
-            // pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Queue Error detected: ${finishReason}`, null, 'srv-warn');
-
-          case finishReason.startsWith('Proxy error'):
-            // pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`Gemini Internal Proxy Error detected: ${finishReason}`, null, 'srv-warn');
+            pt.addDialectIssue({ text: 'The service\'s internal proxy queue failed.', detail: finishReason }, 'srv-warn');
+            return pt.setDialectEnded('issue-dialect');
 
           default:
             // NOTE: the 'GOOD' default values shall be GeminiWire_API_Generate_Content.FinishReason_enum, e.g. STOP, MAX_TOKENS, SAFETY, .. TOO_MANY_TOOL_CALLS, etc.
@@ -152,10 +145,15 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
       pt.updateMetrics(metricsUpdate);
     }
 
-    // -> Prompt Safety Blocking
+    // -> Prompt Safety Blocking: the service's filter stopped the request before any output: a filter stop, as a blocked
+    // response is (stored stop reason 'filter', the rephrase advice), with the block reason as the cause
     if (generationChunk.promptFeedback?.blockReason) {
       const { blockReason, safetyRatings } = generationChunk.promptFeedback;
-      return pt.setDialectTerminatingIssue(`Input not allowed: ${blockReason}: ${_explainGeminiSafetyIssues(safetyRatings)}`, IssueSymbols.PromptBlocked, false);
+      // a block reason that is not code-shaped is dropped from `causeCode`: it then leads the detail
+      const detail = [aixIssueCodeShaped(blockReason) ? undefined : blockReason, _explainGeminiSafetyIssues(safetyRatings)].filter(Boolean).join(' - ');
+      pt.setTokenStopReason('filter-content');
+      pt.addDialectIssue({ code: 'model-filter', text: 'The input was not allowed.', causeCode: blockReason, detail: detail || undefined });
+      return pt.setDialectEnded('issue-dialect');
     }
 
     // candidates may be an optional field (started happening on 2024-09-27)
@@ -231,7 +229,8 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
                 );
               } catch (error) {
                 console.warn('[Gemini] Failed to convert audio:', error);
-                pt.setDialectTerminatingIssue(`Failed to process audio: ${error}`, null, 'srv-warn');
+                pt.addDialectIssue({ code: 'dispatch-parse', text: 'The generated audio could not be converted.', detail: error instanceof Error ? error.message : String(error) }, 'srv-warn');
+                pt.setDialectEnded('issue-dialect');
               }
             } else {
               // [Gemini, 2026-06] Code-execution file artifacts (PDF, CSV, xlsx, ...) arrive as inline base64.
@@ -350,7 +349,7 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
       }
 
       // -> Candidates[0] -> Safety Ratings
-      // only parsed when the finish reason is 'SAFETY'
+      // read only at a filter finish: all of them for SAFETY and IMAGE_SAFETY, the blocked ones for the other filter rows
 
       // -> Candidates[0] -> Citation Metadata
       // this is automated recitation detection by the API, not explicit grounding - very weak signal - as websites appear to be poor quality
@@ -411,12 +410,11 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           case 'MAX_TOKENS':
           case 'CONTINUATION': // Per-request token limit reached before the end; we do not resume with continuationToken, so the output is cut
             pt.setTokenStopReason('out-of-tokens');
-            // NOTE: we call setDialectEnded instead of setDialectTerminatingIssue, because we don't want an extra message appended,
-            // as we know that 'out-of-tokens' will likely append a brick wall (simple/universal enough).
+            // no issue: the out-of-tokens stop reason says it
             pt.setDialectEnded('issue-dialect'); // Gemini: max tokens reached
             break;
 
-          // will set both TokenStop and TerminatingIssue
+          // a filter stop: the stop reason, then the issue that explains it; a failure: 'cg-issue' and one issue
           case 'SAFETY':
           case 'RECITATION':
           case 'LANGUAGE':
@@ -437,40 +435,59 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
           case 'ESCALATION': // Request was filtered by an escalation rule
           case 'PUP_LIMITED_DISABLED': // User account limited or disabled for Prohibited Use Policy (PUP) violations
           case 'FINISH_REASON_UNSPECIFIED':
-            const reasonMap: Record<typeof candidate0.finishReason, [AixWire_Particles.GCTokenStopReason, string, string | null]> = {
-              'SAFETY': ['filter-content', `Generation stopped due to SAFETY: ${_explainGeminiSafetyIssues(candidate0.safetyRatings)}`, null],
-              'RECITATION': ['filter-recitation', 'Generation stopped due to RECITATION', IssueSymbols.Recitation],
-              'LANGUAGE': ['filter-refusal', 'Generation stopped due to unsupported LANGUAGE', IssueSymbols.Language],
-              'OTHER': ['cg-issue', `Generation stopped due to 'OTHER' (unknown reason)`, null],
-              'BLOCKLIST': ['filter-content', 'Generation stopped: content contains forbidden terms', null],
-              'PROHIBITED_CONTENT': ['filter-content', 'Generation stopped: potentially prohibited content', null],
-              'SPII': ['filter-content', 'Generation stopped: potentially contains Sensitive PII (SPII)', null],
-              'MALFORMED_FUNCTION_CALL': ['cg-issue', 'Generation stopped: invalid function call generated by model', null],
-              'IMAGE_SAFETY': ['filter-content', 'Image generation stopped: safety violations', null],
-              'IMAGE_PROHIBITED_CONTENT': ['filter-content', 'Image generation stopped: prohibited content', null],
-              'IMAGE_RECITATION': ['filter-recitation', 'Image generation stopped: recitation detected', IssueSymbols.Recitation],
-              'IMAGE_OTHER': ['cg-issue', 'Image generation stopped: miscellaneous issue', null],
-              'NO_IMAGE': ['cg-issue', 'Image generation failed: no image generated', null],
-              'UNEXPECTED_TOOL_CALL': ['cg-issue', 'Generation stopped: tool call made but no tools enabled', null],
-              'TOO_MANY_TOOL_CALLS': ['cg-issue', 'Generation stopped: too many consecutive tool calls', null],
-              'MISSING_THOUGHT_SIGNATURE': ['cg-issue', 'Generation stopped: request has at least one Gemini thought signature missing', null],
-              'MALFORMED_RESPONSE': ['cg-issue', 'Generation stopped: malformed response', null],
-              'ESCALATION': ['filter-content', 'Generation stopped: request filtered by an escalation rule', null],
-              'PUP_LIMITED_DISABLED': ['cg-issue', 'Generation stopped: account limited or disabled for Prohibited Use Policy (PUP) violations', null],
-              'FINISH_REASON_UNSPECIFIED': ['cg-issue', 'Generation stopped and no reason was given', null],
+            // `text` of a failure is our sentence when the vendor sent no finishMessage; a filter's sentence is the stop reason's, except where it misdescribes the stop
+            const finishRows: Record<typeof candidate0.finishReason, { stop: Extract<AixWire_Particles.GCTokenStopReason, `filter-${string}`>, text?: string } | { stop: 'cg-issue', text: string }> = {
+              'SAFETY': { stop: 'filter-content' },
+              'RECITATION': { stop: 'filter-recitation' },
+              'LANGUAGE': { stop: 'filter-refusal', text: 'The language is not supported.' },
+              'OTHER': { stop: 'cg-issue', text: 'The generation stopped for an unknown reason.' },
+              'BLOCKLIST': { stop: 'filter-content' },
+              'PROHIBITED_CONTENT': { stop: 'filter-content' },
+              'SPII': { stop: 'filter-content' },
+              'MALFORMED_FUNCTION_CALL': { stop: 'cg-issue', text: 'The model generated an invalid function call.' },
+              'IMAGE_SAFETY': { stop: 'filter-content' },
+              'IMAGE_PROHIBITED_CONTENT': { stop: 'filter-content' },
+              'IMAGE_RECITATION': { stop: 'filter-recitation' },
+              'IMAGE_OTHER': { stop: 'cg-issue', text: 'The image generation stopped for an unknown reason.' },
+              'NO_IMAGE': { stop: 'cg-issue', text: 'No image was generated.' },
+              'UNEXPECTED_TOOL_CALL': { stop: 'cg-issue', text: 'The model called a tool, but no tools were enabled.' },
+              'TOO_MANY_TOOL_CALLS': { stop: 'cg-issue', text: 'The model made too many consecutive tool calls.' },
+              'MISSING_THOUGHT_SIGNATURE': { stop: 'cg-issue', text: 'The request is missing at least one thought signature.' },
+              'MALFORMED_RESPONSE': { stop: 'cg-issue', text: 'The response was malformed.' },
+              'ESCALATION': { stop: 'filter-content' },
+              'PUP_LIMITED_DISABLED': { stop: 'cg-issue', text: 'The account is limited or disabled for Prohibited Use Policy violations.' },
+              'FINISH_REASON_UNSPECIFIED': { stop: 'cg-issue', text: 'The generation stopped and no reason was given.' },
             } as const;
-            const reason = reasonMap[candidate0.finishReason] || ['cg-issue', `Generation stopped due to unknown reason: ${candidate0.finishReason || 'reason unknown'}`, null];
-            pt.setTokenStopReason(reason[0]);
-            // append finishMessage if available for more context
-            const issueMessage = candidate0.finishMessage ? `${reason[1]}. ${candidate0.finishReason}: ${candidate0.finishMessage}.` : reason[1];
-            return pt.setDialectTerminatingIssue(issueMessage, reason[2], false);
+            const finishRow = finishRows[candidate0.finishReason];
+            if (finishRow.stop !== 'cg-issue') {
+              // the ratings explain a safety stop; on the other rows a routine rating is not the cause, a blocked one is.
+              // Ratings first: the detail is bounded from the end, and a long finishMessage must not cut them
+              const ratings = _explainGeminiSafetyIssues(candidate0.safetyRatings, candidate0.finishReason !== 'SAFETY' && candidate0.finishReason !== 'IMAGE_SAFETY');
+              pt.setTokenStopReason(finishRow.stop);
+              pt.addDialectIssue({
+                code: 'model-filter',
+                text: finishRow.text,
+                causeCode: candidate0.finishReason,
+                detail: [ratings, candidate0.finishMessage].filter(Boolean).join(' - ') || undefined,
+              });
+              return pt.setDialectEnded('issue-dialect');
+            }
+            pt.setTokenStopReason('cg-issue');
+            pt.addDialectIssue({ text: candidate0.finishMessage || finishRow.text, causeCode: candidate0.finishReason });
+            return pt.setDialectEnded('issue-dialect');
 
           default:
             // Exhaustiveness check - if we get here, Gemini added a new finishReason
             const _exhaustiveCheck: never = candidate0.finishReason as Exclude<typeof candidate0.finishReason, string>;
             aixResilientUnknownValue('Gemini', 'finishReason', candidate0.finishReason);
             pt.setTokenStopReason('cg-issue');
-            return pt.setDialectTerminatingIssue(`unexpected Gemini finish reason: ${candidate0?.finishReason}`, null, 'srv-warn');
+            // a finish reason that is not code-shaped is dropped from `causeCode`: it is kept as the detail
+            pt.addDialectIssue({
+              text: candidate0.finishMessage || 'The generation stopped for a reason this app does not know.',
+              causeCode: candidate0.finishReason,
+              detail: aixIssueCodeShaped(candidate0.finishReason) ? undefined : candidate0.finishReason,
+            }, 'srv-warn');
+            return pt.setDialectEnded('issue-dialect');
         }
       }
     } /* end of .candidates */
@@ -479,15 +496,48 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
 }
 
 
-function _explainGeminiSafetyIssues(safetyRatings?: GeminiWire_Safety.SafetyRating[]): string {
-  if (!safetyRatings || !safetyRatings.length)
-    return 'no safety ratings provided';
-  safetyRatings = (safetyRatings || []).sort(_geminiHarmProbabilitySortFunction);
-  // only for non-neglegible probabilities
-  return safetyRatings
-    .filter(rating => rating.probability !== 'NEGLIGIBLE')
-    .map(rating => `${rating.category/*.replace('HARM_CATEGORY_', '')*/} (${rating.probability?.toLowerCase()})`)
-    .join(', ') || 'Undocumented Gemini Safety Category.';
+/** The ratings above NEGLIGIBLE (or only the `blocked` ones), highest first, as the vendor names them; undefined when there are none (a PROHIBITED_CONTENT block sends no ratings) */
+function _explainGeminiSafetyIssues(safetyRatings: GeminiWire_Safety.SafetyRating[] | undefined, onlyBlocked?: boolean): string | undefined {
+  return [...safetyRatings ?? []]
+    .sort(_geminiHarmProbabilitySortFunction)
+    .filter(rating => onlyBlocked ? rating.blocked === true : rating.probability !== 'NEGLIGIBLE')
+    .map(rating => `${rating.category} (${rating.probability?.toLowerCase()})`)
+    .join(', ') || undefined;
+}
+
+/**
+ * Google's error object (https://google.aip.dev/193) as an issue: `text` is the message, `causeCode` the status name (else the code),
+ * `detail` the status and code, then each typed `details` entry as `name: value` fields. No HTTP status: the stream was a 200.
+ */
+function _geminiInBandErrorIssue(error: unknown): ParticleDialectIssue {
+  if (!error || typeof error !== 'object')
+    return { text: String(error) };
+  const { code, message, status, details } = error as { code?: unknown, message?: unknown, status?: unknown, details?: unknown };
+  const statusText = typeof status === 'string' && status ? status : undefined;
+  const codeText = (typeof code === 'number' || typeof code === 'string') && code !== '' ? String(code) : undefined;
+
+  let retryAfterMs: number | undefined;
+  const entries = !Array.isArray(details) ? [] : details.map((entry: unknown) => {
+    if (!entry || typeof entry !== 'object') return String(entry);
+    const { '@type': type, ...fields } = entry as Record<string, unknown>;
+    // RetryInfo.retryDelay is a Duration, '41s' or '1.5s'
+    const delay = typeof fields.retryDelay === 'string' ? /^(\d+(?:\.\d+)?)s$/.exec(fields.retryDelay) : null;
+    if (delay) retryAfterMs = Math.round(parseFloat(delay[1]) * 1000);
+    const values = Object.entries(fields).map(([name, value]) => `${name}: ${typeof value === 'string' ? value : JSON.stringify(value)}`).join(', ');
+    const typeName = typeof type === 'string' ? type.split('.').at(-1) : undefined;
+    return typeName ? `${typeName} (${values})` : values;
+  });
+
+  const detail = [
+    [statusText, codeText !== undefined && `(${codeText})`].filter(Boolean).join(' '),
+    entries.join('; '),
+  ].filter(Boolean).join(' - ');
+  return {
+    text: typeof message === 'string' ? message : undefined, // none: the record's own sentence
+    ...(detail && { detail }),
+    causeCode: statusText ?? codeText,
+    ...(retryAfterMs !== undefined && { retryAfterMs }),
+  };
 }
 
 function _geminiHarmProbabilitySortFunction(a: { probability: string }, b: { probability: string }) {

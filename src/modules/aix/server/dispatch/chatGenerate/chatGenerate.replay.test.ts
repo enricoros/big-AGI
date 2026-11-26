@@ -27,12 +27,15 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, test, type TestContext } from 'node:test';
 
 import { AixWire_Particles, type AixWire_Vendors } from '../../api/aix.wiretypes';
-import { aixIssueFails, type DAixIssue, type DAixIssueCode } from '../../../shared/aix.issues';
+import { aixIssue, aixIssueFails, type DAixIssue, type DAixIssueCode } from '../../../shared/aix.issues';
 
 import type { AixDebugObject } from './chatGenerate.debug';
 import type { ChatGenerateDispatch, ChatGenerateParseFunction } from './chatGenerate.dispatch';
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
+import { createBedrockConverseParserNS, createBedrockConverseStreamParser } from './parsers/bedrock-converse.parser';
+import { createEventStreamToSSETransform } from '../stream.demuxer.aws-eventstream';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
+import { createGeminiInteractionsParserNS, createGeminiInteractionsParserSSE } from './parsers/gemini.interactions.parser';
 import { createOpenAIChatCompletionsChunkParser, createOpenAIChatCompletionsParserNS } from './parsers/openai.parser';
 import { createOpenAIResponseParserNS, createOpenAIResponsesEventParser } from './parsers/openai.responses.parser';
 import { executeChatGenerateWithContinuation } from './chatGenerate.continuation';
@@ -361,6 +364,8 @@ type Ending = {
   stop: AixWire_Particles.GCTokenStopReason | typeof FAILED | typeof NOT_CLEAN | typeof UNDECIDED,
   /** what the user reads about it; null when nothing is said, left out when not asserted */
   says?: RegExp | null,
+  /** a second observation the user also reads, as a notice after the failure */
+  alsoSays?: RegExp,
   /** set when the chain does not do this yet: what it does today */
   notYet?: string,
   files: string[],
@@ -391,33 +396,33 @@ const ENDINGS: Ending[] = [
   },
   {
     ending: 'refused by the model\'s classifier: the vendor\'s explanation travels with the end',
-    stop: 'filter-refusal', says: /^Refusal: \[reasoning_extraction] This request was blocked/,
+    stop: 'filter-refusal', says: /^reasoning_extraction .+\. This request was blocked/, // the category is the code, the explanation the further words
     files: ['anthropic/fable-5.2_refusal-reasoning-extraction_at-start.sse', 'anthropic/sonnet-5.5_refusal-reasoning-extraction_nonstream.json'],
   },
   {
     ending: 'stopped as recitation: the text before the stop is kept',
-    stop: 'filter-recitation', says: /Generation stopped due to RECITATION/,
+    stop: 'filter-recitation', says: /^RECITATION /,
     files: ['gemini/gemini-2.5-flash-lite_finish-RECITATION.sse'],
   },
   {
     ending: 'stopped by the safety filter, with the category and its level',
-    stop: 'filter-content', says: /Generation stopped due to SAFETY: HARM_CATEGORY_HARASSMENT \(medium\)/,
+    stop: 'filter-content', says: /^SAFETY .+ HARM_CATEGORY_HARASSMENT \(medium\)(?: - .+)?$/, // the ratings lead the detail, before the vendor's message
     files: ['gemini/gemini-3.5-flash-lite_finish-SAFETY_after-text.sse', 'gemini/gemini-2.5-pro_finish-SAFETY_no-content.sse'],
   },
   {
     ending: 'a function call the model wrote wrong',
-    stop: 'cg-issue', says: /MALFORMED_FUNCTION_CALL: Malformed function call: /,
+    stop: 'cg-issue', says: /^MALFORMED_FUNCTION_CALL Malformed function call: /,
     files: ['gemini/gemini-2.5-flash-lite_finish-MALFORMED_FUNCTION_CALL.sse'],
   },
   {
     ending: 'a function call with no tools in the request',
-    stop: 'cg-issue', says: /Generation stopped: tool call made but no tools enabled/,
+    stop: 'cg-issue', says: /^UNEXPECTED_TOOL_CALL .*no tools were enabled/,
     files: ['gemini/gemini-2.5-flash-lite_finish-UNEXPECTED_TOOL_CALL.sse'],
   },
   {
     // #1286. How this stop is classed is not decided (an error today, AIX-outcome.md "tool-budget stops" proposes truncated)
     ending: 'the hosted-tool step budget ran out: the vendor\'s reason, with its counts',
-    stop: UNDECIDED, says: /TOO_MANY_TOOL_CALLS: The request reached the tool-use step limit/,
+    stop: UNDECIDED, says: /^TOO_MANY_TOOL_CALLS The request reached the tool-use step limit/,
     files: [
       'gemini/gemini-3.5-flash-lite_tool-limit_code-execution.sse',
       'gemini/gemini-3.6-flash_tool-limit_code-execution.sse',
@@ -429,7 +434,8 @@ const ENDINGS: Ending[] = [
     // rejected parameters, a container deleted mid-run (by hand, for the capture), a dead sandbox, a context that overflows
     // inside the tool loop: HTTP 200, an `error` event before or after answer text, then a failed response (#1211)
     ending: 'failed by the vendor inside the stream',
-    stop: FAILED, says: /: (Container with id 'cntr_\w+' not found\.|Invalid service_tier argument|There was an issue with your request\.|Your input exceeds the context window of this model\.)/,
+    // the vendor's code (its type when the code is null), then its message; the 'unknown' code of the failed response is not one
+    stop: FAILED, says: /^(invalid_request_error|context_length_exceeded) (Container with id 'cntr_\w+' not found\.|Invalid service_tier argument param: service_tier|There was an issue with your request\.|Your input exceeds the context window of this model\..* type: invalid_request_error, param: input)/,
     files: [
       'openai/gpt-6.1-terra_ultrafast-rejected_error-then-failed.sse',
       'openai/gpt-6-luna-pro_container-deleted_error-before-text-then-failed.sse',
@@ -440,9 +446,9 @@ const ENDINGS: Ending[] = [
   },
   {
     // #1288. Both captures are the container stream above, cut by hand after its error event: at the event boundary, and
-    // 160 bytes into the next event
+    // 160 bytes into the next event. Two observations: what the vendor said, and that the stream closed with no final event
     ending: 'failed by the vendor inside the stream, when the stream ends right after the error #1288',
-    stop: FAILED, says: /: Container with id 'cntr_\w+' not found\./,
+    stop: FAILED, says: /^invalid_request_error Container with id 'cntr_\w+' not found\.$/, alsoSays: /^The service closed the response before its final status\.$/,
     files: ['openai/gpt-6-luna_error-after-text-then-eof_synthetic.sse', 'openai/gpt-6-luna_error-after-text-then-cut-midframe_synthetic.sse'],
   },
   {
@@ -460,7 +466,7 @@ const ENDINGS: Ending[] = [
     // after content has streamed (before any, the answer is an HTTP 504). The 503 is the frame logged in the ticket, which
     // Gemini does not send on request, at the end of a cut recording.
     ending: 'an error sent inside a 200 stream, as the first event or after content: the message fails, with the vendor\'s words',
-    stop: FAILED, says: /DEADLINE_EXCEEDED \(504\): Deadline expired before operation could complete\.|UNAVAILABLE \(503\): This model is currently experiencing high demand\.|Model call failed: invalid request \(400\)/,
+    stop: FAILED, says: /^DEADLINE_EXCEEDED Deadline expired before operation could complete\. DEADLINE_EXCEEDED \(504\)$|^UNAVAILABLE This model is currently experiencing high demand\..* UNAVAILABLE \(503\)$|^400 Model call failed: invalid request \(400\) \{"error_type":"invalid_request"\}$/,
     files: [
       'gemini/gemini-3.5-flash-lite_inband-504-after-text.sse',
       'gemini/gemini-3.5-flash-lite_inband-504-during-code-run.sse',
@@ -589,11 +595,6 @@ const GEMINI_2X_EARLY_STOP = [
   'gemini/gemini-2.5-flash_search+code_intermediate-STOP.sse',
   'gemini/gemini-2.5-flash_url-context-as-code.sse',
 ];
-const NON_STREAMING_INCOMPLETE_NOTE = [
-  'openai/gpt-6-luna_incomplete-max-output-tokens-in-function-args_nonstream.json',
-  'openai/gpt-6-luna_incomplete-max-output-tokens-mid-text_nonstream.json',
-  'xai/grok-4.3_incomplete-max-output-tokens-1_nonstream.json',
-];
 const OPENROUTER_USAGE_AFTER_ERROR = [
   'openrouter/qwen-2.5-7b_inband-error-400-after-content_no-done.sse',
   'openrouter/qwen-2.5-7b_inband-error-400-before-content_no-done.sse',
@@ -601,6 +602,34 @@ const OPENROUTER_USAGE_AFTER_ERROR = [
 // Not a loss, and not comparable by this reader: the last frame of this stop reports no candidate tokens, earlier frames
 // reported 18. The chain keeps 18; the reader takes the last frame.
 const TOKENS_NOT_COMPARED = ['gemini/gemini-3.8-flash_tool-limit_search.sse'];
+
+/**
+ * The transmitter's end rules are nets: each writes a record for an ending no parser explained (ChatGenerateTransmitter,
+ * _queueEndIssues). A net's record is its code's own sentence with no vendor word or code beside it; a cutoff that fails
+ * can only be the net's (a parser states a close as a notice, after its own failure).
+ */
+function endNetsFired(particles: Op[]): DAixIssueCode[] {
+  const stop = theEnd(particles).tokenStopReason;
+  return particles.filter(isControl('aix-issue')).map(op => op.issue).filter(issue => {
+    if (issue.detail || issue.causeCode) return false;
+    switch (issue.code) {
+      case 'dispatch-cutoff':
+        return issue.effect === 'failed';
+      case 'dispatch-aborted':
+      case 'model-unfinished':
+      case 'service-error':
+        return issue.text === aixIssue(issue.code, issue.effect).text;
+      case 'model-filter':
+        return issue.text === (stop && AixWire_Particles.gcStopReasonRow(stop)?.message);
+      default:
+        return false;
+    }
+  }).map(issue => issue.code);
+}
+
+// The captures whose ending only a net explains, each with the reason. A new entry is a parser that left an ending
+// unexplained: state it in the parser, or list it here with why the net is the right producer.
+const END_NETS_EXPECTED: Record<string, DAixIssueCode[]> = {};
 
 describe('all captures: invariants', () => {
 
@@ -620,7 +649,7 @@ describe('all captures: invariants', () => {
     assert.ok(stopReason === 'ok' || stopReason === 'ok-tool_invocations', `ends with ${stopReason ?? 'no stop reason'} and has no row in ENDINGS`);
   }));
 
-  test('the answer text the vendor sent reaches the client', { skip }, () => overCaptures(except(GEMINI_2X_EARLY_STOP, NON_STREAMING_INCOMPLETE_NOTE), answerArrives));
+  test('the answer text the vendor sent reaches the client', { skip }, () => overCaptures(except(GEMINI_2X_EARLY_STOP), answerArrives));
 
   test('the reasoning text the vendor sent reaches the client', { skip }, () => overCaptures(all, g => {
     const sent = squash(g.payloads.map(payload => g.vendor.reasoningText(payload, g.streaming)).join(''));
@@ -651,7 +680,7 @@ describe('all captures: invariants', () => {
 
   test('the answer text is delivered exactly as sent, with nothing inserted', { skip }, unlessNotYet(
     'AIX-ingestion.md P1: the Anthropic parser inserts a blank line after a hosted or tool block',
-    () => overCaptures(except(GEMINI_2X_EARLY_STOP, NON_STREAMING_INCOMPLETE_NOTE), answerIsExact)));
+    () => overCaptures(except(GEMINI_2X_EARLY_STOP), answerIsExact)));
 
   test('Gemini 2.x streams with code execution deliver the whole answer and its usage', { skip: missing(...GEMINI_2X_EARLY_STOP) }, unlessNotYet(
     'the first of the intermediate STOPs ends the generation: the rest of the answer and the final usage are dropped (2.5 Flash Lite delivers none of its 77 characters)',
@@ -660,17 +689,22 @@ describe('all captures: invariants', () => {
       tokenTotalsAreTheVendors(g);
     })));
 
-  test('a non-streaming response cut by the output limit adds nothing to the answer text', { skip: missing(...NON_STREAMING_INCOMPLETE_NOTE) }, unlessNotYet(
-    'AIX-ingestion.md P15: the non-streaming Responses parser writes an "Incomplete response" note into the answer text',
-    () => overCaptures(NON_STREAMING_INCOMPLETE_NOTE, answerArrives)));
-
   test('the usage OpenRouter sends after an in-band error is reported', { skip: missing(...OPENROUTER_USAGE_AFTER_ERROR) }, unlessNotYet(
     'the error ends the generation, and the chunk after it, with the billed tokens, cost and tool calls, is not read',
     () => overCaptures(OPENROUTER_USAGE_AFTER_ERROR, tokenTotalsAreTheVendors)));
 
+  test('a parser explains its own endings: no end net of the transmitter fires, unless listed', { skip }, async () => {
+    const fired: Record<string, DAixIssueCode[]> = {};
+    await overCaptures(all, g => {
+      const nets = endNetsFired(g.particles);
+      if (nets.length) fired[g.file] = nets;
+    });
+    assert.deepEqual(fired, END_NETS_EXPECTED);
+  });
+
   test('every folder has a replay, and every row a capture', { skip }, () => {
     assert.deepEqual(folders.filter(folder => !(folder in VENDORS)), [], 'add a row to VENDORS');
-    const named = [...ENDINGS.flatMap(ending => ending.files), ...GEMINI_2X_EARLY_STOP, ...NON_STREAMING_INCOMPLETE_NOTE, ...OPENROUTER_USAGE_AFTER_ERROR, ...TOKENS_NOT_COMPARED];
+    const named = [...ENDINGS.flatMap(ending => ending.files), ...GEMINI_2X_EARLY_STOP, ...OPENROUTER_USAGE_AFTER_ERROR, ...TOKENS_NOT_COMPARED, ...Object.keys(END_NETS_EXPECTED)];
     assert.deepEqual(named.filter(file => !existsSync(CAPTURES + file)), [], 'rows that name a capture that is not there');
   });
 
@@ -681,7 +715,7 @@ describe('all captures: invariants', () => {
 
 describe('unclean endings', () => {
 
-  for (const { ending, stop, says, notYet, files } of ENDINGS) {
+  for (const { ending, stop, says, alsoSays, notYet, files } of ENDINGS) {
     const present = files.filter(file => existsSync(CAPTURES + file));
     test(`${ending} (${[...new Set(present.map(file => file.split('/')[0]))].join(', ')}: ${present.length})`, { skip: present.length ? false : 'captures not found' }, unlessNotYet(notYet, () => eachCapture(present, async file => {
       const particles = await replayCapture(file);
@@ -701,6 +735,10 @@ describe('unclean endings', () => {
         assert.deepEqual(said, []);
       else if (says)
         assert.ok(said.length === 1 && says.test(said[0]), `expected one explanation matching ${says}, got ${JSON.stringify(said)}`);
+      if (alsoSays) {
+        const noted = particles.filter(isControl('aix-issue')).filter(op => op.issue.effect === 'notice').map(op => _issueText(op.issue));
+        assert.ok(noted.length === 1 && alsoSays.test(noted[0]), `expected one notice matching ${alsoSays}, got ${JSON.stringify(noted)}`);
+      }
     })));
   }
 
@@ -908,6 +946,119 @@ describe('Anthropic Messages', () => {
 
   });
 
+  // A refusal is a filter stop: the filter record, stated with the stop reason, is the one explanation
+  const REFUSALS = ['anthropic/fable-5.2_refusal-reasoning-extraction_at-start.sse', 'anthropic/sonnet-5.5_refusal-reasoning-extraction_nonstream.json'];
+
+  test('a refusal is explained once: the category is the code, the vendor\'s explanation the detail', { skip: missing(...REFUSALS) }, () => eachCapture(REFUSALS, async file => {
+    const payloads = isStream(file) ? sseData(capture(file)) : [JSON.parse(capture(file))];
+    const stopDetails = findObject(payloads, object => object.type === 'refusal' && 'category' in object);
+    assert.ok(stopDetails, 'the capture has stop details');
+    const particles = await replayCapture(file);
+
+    const issues = particles.filter(isControl('aix-issue')).map(op => op.issue);
+    assert.equal(issues.length, 1, `one issue, got ${JSON.stringify(issues)}`);
+    const [{ code, effect, causeCode, detail }] = issues;
+    assert.deepEqual({ code, effect, causeCode, detail }, { code: 'model-filter', effect: 'failed', causeCode: stopDetails.category, detail: stopDetails.explanation });
+    // the end reason is the one the dialect had before: a streamed message_stop, a non-streaming body read to its end
+    assert.equal(theEnd(particles).terminationReason, isStream(file) ? 'done-dialect' : 'done-dispatch-closed');
+  }));
+
+  test('a refusal with a suggested model: the model is in the detail, after the explanation', async () => {
+    const refused = (stop_details: object) => JSON.stringify({
+      id: 'msg_replay', type: 'message', role: 'assistant', model: 'claude-haiku-5-5', content: [],
+      stop_reason: 'refusal', stop_sequence: null, stop_details, usage: { input_tokens: 10, output_tokens: 0 },
+    });
+    const { particles } = await replay([refused({ type: 'refusal', category: 'cyber', explanation: 'This request was blocked.', recommended_model: 'claude-haiku-5-5' })], false, createAnthropicMessageParserNS);
+
+    const [issue, ...more] = particles.filter(isControl('aix-issue')).map(op => op.issue);
+    assert.deepEqual(more, []);
+    assert.deepEqual({ code: issue.code, causeCode: issue.causeCode, detail: issue.detail }, { code: 'model-filter', causeCode: 'cyber', detail: 'This request was blocked. - recommended_model: claude-haiku-5-5' });
+    assert.equal(theEnd(particles).tokenStopReason, 'filter-refusal');
+  });
+
+  test('a refusal category that is not a code is kept: it leads the detail, and the refusal type is the code', async () => {
+    const body = JSON.stringify({
+      id: 'msg_replay', type: 'message', role: 'assistant', model: 'claude-haiku-5-5', content: [],
+      stop_reason: 'refusal', stop_sequence: null, stop_details: { type: 'refusal', category: 'general harms', explanation: 'This request was blocked.' }, usage: { input_tokens: 10, output_tokens: 0 },
+    });
+    const { particles } = await replay([body], false, createAnthropicMessageParserNS);
+
+    const issues = particles.filter(isControl('aix-issue')).map(op => op.issue);
+    assert.deepEqual(issues.map(({ code, causeCode, detail }) => ({ code, causeCode, detail })), [{ code: 'model-filter', causeCode: 'refusal', detail: 'category: general harms - This request was blocked.' }]);
+  });
+
+  // The `error` event ends the stream (no capture: Anthropic does not send it on request). Retryable classes retry while
+  // attempts are left; on the last attempt, and for every other class, the generation fails with the vendor's words and code.
+  describe('in-stream error event', () => {
+
+    const errorAfterTextEvents = (error: object) => [
+      { event: 'message_start', data: { type: 'message_start', message: { id: 'msg_replay', type: 'message', role: 'assistant', model: 'claude-haiku-5-5', content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 10, output_tokens: 1 } } } },
+      { event: 'content_block_start', data: { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } } },
+      { event: 'content_block_delta', data: { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'Partial answer' } } },
+      { event: 'error', data: { type: 'error', error } },
+    ];
+    const errorAfterText = (error: object) => sse(errorAfterTextEvents(error));
+
+    /** the parser as the retrier's gate answers; no retries left for any class is what a last attempt sees */
+    const withRetries = (hasRetries: boolean) => (): ChatGenerateParseFunction => {
+      const parse = createAnthropicMessageParser();
+      return (pt, eventData, eventName) => parse(pt, eventData, eventName, { hasRetriesForHttpStatus: () => hasRetries });
+    };
+    const onLastAttempt = withRetries(false);
+
+    // The Bedrock rows are the shape the demuxer gives an exception sent under its own `:event-type`. A `:message-type: exception`
+    // frame reaches this parser with no `error` key and still fails as dispatch-parse, as on main
+    for (const [what, error, expected] of [
+      ['a retryable class on the last attempt', { type: 'overloaded_error', message: 'Overloaded' }, { text: 'Overloaded', causeCode: 'overloaded_error' }],
+      ['the error code, when the vendor gives one, is the code, and the type is the detail', { type: 'rate_limit_error', message: 'You have reached your specified API usage limits.', details: { error_code: 'enforced_spend_limit_reached' } }, { text: 'You have reached your specified API usage limits.', causeCode: 'enforced_spend_limit_reached', detail: 'type: rate_limit_error' }],
+      ['a Bedrock exception frame: the message of its body', { type: 'throttlingException', message: JSON.stringify({ message: 'Too many requests, please wait before trying again.' }) }, { text: 'Too many requests, please wait before trying again.', causeCode: 'throttlingException' }],
+      ['a Bedrock exception frame: the other fields of its body are the detail', { type: 'modelStreamErrorException', message: JSON.stringify({ message: 'Model stream error', originalStatusCode: 424, originalMessage: 'The model returned: overloaded' }) }, { text: 'Model stream error', causeCode: 'modelStreamErrorException', detail: 'originalStatusCode: 424, originalMessage: The model returned: overloaded' }],
+    ] as const)
+      test(`the generation fails in the vendor's words: ${what}`, async () => {
+        const { particles } = await replay([errorAfterText(error)], true, onLastAttempt);
+
+        const issues = particles.filter(isControl('aix-issue')).map(op => op.issue);
+        assert.equal(issues.length, 1, `one issue, got ${JSON.stringify(issues)}`);
+        const [{ code, effect, text, causeCode, detail }] = issues;
+        assert.deepEqual({ code, effect, text, causeCode, detail }, { code: 'service-error', effect: 'failed', detail: undefined, ...expected });
+        assert.equal(particles.filter(isText).map(op => op.t).join(''), 'Partial answer', 'the text before the error is kept');
+        const { terminationReason, tokenStopReason } = theEnd(particles);
+        assert.deepEqual({ terminationReason, tokenStopReason }, { terminationReason: 'issue-dialect', tokenStopReason: 'cg-issue' });
+      });
+
+    test('a non-retryable class fails the generation on any attempt, with its type as the code', async () => {
+      const { particles } = await replay([errorAfterText({ type: 'permission_error', message: 'Your API key does not have permission to use the specified resource.' })], true, withRetries(true));
+
+      const issues = particles.filter(isControl('aix-issue')).map(op => op.issue);
+      assert.deepEqual(issues.map(({ code, effect, causeCode }) => ({ code, effect, causeCode })), [{ code: 'service-error', effect: 'failed', causeCode: 'permission_error' }]);
+      assert.equal(theEnd(particles).terminationReason, 'issue-dialect');
+    });
+
+    test('a retryable class with attempts left asks for a retry, and queues no issue', () => {
+      const calls: string[] = [];
+      const pt = new Proxy({}, { get: (_, name) => () => void calls.push(String(name)) }) as Parameters<ChatGenerateParseFunction>[0];
+      const parse = withRetries(true)();
+      const events = errorAfterTextEvents({ type: 'overloaded_error', message: 'Overloaded' });
+
+      assert.throws(() => events.forEach(({ event, data }) => parse(pt, JSON.stringify(data), event)), (signal: any) => {
+        assert.deepEqual({ name: signal.name, causeHttp: signal.causeHttp, causeConn: signal.causeConn }, { name: 'OperationRetrySignal', causeHttp: 529, causeConn: 'overloaded_error' });
+        return true;
+      });
+      assert.deepEqual(calls.filter(name => /Issue|DialectEnded|TokenStopReason/.test(name)), [], 'an attempt that is retried leaves no issue and no end');
+    });
+
+    test('our own Bedrock decode failure is a parse failure, not the vendor\'s error', async () => {
+      // the demuxer's marker, verbatim, for a chunk frame it could not decode
+      const { particles } = await replay([errorAfterText({ type: 'transform_error', message: 'Failed to decode EventStream frame' })], true, onLastAttempt);
+
+      const issues = particles.filter(isControl('aix-issue')).map(op => op.issue);
+      assert.deepEqual(issues.map(({ code, effect, causeCode, detail }) => ({ code, effect, causeCode, detail })), [{ code: 'dispatch-parse', effect: 'failed', causeCode: undefined, detail: 'Failed to decode EventStream frame' }]);
+      assert.deepEqual(chainFailures(particles, 'failing'), explanations(particles), 'the explanation is a chain failure');
+      assert.equal(theEnd(particles).terminationReason, 'issue-dialect');
+    });
+
+  });
+
 });
 
 
@@ -916,21 +1067,159 @@ describe('Anthropic Messages', () => {
 describe('OpenAI Responses', () => {
 
   for (const file of ['openai/gpt-6-luna_image-generation-moderation-blocked.sse', 'openai/gpt-6-luna_image-generation-moderation-blocked_nonstream.json'])
-    test(`a moderation-blocked image leaves an error part and the response completes (${isStream(file) ? 'streaming' : 'non-streaming'})`, { skip: missing(file) }, async () => {
+    test(`a moderation-blocked image leaves a tool issue and the response completes (${isStream(file) ? 'streaming' : 'non-streaming'})`, { skip: missing(file) }, async () => {
       const raw = capture(file);
       const vendorError = findObject(isStream(file) ? sseData(raw) : JSON.parse(raw), object => object.code === 'moderation_blocked');
       assert.ok(typeof vendorError?.message === 'string', 'the capture has the moderation error');
       const particles = await replayCapture(file);
 
       // this error does not end the response: the vendor's stream goes on after the failed item, and so do we
-      // [Aix.Issue shim] this one site still sends the pre-record particle
-      const issueAt = particles.findIndex(isControl('issue'));
-      const issues = particles.filter(isControl('issue'));
+      const issueAt = particles.findIndex(isControl('aix-issue'));
+      const issues = particles.filter(isControl('aix-issue')).map(op => op.issue);
       assert.equal(issues.length, 1);
-      assert.ok(issues[0].issueText.includes(vendorError.message), 'the error part carries the vendor\'s explanation');
+      assert.deepEqual({ code: issues[0].code, causeCode: issues[0].causeCode, fails: aixIssueFails(issues[0]) }, { code: 'service-tool', causeCode: 'moderation_blocked', fails: false });
+      assert.ok(issues[0].detail?.includes(vendorError.message.trim()), 'the issue carries the vendor\'s explanation');
       assert.ok(particles.slice(issueAt + 1).some(isText), 'the text the model writes after the block is kept');
       assert.equal(theEnd(particles).tokenStopReason, 'ok', 'a blocked image does not fail the response');
     });
+
+  // Endings no capture shows, made from the captures: the vendor's words, code and fields are in the record
+  const issuesOf = (particles: Op[]) => particles.filter(isControl('aix-issue')).map(op => op.issue);
+  const reEvents = (events: any[]) => sse(events.map(data => ({ event: data.type, data })));
+  const INCOMPLETE = 'openai/gpt-6-luna_incomplete-max-output-tokens-mid-text';
+
+  /** The capture cut by the output limit, with another reason */
+  async function incompleteFor(reason: string, streaming: boolean): Promise<{ sent: string, particles: Op[] }> {
+    if (streaming) {
+      const events = sseData(capture(`${INCOMPLETE}.sse`));
+      for (const event of events)
+        if (event.type === 'response.incomplete') event.response.incomplete_details = { reason };
+      return { sent: VENDORS.openai.answerText(events, true), particles: (await replay([reEvents(events)], true, () => createOpenAIResponsesEventParser('openai'))).particles };
+    }
+    const body = JSON.parse(capture(`${INCOMPLETE}_nonstream.json`));
+    body.incomplete_details = { reason };
+    return { sent: VENDORS.openai.answerText([body], false), particles: (await replay([JSON.stringify(body)], false, () => createOpenAIResponseParserNS('openai'))).particles };
+  }
+
+  for (const streaming of [true, false]) {
+    const mode = streaming ? 'streaming' : 'non-streaming', skip = missing(`${INCOMPLETE}${streaming ? '.sse' : '_nonstream.json'}`);
+
+    test(`an incomplete response for content_filter is a filter stop, explained once, with nothing added to the answer (${mode})`, { skip }, async () => {
+      const { sent, particles } = await incompleteFor('content_filter', streaming);
+
+      assert.equal(theEnd(particles).tokenStopReason, 'filter-content');
+      assert.deepEqual(issuesOf(particles).map(issue => [issue.code, issue.causeCode]), [['model-filter', 'content_filter']]);
+      assert.equal(particles.filter(isText).map(op => op.t).join(''), sent);
+    });
+
+    test(`an incomplete response for another reason fails, naming the reason, with nothing added to the answer (${mode})`, { skip }, async () => {
+      const { sent, particles } = await incompleteFor('server_shutdown', streaming);
+
+      assert.equal(theEnd(particles).tokenStopReason, 'cg-issue');
+      assert.deepEqual(issuesOf(particles).map(issue => [issue.code, aixIssueFails(issue), issue.causeCode, issue.detail]), [['service-error', true, 'server_shutdown', 'reason: server_shutdown']]);
+      assert.equal(particles.filter(isText).map(op => op.t).join(''), sent);
+    });
+  }
+
+  test('a non-streaming failed response with no error object fails, with an explanation', { skip: missing(`${INCOMPLETE}_nonstream.json`) }, async () => {
+    const body = { ...JSON.parse(capture(`${INCOMPLETE}_nonstream.json`)), status: 'failed', incomplete_details: null, error: null };
+    const { particles } = await replay([JSON.stringify(body)], false, () => createOpenAIResponseParserNS('openai'));
+
+    assert.equal(theEnd(particles).tokenStopReason, 'cg-issue');
+    assert.deepEqual(issuesOf(particles).map(issue => [issue.code, aixIssueFails(issue)]), [['service-error', true]]);
+  });
+
+  test('a non-streaming error body fails the reply in the vendor\'s words, with its code and fields', async () => {
+    const error = { message: 'The model `gpt-0` does not exist or you do not have access to it.', type: 'invalid_request_error', param: 'model', code: 'model_not_found' };
+    const { particles } = await replay([JSON.stringify({ error })], false, () => createOpenAIResponseParserNS('openai'));
+
+    const { terminationReason, tokenStopReason } = theEnd(particles);
+    assert.deepEqual([terminationReason, tokenStopReason], ['issue-dialect', 'cg-issue']);
+    assert.deepEqual(issuesOf(particles).map(({ code, effect, text, causeCode, detail }) => ({ code, effect, text, causeCode, detail })),
+      [{ code: 'service-error', effect: 'failed', text: error.message, causeCode: 'model_not_found', detail: 'type: invalid_request_error, param: model' }]);
+  });
+
+  test('an error with a numeric code and no string code: the numeric code is the cause code, the type goes to the detail (as in Chat Completions)', async () => {
+    const error = { message: 'x', type: 'invalid_request_error', code: 400 };
+    const { particles } = await replay([JSON.stringify({ error })], false, () => createOpenAIResponseParserNS('openai'));
+
+    assert.deepEqual(issuesOf(particles).map(({ code, causeCode, detail }) => ({ code, causeCode, detail })),
+      [{ code: 'service-error', causeCode: '400', detail: 'type: invalid_request_error' }]);
+  });
+
+  // #1288: the failed response after it says less (code 'unknown', no headers); the wait is the rate-limit capture's
+  const AFTER_TEXT = 'openai/gpt-6-luna_container-deleted_error-after-text-then-failed.sse';
+
+  test('an error event after text and the failed response after it are one explanation, with the event\'s facts', { skip: missing(AFTER_TEXT) }, async () => {
+    const events = sseData(capture(AFTER_TEXT));
+    const errorEvent = events.find(event => event.type === 'error');
+    assert.equal(events.find(event => event.type === 'response.failed')?.response.error.code, 'unknown', 'the capture\'s failed response has no code');
+    errorEvent.error.headers = { 'retry-after': '4', 'retry-after-ms': '3141' };
+    const { particles } = await replay([reEvents(events)], true, () => createOpenAIResponsesEventParser('openai'));
+
+    assert.equal(theEnd(particles).terminationReason, 'issue-dialect');
+    assert.deepEqual(issuesOf(particles).map(({ code, effect, text, causeCode, retryAfterMs }) => ({ code, effect, text, causeCode, retryAfterMs })),
+      [{ code: 'service-error', effect: 'failed', text: errorEvent.error.message, causeCode: 'invalid_request_error', retryAfterMs: 3141 }]);
+  });
+
+  /** The #1288 capture with other error objects in the 'error' event (null: none) and in 'response.failed' */
+  function afterTextWith(eventError: object | null, failedError: object): string {
+    const events = sseData(capture(AFTER_TEXT)).filter(event => eventError || event.type !== 'error');
+    for (const event of events) {
+      if (event.type === 'error') event.error = eventError;
+      if (event.type === 'response.failed') event.response.error = failedError;
+    }
+    return reEvents(events);
+  }
+
+  /** the parser as the retrier's gate answers, for every class */
+  const withRetriesLeft = (left: boolean) => (): ChatGenerateParseFunction => {
+    const parse = createOpenAIResponsesEventParser('openai');
+    return (pt, eventData, eventName) => parse(pt, eventData, eventName, { hasRetriesForHttpStatus: () => left });
+  };
+
+  for (const [what, eventError] of [['after an error event', { type: 'server_error', code: null, message: 'The server had an error.', param: null }], ['alone', null]] as const)
+    test(`a failed response retries on its code, not on its type, as on main (${what})`, { skip: missing(AFTER_TEXT) }, async () => {
+      const { particles } = await replay([afterTextWith(eventError, { type: 'server_error', code: 'unknown', message: 'The server had an error.' })], true, withRetriesLeft(true));
+
+      assert.equal(theEnd(particles).terminationReason, 'issue-dialect');
+      assert.deepEqual(issuesOf(particles).map(({ code, effect, text, causeCode }) => ({ code, effect, text, causeCode })), [{ code: 'service-error', effect: 'failed', text: 'The server had an error.', causeCode: 'server_error' }]);
+      assert.ok(particles.some(isText), 'the streamed text is kept');
+    });
+
+  test('a failed response with a transient code and attempts left asks for a retry', { skip: missing(AFTER_TEXT) }, () => {
+    const pt = new Proxy({}, { get: () => () => undefined }) as Parameters<ChatGenerateParseFunction>[0];
+    const parse = withRetriesLeft(true)();
+    const events = sseData(afterTextWith(null, { type: 'server_error', code: 'server_error', message: 'The server had an error.' }));
+    assert.throws(() => events.forEach(data => parse(pt, JSON.stringify(data), data.type)), (signal: any) => {
+      assert.deepEqual({ name: signal.name, causeHttp: signal.causeHttp, causeConn: signal.causeConn }, { name: 'OperationRetrySignal', causeHttp: 500, causeConn: 'server_error' });
+      return true;
+    });
+  });
+
+  test('a failed response with odd field values keeps the vendor\'s message', { skip: missing(AFTER_TEXT) }, async () => {
+    const { particles } = await replay([afterTextWith(null, { type: { name: 'server_error' }, code: 'unknown', message: 'Container not found.', param: 42 })], true, () => createOpenAIResponsesEventParser('openai'));
+
+    assert.deepEqual(issuesOf(particles).map(({ code, effect, text, causeCode }) => ({ code, effect, text, causeCode })), [{ code: 'service-error', effect: 'failed', text: 'Container not found.', causeCode: undefined }]);
+  });
+
+  test('a kept error event with no code and a failed response with one: the code is the cause code, the type the detail', { skip: missing(AFTER_TEXT) }, async () => {
+    const { particles } = await replay([afterTextWith(
+      { type: 'tokens', code: null, message: 'Rate limit reached for tokens per min.', param: null },
+      { type: 'tokens', code: 'rate_limit_exceeded', message: 'Rate limit reached.' },
+    )], true, withRetriesLeft(false));
+
+    assert.deepEqual(issuesOf(particles).map(({ code, effect, text, causeCode, detail }) => ({ code, effect, text, causeCode, detail })),
+      [{ code: 'service-error', effect: 'failed', text: 'Rate limit reached for tokens per min.', causeCode: 'rate_limit_exceeded', detail: 'type: tokens' }]);
+  });
+
+  test('a non-streaming error body whose message is not a string keeps the vendor\'s words in the detail', async () => {
+    const { particles } = await replay([JSON.stringify({ error: { message: { text: 'Quota exceeded for project X' }, code: 'quota' } })], false, () => createOpenAIResponseParserNS('openai'));
+
+    const issues = issuesOf(particles);
+    assert.deepEqual(issues.map(({ code, effect, causeCode }) => ({ code, effect, causeCode })), [{ code: 'service-error', effect: 'failed', causeCode: 'quota' }]);
+    assert.ok(issues[0].detail?.includes('Quota exceeded for project X'), `the vendor's words are in the record: ${issues[0].detail}`);
+  });
 
   // tool_usage counts the searches; a page the model opens is a web_search_call of its own, on no counter.
   // Code interpreter runs have no counter at all and are counted from the calls.
@@ -987,7 +1276,7 @@ describe('OpenAI Responses', () => {
     assert.equal(particles.filter(isText).map(op => op.t).join(''), VENDORS.openai.answerText(events, true));
     assert.deepEqual(issueTexts(particles), []);
     assert.equal(theEnd(particles).tokenStopReason, 'ok');
-    assert.ok(chainFailures(await replayIn('development'), 'failing').length > 0, 'development did not fail on the unlisted event');
+    assert.ok(chainFailures(await replayIn('development')).length, 'development did not fail on the unlisted event');
   });
 
 });
@@ -1019,6 +1308,10 @@ describe('xAI Responses', () => {
 
 describe('Gemini generateContent', () => {
 
+  const geminiReplay = async (...frames: object[]) =>
+    (await replay([sse(frames.map(data => ({ data })))], true, () => createGeminiGenerateContentResponseParser('models/gemini-test', true))).particles;
+  const geminiIssues = (particles: Op[]): DAixIssue[] => particles.filter(isControl('aix-issue')).map(op => op.issue);
+
   // #1287: the error frame is followed by a bare JSON copy of itself, outside the event framing
   for (const [file, before] of [
     ['gemini/gemini-3.5-flash-lite_inband-504-after-text.sse', 'the text'],
@@ -1039,24 +1332,96 @@ describe('Gemini generateContent', () => {
 
   // #1287. No in-stream error with `details` was captured: the frames are built to the format Google documents for its
   // errors (https://google.aip.dev/193), where `details` is a list of typed entries.
-  test('an error sent mid-stream shows its details, as JSON after the message', async () => {
+  test('an error sent mid-stream is the vendor\'s message, with its status as the code and its details as fields', async () => {
     const error = { code: 429, message: 'Resource has been exhausted.', status: 'RESOURCE_EXHAUSTED' };
     const details = [
       { '@type': 'type.googleapis.com/google.rpc.ErrorInfo', reason: 'RATE_LIMIT_EXCEEDED', domain: 'googleapis.com', metadata: { service: 'generativelanguage.googleapis.com' } },
       { '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '41s' },
     ];
-    const said = async (sent: object) => {
-      const stream = sse([{ data: { candidates: [{ content: { parts: [{ text: 'Partial answer.' }], role: 'model' }, index: 0 }] } }, { data: { error: sent } }]);
-      const texts = issueTexts((await replay([stream], true, () => createGeminiGenerateContentResponseParser('models/gemini-test', true))).particles);
-      assert.equal(texts.length, 1);
-      return texts[0];
+    const issueOf = async (sent: unknown) => {
+      const issues = geminiIssues(await geminiReplay({ candidates: [{ content: { parts: [{ text: 'Partial answer.' }], role: 'model' }, index: 0 }] }, { error: sent }));
+      assert.equal(issues.length, 1);
+      return issues[0];
     };
 
-    assert.ok((await said(error)).endsWith('RESOURCE_EXHAUSTED (429): Resource has been exhausted.'), 'text was added to an error that has no details');
-    const withDetails = await said({ ...error, details });
-    const detailsAt = withDetails.indexOf('[{');
-    assert.ok(withDetails.includes('RESOURCE_EXHAUSTED (429): Resource has been exhausted.') && detailsAt > 0, `the details are not in the text: ${withDetails}`);
-    assert.deepEqual(JSON.parse(withDetails.slice(detailsAt)), details);
+    const plain = await issueOf(error);
+    assert.deepEqual([plain.code, plain.effect, plain.text, plain.causeCode, plain.detail], ['service-error', 'failed', 'Resource has been exhausted.', 'RESOURCE_EXHAUSTED', 'RESOURCE_EXHAUSTED (429)']);
+    assert.equal(plain.httpStatus, undefined, 'an in-band code is not an HTTP status: the stream was a 200');
+
+    const withDetails = await issueOf({ ...error, details });
+    assert.equal(withDetails.text, 'Resource has been exhausted.');
+    assert.equal(withDetails.detail, 'RESOURCE_EXHAUSTED (429) - ErrorInfo (reason: RATE_LIMIT_EXCEEDED, domain: googleapis.com, metadata: {"service":"generativelanguage.googleapis.com"}); RetryInfo (retryDelay: 41s)');
+    assert.equal(withDetails.retryAfterMs, 41_000);
+
+    const bare = await issueOf('Backend overloaded');
+    assert.deepEqual([bare.text, bare.causeCode, bare.detail], ['Backend overloaded', undefined, undefined]);
+  });
+
+  // No capture: the frames below follow the wire schema. A filter stop is told once, by the issue stated with its stop reason
+  test('a filter finish ends filtered, with the finish reason as the code and the vendor\'s message and ratings as the detail', async () => {
+    const text = { candidates: [{ content: { parts: [{ text: 'Some text.' }], role: 'model' }, index: 0 }] };
+    // outside SAFETY and IMAGE_SAFETY a routine rating is not the cause of the stop: only a blocked one is named
+    const blocklist = await geminiReplay(text, { candidates: [{ finishReason: 'BLOCKLIST', finishMessage: 'Blocked term.', safetyRatings: [{ category: 'HARM_CATEGORY_HATE_SPEECH', probability: 'LOW' }, { category: 'HARM_CATEGORY_HARASSMENT', probability: 'NEGLIGIBLE', blocked: true }], index: 0 }] });
+    assert.deepEqual(geminiIssues(blocklist).map(issue => [issue.code, issue.effect, issue.causeCode, issue.text, issue.detail]),
+      [['model-filter', 'failed', 'BLOCKLIST', AixWire_Particles.gcStopReasonRow('filter-content')?.message, 'HARM_CATEGORY_HARASSMENT (negligible) - Blocked term.']]);
+    assert.deepEqual([theEnd(blocklist).terminationReason, theEnd(blocklist).tokenStopReason], ['issue-dialect', 'filter-content']);
+    const recitation = await geminiReplay(text, { candidates: [{ finishReason: 'RECITATION', safetyRatings: [{ category: 'HARM_CATEGORY_HARASSMENT', probability: 'LOW' }], index: 0 }] });
+    assert.deepEqual(geminiIssues(recitation).map(issue => [issue.code, issue.causeCode, issue.detail]), [['model-filter', 'RECITATION', undefined]]);
+
+    // the detail is bounded from its end: a long vendor message must not cut the ratings
+    const finishMessage = 'The model output could not be generated. '.repeat(60);
+    const safety = await geminiReplay(text, { candidates: [{ finishReason: 'SAFETY', finishMessage, safetyRatings: [{ category: 'HARM_CATEGORY_HARASSMENT', probability: 'MEDIUM' }, { category: 'HARM_CATEGORY_HATE_SPEECH', probability: 'NEGLIGIBLE' }], index: 0 }] });
+    const [safetyIssue] = geminiIssues(safety);
+    assert.ok(finishMessage.length > 2000 && safetyIssue.detail?.startsWith('HARM_CATEGORY_HARASSMENT (medium) - The model output could not be generated.'), safetyIssue.detail);
+
+    // the refusal sentence would call an unsupported language a safety refusal
+    const language = await geminiReplay({ candidates: [{ finishReason: 'LANGUAGE', index: 0 }] });
+    assert.deepEqual(geminiIssues(language).map(issue => [issue.code, issue.effect, issue.causeCode, issue.text, issue.detail]), [['model-filter', 'failed', 'LANGUAGE', 'The language is not supported.', undefined]]);
+    assert.equal(theEnd(language).tokenStopReason, 'filter-refusal');
+  });
+
+  test('a blocked prompt is a filter stop, as a blocked response is, with the block reason as the code and the ratings as the detail', async () => {
+    const usage = { usageMetadata: { promptTokenCount: 12 } };
+    const safety = await geminiReplay({ promptFeedback: { blockReason: 'SAFETY', safetyRatings: [{ category: 'HARM_CATEGORY_DANGEROUS_CONTENT', probability: 'NEGLIGIBLE' }, { category: 'HARM_CATEGORY_HARASSMENT', probability: 'HIGH' }] }, ...usage });
+    assert.deepEqual(geminiIssues(safety).map(issue => [issue.code, issue.effect, issue.causeCode, issue.text, issue.detail]), [['model-filter', 'failed', 'SAFETY', 'The input was not allowed.', 'HARM_CATEGORY_HARASSMENT (high)']]);
+    assert.deepEqual([theEnd(safety).terminationReason, theEnd(safety).tokenStopReason], ['issue-dialect', 'filter-content']);
+
+    // PROHIBITED_CONTENT blocks send no ratings
+    const prohibited = await geminiReplay({ promptFeedback: { blockReason: 'PROHIBITED_CONTENT' }, ...usage });
+    assert.deepEqual(geminiIssues(prohibited).map(issue => [issue.causeCode, issue.detail]), [['PROHIBITED_CONTENT', undefined]]);
+
+    // a block reason that is not a code cannot be the code: the vendor's words lead the detail instead
+    const freeText = await geminiReplay({ promptFeedback: { blockReason: 'MODEL ARMOR', safetyRatings: [{ category: 'HARM_CATEGORY_HARASSMENT', probability: 'HIGH' }] }, ...usage });
+    assert.deepEqual(geminiIssues(freeText).map(issue => [issue.code, issue.causeCode, issue.detail]), [['model-filter', undefined, 'MODEL ARMOR - HARM_CATEGORY_HARASSMENT (high)']]);
+  });
+
+  test('a proxy error sent as a finish reason fails the generation, with the vendor\'s string as the detail', async () => {
+    for (const finishReason of ['Proxy queue error: upstream timed out', 'upstream 503 Service Unavailable', 'Proxy error: connection reset']) {
+      const particles = await geminiReplay({ candidates: [{ finishReason }] });
+      assert.deepEqual(geminiIssues(particles).map(issue => [issue.code, issue.effect, issue.causeCode, issue.detail]), [['service-error', 'failed', undefined, finishReason]], finishReason);
+      assert.deepEqual([theEnd(particles).terminationReason, theEnd(particles).tokenStopReason], ['issue-dialect', 'cg-issue'], finishReason);
+    }
+  });
+
+  // In development an unknown finish reason throws (strict parsing); production reports it. The vendor's word stays in the record either way
+  test('an unknown finish reason fails the generation in production, with the vendor\'s message as the text and its free-text reason as the detail', async () => {
+    Object.assign(process.env, { NODE_ENV: 'production' });
+    try {
+      const freeText = await geminiReplay({ candidates: [{ finishReason: '502 Bad Gateway' }] });
+      assert.deepEqual(geminiIssues(freeText).map(issue => [issue.code, issue.effect, issue.causeCode, issue.detail]), [['service-error', 'failed', undefined, '502 Bad Gateway']]);
+      assert.deepEqual([theEnd(freeText).terminationReason, theEnd(freeText).tokenStopReason], ['issue-dialect', 'cg-issue']);
+
+      const coded = await geminiReplay({ candidates: [{ finishReason: 'NEW_REASON', finishMessage: 'Stopped by a new rule.', index: 0 }] });
+      assert.deepEqual(geminiIssues(coded).map(issue => [issue.code, issue.causeCode, issue.text, issue.detail]), [['service-error', 'NEW_REASON', 'Stopped by a new rule.', undefined]]);
+    } finally {
+      Object.assign(process.env, { NODE_ENV: 'development' });
+    }
+  });
+
+  test('generated audio that cannot be converted fails the generation as our parse failure', async () => {
+    const particles = await geminiReplay({ candidates: [{ content: { parts: [{ inlineData: { mimeType: 'audio/L16;codec=opus;rate=24000', data: 'AAAA' } }], role: 'model' }, index: 0 }] });
+    assert.deepEqual(geminiIssues(particles).map(issue => [issue.code, issue.effect, issue.detail]), [['dispatch-parse', 'failed', 'Unsupported audio codec: opus (expected pcm)']]);
+    assert.deepEqual([theEnd(particles).terminationReason, theEnd(particles).tokenStopReason], ['issue-dialect', 'cg-issue']);
   });
 
   const NAMED_FILE = 'gemini/gemini-3.8-flash_code-execution-file-with-displayName.sse';
@@ -1096,6 +1461,134 @@ describe('Gemini generateContent', () => {
 });
 
 
+// --- Gemini Interactions ---
+
+describe('Gemini Interactions', () => {
+
+  // Synthetic: no run that failed, was cancelled, stopped unfinished or hit its budget was captured. The frames follow the spec
+  // (Error { code, message }, Interaction.errors[], the status enum): the answer arrives as a model_output step, then the run ends
+  // with `status`. Streaming ends on interaction.completed; non-streaming is the GET resource that Recover reads.
+  const ANSWER = 'Partial answer.';
+  const runStream = (status: string, extra?: object) => sse([
+    { data: { event_type: 'interaction.created', interaction: { id: 'ix-replay', status: 'in_progress' } } },
+    { data: { event_type: 'step.start', index: 0, step: { type: 'model_output' } } },
+    { data: { event_type: 'step.delta', index: 0, delta: { type: 'text', text: ANSWER } } },
+    { data: { event_type: 'step.stop', index: 0 } },
+    { data: { event_type: 'interaction.completed', interaction: { id: 'ix-replay', status, ...extra } } },
+  ]);
+  const runResource = (status: string, extra?: object) =>
+    JSON.stringify({ id: 'ix-replay', status, steps: [{ type: 'model_output', content: [{ type: 'text', text: ANSWER }] }], ...extra });
+  const replayRun = async (streaming: boolean, status: string, extra?: object) => (await replay(
+    [streaming ? runStream(status, extra) : runResource(status, extra)], streaming,
+    () => streaming ? createGeminiInteractionsParserSSE('deep-research-replay') : createGeminiInteractionsParserNS('deep-research-replay'),
+  )).particles;
+  const issuesOf = (particles: Op[]) => particles.filter(isControl('aix-issue')).map(op => op.issue);
+
+  // `cg-issue` keeps the upstream handle for Recover; each ending that fails is explained once, by the run's status or the vendor's error
+  for (const streaming of [true, false]) {
+    const how = streaming ? 'streaming' : 'non-streaming';
+
+    // failed and requires_action are reported by the parser (issue-dialect); cancelled is stated with a 'cg-issue' stop reason (done-dialect)
+    for (const [status, extra, expected] of [
+      ['failed', { errors: [{ code: 'internal', message: 'The research agent crashed.' }, { message: 'Search quota reached.' }] }, { causeCode: 'internal', text: 'The research agent crashed.', detail: 'Search quota reached.', end: 'issue-dialect' }],
+      // the first error with a message is the text; every other code stays beside its own error, never beside another's message
+      ['failed', { errors: [{ code: 'type.googleapis.com/google.rpc/ABORTED' }, { code: 'quota', message: 'Quota.' }] }, { causeCode: 'quota', text: 'Quota.', detail: 'code: type.googleapis.com/google.rpc/ABORTED', end: 'issue-dialect' }],
+      ['failed', { errors: [{ code: 'type.googleapis.com/google.rpc/INTERNAL', message: 'Crashed.' }, { code: 'quota', message: 'Quota.' }] }, { causeCode: 'failed', text: 'Crashed.', detail: 'code: type.googleapis.com/google.rpc/INTERNAL; Quota. (code: quota)', end: 'issue-dialect' }],
+      ['failed', undefined, { causeCode: 'failed', text: 'The run failed.', detail: undefined, end: 'issue-dialect' }],
+      ['requires_action', undefined, { causeCode: 'requires_action', text: 'The agent asked for an action this app does not support.', detail: undefined, end: 'issue-dialect' }],
+      ['cancelled', undefined, { causeCode: 'cancelled', text: 'The run was cancelled.', detail: undefined, end: 'done-dialect' }],
+    ] as const)
+      test(`${how}: a run that ends ${status}${extra ? ` with errors ${JSON.stringify(extra.errors)}` : ''} keeps the answer and is explained once, in the vendor's words`, async () => {
+        const particles = await replayRun(streaming, status, extra);
+
+        assert.equal(particles.filter(isText).map(op => op.t).join(''), ANSWER);
+        const failing = issuesOf(particles).filter(aixIssueFails);
+        assert.equal(failing.length, 1, 'one explanation');
+        assert.deepEqual(
+          [failing[0].code, failing[0].causeCode, failing[0].text, failing[0].detail],
+          ['service-error', expected.causeCode, expected.text, expected.detail],
+        );
+        const end = theEnd(particles);
+        assert.deepEqual([end.tokenStopReason, end.terminationReason], ['cg-issue', expected.end]);
+      });
+
+    for (const status of ['incomplete', 'requires_continuation'] as const)
+      test(`${how}: a run that ends ${status} is truncated by its stop reason alone: no note in the answer, no issue`, async () => {
+        const particles = await replayRun(streaming, status);
+
+        assert.equal(particles.filter(isText).map(op => op.t).join(''), ANSWER);
+        assert.deepEqual(issuesOf(particles), []);
+        const end = theEnd(particles);
+        assert.deepEqual([end.tokenStopReason, end.terminationReason], ['out-of-tokens', 'done-dialect']);
+      });
+
+    test(`${how}: a run that ends budget_exceeded is truncated, with a notice that names the cause`, async () => {
+      const particles = await replayRun(streaming, 'budget_exceeded');
+
+      assert.equal(particles.filter(isText).map(op => op.t).join(''), ANSWER);
+      const issues = issuesOf(particles);
+      assert.equal(issues.length, 1);
+      assert.deepEqual([issues[0].code, issues[0].causeCode, issues[0].text, issues[0].effect], ['service-error', 'budget_exceeded', 'The run stopped: budget exceeded.', 'notice']);
+      const end = theEnd(particles);
+      assert.deepEqual([end.tokenStopReason, end.terminationReason], ['out-of-tokens', 'done-dialect']);
+    });
+  }
+
+  test('streaming: a run still in_progress at interaction.completed fails, explained by its status, and keeps the handle (cg-issue)', async () => {
+    const particles = await replayRun(true, 'in_progress');
+
+    assert.equal(particles.filter(isText).map(op => op.t).join(''), ANSWER);
+    const failing = issuesOf(particles).filter(aixIssueFails);
+    assert.deepEqual(failing.map(issue => [issue.code, issue.causeCode, issue.text]), [['service-error', 'in_progress', 'The run has not finished on the service.']]);
+    const end = theEnd(particles);
+    assert.deepEqual([end.tokenStopReason, end.terminationReason], ['cg-issue', 'done-dialect']);
+  });
+
+  // Recover on a live (or zombie) run: the diagnostics and the Recover / Cancel guidance stay in the answer, as before
+  test('non-streaming: a run still in_progress keeps its diagnostics in the answer, explained by its status, and keeps the handle (cg-issue)', async () => {
+    const particles = await replayRun(false, 'in_progress', { created: new Date(Date.now() - 5 * 60_000).toISOString() });
+
+    const answer = particles.filter(isText).map(op => op.t).join('');
+    assert.ok(answer.startsWith(ANSWER) && answer.includes('`in_progress`') && answer.includes('**Recover**'), `the diagnostics are not in the answer: ${answer}`);
+    const failing = issuesOf(particles).filter(aixIssueFails);
+    assert.deepEqual(failing.map(issue => [issue.code, issue.causeCode, issue.text]), [['service-error', 'in_progress', 'The run has not finished on the service.']]);
+    const end = theEnd(particles);
+    assert.deepEqual([end.tokenStopReason, end.terminationReason], ['cg-issue', 'done-dialect']);
+  });
+
+  test('an error event ends the run: the vendor\'s message is the text, its code the cause code (a URI code goes to the detail)', async () => {
+    const errorRun = (error: object) => sse([
+      { data: { event_type: 'interaction.created', interaction: { id: 'ix-replay', status: 'in_progress' } } },
+      { data: { event_type: 'step.start', index: 0, step: { type: 'model_output' } } },
+      { data: { event_type: 'step.delta', index: 0, delta: { type: 'text', text: ANSWER } } },
+      { data: { event_type: 'error' } }, // observed empty mid-stream: skipped
+      { data: { event_type: 'error', error } },
+      { data: { event_type: 'step.delta', index: 0, delta: { type: 'text', text: ' After the error.' } } },
+    ]);
+    const said = async (error: object) => {
+      const particles = (await replay([errorRun(error)], true, () => createGeminiInteractionsParserSSE('deep-research-replay'))).particles;
+      assert.equal(particles.filter(isText).map(op => op.t).join(''), ANSWER, 'output after the error');
+      assert.equal(theEnd(particles).terminationReason, 'issue-dialect');
+      const issues = issuesOf(particles);
+      assert.equal(issues.length, 1);
+      assert.ok(aixIssueFails(issues[0]));
+      assert.equal(theEnd(particles).tokenStopReason, 'cg-issue');
+      return issues[0];
+    };
+
+    const message = 'Failed to get completed interaction: Result not found.';
+    const plain = await said({ code: 'not_found', message });
+    assert.deepEqual([plain.code, plain.causeCode, plain.text, plain.detail], ['service-error', 'not_found', message, undefined]);
+    const uri = await said({ code: 'type.googleapis.com/google.rpc/NOT_FOUND', message });
+    assert.deepEqual([uri.causeCode, uri.text, uri.detail], [undefined, message, 'code: type.googleapis.com/google.rpc/NOT_FOUND']);
+    // a code with no message: the record's own sentence, the vendor's code as the cause code
+    const codeOnly = await said({ code: 'deadline_exceeded' });
+    assert.deepEqual([codeOnly.code, codeOnly.causeCode, codeOnly.text, codeOnly.detail], ['service-error', 'deadline_exceeded', 'The service reported an error.', undefined]);
+  });
+
+});
+
+
 // --- OpenRouter ---
 
 describe('OpenRouter Chat Completions', () => {
@@ -1119,21 +1612,295 @@ describe('OpenRouter Chat Completions', () => {
   // 'error' is one of OpenRouter's normalized finish reasons, and a streamed finish is repeated on the usage chunk.
   // Synthetic: no provider failure was caught live
   test('finish_reason error fails the reply, keeps what came before, and the usage chunk after it still counts', async () => {
-    const chunk = (delta: object, finish_reason: string | null, extra?: object) =>
-      ({ data: { id: 'gen-replay', object: 'chat.completion.chunk', created: 1, model: 'vendor/model', choices: [{ index: 0, delta, finish_reason, native_finish_reason: null }], ...extra } });
-    const stream = sse([
-      chunk({ role: 'assistant', content: 'The first half' }, null),
-      chunk({ role: 'assistant', content: '' }, 'error'),
-      chunk({ role: 'assistant', content: '' }, 'error', { usage: { prompt_tokens: 12, completion_tokens: 4, total_tokens: 16 } }),
-    ]) + 'data: [DONE]\n\n';
+    // the user is told why, once though the finish came twice: the provider's own reason, when it gives one, is the code
+    for (const [native, told] of [[null, 'The provider ended the reply with an error.'], ['OTHER', 'OTHER The provider ended the reply with an error (OTHER).']] as const) {
+      const chunk = (delta: object, finish_reason: string | null, extra?: object) =>
+        ({ data: { id: 'gen-replay', object: 'chat.completion.chunk', created: 1, model: 'vendor/model', choices: [{ index: 0, delta, finish_reason, native_finish_reason: finish_reason && native }], ...extra } });
+      const stream = sse([
+        chunk({ role: 'assistant', content: 'The first half' }, null),
+        chunk({ role: 'assistant', content: '' }, 'error'),
+        chunk({ role: 'assistant', content: '' }, 'error', { usage: { prompt_tokens: 12, completion_tokens: 4, total_tokens: 16 } }),
+      ]) + 'data: [DONE]\n\n';
+      const { particles } = await replay([stream], true, () => createOpenAIChatCompletionsChunkParser());
+
+      const { tokenStopReason } = theEnd(particles);
+      assert.equal(tokenStopReason && AixWire_Particles.gcStopReasonRow(tokenStopReason)?.class, 'error', String(native));
+      assert.deepEqual(issueTexts(particles), [told]);
+      assert.equal(particles.filter(isText).map(op => op.t).join(''), 'The first half', String(native));
+      const { TIn, TOut } = finalMetrics(particles);
+      assert.deepEqual({ TIn, TOut }, { TIn: 12, TOut: 4 }, String(native));
+    }
+  });
+
+  // Synthetic: Gemini through OpenRouter stops for its own filter reason, normalized to content_filter
+  test('a content_filter finish names the provider\'s own reason, as the provider does directly', async () => {
+    const chunk = (delta: object, finish_reason: string | null) =>
+      ({ data: { id: 'gen-replay', object: 'chat.completion.chunk', created: 1, model: 'vendor/model', choices: [{ index: 0, delta, finish_reason, native_finish_reason: finish_reason && 'PROHIBITED_CONTENT' }] } });
+    const stream = sse([chunk({ role: 'assistant', content: 'Partial' }, null), chunk({ content: '' }, 'content_filter')]) + 'data: [DONE]\n\n';
     const { particles } = await replay([stream], true, () => createOpenAIChatCompletionsChunkParser());
 
-    const { tokenStopReason } = theEnd(particles);
-    assert.equal(tokenStopReason && AixWire_Particles.gcStopReasonRow(tokenStopReason)?.class, 'error');
-    assert.equal(explanations(particles).length, 1, 'the user is told why, once');
+    assert.equal(theEnd(particles).tokenStopReason, 'filter-content');
+    assert.deepEqual(particles.filter(isControl('aix-issue')).map(({ issue: { code, causeCode, effect } }) => [code, causeCode, effect]), [['model-filter', 'PROHIBITED_CONTENT', 'failed']]);
+
+    const body = JSON.stringify({
+      id: 'gen-replay', object: 'chat.completion', created: 1, model: 'vendor/model',
+      choices: [{ index: 0, message: { role: 'assistant', content: 'Partial' }, finish_reason: 'content_filter', native_finish_reason: 'PROHIBITED_CONTENT' }],
+    });
+    const nonStreaming = await replay([body], false, () => createOpenAIChatCompletionsParserNS());
+    assert.deepEqual(nonStreaming.particles.filter(isControl('aix-issue')).map(({ issue: { code, causeCode } }) => [code, causeCode]), [['model-filter', 'PROHIBITED_CONTENT']], 'non-streaming');
+  });
+
+  const INBAND_AFTER_CONTENT = 'openrouter/qwen-2.5-7b_inband-error-400-after-content_no-done.sse';
+
+  test('an in-band error is one record: the message, the numeric code, the upstream cause; the read ends at it', { skip: missing(INBAND_AFTER_CONTENT) }, async () => {
+    const particles = await replayCapture(INBAND_AFTER_CONTENT);
+
+    const issues = particles.filter(isControl('aix-issue')).map(op => op.issue);
+    assert.equal(issues.length, 1);
+    const { code, effect, text, causeCode, detail } = issues[0];
+    assert.deepEqual({ code, effect, text, causeCode, detail }, {
+      code: 'service-error', effect: 'failed', text: 'Model call failed: invalid request (400)', causeCode: '400', detail: '{"error_type":"invalid_request"}',
+    });
+    const { tokenStopReason, terminationReason } = theEnd(particles);
+    assert.deepEqual([tokenStopReason, terminationReason], ['cg-issue', 'issue-dialect']);
+    const afterIssue = particles.slice(particles.findIndex(isControl('aix-issue')) + 1);
+    assert.deepEqual(afterIssue.filter(op => !('cg' in op)), []);
+  });
+
+  // The upstream may stall after the error: on OpenRouter (its chunks name the `provider`) as on any other host, nothing
+  // after the error is read, so the end does not wait on the connection
+  for (const [host, extra] of [['OpenRouter', { provider: 'Any' }], ['another host', {}]] as const)
+    test(`on ${host} an in-band error ends the read at once: the usage and content after it are not read`, async () => {
+      const base = { id: 'gen-replay', object: 'chat.completion.chunk', created: 1, model: 'vendor/model', ...extra };
+      const stream = sse([
+        { data: { ...base, choices: [{ index: 0, delta: { role: 'assistant', content: 'Half an' }, finish_reason: null }] } },
+        { data: { ...base, choices: [], error: { code: 'server_error', message: 'The server had an error.' } } },
+        { data: { ...base, choices: [], usage: { prompt_tokens: 12, completion_tokens: 4 } } },
+        { data: { ...base, choices: [{ index: 0, delta: { content: ' answer' }, finish_reason: 'stop' }] } },
+      ]);
+      const { particles } = await replay([stream], true, () => createOpenAIChatCompletionsChunkParser());
+
+      const issues = particles.filter(isControl('aix-issue')).map(op => op.issue);
+      assert.deepEqual(issues.map(({ code, effect, causeCode }) => ({ code, effect, causeCode })), [{ code: 'service-error', effect: 'failed', causeCode: 'server_error' }]);
+      const { tokenStopReason, terminationReason } = theEnd(particles);
+      assert.deepEqual([tokenStopReason, terminationReason], ['cg-issue', 'issue-dialect']);
+      assert.deepEqual(particles.filter(isText).map(op => op.t).join(''), 'Half an');
+      assert.deepEqual(particles.filter(isControl('set-metrics')), []);
+    });
+
+  test('an in-band error repeated in the stream is sent once, and the repeat is not retried', async () => {
+    const errorChunk = (code: number, message: string) => ({ data: { id: 'gen-replay', object: 'chat.completion.chunk', created: 1, model: 'vendor/model', choices: [], error: { code, message } } });
+    const stream = sse([errorChunk(400, 'Model call failed: invalid request (400)'), errorChunk(429, 'Rate limit exceeded')]);
+    const { particles, requestBodies } = await replay([stream], true, () => createOpenAIChatCompletionsChunkParser());
+
+    assert.equal(requestBodies.length, 1);
+    assert.deepEqual(issueTexts(particles), ['400 Model call failed: invalid request (400)']);
+    assert.equal(theEnd(particles).tokenStopReason, 'cg-issue');
+  });
+
+});
+
+
+// --- OpenAI-compatible Chat Completions ---
+
+describe('OpenAI-compatible Chat Completions', () => {
+
+  const chunk = (delta: object, finish_reason: string | null) =>
+    ({ data: { id: 'chatcmpl-replay', object: 'chat.completion.chunk', created: 1, model: 'vendor/model', choices: [{ index: 0, delta, finish_reason }] } });
+  const finishing = (finish_reason: string) =>
+    sse([chunk({ role: 'assistant', content: 'Partial' }, null), chunk({ content: '' }, finish_reason)]) + 'data: [DONE]\n\n';
+
+  test('finish_reason content_filter is explained once, by the filter, with the vendor\'s finish reason', async () => {
+    const { particles } = await replay([finishing('content_filter')], true, () => createOpenAIChatCompletionsChunkParser());
+
+    assert.equal(theEnd(particles).tokenStopReason, 'filter-content');
+    assert.deepEqual(particles.filter(isControl('aix-issue')).map(({ issue }) => [issue.code, issue.causeCode, issue.effect]), [['model-filter', 'content_filter', 'failed']]);
+  });
+
+  test('[Z.ai] finish_reason network_error fails the reply and ends the read, naming the reason', async () => {
+    const { particles } = await replay([finishing('network_error')], true, () => createOpenAIChatCompletionsChunkParser());
+
+    const end = theEnd(particles);
+    assert.deepEqual([end.terminationReason, end.tokenStopReason], ['issue-dialect', 'cg-issue']);
+    assert.deepEqual(particles.filter(isControl('aix-issue')).map(({ issue }) => [issue.code, issue.causeCode, issue.effect]), [['service-error', 'network_error', 'failed']]);
+    assert.equal(particles.filter(isText).map(op => op.t).join(''), 'Partial');
+  });
+
+  test('an in-band error code that is prose is not the code: the type is, and the words go to the detail', async () => {
+    const stream = sse([{ data: { error: { code: 'Bad Request', type: 'invalid_request_error', message: 'bad thing' } } }]);
+    const { particles } = await replay([stream], true, () => createOpenAIChatCompletionsChunkParser());
+
+    const issues = particles.filter(isControl('aix-issue')).map(op => op.issue);
+    assert.deepEqual(issues.map(({ code, causeCode, text, detail }) => ({ code, causeCode, text, detail })), [
+      { code: 'service-error', causeCode: 'invalid_request_error', text: 'bad thing', detail: 'code: Bad Request' },
+    ]);
+    assert.equal(theEnd(particles).tokenStopReason, 'cg-issue');
+  });
+
+  test('non-streaming: an error body fails the reply with the vendor\'s message and its string code; the type goes to the detail', async () => {
+    const body = JSON.stringify({ error: { message: 'Incorrect API key provided.', type: 'invalid_request_error', param: null, code: 'invalid_api_key' } });
+    const { particles } = await replay([body], false, () => createOpenAIChatCompletionsParserNS());
+
+    const end = theEnd(particles);
+    assert.deepEqual([end.terminationReason, end.tokenStopReason], ['issue-dialect', 'cg-issue']);
+    assert.deepEqual(explanations(particles), ['invalid_api_key Incorrect API key provided. type: invalid_request_error']);
+  });
+
+  test('an in-band error with a numeric code and no string code: the numeric code is the cause code, the type goes to the detail (as in Responses)', async () => {
+    const stream = sse([{ data: { error: { type: 'invalid_request_error', code: 400, message: 'x' } } }]);
+    const { particles } = await replay([stream], true, () => createOpenAIChatCompletionsChunkParser());
+
+    assert.deepEqual(particles.filter(isControl('aix-issue')).map(({ issue: { code, causeCode, detail } }) => ({ code, causeCode, detail })),
+      [{ code: 'service-error', causeCode: '400', detail: 'type: invalid_request_error' }]);
+  });
+
+  test('non-streaming: audio that cannot be converted is our failure, with the conversion\'s words', async () => {
+    const body = JSON.stringify({
+      id: 'chatcmpl-replay', object: 'chat.completion', created: 1, model: 'vendor/model',
+      choices: [{ index: 0, message: { role: 'assistant', content: null, audio: { id: 'audio-1', data: 'A', transcript: 'Hello', expires_at: 1 } }, finish_reason: 'stop' }],
+    });
+    const { particles } = await replay([body], false, () => createOpenAIChatCompletionsParserNS());
+
+    const issues = particles.filter(isControl('aix-issue')).map(op => op.issue);
+    assert.deepEqual(issues.map(({ code, effect }) => [code, effect]), [['dispatch-parse', 'failed']]);
+    assert.ok(issues[0].detail, 'the conversion\'s error is the detail');
+    assert.equal(theEnd(particles).tokenStopReason, 'cg-issue');
+  });
+
+});
+
+
+// --- Bedrock Converse ---
+
+// No Bedrock capture: the streams are AWS event-stream frames built here to the format AWS documents (string headers, the
+// JSON payload), and run through the real demuxer before the chain. The demuxer does not check the CRCs: they are left zero.
+describe('Bedrock Converse', () => {
+
+  /** One event-stream frame: [total length][headers length][prelude CRC] headers payload [message CRC] */
+  function awsFrame(headers: Record<string, string>, payload: string): Uint8Array {
+    const encoder = new TextEncoder();
+    const headerBytes = Object.entries(headers).flatMap(([name, value]) => {
+      const nameBytes = encoder.encode(name), valueBytes = encoder.encode(value);
+      return [nameBytes.length, ...nameBytes, 7 /* string */, valueBytes.length >> 8, valueBytes.length & 0xff, ...valueBytes];
+    });
+    const payloadBytes = encoder.encode(payload);
+    const frame = new Uint8Array(12 + headerBytes.length + payloadBytes.length + 4);
+    const view = new DataView(frame.buffer);
+    view.setUint32(0, frame.length);
+    view.setUint32(4, headerBytes.length);
+    frame.set(headerBytes, 12);
+    frame.set(payloadBytes, 12 + headerBytes.length);
+    return frame;
+  }
+
+  const event = (type: string, data: object) => awsFrame({ ':event-type': type, ':content-type': 'application/json', ':message-type': 'event' }, JSON.stringify(data));
+
+  /** The frames as the parser reads them: through the AWS event-stream demuxer */
+  async function demuxed(frames: Uint8Array[]): Promise<string> {
+    const body = new Blob(frames.map(frame => frame.slice().buffer)).stream().pipeThrough(createEventStreamToSSETransform());
+    return await new Response(body).text();
+  }
+
+  const START_AND_TEXT = [
+    event('messageStart', { role: 'assistant' }),
+    event('contentBlockDelta', { contentBlockIndex: 0, delta: { text: 'The first half' } }),
+  ];
+  const USAGE = event('metadata', { usage: { inputTokens: 12, outputTokens: 4, totalTokens: 16 }, metrics: { latencyMs: 100 } });
+
+  test('an exception frame fails the reply in the vendor\'s words, its type as the code, and keeps what came before', async () => {
+    const exception = awsFrame({ ':exception-type': 'modelStreamErrorException', ':content-type': 'application/json', ':message-type': 'exception' },
+      JSON.stringify({ message: 'The model stream failed.', originalStatusCode: 424, originalMessage: 'Upstream model error' }));
+    const { particles } = await replay([await demuxed([...START_AND_TEXT, exception])], true, createBedrockConverseStreamParser);
+
+    const issues = particles.filter(isControl('aix-issue')).map(op => op.issue);
+    assert.equal(issues.length, 1);
+    assert.ok(aixIssueFails(issues[0]));
+    assert.deepEqual({ code: issues[0].code, causeCode: issues[0].causeCode, text: issues[0].text }, { code: 'service-error', causeCode: 'modelStreamErrorException', text: 'The model stream failed.' });
+    assert.ok(issues[0].detail?.includes('originalStatusCode: 424') && issues[0].detail.includes('originalMessage: Upstream model error'), `the other fields are not in the detail: ${issues[0].detail}`);
     assert.equal(particles.filter(isText).map(op => op.t).join(''), 'The first half');
-    const { TIn, TOut } = finalMetrics(particles);
-    assert.deepEqual({ TIn, TOut }, { TIn: 12, TOut: 4 });
+    assert.deepEqual([theEnd(particles).terminationReason, theEnd(particles).tokenStopReason], ['issue-dialect', 'cg-issue']);
+  });
+
+  test('an error frame, whose facts are in its headers, fails the reply in the vendor\'s words', async () => {
+    const error = awsFrame({ ':error-code': 'InternalFailure', ':error-message': 'An internal error occurred.', ':message-type': 'error' }, '');
+    const { particles } = await replay([await demuxed([...START_AND_TEXT, error])], true, createBedrockConverseStreamParser);
+
+    const said = particles.filter(isControl('aix-issue')).map(op => op.issue);
+    assert.deepEqual(said.map(issue => [issue.code, issue.causeCode, issue.text]), [['service-error', 'InternalFailure', 'An internal error occurred.']]);
+    assert.ok(aixIssueFails(said[0]));
+    assert.deepEqual([theEnd(particles).terminationReason, theEnd(particles).tokenStopReason], ['issue-dialect', 'cg-issue']);
+  });
+
+  test('an exception frame whose payload is not JSON is still the service\'s failure, in its words and with its type', async () => {
+    const exception = awsFrame({ ':exception-type': 'internalServerException', ':message-type': 'exception' }, 'Internal failure');
+    const { particles } = await replay([await demuxed([...START_AND_TEXT, exception])], true, createBedrockConverseStreamParser);
+
+    const said = particles.filter(isControl('aix-issue')).map(op => op.issue);
+    assert.deepEqual(said.map(issue => [issue.code, issue.causeCode, issue.text, issue.detail]), [['service-error', 'internalServerException', 'Internal failure', undefined]]);
+    assert.ok(aixIssueFails(said[0]));
+    assert.deepEqual([theEnd(particles).terminationReason, theEnd(particles).tokenStopReason], ['issue-dialect', 'cg-issue']);
+  });
+
+  test('an error frame with no facts at all is still the service\'s failure, not ours', async () => {
+    const error = awsFrame({ ':message-type': 'error' }, '');
+    const { particles } = await replay([await demuxed([...START_AND_TEXT, error])], true, createBedrockConverseStreamParser);
+
+    const said = particles.filter(isControl('aix-issue')).map(op => op.issue);
+    assert.deepEqual(said.map(issue => [issue.code, issue.causeCode, issue.detail]), [['service-error', undefined, undefined]]);
+    assert.ok(said[0].text, 'the record\'s own sentence');
+    assert.ok(aixIssueFails(said[0]));
+    assert.deepEqual([theEnd(particles).terminationReason, theEnd(particles).tokenStopReason], ['issue-dialect', 'cg-issue']);
+  });
+
+  test('an exception sent under its own event type fails the reply with its message, not its payload as JSON', async () => {
+    const exception = awsFrame({ ':event-type': 'throttlingException', ':content-type': 'application/json' }, JSON.stringify({ message: 'Too many requests, please wait before trying again.' }));
+    const { particles } = await replay([await demuxed([...START_AND_TEXT, exception])], true, createBedrockConverseStreamParser);
+
+    const said = particles.filter(isControl('aix-issue')).map(op => op.issue);
+    assert.deepEqual(said.map(issue => [issue.code, issue.causeCode, issue.text, issue.detail]), [['service-error', 'throttlingException', 'Too many requests, please wait before trying again.', undefined]]);
+    assert.ok(aixIssueFails(said[0]));
+    assert.deepEqual([theEnd(particles).terminationReason, theEnd(particles).tokenStopReason], ['issue-dialect', 'cg-issue']);
+  });
+
+  for (const stopReason of ['guardrail_intervened', 'content_filtered'] as const) {
+    const stop = { stopReason };
+    const check = (particles: Op[], terminationReason: string) => {
+      const said = particles.filter(isControl('aix-issue')).map(op => op.issue);
+      assert.deepEqual(said.map(issue => [issue.code, issue.causeCode, issue.text]), [['model-filter', stopReason, AixWire_Particles.gcStopReasonRow('filter-content')?.message]], 'one explanation, the stop row\'s sentence, with the vendor\'s reason');
+      const end = theEnd(particles);
+      assert.deepEqual([end.tokenStopReason, end.terminationReason], ['filter-content', terminationReason]);
+      const { TIn, TOut } = finalMetrics(particles);
+      assert.deepEqual({ TIn, TOut }, { TIn: 12, TOut: 4 });
+    };
+
+    test(`a filter stop (${stopReason}) is explained once, with the vendor's reason, and its usage counts (streaming)`, async () => {
+      const { particles } = await replay([await demuxed([...START_AND_TEXT, event('messageStop', stop), USAGE])], true, createBedrockConverseStreamParser);
+      check(particles, 'done-dialect');
+    });
+
+    test(`a filter stop (${stopReason}) is explained once, with the vendor's reason, and its usage counts (non-streaming)`, async () => {
+      const body = { output: { message: { role: 'assistant', content: [{ text: 'The first half' }] } }, ...stop, usage: { inputTokens: 12, outputTokens: 4, totalTokens: 16 } };
+      const { particles } = await replay([JSON.stringify(body)], false, createBedrockConverseParserNS);
+      check(particles, 'done-dispatch-closed');
+    });
+  }
+
+  test('an event the parser cannot read is our failure, not the service\'s', async () => {
+    const unreadable = event('contentBlockDelta', { contentBlockIndex: 0, delta: { unknownKind: {} } });
+    const { particles } = await replay([await demuxed([...START_AND_TEXT, unreadable, USAGE])], true, createBedrockConverseStreamParser);
+
+    const said = explanations(particles);
+    assert.ok(said.length === 1 && chainFailures(particles, 'failing')[0] === said[0], `expected one chain failure, got ${JSON.stringify(said)}`);
+    assert.equal(particles.filter(isControl('aix-issue'))[0].issue.code, 'dispatch-parse');
+  });
+
+  test('a frame the demuxer cannot decode is our failure, not the service\'s', async () => {
+    const undecodable = awsFrame({ ':event-type': 'chunk', ':content-type': 'application/json', ':message-type': 'event' }, '{not json');
+    const { particles } = await replay([await demuxed([...START_AND_TEXT, undecodable])], true, createBedrockConverseStreamParser);
+
+    const said = particles.filter(isControl('aix-issue')).map(op => op.issue);
+    assert.deepEqual(said.map(issue => [issue.code, issue.causeCode, issue.detail]), [['dispatch-parse', undefined, 'Failed to decode EventStream frame']]);
+    assert.ok(aixIssueFails(said[0]));
   });
 
 });

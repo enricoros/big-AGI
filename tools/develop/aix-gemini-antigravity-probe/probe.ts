@@ -37,7 +37,6 @@ function createRecordingTransmitter(): { pt: IParticleTransmitter; log: LogEntry
   const pt: IParticleTransmitter = {
     setDialectEnded: rec('setDialectEnded'),
     addDialectIssue: rec('addDialectIssue'),
-    setDialectTerminatingIssue: rec('setDialectTerminatingIssue'),
     setTokenStopReason: rec('setTokenStopReason'),
     endMessagePart: rec('endMessagePart'),
     appendText: rec('appendText'),
@@ -230,7 +229,7 @@ function printParticleSummary(prefix: string, log: LogEntry[], warnings: { msg: 
 
   // Particle log (pretty)
   console.log(`\n${prefix} particles emitted: ${log.length}`);
-  const interesting = ['sendOperationState', 'appendText', 'appendReasoningText', 'setUpstreamHandle', 'setModelName', 'setTokenStopReason', 'setDialectEnded', 'addDialectIssue', 'setDialectTerminatingIssue', 'updateMetrics', 'endMessagePart', 'appendImageInline', 'appendUrlCitation'];
+  const interesting = ['sendOperationState', 'appendText', 'appendReasoningText', 'setUpstreamHandle', 'setModelName', 'setTokenStopReason', 'setDialectEnded', 'addDialectIssue', 'updateMetrics', 'endMessagePart', 'appendImageInline', 'appendUrlCitation'];
   const histogram: Record<string, number> = {};
   for (const e of log) histogram[e.call] = (histogram[e.call] ?? 0) + 1;
   console.log('  histogram:', JSON.stringify(histogram));

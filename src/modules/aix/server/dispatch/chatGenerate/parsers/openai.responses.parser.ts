@@ -5,9 +5,8 @@ import { usdToCents } from '~/common/util/costUtils';
 
 import type { AixWire_Particles, AixWire_Vendors } from '../../../api/aix.wiretypes';
 import type { ChatGenerateParseContext, ChatGenerateParseFunction } from '../chatGenerate.dispatch';
-import type { IParticleTransmitter } from './IParticleTransmitter';
+import type { IParticleTransmitter, ParticleDialectIssue, ParticleServerLogLevel } from './IParticleTransmitter';
 import { AIX_OAI_DEFAULT_IMAGE_GEN_MODEL } from '../adapters/openai.responsesCreate';
-import { IssueSymbols } from '../ChatGenerateTransmitter';
 import { aixResilientUnknownValue } from '../../../api/aix.resilience';
 import { openAITransientErrorToHttpStatus, openAIUpstreamErrorLogLevel } from './openai.error-severity';
 import { stripXAIDefectiveCitations, XAIDefectiveCitationsFilter } from './xai.transform-citationsLeak';
@@ -129,7 +128,7 @@ class ResponseParserStateMachine {
   #hasFunctionCalls: boolean = false; // tracks if we've seen function_call output items
   public hasEmittedText: boolean = false; // any assistant message text streamed - gates the 'error'/'response.failed' salvage (#1149)
   #responseSealed: boolean = false; // true once response.completed/failed/incomplete has been processed - trailing 'error' events are advisory only
-  public deferredErrorText: string | undefined; // the last 'error' whose verdict was left to the terminal event
+  #pendingError: TPendingError | undefined; // an 'error' event after text, kept for the verdict of the terminal event that follows it (#1149, #1288)
 
   // hosted tool configuration echo (captured at response.created)
   #imageGenToolCfg: TImageGenToolCfg | undefined;
@@ -314,6 +313,17 @@ class ResponseParserStateMachine {
     return this.#responseSealed;
   }
 
+  keepPendingError(pending: TPendingError) {
+    this.#pendingError = pending;
+  }
+
+  /** The kept 'error', once: the verdict merges it or drops it, the end of the read states it */
+  takePendingError(): TPendingError | undefined {
+    const pending = this.#pendingError;
+    this.#pendingError = undefined;
+    return pending;
+  }
+
 
   // Hosted tool config capture
 
@@ -343,7 +353,7 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
   // [xAI] grok-4.6 leaks internal citation directives into web_search answer text - strip them (see xai.transform-citationsLeak.ts)
   const xaiCitationsFilter = rspVendor === 'xai' ? new XAIDefectiveCitationsFilter() : undefined;
 
-  return function(pt: IParticleTransmitter, eventData: string, _eventName?: string, context?: ChatGenerateParseContext) {
+  const parse: ChatGenerateParseFunction = function(pt: IParticleTransmitter, eventData: string, _eventName?: string, context?: ChatGenerateParseContext) {
 
     // throws on malformed event data
     const chunkData = JSON.parse(eventData);
@@ -426,7 +436,8 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
         // CHANGE of { ..fields.. } expected
         R.setResponse(eventType, event.response, ['status', 'output', 'usage', 'service_tier', 'tool_usage' /*, 'completed_at' (not parsed) */]); // service_tier settles ('auto' -> served tier) and tool_usage fills in along the way
 
-        // -> Status: determine stop reason based on streamed content
+        // -> Status: determine stop reason based on streamed content; an 'error' kept before this verdict is dropped: the answer stands (#1288)
+        R.takePendingError();
         pt.setTokenStopReason(R.hasFunctionCalls ? 'ok-tool_invocations' : 'ok');
 
         // -> Output
@@ -448,6 +459,9 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
         // -> Metrics: timing always, even on failure (#1149; wrapped-failed responses carry usage: null)
         pt.updateMetrics(_fromResponseMetrics(event.response, R.parserCreationTimestamp, R.timeToFirstEvent));
 
+        // the 'error' event kept for this verdict (#1288): merged into the failure, or dropped with the answer that stands
+        const pendingError = R.takePendingError()?.issue;
+
         // #1149 salvage: completed message + streamed text -> success (see _isSalvageableFailedOutput)
         const failedError = event.response.error;
         if (R.hasEmittedText && _isSalvageableFailedOutput(event.response.output)) {
@@ -457,16 +471,16 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
           break;
         }
 
-        const failedText = !failedError ? (R.deferredErrorText ?? 'Response failed with no error details.') // the 'error' event that preceded it is the only explanation
-          : `${safeErrorString(failedError.code) || 'Error'}: ${safeErrorString(failedError.message) || 'unknown.'}`;
-
-        // Genuine failure: retry if transient (the deferred mid-stream 'error' lands here when the message didn't complete), else surface the error
-        const failedRetryHttpStatus = openAITransientErrorToHttpStatus(failedError);
-        if (failedRetryHttpStatus && context?.hasRetriesForHttpStatus(failedRetryHttpStatus, failedError?.code))
-          throw new OperationRetrySignal(failedText, { causeHttp: failedRetryHttpStatus, causeConn: failedError?.code });
+        // Genuine failure: retry if transient (the kept mid-stream 'error' lands here when the message didn't complete), else surface the error
+        // the retry gate and the log level read { code, message } only: 'type' is a fact of the issue, not a retry trigger
+        const failedClass = { code: failedError?.code, message: failedError?.message };
+        const failedRetryHttpStatus = openAITransientErrorToHttpStatus(failedClass);
+        if (failedRetryHttpStatus && context?.hasRetriesForHttpStatus(failedRetryHttpStatus, failedError?.code ?? undefined))
+          throw new OperationRetrySignal(`${safeErrorString(failedError?.code) || 'Error'}: ${safeErrorString(failedError?.message) || 'unknown.'}`, { causeHttp: failedRetryHttpStatus, causeConn: failedError?.code ?? undefined });
 
         pt.setTokenStopReason('cg-issue');
-        pt.setDialectTerminatingIssue(failedText, IssueSymbols.Generic, openAIUpstreamErrorLogLevel(failedError));
+        pt.addDialectIssue(_withPendingError(failedError, pendingError), openAIUpstreamErrorLogLevel(failedClass));
+        pt.setDialectEnded('issue-dialect');
         break;
       }
 
@@ -477,15 +491,19 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
         // -> Metrics: timing always, tokens when the usage block carries them (#1149)
         pt.updateMetrics(_fromResponseMetrics(event.response, R.parserCreationTimestamp, R.timeToFirstEvent));
 
-        // -> Status: the reason decides how the client renders the cut (#1208: never as a clean finish)
+        // -> Status: the reason decides how the client renders the cut (#1208: never as a clean finish). An 'error' kept
+        //    before it is dropped: this verdict replaces it
+        R.takePendingError();
         const incompleteReason = event.response.incomplete_details?.reason;
         if (incompleteReason === 'max_output_tokens')
           pt.setTokenStopReason('out-of-tokens');
-        else if (incompleteReason === 'content_filter')
+        else if (incompleteReason === 'content_filter') {
           pt.setTokenStopReason('filter-content');
-        else {
+          pt.addDialectIssue({ code: 'model-filter', causeCode: incompleteReason });
+        } else {
           pt.setTokenStopReason('cg-issue');
-          pt.setDialectTerminatingIssue(`Incomplete response${incompleteReason ? `: ${safeErrorString(incompleteReason)}` : ''}.`, IssueSymbols.Generic, 'srv-warn');
+          pt.addDialectIssue(_issueFromIncompleteReason(incompleteReason), 'srv-warn');
+          pt.setDialectEnded('issue-dialect');
         }
         break;
 
@@ -839,7 +857,11 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
         const errorCode = safeErrorString(event.error?.type || event.error?.code || event.code) ?? undefined;
         const errorMessage = safeErrorString(event.error?.message || event?.message) ?? undefined;
         const errorParam = safeErrorString(event.error?.param || event?.param) ?? undefined;
-        const errorText = `${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`;
+        const errorText = `${errorCode || 'Error'}: ${errorMessage || 'unknown.'}${errorParam ? ` (param: ${errorParam})` : ''}`; // logs and the retry signal
+        const errorIssue = _issueFromOpenAIError({
+          type: event.error?.type, code: event.error?.code ?? event.code, message: event.error?.message || event.message,
+          param: event.error?.param || event.param, headers: event.error?.headers,
+        });
 
         // Trailing-error guard: if the response already reached a terminal state (completed/failed/incomplete),
         // an 'error' event arriving after is an upstream advisory (e.g. rate-limit headroom) and must NOT
@@ -849,19 +871,13 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
           break;
         }
 
-        // #1149 salvage candidate: text already streamed and this event carries no .output to check - defer
-        // the verdict to the imminent 'response.failed' (see _isSalvageableFailedOutput), which repeats this error
+        // #1149 salvage candidate: text already streamed and this event carries no .output to check - keep the error
+        // for the imminent 'response.failed' (see _isSalvageableFailedOutput), which repeats it: that verdict states it
+        // merged, or drops it with the answer that stands. When the read ends first, onReadEnd states it (#1288)
+        // [OpenAI, 2026-11-09, hypothesis: 'response.failed' follows every 'error' (observed, the order is undocumented), so a stream ending on 'error' is a cut connection or another host]
         if (OPENAI_RESPONSES_SALVAGE_FAILED && R.hasEmittedText) {
-          console.warn(`[DEV] AIX: OpenAI Responses: mid-stream 'error' after text streamed - deferring the verdict to the terminal event: ${errorText}`);
-          // STOPGAP #1288 - REVERT with the typed errors (AIX-TODO-errors.md, "Stream mechanics"). The error is parked in the stop
-          // reason until a terminal event sets its own, which replaces the reason and this text; when the stream ends first, the
-          // message carries the vendor's text beside the end-of-stream line. This writes an error into the vendor's status, the
-          // client then guesses it back (ContentReassembler.onCGEnd), and the error is lost if our own function is cut.
-          // Properly: send it on arrival as a non-terminal dialect issue (subkind 'upstream-error', subCause: errorCode,
-          // aiRender: false, uiColor: 'danger'); the end only says how the read ended; the outcome is derived from both.
-          // [OpenAI, 2026-11-09, hypothesis: 'response.failed' follows every 'error' (observed, the order is undocumented), so a stream ending on 'error' is a cut connection or another host]
-          pt.setTokenStopReason('cg-issue', errorText);
-          R.deferredErrorText = errorText;
+          console.warn(`[DEV] AIX: OpenAI Responses: mid-stream 'error' after text streamed - keeping it for the terminal event: ${errorText}`);
+          R.keepPendingError({ issue: errorIssue, serverLog: openAIUpstreamErrorLogLevel({ code: event.error?.code ?? event.code, type: event.error?.type }) });
           pt.updateMetrics(_fromResponseMetrics(undefined, R.parserCreationTimestamp, R.timeToFirstEvent)); // timing, should no terminal event bring the rest
           break;
         }
@@ -876,7 +892,8 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
         R.markResponseSealed();
         pt.updateMetrics(_fromResponseMetrics(undefined, R.parserCreationTimestamp, R.timeToFirstEvent)); // timing even on failure (#1149)
         pt.setTokenStopReason('cg-issue');
-        pt.setDialectTerminatingIssue(errorText, IssueSymbols.Generic, openAIUpstreamErrorLogLevel({ code: event.error?.code ?? event.code, type: event.error?.type }));
+        pt.addDialectIssue(errorIssue, openAIUpstreamErrorLogLevel({ code: event.error?.code ?? event.code, type: event.error?.type }));
+        pt.setDialectEnded('issue-dialect');
         break;
       }
 
@@ -912,6 +929,20 @@ export function createOpenAIResponsesEventParser(rspVendor: AixWire_Vendors.RspV
 
     }
   };
+
+  // #1288: the read ended before the verdict on a kept 'error' (a cut connection, another host): the error is the failure.
+  // Two observations, both stated: what the vendor said, then how the stream ended - a close with no terminal event, which
+  // this dialect always sends. After a read that threw, the kept error follows the read's own record, as a notice; after
+  // an abort it is stated too. Neither gets the cutoff notice.
+  parse.onReadEnd = (pt: IParticleTransmitter, closed: boolean) => {
+    const pending = R.takePendingError();
+    if (!pending) return;
+    pt.addDialectIssue(pending.issue, pending.serverLog);
+    if (closed)
+      pt.addDialectIssue({ code: 'dispatch-cutoff', effect: 'notice' });
+  };
+
+  return parse;
 }
 
 
@@ -961,6 +992,7 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
     // Determine stop reason based on output content and response status
     const hasFunctionCalls = response.output.some(item => item.type === 'function_call');
     let tokenStopReason: AixWire_Particles.GCTokenStopReason = hasFunctionCalls ? 'ok-tool_invocations' : 'ok';
+    let stopIssue: ParticleDialectIssue | undefined; // what explains a filter or a failure: stated after the output, which it follows
 
     switch (response.status) {
       case 'completed':
@@ -971,16 +1003,16 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
         // pedantic check (.incomplete_details)
         if (response.incomplete_details && typeof response.incomplete_details === 'object') {
 
-          // override the stop reason: out of tokens, filtered, else a generic issue (#1208: never a clean finish)
+          // override the stop reason: out of tokens, filtered, else an issue with the reason (#1208: never a clean finish)
           if (response.incomplete_details.reason === 'max_output_tokens')
             tokenStopReason = 'out-of-tokens';
-          else if (response.incomplete_details.reason === 'content_filter')
+          else if (response.incomplete_details.reason === 'content_filter') {
             tokenStopReason = 'filter-content';
-          else
+            stopIssue = { code: 'model-filter', causeCode: response.incomplete_details.reason };
+          } else {
             tokenStopReason = 'cg-issue';
-
-          // append the incomplete details as text
-          pt.appendText(`**Incomplete response**: the response was incomplete because ${response.incomplete_details?.reason || 'unknown reason'}\n`);
+            stopIssue = _issueFromIncompleteReason(response.incomplete_details.reason);
+          }
           console.warn('[DEV] AIX: OpenAI-Response-NS response incomplete:', { incomplete_details: response.incomplete_details });
 
         } else {
@@ -1004,10 +1036,11 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
         if (_isSalvageableFailedOutput(response.output))
           console.warn('[DEV] AIX: OpenAI-Response-NS failed but message already completed - treating as a soft success:', { error: response.error });
         else {
+          // reached when the body's error is not usable alone (see _forwardResponseErrorNS): explained from what it has
           tokenStopReason = 'cg-issue';
+          stopIssue = _issueFromOpenAIError(response.error);
           console.warn('[DEV] AIX: OpenAI-Response-NS response failed:', { response });
         }
-        // TODO: extract and forward specific error details from response.error if present
         break;
 
       default:
@@ -1194,6 +1227,8 @@ export function createOpenAIResponseParserNS(rspVendor: AixWire_Vendors.RspVendo
 
     // Set the determined stop reason - after the output, which can still fail to parse
     pt.setTokenStopReason(tokenStopReason);
+    if (stopIssue)
+      pt.addDialectIssue(stopIssue, stopIssue.code === 'model-filter' ? false : 'srv-warn');
 
     // -> Status
     // .status: check for the status
@@ -1341,17 +1376,94 @@ function _forwardResponseErrorNS(parsedData: any, pt: IParticleTransmitter, cont
   if (Array.isArray(parsedData.output) && _isSalvageableFailedOutput(parsedData.output))
     return false;
 
-  const errorText = safeErrorString(error) || 'unknown.';
-
   // Transient and retries left: unwind to the operation retrier (#1210)
   const retryHttpStatus = openAITransientErrorToHttpStatus(error);
   const retryUpstreamCode = typeof error.code === 'string' ? error.code : undefined;
   if (retryHttpStatus && context?.hasRetriesForHttpStatus(retryHttpStatus, retryUpstreamCode))
-    throw new OperationRetrySignal(errorText, { causeHttp: retryHttpStatus, causeConn: retryUpstreamCode });
+    throw new OperationRetrySignal(safeErrorString(error) || 'unknown.', { causeHttp: retryHttpStatus, causeConn: retryUpstreamCode });
 
-  // Transmit the error as text - note: throw if you want to transmit as 'error'
-  pt.setDialectTerminatingIssue(errorText, IssueSymbols.Generic, openAIUpstreamErrorLogLevel(error));
+  pt.addDialectIssue(_issueFromOpenAIError(error), openAIUpstreamErrorLogLevel(error));
+  pt.setDialectEnded('issue-dialect');
   return true;
+}
+
+const _RESPONSE_FAILED_TEXT = 'The response failed.';
+
+/** The facts of a `service-error` */
+type TServiceErrorFacts = Pick<ParticleDialectIssue, 'text' | 'detail' | 'causeCode' | 'retryAfterMs'>;
+
+type TPendingError = { issue: TServiceErrorFacts, serverLog: ParticleServerLogLevel };
+
+/**
+ * An OpenAI error object (the 'error' event, 'response.failed', a non-streaming body) as an issue: the message is the
+ * text, the code the `causeCode` (when the code is missing or the placeholder 'unknown': a numeric code, else the type, as in the
+ * Chat Completions parser), the other fields the detail, and the wait from the headers the service copies into it.
+ */
+function _issueFromOpenAIError(error: TOpenAIErrorObject | null | undefined): TServiceErrorFacts {
+  const code = error?.code === 'unknown' ? undefined : error?.code;
+  const numericCode = typeof code === 'number' ? String(code) : undefined;
+  const type = _errorWord(error?.type), param = _errorWord(error?.param), message = _errorWord(error?.message);
+  // a message that is not a string (a compatible host's object) is still the vendor's words: kept in the detail, flattened
+  const otherMessage = !message && error?.message ? safeErrorString(error.message)?.replace(/\s+/g, ' ').trim() : undefined;
+  const causeCode = _openAIErrorCode(error) ?? numericCode ?? type;
+  const detail = [
+    type && type !== causeCode && `type: ${type}`,
+    numericCode && numericCode !== causeCode && `code: ${numericCode}`,
+    param && `param: ${param}`,
+    otherMessage && `message: ${otherMessage}`,
+  ].filter(Boolean).join(', ');
+  const retryAfterMs = _retryAfterMsFromHeaders(error?.headers);
+  return {
+    text: message ?? _RESPONSE_FAILED_TEXT,
+    ...(causeCode && { causeCode }),
+    ...(detail && { detail }),
+    ...(retryAfterMs !== undefined && { retryAfterMs }),
+  };
+}
+
+/**
+ * #1288: the verdict on a kept 'error' event is one issue. The event's words win, as the verdict may say less ('unknown').
+ * `causeCode` keeps the most specific code across both: the verdict's real code beats the event's only when the event's
+ * may be a coarse type (the kept facts do not say which it is); the details join, without repeats.
+ */
+function _withPendingError(verdictError: TOpenAIErrorObject | null | undefined, pending: TServiceErrorFacts | undefined): TServiceErrorFacts {
+  const verdict = _issueFromOpenAIError(verdictError);
+  if (!pending) return verdict;
+  const causeCode = (_openAIErrorCode(verdictError) ? verdict.causeCode : pending.causeCode) ?? verdict.causeCode;
+  const detail = [...new Set([pending.detail, verdict.detail].flatMap(d => d ? d.split(', ') : []))].join(', ');
+  const retryAfterMs = pending.retryAfterMs ?? verdict.retryAfterMs;
+  return {
+    text: pending.text !== _RESPONSE_FAILED_TEXT ? pending.text : verdict.text,
+    ...(causeCode && { causeCode }),
+    ...(detail && { detail }),
+    ...(retryAfterMs !== undefined && { retryAfterMs }),
+  };
+}
+
+/** The error objects OpenAI sends: the 'error' event, 'response.failed', a non-streaming body (raw, unvalidated) */
+type TOpenAIErrorObject = { type?: unknown, code?: unknown, message?: unknown, param?: unknown, headers?: unknown };
+
+/** The vendor's machine code: a string other than the placeholder 'unknown' */
+function _openAIErrorCode(error: TOpenAIErrorObject | null | undefined): string | undefined {
+  return error?.code === 'unknown' ? undefined : _errorWord(error?.code);
+}
+
+function _errorWord(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+/** An incomplete response for a reason no stop reason states: the reason is all the service says */
+function _issueFromIncompleteReason(reason: string | undefined): TServiceErrorFacts {
+  return { text: 'The response is incomplete.', ...(reason && { causeCode: reason, detail: `reason: ${reason}` }) };
+}
+
+/** The wait asked for in the headers copied into an error: 'retry-after-ms', else 'retry-after' in seconds */
+function _retryAfterMsFromHeaders(headers: unknown): number | undefined {
+  if (!headers || typeof headers !== 'object') return undefined;
+  const { 'retry-after-ms': ms, 'retry-after': seconds } = headers as Record<string, unknown>;
+  const toNumber = (value: unknown) => typeof value === 'number' ? value : typeof value === 'string' && value.trim() ? Number(value) : NaN;
+  const waitMs = Number.isFinite(toNumber(ms)) ? toNumber(ms) : toNumber(seconds) * 1000;
+  return Number.isFinite(waitMs) && waitMs >= 0 ? Math.round(waitMs) : undefined;
 }
 
 /**
@@ -1440,8 +1552,8 @@ function _imageGenerationMimeType(item: { output_format?: string | null, result?
 /**
  * Closes the image operation in the error state, for a done image_generation_call without an image:
  * status 'failed' (OpenAI: error { code, message }, e.g. a moderation block), or no result.
- * Also leaves an error part where the image would be: the response goes on (the model usually explains in text),
- * and the next request carries the part to the model as text.
+ * Also leaves an issue where the image would be: the response goes on (the model usually explains in text),
+ * and the next request carries the issue to the model as text.
  */
 function _forwardFailedImageGenerationCallItem(pt: IParticleTransmitter, item: Extract<TOutputItem, { type: 'image_generation_call' }>): void {
   if (item.status !== 'failed')
@@ -1450,8 +1562,8 @@ function _forwardFailedImageGenerationCallItem(pt: IParticleTransmitter, item: E
   pt.sendOperationState('gen-image', failedText, {
     opId: item.id, state: 'error', ...item.error?.message ? { oTexts: [item.error.message] } : undefined,
   });
-  // TODO: send this as a dialect issue, of subkind image-gen-error, subCause: string, aiRender: true, uiColor: 'neutral', ... - with the AIX errors refactor (typed errors, travelling in particles)
-  pt.sendCGControl({ cg: 'issue', issueId: 'dialect-issue', issueText: item.error?.message ? `${failedText}: ${item.error.message}` : `${failedText}.` }); // an issue particle alone does not end the response
+  // a hosted tool failed and the response goes on: the issue stands for the lost image, and is replayed to the model
+  pt.addDialectIssue({ code: 'service-tool', text: `${failedText}.`, detail: item.error?.message ?? undefined, causeCode: item.error?.code ?? undefined });
 }
 
 /**

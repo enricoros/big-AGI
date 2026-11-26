@@ -18,7 +18,7 @@ export type ParticleDialectIssue = { text?: string; detail?: string; causeCode?:
   | { code: 'service-tool'; effect?: 'lost' });                                                    // a hosted tool or operation failed; the generation goes on
 
 /** What a parser may send as a control particle: the end and the issues have their own calls */
-export type ParticleCGControlOp = Exclude<AixWire_Particles.ChatControlOp, { cg: 'end' } | { cg: 'aix-issue' }>;
+export type ParticleCGControlOp = Exclude<AixWire_Particles.ChatControlOp, { cg: 'end' } | { cg: 'aix-issue' } | { cg: 'issue' }>;
 
 /** Rule: parsers translate each vendor unit 1:1, presentation is a render concern - kb/modules/AIX-ingestion.md lists where this does not hold yet */
 export interface IParticleTransmitter {
@@ -35,16 +35,12 @@ export interface IParticleTransmitter {
    */
   addDialectIssue(issue: ParticleDialectIssue, serverLog?: ParticleServerLogLevel): void;
 
-  /** [Aix.Issue shim] the pre-record call: addDialectIssue({ text }), then setDialectEnded('issue-dialect') */
-  setDialectTerminatingIssue(dialectText: string, symbol: string | null, serverLog: ParticleServerLogLevel): void;
-
   /**
    * The model's finish, as data. Call it after the response content: after a clean or truncated stop reason an issue is a
    * notice. A filter stop the parser has words for: set the reason, then addDialectIssue({ code: 'model-filter', ... });
    * with no words, the reason alone is enough. Once an issue failed the generation, a reason that is not an error is ignored.
-   * [Aix.Issue shim] `shimErrorText`: the pre-record explanation of a filter or 'cg-issue' stop, stated at the end.
    */
-  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason, shimErrorText?: string): void;
+  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason): void;
 
 
   // Parts data //

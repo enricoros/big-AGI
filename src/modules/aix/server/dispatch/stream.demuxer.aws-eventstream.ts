@@ -125,6 +125,32 @@ function _base64Decode(base64: string, td: TextDecoder): string {
 }
 
 
+// --- Error frames ---
+
+const ERROR_FRAME_HEADERS = [':exception-type', ':error-code', ':error-message'] as const;
+
+/**
+ * The payload of an `exception` or `error` frame, with the frame's own facts added under their header names: the exception
+ * type (the payload is only `{ message, ...fields }`), or the code and message of an error frame (whose payload is empty).
+ * Additive: the payload's fields are kept; a payload that is not a JSON object is the vendor's message, kept as `message`.
+ * A frame with none of these headers passes as received.
+ */
+function _withErrorFrameHeaders(payload: string, headers: Map<string, string>): string {
+  const facts = ERROR_FRAME_HEADERS.filter(name => headers.has(name)).map(name => [name, headers.get(name)] as const);
+  if (!facts.length) return payload;
+  let body: unknown = {};
+  if (payload.trim()) {
+    try {
+      body = JSON.parse(payload);
+    } catch {
+      body = undefined;
+    }
+  }
+  const fields = body && typeof body === 'object' && !Array.isArray(body) ? body : { message: payload.trim() };
+  return JSON.stringify({ ...fields, ...Object.fromEntries(facts) });
+}
+
+
 // --- TransformStream factory ---
 
 /**
@@ -171,7 +197,7 @@ export function createEventStreamToSSETransform(): TransformStream<Uint8Array, U
 
         // Handle error frames
         if (messageType === 'exception' || messageType === 'error') {
-          const errorPayload = decoder.decode(frame.payload);
+          const errorPayload = _withErrorFrameHeaders(decoder.decode(frame.payload), frame.headers);
           if (DEBUG_TRANSFORM)
             console.log(`[EventStream] frame #${_dbg_frameCount}: ${messageType} (${bytesConsumed}B):`, errorPayload.slice(0, 200));
           const errorSSE = `event: error\ndata: ${errorPayload}\n\n`;
