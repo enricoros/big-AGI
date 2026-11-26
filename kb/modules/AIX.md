@@ -13,7 +13,7 @@ Built with tRPC, it manages the lifecycle of AI-generated content from request t
 - Content Generation
   - Multi-Modal streaming/non-streaming
   - Throttled batching and error handling
-  - Server-side timeout/retry
+  - Server-side retry: the upstream connect (network failures; HTTP 429 rate limits, 502, 503, 529), and the dispatch on a transient in-band error
 - Function Calling and Code Execution
 - Complex AI Workflows (future)
 - Embeddings / Information Retrieval / Image Manipulation (future)
@@ -170,13 +170,16 @@ sequenceDiagram
         AIX Server ->> AIX Client: Send 'aix-issue' control particles, live, before the end
     end
 
-    note over AIX Server, AI Provider: Server-side Timeout/Retry mechanism
-    loop Retry on timeout (server-side)
+    note over AIX Server, AI Provider: Server-side retries, each announced by 'aix-retry-reset' particles
+    loop Connect retry (network failure, HTTP 429 rate limit, 502, 503, 529)
         AIX Server ->> AI Provider: Retry request
     end
+    loop Operation retry (transient in-band error, classified by the parser)
+        AIX Server ->> AI Provider: Re-run the dispatch
+    end
 
-    note over AIX Client: Client-side Timeout mechanism
-    AIX Client ->> AIX Client: Timeout if no response received within set time
+    note over AIX Client: No client timeout, no client retry
+    AIX Client ->> AIX Client: A throw out of the stream, other than a Stop, becomes the record that fails the generation
 ```
 
 ---

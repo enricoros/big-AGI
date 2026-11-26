@@ -21,7 +21,7 @@ Server-side compaction (`context_management` on the request): the model summariz
 
 | | Change | Note |
 |---|---|---|
-| A | Keep the failure, say that the hosted tools filled the context | belongs with the typed errors work |
+| A | Keep the failure, say that the hosted tools filled the context | an advice for `causeCode` `context_length_exceeded` in `aix.issues.policy.ts` |
 | B | Compaction on for every native OpenAI request | about 15 lines |
 | C | Compaction only when hosted tools are on, or as a model parameter | B, gated; leaves large plain requests as they are |
 | D | B or C, plus the compaction item stored and replayed | changes persisted data; belongs with the lossless ingestion work ([AIX-ingestion.md](../AIX-ingestion.md)) |

@@ -25,11 +25,11 @@ This document analyzes all AIX function callers and their patterns for message r
 |------------|-------------|-------------------|----------------|-------------------|
 | **Chat Persona** | `'conversation'` | `messageWasInterruptedAtStart()` → `removeMessage()` | None | Issue parts (`aix.issue`) |
 | **XE Chat Generate** | `'conversation'` | `messageWasInterruptedAtStart()` → `removeMessage()` | `'...'` placeholder | Issue parts (`aix.issue`) via messageEditor |
-| **Beam Scatter** | `'beam-scatter'` | `messageWasInterruptedAtStart()` → empty message | `SCATTER_PLACEHOLDER` | Ray status update |
+| **Beam Scatter** | `'beam-scatter'` | `messageWasInterruptedAtStart()` → empty message | `SCATTER_PLACEHOLDER` | Ray `status` from the outcome; the issue part stays in the ray's message |
 | **Beam Gather** | `'beam-gather'` | `messageWasInterruptedAtStart()` → clear fragments | `GATHER_PLACEHOLDER` | Re-throw errors |
 | **Beam Follow-up** | `'beam-followup'` | `messageWasInterruptedAtStart()` → remove message | `FOLLOWUP_PLACEHOLDER` | Status updates |
 | **ScratchChat** | `'scratch-chat'` | `aborted && !fragments` → array removal | `SCRATCH_CHAT_PLACEHOLDER` | Issue parts (`aix.issue`) |
-| **Telephone** | `'call'` | None | None | Basic handling |
+| **Telephone** | `'call'` | None | None | Issue parts kept in the call transcript; a throw appends an error part |
 | **ReAct Agent** | `'chat-react-turn'` | None | None | Append errors |
 | **Variform** | `'_DEV_'` | None | None | Throw errors |
 
@@ -37,7 +37,7 @@ This document analyzes all AIX function callers and their patterns for message r
 
 | **Caller** | **Context** | **Message Removal** | **Error Handling** |
 |------------|-------------|-------------------|-------------------|
-| **Auto Follow-ups** | `'chat-followup-*'` | `fragmentDelete()` on failure | `fragmentReplace()` with error |
+| **Auto Follow-ups** | `'chat-followup-*'` | `fragmentDelete()` when nothing was generated | `fragmentReplace()` with an error part |
 | **Gen CR Diffs** | `'aifn-gen-cr-diffs'` | None | State-based handling |
 | **Code Fixup** | `'fixup-code'` | None | Throw errors |
 | **Attachment Prompts** | `'chat-attachment-prompts'` | None | Throw errors |
@@ -64,7 +64,7 @@ This document analyzes all AIX function callers and their patterns for message r
 
 ### 2. Fragment-Level Management
 - **Beam Gather**: Clear fragments array but keep message structure
-- **Auto Follow-ups**: Delete specific placeholder fragments on failure
+- **Auto Follow-ups**: Delete the placeholder when nothing was generated
 - **Purpose**: Maintain message structure while removing failed content
 
 ### 3. Empty Message Replacement
@@ -105,7 +105,7 @@ function messageWasInterruptedAtStart(message: Pick<DMessage, 'generator' | 'fra
 ### Placeholder Management
 - **Initialization**: `createPlaceholderVoidFragment(placeholderText)`
 - **Replacement**: During streaming updates or on completion
-- **Cleanup**: Delete on error to avoid stale content
+- **Cleanup**: On failure, replaced by AIX's fragments with the issue part, or by a caller's error part; a placeholder left last becomes an error part on load (`inMemHeadCleanDMessage`)
 
 ### Context Patterns
 - **Production**: `'conversation'`, `'beam-scatter'`, `'scratch-chat'`
@@ -120,14 +120,14 @@ function messageWasInterruptedAtStart(message: Pick<DMessage, 'generator' | 'fra
 - Consider UI context when choosing removal vs. clearing strategy
 
 ### Error Handling
-- **Fragment-level**: Use `messageEditor.fragmentReplace()` with error fragments
+- **Fragment-level**: AIX returns a failure as an `aix.issue` part in the fragments: store them as they are; a caller's own failure replaces its placeholder with an error part (`createErrorContentFragment()`)
 - **Message-level**: Use `messageEditor.removeMessage()` or array removal
 - **Status-level**: Update component state for UI feedback
 
 ### Placeholder Management
 - Initialize with descriptive placeholders using `createPlaceholderVoidFragment()`
 - Replace during streaming updates
-- Clean up on error to prevent stale content
+- On a caller's own failure, replace it with an error part
 
 ## Architectural Insights
 

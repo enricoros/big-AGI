@@ -21,7 +21,7 @@ One classification of how a generation ended, derived once from the stored messa
 
 The reassembler keeps the stored stop reason and the records in agreement: when the message holds an issue that failed, it stores `issue` (`filter` stays). The executor's stop reason does not see a failure the client recorded, and a Stop after a failure therefore reads `failed`.
 
-The stored fact is `DMessageGenerator.tokenStopReason`, four values, unchanged. The outcome is never stored.
+The stored fact is `DMessageGenerator.tokenStopReason`, four values. The outcome is never stored.
 
 Production builds minify with SWC, which can miscompile some switch shapes (`tools/eslint/swc-miscompile.mjs` bans the known ones); unminified checks (`next dev`, tsc, tests) cannot see that, so a behavior the source cannot produce is checked against the deployed chunk.
 
