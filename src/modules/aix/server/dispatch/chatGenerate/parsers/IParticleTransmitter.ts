@@ -5,22 +5,46 @@ export type ParticleServerLogLevel = false | 'srv-log' | 'srv-warn';
 
 export type ParticleCGDialectEndReason = Extract<AixWire_Particles.CGEndReason, 'done-dialect' | 'issue-dialect'>;
 
+/**
+ * An issue as the parser states it; the transmitter completes the record (aix.issues.ts: bounds, the effect after the verdict).
+ * `text` is the vendor's top-level message, else our sentence: plain, no markup, no service name; left out, the code's
+ * sentence (for `model-filter`, the stop reason's). `detail` is any further vendor text. `causeCode` is the most specific
+ * vendor code in scope; a numeric in-band code goes here as a string when the vendor gave no string code.
+ * No HTTP status: the stream was a 200, an in-band code is not one.
+ */
+export type ParticleDialectIssue = { text?: string; detail?: string; causeCode?: string; retryAfterMs?: number } & (
+  | { code?: 'service-error' | 'model-filter' | 'dispatch-parse'; effect?: 'failed' | 'notice' }  // default 'service-error', 'failed'. 'dispatch-parse': our processing of the service's data failed
+  | { code: 'dispatch-cutoff'; effect: 'notice' }                                                  // onReadEnd only: the read closed before the final event this dialect always sends, after a failure it had stated
+  | { code: 'service-tool'; effect?: 'lost' });                                                    // a hosted tool or operation failed; the generation goes on
+
+/** What a parser may send as a control particle: the end and the issues have their own calls */
+export type ParticleCGControlOp = Exclude<AixWire_Particles.ChatControlOp, { cg: 'end' } | { cg: 'aix-issue' }>;
+
 /** Rule: parsers translate each vendor unit 1:1, presentation is a render concern - kb/modules/AIX-ingestion.md lists where this does not hold yet */
 export interface IParticleTransmitter {
 
   // Parser-initiated Control //
 
-  /** Set the end reason - only use for 'done-dialect' to signal a dialect-close */
+  /** Stop reading: the dialect ended. An issue that ends the read is two calls, in this order: addDialectIssue(...), then setDialectEnded('issue-dialect') */
   setDialectEnded(reason: ParticleCGDialectEndReason): void;
 
-  /** End the current part and flush it, which also calls `setDialectEnded('issue-dialect')` */
+  /**
+   * State an issue: sent at once as an `aix-issue` particle, at its place in the stream. The read goes on, whatever the
+   * effect: what arrives after an error is worth reading (usage, a finish). It closes the open part: state it between
+   * items, never inside one (a tool call's arguments).
+   */
+  addDialectIssue(issue: ParticleDialectIssue, serverLog?: ParticleServerLogLevel): void;
+
+  /** [Aix.Issue shim] the pre-record call: addDialectIssue({ text }), then setDialectEnded('issue-dialect') */
   setDialectTerminatingIssue(dialectText: string, symbol: string | null, serverLog: ParticleServerLogLevel): void;
 
   /**
-   * Communicates the finish reason to the client - Data only. Optional `errorText` is a vendor-composed string rendered as a complementary error fragment alongside the generic classification message.
-   * Call it after the response content: after a clean or truncated stop reason, an issue is sent as a notice, not as content.
+   * The model's finish, as data. Call it after the response content: after a clean or truncated stop reason an issue is a
+   * notice. A filter stop the parser has words for: set the reason, then addDialectIssue({ code: 'model-filter', ... });
+   * with no words, the reason alone is enough. Once an issue failed the generation, a reason that is not an error is ignored.
+   * [Aix.Issue shim] `shimErrorText`: the pre-record explanation of a filter or 'cg-issue' stop, stated at the end.
    */
-  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason, errorText?: string): void;
+  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason, shimErrorText?: string): void;
 
 
   // Parts data //
@@ -83,7 +107,7 @@ export interface IParticleTransmitter {
   // Special //
 
   /** Sends control particles right away, such as aix-info/aix-retry-reset/... control particles */
-  sendCGControl(cgCOp: AixWire_Particles.ChatControlOp, flushQueue?: boolean): void;
+  sendCGControl(cgCOp: ParticleCGControlOp, flushQueue?: boolean): void;
 
   /** Sends a void placeholder particle - temporary status with operation tracking */
   sendOperationState(

@@ -1,4 +1,7 @@
+import { safeErrorString } from '~/server/wire';
+
 import type { AixWire_Particles } from '../../api/aix.wiretypes';
+import { aixIssue, aixIssueFails, type AixIssueFacts, type DAixIssue } from '../../../shared/aix.issues';
 
 import type { AixDebugObject } from './chatGenerate.debug';
 import type { ChatGenerateDispatch } from './chatGenerate.dispatch';
@@ -64,8 +67,7 @@ export interface AixChatGenerateCompletionStats {
   metrics?: AixWire_Particles.CGSelectMetrics;       // token counts (TIn/TCacheRead/TOut/...), duration (dtAll), cost
   terminationReason?: AixWire_Particles.CGEndReason; // how generation ended ('done-dialect' = clean)
   tokenStopReason?: AixWire_Particles.GCTokenStopReason; // the model's stop reason, when the dialect reported one (class: ok | truncated | error)
-  lastIssueId?: AixWire_Particles.CGIssueId;         // where the last issue arose ('dispatch-fetch', 'dialect-issue', ...)
-  lastIssueCause?: AixWire_Particles.CGIssueCause;   // [dispatch-fetch] its machine-readable cause, when known
+  lastIssue?: DAixIssue;                             // the issue that failed the generation (aixIssueFails), when one did: the record, as sent
 }
 
 /** Accumulate completion stats from a passing-through particle (last value wins across continuation turns). */
@@ -76,9 +78,9 @@ function _captureCompletionStats(stats: AixChatGenerateCompletionStats, particle
   } else if (particle.cg === 'end') {
     stats.terminationReason = particle.terminationReason;
     stats.tokenStopReason = particle.tokenStopReason;
-  } else if (particle.cg === 'issue') {
-    stats.lastIssueId = particle.issueId;
-    stats.lastIssueCause = particle.issueCause;
+  } else if (particle.cg === 'aix-issue') {
+    if (aixIssueFails(particle.issue)) // notices and lost items say nothing about how the generation ended
+      stats.lastIssue = particle.issue;
   }
 }
 
@@ -105,6 +107,17 @@ export async function* withChatGenerateCompletionStats(
 
 
 // --- Continuation + Operation Retry + Dispatch ---
+
+/**
+ * This wrapper's own failure, as the executor would send it: the record, then the end. A notice when an issue already
+ * failed the generation: at most one does.
+ */
+function _wrapperFailure(failedBefore: boolean, facts: AixIssueFacts): AixWire_Particles.ChatGenerateOp[] {
+  return [
+    { cg: 'aix-issue', issue: aixIssue('dispatch-unknown', failedBefore ? 'notice' : 'failed', facts) },
+    { cg: 'end', terminationReason: 'issue-dispatch-rpc', tokenStopReason: 'cg-issue' },
+  ];
+}
 
 /**
  * Top-level chat generation entry point: [Anthropic]continuation (outer) -> operation retry (inner) -> dispatch.
@@ -143,10 +156,16 @@ export async function* executeChatGenerateWithContinuation(
   // Dropped reasoning: the wire paths the first request reports as dropped. Those blocks are in the chat history
   const historyDrops = new Set<string>();
 
+  // What went out, for a failure of this wrapper: a second failure is a notice, and nothing follows the end
+  let failedSent = false;
+  let endSent = false;
+
   for (let turn = 0; turn <= MAX_CONTINUATION_TURNS; turn++) {
     try {
 
       for await (const particle of executeChatGenerateWithOperationRetry(currentCreator, abortSignal, _d)) {
+        if ('cg' in particle && particle.cg === 'aix-issue' && aixIssueFails(particle.issue)) failedSent = true;
+        if ('cg' in particle && particle.cg === 'end') endSent = true;
         if ('cg' in particle && particle.cg === 'set-metrics') {
           metricsTurn = particle.metrics;
           if (metricsBase) {
@@ -177,12 +196,23 @@ export async function* executeChatGenerateWithContinuation(
       return; // normal completion
 
     } catch (error) {
-      // pass-through non-continuation errors (shall be rare, probably CSF errors or errors from exceeding retries, etc.)
-      if (!(error instanceof DispatchContinuationSignal)) throw error;
+      // Last resort: a throw that crossed the layers (an executor bug, an operation retry out of attempts) becomes an issue
+      // and the end, so it is classified here and not as a relay failure on the client. An abort is a Stop, no failure: it
+      // passes through, to the client under Direct Connection, to nobody on the relay
+      if (!(error instanceof DispatchContinuationSignal)) {
+        if (abortSignal.aborted) throw error;
+        if (endSent)
+          console.warn(`[AIX] ${_d.prettyDialect}: error after the end, not reported:`, safeErrorString(error));
+        else
+          yield* _wrapperFailure(failedSent, { detail: safeErrorString(error) || undefined });
+        return;
+      }
 
       if (turn >= MAX_CONTINUATION_TURNS) {
         if (DEBUG_CONTINUATION) console.warn('[continuation] ❌ Max continuation turns reached', MAX_CONTINUATION_TURNS);
-        throw error;
+        // our limit, not a vendor failure
+        yield* _wrapperFailure(failedSent, { text: 'The generation exceeded the continuation limit.', causeCode: 'continuation-limit', detail: `${MAX_CONTINUATION_TURNS} continuation turns: ${error.continuation.reason}` });
+        return;
       }
 
       if (DEBUG_CONTINUATION) console.log(`[continuation] Turn ${turn + 1}/${MAX_CONTINUATION_TURNS}: ${error.continuation.reason}`);

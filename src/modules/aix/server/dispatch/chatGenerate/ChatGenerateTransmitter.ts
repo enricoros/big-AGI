@@ -1,12 +1,12 @@
 import { SERVER_DEBUG_WIRE } from '~/server/wire';
-import type { TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 import { serverSideId } from '~/server/trpc/trpc.nanoid';
 
 import { objectDeepCloneWithStringLimit, objectEstimateJsonSize, objectStringifyWithIndentDepth } from '~/common/util/objectUtils';
 
 import { AixWire_Particles } from '../../api/aix.wiretypes';
+import { aixIssue, aixIssueFails, aixIssuePlainText, type DAixIssue } from '../../../shared/aix.issues';
 
-import type { IParticleTransmitter, ParticleCGDialectEndReason, ParticleServerLogLevel } from './parsers/IParticleTransmitter';
+import type { IParticleTransmitter, ParticleCGControlOp, ParticleCGDialectEndReason, ParticleDialectIssue, ParticleServerLogLevel } from './parsers/IParticleTransmitter';
 
 
 // configuration
@@ -38,27 +38,14 @@ function _redactUrlSecrets(url: string): string {
  * happen if the tokenizer has been trained for it, but for general tokenizers (and for now) this escapes.
  */
 const LLM_HOTFIX_TRANSFORM_THINKING = true;
+
+/** [Aix.Issue shim] unused by the records: here until the parsers stop passing them */
 export const IssueSymbols = {
   Generic: '❌',
   PromptBlocked: '🚫',
   Recitation: '🦜',
   Language: '🌐',
 };
-
-/** [dispatch-fetch] TRPCFetcherError -> issue cause: system error name (connection), or HTTP status and vendor body code (http) */
-export function trpcFetcherError_to_IssueCause(error: unknown): AixWire_Particles.CGIssueCause | undefined {
-  const fe = error as Partial<TRPCFetcherError> | undefined;
-  if (fe?.name !== 'TRPCFetcherError') return undefined;
-  const causeConn = fe.category === 'connection' ? _machineShaped(fe.connErrorName) : undefined;
-  const causeHttpStatus = fe.category === 'http' ? fe.httpStatus : undefined;
-  const causeVendorCode = fe.category === 'http' ? _machineShaped(fe.httpErrorCode) : undefined;
-  return (causeConn || causeHttpStatus || causeVendorCode) ? { ...(causeConn && { causeConn }), ...(causeHttpStatus && { causeHttpStatus }), ...(causeVendorCode && { causeVendorCode }) } : undefined;
-}
-
-/** codes only, never prose: these may leave the server (analytics) */
-function _machineShaped(value: unknown): string | undefined {
-  return typeof value === 'string' && /^[\w.:-]{1,64}$/.test(value) ? value : undefined;
-}
 
 
 /**
@@ -67,12 +54,14 @@ function _machineShaped(value: unknown): string | undefined {
  *
  * Called by:
  * - The current dispatch chatGenerate parser, for transmitting multi-modal and multi-part messages to the client
- * - The aix.router.ts for chatGenerate operations (if called, it's mainly to queue errors)
+ * - The executor, for its own issues and the end
  *
- * Error handling:
- * - Dialect issues: transmitted by the service (such as OpenAI's .error json fields, or gemini RECITATION) -- [dialect-issue]
- * - RPC issues: the issue is catched in the Aix router at various stages -- [dispatch-prepare, dispatch-fetch, dispatch-read, dispatch-parse]
- *  - Throwing in the IPartTrasmitter portion will be caught by the caller and be re-injected as a [dispatch-parse] issue
+ * Issues (aix.issues.ts): each is queued where it arrives, as an `aix-issue` particle, and never held back. Rules:
+ * - at most one issue fails a generation: after a failure, or after a clean or truncated stop reason, a failure is a notice
+ * - a failure travels with an error-class stop reason: the parser's own (a filter), else 'cg-issue'; a clean one is then refused
+ * - adding an issue does not stop the read: setDialectEnded / setDispatchEnded do
+ * - the end is sent once, last: before it, the issues only the end can tell (_queueEndIssues); nothing follows it
+ * - a parser's throw is caught by the executor and becomes a `dispatch-parse` issue
  */
 export class ChatGenerateTransmitter implements IParticleTransmitter {
 
@@ -87,10 +76,14 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
   // Termination
   private terminationReason: AixWire_Particles.CGEndReason | null /* if reset (not impl.) */ | undefined = undefined;
+  private endQueued: boolean = false; // the end particle was queued: nothing follows it
 
   // Token stop reason
   private tokenStopReason: AixWire_Particles.GCTokenStopReason | undefined = undefined;
-  private tokenStopError: string | undefined = undefined;
+  private shimStopText: string | undefined = undefined; // [Aix.Issue shim] the text a parser sent with its stop reason, stated at the end
+
+  // Issues
+  private failedQueued: boolean = false; // an issue that failed the generation was queued
 
   // Metrics
   private accMetrics: AixWire_Particles.CGSelectMetrics | undefined = undefined;
@@ -122,6 +115,18 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
   /// aix.router.ts
 
   * emitParticles(): Generator<AixWire_Particles.ChatGenerateOp> {
+    // After the end: nothing more goes out
+    if (this.endQueued) {
+      if (this.transmissionQueue.length)
+        console.warn(`[Aix.${this.prettyDialect}] emitParticles: dropping ${this.transmissionQueue.length} particle(s) queued after the end`);
+      this.transmissionQueue = [];
+      return;
+    }
+
+    // Termination, 1/2: the issues only the end can tell, before the final metrics
+    if (this.terminationReason)
+      this._queueEndIssues();
+
     // Metrics: emit at the beginning and the end -- if there's data to transmit
     if (!this.sentMetrics && this.freshMetrics && this.accMetrics) {
       this.sentMetrics = true;
@@ -132,18 +137,14 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
       });
     }
 
-    // Termination
+    // Termination, 2/2: the end, once, last; facts only
     if (this.terminationReason) {
-      // NOTE: we used to infer the stop reason, now we mandate it - or else is undefined, and we leave it to the reassembler to decide
-      // const dispatchOrDialectIssue = this.terminationReason === 'issue-dialect' || this.terminationReason === 'issue-dispatch-rpc';
+      this.endQueued = true;
       this.transmissionQueue.push({
         cg: 'end',
         terminationReason: this.terminationReason,
-        tokenStopReason: this.tokenStopReason, // See NOTE above - || (dispatchOrDialectIssue ? 'cg-issue' : 'ok'),
-        ...(this.tokenStopError && { tokenStopError: this.tokenStopError }),
+        tokenStopReason: this.tokenStopReason,
       });
-      // Keep this in a terminated state, so that every subsequent call will yield errors (not implemented)
-      // this.terminationReason = null;
     }
 
     // Emit queued particles
@@ -160,6 +161,11 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
   get isEnded() {
     return !!this.terminationReason;
+  }
+
+  /** The service closed the body with no end from the dialect: how some dialects finish, a cutoff for one that always sends a final event */
+  get isClosedWithoutEnd(): boolean {
+    return this.terminationReason === 'done-dispatch-closed';
   }
 
   get hasExplicitTokenStopReason(): boolean {
@@ -207,13 +213,9 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this.terminationReason = reason;
   }
 
-  setDispatchRpcTerminatingIssue(issueId: Extract<AixWire_Particles.CGIssueId,
-    | 'dispatch-prepare'
-    | 'dispatch-fetch'
-    | 'dispatch-read'
-    | 'dispatch-parse'
-  >, issueText: string, serverLog: ParticleServerLogLevel, issueCause?: AixWire_Particles.CGIssueCause) {
-    this._addIssue(issueId, issueText, serverLog, issueCause);
+  /** Queue the record of a failed executor stage (`dispatch-*`) and end with 'issue-dispatch-rpc' */
+  setDispatchRpcTerminatingIssue(issue: DAixIssue, serverLog: ParticleServerLogLevel) {
+    this.addIssue(issue, serverLog);
     this.setDispatchEnded('issue-dispatch-rpc');
   }
 
@@ -228,24 +230,36 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
     this.terminationReason = reason;
   }
 
-  /**
-   * End the current part and flush it
-   * - note the default is to NOT log to server, as those are user-facing and not server issues
-   */
-  setDialectTerminatingIssue(dialectText: string, symbol: string | null, _serverLog: ParticleServerLogLevel = false) {
-    this._addIssue('dialect-issue', ` ${symbol || ''} **[${this.prettyDialect} Issue]:** ${dialectText}`, _serverLog);
+  /** An issue the parser states; the default is to NOT log to server, as those are user-facing and not server issues */
+  addDialectIssue(issue: ParticleDialectIssue, serverLog: ParticleServerLogLevel = false): void {
+    const { code = 'service-error', effect = code === 'service-tool' ? 'lost' : 'failed', text, detail, causeCode, retryAfterMs } = issue;
+    this.addIssue(aixIssue(code, effect, {
+      // a filter the parser has no words for is explained by its stop reason
+      text: text || (code === 'model-filter' ? AixWire_Particles.gcStopReasonRow(this.tokenStopReason ?? '')?.message : undefined),
+      detail, causeCode, retryAfterMs,
+    }), serverLog);
+  }
+
+  /** [Aix.Issue shim] the pre-record call: an issue that fails, then the end */
+  setDialectTerminatingIssue(dialectText: string, _symbol: string | null, serverLog: ParticleServerLogLevel = false) {
+    this.addDialectIssue({ text: dialectText }, serverLog);
     this.setDialectEnded('issue-dialect');
   }
 
-  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason, errorText?: string) {
+  setTokenStopReason(reason: AixWire_Particles.GCTokenStopReason, shimErrorText?: string) {
     if (SERVER_DEBUG_WIRE)
-      console.log('|token-stop|', reason, errorText ?? '');
+      console.log('|token-stop|', reason, shimErrorText ?? '');
+
+    // a generation that failed cannot finish clean
+    if (this.failedQueued && AixWire_Particles.gcStopReasonRow(reason)?.class !== 'error') {
+      console.warn(`[Aix.${this.prettyDialect}] setTokenStopReason('${reason}'): ignored, an issue already failed the generation (stop reason '${this.tokenStopReason}')`);
+      return;
+    }
+
     if (this.tokenStopReason && this.tokenStopReason !== reason)
       console.warn(`[Aix.${this.prettyDialect}] setTokenStopReason('${reason}'): already has token stop reason '${this.tokenStopReason}' (overriding)`);
     this.tokenStopReason = reason;
-    // STOPGAP #1288 - REVERT to `if (errorText) this.tokenStopError = errorText;` with the typed errors: a later stop reason replaces
-    // the text here only so that a held OpenAI Responses error is dropped when its terminal event arrives
-    this.tokenStopError = errorText || undefined;
+    this.shimStopText = shimErrorText || undefined; // last wins: a later stop reason drops the text of an earlier one (#1288)
   }
 
 
@@ -416,38 +430,56 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
 
   /**
-   * Undocumented, internal, as the IPartTransmitter callers will call setDialectTerminatingIssue instead
+   * Queue an issue record (aix.issues.ts): it closes the open part and goes out at once, as an `aix-issue` particle.
+   * After the verdict (a clean or truncated stop reason, an earlier failure) a failure changes nothing of the response:
+   * it is stamped a notice. An issue that fails sets the stop reason to 'cg-issue', unless an error-class one is set.
    */
-  private _addIssue(issueId: AixWire_Particles.CGIssueId, issueText: string, serverLog: ParticleServerLogLevel, issueCause?: AixWire_Particles.CGIssueCause) {
+  addIssue(issue: DAixIssue, serverLog: ParticleServerLogLevel): void {
+    const verdictIn = this.failedQueued || (this.tokenStopReason !== undefined && AixWire_Particles.gcStopReasonRow(this.tokenStopReason)?.class !== 'error');
+    if (verdictIn && aixIssueFails(issue))
+      issue = { ...issue, effect: 'notice' };
+
     if (serverLog || ENABLE_EXTRA_DEV_MESSAGES || SERVER_DEBUG_WIRE) {
       const logLevel = serverLog === 'srv-warn' ? 'warn' as const : 'log' as const;
-      console[logLevel](`Aix.${this.prettyDialect} ${issueId}: ${issueText}`);
+      console[logLevel](`Aix.${this.prettyDialect} ${issue.code} (${issue.effect}): ${aixIssuePlainText(issue)}`, { causeCode: issue.causeCode, httpStatus: issue.httpStatus });
     }
 
-    // queue the issue
+    if (aixIssueFails(issue)) {
+      this.failedQueued = true;
+      if (AixWire_Particles.gcStopReasonRow(this.tokenStopReason ?? '')?.class !== 'error')
+        this.tokenStopReason = 'cg-issue';
+    }
+
     this.endMessagePart();
+    this.transmissionQueue.push({ cg: 'aix-issue', issue });
+  }
 
-    // after a clean or truncated stop reason the response content is final: a later issue is a notice, never content -
-    // an error fragment would make the stored outcome 'failed' (a clean stop is stored as no stop reason, so the trailing
-    // error decides) and be replayed to the model on the next turn. After an error stop reason, the issue is its explanation.
-    if (this.tokenStopReason !== undefined && AixWire_Particles.gcStopReasonRow(this.tokenStopReason)?.class !== 'error') {
-      this.transmissionQueue.push({
-        p: 'vnt',
-        nt: 'late-issue',
-        issueId,
-        text: 'Issue after the response ended',
-        detail: issueText.trim(),
-        level: 'warn',
-      });
-      return;
-    }
+  /**
+   * The issues only the end can tell, from the final end reason and stop reason: nets, for what no producer explained.
+   * At most one applies; none once an issue failed the generation.
+   */
+  private _queueEndIssues(): void {
+    // [Aix.Issue shim] the text a parser sent with its stop reason
+    if (this.shimStopText)
+      this.addIssue(aixIssue(this.tokenStopReason?.startsWith('filter-') ? 'model-filter' : 'service-error', 'failed', { text: this.shimStopText }), false);
+    if (this.failedQueued) return;
+    const reason = this.terminationReason, stop = this.tokenStopReason;
 
-    this.transmissionQueue.push({
-      cg: 'issue',
-      issueId,
-      issueText,
-      ...(issueCause && { issueCause }),
-    });
+    // a filter stop the parser did not explain: the stop reason's own sentence
+    if (stop?.startsWith('filter-'))
+      return this.addIssue(aixIssue('model-filter', 'failed', { text: AixWire_Particles.gcStopReasonRow(stop)?.message }), false);
+    // the read closed with no stop reason; with one, the close is how that dialect ends
+    if (reason === 'done-dispatch-closed' && !stop)
+      return this.addIssue(aixIssue('dispatch-cutoff', 'failed'), 'srv-warn');
+    // the abort signal fired with no stop reason: under a user Stop nobody reads this, else it is the failure
+    if (reason === 'done-dispatch-aborted' && !stop)
+      return this.addIssue(aixIssue('dispatch-aborted', 'failed'), false);
+    // an end that fails with no issue: no failure without an explanation
+    if (stop === 'cg-issue' || (!stop && (reason === 'issue-dialect' || reason === 'issue-dispatch-rpc')))
+      return this.addIssue(aixIssue('service-error', 'failed'), 'srv-warn');
+    // the dialect ended without a stop reason: completeness unknown
+    if (reason === 'done-dialect' && !stop)
+      this.addIssue(aixIssue('model-unfinished', 'notice'), false);
   }
 
   /**
@@ -543,7 +575,7 @@ export class ChatGenerateTransmitter implements IParticleTransmitter {
 
 
   /** Sends control particles right away, such as aix-info/aix-retry-reset/... control particles */
-  sendCGControl(cgCOp: AixWire_Particles.ChatControlOp, flushQueue: boolean = true) {
+  sendCGControl(cgCOp: ParticleCGControlOp, flushQueue: boolean = true) {
     // queue current particles before sending control particle (interfere with content flow)
     if (flushQueue) this._queueParticleS();
     this.transmissionQueue.push(cgCOp);

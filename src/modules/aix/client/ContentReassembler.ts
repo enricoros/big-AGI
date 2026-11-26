@@ -4,7 +4,7 @@ import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 import { messageTerminalOutcome } from '~/common/stores/chat/chat.message.outcome';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createHostedResourceContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderMOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAixIssueContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createHostedResourceContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderMOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isAixIssuePart, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
 import { downloadBlob } from '~/common/util/downloadUtils';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { imageBlobTransform, PLATFORM_IMAGE_MIMETYPE } from '~/common/util/imageUtils';
@@ -12,6 +12,7 @@ import { metricsChatGenerateLgToMd, metricsFinishChatGenerateLg, metricsPendChat
 import { nanoidToUuidV4 } from '~/common/util/idUtils';
 
 import { AixWire_Particles, AixWire_Vendors } from '../server/api/aix.wiretypes';
+import { aixIssueFails } from '../shared/aix.issues';
 
 import type { AixClientDebugger, AixFrameId } from './debugger/memstore-aix-client-debugger';
 import { aixClientDebugger_completeFrame, aixClientDebugger_init, aixClientDebugger_recordParticleReceived, aixClientDebugger_setProfilerMeasurements, aixClientDebugger_setRequest } from './debugger/reassembler-debug';
@@ -47,6 +48,7 @@ const _RETRY_PENDING = 'Retrying '; // 'Retrying in 0.7s' through the wait, then
 /** Output of the attempt a retry status announced, once connected: heartbeats, connect failures and the end are not */
 const _isAttemptOutput = (op: AixWire_Particles.ChatGenerateOp): boolean => !('cg' in op) ? !('p' in op && op.p === '❤')
   : op.cg === 'issue' ? op.issueId !== 'dispatch-prepare' && op.issueId !== 'dispatch-fetch'
+    : op.cg === 'aix-issue' ? op.issue.code !== 'dispatch-prepare' && op.issue.code !== 'dispatch-connect' && op.issue.code !== 'dispatch-http'
     : op.cg !== 'end' && op.cg !== 'aix-retry-reset' && op.cg !== '_debugDispatchRequest' && op.cg !== '_debugProfiler';
 const _STREAM_ENDED_EARLY = 'The stream ended before a final response status was received. The answer may be incomplete.';
 
@@ -181,8 +183,10 @@ export class ContentReassembler {
     // Termination -> what the stored message carries: the stop reason, and an error fragment or a display-only notice
     const { tsr, errorMessage, notice } = this._storedTermination();
     this.S.generator = { ...this.S.generator, tokenStopReason: tsr, endedAt: Date.now() };
-    if (errorMessage) this._appendErrorFragment(errorMessage);
-    if (notice) this._pushFragment(createPlaceholderVoidFragment(notice, 'notice', undefined, undefined, undefined, 'no-stop-reason', 'warn'));
+    // [Aix.Issue] minimal: the executor states the end's issues as records, so the texts derived here would repeat them
+    const issues = this.S.fragments.flatMap(f => isContentFragment(f) && isAixIssuePart(f.part) ? [f.part.issue] : []);
+    if (errorMessage && !issues.some(aixIssueFails)) this._appendErrorFragment(errorMessage);
+    if (notice && !issues.length) this._pushFragment(createPlaceholderVoidFragment(notice, 'notice', undefined, undefined, undefined, 'no-stop-reason', 'warn'));
 
     // The outcome is read back from the message: one function for the LL result, the stored message and every surface
     const outcome = messageTerminalOutcome({ generator: this.S.generator, fragments: this.S.fragments });
@@ -472,6 +476,13 @@ export class ContentReassembler {
             break;
           case 'issue':
             this.onCGIssue(op);
+            break;
+          case 'aix-issue':
+            // [Aix.Issue] minimal: the record is stored as sent, at its place; the outcome reads it (messageTerminalOutcome).
+            // The client's own doors and the end move to records with the reassembler rewrite
+            // [Aix.Issue Malformed Guard] not checked: stored as sent, as every particle of our own executor is
+            this.S._textFragmentIndex = null;
+            this._pushFragment(createAixIssueContentFragment({ ...op.issue, atMs: op.issue.atMs ?? (Date.now() - this.wallStartTs) }));
             break;
           case 'aix-info':
             if (op.ait === 'flow-cont') {
@@ -1120,7 +1131,7 @@ export class ContentReassembler {
   /**
    * Stores raw termination data from the wire - classification deferred to finalizeReassembly()
    */
-  private onCGEnd({ terminationReason, tokenStopReason, tokenStopError }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'end' }>): void {
+  private onCGEnd({ terminationReason, tokenStopReason }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'end' }>): void {
     // Diagnostic: detect late 'end' particles overriding a prior termination (parser bug, replayed wire, or upstream advisory after a clean end).
     // Behavior unchanged - we still apply the override - but the warning makes the override visible client-side, mirroring the server-side
     // 'setDialectEnded ... (overriding)' warning in ChatGenerateTransmitter and the existing setClientAborted/setClientExcepted warnings here.
@@ -1129,14 +1140,6 @@ export class ContentReassembler {
 
     this.S.terminationReason = terminationReason;
     this.S.dialectStopReason = tokenStopReason;
-    // Vendor-composed stop error, surfaced as a complementary error fragment alongside the generic classification message
-    if (tokenStopError)
-      this._appendErrorFragment(tokenStopError);
-    // STOPGAP #1288 - REVERT with the typed errors (AIX-TODO-errors.md, "Stream mechanics"): this guesses "an error the vendor reported,
-    // on a stream that then closed without its final event" from three fields of the end. Two facts, neither implies the other;
-    // done properly the error is an issue of its own and the end only says how the read ended
-    if (tokenStopError && tokenStopReason === 'cg-issue' && terminationReason === 'done-dispatch-closed')
-      this._appendErrorFragment(_STREAM_ENDED_EARLY);
   }
 
   /**

@@ -1,5 +1,5 @@
 import { createEmptyReadableStream, safeErrorString } from '~/server/wire';
-import { fetchResponseOrTRPCThrow } from '~/server/trpc/trpc.router.fetchers';
+import { fetchResponseOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 import { fetchWithAbortableConnectionRetry, RetryAttempt } from '~/server/trpc/trpc.fetchers.retrier';
 
 import { llmAppIdentityHeaders } from '~/modules/llms/shared/llm.appIdentity';
@@ -9,11 +9,12 @@ import { objectDeepCloneWithStringLimit } from '~/common/util/objectUtils';
 
 import { AIX_SECURITY_ONLY_IN_DEV_BUILDS } from '../../api/aix.security';
 import { AixWire_Particles } from '../../api/aix.wiretypes';
+import { aixIssue, type DAixIssue } from '../../../shared/aix.issues';
 
 import { AixDebugObject } from './chatGenerate.debug';
 import { AixDemuxers } from '../stream.demuxers';
 import { ChatGenerateDispatch, ChatGenerateDispatchRequest, ChatGenerateParseContext, ChatGenerateParseFunction } from './chatGenerate.dispatch';
-import { ChatGenerateTransmitter, trpcFetcherError_to_IssueCause } from './ChatGenerateTransmitter';
+import { ChatGenerateTransmitter } from './ChatGenerateTransmitter';
 import { DispatchContinuationSignal } from './chatGenerate.continuation';
 import { OperationRetrySignal } from './chatGenerate.operation-retry';
 import { heartbeatsWhileAwaiting } from '../heartbeatsWhileAwaiting';
@@ -32,14 +33,56 @@ function promiseWithResolvers<T>(): { promise: Promise<T>, resolve: (value: T | 
 }
 
 /**
- * Text for a failure while reading the service response, shared by the streaming and non-streaming consumers.
- * A dropped connection says so and keeps the runtime's own text: [CSF] a browser drop (e.g. Firefox 'Error in input stream', #1211),
- * [server] a Node fetch drop ('terminated') or a Vercel Edge one ('Network connection lost.').
+ * The record for a failure while reading the service response, shared by the streaming and non-streaming consumers.
+ * A dropped connection keeps the runtime's own text as the detail: [CSF] a browser drop (e.g. Firefox 'Error in input stream', #1211),
+ * [server] a Node fetch drop ('terminated') or a Vercel Edge one ('Network connection lost.'). Anything else is an unexpected read error.
  */
-function _describeReadFailure(error: any, prettyDialect: string): string {
-  if (isBrowserNetworkError(error) || isNodeStreamTerminated(error) || isEdgeConnectionLost(error))
-    return `the connection to ${prettyDialect} dropped mid-response (${error.message}).` + (isBrowserOffline() ? ' You appear to be offline.' : '');
-  return safeErrorString(error) || 'Unknown stream reading error';
+function _readFailureIssue(error: any, _d: AixDebugObject): DAixIssue {
+  const dropped = isBrowserNetworkError(error) || isNodeStreamTerminated(error) || isEdgeConnectionLost(error);
+  return aixIssue('dispatch-read', 'failed', {
+    runtime: _d.runtime,
+    detail: dropped ? error.message : (safeErrorString(error) || 'Unknown stream reading error'),
+    ...(!dropped && { text: 'Reading the response failed.' }),
+    ...(dropped && isBrowserOffline() && { offline: true }),
+  });
+}
+
+// class names say nothing about a connection failure: only a system code (ECONNREFUSED, UND_ERR_CONNECT_TIMEOUT) is a cause code
+const _BARE_ERROR_NAMES = ['Error', 'TypeError', 'AggregateError', 'DOMException', 'UnknownError'];
+
+/**
+ * The record for a failure to get a response from the service, from the TRPCFetcherError facts: an HTTP status with the
+ * vendor's words and code, or a connection failure with the runtime's own words. No advice: that is the renderer's.
+ */
+function _connectFailureIssue(error: any, _d: AixDebugObject): DAixIssue {
+  const fe: TRPCFetcherError | null = error?.name === 'TRPCFetcherError' ? error : null;
+  if (fe?.category === 'http')
+    return aixIssue('dispatch-http', 'failed', { httpStatus: fe.httpStatus, causeCode: fe.httpErrorCode ?? fe.httpErrorType, retryAfterMs: fe.httpRetryAfterMs, detail: fe.causeText });
+  if (fe?.category === 'parse') // not on the default connect (its parser cannot throw): a customConnect's
+    return aixIssue('dispatch-parse', 'failed', { detail: safeErrorString(error) || undefined });
+  const name = fe ? fe.connErrorName : error?.name;
+  return aixIssue('dispatch-connect', 'failed', {
+    runtime: _d.runtime,
+    detail: (fe ? fe.causeText : safeErrorString(error)) || undefined, // not a fetcher error: a customConnect's own throw
+    causeCode: name && !_BARE_ERROR_NAMES.includes(name) ? name : undefined, // the record keeps it only when code-shaped
+    ...(isBrowserOffline() && { offline: true }),
+  });
+}
+
+/** The one abort rule of the connect and read catches: the intake signal fired, or the error says abort */
+function _isDispatchAbort(error: any, intakeAbortSignal: AbortSignal): boolean {
+  return intakeAbortSignal.aborted
+    || error?.name === 'AbortError' || error?.name === 'ResponseAborted' // CSF, Next.js
+    || (error?.name === 'TRPCFetcherError' && error.category === 'abort');
+}
+
+/** The record for data the service sent that could not be processed: the error, and a bounded single-line head of the input for a bug report */
+function _parseFailureIssue(error: any, input: string): DAixIssue {
+  const errorText = (safeErrorString(error) || 'Unknown parsing error').replace(/\s+/g, ' ').trim();
+  const head = (input || '').replace(/\s+/g, ' ').trim();
+  return aixIssue('dispatch-parse', 'failed', {
+    detail: `${errorText.length > 240 ? errorText.slice(0, 240) + '...' : errorText} - input: ${head.length > 200 ? head.slice(0, 200) + '...' : head || '(empty)'}`,
+  });
 }
 
 
@@ -69,7 +112,7 @@ export async function* executeChatGenerateDispatch(
     dispatch.request.headers = llmAppIdentityHeaders(dispatch.request.headers);
   } catch (error: any) {
     // log but don't warn on the server console, this is typically a service configuration issue (e.g. a missing password will throw here)
-    chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-prepare', `**[AIX Configuration Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown service preparation error'}`, 'srv-log');
+    chatGenerateTx.setDispatchRpcTerminatingIssue(aixIssue('dispatch-prepare', 'failed', { detail: safeErrorString(error) || 'Unknown service preparation error' }), 'srv-log');
     yield* chatGenerateTx.flushParticles();
     return; // exit
   }
@@ -91,7 +134,7 @@ export async function* executeChatGenerateDispatch(
     }
 
     // Connect to the dispatch (yields debug echo particles directly, bypasses the companions)
-    const dispatchResponse = yield* _connectToDispatch(dispatch.request, dispatch.customConnect, intakeAbortSignal, chatGenerateTx, _d);
+    const dispatchResponse = yield* _connectToDispatch(dispatch.request, dispatch.customConnect, !!dispatch.connectNoRetry, intakeAbortSignal, chatGenerateTx, _d);
     if (!dispatchResponse)
       return; // exit: error already handled
 
@@ -100,9 +143,16 @@ export async function* executeChatGenerateDispatch(
 
       // Consume dispatch response
       if (dispatch.demuxerFormat === null /* NS */)
-        yield* _consumeDispatchUnified(dispatchResponse, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
+        yield* _consumeDispatchUnified(dispatchResponse, dispatch.chatGenerateParse, intakeAbortSignal, chatGenerateTx, _d, parseContext);
       else
-        yield* _consumeDispatchStream(dispatchResponse, dispatch.bodyTransform ?? null, dispatch.demuxerFormat, dispatch.chatGenerateParse, chatGenerateTx, _d, parseContext);
+        yield* _consumeDispatchStream(dispatchResponse, dispatch.bodyTransform ?? null, dispatch.demuxerFormat, dispatch.chatGenerateParse, intakeAbortSignal, chatGenerateTx, _d, parseContext);
+
+      // The read is over: a parser that kept an event aside for the next one states it now, before the end
+      try {
+        dispatch.chatGenerateParse.onReadEnd?.(chatGenerateTx, chatGenerateTx.isClosedWithoutEnd);
+      } catch (error: any) {
+        console.warn(`[AIX] ${_d.prettyDialect}: the parser threw on read end`, { error: error?.message || error });
+      }
 
       // Tack profiling particles if generated
       if (_d.profiler) {
@@ -160,6 +210,7 @@ export async function* executeChatGenerateDispatch(
 async function* _connectToDispatch(
   request: ChatGenerateDispatchRequest,
   customConnect: ((signal: AbortSignal) => Promise<Response>) | undefined,
+  connectNoRetry: boolean,
   intakeAbortSignal: AbortSignal,
   chatGenerateTx: ChatGenerateTransmitter,
   _d: AixDebugObject,
@@ -197,7 +248,7 @@ async function* _connectToDispatch(
       singnaldrain.resolve('▼'); // -> breaks the heartbeat loop
     };
     // loops on connection issues, or throws the original error (TRPCFetcherError) from fetchResponseOrTRPCThrow when: not retryable, aborted, or attempts exhausted
-    const chatGenerateResponsePromise = fetchWithAbortableConnectionRetry(connectionOperationCreator, intakeAbortSignal, onRetryAttempt);
+    const chatGenerateResponsePromise = fetchWithAbortableConnectionRetry(connectionOperationCreator, intakeAbortSignal, onRetryAttempt, { noRetry: connectNoRetry });
 
     while (true) {
       // this only yields heartbeat particles, does not yield while blocked on the connection attempt (which could be a long loop)
@@ -220,16 +271,16 @@ async function* _connectToDispatch(
     // if (intakeAbortSignal.aborted && error && error?.name === 'TRPCFetcherError' /* CSF */)
     //   throw new DOMException('CSF aborted in dispatch-fetch', 'AbortError');
 
-    // tRPC: handle expected dispatch abortion while the first fetch hasn't even completed
-    if (intakeAbortSignal.aborted && error && (error?.name === 'TRPCError' /* tRPC */ || error?.name === 'TRPCFetcherError' /* CSF */)) {
+    // aborted while connecting
+    if (_isDispatchAbort(error, intakeAbortSignal)) {
       chatGenerateTx.setDispatchEnded('done-dispatch-aborted');
       yield* chatGenerateTx.flushParticles();
       return null; // signal caller to exit
     }
 
-    // Handle AI Service connection error
-    const dispatchFetchError = safeErrorString(error) + (error?.cause ? ' · ' + JSON.stringify(error.cause) : '');
-    const extraDevMessage = AIX_SECURITY_ONLY_IN_DEV_BUILDS ? ` - [DEV_URL: ${request.url}]` : '';
+    // the request URL helps a developer, but is never stored: under Direct Connection to Gemini its query holds the key
+    if (AIX_SECURITY_ONLY_IN_DEV_BUILDS)
+      console.log(`[AIX] ${_d.prettyDialect}: connect failed: ${request.url.split('?')[0]}`);
 
     // upstream rejections that are user/key/policy issues (401 bad key, 402 billing, 403 region/permission, 404 unknown model, 429 quota) log instead of warn;
     // 400/422 and the rest keep warning, as they can signal adapter bugs (malformed requests we generated)
@@ -237,7 +288,7 @@ async function* _connectToDispatch(
     const isUpstreamUserError = error?.name === 'TRPCFetcherError' && error.category === 'http' && demoteToLog.includes(error.httpStatus);
     const serverLogLevel = _d.consoleLogErrors === 'srv-warn' && isUpstreamUserError ? 'srv-log' : _d.consoleLogErrors;
 
-    chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-fetch', `**[Service Issue] ${_d.prettyDialect}**: ${dispatchFetchError}${extraDevMessage}`, serverLogLevel, trpcFetcherError_to_IssueCause(error));
+    chatGenerateTx.setDispatchRpcTerminatingIssue(_connectFailureIssue(error, _d), serverLogLevel);
     yield* chatGenerateTx.flushParticles();
     return null; // signal caller to exit
   }
@@ -250,6 +301,7 @@ async function* _connectToDispatch(
 async function* _consumeDispatchUnified(
   dispatchResponse: Response,
   dispatchParserNS: ChatGenerateParseFunction,
+  intakeAbortSignal: AbortSignal,
   chatGenerateTx: ChatGenerateTransmitter,
   _d: AixDebugObject,
   parseContext?: ChatGenerateParseContext,
@@ -272,11 +324,13 @@ async function* _consumeDispatchUnified(
     // Handle the case where the Dialect hansn't signaled the end of generation
     if (!chatGenerateTx.isEnded) {
 
-      // dialects shall send a token stop reason before 'normal' stream close - otherwise it's a protocol 'bug' or an unexpected truncation (which needs investigation)
-      if (!chatGenerateTx.hasExplicitTokenStopReason)
-        console.warn(`[AIX] _consumeDispatchUnified: ${_d.prettyDialect}: stream closed (done-dispatch-closed) without provider termination signal - response may be truncated`);
-
-      chatGenerateTx.setDispatchEnded('done-dispatch-closed'); // not a a good end reason, means we didn't receive a logic end
+      // the body was read and parsed in full: with a stop reason the close is how the dialect ends; without one the response
+      // is whole but unqualified (a gateway that omits the finish), the same as a stream that ends without one: not a cutoff
+      if (!chatGenerateTx.hasExplicitTokenStopReason) {
+        console.warn(`[AIX] _consumeDispatchUnified: ${_d.prettyDialect}: response parsed without a provider stop reason`);
+        chatGenerateTx.setDialectEnded('done-dialect');
+      } else
+        chatGenerateTx.setDispatchEnded('done-dispatch-closed');
     }
 
   } catch (error: any) {
@@ -287,10 +341,16 @@ async function* _consumeDispatchUnified(
     }
     if (error instanceof OperationRetrySignal) throw error;
 
-    if (dispatchBody === undefined)
-      chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-read', `**[Reading Issue] ${_d.prettyDialect}**: ${_describeReadFailure(error, _d.prettyDialect)}`, 'srv-warn');
-    else
-      chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-parse', ` **[Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\n\nInput data: ${objectDeepCloneWithStringLimit(dispatchBody, 'aix.parsing-issue', 2048)}.\n\nPlease open a support ticket on GitHub.`, 'srv-warn');
+    if (dispatchBody === undefined) {
+      if (_isDispatchAbort(error, intakeAbortSignal))
+        chatGenerateTx.setDispatchEnded('done-dispatch-aborted');
+      else
+        chatGenerateTx.setDispatchRpcTerminatingIssue(_readFailureIssue(error, _d), 'srv-warn');
+    } else {
+      // the full body goes to the log, a bounded head of it to the record
+      console.warn(`[AIX] _consumeDispatchUnified: ${_d.prettyDialect}: parse failure, input data:`, objectDeepCloneWithStringLimit(dispatchBody, 'aix.parsing-issue', 2048));
+      chatGenerateTx.setDispatchRpcTerminatingIssue(_parseFailureIssue(error, dispatchBody), 'srv-warn');
+    }
   }
 }
 
@@ -303,6 +363,7 @@ async function* _consumeDispatchStream(
   dispatchBodyTransform: AixDemuxers.StreamBodyTransform,
   dispatchDemuxerFormat: AixDemuxers.StreamDemuxerFormat,
   dispatchParser: ChatGenerateParseFunction,
+  intakeAbortSignal: AbortSignal,
   chatGenerateTx: ChatGenerateTransmitter,
   _d: AixDebugObject,
   parseContext?: ChatGenerateParseContext,
@@ -359,19 +420,14 @@ async function* _consumeDispatchStream(
 
     } catch (error: any) {
 
-      // CSF - rethrow aborts to prevent particle creation and instead break the outer loops, as-if it was a tRPC client-side error
-      // if (/*intakeAbortSignal.aborted &&*/ error && error?.name === 'AbortError' /* CSF */)
-      //   throw new DOMException('CSF aborted in dispatch-read', 'AbortError');
-
-      // tRPC: handle expected dispatch stream abortion - nothing to do, as the intake is already closed
-      // NOTE: Seems like ResponseAborted is NextJS vs signal driven.
-      if (/*intakeAbortSignal.aborted &&*/ error && (error?.name === 'ResponseAborted' /* tRPC */ || error?.name === 'AbortError' /* CSF */)) {
+      // aborted while reading (NOTE: ResponseAborted is Next.js, not signal driven)
+      if (_isDispatchAbort(error, intakeAbortSignal)) {
         chatGenerateTx.setDispatchEnded('done-dispatch-aborted');
         break; // outer do {}
       }
 
       // Handle abnormal stream termination; print to the server console as well (important to debug)
-      chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-read', `**[Streaming Issue] ${_d.prettyDialect}**: ${_describeReadFailure(error, _d.prettyDialect)}`, 'srv-warn');
+      chatGenerateTx.setDispatchRpcTerminatingIssue(_readFailureIssue(error, _d), 'srv-warn');
       break; // outer do {}
     }
 
@@ -420,8 +476,9 @@ async function* _consumeDispatchStream(
         }
         if (error instanceof OperationRetrySignal) throw error;
 
-        // Handle parsing issue (likely a schema break); print it to the server console as well
-        chatGenerateTx.setDispatchRpcTerminatingIssue('dispatch-parse', ` **[Service Parsing Issue] ${_d.prettyDialect}**: ${safeErrorString(error) || 'Unknown stream parsing error'}.\n\nInput data: ${objectDeepCloneWithStringLimit(demuxedItem.data, 'aix.service-parsing-issue', 2048)}.\n\nPlease open a support ticket on GitHub.`, 'srv-warn');
+        // Handle parsing issue (likely a schema break): the full event goes to the log, a bounded head of it to the record
+        console.warn(`[AIX] _consumeDispatchStream: ${_d.prettyDialect}: parse failure, input data:`, objectDeepCloneWithStringLimit(demuxedItem.data, 'aix.service-parsing-issue', 2048));
+        chatGenerateTx.setDispatchRpcTerminatingIssue(_parseFailureIssue(error, demuxedItem.data), 'srv-warn');
         break; // inner for {}, then outer do
       }
     }
@@ -429,7 +486,7 @@ async function* _consumeDispatchStream(
     // 6. Stream end - Handle the case where the Dialect hansn't signaled the end of generation
     if (isFinalIteration && !chatGenerateTx.isEnded) {
 
-      // dialects shall send a token stop reason before 'normal' stream close - otherwise it's a protocol 'bug' or an unexpected truncation (which needs investigation)
+      // without a stop reason this is a cutoff, which the transmitter states at the end (dispatch-cutoff)
       if (!chatGenerateTx.hasExplicitTokenStopReason)
         console.warn(`[AIX] _consumeDispatchStream: ${_d.prettyDialect}: stream closed (done-dispatch-closed) without provider termination signal - response may be truncated`);
 

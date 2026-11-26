@@ -46,6 +46,8 @@ export type ChatGenerateDispatch = {
   request: ChatGenerateDispatchRequest;
   /** Used by dialects that need multi-step I/O. The returned response is consumed normally via demuxerFormat/chatGenerateParse */
   customConnect?: (signal: AbortSignal) => Promise<Response>;
+  /** the connect runs once: a retried request would repeat a side effect upstream (a second billable run) */
+  connectNoRetry?: true;
   bodyTransform?: AixDemuxers.StreamBodyTransform;
   /** Source of truth for the consumer mode: null = NS */
   demuxerFormat: null | AixDemuxers.StreamDemuxerFormat;
@@ -64,7 +66,13 @@ export type ChatGenerateParseContext = {
   hasRetriesForHttpStatus: (httpStatus?: number, upstreamCode?: string) => boolean;
 };
 
-export type ChatGenerateParseFunction = (partTransmitter: IParticleTransmitter, eventData: string, eventName?: string, context?: ChatGenerateParseContext) => void;
+export type ChatGenerateParseFunction = ((partTransmitter: IParticleTransmitter, eventData: string, eventName?: string, context?: ChatGenerateParseContext) => void) & {
+  /**
+   * Called once when the read is over, before the end is sent: a parser that kept an event aside for the next one states it now.
+   * `closed`: the service closed the body with no end from the dialect (not a read that threw, not an abort)
+   */
+  onReadEnd?: (partTransmitter: IParticleTransmitter, closed: boolean) => void;
+};
 
 /**
  * A dispatch companion: an attachment that lives for one dispatch. In array order, the executor runs `onStart` before
@@ -224,12 +232,10 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
         };
         return {
           request,
-          // Custom-connect so we can neutralize the outer retrier on HTTP errors: a retried POST would create a second (billable) Deep Research interaction upstream
-          customConnect: (signal) => fetchResponseOrTRPCThrow({ ...request, signal, name: 'Aix.Gemini.Interactions.create', throwWithoutName: true })
-            .catch((error: any) => {
-              if (signal.aborted) throw error; // preserve abort identity for the executor's abort classifier
-              throw new Error(`Gemini Interactions POST: ${error?.message || 'upstream error'}`); // rewrapping TRPCFetcherError as plain Error makes the retrier treat it as non-retryable
-            }),
+          // No connect retry: a retried POST would create a second (billable) Deep Research interaction upstream. The fetcher's
+          // error reaches the executor as is, so a 400/401/429 is an HTTP failure with its facts
+          customConnect: (signal) => fetchResponseOrTRPCThrow({ ...request, signal, name: 'Aix.Gemini.Interactions.create', throwWithoutName: true }),
+          connectNoRetry: true,
           /** Upstream hardcodes stream=true + background=true (required by deep-research agents) and has no non-streaming alternative. */
           demuxerFormat: 'fast-sse',
           chatGenerateParse: createGeminiInteractionsParserSSE(requestedModelName),

@@ -27,6 +27,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, test, type TestContext } from 'node:test';
 
 import { AixWire_Particles, type AixWire_Vendors } from '../../api/aix.wiretypes';
+import { aixIssueFails, type DAixIssue, type DAixIssueCode } from '../../../shared/aix.issues';
 
 import type { AixDebugObject } from './chatGenerate.debug';
 import type { ChatGenerateDispatch, ChatGenerateParseFunction } from './chatGenerate.dispatch';
@@ -48,7 +49,7 @@ const CAPTURES = 'tools/data/aix-replay/generations/';
 
 type Op = AixWire_Particles.ChatGenerateOp;
 
-const _d: AixDebugObject = { prettyDialect: 'Replay', echoRequest: false, requestBodyOverride: undefined, consoleLogErrors: false, profiler: undefined, wire: undefined };
+const _d: AixDebugObject = { runtime: 'relay', prettyDialect: 'Replay', echoRequest: false, requestBodyOverride: undefined, consoleLogErrors: false, profiler: undefined, wire: undefined };
 
 function capture(file: string): string {
   return readFileSync(CAPTURES + file, 'utf8');
@@ -121,18 +122,30 @@ function theEnd(particles: Op[]) {
   return ends[0];
 }
 
-function issueTexts(particles: Op[]): string[] {
-  return particles.filter(isControl('issue')).map(issue => issue.issueText);
-}
-
-/** What the user is told about a bad ending: the error parts, and the explanation sent with the end */
-function explanations(particles: Op[]): string[] {
-  const end = particles.filter(isControl('end')).at(-1);
-  return [...issueTexts(particles), ...(end?.tokenStopError ? [end.tokenStopError] : [])];
-}
-
 /** Issues the chain raises about itself: a response it could not read or parse, as opposed to what the vendor reported */
-const CHAIN_FAILURE = /\b(Parsing|Reading|Streaming|Configuration) Issue]/;
+const _CHAIN_FAILURE_CODES: ReadonlySet<DAixIssueCode> = new Set(['dispatch-parse', 'dispatch-read', 'dispatch-prepare', 'dispatch-unknown']);
+
+/** An issue as one string: the vendor's (or our) code, the sentence, the further words */
+function _issueText(issue: DAixIssue): string {
+  return [issue.causeCode, issue.text, issue.detail].filter(Boolean).join(' ');
+}
+
+/** The issues the chain raised about itself, by their record's code, as issueTexts writes them; `failing`: only those that fail the generation */
+function chainFailures(particles: Op[], failing?: 'failing'): string[] {
+  return particles.filter(isControl('aix-issue')).map(op => op.issue)
+    .filter(issue => _CHAIN_FAILURE_CODES.has(issue.code) && (!failing || aixIssueFails(issue)))
+    .map(_issueText);
+}
+
+/** Every issue the client receives, whether it fails the generation or not */
+function issueTexts(particles: Op[]): string[] {
+  return particles.filter(isControl('aix-issue')).map(op => _issueText(op.issue));
+}
+
+/** What the user is told about a bad ending: each issue that fails the generation */
+function explanations(particles: Op[]): string[] {
+  return particles.filter(isControl('aix-issue')).filter(op => aixIssueFails(op.issue)).map(op => _issueText(op.issue));
+}
 
 /** The first object, anywhere in a JSON value, that matches: reads a vendor's own field out of a capture */
 function findObject(value: unknown, matches: (object: Record<string, unknown>) => boolean): Record<string, unknown> | undefined {
@@ -339,7 +352,7 @@ function hostedToolCounts(rows: readonly (readonly [file: string, expected: Coun
 // `notYet`, and its test is reported as skipped with that reason for as long as it fails.
 
 const NOT_CLEAN = 'anything but a clean finish', UNDECIDED = 'not decided, not asserted';
-/** The message is failed, either way AIX-outcome.md derives it: a stop reason of the error class, or none and an error part as the last content */
+/** The message is failed, either way AIX-outcome.md derives it: a stop reason of the error class, or none and an issue that fails */
 const FAILED = 'failed';
 
 type Ending = {
@@ -597,7 +610,7 @@ describe('all captures: invariants', () => {
   const except = (...lists: string[][]) => all.filter(file => !lists.some(list => list.includes(file)));
 
   test('parses in strict mode and ends once', { skip }, () => overCaptures(all, g => {
-    assert.deepEqual(issueTexts(g.particles).filter(text => CHAIN_FAILURE.test(text)), []);
+    assert.deepEqual(chainFailures(g.particles), []);
     theEnd(g.particles);
   }));
 
@@ -675,15 +688,15 @@ describe('unclean endings', () => {
 
       const stopReason = theEnd(particles).tokenStopReason;
       if (stop === FAILED) {
-        const lastContent = particles.filter(op => !('cg' in op) || op.cg === 'issue').at(-1);
-        const failed = stopReason ? AixWire_Particles.gcStopReasonRow(stopReason)?.class === 'error' : !!lastContent && 'cg' in lastContent;
-        assert.ok(failed, `ends ${stopReason ?? 'with no stop reason'} and ${lastContent && 'cg' in lastContent ? 'an' : 'no'} error part last: not a failed message`);
+        const issueFails = particles.some(op => isControl('aix-issue')(op) && aixIssueFails(op.issue));
+        const failed = stopReason ? AixWire_Particles.gcStopReasonRow(stopReason)?.class === 'error' : issueFails;
+        assert.ok(failed, `ends ${stopReason ?? 'with no stop reason'} and ${issueFails ? 'an' : 'no'} issue that fails: not a failed message`);
       } else if (stop === NOT_CLEAN)
         assert.ok(stopReason !== 'ok' && stopReason !== 'ok-tool_invocations', `ends ${stopReason}, a clean finish`);
       else if (stop !== UNDECIDED)
         assert.equal(stopReason, stop);
       const said = explanations(particles);
-      assert.deepEqual(said.filter(text => CHAIN_FAILURE.test(text)), [], 'the chain failed on the response');
+      assert.deepEqual(chainFailures(particles, 'failing'), [], 'the chain failed on the response');
       if (says === null)
         assert.deepEqual(said, []);
       else if (says)
@@ -910,9 +923,11 @@ describe('OpenAI Responses', () => {
       const particles = await replayCapture(file);
 
       // this error does not end the response: the vendor's stream goes on after the failed item, and so do we
+      // [Aix.Issue shim] this one site still sends the pre-record particle
       const issueAt = particles.findIndex(isControl('issue'));
-      assert.equal(issueTexts(particles).length, 1);
-      assert.ok(issueTexts(particles)[0].includes(vendorError.message), 'the error part carries the vendor\'s explanation');
+      const issues = particles.filter(isControl('issue'));
+      assert.equal(issues.length, 1);
+      assert.ok(issues[0].issueText.includes(vendorError.message), 'the error part carries the vendor\'s explanation');
       assert.ok(particles.slice(issueAt + 1).some(isText), 'the text the model writes after the block is kept');
       assert.equal(theEnd(particles).tokenStopReason, 'ok', 'a blocked image does not fail the response');
     });
@@ -972,7 +987,7 @@ describe('OpenAI Responses', () => {
     assert.equal(particles.filter(isText).map(op => op.t).join(''), VENDORS.openai.answerText(events, true));
     assert.deepEqual(issueTexts(particles), []);
     assert.equal(theEnd(particles).tokenStopReason, 'ok');
-    assert.ok(issueTexts(await replayIn('development')).some(text => CHAIN_FAILURE.test(text)), 'development did not fail on the unlisted event');
+    assert.ok(chainFailures(await replayIn('development'), 'failing').length > 0, 'development did not fail on the unlisted event');
   });
 
 });
@@ -1015,7 +1030,7 @@ describe('Gemini generateContent', () => {
       assert.ok(afterErrorFrame.length > 0, 'the capture carries data after the error frame');
       const particles = await replayCapture(file);
 
-      const issueAt = particles.findIndex(isControl('issue'));
+      const issueAt = particles.findIndex(isControl('aix-issue'));
       const kept = particles.slice(0, issueAt);
       assert.ok(file.includes('after-text') ? kept.some(isText) : kept.some(isPart('cei')) && !kept.some(isPart('cer')));
       assert.ok(particles.slice(issueAt + 1).every(op => 'cg' in op), 'content was output after the error');
@@ -1113,9 +1128,9 @@ describe('OpenRouter Chat Completions', () => {
     ]) + 'data: [DONE]\n\n';
     const { particles } = await replay([stream], true, () => createOpenAIChatCompletionsChunkParser());
 
-    const { tokenStopReason, tokenStopError } = theEnd(particles);
+    const { tokenStopReason } = theEnd(particles);
     assert.equal(tokenStopReason && AixWire_Particles.gcStopReasonRow(tokenStopReason)?.class, 'error');
-    assert.ok(tokenStopError, 'the user is told why');
+    assert.equal(explanations(particles).length, 1, 'the user is told why, once');
     assert.equal(particles.filter(isText).map(op => op.t).join(''), 'The first half');
     const { TIn, TOut } = finalMetrics(particles);
     assert.deepEqual({ TIn, TOut }, { TIn: 12, TOut: 4 });

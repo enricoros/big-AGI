@@ -77,6 +77,7 @@ export async function clientSideDeleteUpstream(
 function _createClientDebugConfig(access: AixAPI_Access, options: undefined | { debugDispatchRequest?: boolean, debugProfilePerformance?: boolean, debugRequestBodyOverride?: Record<string, unknown> }, chatGenerateContextName: string): AixDebugObject {
   const echoRequest = !!options?.debugDispatchRequest && (AIX_SECURITY_ONLY_IN_DEV_BUILDS || AIX_INSPECTOR_ALLOWED_CONTEXTS.includes(chatGenerateContextName));
   return {
+    runtime: 'client' as const, // the executor runs in this browser (DAixIssue.runtime)
     prettyDialect: capitalizeFirstLetter(access.dialect), // string
     echoRequest: echoRequest, // boolean
     requestBodyOverride: echoRequest ? options?.debugRequestBodyOverride : undefined,

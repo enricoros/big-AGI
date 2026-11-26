@@ -4,6 +4,8 @@ import * as z from 'zod/v4';
 import type { DMessageFragmentVendorStateKnown, DMessageToolResponsePart } from '~/common/stores/chat/chat.fragments';
 import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 
+import type { DAixIssue } from '../../shared/aix.issues';
+
 import { anthropicAccessSchema } from '~/modules/llms/server/anthropic/anthropic.access';
 import { bedrockAccessSchema } from '~/modules/llms/server/bedrock/bedrock.access';
 import { geminiAccessSchema } from '~/modules/llms/server/gemini/gemini.access';
@@ -760,8 +762,9 @@ export namespace AixWire_Particles {
 
   export type ChatControlOp =
   // | { cg: 'start' } // not really used for now
-    | { cg: 'end', terminationReason: CGEndReason /* we know why we're sending 'end' */, tokenStopReason?: GCTokenStopReason /* we may or not have gotten a logical token stop reason from the dispatch */, tokenStopError?: string /* optional vendor-composed human-readable detail paired with tokenStopReason */ }
-    | { cg: 'issue', issueId: CGIssueId, issueText: string, issueCause?: CGIssueCause }
+    | { cg: 'end', terminationReason: CGEndReason /* we know why we're sending 'end' */, tokenStopReason?: GCTokenStopReason /* we may or not have gotten a logical token stop reason from the dispatch */ } // facts only, once, last: every explanation travels before it, as an aix-issue
+    | { cg: 'aix-issue', issue: DAixIssue } // the record (aix.issues.ts), live, at its place in the stream
+    | { cg: 'issue', issueId: string, issueText: string } // [Aix.Issue shim] the pre-record particle: the executor sends none; declared until its last readers move (client, tools)
     | { cg: 'aix-info', ait: 'flow-cont' /* important: establishes a checkpoint */, text: string }
     | { cg: 'aix-retry-reset', rScope: 'srv-dispatch' | 'srv-op' | 'cli-ll', rClearStrategy: 'none' | 'since-checkpoint' | 'all', reason: string, attempt: number, maxAttempts: number, phase: 'waiting' | 'started' | 'gave-up' /* what the message announces: the wait before the attempt, the attempt beginning, no attempts left */, delayMs: number /* the wait; sent in every phase, as a client older than `phase` reads the phase from it: > 0 waiting, else gave-up */, causeHttp?: number, causeConn?: string, calm?: true /* the retry profile marks the condition as expected (e.g. a busy best-effort tier): rendered without alarm */ }
     | { cg: 'set-metrics', metrics: CGSelectMetrics }
@@ -778,20 +781,6 @@ export namespace AixWire_Particles {
     | 'issue-dialect'           // [1] ended because a dispatch encountered an issue, such as out-of-tokens, recitation, etc.
     | 'issue-dispatch-rpc';     // [2] ended because of an issue
 
-  export type CGIssueId =
-    | 'dialect-issue'           // [1] when end reason = 'issue-dialect'
-    | 'dispatch-prepare'        // [2] when end reason = 'issue-dispatch-rpc', 4 phases of GC dispatch
-    | 'dispatch-fetch'          // [2] "
-    | 'dispatch-read'           // [2] "
-    | 'dispatch-parse';         // [2] "
-
-  export type CGIssueCause = _CGIssueCause_DispatchFetch;
-  type _CGIssueCause_DispatchFetch = {
-    causeConn?: string;         // [dispatch-fetch] system error name of a failed connection
-    causeHttpStatus?: number;   // [dispatch-fetch] upstream HTTP status
-    causeVendorCode?: string;   // [dispatch-fetch] vendor error code from the HTTP body
-  }
-
 
   // Token stop reasons, grouped by class. The class is the one grouping shared by the edge (analytics) and the
   // browser (reassembler outcome): 'ok' is the only success, 'truncated' is an error typed apart, 'error' is the rest.
@@ -802,7 +791,7 @@ export namespace AixWire_Particles {
   type _GCTokenStopReason_Truncated =
     | 'out-of-tokens';          // got out of tokens: the output is cut, kept but not usable as-is
   type _GCTokenStopReason_Error =
-    | 'cg-issue'                // [1][2] chat-generation issue (see CGIssueId, mostly a dispatch or dialect issue)
+    | 'cg-issue'                // [1][2] chat-generation issue: the aix-issue that failed the generation explains it
     | 'filter-content'          // content filter (e.g. profanity)
     | 'filter-recitation'       // recitation filter (e.g. recitation)
     | 'filter-refusal';         // safety refusal filter (e.g. Anthropic safety concerns)
@@ -908,7 +897,6 @@ export namespace AixWire_Particles {
       | { nt: 'input-transform', itt: 'thinking-dropped', cause: 'prefix-changed' | 'model-switch' | (string & {}), reason: string, paths: string[] } // the server rewrote our request: dropped replayed thinking blocks, one particle per vendor reason; `cause` normalizes `reason` (open set), `paths` are wire locations. 'prefix-changed' is deliberately unspecific: the vendor's 'prefix_binding_mismatch' covers system/tools/message edits alike and doesn't say which - don't narrow it to "history edited" in copy, that's provably wrong for tool/system changes. client-side log for now
       | { nt: 'hres-discarded', kind: 'vnd.ant.file', fileId: string, filename?: string } // a provider-hosted file deleted by the Save policy without embedding; it may still exist in the model's sandbox
       | { nt: 'flow-cont', kind: 'vnd.ant.pause_turn', turn: number } // the generation continued in a new upstream request at this point (hosted-tool loop paused itself); rendered as a divider, `turn` is the 1-based continuation count
-      | { nt: 'late-issue', issueId: CGIssueId } // an issue that arrived after the vendor's stop reason (stream cut before the end marker, a trailing chunk failing to parse, a late error event): the response is complete, so it is not content
       )
     | { p: 'hres' } & ( // hosted resource - provider-hosted resource
       | { kind: 'vnd.ant.file', fileId: string, containerId?: string }

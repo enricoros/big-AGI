@@ -215,9 +215,13 @@ export type RetryAttempt = {
  * @param operationFn The operation to retry (must be repeatable/idempotent)
  * @param abortSignal Signal to cancel retries
  * @param onRetryAttempt Optional callback invoked once per `phase`: when the wait before a retry begins, when that attempt begins, and when no attempts are left
+ * @param options.noRetry run the operation once and rethrow its error as is: for operations that must not repeat (a POST that starts a billable run)
  * @returns Promise that resolves with the successful result or rejects with the final error
  */
-export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Promise<T>, abortSignal: AbortSignal, onRetryAttempt?: (retryInfo: RetryAttempt) => void): Promise<T> {
+export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Promise<T>, abortSignal: AbortSignal, onRetryAttempt?: (retryInfo: RetryAttempt) => void, options?: { noRetry?: boolean }): Promise<T> {
+  if (options?.noRetry)
+    return operationFn();
+
   let attemptNumber = 1;
   let waitedMs = 0;
 
@@ -243,8 +247,7 @@ export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Pr
 
       // Only a TRPCFetcherError says how the request failed, and fetchResponseOrTRPCThrow wraps every fetch failure in one
       // (abort, connection, HTTP status, parse). Anything else is rethrown without a retry, and named in the log:
-      // - a plain Error from a customConnect that opts out of retries: the Gemini Interactions start, where a retried POST would begin a second billable run
-      // - whatever else a customConnect throws around its own fetch: a bug to fix there
+      // whatever a customConnect throws around its own fetch is a bug to fix there
       if (!(error instanceof TRPCFetcherError)) {
         // NOTE: this is here so we can aggregate statistics on this in the next month or so, then we know how to subclass/silence this
         console.warn(`[fetchers.retrier] ⚠️ Not a TRPCFetcherError, not retried: ${error?.name || typeof error}`, { error });

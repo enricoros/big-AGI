@@ -34,6 +34,7 @@ import { LabFlavor, LabRun, LabRunMeta, LabSegment, TraceRecorder, withConsoleCa
 
 function _makeDebugObj(prettyDialect: string): AixDebugObject {
   return {
+    runtime: 'relay',
     prettyDialect,
     echoRequest: false,
     requestBodyOverride: undefined,

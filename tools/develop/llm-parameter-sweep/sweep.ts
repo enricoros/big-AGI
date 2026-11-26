@@ -16,7 +16,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request, AixTools_ToolDefinition, AixTools_ToolsPolicy, AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
-import type { IParticleTransmitter, ParticleCGDialectEndReason, ParticleServerLogLevel } from '~/modules/aix/server/dispatch/chatGenerate/parsers/IParticleTransmitter';
+import type { IParticleTransmitter, ParticleCGControlOp, ParticleCGDialectEndReason, ParticleDialectIssue, ParticleServerLogLevel } from '~/modules/aix/server/dispatch/chatGenerate/parsers/IParticleTransmitter';
 import type { ModelDescriptionSchema } from '~/modules/llms/server/llm.server.types';
 import { ChatGenerateDispatch, createChatGenerateDispatch } from '~/modules/aix/server/dispatch/chatGenerate/chatGenerate.dispatch';
 import { listModelsRunDispatch } from '~/modules/llms/server/listModels.dispatch';
@@ -471,7 +471,7 @@ type ErrorCategory =
 
 class SweepCollectorTransmitter implements IParticleTransmitter {
   text: string = '';
-  dialectIssue: string | null = null;
+  dialectIssue: string | null = null; // the first issue that failed the generation
   tokenStopReason: AixWire_Particles.GCTokenStopReason | null = null;
   endReason: string | null = null;
 
@@ -492,6 +492,12 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
   // Parser-initiated Control
   setDialectEnded(reason: ParticleCGDialectEndReason): void {
     this.endReason = reason;
+  }
+
+  addDialectIssue(issue: ParticleDialectIssue, _serverLog?: ParticleServerLogLevel): void {
+    // the first issue that fails the generation: the probe failed
+    if (issue.code !== 'service-tool' && issue.effect !== 'notice')
+      this.dialectIssue ??= issue.text || issue.code || 'service-error';
   }
 
   setDialectTerminatingIssue(dialectText: string, _symbol: string | null, _serverLog: ParticleServerLogLevel): void {
@@ -536,7 +542,7 @@ class SweepCollectorTransmitter implements IParticleTransmitter {
   appendUrlCitation(_title: string, _url: string, _citationNumber?: number, _startIndex?: number, _endIndex?: number, _textSnippet?: string, _pubTs?: number): void { /* no-op */ }
 
   // Special
-  sendCGControl(_cgCOp: AixWire_Particles.ChatControlOp, _flushQueue?: boolean): void { /* no-op */ }
+  sendCGControl(_cgCOp: ParticleCGControlOp, _flushQueue?: boolean): void { /* no-op */ }
   sendOperationState(_mot: 'search-web' | 'gen-image' | 'code-exec', _text: string, _opts?: any): void { /* no-op */ }
   sendSetVendorState(svs: any): void {
     // Capture Gemini thoughtSignature for round-trip tool continuity (see parser: sendSetVendorState({p:'svs', vendor:'gemini', state:{thoughtSignature}}))
