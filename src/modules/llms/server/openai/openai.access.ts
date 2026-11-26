@@ -17,7 +17,7 @@ import { BaseProduct } from '~/common/app.release';
 import { env } from '~/server/env.server';
 
 import type { RequestAccessValues } from '../llm.server.types';
-import { llmsApiUrl, llmsFixupHost, llmsHostnameMatches, llmsServerKeyForHost } from '../../shared/llm.isomorphic';
+import { llmsApiUrl, llmsFixupHost, llmsHostnameMatches, llmsIsNativeDeepseekHost, llmsServerKeyForHost } from '../../shared/llm.isomorphic';
 
 
 // configuration
@@ -76,6 +76,12 @@ export const OPENROUTER_API_PATHS = {
   credits: '/v1/credits', // credits bought or granted, and used, by the key's account
 } as const;
 
+// -- DeepSeek-specific API Paths --
+
+export const DEEPSEEK_API_PATHS = {
+  messages: '/anthropic/v1/messages', // [DeepSeek Messages] the Anthropic-compatible route, off the server root
+} as const;
+
 
 /** Select a random key from a comma-separated list of API keys, used to load balance. */
 export function llmsRandomKeyFromMultiKey(multiKeyString: string): string {
@@ -111,6 +117,9 @@ export const openAIAccessSchema = z.object({
 
   // [OpenRouter only] Debug/routing service-level settings
   orRequireParameters: z.boolean().optional(), // Only route to providers supporting all request params
+
+  // [DeepSeek only] the service's API protocol; unset is Auto, resolved with the host by llmsDeepseekWire
+  dsProtocol: z.enum(['messages', 'chat-completions']).optional(),
 });
 
 export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | null, apiPath: string): { headers: HeadersInit, url: string } {
@@ -180,7 +189,13 @@ export function openAIAccess(access: OpenAIAccessSchema, modelRefId: string | nu
     case 'deepseek':
       // https://platform.deepseek.com/api-docs/
       let deepseekKey = access.oaiKey || llmsServerKeyForHost(access.oaiHost, env.DEEPSEEK_API_KEY, DEFAULT_DEEPSEEK_HOST);
-      const deepseekHost = llmsFixupHost(access.oaiHost || DEFAULT_DEEPSEEK_HOST, apiPath);
+      let deepseekHost = llmsFixupHost(access.oaiHost || DEFAULT_DEEPSEEK_HOST, apiPath);
+
+      // [DeepSeek Messages] the route hangs off the server root, so a base path in the host does not apply to it: on
+      // DeepSeek's own host any path goes ('/beta' is a Chat Completions base), elsewhere a trailing '/anthropic' (the
+      // base URL DeepSeek documents for Anthropic SDKs) is already in the route
+      if (apiPath === DEEPSEEK_API_PATHS.messages)
+        deepseekHost = llmsIsNativeDeepseekHost(access.oaiHost) ? DEFAULT_DEEPSEEK_HOST : deepseekHost.replace(/\/anthropic$/, '');
 
       // Use function to select a random key if multiple keys are provided
       deepseekKey = llmsRandomKeyFromMultiKey(deepseekKey);

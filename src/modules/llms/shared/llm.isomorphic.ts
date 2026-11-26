@@ -85,3 +85,25 @@ export function llmsIsNativeOpenAIHost(oaiHost: string | undefined): boolean {
 export function llmsIsNativeGeminiHost(geminiHost: string | undefined): boolean {
   return !geminiHost || llmsHostnameMatches(geminiHost, 'generativelanguage.googleapis.com');
 }
+
+/**
+ * True when the configured host points at the real DeepSeek API (empty = use default = native), at any path:
+ * 'https://api.deepseek.com/beta' and '.../anthropic' are DeepSeek's own bases.
+ */
+export function llmsIsNativeDeepseekHost(deepseekHost: string | undefined): boolean {
+  return !deepseekHost || llmsHostnameMatches(deepseekHost, 'api.deepseek.com');
+}
+
+/** The API protocols of a DeepSeek service - persisted in its setup: add values, never rename */
+export type LlmsDeepseekWire = 'messages' | 'chat-completions';
+
+/**
+ * The wire a DeepSeek service speaks. A protocol the user set wins; unset is Auto: Anthropic Messages on DeepSeek's own
+ * host, Chat Completions on any other - a proxy is taken to serve the OpenAI-compatible route only.
+ *
+ * The one answer for the chat dispatch (per request), the models listing (which parameters a model gets), the setup UI
+ * and the model-defs version (a change re-lists): none of them looks at the host on its own.
+ */
+export function llmsDeepseekWire(protocol: LlmsDeepseekWire | null | undefined, deepseekHost: string | undefined): LlmsDeepseekWire {
+  return protocol || (llmsIsNativeDeepseekHost(deepseekHost) ? 'messages' : 'chat-completions');
+}
