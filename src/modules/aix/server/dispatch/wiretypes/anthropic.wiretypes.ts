@@ -364,6 +364,7 @@ export namespace AnthropicWire_Blocks {
      */
     input: z.any(),
     caller: _ToolUseCaller_schema.optional(),
+    kind: z.string().optional(), // [DeepSeek Messages] which capability made the call: search | deep_search | read_link | image_search | deep_image_search
   });
 
   /**
@@ -400,6 +401,11 @@ export namespace AnthropicWire_Blocks {
         title: z.string(),
         url: z.string(),
         page_age: z.string().nullish(),
+        // [DeepSeek Messages] for display: the result card, and the image's own address on an image search
+        snippet: z.string().nullish(),
+        site_name: z.string().nullish(),
+        site_icon: z.string().nullish(),
+        image_url: z.string().nullish(),
       })),
       z.object({
         type: z.literal('web_search_tool_result_error'),
@@ -408,8 +414,11 @@ export namespace AnthropicWire_Blocks {
           z.string(), // forward-compatibility
         ]),
       }),
+      // [DeepSeek Messages] a failed search is documented as the error inside an array (not seen live)
+      z.tuple([z.object({ type: z.literal('web_search_tool_result_error'), error_code: z.string() })]),
     ]),
     caller: _ToolUseCaller_schema.optional(),
+    kind: z.string().optional(), // [DeepSeek Messages] as on its server_tool_use
   });
 
   export const WebFetchToolResultBlock_schema = _CommonBlock_schema.extend({
@@ -420,6 +429,7 @@ export namespace AnthropicWire_Blocks {
         type: z.literal('web_fetch_result'),
         url: z.string(),
         retrieved_at: z.string().nullish(),
+        published_at: z.string().nullish(), // [DeepSeek Messages] the page's date: RFC 3339 on a page opened by a search, as found on the page for a link read
         content: DocumentBlock_I_schema,
       }),
       z.object({
@@ -429,6 +439,9 @@ export namespace AnthropicWire_Blocks {
       }),
     ]),
     caller: _ToolUseCaller_schema.optional(),
+    // [DeepSeek Messages] `signature` is the page a link read brought in, encrypted: sent back, it restores the page in later turns. Not stored yet
+    kind: z.string().optional(),
+    signature: z.string().optional(),
   });
 
   const _CodeExecutionOutputBlock_schema = z.object({
