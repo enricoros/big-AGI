@@ -1,4 +1,5 @@
 import type { IModelVendor } from '../IModelVendor';
+import type { LlmsDeepseekWire } from '../../shared/llm.isomorphic';
 import type { OpenAIAccessSchema } from '../../server/openai/openai.access';
 
 import { ModelVendorOpenAI } from '../openai/openai.vendor';
@@ -7,6 +8,7 @@ import { ModelVendorOpenAI } from '../openai/openai.vendor';
 export interface DDeepseekServiceSettings {
   deepseekKey: string;
   deepseekHost: string;
+  deepseekProtocol?: LlmsDeepseekWire; // unset is Auto: by host, see llmsDeepseekWire
   csf?: boolean;
 }
 
@@ -36,6 +38,7 @@ export const ModelVendorDeepseek: IModelVendor<DDeepseekServiceSettings, OpenAIA
     oaiKey: partialSetup?.deepseekKey || '',
     oaiOrg: '',
     oaiHost: partialSetup?.deepseekHost || '',
+    ...(partialSetup?.deepseekProtocol ? { dsProtocol: partialSetup.deepseekProtocol } : {}),
   }),
 
   // OpenAI transport ('Deepseek' dialect in 'access')

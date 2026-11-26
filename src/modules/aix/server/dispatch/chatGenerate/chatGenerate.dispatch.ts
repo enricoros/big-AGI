@@ -1,8 +1,9 @@
 import { ANTHROPIC_API_PATHS, anthropicAccess, anthropicBetaFeatures } from '~/modules/llms/server/anthropic/anthropic.access';
-import { OPENAI_API_PATHS, openAIAccess, OpenAIDialects } from '~/modules/llms/server/openai/openai.access';
+import { DEEPSEEK_API_PATHS, OPENAI_API_PATHS, openAIAccess, OpenAIDialects } from '~/modules/llms/server/openai/openai.access';
 import { bedrockAccessAsync, bedrockResolveRegion, bedrockURLMantle, bedrockURLRuntime } from '~/modules/llms/server/bedrock/bedrock.access';
 import { geminiAccess } from '~/modules/llms/server/gemini/gemini.access';
 import { ollamaAccess } from '~/modules/llms/server/ollama/ollama.access';
+import { llmsDeepseekWire } from '~/modules/llms/shared/llm.isomorphic';
 
 import { fetchResponseOrTRPCThrow, TRPCFetcherError } from '~/server/trpc/trpc.router.fetchers';
 
@@ -14,6 +15,7 @@ import { GeminiInteractionsWire_API_Interactions } from '../wiretypes/gemini.int
 
 import { aixAnthropicHostedFeatures, aixToAnthropicMessageCreate } from './adapters/anthropic.messageCreate';
 import { aixToBedrockConverse } from './adapters/bedrock.converse';
+import { aixToDeepseekMessageCreate } from './adapters/deepseek.messageCreate';
 import { aixToGeminiGenerateContent } from './adapters/gemini.generateContent';
 import { aixToGeminiInteractionsCreate } from './adapters/gemini.interactionsCreate';
 import { aixToOpenAIChatCompletions } from './adapters/openai.chatCompletions';
@@ -25,6 +27,7 @@ import type { IParticleTransmitter } from './parsers/IParticleTransmitter';
 import { createAnthropicFileInlineCompanion } from './parsers/anthropic.companion-fileInline';
 import { anthropicThinkingOrigins, createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
 import { createBedrockConverseParserNS, createBedrockConverseStreamParser } from './parsers/bedrock-converse.parser';
+import { createDeepseekMessagesParser } from './parsers/deepseek.messages.parser';
 import { createGeminiGenerateContentResponseParser } from './parsers/gemini.parser';
 import { createGeminiInteractionsParserNS, createGeminiInteractionsParserSSE } from './parsers/gemini.interactions.parser';
 import { createGeminiInteractionsUsageBackfillCompanion } from './parsers/gemini.interactions.companion-usageBackfill';
@@ -302,6 +305,19 @@ export async function createChatGenerateDispatch(access: AixAPI_Access, model: A
     case 'togetherai':
     case 'xai':
     case 'zai':
+
+      // [DeepSeek Messages] DeepSeek's own host speaks Anthropic Messages. Chat Completions, below, stays for custom hosts
+      // and as the way back: the service's API Protocol decides, with the host (llmsDeepseekWire)
+      if (dialect === 'deepseek' && llmsDeepseekWire(access.dsProtocol, access.oaiHost) === 'messages')
+        return {
+          request: {
+            ...openAIAccess(access, model.id, DEEPSEEK_API_PATHS.messages),
+            method: 'POST',
+            body: aixToDeepseekMessageCreate(model, chatGenerate, streaming),
+          },
+          demuxerFormat: streaming ? 'fast-sse' : null,
+          chatGenerateParse: createDeepseekMessagesParser(streaming),
+        };
 
       // newer: OpenAI Responses API - per model (vndOaiResponsesAPI) or for the dialects served on Responses only
       const isResponsesAPI = !!model.vndOaiResponsesAPI || RESPONSES_ONLY_DIALECTS.has(dialect);
