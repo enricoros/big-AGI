@@ -66,6 +66,12 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **P23** (low) Consecutive text parts carry no boundary and merge (T1). Not reproduced (0/12 2.5 URL-context runs, 0/21 3.x NS)
 - [ ] **P54** (low) A 0-byte code-execution file (`inlineData` without `data`) is skipped; Gemini fails its own continuation right after (in-band 400)
 
+### Parse: DeepSeek Messages (`P/deepseek.messages.parser.ts`, over `P/anthropic.parser.ts`)
+
+The Anthropic rows apply where DeepSeek sends the same blocks (P1, P4, P8). Its own:
+
+- [ ] **P64** (low) Thinking `signature` not stored, by choice: it is a UUID the vendor does not check, and stored it would replay to Anthropic as a signature. Reasoning is sent back as unsigned text, on tool turns only ([LLM-deepseek-messages.md](LLM-deepseek-messages.md))
+
 ### Parse: Chat Completions (`P/openai.parser.ts`)
 
 - [ ] **P37** (urgent, client tools) A delta opening several tool calls keeps only the first (`break` exits the loop): Mistral direct and Cerebras qwen lose 22/31 calls; missing names become `unknown_function`
@@ -133,7 +139,7 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **Q5** (high) Anthropic: model image parts are moved first and sent as user content (`hotFixImagePartsFirst`, `hotFixMapModelImagesToUser`): a generated chart lands in the user's message and that turn's thinking is dropped
 - [ ] **Q6** (high) OpenAI: assistant images sent as a user `input_image`: an image-generation turn dissolves into the user message, a code chart splits the assistant turn
 - [ ] **Q7** (medium) Gemini: a hosted `codeExecutionResult` replayed under role `user`, splitting the model turn (accepted)
-- [ ] **Q9** (medium, client tools) DeepSeek: every `ma` concatenated onto the last tool-call message, `''` sent on earlier ones; accepted, prefix-cache hits lost each iteration
+- [ ] **Q9** (medium, client tools) DeepSeek on Chat Completions (custom hosts): every `ma` concatenated onto the last tool-call message, `''` sent on earlier ones; accepted, prefix-cache hits lost each iteration. The Messages wire sends each step's reasoning on its own tool turn
 - [ ] **Q3** (low) Anthropic: a `\n` text block inserted between contiguous thinking blocks - `hotFixAntSeparateContiguousThinkingBlocks`. Binding-neutral; 5.x models accept contiguous thinking; most insertions sit where P4 removed hosted blocks
 - [ ] **Q4** (low) Anthropic: one `ma` emits its thinking block, then all its redacted blocks (R3); matches wire order for every stored shape
 - [ ] **Q8** (low) OpenAI: `attachCodeInterpreterCallOutputs` overwrites `outputs` per stored tool result, only the last replays (synthetic)
