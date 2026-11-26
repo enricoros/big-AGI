@@ -68,7 +68,7 @@ Gemini ends a hosted-tools run that exhausts the per-request step budget (Google
 
 Proposed treatment, on the issue record (the policy has no vendor rows yet):
 
-- class `truncated`, with its own stop reason: `out-of-tokens` would show the wrong words, so the wording at the three "Out of tokens" sites (outcome label, Beam card notice, Continue block) becomes stop-reason aware
+- class `truncated`, with its own stop reason: `out-of-tokens` would show the wrong words, so the wording at the three "Out of tokens" sites (outcome label, the message's own line in `ChatMessage`, Continue block) becomes stop-reason aware
 - retryable: no; the recovery is Continue, since a new request gets a fresh budget
 - user text: the vendor `finishMessage`, as a display-only notice, not content
 - AI text: none
