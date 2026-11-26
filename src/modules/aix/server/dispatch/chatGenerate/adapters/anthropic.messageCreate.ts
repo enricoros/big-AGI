@@ -29,7 +29,10 @@ type TRequest = AnthropicWire_API_Message_Create.Request;
  * body against its own schema and 400s on api.anthropic.com-only fields, so the adapter has to know
  * where the request is going. Keep every target-conditional field in the one block at the bottom.
  */
-export type AixAnthropicTarget = 'anthropic' | 'bedrock';
+export type AixAnthropicTarget =
+  | 'anthropic'
+  | 'bedrock'
+  | 'deepseek'; // [DeepSeek Messages] no branch of its own: prepared and rewritten around this adapter, in deepseek.messageCreate.ts
 
 
 /**
