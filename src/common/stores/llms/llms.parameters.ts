@@ -308,6 +308,26 @@ export const DModelParameterRegistry = {
   }),
 
 
+  // DeepSeek-specific
+  // The web tools of the Messages wire, on deepseek-flash: one parameter per tool - kb/modules/LLM-deepseek-messages.md
+
+  llmVndDeepseekReadUrl: _enumDef({ // implies: LLM_IF_Tools_WebSearch
+    label: 'Read URL',
+    type: 'enum',
+    description: 'Read the pages linked in the message',
+    values: ['auto', 'off'],
+    // undefined means off (same as 'off')
+  }),
+
+  llmVndDeepseekWebSearch: _enumDef({ // implies: LLM_IF_Tools_WebSearch
+    label: 'Web Search',
+    type: 'enum',
+    description: 'Search the web and cite sources; with thinking on, search, open pages and check over several steps',
+    values: ['auto', 'off'],
+    // undefined means off (same as 'off')
+  }),
+
+
   // Gemini-specific
 
   llmVndGeminiAspectRatio: _enumDef({ // implies: LLM_IF_Outputs_Image

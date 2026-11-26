@@ -196,6 +196,16 @@ const _antWebFetchOptions = [
   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
 ] as const;
 
+const _deepseekWebSearchOptions = [
+  { value: 'auto', label: 'On', description: 'Search and cite; deeper with thinking on' },
+  { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
+] as const;
+
+const _deepseekReadUrlOptions = [
+  { value: 'auto', label: 'On', description: 'Read the links in the message' },
+  { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
+] as const;
+
 // const _moonshotWebSearchOptions = [
 //   { value: 'auto', label: 'On', description: 'Enable Kimi $web_search ($0.005 per search)' },
 //   { value: _UNSPECIFIED, label: 'Off', description: 'Disabled (default)' },
@@ -308,6 +318,8 @@ export function LLMParametersEditor(props: {
     llmVndAntWebFetchMaxUses,
     llmVndAntWebSearch,
     llmVndAntWebSearchMaxUses,
+    llmVndDeepseekReadUrl,
+    llmVndDeepseekWebSearch,
     llmVndGemEffort,
     llmVndGeminiAgentViz,
     llmVndGeminiAspectRatio,
@@ -699,6 +711,32 @@ export function LLMParametersEditor(props: {
 
 
     {/* Gemini [effort, ... ] */}
+
+    {showParam('llmVndDeepseekWebSearch') && (
+      <FormSelectControl
+        title='Web Search'
+        tooltip='DeepSeek searches the web and cites its sources. With thinking on it works over several steps: it searches, opens pages and finds text in them. Not used on a request that carries tools of its own.'
+        value={llmVndDeepseekWebSearch ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value || value === 'off') onRemoveParameter('llmVndDeepseekWebSearch');
+          else onChangeParameter({ llmVndDeepseekWebSearch: value });
+        }}
+        options={_deepseekWebSearchOptions}
+      />
+    )}
+
+    {showParam('llmVndDeepseekReadUrl') && (
+      <FormSelectControl
+        title='Read URL'
+        tooltip='DeepSeek reads the pages linked in your last message, up to 10. With thinking and Web Search both on, the search opens the links itself.'
+        value={llmVndDeepseekReadUrl ?? _UNSPECIFIED}
+        onChange={(value) => {
+          if (value === _UNSPECIFIED || !value || value === 'off') onRemoveParameter('llmVndDeepseekReadUrl');
+          else onChangeParameter({ llmVndDeepseekReadUrl: value });
+        }}
+        options={_deepseekReadUrlOptions}
+      />
+    )}
 
     {showParam('llmVndGeminiThinkingBudget') && (
       <FormSliderControl

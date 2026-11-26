@@ -571,6 +571,10 @@ export namespace AixWire_API {
     // Bedrock
     vndBedrockAPI: z.enum(['converse', 'invoke-anthropic', 'mantle', 'mantle-responses']).optional(),
 
+    // DeepSeek - the web tools of its Messages wire
+    vndDeepseekReadUrl: z.enum(['auto']).optional(),
+    vndDeepseekWebSearch: z.enum(['auto']).optional(),
+
     // Gemini
     vndGeminiAPI: z.enum(['interactions-agent']).optional(), // opt-in per-model API dialect; unset = generateContent
     vndGeminiAgentViz: z.enum(['auto', 'off']).optional(), // agent_config.visualization; default 'auto' upstream

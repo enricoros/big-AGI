@@ -84,6 +84,7 @@ export function aixCreateModelFromLLMParameters(
     llmVndAntEffort, llmVndGemEffort, llmVndOaiEffort, llmVndMiscEffort,
     llmVndAntCodeSandbox, llmVndAntInfSpeed, llmVndAntSkills, llmVndAntThinkingBudget, llmVndAntWebDynamic, llmVndAntWebFetch, llmVndAntWebFetchMaxUses, llmVndAntWebSearch, llmVndAntWebSearchMaxUses,
     llmVndBedrockAPI,
+    llmVndDeepseekReadUrl, llmVndDeepseekWebSearch,
     llmVndGeminiAgentViz, llmVndGeminiAspectRatio, llmVndGeminiImageSize, llmVndGeminiCodeExecution, llmVndGeminiComputerUse, llmVndGeminiGoogleSearch, llmVndGeminiMediaResolution, llmVndGeminiThinkingBudget, llmVndGeminiUrlContext,
     // llmVndMoonshotWebSearch,
     llmVndOaiReasoningMode, llmVndOaiRestoreMarkdown, llmVndOaiServiceTier, llmVndOaiVerbosity, llmVndOaiWebSearchContext, llmVndOaiWebSearchGeolocation, llmVndOaiImageGeneration, llmVndOaiCodeInterpreter,
@@ -153,6 +154,10 @@ export function aixCreateModelFromLLMParameters(
 
     // Bedrock
     ...(llmVndBedrockAPI ? { vndBedrockAPI: llmVndBedrockAPI } : {}),
+
+    // DeepSeek
+    ...(llmVndDeepseekReadUrl === 'auto' ? { vndDeepseekReadUrl: llmVndDeepseekReadUrl } : {}),
+    ...(llmVndDeepseekWebSearch === 'auto' ? { vndDeepseekWebSearch: llmVndDeepseekWebSearch } : {}),
 
     // Gemini
     ...(llmVndGeminiInteractions ? { vndGeminiAPI: 'interactions-agent' } : {}),
