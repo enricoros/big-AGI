@@ -4,16 +4,19 @@ How a broken connection surfaces on each path, what classifies it, and what Verc
 
 ## Where errors are classified
 
-| Path | Site | Turns a failure into |
-|---|---|---|
-| tRPC client | `streamingTransportFetch` (`src/common/util/trpc.client.ts`) | 413 and `text/html` responses -> `TRPCClientFetchError`, before tRPC parses them |
-| tRPC client | `aixClassifyStreamingError` (`src/modules/aix/client/aix.client.errors.ts`) | thrown transport errors -> error fragment text + `aix-<type>` hint |
-| tRPC client | `BlockPartError` | `aix-net-disconnected` + `**connection terminated**` -> the Connection Terminated card with the Direct Connection toggle (off and disabled, with the reason, where it cannot be used); `**network error**` -> plain text |
-| Server dispatch, and CSF in the browser | `fetchResponseOrTRPCThrow`, `fetchWithAbortableConnectionRetry` (`src/server/trpc/`) | connect and HTTP failures -> `TRPCFetcherError` categories; connection errors retried 3 times |
-| Server dispatch, and CSF in the browser | `chatGenerate.executor.ts` | `[Service Issue]`, `[Streaming Issue]`, `[Reading Issue]`, `[Parsing Issue]` in-band error particles (no hint) |
-| Both | `ContentReassembler` termination | a stream that ends without a terminal event -> "The stream ended before a final response status was received. The answer may be incomplete." |
+Every failure becomes one record, `DAixIssue` (`src/modules/aix/shared/aix.issues.ts`: the codes and the texts; `aix.issues.policy.ts`: what a code means for the retry, the replay and the presentation). The record is built where the failure is seen and carried unchanged: from the executor side in an `aix-issue` particle, from a throw by the client, and stored as an `aix.issue` part. The layers, the code table and the rules: [aix/AIX-TODO-errors.md](aix/AIX-TODO-errors.md). The relay is the tRPC pipe between the client and the executor on our server; Direct Connection (CSF) has none.
 
-The failure texts live in one place, `src/common/util/fetchFailures.ts`, as checks by who throws them: `isBrowserNetworkError`, `isNodeStreamTerminated`, `isEdgeConnectionLost`, `isTRPCNetworkError` (bare or wrapped in a `TRPCClientError`), `isTRPCStreamClosedEarly`, plus `isBrowserOffline`. Each site sits on one leg, uses the checks of that leg, and words the message itself.
+| Path | Site | Builds |
+|---|---|---|
+| tRPC client | `streamingTransportFetch` (`src/common/util/trpc.client.ts`) | 413, `text/html` and any other non-2xx that is not tRPC's own error envelope -> `TRPCClientFetchError`, before tRPC parses them. The stream link answers 200 for every failure of a procedure, so an error status is the answer of what sits in front |
+| tRPC client | `aixClassifyStreamingError` (`src/modules/aix/client/aix.client.errors.ts`) | a throw across the relay -> `relay-connect`, `relay-read`, `relay-cutoff`, `relay-http`, `relay-html`, `relay-rejected` (a tRPC code other than `INTERNAL_SERVER_ERROR`); anything else, and our procedure throwing (`INTERNAL_SERVER_ERROR`), `aix-unknown`. A Stop only when the user's signal is aborted. On the CSF path nothing is `relay-*` |
+| Both | `BlockPartAixIssue` | `relay-cutoff` -> the Connection Terminated card with the Direct Connection toggle (off and disabled, with the reason, where it cannot be used); `relay-http` 413 -> the Request Too Large card; any other record: a block (label or service name, sentence, detail, advice, Details with the facts row) or a chip, by `aixIssuePresentation` |
+| Server dispatch, and CSF in the browser | `fetchResponseOrTRPCThrow`, `fetchWithAbortableConnectionRetry` (`src/server/trpc/`) | connect and HTTP failures -> `TRPCFetcherError` categories; connection errors retried 3 times |
+| Server dispatch, and CSF in the browser | `chatGenerate.executor.ts` and the continuation wrapper | `dispatch-prepare`, `dispatch-connect` (`causeCode` the system code), `dispatch-http`, `dispatch-read`, `dispatch-parse`, `dispatch-unknown`; `runtime` `client` or `relay` on connect and read failures |
+| Server dispatch, and CSF in the browser | `ChatGenerateTransmitter`, at the end | a body closed without a dialect end and without a stop reason -> `dispatch-cutoff`; the abort signal fired with no stop reason -> `dispatch-aborted` (under a user Stop the client applies nothing after it); a dialect end with no stop reason -> `model-unfinished`, a notice. All in `aix-issue` particles |
+| Both | `ContentReassembler` | no end particle -> `aix-unknown` (`no-end`); a particle that throws in processing -> `aix-unknown`; a throw after the verdict -> logged, no record |
+
+The failure texts live in one place, `src/common/util/fetchFailures.ts`, as checks by who throws them: `isBrowserNetworkError`, `isNodeStreamTerminated`, `isEdgeConnectionLost`, `isTRPCNetworkError` (bare or wrapped in a `TRPCClientError`), `isTRPCStreamClosedEarly`, plus `isBrowserOffline`. Each site sits on one leg, uses the checks of that leg, and builds its record: the sentence is the code's, the engine text goes to `detail`.
 
 ## Browser fetch failure texts
 
@@ -29,21 +32,26 @@ Older WebKit surfaced NSURLError texts (`The network connection was lost.` and s
 
 ## What the user sees (11.22.1)
 
+The record's code per event; the sentence is the code's text in `aix.issues.ts`, the engine or runtime text is the record's `detail` (shown under Details, with the facts row).
+
 | Event | tRPC path | CSF path |
 |---|---|---|
-| Vercel 300s limit, Edge or Node | `Stream closed unexpectedly` -> **connection terminated** | no function in the path |
+| Vercel 300s limit, Edge or Node | `Stream closed unexpectedly` -> `relay-cutoff`, the Connection Terminated card | no function in the path |
 | Function process dies mid-stream | same as the limit: a clean end of body | - |
-| Body ends before the first line | `Stream closed before head was received` -> **connection terminated** | - |
-| Connection reset or cut mid-stream | bare `TypeError` -> **network error** | `[Streaming Issue] D: the connection to D dropped mid-response (<engine text>).` |
-| Connection fails before the response | `TypeError` wrapped in `TRPCClientError` -> **network error** | `[Service Issue] D: Could not connect to <host>: <engine text>. The browser hides the cause: offline, a blocking extension, or the service refusing browser requests (CORS; ...)` after 3 retries |
-| Server's provider socket drops (undici `terminated`, Edge `Network connection lost.`) | `[Streaming Issue] D: the connection to D dropped mid-response (<runtime text>).` | - |
-| Front-door 413 | Request too large card | provider 413 -> `[Service Issue] ... 413` |
-| HTML instead of JSON | captive-portal message | - |
-| Provider ends without `[DONE]` or a finish reason | "The stream ended before a final response status was received. The answer may be incomplete." | same |
-| Stop | aborted, no error fragment | same |
-| Transport fails after a clean or truncated end | kept as is, see AIX-outcome.md (Issue after the stop reason) | same |
+| Body ends before the first line | `Stream closed before head was received` -> `relay-cutoff` | - |
+| Connection reset or cut mid-stream | bare `TypeError` -> `relay-read` | `dispatch-read`, runtime `client`, detail `<engine text>` |
+| Connection fails before the response | `TypeError` wrapped in `TRPCClientError` -> `relay-connect`, with the Direct Connection turn-on row when online | `dispatch-connect`, runtime `client`, after 3 retries; detail the engine text, cause and host; the turn-off row when online |
+| Server's provider socket drops (undici `terminated`, Edge `Network connection lost.`) | `dispatch-read`, runtime `relay`, detail `<runtime text>` | - |
+| Front-door 413 | `relay-http` 413, the Request Too Large card | provider 413 -> `dispatch-http` 413 |
+| Front-door 5xx, 429, 401, 403, 404 (a gateway, a firewall, a platform limit), plain or JSON | `relay-http` with the status: 'Try again in a moment.', or 'Reload the app, then try again.' for 401/403/404 | - |
+| HTML instead of JSON | `relay-html` | - |
+| Our server's procedure throws | `aix-unknown`, `causeCode` `INTERNAL_SERVER_ERROR` (an executor throw is `dispatch-unknown` before it gets there) | `dispatch-unknown` |
+| Provider closes the body with no end event and no finish reason | `dispatch-cutoff` | same |
+| Provider ends (`[DONE]`) without a finish reason | `model-unfinished` notice, outcome completed | same |
+| Stop | aborted, no record stored (the executor's closing `dispatch-aborted` is not applied) | same |
+| The relay fails after the verdict (the end applied, or an issue that failed) | logged only, see AIX-outcome.md (Issue after the stop reason) | same |
 
-When the browser reports no network (`navigator.onLine === false`, `isBrowserOffline`), the network-error texts on both paths end with "You appear to be offline."; for a CSF connect failure it replaces the list of possible causes.
+When the browser reports no network (`navigator.onLine === false`, `isBrowserOffline`), the record carries `offline`: the advice reads "You appear to be offline." and a connect failure offers no Direct Connection row.
 
 On 11.19.0 the 300s cut surfaced as a minified `TypeError` (`i is not iterable` on V8, `undefined is not an object (evaluating '[s,l,u]')` on JSC) and, before the result envelope, as a wrapped `TypeError` classified **net-unknown**.
 
@@ -78,7 +86,7 @@ Earlier tRPC workarounds: the 10.44.1 pin (bundle size, trpc#5249), stream abort
 ## Open
 
 - The Stop leak above: the server cannot learn about the abort on Vercel; a fix needs another signal (a stop call, or the provider's own cancel).
-- Client-side retry is off (`new AixStreamRetry(0, 0)`) and has two latent bugs: the status is read from `error.status` (a `TRPCClientError` has none), and an abort during the backoff ends `failed`, not `aborted`.
+- Client-side retry is off (`new AixStreamRetry(0, 0)`): its policy is open. Its two latent bugs are fixed: `shallRetry` reads the record (`httpStatus`, the policy's `recovery`) instead of `error.status`, and an abort during the backoff ends `aborted`. A throw after the verdict is not retried.
 
 ## Re-measuring
 

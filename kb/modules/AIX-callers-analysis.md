@@ -23,12 +23,12 @@ This document analyzes all AIX function callers and their patterns for message r
 
 | **Caller** | **Context** | **Message Removal** | **Placeholder** | **Error Handling** |
 |------------|-------------|-------------------|----------------|-------------------|
-| **Chat Persona** | `'conversation'` | `messageWasInterruptedAtStart()` → `removeMessage()` | None | Error fragments |
-| **XE Chat Generate** | `'conversation'` | `messageWasInterruptedAtStart()` → `removeMessage()` | `'...'` placeholder | Error fragments via messageEditor |
+| **Chat Persona** | `'conversation'` | `messageWasInterruptedAtStart()` → `removeMessage()` | None | Issue parts (`aix.issue`) |
+| **XE Chat Generate** | `'conversation'` | `messageWasInterruptedAtStart()` → `removeMessage()` | `'...'` placeholder | Issue parts (`aix.issue`) via messageEditor |
 | **Beam Scatter** | `'beam-scatter'` | `messageWasInterruptedAtStart()` → empty message | `SCATTER_PLACEHOLDER` | Ray status update |
 | **Beam Gather** | `'beam-gather'` | `messageWasInterruptedAtStart()` → clear fragments | `GATHER_PLACEHOLDER` | Re-throw errors |
 | **Beam Follow-up** | `'beam-followup'` | `messageWasInterruptedAtStart()` → remove message | `FOLLOWUP_PLACEHOLDER` | Status updates |
-| **ScratchChat** | `'scratch-chat'` | `aborted && !fragments` → array removal | `SCRATCH_CHAT_PLACEHOLDER` | Error fragments |
+| **ScratchChat** | `'scratch-chat'` | `aborted && !fragments` → array removal | `SCRATCH_CHAT_PLACEHOLDER` | Issue parts (`aix.issue`) |
 | **Telephone** | `'call'` | None | None | Basic handling |
 | **ReAct Agent** | `'chat-react-turn'` | None | None | Append errors |
 | **Variform** | `'_DEV_'` | None | None | Throw errors |

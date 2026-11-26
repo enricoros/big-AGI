@@ -22,7 +22,7 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **P5** (low, client tools) Client `tool_use.caller` dropped; replay accepted
 - [ ] **P6** (low) Unknown block types skipped in production, fatal to the stream in development builds and strict mode; `mcp_tool_use`/`mcp_tool_result` throw (MCP is never sent)
 - [ ] **P8** (low) `web_fetch_tool_result` synthesizes a citation, the only fetch source left in the record - `_handleCBS_WebFetchToolResult`. Not replayed
-- [ ] **P9** (low) Message `id`, `stop_sequence` dropped; `stop_details` flattened into error text, replayed as `[ERROR]` (Q1)
+- [ ] **P9** (low) Message `id`, `stop_sequence` dropped; `stop_details` become the refusal's `model-filter` record (`causeCode` the category, `detail` the explanation), replayed as `[ERROR]` (Q1)
 - [ ] **P57** (low) Strict enums fail the event on a new vendor value: usage `service_tier` and `speed`, the skills `type`, the citations union. Latent
 
 ### Parse: Responses (`P/openai.responses.parser.ts`: OpenAI, xAI, Meta AI, Sakana)
@@ -33,9 +33,9 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **P51** (medium) S `response.incomplete` never sets the dialect end: a trailing hosted-op placeholder survives and becomes `[ERROR] (message incomplete)` on reload (S2)
 - [ ] **P50** (medium) Sakana: Gemini-backed turns end with an empty message holding the annotation; S drops it, NS stores an empty text fragment and an unswept placeholder (S2)
 - [ ] **P12** (medium) Code interpreter outputs regrouped (logs joined, images last); synthesized image text, failure text and container expiry replay as vendor logs - `_forwardDoneCodeInterpreterCallItem`
-- [ ] **P15** (medium) NS: synthetic `**Incomplete response**` text stored before the reasoning and replayed as assistant text; S sets an issue instead
+- [x] **P15** (medium) NS: synthetic `**Incomplete response**` text stored before the reasoning and replayed as assistant text; S sets an issue instead. Closed by the issue records: the text is gone, an incomplete reason is a stop reason or a record in S and NS
 - [ ] **P18** (medium) Annotation offsets part-relative and unlinked from their fragment (wrong span in the joined text 16/23); `file_citation`/`file_path` dropped; `container_file_citation` loses offsets - `_forwardTextAnnotation`
-- [ ] **P58** (medium) `response.failed` drops the misalignment explanation; the stored error is the code and message only
+- [ ] **P58** (medium) `response.failed` drops the misalignment explanation; the record keeps the message, code, type and param only
 - [ ] **P59** (medium) An `error` before any text ends the read, so the `response.failed` after it is dropped, and with it the tool counts (it carries no `usage`)
 - [ ] **P60** (medium) `nWebSearch` is read only past the `usage` gate in `_fromResponseMetrics`: a failed response carries `tool_usage` and no `usage`, so its searches are not counted. Moving it out shows a search-only cost on token-less failures
 - [ ] **P17** (low) Message and `function_call` item `id`/`status` dropped; unknown `phase` values dropped. Replay accepted, no measured effect
@@ -46,7 +46,7 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **P21** (low) A salvaged `failed` response drops its error text; NS `cancelled`/`in_progress`/`queued` end as `ok` (synthetic)
 - [ ] **P13** (low) `refusal` parts dropped; a refusal-only message stores nothing (synthetic)
 - [ ] **P14** (low) `reasoning_text` dropped; never emitted by GPT-6 (0/87 items)
-- [ ] **P55** (low) A failed `image_generation_call` (moderation block) is stored as a composed error text and replayed as `[ERROR]` (Q1); its id, status and error object are lost (P16) - `_forwardFailedImageGenerationCallItem`
+- [ ] **P55** (low) A failed `image_generation_call` (moderation block) is a `service-tool` record (effect `lost`, the vendor code in `causeCode`, its message in `detail`), replayed as `[ERROR]` (Q1); its id and status are lost (P16) - `_forwardFailedImageGenerationCallItem`
 - [ ] **P56** (low) S: event types not in the union are skipped in production, fatal to the stream in development builds and strict mode; seen: `response.metadata` (moderation flags) from ChatGPT-backed relays
 
 ### Parse: Gemini (`P/gemini.parser.ts`, `P/gemini.interactions.parser.ts`)
@@ -57,11 +57,11 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **P25** (medium) Grounding becomes message-wide citations; `groundingSupports`, `searchEntryPoint`, `citationMetadata`, `retrievalMetadata` dropped; a chunk without `web` fails the parse
 - [ ] **P31** (medium) Interactions: tool steps become `vp` cut to 80/240 chars in S, skipped in NS; the follow-up re-ran both searches when told not to; unknown steps, `user_input`, empty text skipped
 - [ ] **P52** (medium) Interactions: the NS (Recover) parser ignores `environment_id`, so the next turn gets a fresh sandbox
-- [ ] **P61** (medium) Interactions: a `cancelled` interaction shows as "Error" with no text
+- [x] **P61** (medium) Interactions: a `cancelled` interaction shows as "Error" with no text. Closed by the issue records: a `service-error` record that fails, `causeCode` `cancelled`, text 'The run was cancelled.'
 - [ ] **P22** (low) Empty text parts collapsed; their signature moves to the preceding text - `COLLAPSE_EMPTY_TEXT_PARTS`. Accepted on replay (21/21)
 - [ ] **P30** (low) Interactions: thought summary items concatenated into one reasoning run - `_emitThoughtSummary`
 - [ ] **P27** (low) A `functionCall` with non-object args dropped while its signature is still emitted, next turn 400 (synthetic); `OUTCOME_DEADLINE_EXCEEDED` output moved into error text
-- [ ] **P28** (low) Interactions: synthetic markdown in text (`[Image: uri]`, `[Document: uri]`, `[Video: uri]`, status lines) (synthetic)
+- [ ] **P28** (low) Interactions: synthetic markdown in text (`[Image: uri]`, `[Document: uri]`, `[Video: uri]`, the NS Recover diagnostics) (synthetic)
 - [ ] **P29** (low) Interactions: citations disabled - `DISABLE_CITATIONS`
 - [ ] **P23** (low) Consecutive text parts carry no boundary and merge (T1). Not reproduced (0/12 2.5 URL-context runs, 0/21 3.x NS)
 - [ ] **P54** (low) A 0-byte code-execution file (`inlineData` without `data`) is skipped; Gemini fails its own continuation right after (in-band 400)
@@ -81,14 +81,14 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 - [ ] **P36** (low) NS merges `reasoning_content` and `reasoning_details` into one `ma` (synthetic; no live provider sends both)
 - [ ] **P39** (low) `refusal` never read (synthetic)
 - [ ] **P40** (low) Audio `id` dropped, transcript kept only as the label; OpenRouter non-`data:` images dropped (synthetic)
-- [ ] **P63** (low) Unknown `finish_reason` values are dropped: the message says the finish reason was not provided by the model
+- [ ] **P63** (low) Unknown `finish_reason` values are dropped: the message gets a `model-unfinished` notice, 'The response may be incomplete: the service gave no finish reason.'
 
 ### Parse: Bedrock (`P/bedrock-converse.parser.ts`, Anthropic-on-Bedrock)
 
 - [ ] **P42** (high) Converse deltas other than text/`toolUse`, and NS blocks other than text/image/`toolUse`/`toolResult`, fail the parse: reasoning models (gpt-oss, DeepSeek R1, Kimi K2) return no answer (4/4); NS assistant images ignored
 - [ ] **P41** (low) `contentBlockIndex` discarded: adjacent text blocks land in one stream (synthetic)
-- [ ] **P43** (low) Converse stream exception frames skipped as unknown events; the vendor message is lost behind a generic truncation error (synthetic)
-- [ ] **P53** (low) Anthropic-on-Bedrock: an exception frame crashes the Anthropic parser's error handler; the vendor text survives only inside the issue's input data (synthetic)
+- [x] **P43** (low) Converse stream exception frames skipped as unknown events; the vendor message is lost behind a generic truncation error (synthetic). Closed by the issue records: a `service-error` that fails, the vendor message as text, the exception type as `causeCode`
+- [ ] **P53** (low) Anthropic-on-Bedrock: an exception frame crashes the Anthropic parser's error handler; the vendor text survives only in the `dispatch-parse` detail's input head (synthetic)
 
 ### Transmit
 
@@ -99,7 +99,7 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 
 ### Reassemble (`CR`)
 
-- [ ] **R7** (urgent, client tools) `_fci` args append to the last fragment (no id); when it is not the call, each chunk becomes an error fragment and the call keeps `""` args (P45) - `onAppendFunctionCallInvocationArgs`
+- [ ] **R7** (urgent, client tools) `_fci` args append to the last fragment (no id); when it is not the call, each chunk becomes a warn notice ('Part of the response could not be applied.') and the call keeps `""` args (P45) - `onAppendFunctionCallInvocationArgs`
 - [ ] **R1** (high) The text cursor stays open across `vp`, `urlc`, `svs`, `trs`, `trr_`, `aix-info`, retry resets, and boundaries never arrive (T1): text on both sides becomes one fragment - `onAppendText`. A merge drops later Anthropic thinking when isolated from P4
 - [ ] **R8** (high) `urlc` collected into one annotations fragment per message: on Anthropic (no offsets) a repeat URL is dropped whole; elsewhere ranges merge; first title wins - `onAddUrlCitation`
 - [ ] **R16** (high) `createDVoidWebCitation` (`chat.fragments.ts`) drops `textSnippet` without offsets: every Anthropic `cited_text` is lost
@@ -128,7 +128,7 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 
 ### Replay (`aix.client.chatGenerateRequest.ts`, adapters)
 
-- [ ] **Q1** (high) Assistant error fragments replay as `[ERROR] ...` model text when the turn has other content, parse issues with up to 2,048 chars of raw response JSON; the model reads them as its own output. A turn of errors alone is not sent
+- [ ] **Q1** (high) Assistant issues with effect `failed` or `lost` replay as `[ERROR] ...` model text when the turn has other content (`aixIssueReplayText`: the sentence, plus the vendor's detail for `service-*` and `model-*`); error parts stored before the records replay their text, parse issues with up to 2,048 chars of raw response JSON. The model reads them as its own output. A turn of errors alone is not sent
 - [ ] **Q2** (high) Void fragments other than reasoning are skipped, so citations are not replayed (R8); replay without citations drops later Anthropic thinking when isolated from P4
 - [ ] **Q5** (high) Anthropic: model image parts are moved first and sent as user content (`hotFixImagePartsFirst`, `hotFixMapModelImagesToUser`): a generated chart lands in the user's message and that turn's thinking is dropped
 - [ ] **Q6** (high) OpenAI: assistant images sent as a user `input_image`: an image-generation turn dissolves into the user message, a code chart splits the assistant turn

@@ -10,14 +10,16 @@ One classification of how a generation ended, derived once from the stored messa
 |---|---|---|---|
 | `completed` | the model stopped cleanly | none | true |
 | `truncated` | out of tokens; the partial output is kept, not usable as-is | `warning` | false |
-| `failed` | stop reason `issue` or `filter`, or a trailing error fragment on a message without a stop reason | `danger` | false |
+| `failed` | stop reason `issue` or `filter`; without a known stop reason, a trailing `aix.issue` that failed the generation, or a trailing error part | `danger` | false |
 | `aborted` | stopped by the user | `neutral` | false |
 
 `AixChatGenerateTerminal_LL` (the LL result) is an alias of the terminal type. `aixOutcomeIsSuccess()` is the Boolean projection.
 
 ## Derivation
 
-`messageTerminalOutcome(message)`: stored stop reason first (`out-of-tokens`, `issue` and `filter`, `client-abort`), then, with no stop reason, the last content fragment decides (`error` part means failed). Void fragments do not weigh in. A stop reason this build does not know (a newer build or peer) is no evidence: the fragments decide, as with none. `messageOutcome()` returns `pending` while `pendingIncomplete`.
+`messageTerminalOutcome(message)`: stored stop reason first (`out-of-tokens`, `issue` and `filter`, `client-abort`). Fallback, with no stop reason or one this build does not know (a newer build or peer): the last content fragment decides, skipping `aix.issue` parts that did not fail the generation (`aixIssueFails`: effect `failed`): an issue that failed or an `error` part means failed, anything else completed. Content after a failed issue reads completed: a message joined from several generations (Beam "Use all", a call transcript) has no stop reason, while one generation an issue failed stores `issue`. Void fragments do not weigh in. No `switch` (SWC); `tools/develop/swc-minify-check` holds the cases. `messageOutcome()` returns `pending` while `pendingIncomplete`.
+
+The reassembler keeps the stored stop reason and the records in agreement: when the message holds an issue that failed, it stores `issue` (`filter` stays). The executor's stop reason does not see a failure the client recorded, and a Stop after a failure therefore reads `failed`.
 
 The stored fact is `DMessageGenerator.tokenStopReason`, four values, unchanged. The outcome is never stored.
 
@@ -42,8 +44,8 @@ The tables are private to `chat.message.outcome.ts`; `messageOutcomePolicy()`, `
 
 ## Homes
 
-- Wire: `AixWire_Particles.gcStopReasonRow()` in `aix.wiretypes.ts` reads the private stop-reason table, one row per stop reason with three columns: `class` (edge analytics: `ok` | `truncated` | `error`), `stored` (the stop reason the client persists), `message` (error fragment text on a cut). A reason this build does not know returns undefined. The wire op `cg: 'end'` is unchanged.
-- Reassembler: `_storedTermination()` decides what the message carries, then `finalizeReassembly()` reads the outcome back with `messageTerminalOutcome`. `completed` and `truncated` are both vendor-ended: upstream handle cleared, metrics finalized the same way.
+- Wire: `AixWire_Particles.gcStopReasonRow()` in `aix.wiretypes.ts` reads the private stop-reason table, one row per stop reason with three columns: `class` (edge analytics: `ok` | `truncated` | `error`), `stored` (the stop reason the client persists), `message` (the sentence of a filter stop's `model-filter` record when the parser has no words for it). A reason this build does not know returns undefined. The wire op `cg: 'end'` carries facts only (`terminationReason`, `tokenStopReason`); every explanation precedes it as an `aix-issue`.
+- Reassembler: `_storedStopReason()` decides the stored stop reason, then `finalizeReassembly()` reads the outcome back with `messageTerminalOutcome`. `completed` and `truncated` are both vendor-ended: upstream handle cleared, metrics finalized the same way.
 - Presentation: `messageOutcomeColor()` and `messageOutcomeLabel()`. `messageBackground()` takes the palette key. Beam cards color all three non-success outcomes (`aborted` neutral, #1070). Chat bubbles tint truncation only: errors render inline, a stop in chat is usually deliberate.
 - Beam: `BeamStatus` in `beam.status.ts` is `'idle' | 'running' | AixChatGenerateTerminal_LL`, shared by `BRay.status` and `BFusion.stage`. `beamStatusColor()` colors the cards. A message imported into Beam keeps its outcome. Not persisted.
 
@@ -57,14 +59,14 @@ The tables are private to `chat.message.outcome.ts`; `messageOutcomePolicy()`, `
 | OpenAI Responses | `incomplete`, reason `max_output_tokens` | truncated |
 | Gemini | `MAX_TOKENS`, `CONTINUATION` | truncated (ends with `issue-dialect`, the others with `done-dialect`) |
 | Gemini | `TOO_MANY_TOOL_CALLS` | error today; see Open: tool-budget stops |
-| Gemini Interactions | `incomplete`, `budget_exceeded` | truncated, with an inline body note |
+| Gemini Interactions | `incomplete`, `budget_exceeded` | truncated; `budget_exceeded` adds a `service-error` notice (`causeCode` `budget_exceeded`) |
 | all | `refusal`, `content_filter`, `SAFETY`, `RECITATION`, ... | error |
 
 ## Open: tool-budget stops (PROPOSED)
 
-Gemini ends a hosted-tools run that exhausts the per-request step budget (Google Search and URL context share it) with `TOO_MANY_TOOL_CALLS` and a `finishMessage` that gives the counts and tells the user to split the task (#1286). The parser maps it to `cg-issue`: the message is `failed`, the text is an error fragment, replayed to the model as `[ERROR]` when the turn has other content, chat offers no Continue, Beam paints the ray red. Nothing retries it, which is right: a retry repeats the same cut at the same cost.
+Gemini ends a hosted-tools run that exhausts the per-request step budget (Google Search and URL context share it) with `TOO_MANY_TOOL_CALLS` and a `finishMessage` that gives the counts and tells the user to split the task (#1286). The parser maps it to `cg-issue`: the message is `failed`, the explanation is a `service-error` record that fails (`causeCode` `TOO_MANY_TOOL_CALLS`, the finishMessage as text), replayed to the model as `[ERROR]` when the turn has other content, chat offers no Continue, Beam paints the ray red. Nothing retries it, which is right: a retry repeats the same cut at the same cost.
 
-Proposed treatment, to apply when the issue particle carries a descriptor (class, retryable, user text, AI text):
+Proposed treatment, on the issue record (the policy has no vendor rows yet):
 
 - class `truncated`, with its own stop reason: `out-of-tokens` would show the wrong words, so the wording at the three "Out of tokens" sites (outcome label, Beam card notice, Continue block) becomes stop-reason aware
 - retryable: no; the recovery is Continue, since a new request gets a fresh budget
@@ -72,15 +74,15 @@ Proposed treatment, to apply when the issue particle carries a descriptor (class
 - AI text: none
 - check the other dialects for the same stop: OpenAI Responses maps only `max_output_tokens` and `content_filter`, other `incomplete_details.reason` values fall to a generic incomplete text
 
-Deferred because the truncated class has one wire reason and one hardcoded wording; the descriptor refactor is the moment to add the second.
+Deferred because the truncated class has one wire reason and one hardcoded wording.
 
 ## Clean end without a finish reason
 
-Completeness unknown, assumed complete: outcome `completed` plus a void notice (`pType: 'notice'`, `pNoticeKind: 'no-stop-reason'`, `pNoticeLevel: 'warn'`). Not an error fragment: error fragments are content, replayed to the model as `[ERROR]` text when the turn has other content. Gateways omitting `finish_reason` land here. An end reason or a particle this build does not know (a newer server) gets the same treatment: a warn notice, not an error fragment.
+Completeness unknown, assumed complete: outcome `completed` plus a `model-unfinished` record (effect `notice`), stated by the transmitter at the end and stored as an `aix.issue` part. It does not fail, is not replayed and is not in the message text. Gateways omitting `finish_reason` land here, and so does a non-streaming body parsed in full with no stop reason. `no-stop-reason` void notices stored before the records keep rendering. An end reason or a particle this build does not know (a newer server) is a warn void notice, not a record.
 
 ## Issue after the stop reason
 
-Parsers set the stop reason after the content. After a clean or truncated stop reason, the transmitter sends a later issue (stream cut before the end marker, a trailing chunk that fails to parse, a late error event) as a warn notice (`pNoticeKind: 'late-issue'`), so the outcome keeps the stop reason. After an error stop reason, the issue is its explanation and stays an error fragment. The client applies the same rule to its own transport errors (`ContentReassembler.setClientExcepted`): after a clean or truncated stop reason, a connection error (e.g. the stream dropping before tRPC's closing chunk) is only logged to the console - no fragment, and the outcome keeps the stop reason.
+Parsers set the stop reason after the content. An issue that would fail, arriving after a clean or truncated stop reason (a read error, a trailing chunk that fails to parse, a late error event) or after an issue that already failed, is stamped effect `notice` by the transmitter ([aix/AIX-TODO-errors.md](aix/AIX-TODO-errors.md)): stored as an `aix.issue` part, shown as a chip, not replayed; the outcome keeps the stop reason. A clean close after the stop reason is how the dialect ends: no record. Under `cg-issue` the issue is its explanation and fails. The client applies the same rule to its own relay failures: after the verdict (the wire end applied, or an issue that failed), `ContentReassembler.setClientExcepted` only logs (e.g. the stream dropping before tRPC's closing chunk) and the client does not retry.
 
 ## Dev
 
@@ -94,4 +96,4 @@ Parsers set the stop reason after the content. After a clean or truncated stop r
 - `aixChatGenerateText_Simple` returns truncated text as if complete (options noted at the end of the function).
 - A multi-step merge continues past a truncated intermediate step.
 - Merge inputs are every settled ray with non-error content, truncated included.
-- Assistant error parts are replayed to the model when the turn has other content; a turn of errors alone is not sent.
+- Issues with effect `failed` or `lost` are replayed to the model as `[ERROR]` text when the turn has other content (`aixIssueReplayText`); a turn of errors alone is not sent.

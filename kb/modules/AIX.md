@@ -72,7 +72,7 @@ The subsystem comprises three main components:
 4. Data Decoding, Transformation and Transmission: AIX Server sends AixWire_Particles to AIX Client (see [AIX-ingestion.md](AIX-ingestion.md))
 5. Client-side Processing: Client's ContentReassembler processes AixWire_Particles into a list (likely a single) of multi-fragment (DMessageContentFragment[]) messages
 6. Completion: AIX Server sends 'done' control message, AIX Client finalizes data update
-7. Error Handling: AIX Server sends specific error messages when necessary
+7. Error Handling: each failure is one `DAixIssue` record (`src/modules/aix/shared/aix.issues.ts`), sent live in an `aix-issue` particle (or built by the client for a throw) and stored as an `aix.issue` part: [aix/AIX-TODO-errors.md](aix/AIX-TODO-errors.md)
 
 ## 2. Files and Folders
 
@@ -113,7 +113,7 @@ sequenceDiagram
     AIX Server ->> AIX Server: Prepare Dispatch (Upstream request, demux, parsing)
 
     alt Dispatch Preparation Error
-        AIX Server ->> AIX Client: Send `dispatch-prepare` error message
+        AIX Server ->> AIX Client: Send a `dispatch-prepare` aix-issue, then the end
     else Dispatch Fetch
         AIX Server ->> AI Provider: Send AI-provider specific stream/non-stream request
         AIX Server ->> AIX Client: Send 'start' control message
@@ -155,8 +155,8 @@ sequenceDiagram
                 AIX Client ->> AIX Client: Process tool invocation (dev only)
             else DMessageToolResponsePart
                 AIX Client ->> AIX Client: Process tool response (dev only)
-            else DMessageErrorPart
-                AIX Client ->> AIX Client: Display error message
+            else DMessageAixIssuePart
+                AIX Client ->> AIX Client: Display the issue record
             else DMessageDocPart
                 AIX Client ->> AIX Client: Process and display document
             else DVoidPlaceholderPart
@@ -167,7 +167,7 @@ sequenceDiagram
     end
 
     alt Error Handling
-        AIX Server ->> AIX Client: Send 'error' specific control messages
+        AIX Server ->> AIX Client: Send 'aix-issue' control particles, live, before the end
     end
 
     note over AIX Server, AI Provider: Server-side Timeout/Retry mechanism
