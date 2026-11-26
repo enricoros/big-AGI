@@ -70,6 +70,7 @@ Paths: `P/` = `src/modules/aix/server/dispatch/chatGenerate/parsers/`, `TX` = `.
 
 The Anthropic rows apply where DeepSeek sends the same blocks (P1, P4, P8). Its own:
 
+- [ ] **P65** (medium) The web tools' calls and results become `vp` placeholders, as P4. The `signature` of a link read is dropped with them: the next turn cannot quote a page read earlier (0/6 without, 6/6 with)
 - [ ] **P64** (low) Thinking `signature` not stored, by choice: it is a UUID the vendor does not check, and stored it would replay to Anthropic as a signature. Reasoning is sent back as unsigned text, on tool turns only ([LLM-deepseek-messages.md](LLM-deepseek-messages.md))
 
 ### Parse: Chat Completions (`P/openai.parser.ts`)

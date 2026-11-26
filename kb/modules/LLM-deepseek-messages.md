@@ -29,6 +29,31 @@ Vendor `deepseek` serves `deepseek-flash` and `deepseek-v4-pro` at `https://api.
 - Usage is final in `message_delta`: `input_tokens` excludes cache hits, `cache_read_input_tokens` has them, `output_tokens_details.thinking_tokens` is the reasoning. `cache_creation_input_tokens` is always 0.
 - Stop reasons: `end_turn`, `max_tokens`, `tool_use`, `refusal`.
 
+## Web tools
+
+DeepSeek's own server tools (2026-11-13): `deepseek_web_search` and `deepseek_read_url`, declared as `{type, name}` with the same string in both. `deepseek-flash` only: a 400 on `deepseek-v4-pro` on every wire.
+
+- One parameter per tool: `llmVndDeepseekWebSearch`, `llmVndDeepseekReadUrl` (`auto` or unset). The listing gives them to `deepseek-flash` only when the service speaks Messages (`deepseekModelToModelDescription(id, wire)`), so a spec on the model is the whole answer to "can this model search": editors and the Search button read nothing else. A change of wire re-lists (`llmsDefsVersionFor`, and the setup's protocol select).
+- Search has two modes, decided by thinking, not by a parameter. Off: one or two rounds of queries, 2 to 4 seconds. On: a deep search over several steps that searches, opens pages (`open_page`) and finds text in them (`find_in_page`): 5 to 32 calls and 17 to 75 seconds measured, billing 20K to 400K input tokens per answer, mostly cache hits.
+- `deepseek_read_url` reads the links of the last user message, 10 at most. With thinking on and web search declared it does nothing: the deep search opens the links itself.
+- A message with an image is searched by image: `kind` `image_search` or `deep_image_search`, no queries, results with an `image_url`.
+- Next to client function tools: a 400 with thinking off (`client tools can only be used together with deepseek_web_search in thinking mode`); with thinking on the request passes and the tools are dead, the model answering that it has none (0 of 16 searches, 0 of 6 links read; with a system prompt naming them, 4 of 6 and 2 dead-end turns). The adapter leaves them out of any request that carries client tools, and of a forced call: `DEEPSEEK_WEB_TOOLS_WITH_CLIENT_TOOLS`.
+- They cannot share a request with another server tool (400), `tool_choice` cannot name them, and `tool_choice: none` turns them off.
+- Free: no per-call fee; the tokens of every inference step are billed, and `usage` is their sum.
+
+On the wire:
+
+- A call is a `server_tool_use` block, complete when it starts (no input deltas), with `kind` (`search`, `deep_search`, `read_link`, `image_search`, `deep_image_search`) and `input.action` (`search` with `queries`, `open_page` with `url`, `find_in_page` with `url` and `pattern`, `read_link` with `url`). Calls made at once come first, then their results, matched by `tool_use_id`.
+- Results are Anthropic's blocks with added fields: `web_search_tool_result` (items gain `snippet`, `site_name`, `site_icon`), `web_fetch_tool_result` (`published_at`; `signature` on a link read; the document's `data` is always empty, and its `title` null for a text found in a page). A fetch that fails carries `url_not_accessible`, `url_not_allowed` or `unavailable`. A search that fails is documented as the error inside an array, not seen in 236 captures.
+- Shown as `search-web` operations by the plugin's `onServerToolUse` (queries, URL or pattern), closed by the Anthropic result handlers; every page fetched also becomes a citation (AIX-ingestion P8).
+- Citations are `citations_delta` of type `web_search_result_location`, with an empty `encrypted_index`; `cited_text` is the answer's own text up to the mark, not the source's. A deep answer can come with none (2 of 24).
+- Counts: `usage.server_tool_use.web_search_requests` and `web_fetch_requests` are the result blocks, failed ones included (`nWebSearch`, `nWebFetch`). `tool_search` counts queries and is not read.
+
+Across turns:
+
+- By the vendor's rule only the answer text of earlier rounds is context: their search results, opened pages and thinking are not. Sending text-only history loses nothing there.
+- The exception is a link read: echoing its `web_fetch_tool_result` with the `signature` restores the page in later turns (78 KB for an 18K-token page). Echoed, the next turn quotes the page verbatim (18,239 prompt tokens, 18,048 of them cache hits); without it, it cannot (105 tokens). Not stored today: see Deliberately not wired.
+
 ## Errors and endings
 
 - HTTP errors are `{type: 'error', error: {type, message}}` here, and `{error: {message, type, param, code}}` on the other two wires. 400 for a contract breach, 401 for the key, 422 for a body that does not deserialize (an unknown tool type or role).
@@ -39,9 +64,12 @@ Vendor `deepseek` serves `deepseek-flash` and `deepseek-v4-pro` at `https://api.
 
 ## Deliberately not wired
 
+- The `signature` of a link read: not stored, so a later turn has the answer about a page and not the page. It belongs with the hosted-tool record every vendor lacks (AIX-ingestion P4, P16, P24, P65), not in a DeepSeek-only field.
+- Search on `deepseek-v4-pro`, and the web tools next to client tools: the vendor serves neither. The first is a spec to add in `deepseek.models.ts`, the second a constant to flip.
+- The web tools on Chat Completions (custom hosts): the vendor serves them there too (`server_tool_event`, `server_tool_calls`), nothing reads them.
 - The standard `web_search` server tool: it works here on both models (and on Responses for pro), next to client tools too, but returns no citation annotations and reads no pages. DeepSeek's web tools are the product going forward.
 - `latest_reminder` (an extra message role carrying date, weekday, location, platform, language): accepted on Messages and Chat Completions, a 422 on Responses. Without a date in the prompt, deep search anchors on 2025 (2 of 2; 4 of 4 right with a dated system prompt or the marker). The default personas carry the date.
 - JSON schema output: ignored on this wire (`output_config.format`), a 400 on Chat Completions, honored on Responses only.
 - `title`, `safety_check`, the Files API, the raw Search and Fetch APIs (`/v1/tools/search`, `/v1/tools/fetch`).
 
-Maintenance: `/llms:update-models-deepseek` (catalog, prices); captures in `tools/data/aix-replay/generations/deepseek`; the request rules as a test in `adapters/deepseek.messageCreate.test.ts`.
+Maintenance: `/llms:update-models-deepseek` (catalog, prices, which models take the web tools); captures in `tools/data/aix-replay/generations/deepseek`; the request rules as a test in `adapters/deepseek.messageCreate.test.ts`.
