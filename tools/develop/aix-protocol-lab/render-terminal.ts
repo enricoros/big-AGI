@@ -33,7 +33,7 @@ function _particleLabel(p: any): string {
   if ('cg' in p) {
     const detail = p.cg === 'end' ? ` ${p.terminationReason}${p.tokenStopReason ? '/' + p.tokenStopReason : ''}`
       : p.cg === 'set-model' ? ` ${p.name}`
-        : p.cg === 'issue' ? ` ${_ellipsize(p.issueText, 60)}`
+        : p.cg === 'aix-issue' ? ` ${p.issue?.code} ${_ellipsize(p.issue?.text, 60)}`
           : p.cg === 'set-upstream-handle' ? ` ${p.handle?.runId}`
             : p.cg === 'set-metrics' ? ` ${JSON.stringify(p.metrics)}`
               : '';

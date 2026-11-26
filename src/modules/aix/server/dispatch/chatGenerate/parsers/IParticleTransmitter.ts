@@ -18,7 +18,7 @@ export type ParticleDialectIssue = { text?: string; detail?: string; causeCode?:
   | { code: 'service-tool'; effect?: 'lost' });                                                    // a hosted tool or operation failed; the generation goes on
 
 /** What a parser may send as a control particle: the end and the issues have their own calls */
-export type ParticleCGControlOp = Exclude<AixWire_Particles.ChatControlOp, { cg: 'end' } | { cg: 'aix-issue' } | { cg: 'issue' }>;
+export type ParticleCGControlOp = Exclude<AixWire_Particles.ChatControlOp, { cg: 'end' } | { cg: 'aix-issue' }>;
 
 /** Rule: parsers translate each vendor unit 1:1, presentation is a render concern - kb/modules/AIX-ingestion.md lists where this does not hold yet */
 export interface IParticleTransmitter {

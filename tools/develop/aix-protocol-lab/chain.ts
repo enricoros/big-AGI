@@ -18,6 +18,7 @@ import { createDMessageFromFragments, DMessage, DMessageGenerator } from '~/comm
 import { create_FunctionCallResponse_ContentFragment, createTextContentFragment, DMessageFragment } from '~/common/stores/chat/chat.fragments';
 import { createChatGenerateDispatch } from '~/modules/aix/server/dispatch/chatGenerate/chatGenerate.dispatch';
 import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request, AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
+import { aixIssueFails, aixIssuePlainText } from '~/modules/aix/shared/aix.issues';
 
 import type { CompiledScenario } from './scenarios';
 import type { LabFlavor, LabRun, LabSegment } from './trace';
@@ -480,8 +481,8 @@ export function liveVerdict(run: LabRun): LiveVerdict {
       inputTransforms.push(`parser notice: ${[particle.text, particle.detail].filter(Boolean).join(' - ')}`);
     else if ('cg' in particle && particle.cg === 'set-metrics')
       metrics = particle.metrics;
-    else if ('cg' in particle && particle.cg === 'issue')
-      issue ??= `${particle.issueId}: ${particle.issueText.replace(/\s+/g, ' ').slice(0, 400)}`;
+    else if ('cg' in particle && particle.cg === 'aix-issue' && aixIssueFails(particle.issue))
+      issue ??= `${particle.issue.code}: ${aixIssuePlainText(particle.issue).replace(/\s+/g, ' ').slice(0, 400)}`;
   }
   // a refusal or a filter stop ends the dispatch cleanly: keep the token stop reason visible next to the end reason
   const stop = run.outcome.tokenStopReason && run.outcome.tokenStopReason !== 'ok' ? ` / ${run.outcome.tokenStopReason}` : '';

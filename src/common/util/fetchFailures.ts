@@ -76,16 +76,22 @@ export function isTRPCStreamClosedEarly(error: unknown): boolean {
 // into an engine-specific SyntaxError; tRPC then wraps it in a TRPCClientError.
 // - 'request-exceeded': HTTP 413, the request body is over the limit of whatever sits in front of the function
 // - 'response-captive': text/html where a JSON(L) stream is expected - captive portal, proxy, gateway error page
+// - 'response-status': any other non-2xx that is not tRPC's own error envelope - a gateway's 502/504, a firewall's 403, a 429
 // TODO: typed errors (kb/modules/aix/AIX-TODO-errors.md) - a custom class until the error table covers the transport
 export class TRPCClientFetchError extends Error {
-  constructor(readonly code: 'request-exceeded' | 'response-captive', message: string) {
+  constructor(readonly code: 'request-exceeded' | 'response-captive' | 'response-status', message: string, readonly httpStatus?: number) {
     super(message);
     this.name = 'TRPCClientFetchError';
   }
 }
 
+/** A TRPCClientFetchError - bare, or as the `.cause` of a TRPCClientError; undefined for any other error. */
+export function getTRPCClientFetchError(error: unknown): TRPCClientFetchError | undefined {
+  const source = error instanceof Error && error.name === 'TRPCClientError' ? error.cause : error;
+  return source instanceof TRPCClientFetchError ? source : undefined;
+}
+
 /** The code of a TRPCClientFetchError - bare, or as the `.cause` of a TRPCClientError; undefined for any other error. */
 export function getTRPCClientFetchErrorCode(error: unknown): TRPCClientFetchError['code'] | undefined {
-  const source = error instanceof Error && error.name === 'TRPCClientError' ? error.cause : error;
-  return source instanceof TRPCClientFetchError ? source.code : undefined;
+  return getTRPCClientFetchError(error)?.code;
 }

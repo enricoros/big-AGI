@@ -9,11 +9,11 @@ import { AIVndAntInlineFilesPolicy, getVndAntInlineFiles, getVndGeminiVertexLink
 import { AudioPlayer } from '~/common/util/audio/AudioPlayer';
 import { DLLM, DLLMId, LLM_IF_GEM_Interactions, LLM_IF_HOTFIX_NoTemperature, LLM_IF_OAI_Responses, LLM_IF_Outputs_Audio, LLM_IF_Outputs_Image, LLM_IF_Outputs_NoText } from '~/common/stores/llms/llms.types';
 import { DMessage, DMessageGenerator, createGeneratorAIX_AutoLabel } from '~/common/stores/chat/chat.message';
-import type { DMessageTerminalOutcome } from '~/common/stores/chat/chat.message.outcome';
+import { type DMessageTerminalOutcome, messageTerminalOutcome } from '~/common/stores/chat/chat.message.outcome';
 import { DMetricsChatGenerate_Lg, DMetricsChatGenerate_Md, metricsChatGenerateLgToMd, metricsComputeChatGenerateCostsMd, } from '~/common/stores/metrics/metrics.chatgenerate';
 import { DModelParameterValues, getAllModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import { apiAsync, apiStream } from '~/common/util/trpc.client';
-import { createErrorContentFragment, DMessageContentFragment, DMessageErrorPart, DMessageVoidFragment, fragmentFailureText } from '~/common/stores/chat/chat.fragments';
+import { createAixIssueContentFragment, DMessageContentFragment, DMessageVoidFragment, fragmentFailureText } from '~/common/stores/chat/chat.fragments';
 import { findLLMOrThrow } from '~/common/stores/llms/store-llms';
 import type { AIVndOaiBeamSandboxPolicy } from '~/common/stores/store-ai';
 import { getAixInspectorEnabled } from '~/common/stores/store-ui';
@@ -29,10 +29,12 @@ import { webGeolocationCached } from '~/common/util/webGeolocationUtils';
 // NOTE: pay particular attention to the "import type", as this is importing from the server-side Zod definitions
 import type { AixAPI_Access, AixAPI_ConnectionOptions_ChatGenerate, AixAPI_Context_ChatGenerate, AixAPI_Model, AixAPIChatGenerate_Request, AixTools_ToolDefinition, AixTools_ToolsPolicy } from '../server/api/aix.wiretypes';
 
+import { aixIssue, aixIssuePlainText } from '../shared/aix.issues';
+
 import { AixStreamRetry } from './aix.client.retry';
 import { ReassemblerParticleTransforms, ContentReassembler } from './ContentReassembler';
 import { aixCGR_ChatSequence_FromDMessagesOrThrow, aixCGR_FromSimpleText, aixCGR_SystemMessage_FromDMessageOrThrow, AixChatGenerate_TextMessages, clientHotFixGenerateRequest_ApplyAll } from './aix.client.chatGenerateRequest';
-import { aixClassifyStreamingError } from './aix.client.errors';
+import { aixClassifyStreamingError, AixIssueThrow } from './aix.client.errors';
 import { aixClientDebuggerGetRBO, getAixDebuggerNoStreaming } from './debugger/memstore-aix-client-debugger';
 import { createClientAnthropicFileInlineTransform } from './aix.client.transform-antFileInline';
 import { withDecimator } from './withDecimator';
@@ -56,7 +58,8 @@ async function _loadCsfModuleOrThrow(): Promise<typeof import('./aix.client.dire
   try {
     return await import('./aix.client.direct-chatGenerate');
   } catch (error) {
-    throw new Error(`Direct connection unsuccessful: ${(error as any)?.message || 'unknown loading error'}`, { cause: error });
+    const message = (error as any)?.message || 'unknown loading error';
+    throw new AixIssueThrow(`Direct connection unsuccessful: ${message}`, aixIssue('aix-load', 'failed', { detail: message }), { cause: error });
   }
 }
 
@@ -295,11 +298,10 @@ function _oaiContainerRelease(containerId: string): void {
 
 // --- L3 - Conversation-level generation (builds chat request, error wrapping) ---
 
-/** L3 return: final DMessage-compatible object + terminal outcome. errorMessage is only set for pre-LL errors. */
+/** L3 return: final DMessage-compatible object + terminal outcome. A failure, in the stream loop or outside it (a pre-LL error), is an issue part of the message: messageFailureText(lastDMessage.fragments) */
 export type AixChatGenerateContent_FromConversation_Result = {
   lastDMessage: AixChatGenerateContent_DMessageGuts,
   outcome: AixChatGenerateTerminal_LL,
-  outcomeFailedMessage?: string,
 };
 
 /**
@@ -383,20 +385,32 @@ export async function aixChatGenerateContent_DMessage_FromConversation(
 
   } catch (error: any) {
 
-    // pre-LL error (e.g. LLM not found, service misconfigured, content assembly error) - the LL likly never ran
+    // pre-LL error (e.g. LLM not found, service misconfigured, content assembly error, the Direct Connection bundle not
+    // loading), or a throw after the LL ran: its post-processing, the caller's own final update
     console.warn('[DEV] aixChatGenerateContent error:', { error });
     const errorMessage = error.message || (typeof error === 'string' ? error : 'Chat stopped.');
+    const { generator } = lastDMessage;
+    // a generation that had ended keeps its verdict: the record is a notice after it; else the record fails it
+    const ended = generator.endedAt !== undefined;
+    const issue = error instanceof AixIssueThrow ? error.issue
+      : aixIssue(ended || lastDMessage.fragments.length ? 'aix-unknown' : 'aix-prepare', ended ? 'notice' : 'failed', { detail: errorMessage });
     lastDMessage = {
-      fragments: [...lastDMessage.fragments, createErrorContentFragment(`Issue: ${errorMessage}`)],
-      generator: { ...lastDMessage.generator, tokenStopReason: 'issue', endedAt: Date.now() },
+      fragments: [...lastDMessage.fragments, createAixIssueContentFragment(issue)],
+      generator: ended ? generator : { ...generator, tokenStopReason: 'issue', endedAt: Date.now() },
       pendingIncomplete: false,
-    }
+    };
+    const outcome = messageTerminalOutcome(lastDMessage);
 
     // final update
-    // emitted because we modify the contents above, and the logic may use the callback rather than the final return value's message
-    await onStreamingUpdate(lastDMessage /* last we heard + the error */, true);
+    // emitted because we modify the contents above, and the logic may use the callback rather than the final return value's message;
+    // guarded: the throw may have come from this same callback
+    try {
+      await onStreamingUpdate(lastDMessage /* last we heard + the record */, true);
+    } catch (callbackError) {
+      console.error('[DEV] aixChatGenerateContent: final update failed:', { callbackError });
+    }
 
-    return { outcome: 'failed', lastDMessage, outcomeFailedMessage: errorMessage };
+    return { outcome, lastDMessage };
 
   } finally {
 
@@ -435,7 +449,7 @@ interface _AixChatGenerateText_Simple {
  * Contract - expects ONLY text/text in/out (e.g. no Tools, no upstream Error messages, no Empty messages):
  * - User aborts are thrown as AbortError
  * - Other issues are thrown as Error
- * - Aix issues (network, model, etc.) that became error fragments are re-thrown as Error
+ * - Aix issues (network, model, etc.) that failed the generation (`aix.issue` parts, read with fragmentFailureText) are re-thrown as Error
  *
  * @throws AbortError if the user aborts the operation
  * @throws Error if there are issues with the LLM Output, the Upstream AI service, the Aix API
@@ -561,10 +575,11 @@ export async function aixChatGenerateText_Simple(
 /**
  * Down-casts the LL to plain text, and updates the destination object.
  * - text -> text
- * - error -> inline error text: DO NOT THROW HERE, as the LL will catch it and add another error part with the same text
- * - tool -> throw: the LL will catch it and add the error text. However when done outside the LL (secondary usage) this will throw freely
+ * - error, and an issue that failed the generation -> inline error text: DO NOT THROW HERE. An issue it survived (a lost
+ *   image, a failed hosted tool) is not the model's text: a title or summary leaves it out
+ * - tool -> throw: inside the LL the reassembler logs a throw of the update callback; after the LL it reaches the caller
  */
-function _llToL2Simple({ fragments, generator }: AixChatGenerateContent_LL, dest: _AixChatGenerateText_Simple) {
+export function _llToL2Simple({ fragments, generator }: AixChatGenerateContent_LL, dest: _AixChatGenerateText_Simple) { // exported for its test
   // transfer generator by reference - already structurally shared
   dest.generator = generator;
 
@@ -631,7 +646,7 @@ type _AixChatGenerateContent_DMessageGuts_WithOutcome = AixChatGenerateContent_D
  * Contract:
  * - empty fragments means no content yet, and no error
  * - pendingIncomplete is true until the final update & final object (or unless this throws)
- * - errors become Error fragments, and they can be dialect-sent, dispatch-excepts, client-read issues or even user aborts
+ * - failures become `aix.issue` parts (read with fragmentFailureText / messageFailureText): dialect-sent, dispatch-excepts, client-read issues
  * @throws Error if the LLM is not found or other misconfigurations, but handles most other errors internally.
  *
  * Features:
@@ -891,7 +906,7 @@ export interface AixChatGenerateContent_LL_Result extends AixChatGenerateContent
  * reassembler derives from the final message (one outcome function, no parallel classification).
  * - 'completed': model responded and stopped cleanly - the only success
  * - 'truncated': model ran out of tokens - an error typed apart (warning, not danger); the partial output is kept, not usable
- * - 'failed':    error occurred (error fragments carry the detail)
+ * - 'failed':    error occurred (the `aix.issue` part that failed carries the detail)
  * - 'aborted':   user cancelled
  */
 export type AixChatGenerateTerminal_LL = DMessageTerminalOutcome;
@@ -920,8 +935,8 @@ async function _aixChatGenerateContent_LL(...args: Parameters<typeof _aixChatGen
  * - empty fragments means no content yet, and no error
  * - wireStreaming hints the wire transport (SSE vs single response), but can be respected or not by the dispatch (e.g. SSE-only APIs ignore a `false` value)
  *   - onReassemblyUpdate is optional, you can ignore the updates and await the final result
- * - errors become Error fragments, and they can be dialect-sent, dispatch-excepts, client-read issues or even user aborts
- *   - DOES NOT THROW, but the final accumulator may contain error fragments
+ * - failures become `aix.issue` parts (read with fragmentFailureText / messageFailureText): dialect-sent, dispatch-excepts, client-read issues
+ *   - DOES NOT THROW, but the final accumulator may contain an issue part that failed the generation
  * - empty fragments:
  *   - in the interim updates, means no content yet
  *   - in the final update, means there was no content received at all
@@ -1035,7 +1050,7 @@ async function _aixChatGenerateContent_LL_unlocked(
   // Retry/Reconnect - LL state machine
   // - reconnect: for server overload/busy (429, 503, 502) and transient errors
   // - reattach: for network disconnects with uptream handles
-  const rsm = new AixStreamRetry(0, 0); // keep off: latent bugs - the status is read from error.status (a TRPCClientError has none), and an abort during the backoff ends 'failed', not 'aborted'
+  const rsm = new AixStreamRetry(0, 0); // keep off: client auto retry is not enabled (its policy is open, kb/modules/aix/AIX-TODO-errors.md)
 
   while (true) {
 
@@ -1126,8 +1141,9 @@ async function _aixChatGenerateContent_LL_unlocked(
       // synchronize any pending async tasks
       await reassembler.waitForWireComplete();
 
-      // a Stop during the drain makes the reassembler drop the rest of the backlog, the end particle included - route to catch as aborted
-      abortSignal.throwIfAborted();
+      // a Stop during the drain leaves the rest of the backlog unprocessed: with no end applied, a Stop, not a missing end
+      if (abortSignal.aborted && !reassembler.hasWireEnd)
+        reassembler.setClientAborted();
 
       break; // -> terminal: completed
 
@@ -1137,20 +1153,20 @@ async function _aixChatGenerateContent_LL_unlocked(
       sendContentUpdate?.stop?.();
 
       // drain in-flight processing before any terminal/retry decision (prevents ghost fragments from mid-await particles)
-      await reassembler.waitForWireComplete().catch(() => {/* processing errors are already handled internally */});
+      await reassembler.waitForWireComplete();
 
 
-      // classify error
-      const { errorType, errorMessage } = aixClassifyStreamingError(error, abortSignal.aborted, !!accumulator_LL.fragments.length);
-      const maybeErrorStatusCode = error?.status || error?.response?.status || undefined;
+      // classify error: the record that fails the generation, or null for the user's Stop
+      const issue = aixClassifyStreamingError(error, { aborted: abortSignal.aborted, path: aixAccess.clientSideFetch ? 'csf' : 'trpc' });
 
-      // client-side-retry decision - reattach handle from accumulator determines strategy (reattach vs reconnect)
-      const shallRetry = rsm.shallRetry(errorType, maybeErrorStatusCode, !!accumulator_LL.generator.upstreamHandle);
-      if (shallRetry) {
+      // client-side-retry decision - the record's policy decides, the reattach handle from the accumulator the strategy (reattach vs reconnect)
+      // after the verdict a throw says nothing about the generation (setClientExcepted logs it): no retry, which would wipe it
+      const shallRetry = issue && !reassembler.hasVerdict ? rsm.shallRetry(issue, !!accumulator_LL.generator.upstreamHandle) : false;
+      if (shallRetry && issue) {
 
         // notify UI of our ongoing retry attempt
         try {
-          await reassembler.setClientRetrying(shallRetry.strategy, errorMessage, shallRetry.attemptNumber, 0, shallRetry.delayMs, typeof maybeErrorStatusCode === 'number' ? maybeErrorStatusCode : undefined, errorType);
+          await reassembler.setClientRetrying(shallRetry.strategy, aixIssuePlainText(issue), shallRetry.attemptNumber, 0, shallRetry.delayMs, issue.httpStatus, issue.causeCode);
           await onGenerateContentUpdate?.(accumulator_LL, false);
         } catch (_) {
           // ignore notification errors
@@ -1161,23 +1177,23 @@ async function _aixChatGenerateContent_LL_unlocked(
         if (stepResult === 'completed')
           continue; // -> retry: loop
 
-        // user-aborted during retry backoff
-        // ...fall through to classify with the original error
+        // the user stopped during the backoff: a Stop, not the failure that was being retried
+        reassembler.setClientAborted();
+        break; // -> terminal: aborted
       }
 
-      // Terminal: not retryable, or user-aborted during retry backoff
-      if (errorType === 'client-aborted')
-        reassembler.setClientAborted();
-      else {
-        const errorHint: DMessageErrorPart['hint'] = `aix-${errorType}`; // MUST MATCH our `aixClassifyStreamingError` hints with 'aix-<type>' in DMessageErrorPart
-        reassembler.setClientExcepted(errorMessage, errorHint);
-      }
+      // Terminal: not retryable. A Stop after the wire end was applied leaves the end standing, as on the success path
+      if (!issue) {
+        if (!reassembler.hasWireEnd)
+          reassembler.setClientAborted();
+      } else
+        reassembler.setClientExcepted(issue);
       break; // -> terminal: failed or aborted
     }
   }
 
 
-  // Finalize - classify termination, append error fragments, compute outcome
+  // Finalize - the stored stop reason, a missing end's record, the outcome
   const llResult = reassembler.finalizeReassembly();
 
   // final update bypasses decimation entirely and contains complete content

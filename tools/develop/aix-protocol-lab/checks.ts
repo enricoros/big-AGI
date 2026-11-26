@@ -14,6 +14,7 @@
 
 import type { AixWire_Particles } from '~/modules/aix/server/api/aix.wiretypes';
 import { AixWire_Vendors } from '~/modules/aix/server/api/aix.wiretypes';
+import { aixIssuePlainText } from '~/modules/aix/shared/aix.issues';
 import { AixDemuxers } from '~/modules/aix/server/dispatch/stream.demuxers';
 
 import type { LabEvent, LabRun } from './trace';
@@ -811,8 +812,8 @@ export function projectParticles(particles: AixWire_Particles.ChatGenerateOp[]):
           proj.endReason = p.terminationReason;
           if (p.tokenStopReason) proj.tokenStopReason = p.tokenStopReason;
           break;
-        case 'issue':
-          proj.parts.push({ kind: 'issue', text: p.issueText });
+        case 'aix-issue':
+          proj.parts.push({ kind: 'issue', text: `${p.issue.code}: ${aixIssuePlainText(p.issue)}` });
           break;
       }
     } else if ('p' in p) {

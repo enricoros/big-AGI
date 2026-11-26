@@ -144,20 +144,14 @@ export type DMessageErrorPart = { pt: 'error', error: string, hint?: DMessageErr
 /**
  * An issue of a chat generation, where it arrived, whatever its effect: the record is the data, every reader derives from
  * it (aix.issues.ts, aix.issues.policy.ts). Not editable. Copied verbatim (structuredClone): a field or code a newer build
- * added must survive this build.
+ * added must survive this build. AIX writes no error parts: those stay for stored messages and non-AIX producers.
  */
 export type DMessageAixIssuePart = { pt: 'aix.issue', issue: DAixIssue };
 
-type DMessageErrorPartHint =
-  // AIX streaming errors (from aixClassifyStreamingError)
-  | 'aix-client-aborted'
-  | 'aix-net-disconnected'
-  | 'aix-request-exceeded'
-  | 'aix-response-captive'
-  | 'aix-net-unknown'
-  | 'aix-processing-error'
-  // Allow custom hints
-  | string;
+// Data at rest only: no longer written or read, carried by copies. Before the issue records (DMessageAixIssuePart) AIX
+// stored 'aix-client-aborted', 'aix-net-disconnected', 'aix-request-exceeded', 'aix-response-captive', 'aix-net-unknown',
+// 'aix-processing-error' and the media processing hints here
+type DMessageErrorPartHint = string;
 
 /**
  * @deprecated replaced by DMessageZyncAssetReferencePart to an image asset; here for migration purposes
@@ -335,7 +329,7 @@ export type DVoidPlaceholderPart = {
   pType?:
     | 'chat-gen-follow-up'   // a follow-up is being generated
     | 'notice',              // neutral dismissible notice (e.g. earlier reasoning dropped): survives generation, deleted by the user
-  pNoticeKind?: 'input-transform' | 'hres-discarded' | 'flow-cont' | 'no-stop-reason' | 'late-issue', // for 'notice': the AIX notice type it came from, for per-kind UI policy (e.g. input-transform yields to errors, flow-cont renders as a divider, no-stop-reason: clean end without a finish reason, completeness unknown, late-issue: an issue after the vendor's stop reason)
+  pNoticeKind?: 'input-transform' | 'hres-discarded' | 'flow-cont' | 'no-stop-reason' | 'late-issue', // for 'notice': the AIX notice type it came from, for per-kind UI policy (e.g. input-transform yields to errors, flow-cont renders as a divider, no-stop-reason and late-issue: stored before the AIX issue records, which replace them - in data at rest, no longer written)
   pNoticeLevel?: 'warn', // for 'notice': the sender judged it unexpected (e.g. a reasoning reset inside a paused turn); absent = informational
 
   // operation history for stacked progress UI
@@ -397,10 +391,6 @@ export function isContentFragment(fragment: DMessageFragment): fragment is DMess
 
 export function isTextContentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment & { part: DMessageTextPart } {
   return fragment.ft === 'content' && fragment.part.pt === 'text';
-}
-
-export function isErrorContentFragment(fragment: DMessageFragment): fragment is DMessageContentFragment & { part: DMessageErrorPart } {
-  return fragment.ft === 'content' && fragment.part.pt === 'error';
 }
 
 export function isAttachmentFragment(fragment: DMessageFragment): fragment is DMessageAttachmentFragment {
@@ -529,8 +519,8 @@ export function createTextContentFragment(text: string): DMessageContentFragment
   return _createContentFragment(_create_Text_Part(text));
 }
 
-export function createErrorContentFragment(error: string, hint?: DMessageErrorPartHint): DMessageContentFragment {
-  return _createContentFragment(_create_Error_Part(error, hint));
+export function createErrorContentFragment(error: string): DMessageContentFragment {
+  return _createContentFragment(_create_Error_Part(error));
 }
 
 /** The record is stored as given: built for this generation, never rebuilt */

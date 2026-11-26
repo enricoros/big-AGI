@@ -19,6 +19,7 @@ import { registerHooks } from 'node:module';
 import { before, describe, test } from 'node:test';
 
 import type { AixAPI_Access, AixAPI_Model, AixAPIChatGenerate_Request } from '~/modules/aix/server/api/aix.wiretypes';
+import { aixIssueFails, aixIssuePlainText } from '~/modules/aix/shared/aix.issues';
 import type { DLLM } from '~/common/stores/llms/llms.types';
 import type { DModelParameterSpecAny, DModelParameterValues } from '~/common/stores/llms/llms.parameters';
 import type { ModelDescriptionSchema } from '~/modules/llms/server/llm.server.types';
@@ -285,7 +286,7 @@ function nextChatModel(app: App, vendorId: string, models: ModelDescriptionSchem
 async function chatOnce(app: App, access: AixAPI_Access, model: AixAPI_Model, signal: AbortSignal): Promise<string> {
   let issue = '';
   for await (const particle of app.clientSideChatGenerate(access, model, CHAT, { method: 'chat-generate', name: 'conversation', ref: 'csf-cors-checker' }, true, {}, signal))
-    if ('cg' in particle && particle.cg === 'issue') issue = particle.issueText;
+    if ('cg' in particle && particle.cg === 'aix-issue' && aixIssueFails(particle.issue)) issue = aixIssuePlainText(particle.issue);
   signal.throwIfAborted(); // the direct generator ends quietly on abort
   if (issue) throw new Error(`${model.id}: ${issue}`);
   return model.id;

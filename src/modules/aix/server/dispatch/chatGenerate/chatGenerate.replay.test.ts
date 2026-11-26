@@ -9,14 +9,16 @@
 // with what happens instead: it runs, and is reported as skipped with that reason as long as it fails. The day it passes
 // it fails, to have the mark removed. Where nothing is decided, nothing is asserted.
 //
-// Four groups:
+// Five groups:
 // 1. "all captures: invariants": rules that hold for any vendor response, one test per rule over the captures of all vendors. Each
 //    is checked against the capture itself, read by a few lines that share no code with the parsers, so no expectation is
 //    written by hand and a capture added to a folder is checked from then on.
-// 2. "unclean endings": every ending that is not a clean finish, one row per ending.
-// 3. one group per vendor API: what only that API does. What a hosted tool run counts as, what a paused turn sends back,
+// 2. "all captures: through the client": the same particles past the wire, into the reassembler, the load repair and the
+//    readers of the stored message.
+// 3. "unclean endings": every ending that is not a clean finish, one row per ending.
+// 4. one group per vendor API: what only that API does. What a hosted tool run counts as, what a paused turn sends back,
 //    what a failed step leaves behind. One row per fact, with the calls on the wire in its name.
-// 4. "not covered yet": what this file does not check, listed so that a green run is not read as more than it is.
+// 5. "not covered yet": what this file does not check, listed so that a green run is not read as more than it is.
 //
 // Captures are in tools/data/aix-replay/generations/<vendor>, as received (see the README there); a test whose capture
 // is not there is reported as skipped. What a request body does not show about how a capture was made (a request header,
@@ -26,8 +28,15 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, test, type TestContext } from 'node:test';
 
+import type { DMessageFragment } from '../../../../../common/stores/chat/chat.fragments';
+import { type DMessage, type DMessageGenerator, messageFragmentsReduceText } from '../../../../../common/stores/chat/chat.message';
+import { V4ToHeadConverters } from '../../../../../common/stores/chat/chats.converters';
+import { messageTerminalOutcome } from '../../../../../common/stores/chat/chat.message.outcome';
+
 import { AixWire_Particles, type AixWire_Vendors } from '../../api/aix.wiretypes';
+import { ContentReassembler } from '../../../client/ContentReassembler';
 import { aixIssue, aixIssueFails, type DAixIssue, type DAixIssueCode } from '../../../shared/aix.issues';
+import { aixIssuePresentation, aixIssueReplayText } from '../../../shared/aix.issues.policy';
 
 import type { AixDebugObject } from './chatGenerate.debug';
 import type { ChatGenerateDispatch, ChatGenerateParseFunction } from './chatGenerate.dispatch';
@@ -707,6 +716,88 @@ describe('all captures: invariants', () => {
     const named = [...ENDINGS.flatMap(ending => ending.files), ...GEMINI_2X_EARLY_STOP, ...OPENROUTER_USAGE_AFTER_ERROR, ...TOKENS_NOT_COMPARED, ...Object.keys(END_NETS_EXPECTED)];
     assert.deepEqual(named.filter(file => !existsSync(CAPTURES + file)), [], 'rows that name a capture that is not there');
   });
+
+});
+
+
+// --- all captures: through the client ---
+
+// What the client stores for a generation, and what a reload makes of it. The particles are the ones replayed above; the
+// reassembler, the load repair and the readers are the real ones. Images, audio and video cannot be decoded here: such a
+// capture stores an `aix-media` issue for each, which is the lost-item path, not a failure.
+
+const GENERATOR: DMessageGenerator = { mgt: 'aix', name: 'replay', aix: { vId: 'openai', mId: 'replay' } };
+
+async function storeGeneration(particles: Op[]) {
+  // the reassembler keeps a placeholder on screen for a moment before removing it: no wait here
+  const { setTimeout: realSetTimeout } = globalThis;
+  globalThis.setTimeout = ((handler: () => void) => setImmediate(handler)) as unknown as typeof setTimeout;
+  const { log, warn, error } = console;
+  console.log = console.warn = console.error = () => undefined;
+  try {
+    const reassembler = new ContentReassembler(GENERATOR, undefined, undefined, [], true);
+    for (const op of particles)
+      reassembler.enqueueWireParticle(structuredClone(op));
+    await reassembler.waitForWireComplete();
+    return reassembler.finalizeReassembly();
+  } finally {
+    globalThis.setTimeout = realSetTimeout;
+    Object.assign(console, { log, warn, error });
+  }
+}
+
+describe('all captures: through the client', () => {
+
+  const all = Object.keys(VENDORS).flatMap(capturesOf).filter(file => !/_\d+-continuation\./.test(file));
+  const skip = all.length ? false : `no captures in ${CAPTURES}`;
+
+  const stored = new Map<string, ReturnType<typeof storeGeneration>>();
+  const storedOf = (g: Generation) => stored.get(g.file) ?? stored.set(g.file, storeGeneration(g.particles)).get(g.file)!;
+  /** overCaptures, for a rule that reads the stored message */
+  const overStored = (holds: (g: Generation, result: Awaited<ReturnType<typeof storeGeneration>>) => boolean | void) => async () => {
+    const results = new Map<string, Awaited<ReturnType<typeof storeGeneration>>>();
+    for (const file of all)
+      results.set(file, await storedOf(await generationOf(file)));
+    await overCaptures(all, g => holds(g, results.get(g.file)!));
+  };
+  const storedIssues = (fragments: readonly DMessageFragment[]) => fragments.flatMap(fragment => fragment.ft === 'content' && fragment.part.pt === 'aix.issue' ? [fragment.part.issue] : []);
+
+  test('the stored outcome is the one the end states, with at most one failure and always its record', { skip }, overStored((g, { outcome, fragments }) => {
+    const { terminationReason, tokenStopReason } = theEnd(g.particles);
+    const stopClass = tokenStopReason && AixWire_Particles.gcStopReasonRow(tokenStopReason)?.class;
+    const expected = stopClass ? ({ ok: 'completed', truncated: 'truncated', error: 'failed' } as const)[stopClass] : terminationReason === 'done-dialect' ? 'completed' : 'failed';
+    assert.equal(outcome, expected, `the end is ${terminationReason}/${tokenStopReason}`);
+    const failed = storedIssues(fragments).filter(aixIssueFails);
+    assert.equal(failed.length, outcome === 'failed' ? 1 : 0, `${failed.length} stored issue(s) fail a message that is ${outcome}`);
+  }));
+
+  test('every particle is placed: no unknown or unapplied notice, no failure of the client itself', { skip }, overStored((_g, { fragments }) => {
+    assert.deepEqual(storedIssues(fragments).filter(issue => issue.code === 'aix-unknown').map(_issueText), []);
+    assert.deepEqual(fragments.flatMap(fragment => fragment.ft === 'void' && fragment.part.pt === 'ph' && /unknown to this version|could not be applied/.test(fragment.part.pText) ? [fragment.part.pText] : []), []);
+  }));
+
+  test('the text on the wire is the text stored', { skip }, overStored((g, { fragments }) => {
+    if (g.particles.some(op => isControl('aix-retry-reset')(op) && op.rClearStrategy !== 'none')) return false; // a retry takes the failed attempt's text back
+    const wire = g.particles.filter(isText).map(op => op.t).join('');
+    const texts = fragments.flatMap(fragment => fragment.ft === 'content' && fragment.part.pt === 'text' ? [fragment.part.text] : []);
+    const kept = texts.filter(text => !/^Generated (audio|video|file) /.test(text)).join(''); // the reassembler's own line for a media item or a hosted file
+    assert.ok(kept === wire, `${wire.length} characters on the wire, ${kept.length} stored`);
+    // an issue closes the text before it: an empty chunk a vendor still sends after it must not open a new, empty text
+    const afterIssue = fragments.slice(fragments.findIndex(fragment => fragment.ft === 'content' && fragment.part.pt === 'aix.issue') + 1 || fragments.length);
+    assert.ok(!afterIssue.some(fragment => fragment.ft === 'content' && fragment.part.pt === 'text' && !fragment.part.text), 'an empty text fragment is stored after an issue');
+  }));
+
+  test('a reload changes nothing: the load repair keeps every fragment and the outcome, and every reader reads the message', { skip }, overStored((_g, { fragments, generator, outcome }) => {
+    const message = { id: 'replay', role: 'assistant', fragments: structuredClone(fragments), generator, tokenCount: 0, created: 1, updated: null } as unknown as DMessage;
+    V4ToHeadConverters.inMemHeadCleanDMessage(message, []);
+    assert.deepEqual(message.fragments, fragments, 'the load repair changed the stored fragments');
+    assert.equal(messageTerminalOutcome(message), outcome);
+    messageFragmentsReduceText(message.fragments);
+    for (const issue of storedIssues(message.fragments)) {
+      aixIssuePresentation(issue);
+      aixIssueReplayText(issue);
+    }
+  }));
 
 });
 

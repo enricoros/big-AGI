@@ -37,6 +37,9 @@ const enableLoggerLink = (opts: any) => {
  * - 413 from whatever sits in front of the function: the hosted Vercel edge (~4.5MB, as `text/plain`), OR a
  *   self-hosted reverse proxy (nginx `client_max_body_size`, etc.). The classifier emits host-appropriate copy.
  * - text/html where a JSON(L) stream is expected (captive portals / proxies / gateway error pages)
+ * - any other non-2xx that tRPC did not write: the stream link answers 200 for every failure of a procedure (validation,
+ *   a throw before or while streaming), so an error status is the answer of what sits in front - a gateway's 502/504, a
+ *   firewall's 403, a platform's 429. A non-2xx that carries tRPC's own error envelope passes through, for tRPC to read.
  *
  * NOTE: only the server-side tRPC path passes through here. CSF (client-side-fetch, direct browser->provider) has its
  * own error surface and structurally cannot hit a front-door 413 (there is no edge/proxy hop), so it bypasses this.
@@ -49,8 +52,18 @@ const streamingTransportFetch: typeof fetch = async (input, init) => {
   // page (commonly non-2xx), regardless of status. We flag it before the JSONL parser chokes on the '<!DOCTYPE'.
   if ((res.headers.get('content-type') ?? '').includes('text/html'))
     throw new TRPCClientFetchError('response-captive', 'tRPC fetch: captive/HTML response');
+  if (!res.ok && !(await _hasTRPCErrorEnvelope(res)))
+    throw new TRPCClientFetchError('response-status', `tRPC fetch: HTTP ${res.status}`, res.status);
   return res;
 };
+
+/** tRPC's error envelope: `{ error: { ..., data: { code } } }`, under `json` with the transformer. Read off a clone: the body stays for tRPC */
+async function _hasTRPCErrorEnvelope(res: Response): Promise<boolean> {
+  if (!(res.headers.get('content-type') ?? '').includes('application/json')) return false;
+  const body = await res.clone().json().catch(() => null);
+  const error = body?.error?.json ?? body?.error;
+  return typeof error?.data?.code === 'string';
+}
 
 
 /// Edge APIs: async, query, and stream

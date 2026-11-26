@@ -1,5 +1,8 @@
 import { delayOrAbort } from '~/common/util/abortUtils';
 
+import type { DAixIssue } from '../shared/aix.issues';
+import { aixIssuePolicy } from '../shared/aix.issues.policy';
+
 
 // configuration
 const RETRY_PROFILES = {
@@ -31,10 +34,10 @@ export class AixStreamRetry {
   }
 
   /**
-   * Determines if error is retryable and returns strategy + delay.
+   * Determines if the issue is retryable (its policy's recovery, aix.issues.policy.ts) and returns strategy + delay.
    * The resume handle (if any) determines the strategy: resume if available, reconnect otherwise.
    */
-  shallRetry(errorType: 'client-aborted' | 'net-disconnected' | 'request-exceeded' | 'response-captive' | 'net-unknown', maybeStatusCode?: number, hasResumeHandle?: boolean): RetryDecision {
+  shallRetry(issue: DAixIssue, hasResumeHandle?: boolean): RetryDecision {
 
     // determine strategy - based on availability of resume handle
     const strategy: RetryStrategy = hasResumeHandle ? 'resume' : 'reconnect';
@@ -47,34 +50,27 @@ export class AixStreamRetry {
 
     // retry profile selection
     let profile;
-    switch (errorType) {
+    switch (aixIssuePolicy(issue).recovery) {
 
-      // never retry these
-      case 'client-aborted':
-      case 'request-exceeded':
-      case 'response-captive':
-        return false;
-
-      case 'net-disconnected':
-        profile = RETRY_PROFILES.network; // Network disconnections are always retryable
+      case 'retry':
+      case 'resume':
+        profile = RETRY_PROFILES.network;
         break;
 
-      case 'net-unknown':
-        if (typeof maybeStatusCode !== 'number')
-          return false;
-
-        // unknown errors: check status code (if any) to determine if retryable
-        if (maybeStatusCode === 429 || maybeStatusCode === 503 || maybeStatusCode === 502)
+      case 'backoff':
+        if (issue.httpStatus === 429 || issue.httpStatus === 503 || issue.httpStatus === 502)
           profile = RETRY_PROFILES.server;  // Server overload/unavailable - use longer backoff
-        else if (maybeStatusCode >= 500)
-          profile = RETRY_PROFILES.transient; // Other 5xx errors - quick retry with transient profile
         else
-          return false;
+          profile = RETRY_PROFILES.transient; // Other 5xx errors - quick retry with transient profile
         break;
 
-      default:
-        const _exhaustiveCheck: never = errorType;
-        console.warn(`[DEV] AixStreamRetry.shallRetry: unhandled errorType '${errorType}'`);
+      // never retry these: the user, a report, a rephrase or nothing is the way out; a reroute is the other path
+      // (Direct Connection on or off), and the same path runs into the same limit
+      case 'reroute':
+      case 'user':
+      case 'rephrase':
+      case 'report':
+      case 'none':
         return false;
     }
 

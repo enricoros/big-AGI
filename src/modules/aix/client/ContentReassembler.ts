@@ -4,7 +4,7 @@ import type { DMessageGenerator } from '~/common/stores/chat/chat.message';
 import { messageTerminalOutcome } from '~/common/stores/chat/chat.message.outcome';
 import type { MaybePromise } from '~/common/types/useful.types';
 import { convert_Base64WithMimeType_To_Blob } from '~/common/util/blobUtils';
-import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAixIssueContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createErrorContentFragment, createHostedResourceContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DMessageErrorPart, DVoidModelAuxPart, DVoidPlaceholderMOp, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isAixIssuePart, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
+import { create_CodeExecutionInvocation_ContentFragment, create_CodeExecutionResponse_ContentFragment, create_FunctionCallInvocation_ContentFragment, createAixIssueContentFragment, createAnnotationsVoidFragment, createDMessageDataRefDBlob, createDVoidWebCitation, createHostedResourceContentFragment, createModelAuxVoidFragment, createPlaceholderVoidFragment, createTextContentFragment, createZyncAssetReferenceContentFragment, DVoidModelAuxPart, DVoidPlaceholderMOp, isAixIssuePart, isContentFragment, isModelAuxPart, isTextContentFragment, isVoidAnnotationsFragment, isVoidFragment, isVoidPlaceholderFragment } from '~/common/stores/chat/chat.fragments';
 import { downloadBlob } from '~/common/util/downloadUtils';
 import { ellipsizeMiddle } from '~/common/util/textUtils';
 import { imageBlobTransform, PLATFORM_IMAGE_MIMETYPE } from '~/common/util/imageUtils';
@@ -12,7 +12,7 @@ import { metricsChatGenerateLgToMd, metricsFinishChatGenerateLg, metricsPendChat
 import { nanoidToUuidV4 } from '~/common/util/idUtils';
 
 import { AixWire_Particles, AixWire_Vendors } from '../server/api/aix.wiretypes';
-import { aixIssueFails } from '../shared/aix.issues';
+import { aixIssue, aixIssueFails, aixIssueIsWellFormed, aixIssuePlainText, type DAixIssue } from '../shared/aix.issues';
 
 import type { AixClientDebugger, AixFrameId } from './debugger/memstore-aix-client-debugger';
 import { aixClientDebugger_completeFrame, aixClientDebugger_init, aixClientDebugger_recordParticleReceived, aixClientDebugger_setProfilerMeasurements, aixClientDebugger_setRequest } from './debugger/reassembler-debug';
@@ -25,8 +25,7 @@ import { aixClassifyReassemblyError } from './aix.client.errors';
 const DEBUG_FLOW = false; // logs client-side checkpoint/retry/continuation flow control
 const GENERATED_IMAGES_CONVERT_TO_COMPRESSED = true; // converts PNG to WebP or JPEG to save IndexedDB space
 const GENERATED_IMAGES_COMPRESSION_QUALITY = 0.98;
-const ELLIPSIZE_DEV_ISSUE_MESSAGES = 4096; // for _appendReassemblyDevError and _appendUnknownParticleNotice
-const MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN = false; // 2025-10-10: put errors in the dedicated part
+const ELLIPSIZE_DEV_ISSUE_MESSAGES = 4096; // for _appendWarnNotice
 const VP_PERSISTENCE_DELAY = 500; // persistence of vision for voidPlaceholders
 
 /** Placeholders the reassembler manages (progress, follow-ups, controls) - 'notice' placeholders are user-dismissed: never auto-removed or recycled */
@@ -47,10 +46,13 @@ const _isRetryStatus = (f: Parameters<typeof isVoidPlaceholderFragment>[0]) => i
 const _RETRY_PENDING = 'Retrying '; // 'Retrying in 0.7s' through the wait, then 'Retrying now': finalizeReassembly rewrites from here when the run ends on it
 /** Output of the attempt a retry status announced, once connected: heartbeats, connect failures and the end are not */
 const _isAttemptOutput = (op: AixWire_Particles.ChatGenerateOp): boolean => !('cg' in op) ? !('p' in op && op.p === '❤')
-  : op.cg === 'issue' ? op.issueId !== 'dispatch-prepare' && op.issueId !== 'dispatch-fetch'
-    : op.cg === 'aix-issue' ? op.issue.code !== 'dispatch-prepare' && op.issue.code !== 'dispatch-connect' && op.issue.code !== 'dispatch-http'
+  : op.cg === 'aix-issue' ? op.issue?.code !== 'dispatch-prepare' && op.issue?.code !== 'dispatch-connect' && op.issue?.code !== 'dispatch-http'
     : op.cg !== 'end' && op.cg !== 'aix-retry-reset' && op.cg !== '_debugDispatchRequest' && op.cg !== '_debugProfiler';
-const _STREAM_ENDED_EARLY = 'The stream ended before a final response status was received. The answer may be incomplete.';
+
+// Input this build cannot place: a warn notice, never an issue record - the response may well be complete
+const _UNKNOWN_PARTICLE = 'Part of the response is unknown to this version of the app.'; // a newer server
+const _UNAPPLIED_PARTICLE = 'Part of the response could not be applied.'; // a particle that does not fit the message so far
+const _UNKNOWN_END = 'Response may be incomplete - the end reason is unknown to this version of the app.'; // a newer server
 
 // Future: Reassembly Policies
 // type ReassemblyPolicyVoidPlaceholder =
@@ -156,10 +158,10 @@ export class ContentReassembler {
 
   enqueueWireParticle(op: AixWire_Particles.ChatGenerateOp): void {
     if (this.#wireIsAborted) {
-      // WARN about dropping particles; note that this should not happen besides CSF 'end' particles,
-      //      which are ignored anyways becuse we hande end with the '.throwIfAborted()' outside here
-      const isEndParticle = 'cg' in op && op.cg === 'end';
-      if (!isEndParticle)
+      // a Stop stays a Stop: nothing is applied after it. Under Direct Connection the executor still closes the aborted run
+      // with its 'dispatch-aborted' issue and the end; anything else arriving here is unexpected
+      const isClosingParticle = 'cg' in op && (op.cg === 'end' || op.cg === 'aix-issue');
+      if (!isClosingParticle)
         console.log('⚠️ [ContentReassembler] enqueueWireParticle: received particle after wire abortion, ignoring', op);
       return;
     }
@@ -173,20 +175,48 @@ export class ContentReassembler {
     this.#continueWireBacklogProcessing();
   }
 
+  /**
+   * Resolves once no run is in flight and the backlog is empty, or the wire was aborted (an aborted backlog is never drained).
+   * A run that ends chains the next one for what arrived meanwhile: wait on each in turn. The chain never rejects.
+   */
   async waitForWireComplete(): Promise<void> {
-    return this.processingPromise;
+    while (true) {
+      if (!this.isProcessing) {
+        if (!this.#hasBacklog || this.#wireIsAborted) return;
+        this.#continueWireBacklogProcessing();
+        if (!this.isProcessing) return;
+      }
+      await this.processingPromise;
+    }
+  }
+
+  /** The wire's end particle was applied: the executor said how the generation ended */
+  get hasWireEnd(): boolean {
+    const end = this.S.terminationReason;
+    return end !== undefined && end !== 'done-client-aborted' && end !== 'issue-client-rpc';
+  }
+
+  /** The verdict is in: a termination was applied, or an issue that failed the generation. A later throw says nothing about it */
+  get hasVerdict(): boolean {
+    return this.S.terminationReason !== undefined || this.#hasFailedIssue;
   }
 
 
   finalizeReassembly(): AixChatGenerateContent_LL_Result {
 
-    // Termination -> what the stored message carries: the stop reason, and an error fragment or a display-only notice
-    const { tsr, errorMessage, notice } = this._storedTermination();
+    // A missing end: neither a client termination nor the wire's end particle, and no failure that explains the silence
+    if (this.S.terminationReason === undefined && !this.#hasFailedIssue) {
+      // SEVERE - AIX BUG: either client terminations or an 'end' particle must be received
+      console.warn(`⚠️ [ContentReassembler] finished without 'terminationReason' - possible missing 'end' particle.`);
+      this.addIssue(aixIssue('aix-unknown', 'failed', { causeCode: 'no-end', text: 'The response ended without a completion signal.' }));
+    }
+
+    // Termination -> the stored stop reason. A stored issue that failed makes the message at least failed ('filter' stays):
+    // the executor's stop reason does not see the client's own failures, and a Stop after a failure ends a generation that
+    // had already failed
+    const endStopReason = this._storedStopReason();
+    const tsr = this.#hasFailedIssue && endStopReason !== 'filter' ? 'issue' : endStopReason;
     this.S.generator = { ...this.S.generator, tokenStopReason: tsr, endedAt: Date.now() };
-    // [Aix.Issue] minimal: the executor states the end's issues as records, so the texts derived here would repeat them
-    const issues = this.S.fragments.flatMap(f => isContentFragment(f) && isAixIssuePart(f.part) ? [f.part.issue] : []);
-    if (errorMessage && !issues.some(aixIssueFails)) this._appendErrorFragment(errorMessage);
-    if (notice && !issues.length) this._pushFragment(createPlaceholderVoidFragment(notice, 'notice', undefined, undefined, undefined, 'no-stop-reason', 'warn'));
 
     // The outcome is read back from the message: one function for the LL result, the stored message and every surface
     const outcome = messageTerminalOutcome({ generator: this.S.generator, fragments: this.S.fragments });
@@ -253,7 +283,7 @@ export class ContentReassembler {
     if (DEBUG_PARTICLES)
       console.log('-> aix.p: abort-client');
 
-    // normal user cancellation does not require error fragments
+    // a user Stop is no failure: no issue record
 
     if (this.S.terminationReason)
       console.warn(`⚠️ [ContentReassembler] setClientAborted: overriding server termination '${this.S.terminationReason}' (wire stop: ${this.S.dialectStopReason ?? 'none'})`);
@@ -262,25 +292,33 @@ export class ContentReassembler {
     this.S.dialectStopReason = undefined; // reset, as we assume we can't know (alt: jsut leave it)
   }
 
-  setClientExcepted(errorAsText: string, errorHint?: DMessageErrorPart['hint']): void {
+  /** A throw out of the stream loop, as the record that fails the generation (aixClassifyStreamingError) */
+  setClientExcepted(issue: DAixIssue): void {
     if (DEBUG_PARTICLES)
-      console.log('-> aix.p: issue:', errorAsText);
+      console.log('-> aix.p: issue:', issue);
 
-    // the dialect already ended with a clean or truncated stop reason: the content is final, so a transport error after it
-    // (e.g. the connection dropping before tRPC's closing chunk) is only logged - same rule as the server's late issue (ChatGenerateTransmitter._addIssue)
-    if (this.S.terminationReason === 'done-dialect' && this.S.dialectStopReason !== undefined && AixWire_Particles.gcStopReasonRow(this.S.dialectStopReason)?.class !== 'error') {
-      console.warn(`⚠️ [ContentReassembler] setClientExcepted: transport error after the response ended ('${this.S.dialectStopReason}'), keeping it: ${errorAsText}`);
+    // after the verdict (the wire end, or an issue that failed the generation) a relay failure says nothing about the
+    // generation: e.g. the connection dropping before tRPC's closing chunk. No record, the termination stands
+    if (this.hasVerdict) {
+      console.warn(`⚠️ [ContentReassembler] setClientExcepted: after the verdict ('${this.S.terminationReason ?? 'failed issue'}', wire stop: ${this.S.dialectStopReason ?? 'none'}), logged only: ${aixIssuePlainText(issue)}`);
       return;
     }
 
-    // add the error fragment with the given message
-    this._appendErrorFragment(errorAsText, errorHint);
-
-    if (this.S.terminationReason)
-      console.warn(`⚠️ [ContentReassembler] setClientExcepted: overriding server termination '${this.S.terminationReason}' (wire stop: ${this.S.dialectStopReason ?? 'none'})`);
-
+    this.addIssue(issue);
     this.S.terminationReason = 'issue-client-rpc';
-    this.S.dialectStopReason = undefined; // reset, as we can't assume we know (alt: jsut leave it)
+  }
+
+  /**
+   * The one entry for every issue record (aix.issues.ts), whatever door it came through: a particle of the executor, a throw
+   * the client classified, this reassembler's own work. Stored as an `aix.issue` part at its place in the stream, stamped
+   * with its time; it never changes the termination.
+   * One rule, over the whole generation, which no producer sees (the client's own failures): at most one issue fails, a
+   * later one is a notice.
+   */
+  private addIssue(issue: DAixIssue): void {
+    const effect = aixIssueFails(issue) && this.#hasFailedIssue ? 'notice' : issue.effect;
+    this.S._textFragmentIndex = null;
+    this._pushFragment(createAixIssueContentFragment({ ...issue, effect, atMs: issue.atMs ?? (Date.now() - this.wallStartTs) }));
   }
 
   async setClientRetrying(strategy: 'reconnect' | 'resume', errorMessage: string, attempt: number, maxAttempts: number, delayMs: number, causeHttp?: number, causeConn?: string) {
@@ -308,44 +346,37 @@ export class ContentReassembler {
 
     this.isProcessing = true;
 
-    // schedule processing as a promise chain
-    // Key insight: the .then modifies the processingPromise in place, so we can chain it
-    this.processingPromise = this.processingPromise.then(() => this.#processWireBacklog());
-
-    // NOTE: we let errors propagate to the caller, as here we're too down deep to handle them
-    // .catch((error) => console.error('ContentReassembler: processing error', error));
+    // schedule processing as a promise chain, which never rejects: a rejected link would skip every later one, and the
+    // processing flag would stay set (waitForWireComplete relies on both)
+    this.processingPromise = this.processingPromise
+      .then(() => this.#processWireBacklog())
+      .catch((error) => console.error('[ContentReassembler] processing chain error', error));
   }
 
   async #processWireBacklog(): Promise<void> {
-    // try...finally does not stop the error propagation (grat because we handle errors in the caller)
-    // but allows this to continue processing the backlog
     try {
 
       while (this.#hasBacklog && !this.#wireIsAborted) {
 
         // worker function, may be sync or async
         const particle = this.wireParticlesBacklog.shift()!;
-        await this.#reassembleParticle(particle);
+        try {
+          await this.#reassembleParticle(particle);
+        } catch (error) {
+          // [Error Channel 2] particle-PROCESSING errors (see the channel map in aix.client.errors.ts): the particle may have
+          // carried content, now lost - a record that fails the generation; the backlog goes on
+          console.warn('[ContentReassembler] particle processing failed', { error, particle });
+          this.addIssue(aixClassifyReassemblyError(error));
+        }
 
-        // signal all updates
-        await this.onStreamingUpdate?.(this.S, this.updateContentStarted ||= this.S.fragments.length > 0);
+        // signal all updates; a failing update callback is the caller's problem, not the generation's: logged, no record
+        try {
+          await this.onStreamingUpdate?.(this.S, this.updateContentStarted ||= this.S.fragments.length > 0);
+        } catch (error) {
+          console.error('[ContentReassembler] update callback failed', error);
+        }
 
       }
-
-    } catch (error) {
-
-      //
-      // [Error Channel 2] Classify/display particle-PROCESSING errors (see channel map in aix.client.errors.ts;
-      // [Error Channel 1] transport/connection errors are handled by the stream-loop catch in aix.client.ts).
-      //
-      // NOTE: we cannot throw here as we are part of a detached promise chain
-      // READ the `aixClassifyReassemblyError` that explains this in detail
-      //
-      const showAsBold = !!this.S.fragments.length;
-      const { errorMessage } = aixClassifyReassemblyError(error, showAsBold);
-
-      this._appendReassemblyDevError(errorMessage, true);
-      await this.onStreamingUpdate?.(this.S, this.updateContentStarted ||= true)?.catch(console.error);
 
     } finally {
 
@@ -362,6 +393,11 @@ export class ContentReassembler {
 
   get #wireIsAborted(): boolean {
     return !!this.wireAbortSignal?.aborted;
+  }
+
+  /** An issue that failed the generation is stored. Read from the fragments, so a clearing retry reset takes it back with them */
+  get #hasFailedIssue(): boolean {
+    return this.S.fragments.some(f => isContentFragment(f) && isAixIssuePart(f.part) && aixIssueFails(f.part.issue));
   }
 
 
@@ -456,7 +492,7 @@ export class ContentReassembler {
           default:
             // noinspection JSUnusedLocalSymbols
             const _exhaustiveCheck: never = op;
-            this._appendUnknownParticleNotice(`unexpected PartParticleOp: ${JSON.stringify(op)}`);
+            this._appendWarnNotice(_UNKNOWN_PARTICLE, `unexpected PartParticleOp: ${JSON.stringify(op)}`);
         }
         break;
 
@@ -474,15 +510,13 @@ export class ContentReassembler {
           case 'end':
             this.onCGEnd(op);
             break;
-          case 'issue':
-            this.onCGIssue(op);
-            break;
           case 'aix-issue':
-            // [Aix.Issue] minimal: the record is stored as sent, at its place; the outcome reads it (messageTerminalOutcome).
-            // The client's own doors and the end move to records with the reassembler rewrite
-            // [Aix.Issue Malformed Guard] not checked: stored as sent, as every particle of our own executor is
-            this.S._textFragmentIndex = null;
-            this._pushFragment(createAixIssueContentFragment({ ...op.issue, atMs: op.issue.atMs ?? (Date.now() - this.wallStartTs) }));
+            // [Aix.Issue Malformed Guard] the wire door: a record the readers could not read is not stored (they would throw on
+            // the live message, and the load repair would delete it). It is a particle this build cannot place: the notice
+            if (aixIssueIsWellFormed(op.issue))
+              this.addIssue(op.issue);
+            else
+              this._appendWarnNotice(_UNKNOWN_PARTICLE, `malformed aix-issue: ${JSON.stringify(op)}`);
             break;
           case 'aix-info':
             if (op.ait === 'flow-cont') {
@@ -519,14 +553,14 @@ export class ContentReassembler {
           default:
             // noinspection JSUnusedLocalSymbols
             const _exhaustiveCheck: never = op;
-            this._appendUnknownParticleNotice(`unexpected ChatGenerateOp: ${JSON.stringify(op)}`);
+            this._appendWarnNotice(_UNKNOWN_PARTICLE, `unexpected ChatGenerateOp: ${JSON.stringify(op)}`);
         }
         break;
 
       default:
         // noinspection JSUnusedLocalSymbols
         const _exhaustiveCheck: never = op;
-        this._appendUnknownParticleNotice(`unexpected particle: ${JSON.stringify(op)}`);
+        this._appendWarnNotice(_UNKNOWN_PARTICLE, `unexpected particle: ${JSON.stringify(op)}`);
     }
   }
 
@@ -638,7 +672,9 @@ export class ContentReassembler {
       };
       this._replaceFragmentAt(this.S.fragments.length - 1, { ...fragment, part: updatedPart });
     } else
-      this._appendReassemblyDevError('unexpected _fc particle without a preceding function-call');
+      // not a notice: the call these arguments belong to would stand complete with part of them, and be handed over as
+      // such. A processing failure: the record fails the message (#processWireBacklog), the stream goes on
+      throw new Error('function-call arguments arrived with no function call open');
   }
 
   private onAddCodeExecutionInvocation(cei: Extract<AixWire_Particles.PartParticleOp, { p: 'cei' }>): void {
@@ -710,8 +746,8 @@ export class ContentReassembler {
 
     } catch (error: any) {
       console.warn('[DEV] Failed to add inline audio to DBlobs:', { label: safeLabel, error, mimeType, size: base64Data.length });
-      // Add an error fragment instead
-      this._appendErrorFragment(`Failed to process audio: ${error?.message || 'Unknown error'}`, 'aix-audio-processing');
+      // an issue record instead: the response goes on, the audio is missing
+      this._addMediaIssue('audio', error);
     }
   }
 
@@ -738,7 +774,7 @@ export class ContentReassembler {
 
     } catch (error: any) {
       console.warn('[DEV] Failed to process inline video:', { label: safeLabel, error, mimeType, size: base64Data.length });
-      this._appendErrorFragment(`Failed to process video: ${error?.message || 'Unknown error'}`, 'aix-video-processing');
+      this._addMediaIssue('video', error);
     }
   }
 
@@ -800,8 +836,8 @@ export class ContentReassembler {
       this._pushFragment(zyncImageAssetFragmentWithLegacy);
     } catch (error: any) {
       console.warn('[DEV] Failed to add inline image to DBlobs:', { label, error, inputType, base64Length: inputBase64.length });
-      // User-visible error fragment so a silent dblob/resize failure doesn't look like "image just didn't arrive"
-      this._appendErrorFragment(`Failed to process image: ${error?.message || 'Unknown error'}`, 'aix-image-processing');
+      // a visible issue record, so a silent dblob/resize failure doesn't look like "image just didn't arrive"
+      this._addMediaIssue('image', error);
     }
   }
 
@@ -1129,7 +1165,7 @@ export class ContentReassembler {
   /// Rest of the data ///
 
   /**
-   * Stores raw termination data from the wire - classification deferred to finalizeReassembly()
+   * Stores raw termination data from the wire - facts only: every explanation arrived before it, as an aix-issue
    */
   private onCGEnd({ terminationReason, tokenStopReason }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'end' }>): void {
     // Diagnostic: detect late 'end' particles overriding a prior termination (parser bug, replayed wire, or upstream advisory after a clean end).
@@ -1143,96 +1179,51 @@ export class ContentReassembler {
   }
 
   /**
-   * Termination -> what the stored message will carry: the stop reason (DMessageGenerator.tokenStopReason), and either an
-   * error fragment text or a display-only notice. No outcome is decided here: finalizeReassembly() reads it back from the
-   * message with messageTerminalOutcome(), so the LL result, the stored message and every surface share one function.
+   * The stored stop reason (DMessageGenerator.tokenStopReason), from the end facts. No outcome is decided here:
+   * finalizeReassembly() reads it back from the message with messageTerminalOutcome(), so the LL result, the stored message
+   * and every surface share one function. The explanations are the issue records, already stored.
    */
-  private _storedTermination(): { tsr: DMessageGenerator['tokenStopReason']; errorMessage?: string; notice?: string } {
+  private _storedStopReason(): DMessageGenerator['tokenStopReason'] {
     const { terminationReason: endReason, dialectStopReason: dialectTokenStopReason } = this.S;
 
     // -- Client-set terminations --
 
     if (endReason === 'done-client-aborted')
-      return { tsr: 'client-abort' };
+      return 'client-abort';
     if (endReason === 'issue-client-rpc')
-      return { tsr: 'issue' /* error fragment already appended by setClientExcepted() */ };
+      return 'issue';
 
     // -- Dialect-set dispatch terminations (model responded with an explicit stop reason at the end) --
 
     if (dialectTokenStopReason) {
       // one row per wire reason, shared with the edge: gcStopReasonRow in aix.wiretypes
       const stopRow = AixWire_Particles.gcStopReasonRow(dialectTokenStopReason);
-      // TODO: port to the new typed errors system, otherwise replace with the following code: the row's message becomes a fallback,
-      //       skipped when the stop arrived with its own text (today a Gemini filter stop, and an Anthropic refusal with details,
-      //       store two error fragments: the vendor's text and this generic one)
-      //   - ReassemblyState, false at init:  dialectStopExplained: boolean;
-      //   - onCGEnd, where dialectStopReason is set:  this.S.dialectStopExplained = !!tokenStopError || terminationReason === 'issue-dialect';
-      //   - here:  return { tsr: stopRow.stored, ...(stopRow.message && !this.S.dialectStopExplained && { errorMessage: stopRow.message }) };
       if (stopRow)
-        return { tsr: stopRow.stored, ...(stopRow.message && { errorMessage: stopRow.message }) };
+        return stopRow.stored;
       console.warn(`[ContentReassembler] Unmapped dialectStopReason: ${dialectTokenStopReason}. Falling back to terminationReason.`);
-    }
-
-    // -- Unexpected: no termination reason nor token stop reason --
-
-    if (endReason === undefined) {
-      // SEVERE - AIX BUG: either client terminations or an 'end' particle must be received
-      console.warn(`⚠️ [ContentReassembler] finished without 'terminationReason' - possible missing 'end' particle.`);
-      return { tsr: 'issue', errorMessage: 'Response may be incomplete - missing completion signal.' };
     }
 
     // -- Dispatch-set terminations: AixWire_Particles.CGEndReason --
 
     switch (endReason) {
       case 'done-dialect':
-        // the dialect said done without a stop reason (parser gap, or a gateway omitting finish_reason): completeness unknown, assumed
-        // complete - a dismissible warning notice, not an error fragment (error fragments are content and may reach the model)
-        console.warn(`⚠️ [ContentReassembler] termination by dialect without 'dialectStopReason' - possible dialect parser issue.`);
-        return { tsr: undefined, notice: 'Response may be incomplete - the finish reason was not provided by the model.' };
+        // the dialect said done without a stop reason (parser gap, or a gateway omitting finish_reason): completeness unknown,
+        // assumed complete; the executor sent its 'model-unfinished' notice
+        return undefined;
 
-      case 'done-dispatch-closed': // (!) VERY COMMON
-        // BROKEN - Stream EOF before the dialect sent a termination signal - provider closed the connection early
-        console.warn(`⚠️ [ContentReassembler] done-dispatch-closed without dialectStopReason - possible truncation`);
-        return { tsr: 'issue', errorMessage: _STREAM_ENDED_EARLY };
-
+      case undefined: // no end at all
+      case 'done-dispatch-closed': // (!) VERY COMMON - Stream EOF before the dialect sent a termination signal
       case 'done-dispatch-aborted':
-        // BROKEN - Infrastructure abort (not user-initiated) - dispatch connection severed
-        console.warn(`⚠️ [ContentReassembler] done-dispatch-aborted - connection lost, not user-initiated.`);
-        return { tsr: 'issue', errorMessage: 'Response interrupted - the server cancelled the request.' };
-
       case 'issue-dialect':
       case 'issue-dispatch-rpc':
-        return { tsr: 'issue' /* error fragments already added by upstream issue particles */ };
+        return 'issue';
 
       default:
-        // a termination this build does not know (a newer server): completeness unknown, assumed complete, as above
+        // a termination this build does not know (a newer server): completeness unknown, assumed complete
         const _exhaustiveCheck: never = endReason;
-        console.warn(`⚠️ [ContentReassembler] unmapped termination reason: ${endReason}`);
-        return { tsr: undefined, notice: 'Response may be incomplete - the end reason is unknown to this version of the app.' };
+        this._appendWarnNotice(_UNKNOWN_END, `unmapped termination reason: ${endReason}`);
+        return undefined;
     }
-  }
-
-  private onCGIssue({ issueId: _issueId /* Redundant as we add an Error Fragment already */, issueText, issueHint }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'issue' }> & { issueHint?: DMessageErrorPart['hint'] }): void {
-    // Diagnostic: detect issue particles arriving after a clean termination (e.g. OpenAI rate-limit advisory after response.completed).
-    // Behavior unchanged - the issue is still appended - but the warning surfaces that we are mutating a finished message.
-    if (this.S.terminationReason && this.S.terminationReason === 'done-dialect')
-      console.warn(`[DEV] [ContentReassembler] onCGIssue: appending issue after clean '${this.S.terminationReason}' (wire stop: ${this.S.dialectStopReason ?? 'none'}): ${issueText}`);
-
-    // NOTE: not sure I like the flow at all here
-    // there seem to be some bad conditions when issues are raised while the active part is not text
-    if (MERGE_ISSUES_INTO_TEXT_PART_IF_OPEN) {
-      const currentTextFragment = this.S._textFragmentIndex === null ? null
-        : this.S.fragments[this.S._textFragmentIndex];
-      if (currentTextFragment && isTextContentFragment(currentTextFragment)) {
-        const idx = this.S._textFragmentIndex!;
-        this._replaceFragmentAt(idx, {
-          ...currentTextFragment,
-          part: { ...currentTextFragment.part, text: currentTextFragment.part.text + (currentTextFragment.part.text ? '\n' : ' ') + issueText },
-        });
-        return;
-      }
-    }
-    this._appendErrorFragment(issueText, issueHint);
   }
 
   private onAixInfo({ ait, text }: Extract<AixWire_Particles.ChatGenerateOp, { cg: 'aix-info' }>): void {
@@ -1253,9 +1244,9 @@ export class ContentReassembler {
 
       case 'since-checkpoint':
         // atomic restore: to the last continuation checkpoint ('flow-cont'), keeping the turns before the failed one; with no
-        // checkpoint this is the first turn, and restarting the answer from the initial state is the intended reset
+        // checkpoint this is the first turn, and restarting the answer from the initial state is the intended reset.
+        // The backlog is left alone: what is queued behind the reset belongs to the next attempt
         Object.assign(this.S, structuredClone(this.checkpointState ?? this.initialState));
-        this.wireParticlesBacklog.length = 0; // should have been drained/completed already
         if (DEBUG_FLOW) console.log(`[DEV] [flow] retry-reset ${rScope}: since-checkpoint (${_prevFragments} -> ${this.S.fragments.length} fragments) - ${reason}`);
         break;
 
@@ -1263,7 +1254,6 @@ export class ContentReassembler {
         // full wipe for reconnect scenarios (L4 client reconnect)
         Object.assign(this.S, structuredClone(this.initialState));
         this.checkpointState = undefined;
-        this.wireParticlesBacklog.length = 0; // should have been drained/completed already
         if (DEBUG_FLOW) console.log(`[DEV] [flow] retry-reset ${rScope}: all (${_prevFragments} -> 0 fragments, checkpoint discarded) - ${reason}`);
         break;
 
@@ -1281,7 +1271,7 @@ export class ContentReassembler {
     const phase = sentPhase ?? (delayMs > 0 ? 'waiting' : 'gave-up'); // a server older than `phase` says it with delayMs
     const retryMessage = phase !== 'gave-up'
       ? `${reason ? `${reason} - ` : ''}${_RETRY_PENDING}${phase === 'started' ? 'now' : `in ${Math.round(delayMs / 100) / 10}s`} - ${attempt}/${maxAttempts}`
-      : `Connection failed (${attempt} attempts)`;
+      : `${reason ? `${reason} - ` : ''}Gave up after ${attempt} attempts`; // as the operation retry's last status reads (finalizeReassembly): a rate limit that ran out is no failed connection
     this._pushFragment(createPlaceholderVoidFragment(retryMessage, undefined, {
       ctl: 'ec-retry',
       rScope: rScope,
@@ -1316,7 +1306,7 @@ export class ContentReassembler {
     // validate the handle
     const knownUht = handle?.uht === 'vnd.oai.responses' || handle?.uht === 'vnd.gem.interactions';
     if (!knownUht || !handle?.runId || handle.createdAt === undefined || handle.expiresAt === undefined) {
-      this._appendReassemblyDevError(`Invalid response handle received: ${JSON.stringify(handle)}`);
+      this._appendWarnNotice(_UNAPPLIED_PARTICLE, `Invalid response handle received: ${JSON.stringify(handle)}`);
       return;
     }
 
@@ -1356,26 +1346,16 @@ export class ContentReassembler {
 
   // utility
 
-  private _appendReassemblyDevError(errorText: string, omitPrefix?: boolean): void {
-    if (ELLIPSIZE_DEV_ISSUE_MESSAGES) {
-      const excess = errorText.length - ELLIPSIZE_DEV_ISSUE_MESSAGES;
-      const truncationMessage = `\n\n ... (truncated ${excess?.toLocaleString()} characters) ... \n\n`;
-      if (excess > 0)
-        errorText = ellipsizeMiddle(errorText, ELLIPSIZE_DEV_ISSUE_MESSAGES - truncationMessage.length, truncationMessage);
-    }
-    this._appendErrorFragment((omitPrefix ? '' : 'AIX Content Reassembler: ') + errorText);
+  /** Input this build cannot place (see the texts at the top): a warn notice at its stream position, the stream goes on */
+  private _appendWarnNotice(text: string, detail: string): void {
+    console.warn(`⚠️ [ContentReassembler] ${detail}`);
+    this.S._textFragmentIndex = null;
+    this._pushFragment(createPlaceholderVoidFragment(text, 'notice', undefined, undefined, ellipsizeMiddle(detail, ELLIPSIZE_DEV_ISSUE_MESSAGES, ' ... '), undefined, 'warn'));
   }
 
-  /** A particle this build does not know (a newer server): a warn notice, not an error fragment - the response may well be complete. */
-  private _appendUnknownParticleNotice(particleText: string): void {
-    console.warn(`⚠️ [ContentReassembler] ${particleText}`);
-    this.S._textFragmentIndex = null;
-    this._pushFragment(createPlaceholderVoidFragment('Part of the response is unknown to this version of the app.', 'notice', undefined, undefined, ellipsizeMiddle(particleText, ELLIPSIZE_DEV_ISSUE_MESSAGES, ' ... '), undefined, 'warn'));
-  }
-
-  private _appendErrorFragment(errorText: string, errorHint?: DMessageErrorPart['hint']): void {
-    this._pushFragment(createErrorContentFragment(errorText, errorHint));
-    this.S._textFragmentIndex = null;
+  /** A generated media item that could not be processed: the response goes on, the item is lost */
+  private _addMediaIssue(kind: 'image' | 'audio' | 'video', error: any): void {
+    this.addIssue(aixIssue('aix-media', 'lost', { text: `The generated ${kind} could not be processed.`, causeCode: kind, detail: error?.message || 'Unknown error' }));
   }
 
 }

@@ -610,9 +610,7 @@ export function CMRenderTreeNodes(props: {
           <BlockPartError
             key={node.key}
             errorText={node.fragment.part.error}
-            errorHint={node.fragment.part.hint}
             messageRole={props.messageRole}
-            messageGeneratorLlmId={props.messageGeneratorLlmId}
             contentScaling={props.contentScaling}
           />
         );

@@ -40,7 +40,7 @@ type ChipFamily = 'text' | 'reasoning' | 'tool' | 'op' | 'cite' | 'media' | 'ctr
 function _particleChip(p: any): { family: ChipFamily; label: string; full: unknown } {
   if ('t' in p) return { family: 'text', label: `t "${_flat(p.t, 60)}"`, full: p };
   if ('cg' in p) {
-    if (p.cg === 'issue') return { family: 'err', label: `cg:issue ${_flat(p.issueText, 60)}`, full: p };
+    if (p.cg === 'aix-issue') return { family: 'err', label: `cg:aix-issue ${p.issue?.code} ${_flat(p.issue?.text, 60)}`, full: p };
     const detail = p.cg === 'end' ? ` ${p.terminationReason}${p.tokenStopReason ? '/' + p.tokenStopReason : ''}`
       : p.cg === 'set-model' ? ` ${p.name}`
         : p.cg === 'set-upstream-handle' ? ` ${p.handle?.runId}` : '';

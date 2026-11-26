@@ -764,7 +764,6 @@ export namespace AixWire_Particles {
   // | { cg: 'start' } // not really used for now
     | { cg: 'end', terminationReason: CGEndReason /* we know why we're sending 'end' */, tokenStopReason?: GCTokenStopReason /* we may or not have gotten a logical token stop reason from the dispatch */ } // facts only, once, last: every explanation travels before it, as an aix-issue
     | { cg: 'aix-issue', issue: DAixIssue } // the record (aix.issues.ts), live, at its place in the stream
-    | { cg: 'issue', issueId: string, issueText: string } // [Aix.Issue shim] the pre-record particle: the executor sends none; declared until its last readers move (client, tools)
     | { cg: 'aix-info', ait: 'flow-cont' /* important: establishes a checkpoint */, text: string }
     | { cg: 'aix-retry-reset', rScope: 'srv-dispatch' | 'srv-op' | 'cli-ll', rClearStrategy: 'none' | 'since-checkpoint' | 'all', reason: string, attempt: number, maxAttempts: number, phase: 'waiting' | 'started' | 'gave-up' /* what the message announces: the wait before the attempt, the attempt beginning, no attempts left */, delayMs: number /* the wait; sent in every phase, as a client older than `phase` reads the phase from it: > 0 waiting, else gave-up */, causeHttp?: number, causeConn?: string, calm?: true /* the retry profile marks the condition as expected (e.g. a busy best-effort tier): rendered without alarm */ }
     | { cg: 'set-metrics', metrics: CGSelectMetrics }

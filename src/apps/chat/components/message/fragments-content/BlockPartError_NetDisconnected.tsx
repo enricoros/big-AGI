@@ -13,10 +13,9 @@ import { BlockPartError_DirectConnectionRow } from './BlockPartError_DirectConne
 
 
 /**
- * Error recovery component for "Connection terminated" errors.
+ * The cutoff card (`relay-cutoff`): our server, or what fronts it, closed the response early. Offers Direct Connection.
  */
 export function BlockPartError_NetDisconnected(props: {
-  disconnectionKind: 'net-client-closed' | 'net-server-closed' | 'net-unknown-closed';
   elapsedMs?: number; // when the cut came, from the call's start: a round 5 minutes is a platform limit
   messageGeneratorLlmId?: string | null;
   contentScaling: ContentScaling;
@@ -24,8 +23,7 @@ export function BlockPartError_NetDisconnected(props: {
 
   // external state
   const model = useLLM(props.messageGeneratorLlmId) ?? null;
-  const isServerSideClosed = props.disconnectionKind === 'net-server-closed'; // do not show CSF option for non-server-side
-  const csf = useModelServiceClientSideFetch(isServerSideClosed, model);
+  const csf = useModelServiceClientSideFetch(true, model);
   const { csfAvailable, vendorName } = csf;
 
   return (

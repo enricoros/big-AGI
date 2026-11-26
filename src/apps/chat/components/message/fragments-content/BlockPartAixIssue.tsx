@@ -94,7 +94,7 @@ export function BlockPartAixIssue(props: {
   const presentation = aixIssuePresentation(issue);
   switch (presentation.form) {
     case 'card-cutoff':
-      return <BlockPartError_NetDisconnected disconnectionKind='net-server-closed' elapsedMs={issue.atMs} messageGeneratorLlmId={props.messageGeneratorLlmId} contentScaling={props.contentScaling} />;
+      return <BlockPartError_NetDisconnected elapsedMs={issue.atMs} messageGeneratorLlmId={props.messageGeneratorLlmId} contentScaling={props.contentScaling} />;
     case 'card-size':
       return <BlockPartError_RequestExceeded messageGeneratorLlmId={props.messageGeneratorLlmId} contentScaling={props.contentScaling} />;
     case 'notice':
