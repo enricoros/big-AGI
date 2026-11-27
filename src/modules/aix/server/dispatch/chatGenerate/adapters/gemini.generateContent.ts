@@ -263,6 +263,13 @@ export function aixToGeminiGenerateContent(model: AixAPI_Model, _chatGenerate: A
 
   // [NO-CIRCULATION] can't combine hosted + custom tools, regardless of policy (400 "Built-in tools ... and Function Calling cannot be combined") - custom wins -> wipe hosted if any
   if (_addedHostedTools && hasUserTools && !hasToolContextCirculation) {
+    // Not wired (deciding per vendor): the user is not told. When it is, the adapter takes the dispatch's `notices` array
+    // (ChatGenerateDispatch.notices) and adds, with the names of the tools it removes:
+    //   notices.push({
+    //     p: 'vnt', nt: 'input-transform', itt: 'tools-dropped', tools: ['googleSearch'], level: 'warn',
+    //     text: 'Google Search was not sent',
+    //     detail: 'This model cannot combine its built-in tools with function tools: the function tools were sent.',
+    //   });
     _addedHostedTools = false;
     payload.tools = computerUseEnv ? payload.tools?.filter(tool => 'computerUse' in tool) : undefined; // wipe, except Computer Use: client-side, and its models 400 without it
   }

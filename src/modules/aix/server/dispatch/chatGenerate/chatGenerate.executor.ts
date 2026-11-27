@@ -121,6 +121,10 @@ export async function* executeChatGenerateDispatch(
   if (_d.requestBodyOverride && 'body' in dispatch.request)
     dispatch.request.body = { ...dispatch.request.body, ..._d.requestBodyOverride };
 
+  // What the request leaves out, before any content: an operation retry restores the message to before it, so it shows once
+  for (const notice of dispatch.notices ?? [])
+    chatGenerateTx.appendVoidNotice(notice);
+
   // Companions: attachments that live for this dispatch - lifecycle hooks and 1:1 particle mappers, in order (see ChatGenerateDispatchCompanion)
   const companions = dispatch.companions ?? [];
   try {

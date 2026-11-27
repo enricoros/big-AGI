@@ -39,7 +39,7 @@ import { aixIssue, aixIssueFails, type DAixIssue, type DAixIssueCode } from '../
 import { aixIssuePresentation, aixIssueReplayText } from '../../../shared/aix.issues.policy';
 
 import type { AixDebugObject } from './chatGenerate.debug';
-import type { ChatGenerateDispatch, ChatGenerateParseFunction } from './chatGenerate.dispatch';
+import type { ChatGenerateDispatch, ChatGenerateDispatchNotice, ChatGenerateParseFunction } from './chatGenerate.dispatch';
 import { createAnthropicMessageParser, createAnthropicMessageParserNS } from './parsers/anthropic.parser';
 import { createBedrockConverseParserNS, createBedrockConverseStreamParser } from './parsers/bedrock-converse.parser';
 import { createEventStreamToSSETransform } from '../stream.demuxer.aws-eventstream';
@@ -77,8 +77,9 @@ function missing(...files: string[]): string | false {
 /**
  * Runs one generation: each upstream request the chain makes is answered with the next response, in order.
  * Returns the particles the client would receive, and the request bodies the chain sent (the first is `requestBody`).
+ * `notices`: what the request leaves out, as an adapter would state it on its dispatch.
  */
-async function replay(responses: (string | ReadableStream<Uint8Array>)[], streaming: boolean, createParser: () => ChatGenerateParseFunction, requestBody: object = {}): Promise<{ particles: Op[], requestBodies: any[] }> {
+async function replay(responses: (string | ReadableStream<Uint8Array>)[], streaming: boolean, createParser: () => ChatGenerateParseFunction, requestBody: object = {}, notices?: ChatGenerateDispatchNotice[]): Promise<{ particles: Op[], requestBodies: any[] }> {
   const particles: Op[] = [];
   const requestBodies: any[] = [];
   const dispatchCreator = async (): Promise<ChatGenerateDispatch> => {
@@ -86,6 +87,7 @@ async function replay(responses: (string | ReadableStream<Uint8Array>)[], stream
       request: { url: 'https://capture.invalid', method: 'POST', headers: {}, body: structuredClone(requestBody) },
       demuxerFormat: streaming ? 'fast-sse' : null,
       chatGenerateParse: createParser(),
+      ...(notices && { notices: structuredClone(notices) }),
       customConnect: async () => {
         // read the body at connect time: a continuation mutates it after this creator returns
         requestBodies.push('body' in dispatch.request ? dispatch.request.body : undefined);
@@ -911,6 +913,17 @@ describe('Anthropic Messages', () => {
     assert.equal(metrics.nWebFetch, sum(usage => usage.server_tool_use.web_fetch_requests));
   });
 
+  test('a notice the request carries is sent once, before any content, though the paused turn makes a second request', { skip: missing(PAUSE_1, PAUSE_1_REQUEST, PAUSE_2) }, async () => {
+    const notice: ChatGenerateDispatchNotice = { p: 'vnt', nt: 'input-transform', itt: 'tools-dropped', tools: ['web_search'], level: 'warn', text: 'Web search was not sent' };
+    const { particles, requestBodies } = await replay([capture(PAUSE_1), capture(PAUSE_2)], false, createAnthropicMessageParserNS, JSON.parse(capture(PAUSE_1_REQUEST)).body, [notice]);
+
+    assert.equal(requestBodies.length, 2, 'the pause is continued with one more request');
+    const told = particles.filter(isPart('vnt')).filter(op => op.nt === 'input-transform' && op.itt === 'tools-dropped');
+    assert.deepEqual(told, [notice], 'told once, as stated');
+    const firstPart = particles.find(op => 'p' in op && op.p !== '❤');
+    assert.deepEqual(firstPart, notice, 'before any content');
+  });
+
   test('pause_turn continuation: the next request keeps the container Skills and sends the hosted calls back as received', { skip: missing(PAUSE_1, PAUSE_1_REQUEST, PAUSE_2) }, async () => {
     const paused = JSON.parse(capture(PAUSE_1));
     const request = JSON.parse(capture(PAUSE_1_REQUEST)).body;
@@ -973,7 +986,7 @@ describe('Anthropic Messages', () => {
       assert.equal(added.length, adds, 'the capture: blocks the continuation lists and the first response did not');
       const { particles } = await replay([capture(`${DROPS_PAUSED}_1-initial.sse`), capture(continuation)], true, createAnthropicMessageParser, JSON.parse(capture(`${DROPS_PAUSED}_1-initial.req.json`)).body);
 
-      const shown = particles.filter(isPart('vnt')).filter((notice): notice is Extract<typeof notice, { nt: 'input-transform' }> => notice.nt === 'input-transform');
+      const shown = particles.filter(isPart('vnt')).filter((notice): notice is Extract<typeof notice, { itt: 'thinking-dropped' }> => notice.nt === 'input-transform' && notice.itt === 'thinking-dropped');
       assert.deepEqual(shown.map(notice => notice.level), added.length ? [undefined, 'warn'] : [undefined]);
       assert.deepEqual(shown[0].paths, first);
       for (const path of added)

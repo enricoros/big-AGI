@@ -57,7 +57,12 @@ export type ChatGenerateDispatch = {
   chatGenerateParse: ChatGenerateParseFunction;
   /** attachments living for this dispatch: lifecycle hooks and 1:1 particle mappers, in order (see ChatGenerateDispatchCompanion) */
   companions?: ChatGenerateDispatchCompanion[];
+  /** what this request leaves out of what the user set (a tool the model cannot take): sent before any content, once per message */
+  notices?: ChatGenerateDispatchNotice[];
 };
+
+/** A notice about the request itself: always an input transform, so it is stored and shown as one (it yields to an error card) */
+export type ChatGenerateDispatchNotice = Extract<AixWire_Particles.PartParticleOp, { p: 'vnt', nt: 'input-transform' }>;
 
 export type ChatGenerateDispatchRequest =
   | { url: string, headers: HeadersInit, method: 'POST', body: object }

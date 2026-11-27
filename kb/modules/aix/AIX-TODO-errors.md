@@ -130,6 +130,7 @@ On every user's disk, no migration: these stand.
 - An in-band error ends the read on every host; rejected: reading on for OpenRouter's usage (a stalled upstream keeps it open)
 - Outcome fallback: the last content fragment; rejected: any failed issue fails (joined messages, Beam 'Use all', would read failed)
 - Odd input is a void notice; rejected: a non-failing `aix-unknown` (claims a failure nobody saw)
+- A request that leaves out a tool the user turned on is a warn notice (`input-transform`, `tools-dropped`) the dispatch carries, sent before any content, once per message; rejected: a non-failing issue (nothing failed, and every issue reader would have to skip it), a new notice kind (a stored value for what `input-transform` already is: the request that reached the model is not the one the user set)
 
 ## Limits accepted
 
@@ -180,3 +181,4 @@ Measured; a hypothesis says so.
 - Bedrock: an Invoke exception frame throws in the Anthropic parser (`dispatch-parse`; P53 in [AIX-ingestion.md](../AIX-ingestion.md)); an unknown Converse `stopReason` ends `model-unfinished` with no cause code; `:error-code`/`:error-message` unconfirmed live
 - Gemini: a SAFETY stop's detail lists every non-negligible rating, `blocked` aside, and replays; the 2.x intermediate STOP drops the rest. Interactions: `errors[]` and error-event fields are not in the wiretypes; `is_error` results show as done; PCM-to-WAV failures are dropped
 - OpenAI: an unknown Chat Completions finish_reason loses its raw value; `refusal` is unread; usage on the error chunk is dropped. Responses: a non-streaming failure drops partial output; a second kept error replaces the first; response and event ids are dropped; no Meta AI capture of a kept error then `[DONE]`
+- Request notices: no adapter sends `tools-dropped` yet, each case waits on a decision for its vendor: Gemini removes its hosted tools beside function tools (2.x, image, Deep Research; a commented sample is at the site), Responses relays skip web search and code interpreter, Bedrock skips code execution. A case is wired by passing the dispatch's `notices` into its adapter

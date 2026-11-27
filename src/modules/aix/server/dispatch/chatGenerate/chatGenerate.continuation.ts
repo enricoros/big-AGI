@@ -173,14 +173,14 @@ export async function* executeChatGenerateWithContinuation(
             continue;
           }
         }
-        if (!metricsBase && 'p' in particle && particle.p === 'vnt' && particle.nt === 'input-transform')
+        if (!metricsBase && 'p' in particle && particle.p === 'vnt' && particle.nt === 'input-transform' && particle.itt === 'thinking-dropped')
           particle.paths.forEach(path => historyDrops.add(path));
         // The vendor checks the whole request again on every continuation turn, so each one reports the chat history's
         // drops again: the client was told on the first request, skip (#1304). Any other dropped-reasoning notice on a
         // continuation turn means the request was not accepted as unchanged, in the paused turn we sent back or in the
         // chat rebuilt before it: the one case this loop must never produce. Mark it so the client renders a warning
         // instead of the harmless informational chip, with copy asking for a report.
-        if (metricsBase && 'p' in particle && particle.p === 'vnt' && particle.nt === 'input-transform') {
+        if (metricsBase && 'p' in particle && particle.p === 'vnt' && particle.nt === 'input-transform' && particle.itt === 'thinking-dropped') {
           if (particle.paths.every(path => historyDrops.has(path))) continue;
           const indices = particle.detail?.split('\n').pop();
           yield {
@@ -227,6 +227,7 @@ export async function* executeChatGenerateWithContinuation(
         const dispatch = await previousCreator();
         if ('body' in dispatch.request)
           dispatch.request.body = continuation.mutateBody(dispatch.request.body as Record<string, unknown>);
+        delete dispatch.notices; // the same request, sent on: what it leaves out was told on the first turn
         return dispatch;
       };
 
