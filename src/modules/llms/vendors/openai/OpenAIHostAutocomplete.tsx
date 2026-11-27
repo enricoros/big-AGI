@@ -40,6 +40,7 @@ const OPENAI_COMPATIBLE_PROVIDERS: VerifiedProvider[] = [
   { id: 'nous', label: 'Nous Research', host: 'https://inference-api.nousresearch.com', hostMatch: 'nousresearch.com', category: 'Example Providers', description: 'Hermes models + Portal subscription gateway', docsUrl: 'https://portal.nousresearch.com/', icon: NousResearchIcon },
   { id: 'novita', label: 'Novita AI', host: 'https://api.novita.ai/openai', hostMatch: 'novita.ai', category: 'Example Providers', description: 'Budget open model inference', docsUrl: 'https://novita.ai/docs', icon: NovitaAIIcon },
   { id: 'sarvam', label: 'Sarvam AI', host: 'https://api.sarvam.ai/v2', hostMatch: 'sarvam.ai', category: 'Example Providers', description: 'Indic-language and open-weight models', docsUrl: 'https://docs.sarvam.ai/api/token-factory' },
+  { id: 'synap', label: 'Synap', host: 'https://synap402.com/v1', hostMatch: 'synap402.com', category: 'Example Providers', description: 'Self-hosted open-weight models on dedicated GPUs', docsUrl: 'https://synap402.com/models.html' },
   // Example Proxies
   { id: 'cloudflare', label: 'Cloudflare AI Gateway', host: 'https://gateway.ai.cloudflare.com/v1/{account}/{gateway}/openai', hostMatch: 'gateway.ai.cloudflare.com', category: 'Example Proxies', description: 'Caching and analytics gateway', docsUrl: 'https://developers.cloudflare.com/ai-gateway/', icon: CloudflareIcon },
 ];
