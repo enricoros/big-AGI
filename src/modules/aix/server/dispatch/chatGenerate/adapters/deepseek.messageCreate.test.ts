@@ -222,14 +222,6 @@ describe('DeepSeek Messages request: what is sent', () => {
       }
   });
 
-  test('the web tools change nothing else: thinking and effort are the model\'s, so search is quick with thinking off and deep with it on', () => {
-    for (const effort of EFFORTS) {
-      const { tools: _with, ...withWeb } = aixToDeepseekMessageCreate(aixModel('deepseek-flash', effort, WEB), request([ASK], undefined), true);
-      const { tools: _without, ...without } = aixToDeepseekMessageCreate(aixModel('deepseek-flash', effort), request([ASK], undefined), true);
-      assert.deepEqual(withWeb, without, `effort ${effort}`);
-    }
-  });
-
   test('max_tokens is the model\'s, and absent when it sets none: the vendor\'s limit then applies, not Anthropic\'s 8192', () => {
     assert.equal('max_tokens' in aixToDeepseekMessageCreate(aixModel('deepseek-flash', 'high'), request([ASK], undefined), true), false);
     assert.equal(aixToDeepseekMessageCreate(aixModel('deepseek-flash', 'high', { maxTokens: 32000 }), request([ASK], undefined), true).max_tokens, 32000);

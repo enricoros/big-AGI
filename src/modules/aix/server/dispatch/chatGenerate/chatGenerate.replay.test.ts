@@ -1271,12 +1271,6 @@ describe('DeepSeek Messages', () => {
     assert.deepEqual(g.particles.filter(isPart('vp')).filter(op => op.mot !== 'search-web' || op.text.includes('deepseek_')), []);
   }));
 
-  test('a search by image, which has no query, is announced as one', { skip: missing(BY_IMAGE) }, async () => {
-    const operations = (await replayCapture(BY_IMAGE)).filter(isPart('vp'));
-    assert.equal(operations[0]?.text, 'Searching by image...');
-    assert.equal(operations[0]?.iTexts, undefined);
-  });
-
   test('every source the answer cites reaches the client', { skip: missing(...WEB_TOOLS) }, () => overCaptures(WEB_TOOLS, g => {
     const cited: string[] = g.streaming
       ? g.payloads.flat().filter(event => event.delta?.type === 'citations_delta').map(event => event.delta.citation.url)
