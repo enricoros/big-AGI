@@ -106,4 +106,6 @@ On 11.19.0 the 300s cut surfaced as a minified `TypeError` (`i is not iterable` 
 
 ## Re-measuring
 
+Locally, the relay-hop failures of this document (a 413 or 502 in front of the server, an HTML page, a cut or reset stream, a stream with no end, a server that is down) are made on demand by the relay of `tools/develop/aix-failure-simulator` (README: `relay.mjs`, `run.ts --relay`); a browser opened on the relay's port gives that engine's own texts. What only Vercel does (the 300s kill, the Stop that never arrives) needs a deployment:
+
 Push a branch with a throwaway probe page and synthetic endpoints (a stream that outlives 300s, a fake OpenAI-compatible upstream, a relay that fetches it with `ctx.reqSignal`), open it in each browser, and log results with `console.log` to read from the Vercel logs. Browser texts need a local server that resets or truncates connections. HTTPS pages reach `http://127.0.0.1` from Firefox, and from Chrome after the Local Network Access prompt; Safari fails them, `localhost` included, with `Load failed` and no prompt. To run the app's own code in every browser, serve the test page from the local server over HTTP: an esbuild bundle of the tRPC client, the classifier and `clientSideChatGenerate`, with the `next.config.ts` client mocks and a `process` shim.

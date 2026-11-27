@@ -4,6 +4,8 @@
 
 Every failure of a chat generation is one record, `DAixIssue`, built once by the layer that sees it, sent in an `aix-issue` particle or built by the client, stored as a message part `{ pt: 'aix.issue', issue }`. Outcome, presentation, retry and replay derive from it; `effect` is the one stored decision. Code: `src/modules/aix/shared/aix.issues.ts` (record, codes, texts, builder, predicates; import-free), `aix.issues.policy.ts` (policy, presentation, replay text).
 
+To make any of these failures happen on demand, with the real code in between, and read what is stored: `tools/develop/aix-failure-simulator` (its README is the manual: where each failure is reproduced, the steps, the commands).
+
 ## Record
 
 | Field | Holds |
@@ -142,7 +144,7 @@ On every user's disk, no migration: these stand.
 - `ChatGenerateTransmitter.test.ts`: transmitter rules, end nets, 4,000 seeded call sequences, wrapper failures, `onReadEnd`
 - `chatGenerate.replay.test.ts`: captures through parsers and transmitter (end nets only as listed in `END_NETS_EXPECTED`, empty), then the client readers
 - `chat.issues.readers.test.ts`: readers, load repair; `ContentReassembler.issues.test.ts`: client doors and rules; `aix.issues.chain.test.ts`: stubbed `fetch` through the real executor chain and reassembler, both runtimes, Stop
-- `tools/develop/aix-issues-lab/`: a mock service, one failure per scenario; `tools/develop/swc-minify-check/`: the outcome cases
+- `tools/develop/aix-failure-simulator/` (start at its README): any failure on demand over real HTTP: a service that answers as the vendors do (every capture is a model, plus hand-built answers), a relay that breaks our server's hop, one defect vocabulary for both, a driver whose rows compare two trees; `tools/develop/swc-minify-check/`: the outcome cases
 
 ## Vendor facts
 

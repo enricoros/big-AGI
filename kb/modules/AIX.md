@@ -72,7 +72,7 @@ The subsystem comprises three main components:
 4. Data Decoding, Transformation and Transmission: AIX Server sends AixWire_Particles to AIX Client (see [AIX-ingestion.md](AIX-ingestion.md))
 5. Client-side Processing: Client's ContentReassembler processes AixWire_Particles into a list (likely a single) of multi-fragment (DMessageContentFragment[]) messages
 6. Completion: AIX Server sends the `end` control particle (the termination reason, and the stop reason when known), AIX Client finalizes data update
-7. Error Handling: each failure is one `DAixIssue` record (`src/modules/aix/shared/aix.issues.ts`), sent live in an `aix-issue` particle (or built by the client for a throw) and stored as an `aix.issue` part: [aix/AIX-TODO-errors.md](aix/AIX-TODO-errors.md)
+7. Error Handling: each failure is one `DAixIssue` record (`src/modules/aix/shared/aix.issues.ts`), sent live in an `aix-issue` particle (or built by the client for a throw) and stored as an `aix.issue` part: [aix/AIX-TODO-errors.md](aix/AIX-TODO-errors.md). Any failure is reproduced on demand with `tools/develop/aix-failure-simulator` (see its README)
 
 ## 2. Files and Folders
 

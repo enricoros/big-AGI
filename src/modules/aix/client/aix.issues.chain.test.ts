@@ -2,7 +2,7 @@
 // Run: `NODE_ENV=development npx tsx --test src/modules/aix/client/aix.issues.chain.test.ts`
 // The chain gate: a service failure, through the real dispatch creation, fetcher, executor chain (continuation, operation
 // retry, connect retrier) and reassembler, lands as the records, stored stop reason and outcome stated here. `fetch` is
-// stubbed with the bodies of tools/develop/aix-issues-lab/mock-service.mjs, which serves them to the running app.
+// stubbed; tools/develop/aix-failure-simulator serves the same failures over real HTTP, to the chain and to the running app.
 import assert from 'node:assert/strict';
 import { afterEach, describe, test } from 'node:test';
 

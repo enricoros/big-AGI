@@ -1,0 +1,27 @@
+{
+  "relay": [
+    { "name": "ok", "model": "sim-ok", "expect": "-" },
+    { "name": "vendor 401", "model": "sim-ok~http401", "expect": "dispatch-http:failed", "stop": "issue" },
+    { "name": "vendor stream error", "model": "sim-stream-error", "expect": "service-error:failed", "stop": "issue" },
+    { "name": "relay 502", "model": "sim-ok", "fault": "http502", "expect": "relay-http:failed", "stop": "issue" },
+    { "name": "relay 413", "model": "sim-ok", "fault": "http413", "expect": "relay-http:failed", "stop": "issue" },
+    { "name": "relay html page", "model": "sim-ok", "fault": "html", "expect": "relay-html:failed", "stop": "issue" },
+    { "name": "relay rejects the input", "model": "sim-ok", "fault": "badinput", "expect": "relay-rejected:failed", "stop": "issue" },
+    { "name": "relay refuses the connection", "model": "sim-ok", "fault": "refuse", "count": 8, "expect": "relay-connect:failed", "stop": "issue" },
+    { "name": "relay resets mid-stream", "model": "sim-slow", "fault": "reset6", "expect": "relay-read:failed", "stop": "issue" },
+    { "name": "relay cuts mid-stream", "model": "sim-slow", "fault": "cut6", "expect": "relay-cutoff:failed", "stop": "issue" },
+    { "name": "relay drops the end", "model": "sim-ok", "fault": "noend", "expect": "aix-unknown:failed", "stop": "issue" },
+    { "name": "stop", "model": "sim-slow", "stopAfter": 5, "expect": "-", "stop": "client-abort" }
+  ],
+  "direct": [
+    { "name": "direct ok", "model": "sim-ok", "expect": "-" },
+    { "name": "direct vendor 401", "model": "sim-ok~http401", "expect": "dispatch-http:failed", "stop": "issue" },
+    { "name": "direct vendor refuses", "model": "sim-ok~refuse", "expect": "dispatch-connect:failed", "stop": "issue" },
+    { "name": "direct vendor resets mid-stream", "model": "sim-ok~reset4", "expect": "dispatch-read:failed", "stop": "issue" },
+    { "name": "direct vendor cuts mid-stream", "model": "sim-ok~cut4", "expect": "dispatch-cutoff:failed", "stop": "issue" },
+    { "name": "direct vendor stream error", "model": "sim-stream-error", "expect": "service-error:failed", "stop": "issue" },
+    { "name": "direct undecodable image", "model": "sim-bad-image", "expect": "aix-media:lost" },
+    { "name": "direct image", "model": "sim-image", "expect": "-" },
+    { "name": "direct stop", "model": "sim-slow", "stopAfter": 5, "expect": "-", "stop": "client-abort" }
+  ]
+}

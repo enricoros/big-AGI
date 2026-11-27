@@ -8,7 +8,7 @@ Not the same as `tools/develop/aix-protocol-lab`, which records and analyzes tra
 
 One vendor reply to one chat-generate request, as received: `generations/<vendor>/<model>_<what it shows>[_nonstream]`.
 
-Replayed by `src/modules/aix/server/dispatch/chatGenerate/chatGenerate.replay.test.ts`, part of `npm test`. The test runs each capture through the chat-generate chain (continuation, retry, executor, demuxer, parser, transmitter) in four groups:
+Served again over HTTP by `tools/develop/aix-failure-simulator` (each capture is a model, with transport defects on demand), and replayed by `src/modules/aix/server/dispatch/chatGenerate/chatGenerate.replay.test.ts`, part of `npm test`. The test runs each capture through the chat-generate chain (continuation, retry, executor, demuxer, parser, transmitter) in four groups:
 
 - **All captures: invariants**: rules that hold for any vendor response, one test per rule over the captures of all vendors. It parses in strict mode, ends once, ends clean unless it is listed as an unclean ending, and delivers the vendor's answer text, reasoning text, function calls, error text and token totals. All read off the capture itself, so a capture added to a vendor folder is checked from then on.
 - **Unclean endings**: one row per ending that is not a clean finish (cut by the output limit, refused, filtered, failed inside a 200 stream), with the stop reason and the words the user gets.
