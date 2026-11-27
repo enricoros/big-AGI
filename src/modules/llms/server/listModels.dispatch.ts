@@ -68,6 +68,8 @@ import { zaiCuratedModelDescriptions, zaiDiscoverModels, zaiModelSort } from './
 // -- Dispatch types --
 
 export type ListModelsDispatch<TWireModels = any> = {
+  // returns the listing's own promise: wrapped as `async () => fetchX()` a rejection (a missing key) gets its handler one
+  // microtask late, and Vercel's Edge runtime logs it meanwhile as an error with a stack, beside the line the router logs
   fetchModels: () => Promise<TWireModels>;
   convertToDescriptions: (wireModels: TWireModels) => ReadonlyArray<ModelDescriptionSchema>;
   accessStatus?: (wireModels: TWireModels) => ListModelsAccessStatus | undefined; // what the vendor told about the key, where it does
@@ -358,14 +360,14 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'xai':
       // [xAI]: custom models listing
       return createListModelsDispatch({
-        fetchModels: async () => xaiFetchModelDescriptions(access),
+        fetchModels: () => xaiFetchModelDescriptions(access),
         convertToDescriptions: models => models.sort(xaiModelSort),
       });
 
     case 'lmstudio':
       // [LM Studio]: custom models listing with native API
       return createListModelsDispatch({
-        fetchModels: async () => lmStudioFetchModels(access),
+        fetchModels: () => lmStudioFetchModels(access),
         convertToDescriptions: (response) => lmStudioModelsToModelDescriptions(response.models),
       });
 
@@ -393,14 +395,14 @@ function _listModelsCreateDispatch(access: AixAPI_Access, signal?: AbortSignal):
     case 'cerebras':
       // [Cerebras] custom listing: rich public catalog + Cloudflare UA workaround live in cerebras.models.ts
       return createListModelsDispatch({
-        fetchModels: async () => cerebrasFetchModelDescriptions(access, signal),
+        fetchModels: () => cerebrasFetchModelDescriptions(access, signal),
         convertToDescriptions: (descriptions) => descriptions,
       });
 
     case 'openrouter':
       // [OpenRouter] custom listing: the key endpoint is asked beside the public list, in openrouter.models.ts
       return createListModelsDispatch({
-        fetchModels: async () => openRouterFetchListing(access, signal),
+        fetchModels: () => openRouterFetchListing(access, signal),
         convertToDescriptions: openRouterListingToModelDescriptions,
         accessStatus: ({ accessStatus }) => accessStatus,
       });
