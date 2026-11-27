@@ -42,7 +42,7 @@ How to set up AI models and features in big-AGI.
 
 
 - **Local AI Integrations**:
-  - [LocalAI](config-local-localai.md), [LM Studio](config-local-lmstudio.md), [Ollama](config-local-ollama.md)
+  - [LocalAI](config-local-localai.md), [LM Studio](config-local-lmstudio.md), [Ollama](config-local-ollama.md), [Rapid-MLX](config-local-rapid-mlx.md)
 
 
 - **Enhanced AI Features**:
