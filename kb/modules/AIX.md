@@ -71,7 +71,7 @@ The subsystem comprises three main components:
 3. AI Provider Interaction: AIX Server communicates with AI Provider (streaming or non-streaming)
 4. Data Decoding, Transformation and Transmission: AIX Server sends AixWire_Particles to AIX Client (see [AIX-ingestion.md](AIX-ingestion.md))
 5. Client-side Processing: Client's ContentReassembler processes AixWire_Particles into a list (likely a single) of multi-fragment (DMessageContentFragment[]) messages
-6. Completion: AIX Server sends 'done' control message, AIX Client finalizes data update
+6. Completion: AIX Server sends the `end` control particle (the termination reason, and the stop reason when known), AIX Client finalizes data update
 7. Error Handling: each failure is one `DAixIssue` record (`src/modules/aix/shared/aix.issues.ts`), sent live in an `aix-issue` particle (or built by the client for a throw) and stored as an `aix.issue` part: [aix/AIX-TODO-errors.md](aix/AIX-TODO-errors.md)
 
 ## 2. Files and Folders
@@ -116,7 +116,6 @@ sequenceDiagram
         AIX Server ->> AIX Client: Send a `dispatch-prepare` aix-issue, then the end
     else Dispatch Fetch
         AIX Server ->> AI Provider: Send AI-provider specific stream/non-stream request
-        AIX Server ->> AIX Client: Send 'start' control message
         AIX Server ->> PartTransmitter: Initialize part particle serialization
 
         alt Streaming AI Provider
@@ -144,7 +143,7 @@ sequenceDiagram
             end
             AIX Server ->> AIX Client: Send all AixWire_PartParticles
         end
-        AIX Server ->> AIX Client: Send 'done' control message
+        AIX Server ->> AIX Client: Send the `end` control particle (termination and stop reasons)
         loop For each received batch of particles
             AIX Client ->> AIX Client: ContentReassembler processes particles into DMessage*Part
             alt DMessageTextPart

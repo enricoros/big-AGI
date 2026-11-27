@@ -76,6 +76,7 @@ On 11.19.0 the 300s cut surfaced as a minified `TypeError` (`i is not iterable` 
 - **Stop never reaches the function.** A client abort fires neither `req.signal` (`ctx.reqSignal`) nor the procedure `signal`; tRPC 11.22's body-cancel abort does not trigger either. After an abort at 8s, `aix.chatGenerateContent` kept consuming its upstream until the 300s kill (291 particles), and a relay procedure with the same `fetch(..., { signal: ctx.reqSignal })` wiring kept reading - in Chrome, Safari and Firefox, on Edge and Node. A stopped non-CSF generation keeps the provider call running, and billing, until it ends or the limit hits. CSF closes the provider connection from the browser.
 - **One connection per host.** Chrome multiplexes every stream to a host over one HTTP/2 connection; one reset (seen once, 79s in) failed all 12 parallel streams at once with `network error`. Beam rays share that connection.
 - An uncaught exception thrown from a timer in an Edge function does not end the invocation.
+- **A late handler logs as an error.** A rejection that gets its handler one microtask after it rejects (`async () => fetchX()` returning an already rejected promise) is written by the runtime at error level with a stack, while the request answers normally. Inferred from model listing with a missing key: that row on 20 of 20 requests in that shape, on 0 of 54 where the throw is at creation.
 
 ## Stop on Vercel: fix options
 
@@ -99,6 +100,8 @@ On 11.19.0 the 300s cut surfaced as a minified `TypeError` (`i is not iterable` 
 
 - The Stop leak above: the server cannot learn about the abort on Vercel; a fix needs another signal (a stop call, or the provider's own cancel).
 - A procedure throw leaves no server log in production: the route's `onError` is development-only. `zodError` has no reader, so a rejected input shows zod's JSON.
+- To confirm on the first deploy without the `async` wrapper in model listing: the `TRPCError: Missing ... API Key` error rows stop (the late handler, above).
+- No deadline on short requests: a title call that hangs runs to the 300s limit, and each new turn starts another (seen: three in a row for one conversation, through a relay).
 - Client-side retry is off (`new AixStreamRetry(0, 0)`): its policy is open. `shallRetry` reads the record's policy `recovery` and `httpStatus`; an abort during the backoff ends `aborted`; a throw after the verdict is not retried.
 
 ## Re-measuring
