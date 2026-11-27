@@ -1,0 +1,49 @@
+{
+ "model": "deepseek-flash",
+ "system": [
+  {
+   "type": "text",
+   "text": "Current date: 2026-11-27."
+  }
+ ],
+ "messages": [
+  {
+   "role": "user",
+   "content": [
+    {
+     "type": "text",
+     "text": "What is the weather in Paris right now, and what is today's top news headline about Paris? Answer in two lines."
+    }
+   ]
+  }
+ ],
+ "tools": [
+  {
+   "type": "web_search_20250305",
+   "name": "web_search"
+  },
+  {
+   "name": "get_weather",
+   "description": "Get the current weather for a city",
+   "input_schema": {
+    "type": "object",
+    "properties": {
+     "city": {
+      "type": "string",
+      "description": "City name"
+     }
+    },
+    "required": [
+     "city"
+    ]
+   }
+  }
+ ],
+ "tool_choice": {
+  "type": "auto"
+ },
+ "output_config": {
+  "effort": "high"
+ },
+ "stream": true
+}

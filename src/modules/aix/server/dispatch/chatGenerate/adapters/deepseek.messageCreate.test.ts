@@ -30,21 +30,25 @@ function violations(body: DeepseekMessagesRequest): string[] {
   const thinkingOn = body.thinking?.type !== 'disabled'; // on is the default
 
   // 422 "tools[0]: unknown variant `custom`, expected one of `web_search_20250305`, ..., `deepseek_read_url`": a typed tool is a server tool
-  const webTools = (body.tools ?? []).flatMap(tool => 'type' in tool ? [tool.type as string] : []);
+  const serverTools = (body.tools ?? []).flatMap(tool => 'type' in tool ? [tool.type] : []);
   const clientTools = (body.tools ?? []).filter(tool => !('type' in tool));
-  for (const type of webTools)
-    if (type !== 'deepseek_web_search' && type !== 'deepseek_read_url')
+  const webTools = serverTools.filter(type => ['deepseek_web_search', 'deepseek_read_url'].includes(type)); // DeepSeek's own
+  for (const type of serverTools)
+    if (!webTools.includes(type) && type !== 'web_search_20250305')
       found.push(`a tool of type ${type}`);
 
   // 400 "tools: `deepseek_web_search` can only be declared once"
-  if (new Set(webTools).size !== webTools.length)
-    found.push('a web tool declared twice');
+  if (new Set(serverTools).size !== serverTools.length)
+    found.push('a server tool declared twice');
+  // 400 "tools: other tools cannot be used together with `deepseek_web_search`, `deepseek_read_url`, `safety_check` or `title` yet"
+  if (webTools.length && webTools.length !== serverTools.length)
+    found.push('the standard search next to the web tools');
   // 400 "The server-side tool calls (deepseek_web_search, deepseek_read_url) ... are unavailable for model deepseek-v4-pro"
   if (webTools.length && body.model !== 'deepseek-flash')
     found.push(`web tools on ${body.model}`);
   // 400 "tools: client tools can only be used together with `deepseek_web_search` in thinking mode"
-  if (webTools.length && clientTools.length && !thinkingOn)
-    found.push('web tools next to client tools with thinking off');
+  if (webTools.includes('deepseek_web_search') && clientTools.length && !thinkingOn)
+    found.push('web search next to client tools with thinking off');
 
   // 400 "Thinking mode does not support this tool_choice"
   if (thinkingOn && (body.tool_choice?.type === 'any' || body.tool_choice?.type === 'tool'))
@@ -106,12 +110,14 @@ const HISTORIES: Record<string, AixMessages_ChatMessage[]> = {
 
 const EFFORTS = [undefined, 'none', 'low', 'high', 'max'] as const;
 const POLICIES = [undefined, 'auto', 'any'] as const;
-// the models with the web tools each can have set: the listing gives the two parameters to deepseek-flash alone
+// the models with the search each can have set: the listing gives the two web tools to deepseek-flash, the standard search to deepseek-v4-pro
 const MODELS: [id: string, web: Partial<AixAPI_Model>][] = [
   ['deepseek-flash', {}],
   ['deepseek-flash', { vndDeepseekWebSearch: 'auto' }],
+  ['deepseek-flash', { vndDeepseekReadUrl: 'auto' }],
   ['deepseek-flash', { vndDeepseekWebSearch: 'auto', vndDeepseekReadUrl: 'auto' }],
   ['deepseek-v4-pro', {}],
+  ['deepseek-v4-pro', { vndAntWebSearch: 'auto' }],
 ];
 const WEB = { vndDeepseekWebSearch: 'auto', vndDeepseekReadUrl: 'auto' } as const;
 
@@ -144,7 +150,7 @@ describe('DeepSeek Messages request: nothing DeepSeek rejects', () => {
 
   test('a model that carries Anthropic settings, and tools described for Anthropic code execution', () => {
     // the container id comes from the chat history whatever the model; the others are what a mis-set model could carry
-    const leaky = aixModel('deepseek-flash', 'high', { vndAntContainerId: 'container_011', vndAntThinkingBudget: 'adaptive', vndAntWebSearch: 'auto', vndAntWebFetch: 'auto', vndAntCodeSandbox: 'auto', vndAntInfSpeed: 'fast' });
+    const leaky = aixModel('deepseek-flash', 'high', { vndAntContainerId: 'container_011', vndAntThinkingBudget: 'adaptive', vndAntWebFetch: 'auto', vndAntCodeSandbox: 'auto', vndAntInfSpeed: 'fast' });
     const body = aixToDeepseekMessageCreate(leaky, request(HISTORIES['a tool loop from Claude (signed and redacted reasoning)'], 'auto', [WEATHER_PTC]), true);
     assert.deepEqual(violations(body), []);
     assert.deepEqual(Object.keys(body).filter(key => !DEEPSEEK_FIELDS.includes(key)), [], 'fields DeepSeek does not read');
@@ -212,13 +218,15 @@ describe('DeepSeek Messages request: what is sent', () => {
     assert.deepEqual(declared(WEB), ['deepseek_web_search', 'deepseek_read_url']);
   });
 
-  // measured: a 400 with thinking off, and with thinking on a model that answers it has no such tool (0 of 16 searches)
-  test('the web tools are left out of a request that carries client tools, whatever the thinking, and the client tools stay', () => {
+  // measured: next to client tools DeepSeek's own search ran in 37 of 72 requests, the standard one in 80 of 80.
+  // No violation tells the first: it is a 200 that does not search
+  test('next to client tools the search is the standard one, the client tools stay, and a forced call takes no search', () => {
+    const searching: [id: string, web: Partial<AixAPI_Model>][] = [['deepseek-flash', WEB], ['deepseek-v4-pro', { vndAntWebSearch: 'auto' }]];
     for (const effort of EFFORTS)
-      for (const policy of ['auto', 'any'] as const) {
-        const body = aixToDeepseekMessageCreate(aixModel('deepseek-flash', effort, WEB), request([ASK], policy), true);
-        assert.deepEqual(typedTools(body), [], `effort ${effort}, policy ${policy}`);
-        assert.deepEqual(body.tools?.map(tool => tool.name), ['get_weather'], `effort ${effort}, policy ${policy}`);
+      for (const [id, web] of searching) {
+        const sent = (policy: typeof POLICIES[number]) => aixToDeepseekMessageCreate(aixModel(id, effort, web), request([ASK], policy), true).tools?.map(tool => tool.name);
+        assert.deepEqual(sent('auto'), ['web_search', 'get_weather'], `${id}, effort ${effort}`);
+        assert.deepEqual(sent('any'), ['get_weather'], `${id}, effort ${effort}: forced`);
       }
   });
 

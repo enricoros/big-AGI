@@ -17,7 +17,9 @@ const IF_4 = [LLM_IF_HOTFIX_StripImages, LLM_IF_OAI_Chat, LLM_IF_OAI_Fn];
 // - free: no per-call fee, the tokens of every inference step are billed (a deep search bills 20K-400K input tokens, mostly cache hits)
 // - wired on the Messages wire, so the two parameters are listed only when the service speaks it (deepseekModelToModelDescription);
 //   request and stream contract in kb/modules/LLM-deepseek-messages.md
-const _messagesWireParamIds: ReadonlySet<string> = new Set(['llmVndDeepseekWebSearch', 'llmVndDeepseekReadUrl']);
+// - the same wire serves the standard web_search tool to both models (result lists, no citations, no pages): a model
+//   that does not take the web tools lists that one, llmVndAntWebSearch
+const _messagesWireParamIds: ReadonlySet<string> = new Set(['llmVndDeepseekWebSearch', 'llmVndDeepseekReadUrl', 'llmVndAntWebSearch']);
 
 // [DeepSeek, 2026-10-17] V4.1-Flash-1017: re-post-trained, swapped IN PLACE - https://api-docs.deepseek.com/news/news261017/
 // - Same 'deepseek-flash' id, arch and price; the pricing page MODEL VERSION row reads DeepSeek-V4.1-Flash-1017. Self-feedback
@@ -132,6 +134,7 @@ const _knownDeepseekChatModels = llmsDefineManualMappings([
     parameterSpecs: [
       // 'low' keeps reasoning on yet skips the hidden agentic preamble (8 vs 87 prompt tokens), so it is cheaper per request
       { paramId: 'llmVndMiscEffort', enumValues: ['none', 'low', 'high', 'max'] },
+      { paramId: 'llmVndAntWebSearch' }, // the standard web_search: DeepSeek's own web tools are a 400 on this model
     ],
     maxCompletionTokens: 131072, // house cap; live ceiling is 393216 (384K)
     chatPrice: { input: 1.32, output: 3.96, cache: { read: 0.044 } }, // peak card

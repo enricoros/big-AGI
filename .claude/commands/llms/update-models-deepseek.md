@@ -11,7 +11,7 @@ Reference `src/modules/llms/server/llm.server.types.ts` and `src/modules/llms/se
 - Model List: https://api-docs.deepseek.com/api/list-models/
 - Release Notes: https://api-docs.deepseek.com/updates/ (check for version updates like V4-Flash-0731)
 - Thinking Mode: https://api-docs.deepseek.com/guides/thinking_mode/ - authoritative for the `reasoning_effort` enum and the per-model requested->actual effort mapping that drives `parameterSpecs`
-- Web Tools: https://api-docs.deepseek.com/guides/web_tools/ - which models take `deepseek_web_search` / `deepseek_read_url` ("Use the `deepseek-flash` model"): those models carry the `llmVndDeepseekWebSearch` and `llmVndDeepseekReadUrl` specs, and no other
+- Web Tools: https://api-docs.deepseek.com/guides/web_tools/ - which models take `deepseek_web_search` / `deepseek_read_url` ("Use the `deepseek-flash` model"): those models carry the `llmVndDeepseekWebSearch` and `llmVndDeepseekReadUrl` specs, and the others `llmVndAntWebSearch` (the standard search)
 
 **Note:** DeepSeek frequently swaps weights in place behind an unchanged, undated model id, and releases new versions with significant pricing changes. Always check release notes first.
 

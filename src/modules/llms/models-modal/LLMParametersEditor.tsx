@@ -715,7 +715,7 @@ export function LLMParametersEditor(props: {
     {showParam('llmVndDeepseekWebSearch') && (
       <FormSelectControl
         title='Web Search'
-        tooltip='DeepSeek searches the web and cites its sources. With thinking on it works over several steps: it searches, opens pages and finds text in them. Not used on a request that carries tools of its own.'
+        tooltip='DeepSeek searches the web and cites its sources. With thinking on it works over several steps: it searches, opens pages and finds text in them. Next to tools of its own, a simpler search runs in its place: results, no citations.'
         value={llmVndDeepseekWebSearch ?? _UNSPECIFIED}
         onChange={(value) => {
           if (value === _UNSPECIFIED || !value || value === 'off') onRemoveParameter('llmVndDeepseekWebSearch');

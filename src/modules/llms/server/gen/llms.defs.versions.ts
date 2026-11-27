@@ -16,7 +16,7 @@ export const LLMS_DEFS_VERSIONS = {
   bedrock: 'fecb19d69fce',
   cerebras: 'f1c8ee5b04e5',
   cohere: 'de7eaf0888dd',
-  deepseek: '1d5a936d763e',
+  deepseek: '86c8682e7173',
   googleai: '5a766dc530a3',
   groq: '06b8968145e0',
   lmstudio: '15349e839f17',

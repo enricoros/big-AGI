@@ -37,7 +37,8 @@ DeepSeek's own server tools (2026-11-13): `deepseek_web_search` and `deepseek_re
 - Search has two modes, decided by thinking, not by a parameter. Off: one or two rounds of queries, 2 to 4 seconds. On: a deep search over several steps that searches, opens pages (`open_page`) and finds text in them (`find_in_page`): 5 to 32 calls and 17 to 75 seconds measured, billing 20K to 400K input tokens per answer, mostly cache hits.
 - `deepseek_read_url` reads the links of the last user message, 10 at most. With thinking on and web search declared it does nothing: the deep search opens the links itself.
 - A message with an image is searched by image: `kind` `image_search` or `deep_image_search`, no queries, results with an `image_url`.
-- Next to client function tools: a 400 with thinking off (`client tools can only be used together with deepseek_web_search in thinking mode`); with thinking on the request passes and the tools are dead, the model answering that it has none (0 of 16 searches, 0 of 6 links read; with a system prompt naming them, 4 of 6 and 2 dead-end turns). The adapter leaves them out of any request that carries client tools, and of a forced call: `DEEPSEEK_WEB_TOOLS_WITH_CLIENT_TOOLS`.
+- Next to client function tools (2026-11-27, the same on the three wires): a 400 with thinking off (`client tools can only be used together with deepseek_web_search in thinking mode`). With thinking on the request passes and the search is unreliable: it ran in 37 of 72 requests that needed one, and in 0 of 18 where the turn needed the client tool too (the model writes that it will search and the turn ends, or says it has no search tool). The adapter sends the standard search in its place; a forced call takes no search.
+- The standard search, `web_search_20250305` (parameter `llmVndAntWebSearch`, listed by `deepseek-v4-pro`): served on this wire to both models, and next to client tools it ran in 80 of 80 requests, thinking on or off. Anthropic's own blocks, read by the Anthropic parser as they are: result lists with snippets, no citations, no page opened. Elsewhere it is `deepseek-v4-pro` only on Responses (where it opens pages) and ignored on Chat Completions (`web_search_options`).
 - They cannot share a request with another server tool (400), `tool_choice` cannot name them, and `tool_choice: none` turns them off.
 - Free: no per-call fee; the tokens of every inference step are billed, and `usage` is their sum.
 
@@ -65,9 +66,9 @@ Across turns:
 ## Deliberately not wired
 
 - The `signature` of a link read: not stored, so a later turn has the answer about a page and not the page. It belongs with the hosted-tool record every vendor lacks (AIX-ingestion P4, P16, P24, P65), not in a DeepSeek-only field.
-- Search on `deepseek-v4-pro`, and the web tools next to client tools: the vendor serves neither. The first is a spec to add in `deepseek.models.ts`, the second a constant to flip.
+- DeepSeek's own web tools on `deepseek-v4-pro` (a 400) and next to client tools (unreliable): both get the standard search. When the vendor serves them: the two specs on the model's row in `deepseek.models.ts`, and the swap in the adapter goes.
+- A system sentence telling the model it can search: with it the own search ran next to client tools in 79 of 84 requests. Not sent: no prompt of ours in the user's system message.
 - The web tools on Chat Completions (custom hosts): the vendor serves them there too (`server_tool_event`, `server_tool_calls`), nothing reads them.
-- The standard `web_search` server tool: it works here on both models (and on Responses for pro), next to client tools too, but returns no citation annotations and reads no pages. DeepSeek's web tools are the product going forward.
 - `latest_reminder` (an extra message role carrying date, weekday, location, platform, language): accepted on Messages and Chat Completions, a 422 on Responses. Without a date in the prompt, deep search anchors on 2025 (2 of 2; 4 of 4 right with a dated system prompt or the marker). The default personas carry the date.
 - JSON schema output: ignored on this wire (`output_config.format`), a 400 on Chat Completions, honored on Responses only.
 - `title`, `safety_check`, the Files API, the raw Search and Fetch APIs (`/v1/tools/search`, `/v1/tools/fetch`).

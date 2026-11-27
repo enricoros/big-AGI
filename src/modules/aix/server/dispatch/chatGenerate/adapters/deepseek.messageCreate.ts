@@ -35,8 +35,11 @@ export type DeepseekMessagesRequest = {
 /** A client tool carries no `type` here: 'custom' is a 422 ("unknown variant `custom`") */
 type DeepseekMessagesClientTool = { name: string, description?: string, input_schema: object };
 
-/** DeepSeek's web tools: run by the vendor, the model deciding when. On deepseek-flash only (a 400 on deepseek-v4-pro) */
-type DeepseekMessagesWebTool = { type: 'deepseek_web_search', name: 'deepseek_web_search' } | { type: 'deepseek_read_url', name: 'deepseek_read_url' };
+/** Run by the vendor, the model deciding when: DeepSeek's web tools (deepseek-flash only, a 400 on deepseek-v4-pro), or the standard search */
+type DeepseekMessagesWebTool =
+  | { type: 'deepseek_web_search', name: 'deepseek_web_search' }
+  | { type: 'deepseek_read_url', name: 'deepseek_read_url' }
+  | { type: 'web_search_20250305', name: 'web_search' };
 
 type DeepseekEffort = 'low' | 'high' | 'max';
 
@@ -49,12 +52,12 @@ const _EFFORT: Record<Exclude<NonNullable<AixAPI_Model['reasoningEffort']>, 'non
 const _NO_HOSTED_FEATURES: AnthropicHostedFeatures = { disableAllHostedTools: true };
 
 /**
- * The web tools next to client tools. Measured 2026-11-25: a 400 with thinking off ("client tools can only be used
- * together with `deepseek_web_search` in thinking mode"); with thinking on the request passes and the tools are dead,
- * the model answering that it has none (searched in 0 of 16 runs, read a link in 0 of 6). So they are left out of a
- * request that carries client tools. True once the vendor serves the two together.
+ * The standard `web_search`, which this wire serves too: result lists, no citations, no pages. For a model that lists it,
+ * and in place of DeepSeek's own search next to client tools. Measured 2026-11-27: there the own search ran in 37 of 72
+ * requests, and is a 400 with thinking off ("client tools can only be used together with `deepseek_web_search` in
+ * thinking mode"); this one ran in 80 of 80, thinking on or off. The two kinds are a 400 together.
  */
-const DEEPSEEK_WEB_TOOLS_WITH_CLIENT_TOOLS = false;
+const _STANDARD_SEARCH: DeepseekMessagesWebTool = { type: 'web_search_20250305', name: 'web_search' };
 
 
 export function aixToDeepseekMessageCreate(model: AixAPI_Model, chatGenerate: AixAPIChatGenerate_Request, streaming: boolean): DeepseekMessagesRequest {
@@ -79,8 +82,9 @@ export function aixToDeepseekMessageCreate(model: AixAPI_Model, chatGenerate: Ai
   const effort = (!thinkingOff && model.reasoningEffort) ? _EFFORT[model.reasoningEffort as keyof typeof _EFFORT] : undefined;
 
   const clientTools = ant.tools?.flatMap(_toClientTool) ?? [];
-  // a forced call is for a client tool, and has thinking off: the first line of the rule above
-  const webTools = (forcedCall || (clientTools.length && !DEEPSEEK_WEB_TOOLS_WITH_CLIENT_TOOLS)) ? [] : _webTools(model);
+  const standardSearch = model.vndAntWebSearch === 'auto' || (model.vndDeepseekWebSearch === 'auto' && clientTools.length > 0);
+  // a forced call is for a client tool: no search then
+  const webTools = forcedCall ? [] : standardSearch ? [_STANDARD_SEARCH] : _webTools(model);
   const tools = [...webTools, ...clientTools];
 
   return {

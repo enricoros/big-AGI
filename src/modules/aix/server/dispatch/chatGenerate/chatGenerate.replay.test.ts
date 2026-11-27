@@ -1251,6 +1251,8 @@ describe('DeepSeek Messages', () => {
   const LINK_FAILS = 'deepseek/deepseek-flash_read-url_not-accessible.sse';
   const BY_IMAGE = 'deepseek/deepseek-flash_image-search.sse';
   const WEB_TOOLS = [DEEP, QUICK_NS, LINKS, LINK_FAILS, BY_IMAGE];
+  // the standard `web_search`, sent next to a client tool: Anthropic's own blocks, and the client call arrives before the search
+  const STANDARD_AND_CALL = 'deepseek/deepseek-flash_standard-search+function-call.sse';
 
   // what counts: the result blocks of each kind, failed ones included (usage.server_tool_use, web_search_requests and web_fetch_requests)
   hostedToolCounts([
@@ -1259,6 +1261,7 @@ describe('DeepSeek Messages', () => {
     [LINKS, { nWebFetch: 2 }, '2 links read'],
     [LINK_FAILS, { nWebFetch: 1 }, '1 link that could not be read'],
     [BY_IMAGE, { nWebSearch: 1 }, '1 search by image'],
+    [STANDARD_AND_CALL, { nWebSearch: 1 }, 'the standard search, with a client call in the same message'],
   ]);
 
   /** The blocks the vendor sent, whole: a web tool's call and its result each arrive complete */
@@ -1283,6 +1286,19 @@ describe('DeepSeek Messages', () => {
     // each is a web operation, and none is left to the parser's line for a tool it does not know
     assert.deepEqual(g.particles.filter(isPart('vp')).filter(op => op.mot !== 'search-web' || op.text.includes('deepseek_')), []);
   }));
+
+  test('a client call that arrives next to a standard search is handed over, the search is shown and closed, and the message stops for the call', { skip: missing(STANDARD_AND_CALL) }, async () => {
+    const sent = sseData(capture(STANDARD_AND_CALL)).filter(event => event.type === 'content_block_start').map(event => event.content_block);
+    const clientCalls = sent.filter(block => block.type === 'tool_use');
+    const search = sent.find(block => block.type === 'server_tool_use');
+    assert.ok(clientCalls.length && search?.name === 'web_search', 'the capture has no client call next to a standard search');
+
+    const particles = await replayCapture(STANDARD_AND_CALL);
+    assert.deepEqual(particles.filter(isPart('fci')).map(call => [call.id, call.name]), clientCalls.map(call => [call.id, call.name]));
+    const shown = particles.filter(isPart('vp')).filter(op => op.opId === search.id);
+    assert.deepEqual([shown[0]?.mot, shown.at(-1)?.state], ['search-web', 'done']);
+    assert.equal(theEnd(particles).tokenStopReason, 'ok-tool_invocations');
+  });
 
   test('every source the answer cites reaches the client', { skip: missing(...WEB_TOOLS) }, () => overCaptures(WEB_TOOLS, g => {
     const cited: string[] = g.streaming
