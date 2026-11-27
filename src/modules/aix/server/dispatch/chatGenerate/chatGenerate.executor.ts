@@ -278,10 +278,13 @@ async function* _connectToDispatch(
     if (AIX_SECURITY_ONLY_IN_DEV_BUILDS)
       console.log(`[AIX] ${_d.prettyDialect}: connect failed: ${request.url.split('?')[0]}`);
 
-    // upstream rejections that are user/key/policy issues (401 bad key, 402 billing, 403 region/permission, 404 unknown model, 429 quota) log instead of warn;
+    // upstream rejections that are user/key/policy issues (401 bad key, 402 billing, 403 region/permission, 404 unknown model, 429 quota) or the vendor's capacity (503) log instead of warn;
     // 400/422 and the rest keep warning, as they can signal adapter bugs (malformed requests we generated)
-    const demoteToLog = [401, 402, 403, 404, 429];
-    const isUpstreamUserError = error?.name === 'TRPCFetcherError' && error.category === 'http' && demoteToLog.includes(error.httpStatus);
+    const demoteToLog = [401, 402, 403, 404, 429, 503];
+    // [Anthropic] billing and a conversation over the context window are a 400 too: the user's to fix, told apart by the text
+    const demote400Text = /credit balance is too low|prompt is too long/i;
+    const isUpstreamUserError = error?.name === 'TRPCFetcherError' && error.category === 'http'
+      && (demoteToLog.includes(error.httpStatus) || (error.httpStatus === 400 && demote400Text.test(error.message)));
     const serverLogLevel = _d.consoleLogErrors === 'srv-warn' && isUpstreamUserError ? 'srv-log' : _d.consoleLogErrors;
 
     chatGenerateTx.setDispatchRpcTerminatingIssue(_connectFailureIssue(error, _d), serverLogLevel);

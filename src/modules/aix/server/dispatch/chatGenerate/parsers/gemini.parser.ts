@@ -61,7 +61,8 @@ export function createGeminiGenerateContentResponseParser(requestedModelName: st
     // In-band error after HTTP 200, Google's error object (https://google.aip.dev/193): {"error":{"code":503,"message":"...","status":"UNAVAILABLE","details":[...]}}
     // [Gemini, 2026-11-09, hypothesis] a bare-string error was never observed: it is surfaced as the message rather than dropped
     if (eventData?.error) {
-      pt.addDialectIssue(_geminiInBandErrorIssue(eventData.error), 'srv-warn');
+      // UNAVAILABLE is the vendor's capacity ("high demand"), as a 503 at the connect: logged; the rest can be our request (INVALID_ARGUMENT): warned
+      pt.addDialectIssue(_geminiInBandErrorIssue(eventData.error), eventData.error.status === 'UNAVAILABLE' ? 'srv-log' : 'srv-warn');
       return pt.setDialectEnded('issue-dialect');
     }
 

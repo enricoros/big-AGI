@@ -556,8 +556,9 @@ export function createAnthropicMessageParser(thinkingOrigins?: () => AnthropicTh
             console.log(`[Aix.Anthropic] ⛔ No retries available for error '${errorText}'`);
         }
 
-        // Non-retryable errors (or no retries left): show to user, and stop reading - the error event ends the stream
-        pt.addDialectIssue(_fromAnthropicErrorEvent(error), 'srv-warn');
+        // Non-retryable errors (or no retries left): show to user, and stop reading - the error event ends the stream.
+        // Billing arrives as an invalid_request_error, told apart by the text: the user's account, logged; the rest can be our request, warned
+        pt.addDialectIssue(_fromAnthropicErrorEvent(error), /credit balance is too low/i.test(errorText ?? '') ? 'srv-log' : 'srv-warn');
         return pt.setDialectEnded('issue-dialect');
 
       default:

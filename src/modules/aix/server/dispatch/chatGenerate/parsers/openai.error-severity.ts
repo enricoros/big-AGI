@@ -9,12 +9,13 @@ import type { ParticleServerLogLevel } from './IParticleTransmitter';
  */
 
 
-const _userSideHttpCodes = [401, 402, 403, 404, 429]; // [OpenRouter] mirrors the upstream HTTP status in `code` - coincidentally aligned with the connect-failure log demotion (demoteToLog) in chatGenerate.executor.ts
+const _userSideHttpCodes = [401, 402, 403, 404, 429, 503]; // [OpenRouter] mirrors the upstream HTTP status in `code` - coincidentally aligned with the connect-failure log demotion (demoteToLog) in chatGenerate.executor.ts
 const _userSideErrorCodes = [
   'invalid_api_key', 'account_deactivated', 'insufficient_quota', 'billing_not_active', 'billing_hard_limit_reached', 'unsupported_country_region_territory', 'model_not_found', 'rate_limit_exceeded', 'content_policy_violation', 'content_filter', 'moderation_blocked', 'invalid_prompt',
   'resource_unavailable', // [OpenAI] flex capacity shortage (#1211): reaches the log only once the retries below are spent - an upstream condition, not an adapter bug
+  'upstream_error', // [relays] the relay's own upstream failed ("The provider did not complete a valid response. No balance was deducted."): not a request we generated. The name sits in `code` or in `type` depending on the carrier: listed in both
 ];
-const _userSideErrorTypes = ['authentication_error', 'permission_error', 'insufficient_quota', 'rate_limit_error', 'tokens', 'requests'];
+const _userSideErrorTypes = ['authentication_error', 'permission_error', 'insufficient_quota', 'rate_limit_error', 'tokens', 'requests', 'upstream_error'];
 
 /**
  * 'srv-log' for user/key/policy rejections relayed in-band by OpenAI and compatible endpoints (bad key,
