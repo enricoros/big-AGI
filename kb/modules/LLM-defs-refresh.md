@@ -58,7 +58,7 @@ buckets, following real value-import dependencies:
 - `_shared`: `models.mappings.ts`, `llm.server.variants.ts`, `llm.server.types.ts`,
   `listModels.dispatch.ts` - rolls every service.
 - `_openaiCompat`: the OpenAI-lookalike sub-parsers selected by host heuristics under the
-  `openai` dialect (Fireworks, Novita, ChutesAI, MiniMax, LLM API, Nous, Arcee, FastAPI,
+  `openai` dialect (Fireworks, Novita, ChutesAI, MiniMax, LLM API, Nous, LLMTR, Arcee, FastAPI,
   plus the NVIDIA and OpenRouter parsers they reuse), and `openai.models.ts` itself: a proxy to
   OpenAI (LiteLLM, corporate gateways) sits behind a custom host but is parsed by the first-party
   parser, so first-party edits must reach it. Custom-host OpenAI services (non `api.openai.com`

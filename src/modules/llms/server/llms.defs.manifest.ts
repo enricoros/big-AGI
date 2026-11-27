@@ -102,7 +102,7 @@ export const LLMS_DEFS_EXTRA_BUCKETS = {
   // Custom-host OpenAI services (non api.openai.com) compare against this bucket.
   // openai.models.ts is claimed too: proxies to OpenAI (LiteLLM, gateways) sit behind a
   // custom host but are parsed by the first-party parser, so its edits must reach them.
-  // openrouter.models.ts is claimed for the Nous Research mapper reuse; its other
+  // openrouter.models.ts is claimed for the Nous Research and LLMTR mapper reuse; its other
   // first-party lookup imports (anthropic/gemini/metaai/moonshot/sakanaai/xai/zai) are deliberately
   // untracked here (owner decision: lookalike hosts do not roll on those - bump `epoch` for a roll).
   _openaiCompat: {

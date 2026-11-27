@@ -59,7 +59,7 @@ function _nousNormalizeWireModel(wireModel: any): any {
 // parameterSpecs that only the 'openrouter' dialect can emit - dead or throwing under the 'openai' dialect: every
 // OpenRouter-own parameter (the 'llmVndOrt' prefix, filtered below) plus the tunneled Anthropic thinking budget / Gemini
 // efforts and the Responses-only reasoning mode
-const _nousDroppedParamIds: string[] = [
+const _openRouterDialectDroppedParamIds: string[] = [
   'llmVndAntThinkingBudget',
   'llmVndGemEffort',
   'llmVndGeminiThinkingBudget',
@@ -74,7 +74,7 @@ const _nousDroppedParamIds: string[] = [
  */
 export function openRouterDescriptionToOpenAIDialect(model: ModelDescriptionSchema): ModelDescriptionSchema {
 
-  let parameterSpecs = model.parameterSpecs?.filter(p => !p.paramId.startsWith('llmVndOrt') && !_nousDroppedParamIds.includes(p.paramId));
+  let parameterSpecs = model.parameterSpecs?.filter(p => !p.paramId.startsWith('llmVndOrt') && !_openRouterDialectDroppedParamIds.includes(p.paramId));
 
   const droppedAntThinking = !!model.parameterSpecs?.some(p => p.paramId === 'llmVndAntThinkingBudget');
   // Anthropic effort goes out as plain `reasoning_effort`, honored on adaptive-thinking models (probe: Opus 5.5 'max'
