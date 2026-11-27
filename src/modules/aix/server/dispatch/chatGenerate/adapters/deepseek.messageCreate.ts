@@ -166,10 +166,10 @@ function _returnReasoningOnToolTurns(messages: TAntMessages, reasoningByCallId: 
 
 /** Search works in two modes, by thinking: off, one round of queries; on, several steps that search, open pages and find text in them */
 function _webTools(model: AixAPI_Model): DeepseekMessagesWebTool[] {
-  return [
-    ...(model.vndDeepseekWebSearch === 'auto' ? [{ type: 'deepseek_web_search', name: 'deepseek_web_search' } as const] : []),
-    ...(model.vndDeepseekReadUrl === 'auto' ? [{ type: 'deepseek_read_url', name: 'deepseek_read_url' } as const] : []),
-  ];
+  const tools: DeepseekMessagesWebTool[] = [];
+  if (model.vndDeepseekWebSearch === 'auto') tools.push({ type: 'deepseek_web_search', name: 'deepseek_web_search' });
+  if (model.vndDeepseekReadUrl === 'auto') tools.push({ type: 'deepseek_read_url', name: 'deepseek_read_url' });
+  return tools;
 }
 
 function _toClientTool(tool: NonNullable<TAntRequest['tools']>[number]): DeepseekMessagesClientTool[] {

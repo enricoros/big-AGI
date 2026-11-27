@@ -16,7 +16,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage } from '../../../api/aix.wiretypes';
+import type { AixAPI_Model, AixAPIChatGenerate_Request, AixMessages_ChatMessage, AixMessages_ModelMessage, AixTools_FunctionCallDefinition } from '../../../api/aix.wiretypes';
 
 import { aixToDeepseekMessageCreate, type DeepseekMessagesRequest } from './deepseek.messageCreate';
 import { aixToOpenAIChatCompletions } from './openai.chatCompletions';
@@ -82,16 +82,17 @@ const DEEPSEEK_FIELDS = ['model', 'system', 'messages', 'tools', 'tool_choice', 
 
 // --- the inputs ---
 
-const WEATHER = { type: 'function_call' as const, function_call: { name: 'get_weather', description: 'Get the current weather for a city', input_schema: { properties: { city: { type: 'string' as const } }, required: ['city'] } } };
+const WEATHER: AixTools_FunctionCallDefinition = { type: 'function_call', function_call: { name: 'get_weather', description: 'Get the current weather for a city', input_schema: { properties: { city: { type: 'string' } }, required: ['city'] } } };
 // a tool as the Anthropic programmatic-calling features describe it: the Anthropic adapter answers these with a code execution tool and a container
-const WEATHER_PTC = { type: 'function_call' as const, function_call: { ...WEATHER.function_call, allowed_callers: ['code_execution' as const], input_examples: [{ city: 'Paris' }] } };
+const WEATHER_PTC: AixTools_FunctionCallDefinition = { type: 'function_call', function_call: { ...WEATHER.function_call, allowed_callers: ['code_execution'], input_examples: [{ city: 'Paris' }] } };
 
 const user = (text: string): AixMessages_ChatMessage => ({ role: 'user', parts: [{ pt: 'text', text }] });
-const model = (...parts: Extract<AixMessages_ChatMessage, { role: 'model' }>['parts']): AixMessages_ChatMessage => ({ role: 'model', parts });
-const text = (value: string) => ({ pt: 'text' as const, text: value });
-const reasoning = (aText: string) => ({ pt: 'ma' as const, aType: 'reasoning' as const, aText });
-const call = (id: string, city: string) => ({ pt: 'tool_invocation' as const, id, invocation: { type: 'function_call' as const, name: 'get_weather', args: JSON.stringify({ city }) } });
-const result = (id: string, value: string) => ({ pt: 'tool_response' as const, id, response: { type: 'function_call' as const, name: 'get_weather', result: value }, error: false });
+type ModelPart = AixMessages_ModelMessage['parts'][number];
+const model = (...parts: ModelPart[]): AixMessages_ChatMessage => ({ role: 'model', parts });
+const text = (value: string) => ({ pt: 'text', text: value } satisfies ModelPart);
+const reasoning = (aText: string) => ({ pt: 'ma', aType: 'reasoning', aText } satisfies ModelPart);
+const call = (id: string, city: string) => ({ pt: 'tool_invocation', id, invocation: { type: 'function_call', name: 'get_weather', args: JSON.stringify({ city }) } } satisfies ModelPart);
+const result = (id: string, value: string) => ({ pt: 'tool_response', id, response: { type: 'function_call', name: 'get_weather', result: value }, error: false } satisfies ModelPart);
 
 const ASK = user('What is the weather in Paris and in Tokyo?');
 
@@ -119,7 +120,7 @@ const MODELS: [id: string, web: Partial<AixAPI_Model>][] = [
   ['deepseek-v4-pro', {}],
   ['deepseek-v4-pro', { vndAntWebSearch: 'auto' }],
 ];
-const WEB = { vndDeepseekWebSearch: 'auto', vndDeepseekReadUrl: 'auto' } as const;
+const WEB: Partial<AixAPI_Model> = { vndDeepseekWebSearch: 'auto', vndDeepseekReadUrl: 'auto' };
 
 function request(history: AixMessages_ChatMessage[], policy: typeof POLICIES[number], tools = [WEATHER]): AixAPIChatGenerate_Request {
   return { systemMessage: { parts: [text('Be brief.')] }, chatSequence: history, ...(policy ? { tools, toolsPolicy: { type: policy } } : {}) };
