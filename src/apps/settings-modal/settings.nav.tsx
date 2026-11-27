@@ -53,7 +53,7 @@ export const SETTINGS_NAV: SettingsNavNode[] = [
     children: [
       { id: 'tools-draw', label: 'Draw', path: 'Tools > Draw', icon: <FormatPaintTwoToneIcon />, description: 'Image generation engines' },
       { id: 'tools-browse', label: 'Browsing', path: 'Tools > Browsing', icon: <LanguageRoundedIcon />, description: 'Load web pages into chats' },
-      { id: 'tools-search', label: 'Custom Search', path: 'Tools > Custom Search', icon: <SearchIcon />, description: 'Google Programmable Search' },
+      { id: 'tools-search', label: 'Custom Search', path: 'Tools > Custom Search', icon: <SearchIcon />, description: 'ReAct search provider and credentials' },
     ],
   },
   { id: 'labs', label: 'Labs', icon: <ScienceIcon /> },

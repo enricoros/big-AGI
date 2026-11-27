@@ -23,6 +23,8 @@ const VERCEL_WORKAROUND_EDGE_1MB_PAYLOAD_LIMIT = true;
 
 
 const enableLoggerLink = (opts: any) => {
+  // Credential-bearing calls opt out of logging both inputs and error responses.
+  if (opts.context?.noLog) return false;
   return process.env.NODE_ENV === 'development' ||
     (opts.direction === 'down' && opts.result instanceof Error);
 };
