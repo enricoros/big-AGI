@@ -11,7 +11,7 @@ import { ExternalLink } from '~/common/components/ExternalLink';
 import { FormLabelStart } from '~/common/components/forms/FormLabelStart';
 import { Link } from '~/common/components/Link';
 
-import { isValidGoogleCloudApiKey, isValidGoogleCseId } from './search.client';
+import { googleSearchConfigValidity } from './search.client';
 import { useGoogleSearchStore } from './store-module-google';
 
 
@@ -27,8 +27,7 @@ export function GoogleSearchSettings() {
 
 
   // derived state
-  const isValidKey = googleCloudApiKey ? isValidGoogleCloudApiKey(googleCloudApiKey) : backendHasGoogle;
-  const isValidId = googleCSEId ? isValidGoogleCseId(googleCSEId) : backendHasGoogle;
+  const { keyValid: isValidKey, cseIdValid: isValidId } = googleSearchConfigValidity();
 
 
   const handleGoogleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => setGoogleCloudApiKey(e.target.value);
