@@ -230,10 +230,8 @@ export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Pr
 
       // normal attempt, expecting success and setting the promise value
       const result = await operationFn();
-      if (AIX_DEBUG_SERVER_RETRY && attemptNumber > 1) {
-        // NOTE: console.warn to overwrite the lower level [POST/GET] warning logs
-        console.warn(`[fetchers.retrier] ✅ Success after ${attemptNumber} attempts`);
-      }
+      if (AIX_DEBUG_SERVER_RETRY && attemptNumber > 1)
+        console.log(`[fetchers.retrier] ✅ Success after ${attemptNumber} attempts`);
       return result;
 
     } catch (error: any) {
@@ -277,11 +275,11 @@ export async function fetchWithAbortableConnectionRetry<T>(operationFn: () => Pr
         ...(rp.calm && { calm: true }),
       };
 
-      // exhausted attempts
+      // exhausted attempts - logged, not warned: the caller logs the failure it gets back, at its own level
       if (attemptNumber >= rp.maxAttempts) {
         if (AIX_DEBUG_SERVER_RETRY) {
           const errorInfo = `(${error.category}${error.httpStatus ? `, HTTP ${error.httpStatus}` : ''})`;
-          console.warn(`[fetchers.retrier] ⚠️ All ${rp.maxAttempts - 1} retry attempts exhausted ${errorInfo}`);
+          console.log(`[fetchers.retrier] ⚠️ All ${rp.maxAttempts - 1} retry attempts exhausted ${errorInfo}`);
         }
         // gave up after `attemptNumber` total attempts (incl. the original); delayMs -1 says the same to a client older than `phase`
         onRetryAttempt?.({ ...retryAttempt, attempt: attemptNumber, delayMs: -1, phase: 'gave-up' });
