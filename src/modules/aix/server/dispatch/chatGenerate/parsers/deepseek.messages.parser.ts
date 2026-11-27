@@ -109,8 +109,9 @@ export function createDeepseekMessagesParser(streaming: boolean): ChatGeneratePa
 }
 
 
+/** All three endings are the vendor's (a failed generation, a start that timed out, a stall), never our request: logged, not warned */
 function _endWith(pt: IParticleTransmitter, issue: ParticleDialectIssue): void {
-  pt.addDialectIssue(issue, 'srv-warn');
+  pt.addDialectIssue(issue, 'srv-log');
   pt.setDialectEnded('issue-dialect');
 }
 
