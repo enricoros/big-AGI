@@ -373,10 +373,9 @@ async function* _consumeDispatchStream(
   try {
     yield* _pumpDispatchStream(dispatchReader, dispatchDemuxerFormat, dispatchParser, intakeAbortSignal, chatGenerateTx, _d, parseContext);
   } finally {
-    // We read no further, however we got here (the dialect ended, an issue, a retry or continuation signal, the consumer
-    // closing): release the upstream body. A vendor that keeps its stream open past the event that ended it, or that only
-    // pings, would otherwise hold the connection - for good in the browser (CSF), where no function teardown closes it.
-    // Best effort: a body that is closed or aborted already rejects.
+    // Release the upstream body, whatever ended the read (the dialect's end, an issue, a retry or continuation signal, the
+    // consumer closing): a vendor that leaves its stream open, or pinging, holds the connection - for good under CSF.
+    // The pump has returned, so this close is never read: no issue, no end reason. An errored body rejects: dropped.
     dispatchReader.cancel().catch(() => undefined);
   }
 }
