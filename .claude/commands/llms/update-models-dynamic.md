@@ -1,5 +1,5 @@
 ---
-description: Update/validate dynamic vendor model parsers (OpenRouter, TogetherAI, Azure, Baseten, Novita, Sarvam, ChutesAI, FireworksAI, LM Studio, LocalAI, FastAPI)
+description: Update/validate dynamic vendor model parsers (OpenRouter, TogetherAI, Azure, Baseten, Novita, Sarvam, LLMTR, ChutesAI, FireworksAI, LM Studio, LocalAI, FastAPI)
 ---
 
 Validate that the dynamic (API-fetched) vendor model parsers are up to date and not silently broken.
@@ -44,6 +44,12 @@ These vendors do NOT have hardcoded model lists - they fetch models from APIs at
 - Known listing gap: `gemma4` is listed as not reasoning, but thinks when sent any effort level.
 - Probe with `SARVAM_API_KEY` (`.env.api-keys`): chat, each effort level, tools, image input and budgets were run live on 2026-11-17.
 - Hostname heuristic: `api.sarvam.ai`.
+
+**LLMTR** - `src/modules/llms/server/openai/models/llmtr.models.ts`
+- Gateway at `https://llmtr.com/v1`. `GET /v1/models` is public and uses OpenRouter's wire schema; the parser reuses the OpenRouter mapper.
+- Two corrections before the mapper: keep rows whose `supported_operations` include `CHAT_COMPLETIONS` (the listing also has Responses-only, image, video, embedding and speech rows), and fill a null `architecture.tokenizer` with `Other` (the OpenRouter schema requires a string, otherwise every model is dropped).
+- Requests use the `openai` dialect, so OpenRouter-only parameterSpecs are stripped, same as Nous.
+- Hostname heuristic: `llmtr.com` (the apex host).
 
 **ChutesAI** - `src/modules/llms/server/openai/models/chutesai.models.ts`
 - Custom `max_model_len` field for context window.
